@@ -364,10 +364,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Audio_Middleware_Dat
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_VOICE_LANG_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_VOICE_LANG_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_VOICE_LANG_TYPE: i32 = 10;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_VOICE_LANG_TYPE: [enum__Torappu_VoiceLangType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_VOICE_LANG_TYPE: [enum__Torappu_VoiceLangType; 11] = [
   enum__Torappu_VoiceLangType::NONE,
   enum__Torappu_VoiceLangType::JP,
   enum__Torappu_VoiceLangType::CN_MANDARIN,
@@ -379,7 +379,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_VOICE_LANG_TYPE: [enum__Torappu_VoiceLangTyp
   enum__Torappu_VoiceLangType::GER,
   enum__Torappu_VoiceLangType::RUS,
   enum__Torappu_VoiceLangType::FRE,
-  enum__Torappu_VoiceLangType::SPA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -398,10 +397,9 @@ impl enum__Torappu_VoiceLangType {
   pub const GER: Self = Self(8);
   pub const RUS: Self = Self(9);
   pub const FRE: Self = Self(10);
-  pub const SPA: Self = Self(11);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 11;
+  pub const ENUM_MAX: i32 = 10;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::JP,
@@ -414,7 +412,6 @@ impl enum__Torappu_VoiceLangType {
     Self::GER,
     Self::RUS,
     Self::FRE,
-    Self::SPA,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -430,7 +427,6 @@ impl enum__Torappu_VoiceLangType {
       Self::GER => Some("GER"),
       Self::RUS => Some("RUS"),
       Self::FRE => Some("FRE"),
-      Self::SPA => Some("SPA"),
       _ => None,
     }
   }

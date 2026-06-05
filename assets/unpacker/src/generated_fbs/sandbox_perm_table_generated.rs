@@ -1484,10 +1484,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_SandboxV2SeasonType 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -1573,14 +1573,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -1673,17 +1665,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -1770,14 +1754,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -1867,14 +1843,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -2557,118 +2525,6 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_Battle_SideType {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Battle_SideType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: [enum__Torappu_TileData_HeightTypeMask; 4] = [
-  enum__Torappu_TileData_HeightTypeMask::NONE,
-  enum__Torappu_TileData_HeightTypeMask::LOWLAND,
-  enum__Torappu_TileData_HeightTypeMask::HIGHLAND,
-  enum__Torappu_TileData_HeightTypeMask::ALL,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_TileData_HeightTypeMask(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_TileData_HeightTypeMask {
-  pub const NONE: Self = Self(0);
-  pub const LOWLAND: Self = Self(1);
-  pub const HIGHLAND: Self = Self(2);
-  pub const ALL: Self = Self(3);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::LOWLAND,
-    Self::HIGHLAND,
-    Self::ALL,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::LOWLAND => Some("LOWLAND"),
-      Self::HIGHLAND => Some("HIGHLAND"),
-      Self::ALL => Some("ALL"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_TileData_HeightTypeMask {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_TileData_HeightTypeMask {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_TileData_HeightTypeMask::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_TileData_HeightTypeMask variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_TileData_HeightTypeMask {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_TileData_HeightTypeMask {
-    type Output = enum__Torappu_TileData_HeightTypeMask;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_TileData_HeightTypeMask {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_TileData_HeightTypeMask {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_TileData_HeightTypeMask {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_LEVEL_DATA_DIFFICULTY: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
@@ -21783,19 +21639,17 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
   pub const VT_PLAYERSIDEMASK: ::flatbuffers::VOffsetT = 8;
   pub const VT_SIDETYPE: ::flatbuffers::VOffsetT = 10;
   pub const VT_CHARIDFILTER: ::flatbuffers::VOffsetT = 12;
-  pub const VT_CHARIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 18;
-  pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 20;
-  pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 24;
-  pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 26;
-  pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 28;
-  pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 30;
-  pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 34;
-  pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 36;
-  pub const VT_HEIGHTTYPEMASK: ::flatbuffers::VOffsetT = 38;
+  pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 14;
+  pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 16;
+  pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 18;
+  pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 20;
+  pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 22;
+  pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 24;
+  pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 26;
+  pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 28;
+  pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 32;
+  pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 34;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -21807,7 +21661,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     args: &'args clz_Torappu_RuneData_SelectorArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RuneData_Selector<'bldr>> {
     let mut builder = clz_Torappu_RuneData_SelectorBuilder::new(_fbb);
-    builder.add_heightTypeMask(args.heightTypeMask);
     if let Some(x) = args.mapTagFilter { builder.add_mapTagFilter(x); }
     if let Some(x) = args.subProfessionExcludeFilter { builder.add_subProfessionExcludeFilter(x); }
     if let Some(x) = args.filterTagExcludeFilter { builder.add_filterTagExcludeFilter(x); }
@@ -21819,7 +21672,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     if let Some(x) = args.enemyLevelTypeFilter { builder.add_enemyLevelTypeFilter(x); }
     if let Some(x) = args.enemyIdExcludeFilter { builder.add_enemyIdExcludeFilter(x); }
     if let Some(x) = args.enemyIdFilter { builder.add_enemyIdFilter(x); }
-    if let Some(x) = args.charIdExcludeFilter { builder.add_charIdExcludeFilter(x); }
     if let Some(x) = args.charIdFilter { builder.add_charIdFilter(x); }
     builder.add_sideType(args.sideType);
     builder.add_buildableMask(args.buildableMask);
@@ -21834,9 +21686,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     let playerSideMask = self.playerSideMask();
     let sideType = self.sideType();
     let charIdFilter = self.charIdFilter().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let charIdExcludeFilter = self.charIdExcludeFilter().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
     let enemyIdFilter = self.enemyIdFilter().map(|x| {
@@ -21872,14 +21721,12 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     let mapTagFilter = self.mapTagFilter().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
-    let heightTypeMask = self.heightTypeMask();
     clz_Torappu_RuneData_SelectorT {
       professionMask,
       buildableMask,
       playerSideMask,
       sideType,
       charIdFilter,
-      charIdExcludeFilter,
       enemyIdFilter,
       enemyIdExcludeFilter,
       enemyLevelTypeFilter,
@@ -21891,7 +21738,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
       filterTagExcludeFilter,
       subProfessionExcludeFilter,
       mapTagFilter,
-      heightTypeMask,
     }
   }
 
@@ -21929,13 +21775,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_CHARIDFILTER, None)}
-  }
-  #[inline]
-  pub fn charIdExcludeFilter(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER, None)}
   }
   #[inline]
   pub fn enemyIdFilter(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -22014,13 +21853,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_MAPTAGFILTER, None)}
   }
-  #[inline]
-  pub fn heightTypeMask(&self) -> enum__Torappu_TileData_HeightTypeMask {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_TileData_HeightTypeMask>(clz_Torappu_RuneData_Selector::VT_HEIGHTTYPEMASK, Some(enum__Torappu_TileData_HeightTypeMask::NONE)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
@@ -22034,7 +21866,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
      .visit_field::<enum__Torappu_PlayerSideMask>("playerSideMask", Self::VT_PLAYERSIDEMASK, false)?
      .visit_field::<enum__Torappu_Battle_SideType>("sideType", Self::VT_SIDETYPE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("charIdFilter", Self::VT_CHARIDFILTER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("charIdExcludeFilter", Self::VT_CHARIDEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyIdFilter", Self::VT_ENEMYIDFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyIdExcludeFilter", Self::VT_ENEMYIDEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyLevelTypeFilter", Self::VT_ENEMYLEVELTYPEFILTER, false)?
@@ -22046,7 +21877,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("filterTagExcludeFilter", Self::VT_FILTERTAGEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("subProfessionExcludeFilter", Self::VT_SUBPROFESSIONEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("mapTagFilter", Self::VT_MAPTAGFILTER, false)?
-     .visit_field::<enum__Torappu_TileData_HeightTypeMask>("heightTypeMask", Self::VT_HEIGHTTYPEMASK, false)?
      .finish();
     Ok(())
   }
@@ -22057,7 +21887,6 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub playerSideMask: enum__Torappu_PlayerSideMask,
     pub sideType: enum__Torappu_Battle_SideType,
     pub charIdFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub charIdExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyIdFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyIdExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyLevelTypeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
@@ -22069,7 +21898,6 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub filterTagExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub subProfessionExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub mapTagFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub heightTypeMask: enum__Torappu_TileData_HeightTypeMask,
 }
 impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
   #[inline]
@@ -22080,7 +21908,6 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
       playerSideMask: enum__Torappu_PlayerSideMask::ALL,
       sideType: enum__Torappu_Battle_SideType::NONE,
       charIdFilter: None,
-      charIdExcludeFilter: None,
       enemyIdFilter: None,
       enemyIdExcludeFilter: None,
       enemyLevelTypeFilter: None,
@@ -22092,7 +21919,6 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
       filterTagExcludeFilter: None,
       subProfessionExcludeFilter: None,
       mapTagFilter: None,
-      heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
     }
   }
 }
@@ -22122,10 +21948,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RuneData_Selector
   #[inline]
   pub fn add_charIdFilter(&mut self, charIdFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_CHARIDFILTER, charIdFilter);
-  }
-  #[inline]
-  pub fn add_charIdExcludeFilter(&mut self, charIdExcludeFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER, charIdExcludeFilter);
   }
   #[inline]
   pub fn add_enemyIdFilter(&mut self, enemyIdFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
@@ -22172,10 +21994,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RuneData_Selector
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_MAPTAGFILTER, mapTagFilter);
   }
   #[inline]
-  pub fn add_heightTypeMask(&mut self, heightTypeMask: enum__Torappu_TileData_HeightTypeMask) {
-    self.fbb_.push_slot::<enum__Torappu_TileData_HeightTypeMask>(clz_Torappu_RuneData_Selector::VT_HEIGHTTYPEMASK, heightTypeMask, enum__Torappu_TileData_HeightTypeMask::NONE);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RuneData_SelectorBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RuneData_SelectorBuilder {
@@ -22198,7 +22016,6 @@ impl ::core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
       ds.field("playerSideMask", &self.playerSideMask());
       ds.field("sideType", &self.sideType());
       ds.field("charIdFilter", &self.charIdFilter());
-      ds.field("charIdExcludeFilter", &self.charIdExcludeFilter());
       ds.field("enemyIdFilter", &self.enemyIdFilter());
       ds.field("enemyIdExcludeFilter", &self.enemyIdExcludeFilter());
       ds.field("enemyLevelTypeFilter", &self.enemyLevelTypeFilter());
@@ -22210,7 +22027,6 @@ impl ::core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
       ds.field("filterTagExcludeFilter", &self.filterTagExcludeFilter());
       ds.field("subProfessionExcludeFilter", &self.subProfessionExcludeFilter());
       ds.field("mapTagFilter", &self.mapTagFilter());
-      ds.field("heightTypeMask", &self.heightTypeMask());
       ds.finish()
   }
 }
@@ -22222,7 +22038,6 @@ pub struct clz_Torappu_RuneData_SelectorT {
   pub playerSideMask: enum__Torappu_PlayerSideMask,
   pub sideType: enum__Torappu_Battle_SideType,
   pub charIdFilter: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub charIdExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyIdFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyIdExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyLevelTypeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
@@ -22234,7 +22049,6 @@ pub struct clz_Torappu_RuneData_SelectorT {
   pub filterTagExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub subProfessionExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub mapTagFilter: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub heightTypeMask: enum__Torappu_TileData_HeightTypeMask,
 }
 impl Default for clz_Torappu_RuneData_SelectorT {
   fn default() -> Self {
@@ -22244,7 +22058,6 @@ impl Default for clz_Torappu_RuneData_SelectorT {
       playerSideMask: enum__Torappu_PlayerSideMask::ALL,
       sideType: enum__Torappu_Battle_SideType::NONE,
       charIdFilter: None,
-      charIdExcludeFilter: None,
       enemyIdFilter: None,
       enemyIdExcludeFilter: None,
       enemyLevelTypeFilter: None,
@@ -22256,7 +22069,6 @@ impl Default for clz_Torappu_RuneData_SelectorT {
       filterTagExcludeFilter: None,
       subProfessionExcludeFilter: None,
       mapTagFilter: None,
-      heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
     }
   }
 }
@@ -22270,9 +22082,6 @@ impl clz_Torappu_RuneData_SelectorT {
     let playerSideMask = self.playerSideMask;
     let sideType = self.sideType;
     let charIdFilter = self.charIdFilter.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let charIdExcludeFilter = self.charIdExcludeFilter.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
     let enemyIdFilter = self.enemyIdFilter.as_ref().map(|x|{
@@ -22308,14 +22117,12 @@ impl clz_Torappu_RuneData_SelectorT {
     let mapTagFilter = self.mapTagFilter.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
-    let heightTypeMask = self.heightTypeMask;
     clz_Torappu_RuneData_Selector::create(_fbb, &clz_Torappu_RuneData_SelectorArgs{
       professionMask,
       buildableMask,
       playerSideMask,
       sideType,
       charIdFilter,
-      charIdExcludeFilter,
       enemyIdFilter,
       enemyIdExcludeFilter,
       enemyLevelTypeFilter,
@@ -22327,7 +22134,6 @@ impl clz_Torappu_RuneData_SelectorT {
       filterTagExcludeFilter,
       subProfessionExcludeFilter,
       mapTagFilter,
-      heightTypeMask,
     })
   }
 }

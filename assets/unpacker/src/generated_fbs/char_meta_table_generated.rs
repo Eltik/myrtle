@@ -112,10 +112,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_SpCharMissionCondTyp
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -201,14 +201,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -301,17 +293,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -398,14 +382,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -495,14 +471,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -577,114 +545,6 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_CHAR_MASTER_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_CHAR_MASTER_TYPE: i32 = 2;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_CHAR_MASTER_TYPE: [enum__Torappu_CharMasterType; 3] = [
-  enum__Torappu_CharMasterType::NONE,
-  enum__Torappu_CharMasterType::SYSTEM,
-  enum__Torappu_CharMasterType::BATTLE,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_CharMasterType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_CharMasterType {
-  pub const NONE: Self = Self(0);
-  pub const SYSTEM: Self = Self(1);
-  pub const BATTLE: Self = Self(2);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::SYSTEM,
-    Self::BATTLE,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::SYSTEM => Some("SYSTEM"),
-      Self::BATTLE => Some("BATTLE"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_CharMasterType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_CharMasterType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_CharMasterType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_CharMasterType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_CharMasterType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_CharMasterType {
-    type Output = enum__Torappu_CharMasterType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_CharMasterType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_CharMasterType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_CharMasterType {}
 pub enum dict__string__list_stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1794,613 +1654,6 @@ impl dict__string__longT {
     })
   }
 }
-pub enum clz_Torappu_CharMasterLevelDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_CharMasterLevelData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharMasterLevelData<'a> {
-  type Inner = clz_Torappu_CharMasterLevelData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_CharMasterLevelData<'a> {
-  pub const VT_LEVEL: ::flatbuffers::VOffsetT = 4;
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 8;
-  pub const VT_CONDITIONDESC: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharMasterLevelData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharMasterLevelDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterLevelData<'bldr>> {
-    let mut builder = clz_Torappu_CharMasterLevelDataBuilder::new(_fbb);
-    if let Some(x) = args.conditionDesc { builder.add_conditionDesc(x); }
-    if let Some(x) = args.description { builder.add_description(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_level(args.level);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharMasterLevelDataT {
-    let level = self.level();
-    let name = self.name().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let description = self.description().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let conditionDesc = self.conditionDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_CharMasterLevelDataT {
-      level,
-      name,
-      description,
-      conditionDesc,
-    }
-  }
-
-  #[inline]
-  pub fn level(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharMasterLevelData::VT_LEVEL, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharMasterLevelData::VT_NAME, None)}
-  }
-  #[inline]
-  pub fn description(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharMasterLevelData::VT_DESCRIPTION, None)}
-  }
-  #[inline]
-  pub fn conditionDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharMasterLevelData::VT_CONDITIONDESC, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_CharMasterLevelData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("level", Self::VT_LEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("description", Self::VT_DESCRIPTION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("conditionDesc", Self::VT_CONDITIONDESC, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_CharMasterLevelDataArgs<'a> {
-    pub level: i32,
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub description: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub conditionDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_CharMasterLevelDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharMasterLevelDataArgs {
-      level: 0,
-      name: None,
-      description: None,
-      conditionDesc: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_CharMasterLevelDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharMasterLevelDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_level(&mut self, level: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharMasterLevelData::VT_LEVEL, level, 0);
-  }
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterLevelData::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterLevelData::VT_DESCRIPTION, description);
-  }
-  #[inline]
-  pub fn add_conditionDesc(&mut self, conditionDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterLevelData::VT_CONDITIONDESC, conditionDesc);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharMasterLevelDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharMasterLevelDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterLevelData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_CharMasterLevelData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharMasterLevelData");
-      ds.field("level", &self.level());
-      ds.field("name", &self.name());
-      ds.field("description", &self.description());
-      ds.field("conditionDesc", &self.conditionDesc());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_CharMasterLevelDataT {
-  pub level: i32,
-  pub name: Option<alloc::string::String>,
-  pub description: Option<alloc::string::String>,
-  pub conditionDesc: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_CharMasterLevelDataT {
-  fn default() -> Self {
-    Self {
-      level: 0,
-      name: None,
-      description: None,
-      conditionDesc: None,
-    }
-  }
-}
-impl clz_Torappu_CharMasterLevelDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterLevelData<'b>> {
-    let level = self.level;
-    let name = self.name.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let description = self.description.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let conditionDesc = self.conditionDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_CharMasterLevelData::create(_fbb, &clz_Torappu_CharMasterLevelDataArgs{
-      level,
-      name,
-      description,
-      conditionDesc,
-    })
-  }
-}
-pub enum clz_Torappu_CharMasterBasicDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_CharMasterBasicData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharMasterBasicData<'a> {
-  type Inner = clz_Torappu_CharMasterBasicData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_CharMasterBasicData<'a> {
-  pub const VT_CHARID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_MASTERID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 8;
-  pub const VT_MASTERTYPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_LEVELLIST: ::flatbuffers::VOffsetT = 12;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharMasterBasicData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharMasterBasicDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData<'bldr>> {
-    let mut builder = clz_Torappu_CharMasterBasicDataBuilder::new(_fbb);
-    if let Some(x) = args.levelList { builder.add_levelList(x); }
-    builder.add_masterType(args.masterType);
-    builder.add_sortId(args.sortId);
-    if let Some(x) = args.masterId { builder.add_masterId(x); }
-    if let Some(x) = args.charId { builder.add_charId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharMasterBasicDataT {
-    let charId = self.charId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let masterId = self.masterId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let sortId = self.sortId();
-    let masterType = self.masterType();
-    let levelList = self.levelList().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_CharMasterBasicDataT {
-      charId,
-      masterId,
-      sortId,
-      masterType,
-      levelList,
-    }
-  }
-
-  #[inline]
-  pub fn charId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharMasterBasicData::VT_CHARID, None)}
-  }
-  #[inline]
-  pub fn masterId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharMasterBasicData::VT_MASTERID, None)}
-  }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharMasterBasicData::VT_SORTID, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn masterType(&self) -> enum__Torappu_CharMasterType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_CharMasterType>(clz_Torappu_CharMasterBasicData::VT_MASTERTYPE, Some(enum__Torappu_CharMasterType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn levelList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterLevelData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterLevelData>>>>(clz_Torappu_CharMasterBasicData::VT_LEVELLIST, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_CharMasterBasicData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("masterId", Self::VT_MASTERID, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-     .visit_field::<enum__Torappu_CharMasterType>("masterType", Self::VT_MASTERTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterLevelData>>>>("levelList", Self::VT_LEVELLIST, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_CharMasterBasicDataArgs<'a> {
-    pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub masterId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub sortId: i32,
-    pub masterType: enum__Torappu_CharMasterType,
-    pub levelList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterLevelData<'a>>>>>,
-}
-impl<'a> Default for clz_Torappu_CharMasterBasicDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharMasterBasicDataArgs {
-      charId: None,
-      masterId: None,
-      sortId: 0,
-      masterType: enum__Torappu_CharMasterType::NONE,
-      levelList: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_CharMasterBasicDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharMasterBasicDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterBasicData::VT_CHARID, charId);
-  }
-  #[inline]
-  pub fn add_masterId(&mut self, masterId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterBasicData::VT_MASTERID, masterId);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharMasterBasicData::VT_SORTID, sortId, 0);
-  }
-  #[inline]
-  pub fn add_masterType(&mut self, masterType: enum__Torappu_CharMasterType) {
-    self.fbb_.push_slot::<enum__Torappu_CharMasterType>(clz_Torappu_CharMasterBasicData::VT_MASTERTYPE, masterType, enum__Torappu_CharMasterType::NONE);
-  }
-  #[inline]
-  pub fn add_levelList(&mut self, levelList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterLevelData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMasterBasicData::VT_LEVELLIST, levelList);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharMasterBasicDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharMasterBasicDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_CharMasterBasicData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharMasterBasicData");
-      ds.field("charId", &self.charId());
-      ds.field("masterId", &self.masterId());
-      ds.field("sortId", &self.sortId());
-      ds.field("masterType", &self.masterType());
-      ds.field("levelList", &self.levelList());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_CharMasterBasicDataT {
-  pub charId: Option<alloc::string::String>,
-  pub masterId: Option<alloc::string::String>,
-  pub sortId: i32,
-  pub masterType: enum__Torappu_CharMasterType,
-  pub levelList: Option<alloc::vec::Vec<clz_Torappu_CharMasterLevelDataT>>,
-}
-impl Default for clz_Torappu_CharMasterBasicDataT {
-  fn default() -> Self {
-    Self {
-      charId: None,
-      masterId: None,
-      sortId: 0,
-      masterType: enum__Torappu_CharMasterType::NONE,
-      levelList: None,
-    }
-  }
-}
-impl clz_Torappu_CharMasterBasicDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData<'b>> {
-    let charId = self.charId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let masterId = self.masterId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let sortId = self.sortId;
-    let masterType = self.masterType;
-    let levelList = self.levelList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_CharMasterBasicData::create(_fbb, &clz_Torappu_CharMasterBasicDataArgs{
-      charId,
-      masterId,
-      sortId,
-      masterType,
-      levelList,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_CharMasterBasicDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_CharMasterBasicData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharMasterBasicData<'a> {
-  type Inner = dict__string__clz_Torappu_CharMasterBasicData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_CharMasterBasicData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_CharMasterBasicData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_CharMasterBasicDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharMasterBasicData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_CharMasterBasicDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_CharMasterBasicDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_CharMasterBasicDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_CharMasterBasicData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharMasterBasicData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_CharMasterBasicData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterBasicData>>(dict__string__clz_Torappu_CharMasterBasicData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_CharMasterBasicData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharMasterBasicData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_CharMasterBasicDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_CharMasterBasicDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_CharMasterBasicDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_CharMasterBasicDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_CharMasterBasicDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_CharMasterBasicData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharMasterBasicData>>(dict__string__clz_Torappu_CharMasterBasicData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_CharMasterBasicDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_CharMasterBasicDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharMasterBasicData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_CharMasterBasicData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_CharMasterBasicData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_CharMasterBasicData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_CharMasterBasicDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_CharMasterBasicDataT>>,
-}
-impl Default for dict__string__clz_Torappu_CharMasterBasicDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_CharMasterBasicDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharMasterBasicData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_CharMasterBasicData::create(_fbb, &dict__string__clz_Torappu_CharMasterBasicDataArgs{
-      key,
-      value,
-    })
-  }
-}
 pub enum clz_Torappu_CharMetaTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2420,8 +1673,6 @@ impl<'a> clz_Torappu_CharMetaTable<'a> {
   pub const VT_SPCHARGROUPS: ::flatbuffers::VOffsetT = 4;
   pub const VT_SPCHARMISSIONS: ::flatbuffers::VOffsetT = 6;
   pub const VT_SPCHARVOUCHERSKINTIME: ::flatbuffers::VOffsetT = 8;
-  pub const VT_CHARIDMASTERLISTMAP: ::flatbuffers::VOffsetT = 10;
-  pub const VT_CHARMASTERDATAMAP: ::flatbuffers::VOffsetT = 12;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -2433,8 +1684,6 @@ impl<'a> clz_Torappu_CharMetaTable<'a> {
     args: &'args clz_Torappu_CharMetaTableArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharMetaTable<'bldr>> {
     let mut builder = clz_Torappu_CharMetaTableBuilder::new(_fbb);
-    if let Some(x) = args.charMasterDataMap { builder.add_charMasterDataMap(x); }
-    if let Some(x) = args.charIdMasterListMap { builder.add_charIdMasterListMap(x); }
     if let Some(x) = args.spCharVoucherSkinTime { builder.add_spCharVoucherSkinTime(x); }
     if let Some(x) = args.spCharMissions { builder.add_spCharMissions(x); }
     if let Some(x) = args.spCharGroups { builder.add_spCharGroups(x); }
@@ -2451,18 +1700,10 @@ impl<'a> clz_Torappu_CharMetaTable<'a> {
     let spCharVoucherSkinTime = self.spCharVoucherSkinTime().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
-    let charIdMasterListMap = self.charIdMasterListMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let charMasterDataMap = self.charMasterDataMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     clz_Torappu_CharMetaTableT {
       spCharGroups,
       spCharMissions,
       spCharVoucherSkinTime,
-      charIdMasterListMap,
-      charMasterDataMap,
     }
   }
 
@@ -2487,20 +1728,6 @@ impl<'a> clz_Torappu_CharMetaTable<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__long>>>>(clz_Torappu_CharMetaTable::VT_SPCHARVOUCHERSKINTIME, None)}
   }
-  #[inline]
-  pub fn charIdMasterListMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_string>>>>(clz_Torappu_CharMetaTable::VT_CHARIDMASTERLISTMAP, None)}
-  }
-  #[inline]
-  pub fn charMasterDataMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharMasterBasicData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharMasterBasicData>>>>(clz_Torappu_CharMetaTable::VT_CHARMASTERDATAMAP, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharMetaTable<'_> {
@@ -2512,8 +1739,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_CharMetaTable<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_string>>>>("spCharGroups", Self::VT_SPCHARGROUPS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__clz_Torappu_SpCharMissionData>>>>("spCharMissions", Self::VT_SPCHARMISSIONS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__long>>>>("spCharVoucherSkinTime", Self::VT_SPCHARVOUCHERSKINTIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_string>>>>("charIdMasterListMap", Self::VT_CHARIDMASTERLISTMAP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharMasterBasicData>>>>("charMasterDataMap", Self::VT_CHARMASTERDATAMAP, false)?
      .finish();
     Ok(())
   }
@@ -2522,8 +1747,6 @@ pub struct clz_Torappu_CharMetaTableArgs<'a> {
     pub spCharGroups: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_string<'a>>>>>,
     pub spCharMissions: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__clz_Torappu_SpCharMissionData<'a>>>>>,
     pub spCharVoucherSkinTime: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__long<'a>>>>>,
-    pub charIdMasterListMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_string<'a>>>>>,
-    pub charMasterDataMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharMasterBasicData<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_CharMetaTableArgs<'a> {
   #[inline]
@@ -2532,8 +1755,6 @@ impl<'a> Default for clz_Torappu_CharMetaTableArgs<'a> {
       spCharGroups: None,
       spCharMissions: None,
       spCharVoucherSkinTime: None,
-      charIdMasterListMap: None,
-      charMasterDataMap: None,
     }
   }
 }
@@ -2557,14 +1778,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharMetaTableBuil
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMetaTable::VT_SPCHARVOUCHERSKINTIME, spCharVoucherSkinTime);
   }
   #[inline]
-  pub fn add_charIdMasterListMap(&mut self, charIdMasterListMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__list_string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMetaTable::VT_CHARIDMASTERLISTMAP, charIdMasterListMap);
-  }
-  #[inline]
-  pub fn add_charMasterDataMap(&mut self, charMasterDataMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharMasterBasicData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharMetaTable::VT_CHARMASTERDATAMAP, charMasterDataMap);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharMetaTableBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_CharMetaTableBuilder {
@@ -2585,8 +1798,6 @@ impl ::core::fmt::Debug for clz_Torappu_CharMetaTable<'_> {
       ds.field("spCharGroups", &self.spCharGroups());
       ds.field("spCharMissions", &self.spCharMissions());
       ds.field("spCharVoucherSkinTime", &self.spCharVoucherSkinTime());
-      ds.field("charIdMasterListMap", &self.charIdMasterListMap());
-      ds.field("charMasterDataMap", &self.charMasterDataMap());
       ds.finish()
   }
 }
@@ -2596,8 +1807,6 @@ pub struct clz_Torappu_CharMetaTableT {
   pub spCharGroups: Option<alloc::vec::Vec<dict__string__list_stringT>>,
   pub spCharMissions: Option<alloc::vec::Vec<dict__string__list_dict__string__clz_Torappu_SpCharMissionDataT>>,
   pub spCharVoucherSkinTime: Option<alloc::vec::Vec<dict__string__longT>>,
-  pub charIdMasterListMap: Option<alloc::vec::Vec<dict__string__list_stringT>>,
-  pub charMasterDataMap: Option<alloc::vec::Vec<dict__string__clz_Torappu_CharMasterBasicDataT>>,
 }
 impl Default for clz_Torappu_CharMetaTableT {
   fn default() -> Self {
@@ -2605,8 +1814,6 @@ impl Default for clz_Torappu_CharMetaTableT {
       spCharGroups: None,
       spCharMissions: None,
       spCharVoucherSkinTime: None,
-      charIdMasterListMap: None,
-      charMasterDataMap: None,
     }
   }
 }
@@ -2624,18 +1831,10 @@ impl clz_Torappu_CharMetaTableT {
     let spCharVoucherSkinTime = self.spCharVoucherSkinTime.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
-    let charIdMasterListMap = self.charIdMasterListMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let charMasterDataMap = self.charMasterDataMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     clz_Torappu_CharMetaTable::create(_fbb, &clz_Torappu_CharMetaTableArgs{
       spCharGroups,
       spCharMissions,
       spCharVoucherSkinTime,
-      charIdMasterListMap,
-      charMasterDataMap,
     })
   }
 }

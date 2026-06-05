@@ -1116,10 +1116,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_MotionMode {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_CHECKPOINT_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_CHECKPOINT_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_CHECKPOINT_TYPE: i32 = 10;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_CHECKPOINT_TYPE: [enum__Torappu_CheckpointType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_CHECKPOINT_TYPE: [enum__Torappu_CheckpointType; 11] = [
   enum__Torappu_CheckpointType::MOVE,
   enum__Torappu_CheckpointType::WAIT_FOR_SECONDS,
   enum__Torappu_CheckpointType::WAIT_FOR_PLAY_TIME,
@@ -1130,7 +1130,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_CHECKPOINT_TYPE: [enum__Torappu_CheckpointTy
   enum__Torappu_CheckpointType::ALERT,
   enum__Torappu_CheckpointType::PATROL_MOVE,
   enum__Torappu_CheckpointType::WAIT_BOSSRUSH_WAVE,
-  enum__Torappu_CheckpointType::MAP_OFFSET_MOVE,
   enum__Torappu_CheckpointType::INVALID,
 ];
 
@@ -1149,11 +1148,10 @@ impl enum__Torappu_CheckpointType {
   pub const ALERT: Self = Self(7);
   pub const PATROL_MOVE: Self = Self(8);
   pub const WAIT_BOSSRUSH_WAVE: Self = Self(9);
-  pub const MAP_OFFSET_MOVE: Self = Self(10);
-  pub const INVALID: Self = Self(11);
+  pub const INVALID: Self = Self(10);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 11;
+  pub const ENUM_MAX: i32 = 10;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::MOVE,
     Self::WAIT_FOR_SECONDS,
@@ -1165,7 +1163,6 @@ impl enum__Torappu_CheckpointType {
     Self::ALERT,
     Self::PATROL_MOVE,
     Self::WAIT_BOSSRUSH_WAVE,
-    Self::MAP_OFFSET_MOVE,
     Self::INVALID,
   ];
   /// Returns the variant's name or "" if unknown.
@@ -1181,7 +1178,6 @@ impl enum__Torappu_CheckpointType {
       Self::ALERT => Some("ALERT"),
       Self::PATROL_MOVE => Some("PATROL_MOVE"),
       Self::WAIT_BOSSRUSH_WAVE => Some("WAIT_BOSSRUSH_WAVE"),
-      Self::MAP_OFFSET_MOVE => Some("MAP_OFFSET_MOVE"),
       Self::INVALID => Some("INVALID"),
       _ => None,
     }
@@ -2311,10 +2307,9 @@ impl<'a> clz_Torappu_LevelData_Options<'a> {
   pub const VT_ISTRAININGLEVEL: ::flatbuffers::VOffsetT = 18;
   pub const VT_ISHARDTRAININGLEVEL: ::flatbuffers::VOffsetT = 20;
   pub const VT_ISPREDEFINEDCARDSSELECTABLE: ::flatbuffers::VOffsetT = 22;
-  pub const VT_DISPLAYRESTTIME: ::flatbuffers::VOffsetT = 24;
-  pub const VT_MAXPLAYTIME: ::flatbuffers::VOffsetT = 26;
-  pub const VT_FUNCTIONDISABLEMASK: ::flatbuffers::VOffsetT = 28;
-  pub const VT_CONFIGBLACKBOARD: ::flatbuffers::VOffsetT = 30;
+  pub const VT_MAXPLAYTIME: ::flatbuffers::VOffsetT = 24;
+  pub const VT_FUNCTIONDISABLEMASK: ::flatbuffers::VOffsetT = 26;
+  pub const VT_CONFIGBLACKBOARD: ::flatbuffers::VOffsetT = 28;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -2335,7 +2330,6 @@ impl<'a> clz_Torappu_LevelData_Options<'a> {
     builder.add_initialCost(args.initialCost);
     builder.add_maxLifePoint(args.maxLifePoint);
     builder.add_characterLimit(args.characterLimit);
-    builder.add_displayRestTime(args.displayRestTime);
     builder.add_isPredefinedCardsSelectable(args.isPredefinedCardsSelectable);
     builder.add_isHardTrainingLevel(args.isHardTrainingLevel);
     builder.add_isTrainingLevel(args.isTrainingLevel);
@@ -2354,7 +2348,6 @@ impl<'a> clz_Torappu_LevelData_Options<'a> {
     let isTrainingLevel = self.isTrainingLevel();
     let isHardTrainingLevel = self.isHardTrainingLevel();
     let isPredefinedCardsSelectable = self.isPredefinedCardsSelectable();
-    let displayRestTime = self.displayRestTime();
     let maxPlayTime = self.maxPlayTime();
     let functionDisableMask = self.functionDisableMask();
     let configBlackBoard = self.configBlackBoard().map(|x| {
@@ -2371,7 +2364,6 @@ impl<'a> clz_Torappu_LevelData_Options<'a> {
       isTrainingLevel,
       isHardTrainingLevel,
       isPredefinedCardsSelectable,
-      displayRestTime,
       maxPlayTime,
       functionDisableMask,
       configBlackBoard,
@@ -2449,13 +2441,6 @@ impl<'a> clz_Torappu_LevelData_Options<'a> {
     unsafe { self._tab.get::<bool>(clz_Torappu_LevelData_Options::VT_ISPREDEFINEDCARDSSELECTABLE, Some(false)).unwrap()}
   }
   #[inline]
-  pub fn displayRestTime(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_LevelData_Options::VT_DISPLAYRESTTIME, Some(false)).unwrap()}
-  }
-  #[inline]
   pub fn maxPlayTime(&self) -> f32 {
     // Safety:
     // Created from valid Table for this object
@@ -2494,7 +2479,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_Options<'_> {
      .visit_field::<bool>("isTrainingLevel", Self::VT_ISTRAININGLEVEL, false)?
      .visit_field::<bool>("isHardTrainingLevel", Self::VT_ISHARDTRAININGLEVEL, false)?
      .visit_field::<bool>("isPredefinedCardsSelectable", Self::VT_ISPREDEFINEDCARDSSELECTABLE, false)?
-     .visit_field::<bool>("displayRestTime", Self::VT_DISPLAYRESTTIME, false)?
      .visit_field::<f32>("maxPlayTime", Self::VT_MAXPLAYTIME, false)?
      .visit_field::<enum__Torappu_BattleFunctionDisableMask>("functionDisableMask", Self::VT_FUNCTIONDISABLEMASK, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>("configBlackBoard", Self::VT_CONFIGBLACKBOARD, false)?
@@ -2513,7 +2497,6 @@ pub struct clz_Torappu_LevelData_OptionsArgs<'a> {
     pub isTrainingLevel: bool,
     pub isHardTrainingLevel: bool,
     pub isPredefinedCardsSelectable: bool,
-    pub displayRestTime: bool,
     pub maxPlayTime: f32,
     pub functionDisableMask: enum__Torappu_BattleFunctionDisableMask,
     pub configBlackBoard: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>>>,
@@ -2532,7 +2515,6 @@ impl<'a> Default for clz_Torappu_LevelData_OptionsArgs<'a> {
       isTrainingLevel: false,
       isHardTrainingLevel: false,
       isPredefinedCardsSelectable: false,
-      displayRestTime: false,
       maxPlayTime: 0.0,
       functionDisableMask: enum__Torappu_BattleFunctionDisableMask::NONE,
       configBlackBoard: None,
@@ -2587,10 +2569,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Options
     self.fbb_.push_slot::<bool>(clz_Torappu_LevelData_Options::VT_ISPREDEFINEDCARDSSELECTABLE, isPredefinedCardsSelectable, false);
   }
   #[inline]
-  pub fn add_displayRestTime(&mut self, displayRestTime: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_LevelData_Options::VT_DISPLAYRESTTIME, displayRestTime, false);
-  }
-  #[inline]
   pub fn add_maxPlayTime(&mut self, maxPlayTime: f32) {
     self.fbb_.push_slot::<f32>(clz_Torappu_LevelData_Options::VT_MAXPLAYTIME, maxPlayTime, 0.0);
   }
@@ -2630,7 +2608,6 @@ impl ::core::fmt::Debug for clz_Torappu_LevelData_Options<'_> {
       ds.field("isTrainingLevel", &self.isTrainingLevel());
       ds.field("isHardTrainingLevel", &self.isHardTrainingLevel());
       ds.field("isPredefinedCardsSelectable", &self.isPredefinedCardsSelectable());
-      ds.field("displayRestTime", &self.displayRestTime());
       ds.field("maxPlayTime", &self.maxPlayTime());
       ds.field("functionDisableMask", &self.functionDisableMask());
       ds.field("configBlackBoard", &self.configBlackBoard());
@@ -2650,7 +2627,6 @@ pub struct clz_Torappu_LevelData_OptionsT {
   pub isTrainingLevel: bool,
   pub isHardTrainingLevel: bool,
   pub isPredefinedCardsSelectable: bool,
-  pub displayRestTime: bool,
   pub maxPlayTime: f32,
   pub functionDisableMask: enum__Torappu_BattleFunctionDisableMask,
   pub configBlackBoard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
@@ -2668,7 +2644,6 @@ impl Default for clz_Torappu_LevelData_OptionsT {
       isTrainingLevel: false,
       isHardTrainingLevel: false,
       isPredefinedCardsSelectable: false,
-      displayRestTime: false,
       maxPlayTime: 0.0,
       functionDisableMask: enum__Torappu_BattleFunctionDisableMask::NONE,
       configBlackBoard: None,
@@ -2690,7 +2665,6 @@ impl clz_Torappu_LevelData_OptionsT {
     let isTrainingLevel = self.isTrainingLevel;
     let isHardTrainingLevel = self.isHardTrainingLevel;
     let isPredefinedCardsSelectable = self.isPredefinedCardsSelectable;
-    let displayRestTime = self.displayRestTime;
     let maxPlayTime = self.maxPlayTime;
     let functionDisableMask = self.functionDisableMask;
     let configBlackBoard = self.configBlackBoard.as_ref().map(|x|{
@@ -2707,7 +2681,6 @@ impl clz_Torappu_LevelData_OptionsT {
       isTrainingLevel,
       isHardTrainingLevel,
       isPredefinedCardsSelectable,
-      displayRestTime,
       maxPlayTime,
       functionDisableMask,
       configBlackBoard,
@@ -11575,159 +11548,6 @@ impl clz_Torappu_CharacterData_UniqueEquipPairT {
     })
   }
 }
-pub enum clz_Torappu_CharacterData_MasterInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_CharacterData_MasterInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharacterData_MasterInfo<'a> {
-  type Inner = clz_Torappu_CharacterData_MasterInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_CharacterData_MasterInfo<'a> {
-  pub const VT_MASTERID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_LEVEL: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharacterData_MasterInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharacterData_MasterInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterInfo<'bldr>> {
-    let mut builder = clz_Torappu_CharacterData_MasterInfoBuilder::new(_fbb);
-    builder.add_level(args.level);
-    if let Some(x) = args.masterId { builder.add_masterId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharacterData_MasterInfoT {
-    let masterId = self.masterId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let level = self.level();
-    clz_Torappu_CharacterData_MasterInfoT {
-      masterId,
-      level,
-    }
-  }
-
-  #[inline]
-  pub fn masterId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharacterData_MasterInfo::VT_MASTERID, None)}
-  }
-  #[inline]
-  pub fn level(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharacterData_MasterInfo::VT_LEVEL, Some(0)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_CharacterData_MasterInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("masterId", Self::VT_MASTERID, false)?
-     .visit_field::<i32>("level", Self::VT_LEVEL, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_CharacterData_MasterInfoArgs<'a> {
-    pub masterId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub level: i32,
-}
-impl<'a> Default for clz_Torappu_CharacterData_MasterInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharacterData_MasterInfoArgs {
-      masterId: None,
-      level: 0,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_CharacterData_MasterInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharacterData_MasterInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_masterId(&mut self, masterId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharacterData_MasterInfo::VT_MASTERID, masterId);
-  }
-  #[inline]
-  pub fn add_level(&mut self, level: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharacterData_MasterInfo::VT_LEVEL, level, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharacterData_MasterInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharacterData_MasterInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_CharacterData_MasterInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharacterData_MasterInfo");
-      ds.field("masterId", &self.masterId());
-      ds.field("level", &self.level());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_CharacterData_MasterInfoT {
-  pub masterId: Option<alloc::string::String>,
-  pub level: i32,
-}
-impl Default for clz_Torappu_CharacterData_MasterInfoT {
-  fn default() -> Self {
-    Self {
-      masterId: None,
-      level: 0,
-    }
-  }
-}
-impl clz_Torappu_CharacterData_MasterInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterInfo<'b>> {
-    let masterId = self.masterId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let level = self.level;
-    clz_Torappu_CharacterData_MasterInfo::create(_fbb, &clz_Torappu_CharacterData_MasterInfoArgs{
-      masterId,
-      level,
-    })
-  }
-}
 pub enum clz_Torappu_CharacterInst_MetadataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11950,163 +11770,6 @@ impl clz_Torappu_CharacterInst_MetadataT {
     })
   }
 }
-pub enum clz_Torappu_CharacterInst_TalentInstOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_CharacterInst_TalentInst<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharacterInst_TalentInst<'a> {
-  type Inner = clz_Torappu_CharacterInst_TalentInst<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_CharacterInst_TalentInst<'a> {
-  pub const VT_PREFABKEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharacterInst_TalentInst { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharacterInst_TalentInstArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_TalentInst<'bldr>> {
-    let mut builder = clz_Torappu_CharacterInst_TalentInstBuilder::new(_fbb);
-    if let Some(x) = args.blackboard { builder.add_blackboard(x); }
-    if let Some(x) = args.prefabKey { builder.add_prefabKey(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharacterInst_TalentInstT {
-    let prefabKey = self.prefabKey().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let blackboard = self.blackboard().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_CharacterInst_TalentInstT {
-      prefabKey,
-      blackboard,
-    }
-  }
-
-  #[inline]
-  pub fn prefabKey(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharacterInst_TalentInst::VT_PREFABKEY, None)}
-  }
-  #[inline]
-  pub fn blackboard(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>(clz_Torappu_CharacterInst_TalentInst::VT_BLACKBOARD, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_CharacterInst_TalentInst<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("prefabKey", Self::VT_PREFABKEY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>("blackboard", Self::VT_BLACKBOARD, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_CharacterInst_TalentInstArgs<'a> {
-    pub prefabKey: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub blackboard: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>>>,
-}
-impl<'a> Default for clz_Torappu_CharacterInst_TalentInstArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharacterInst_TalentInstArgs {
-      prefabKey: None,
-      blackboard: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_CharacterInst_TalentInstBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharacterInst_TalentInstBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_prefabKey(&mut self, prefabKey: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharacterInst_TalentInst::VT_PREFABKEY, prefabKey);
-  }
-  #[inline]
-  pub fn add_blackboard(&mut self, blackboard: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharacterInst_TalentInst::VT_BLACKBOARD, blackboard);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharacterInst_TalentInstBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharacterInst_TalentInstBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_TalentInst<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_CharacterInst_TalentInst<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharacterInst_TalentInst");
-      ds.field("prefabKey", &self.prefabKey());
-      ds.field("blackboard", &self.blackboard());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_CharacterInst_TalentInstT {
-  pub prefabKey: Option<alloc::string::String>,
-  pub blackboard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
-}
-impl Default for clz_Torappu_CharacterInst_TalentInstT {
-  fn default() -> Self {
-    Self {
-      prefabKey: None,
-      blackboard: None,
-    }
-  }
-}
-impl clz_Torappu_CharacterInst_TalentInstT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_TalentInst<'b>> {
-    let prefabKey = self.prefabKey.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let blackboard = self.blackboard.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_CharacterInst_TalentInst::create(_fbb, &clz_Torappu_CharacterInst_TalentInstArgs{
-      prefabKey,
-      blackboard,
-    })
-  }
-}
 pub enum clz_Torappu_LevelData_PredefinedData_PredefinedCharacterOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12129,14 +11792,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
   pub const VT_ALIAS: ::flatbuffers::VOffsetT = 10;
   pub const VT_UNIEQUIPIDS: ::flatbuffers::VOffsetT = 12;
   pub const VT_SHOWSPILLUST: ::flatbuffers::VOffsetT = 14;
-  pub const VT_MASTERINFOS: ::flatbuffers::VOffsetT = 16;
-  pub const VT_INST: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 20;
-  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 24;
-  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 26;
-  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 28;
-  pub const VT_OVERRIDETALENTS: ::flatbuffers::VOffsetT = 30;
+  pub const VT_INST: ::flatbuffers::VOffsetT = 16;
+  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 18;
+  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 20;
+  pub const VT_SKINID: ::flatbuffers::VOffsetT = 22;
+  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 24;
+  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 26;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -12148,14 +11809,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
     args: &'args clz_Torappu_LevelData_PredefinedData_PredefinedCharacterArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'bldr>> {
     let mut builder = clz_Torappu_LevelData_PredefinedData_PredefinedCharacterBuilder::new(_fbb);
-    if let Some(x) = args.overrideTalents { builder.add_overrideTalents(x); }
     if let Some(x) = args.overrideSkillBlackboard { builder.add_overrideSkillBlackboard(x); }
     if let Some(x) = args.tmplId { builder.add_tmplId(x); }
     if let Some(x) = args.skinId { builder.add_skinId(x); }
     builder.add_mainSkillLvl(args.mainSkillLvl);
     builder.add_skillIndex(args.skillIndex);
     if let Some(x) = args.inst { builder.add_inst(x); }
-    if let Some(x) = args.masterInfos { builder.add_masterInfos(x); }
     if let Some(x) = args.uniEquipIds { builder.add_uniEquipIds(x); }
     if let Some(x) = args.alias { builder.add_alias(x); }
     builder.add_direction(args.direction);
@@ -12178,9 +11837,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
       x.iter().map(|t| t.unpack()).collect()
     });
     let showSpIllust = self.showSpIllust();
-    let masterInfos = self.masterInfos().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     let inst = self.inst().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
@@ -12195,9 +11851,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
     let overrideSkillBlackboard = self.overrideSkillBlackboard().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
-    let overrideTalents = self.overrideTalents().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
       position,
       direction,
@@ -12205,14 +11858,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     }
   }
 
@@ -12259,13 +11910,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
     unsafe { self._tab.get::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_SHOWSPILLUST, Some(false)).unwrap()}
   }
   #[inline]
-  pub fn masterInfos(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_MASTERINFOS, None)}
-  }
-  #[inline]
   pub fn inst(&self) -> Option<clz_Torappu_CharacterInst_Metadata<'a>> {
     // Safety:
     // Created from valid Table for this object
@@ -12307,13 +11951,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_OVERRIDESKILLBLACKBOARD, None)}
   }
-  #[inline]
-  pub fn overrideTalents(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_OVERRIDETALENTS, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_PredefinedCharacter<'_> {
@@ -12328,14 +11965,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_Predefin
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("alias", Self::VT_ALIAS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair>>>>("uniEquipIds", Self::VT_UNIEQUIPIDS, false)?
      .visit_field::<bool>("showSpIllust", Self::VT_SHOWSPILLUST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>("masterInfos", Self::VT_MASTERINFOS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_Metadata>>("inst", Self::VT_INST, false)?
      .visit_field::<i32>("skillIndex", Self::VT_SKILLINDEX, false)?
      .visit_field::<i32>("mainSkillLvl", Self::VT_MAINSKILLLVL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tmplId", Self::VT_TMPLID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>("overrideSkillBlackboard", Self::VT_OVERRIDESKILLBLACKBOARD, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>("overrideTalents", Self::VT_OVERRIDETALENTS, false)?
      .finish();
     Ok(())
   }
@@ -12347,14 +11982,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedCharacterArgs<'a> {
     pub alias: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub uniEquipIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair<'a>>>>>,
     pub showSpIllust: bool,
-    pub masterInfos: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>>>,
     pub inst: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'a>>>,
     pub skillIndex: i32,
     pub mainSkillLvl: i32,
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tmplId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub overrideSkillBlackboard: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>>>,
-    pub overrideTalents: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedCharacterArgs<'a> {
   #[inline]
@@ -12366,14 +11999,12 @@ impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedCharacterArg
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -12409,10 +12040,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
     self.fbb_.push_slot::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_SHOWSPILLUST, showSpIllust, false);
   }
   #[inline]
-  pub fn add_masterInfos(&mut self, masterInfos: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_MASTERINFOS, masterInfos);
-  }
-  #[inline]
   pub fn add_inst(&mut self, inst: ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'b >>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_INST, inst);
   }
@@ -12435,10 +12062,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
   #[inline]
   pub fn add_overrideSkillBlackboard(&mut self, overrideSkillBlackboard: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'b >>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_OVERRIDESKILLBLACKBOARD, overrideSkillBlackboard);
-  }
-  #[inline]
-  pub fn add_overrideTalents(&mut self, overrideTalents: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::VT_OVERRIDETALENTS, overrideTalents);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_LevelData_PredefinedData_PredefinedCharacterBuilder<'a, 'b, A> {
@@ -12464,14 +12087,12 @@ impl ::core::fmt::Debug for clz_Torappu_LevelData_PredefinedData_PredefinedChara
       ds.field("alias", &self.alias());
       ds.field("uniEquipIds", &self.uniEquipIds());
       ds.field("showSpIllust", &self.showSpIllust());
-      ds.field("masterInfos", &self.masterInfos());
       ds.field("inst", &self.inst());
       ds.field("skillIndex", &self.skillIndex());
       ds.field("mainSkillLvl", &self.mainSkillLvl());
       ds.field("skinId", &self.skinId());
       ds.field("tmplId", &self.tmplId());
       ds.field("overrideSkillBlackboard", &self.overrideSkillBlackboard());
-      ds.field("overrideTalents", &self.overrideTalents());
       ds.finish()
   }
 }
@@ -12484,14 +12105,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
   pub alias: Option<alloc::string::String>,
   pub uniEquipIds: Option<alloc::vec::Vec<clz_Torappu_CharacterData_UniqueEquipPairT>>,
   pub showSpIllust: bool,
-  pub masterInfos: Option<alloc::vec::Vec<clz_Torappu_CharacterData_MasterInfoT>>,
   pub inst: Option<alloc::boxed::Box<clz_Torappu_CharacterInst_MetadataT>>,
   pub skillIndex: i32,
   pub mainSkillLvl: i32,
   pub skinId: Option<alloc::string::String>,
   pub tmplId: Option<alloc::string::String>,
   pub overrideSkillBlackboard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
-  pub overrideTalents: Option<alloc::vec::Vec<clz_Torappu_CharacterInst_TalentInstT>>,
 }
 impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
   fn default() -> Self {
@@ -12502,14 +12121,12 @@ impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -12530,9 +12147,6 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
     let showSpIllust = self.showSpIllust;
-    let masterInfos = self.masterInfos.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     let inst = self.inst.as_ref().map(|x|{
       x.pack(_fbb)
     });
@@ -12547,9 +12161,6 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
     let overrideSkillBlackboard = self.overrideSkillBlackboard.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
-    let overrideTalents = self.overrideTalents.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedCharacter::create(_fbb, &clz_Torappu_LevelData_PredefinedData_PredefinedCharacterArgs{
       position,
       direction,
@@ -12557,14 +12168,12 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedCharacterT {
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     })
   }
 }
@@ -12588,14 +12197,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
   pub const VT_ALIAS: ::flatbuffers::VOffsetT = 6;
   pub const VT_UNIEQUIPIDS: ::flatbuffers::VOffsetT = 8;
   pub const VT_SHOWSPILLUST: ::flatbuffers::VOffsetT = 10;
-  pub const VT_MASTERINFOS: ::flatbuffers::VOffsetT = 12;
-  pub const VT_INST: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 16;
-  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 20;
-  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 22;
-  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 24;
-  pub const VT_OVERRIDETALENTS: ::flatbuffers::VOffsetT = 26;
+  pub const VT_INST: ::flatbuffers::VOffsetT = 12;
+  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 14;
+  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 16;
+  pub const VT_SKINID: ::flatbuffers::VOffsetT = 18;
+  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 20;
+  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 22;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -12607,14 +12214,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
     args: &'args clz_Torappu_LevelData_PredefinedData_PredefinedCardArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_LevelData_PredefinedData_PredefinedCard<'bldr>> {
     let mut builder = clz_Torappu_LevelData_PredefinedData_PredefinedCardBuilder::new(_fbb);
-    if let Some(x) = args.overrideTalents { builder.add_overrideTalents(x); }
     if let Some(x) = args.overrideSkillBlackboard { builder.add_overrideSkillBlackboard(x); }
     if let Some(x) = args.tmplId { builder.add_tmplId(x); }
     if let Some(x) = args.skinId { builder.add_skinId(x); }
     builder.add_mainSkillLvl(args.mainSkillLvl);
     builder.add_skillIndex(args.skillIndex);
     if let Some(x) = args.inst { builder.add_inst(x); }
-    if let Some(x) = args.masterInfos { builder.add_masterInfos(x); }
     if let Some(x) = args.uniEquipIds { builder.add_uniEquipIds(x); }
     if let Some(x) = args.alias { builder.add_alias(x); }
     builder.add_showSpIllust(args.showSpIllust);
@@ -12631,9 +12236,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
       x.iter().map(|t| t.unpack()).collect()
     });
     let showSpIllust = self.showSpIllust();
-    let masterInfos = self.masterInfos().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     let inst = self.inst().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
@@ -12648,22 +12250,17 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
     let overrideSkillBlackboard = self.overrideSkillBlackboard().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
-    let overrideTalents = self.overrideTalents().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
       hidden,
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     }
   }
 
@@ -12694,13 +12291,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_SHOWSPILLUST, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn masterInfos(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_MASTERINFOS, None)}
   }
   #[inline]
   pub fn inst(&self) -> Option<clz_Torappu_CharacterInst_Metadata<'a>> {
@@ -12744,13 +12334,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedCard<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_OVERRIDESKILLBLACKBOARD, None)}
   }
-  #[inline]
-  pub fn overrideTalents(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_OVERRIDETALENTS, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_PredefinedCard<'_> {
@@ -12763,14 +12346,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_Predefin
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("alias", Self::VT_ALIAS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair>>>>("uniEquipIds", Self::VT_UNIEQUIPIDS, false)?
      .visit_field::<bool>("showSpIllust", Self::VT_SHOWSPILLUST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>("masterInfos", Self::VT_MASTERINFOS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_Metadata>>("inst", Self::VT_INST, false)?
      .visit_field::<i32>("skillIndex", Self::VT_SKILLINDEX, false)?
      .visit_field::<i32>("mainSkillLvl", Self::VT_MAINSKILLLVL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tmplId", Self::VT_TMPLID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>("overrideSkillBlackboard", Self::VT_OVERRIDESKILLBLACKBOARD, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>("overrideTalents", Self::VT_OVERRIDETALENTS, false)?
      .finish();
     Ok(())
   }
@@ -12780,14 +12361,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedCardArgs<'a> {
     pub alias: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub uniEquipIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair<'a>>>>>,
     pub showSpIllust: bool,
-    pub masterInfos: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>>>,
     pub inst: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'a>>>,
     pub skillIndex: i32,
     pub mainSkillLvl: i32,
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tmplId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub overrideSkillBlackboard: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>>>,
-    pub overrideTalents: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedCardArgs<'a> {
   #[inline]
@@ -12797,14 +12376,12 @@ impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedCardArgs<'a>
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -12832,10 +12409,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
     self.fbb_.push_slot::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_SHOWSPILLUST, showSpIllust, false);
   }
   #[inline]
-  pub fn add_masterInfos(&mut self, masterInfos: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_MASTERINFOS, masterInfos);
-  }
-  #[inline]
   pub fn add_inst(&mut self, inst: ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'b >>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_INST, inst);
   }
@@ -12860,10 +12433,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_OVERRIDESKILLBLACKBOARD, overrideSkillBlackboard);
   }
   #[inline]
-  pub fn add_overrideTalents(&mut self, overrideTalents: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedCard::VT_OVERRIDETALENTS, overrideTalents);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_LevelData_PredefinedData_PredefinedCardBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_LevelData_PredefinedData_PredefinedCardBuilder {
@@ -12885,14 +12454,12 @@ impl ::core::fmt::Debug for clz_Torappu_LevelData_PredefinedData_PredefinedCard<
       ds.field("alias", &self.alias());
       ds.field("uniEquipIds", &self.uniEquipIds());
       ds.field("showSpIllust", &self.showSpIllust());
-      ds.field("masterInfos", &self.masterInfos());
       ds.field("inst", &self.inst());
       ds.field("skillIndex", &self.skillIndex());
       ds.field("mainSkillLvl", &self.mainSkillLvl());
       ds.field("skinId", &self.skinId());
       ds.field("tmplId", &self.tmplId());
       ds.field("overrideSkillBlackboard", &self.overrideSkillBlackboard());
-      ds.field("overrideTalents", &self.overrideTalents());
       ds.finish()
   }
 }
@@ -12903,14 +12470,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
   pub alias: Option<alloc::string::String>,
   pub uniEquipIds: Option<alloc::vec::Vec<clz_Torappu_CharacterData_UniqueEquipPairT>>,
   pub showSpIllust: bool,
-  pub masterInfos: Option<alloc::vec::Vec<clz_Torappu_CharacterData_MasterInfoT>>,
   pub inst: Option<alloc::boxed::Box<clz_Torappu_CharacterInst_MetadataT>>,
   pub skillIndex: i32,
   pub mainSkillLvl: i32,
   pub skinId: Option<alloc::string::String>,
   pub tmplId: Option<alloc::string::String>,
   pub overrideSkillBlackboard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
-  pub overrideTalents: Option<alloc::vec::Vec<clz_Torappu_CharacterInst_TalentInstT>>,
 }
 impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
   fn default() -> Self {
@@ -12919,14 +12484,12 @@ impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -12943,9 +12506,6 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
     let showSpIllust = self.showSpIllust;
-    let masterInfos = self.masterInfos.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     let inst = self.inst.as_ref().map(|x|{
       x.pack(_fbb)
     });
@@ -12960,22 +12520,17 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedCardT {
     let overrideSkillBlackboard = self.overrideSkillBlackboard.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
-    let overrideTalents = self.overrideTalents.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedCard::create(_fbb, &clz_Torappu_LevelData_PredefinedData_PredefinedCardArgs{
       hidden,
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     })
   }
 }
@@ -13000,14 +12555,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
   pub const VT_ALIAS: ::flatbuffers::VOffsetT = 8;
   pub const VT_UNIEQUIPIDS: ::flatbuffers::VOffsetT = 10;
   pub const VT_SHOWSPILLUST: ::flatbuffers::VOffsetT = 12;
-  pub const VT_MASTERINFOS: ::flatbuffers::VOffsetT = 14;
-  pub const VT_INST: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 18;
-  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 20;
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 22;
-  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 24;
-  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 26;
-  pub const VT_OVERRIDETALENTS: ::flatbuffers::VOffsetT = 28;
+  pub const VT_INST: ::flatbuffers::VOffsetT = 14;
+  pub const VT_SKILLINDEX: ::flatbuffers::VOffsetT = 16;
+  pub const VT_MAINSKILLLVL: ::flatbuffers::VOffsetT = 18;
+  pub const VT_SKINID: ::flatbuffers::VOffsetT = 20;
+  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 22;
+  pub const VT_OVERRIDESKILLBLACKBOARD: ::flatbuffers::VOffsetT = 24;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -13019,14 +12572,12 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
     args: &'args clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'bldr>> {
     let mut builder = clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardBuilder::new(_fbb);
-    if let Some(x) = args.overrideTalents { builder.add_overrideTalents(x); }
     if let Some(x) = args.overrideSkillBlackboard { builder.add_overrideSkillBlackboard(x); }
     if let Some(x) = args.tmplId { builder.add_tmplId(x); }
     if let Some(x) = args.skinId { builder.add_skinId(x); }
     builder.add_mainSkillLvl(args.mainSkillLvl);
     builder.add_skillIndex(args.skillIndex);
     if let Some(x) = args.inst { builder.add_inst(x); }
-    if let Some(x) = args.masterInfos { builder.add_masterInfos(x); }
     if let Some(x) = args.uniEquipIds { builder.add_uniEquipIds(x); }
     if let Some(x) = args.alias { builder.add_alias(x); }
     builder.add_initialCnt(args.initialCnt);
@@ -13045,9 +12596,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
       x.iter().map(|t| t.unpack()).collect()
     });
     let showSpIllust = self.showSpIllust();
-    let masterInfos = self.masterInfos().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     let inst = self.inst().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
@@ -13062,23 +12610,18 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
     let overrideSkillBlackboard = self.overrideSkillBlackboard().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
-    let overrideTalents = self.overrideTalents().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
       initialCnt,
       hidden,
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     }
   }
 
@@ -13116,13 +12659,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_SHOWSPILLUST, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn masterInfos(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_MASTERINFOS, None)}
   }
   #[inline]
   pub fn inst(&self) -> Option<clz_Torappu_CharacterInst_Metadata<'a>> {
@@ -13166,13 +12702,6 @@ impl<'a> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_OVERRIDESKILLBLACKBOARD, None)}
   }
-  #[inline]
-  pub fn overrideTalents(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_OVERRIDETALENTS, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard<'_> {
@@ -13186,14 +12715,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_LevelData_PredefinedData_Predefin
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("alias", Self::VT_ALIAS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair>>>>("uniEquipIds", Self::VT_UNIEQUIPIDS, false)?
      .visit_field::<bool>("showSpIllust", Self::VT_SHOWSPILLUST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo>>>>("masterInfos", Self::VT_MASTERINFOS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_Metadata>>("inst", Self::VT_INST, false)?
      .visit_field::<i32>("skillIndex", Self::VT_SKILLINDEX, false)?
      .visit_field::<i32>("mainSkillLvl", Self::VT_MAINSKILLLVL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tmplId", Self::VT_TMPLID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>>>>("overrideSkillBlackboard", Self::VT_OVERRIDESKILLBLACKBOARD, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst>>>>("overrideTalents", Self::VT_OVERRIDETALENTS, false)?
      .finish();
     Ok(())
   }
@@ -13204,14 +12731,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardArgs<'a> {
     pub alias: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub uniEquipIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UniqueEquipPair<'a>>>>>,
     pub showSpIllust: bool,
-    pub masterInfos: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'a>>>>>,
     pub inst: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'a>>>,
     pub skillIndex: i32,
     pub mainSkillLvl: i32,
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tmplId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub overrideSkillBlackboard: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair<'a>>>>>,
-    pub overrideTalents: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardArgs<'a> {
   #[inline]
@@ -13222,14 +12747,12 @@ impl<'a> Default for clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardArg
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -13261,10 +12784,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
     self.fbb_.push_slot::<bool>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_SHOWSPILLUST, showSpIllust, false);
   }
   #[inline]
-  pub fn add_masterInfos(&mut self, masterInfos: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_MasterInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_MASTERINFOS, masterInfos);
-  }
-  #[inline]
   pub fn add_inst(&mut self, inst: ::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata<'b >>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharacterInst_Metadata>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_INST, inst);
   }
@@ -13289,10 +12808,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LevelData_Predefi
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_OVERRIDESKILLBLACKBOARD, overrideSkillBlackboard);
   }
   #[inline]
-  pub fn add_overrideTalents(&mut self, overrideTalents: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterInst_TalentInst<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::VT_OVERRIDETALENTS, overrideTalents);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardBuilder {
@@ -13315,14 +12830,12 @@ impl ::core::fmt::Debug for clz_Torappu_LevelData_PredefinedData_PredefinedToken
       ds.field("alias", &self.alias());
       ds.field("uniEquipIds", &self.uniEquipIds());
       ds.field("showSpIllust", &self.showSpIllust());
-      ds.field("masterInfos", &self.masterInfos());
       ds.field("inst", &self.inst());
       ds.field("skillIndex", &self.skillIndex());
       ds.field("mainSkillLvl", &self.mainSkillLvl());
       ds.field("skinId", &self.skinId());
       ds.field("tmplId", &self.tmplId());
       ds.field("overrideSkillBlackboard", &self.overrideSkillBlackboard());
-      ds.field("overrideTalents", &self.overrideTalents());
       ds.finish()
   }
 }
@@ -13334,14 +12847,12 @@ pub struct clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
   pub alias: Option<alloc::string::String>,
   pub uniEquipIds: Option<alloc::vec::Vec<clz_Torappu_CharacterData_UniqueEquipPairT>>,
   pub showSpIllust: bool,
-  pub masterInfos: Option<alloc::vec::Vec<clz_Torappu_CharacterData_MasterInfoT>>,
   pub inst: Option<alloc::boxed::Box<clz_Torappu_CharacterInst_MetadataT>>,
   pub skillIndex: i32,
   pub mainSkillLvl: i32,
   pub skinId: Option<alloc::string::String>,
   pub tmplId: Option<alloc::string::String>,
   pub overrideSkillBlackboard: Option<alloc::vec::Vec<clz_Torappu_Blackboard_DataPairT>>,
-  pub overrideTalents: Option<alloc::vec::Vec<clz_Torappu_CharacterInst_TalentInstT>>,
 }
 impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
   fn default() -> Self {
@@ -13351,14 +12862,12 @@ impl Default for clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
       alias: None,
       uniEquipIds: None,
       showSpIllust: false,
-      masterInfos: None,
       inst: None,
       skillIndex: 0,
       mainSkillLvl: 0,
       skinId: None,
       tmplId: None,
       overrideSkillBlackboard: None,
-      overrideTalents: None,
     }
   }
 }
@@ -13376,9 +12885,6 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
     let showSpIllust = self.showSpIllust;
-    let masterInfos = self.masterInfos.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     let inst = self.inst.as_ref().map(|x|{
       x.pack(_fbb)
     });
@@ -13393,23 +12899,18 @@ impl clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardT {
     let overrideSkillBlackboard = self.overrideSkillBlackboard.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
-    let overrideTalents = self.overrideTalents.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     clz_Torappu_LevelData_PredefinedData_PredefinedTokenCard::create(_fbb, &clz_Torappu_LevelData_PredefinedData_PredefinedTokenCardArgs{
       initialCnt,
       hidden,
       alias,
       uniEquipIds,
       showSpIllust,
-      masterInfos,
       inst,
       skillIndex,
       mainSkillLvl,
       skinId,
       tmplId,
       overrideSkillBlackboard,
-      overrideTalents,
     })
   }
 }

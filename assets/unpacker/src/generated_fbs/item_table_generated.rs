@@ -244,10 +244,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemClassifyType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -333,14 +333,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -433,17 +425,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -530,14 +514,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -627,14 +603,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -1235,7 +1203,6 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemData_StageDropInfo<'a> {
 impl<'a> clz_Torappu_ItemData_StageDropInfo<'a> {
   pub const VT_STAGEID: ::flatbuffers::VOffsetT = 4;
   pub const VT_OCCPER: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -1247,7 +1214,6 @@ impl<'a> clz_Torappu_ItemData_StageDropInfo<'a> {
     args: &'args clz_Torappu_ItemData_StageDropInfoArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemData_StageDropInfo<'bldr>> {
     let mut builder = clz_Torappu_ItemData_StageDropInfoBuilder::new(_fbb);
-    builder.add_sortId(args.sortId);
     builder.add_occPer(args.occPer);
     if let Some(x) = args.stageId { builder.add_stageId(x); }
     builder.finish()
@@ -1258,11 +1224,9 @@ impl<'a> clz_Torappu_ItemData_StageDropInfo<'a> {
       alloc::string::ToString::to_string(x)
     });
     let occPer = self.occPer();
-    let sortId = self.sortId();
     clz_Torappu_ItemData_StageDropInfoT {
       stageId,
       occPer,
-      sortId,
     }
   }
 
@@ -1280,13 +1244,6 @@ impl<'a> clz_Torappu_ItemData_StageDropInfo<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<enum__Torappu_OccPer>(clz_Torappu_ItemData_StageDropInfo::VT_OCCPER, Some(enum__Torappu_OccPer::ALWAYS)).unwrap()}
   }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_ItemData_StageDropInfo::VT_SORTID, Some(0)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_ItemData_StageDropInfo<'_> {
@@ -1297,7 +1254,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ItemData_StageDropInfo<'_> {
     v.visit_table(pos)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("stageId", Self::VT_STAGEID, false)?
      .visit_field::<enum__Torappu_OccPer>("occPer", Self::VT_OCCPER, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
      .finish();
     Ok(())
   }
@@ -1305,7 +1261,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_ItemData_StageDropInfo<'_> {
 pub struct clz_Torappu_ItemData_StageDropInfoArgs<'a> {
     pub stageId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub occPer: enum__Torappu_OccPer,
-    pub sortId: i32,
 }
 impl<'a> Default for clz_Torappu_ItemData_StageDropInfoArgs<'a> {
   #[inline]
@@ -1313,7 +1268,6 @@ impl<'a> Default for clz_Torappu_ItemData_StageDropInfoArgs<'a> {
     clz_Torappu_ItemData_StageDropInfoArgs {
       stageId: None,
       occPer: enum__Torappu_OccPer::ALWAYS,
-      sortId: 0,
     }
   }
 }
@@ -1331,10 +1285,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemData_StageDro
   #[inline]
   pub fn add_occPer(&mut self, occPer: enum__Torappu_OccPer) {
     self.fbb_.push_slot::<enum__Torappu_OccPer>(clz_Torappu_ItemData_StageDropInfo::VT_OCCPER, occPer, enum__Torappu_OccPer::ALWAYS);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_ItemData_StageDropInfo::VT_SORTID, sortId, 0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ItemData_StageDropInfoBuilder<'a, 'b, A> {
@@ -1356,7 +1306,6 @@ impl ::core::fmt::Debug for clz_Torappu_ItemData_StageDropInfo<'_> {
     let mut ds = f.debug_struct("clz_Torappu_ItemData_StageDropInfo");
       ds.field("stageId", &self.stageId());
       ds.field("occPer", &self.occPer());
-      ds.field("sortId", &self.sortId());
       ds.finish()
   }
 }
@@ -1365,14 +1314,12 @@ impl ::core::fmt::Debug for clz_Torappu_ItemData_StageDropInfo<'_> {
 pub struct clz_Torappu_ItemData_StageDropInfoT {
   pub stageId: Option<alloc::string::String>,
   pub occPer: enum__Torappu_OccPer,
-  pub sortId: i32,
 }
 impl Default for clz_Torappu_ItemData_StageDropInfoT {
   fn default() -> Self {
     Self {
       stageId: None,
       occPer: enum__Torappu_OccPer::ALWAYS,
-      sortId: 0,
     }
   }
 }
@@ -1385,11 +1332,9 @@ impl clz_Torappu_ItemData_StageDropInfoT {
       _fbb.create_string(x)
     });
     let occPer = self.occPer;
-    let sortId = self.sortId;
     clz_Torappu_ItemData_StageDropInfo::create(_fbb, &clz_Torappu_ItemData_StageDropInfoArgs{
       stageId,
       occPer,
-      sortId,
     })
   }
 }

@@ -593,16 +593,15 @@ impl<'a> clz_Torappu_EquipTalentData<'a> {
   pub const VT_DISPLAYRANGEID: ::flatbuffers::VOffsetT = 4;
   pub const VT_UPGRADEDESCRIPTION: ::flatbuffers::VOffsetT = 6;
   pub const VT_TALENTINDEX: ::flatbuffers::VOffsetT = 8;
-  pub const VT_VALIDMODEINDICES: ::flatbuffers::VOffsetT = 10;
-  pub const VT_UNLOCKCONDITION: ::flatbuffers::VOffsetT = 12;
-  pub const VT_REQUIREDPOTENTIALRANK: ::flatbuffers::VOffsetT = 14;
-  pub const VT_PREFABKEY: ::flatbuffers::VOffsetT = 16;
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 18;
-  pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 20;
-  pub const VT_RANGEID: ::flatbuffers::VOffsetT = 22;
-  pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 24;
-  pub const VT_TOKENKEY: ::flatbuffers::VOffsetT = 26;
-  pub const VT_ISHIDETALENT: ::flatbuffers::VOffsetT = 28;
+  pub const VT_UNLOCKCONDITION: ::flatbuffers::VOffsetT = 10;
+  pub const VT_REQUIREDPOTENTIALRANK: ::flatbuffers::VOffsetT = 12;
+  pub const VT_PREFABKEY: ::flatbuffers::VOffsetT = 14;
+  pub const VT_NAME: ::flatbuffers::VOffsetT = 16;
+  pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 18;
+  pub const VT_RANGEID: ::flatbuffers::VOffsetT = 20;
+  pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 22;
+  pub const VT_TOKENKEY: ::flatbuffers::VOffsetT = 24;
+  pub const VT_ISHIDETALENT: ::flatbuffers::VOffsetT = 26;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -622,7 +621,6 @@ impl<'a> clz_Torappu_EquipTalentData<'a> {
     if let Some(x) = args.prefabKey { builder.add_prefabKey(x); }
     builder.add_requiredPotentialRank(args.requiredPotentialRank);
     if let Some(x) = args.unlockCondition { builder.add_unlockCondition(x); }
-    if let Some(x) = args.validModeIndices { builder.add_validModeIndices(x); }
     builder.add_talentIndex(args.talentIndex);
     if let Some(x) = args.upgradeDescription { builder.add_upgradeDescription(x); }
     builder.add_isHideTalent(args.isHideTalent);
@@ -636,9 +634,6 @@ impl<'a> clz_Torappu_EquipTalentData<'a> {
       alloc::string::ToString::to_string(x)
     });
     let talentIndex = self.talentIndex();
-    let validModeIndices = self.validModeIndices().map(|x| {
-      x.into_iter().collect()
-    });
     let unlockCondition = self.unlockCondition().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
@@ -666,7 +661,6 @@ impl<'a> clz_Torappu_EquipTalentData<'a> {
       displayRangeId,
       upgradeDescription,
       talentIndex,
-      validModeIndices,
       unlockCondition,
       requiredPotentialRank,
       prefabKey,
@@ -699,13 +693,6 @@ impl<'a> clz_Torappu_EquipTalentData<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<i32>(clz_Torappu_EquipTalentData::VT_TALENTINDEX, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn validModeIndices(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, i32>>>(clz_Torappu_EquipTalentData::VT_VALIDMODEINDICES, None)}
   }
   #[inline]
   pub fn unlockCondition(&self) -> Option<clz_Torappu_CharacterData_UnlockCondition<'a>> {
@@ -781,7 +768,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_EquipTalentData<'_> {
      .visit_field::<bool>("displayRangeId", Self::VT_DISPLAYRANGEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("upgradeDescription", Self::VT_UPGRADEDESCRIPTION, false)?
      .visit_field::<i32>("talentIndex", Self::VT_TALENTINDEX, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, i32>>>("validModeIndices", Self::VT_VALIDMODEINDICES, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_UnlockCondition>>("unlockCondition", Self::VT_UNLOCKCONDITION, false)?
      .visit_field::<i32>("requiredPotentialRank", Self::VT_REQUIREDPOTENTIALRANK, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("prefabKey", Self::VT_PREFABKEY, false)?
@@ -799,7 +785,6 @@ pub struct clz_Torappu_EquipTalentDataArgs<'a> {
     pub displayRangeId: bool,
     pub upgradeDescription: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub talentIndex: i32,
-    pub validModeIndices: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
     pub unlockCondition: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterData_UnlockCondition<'a>>>,
     pub requiredPotentialRank: i32,
     pub prefabKey: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -817,7 +802,6 @@ impl<'a> Default for clz_Torappu_EquipTalentDataArgs<'a> {
       displayRangeId: false,
       upgradeDescription: None,
       talentIndex: 0,
-      validModeIndices: None,
       unlockCondition: None,
       requiredPotentialRank: 0,
       prefabKey: None,
@@ -848,10 +832,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EquipTalentDataBu
   #[inline]
   pub fn add_talentIndex(&mut self, talentIndex: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_EquipTalentData::VT_TALENTINDEX, talentIndex, 0);
-  }
-  #[inline]
-  pub fn add_validModeIndices(&mut self, validModeIndices: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , i32>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_EquipTalentData::VT_VALIDMODEINDICES, validModeIndices);
   }
   #[inline]
   pub fn add_unlockCondition(&mut self, unlockCondition: ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_UnlockCondition<'b >>) {
@@ -910,7 +890,6 @@ impl ::core::fmt::Debug for clz_Torappu_EquipTalentData<'_> {
       ds.field("displayRangeId", &self.displayRangeId());
       ds.field("upgradeDescription", &self.upgradeDescription());
       ds.field("talentIndex", &self.talentIndex());
-      ds.field("validModeIndices", &self.validModeIndices());
       ds.field("unlockCondition", &self.unlockCondition());
       ds.field("requiredPotentialRank", &self.requiredPotentialRank());
       ds.field("prefabKey", &self.prefabKey());
@@ -929,7 +908,6 @@ pub struct clz_Torappu_EquipTalentDataT {
   pub displayRangeId: bool,
   pub upgradeDescription: Option<alloc::string::String>,
   pub talentIndex: i32,
-  pub validModeIndices: Option<alloc::vec::Vec<i32>>,
   pub unlockCondition: Option<alloc::boxed::Box<clz_Torappu_CharacterData_UnlockConditionT>>,
   pub requiredPotentialRank: i32,
   pub prefabKey: Option<alloc::string::String>,
@@ -946,7 +924,6 @@ impl Default for clz_Torappu_EquipTalentDataT {
       displayRangeId: false,
       upgradeDescription: None,
       talentIndex: 0,
-      validModeIndices: None,
       unlockCondition: None,
       requiredPotentialRank: 0,
       prefabKey: None,
@@ -969,9 +946,6 @@ impl clz_Torappu_EquipTalentDataT {
       _fbb.create_string(x)
     });
     let talentIndex = self.talentIndex;
-    let validModeIndices = self.validModeIndices.as_ref().map(|x|{
-      _fbb.create_vector(x)
-    });
     let unlockCondition = self.unlockCondition.as_ref().map(|x|{
       x.pack(_fbb)
     });
@@ -999,7 +973,6 @@ impl clz_Torappu_EquipTalentDataT {
       displayRangeId,
       upgradeDescription,
       talentIndex,
-      validModeIndices,
       unlockCondition,
       requiredPotentialRank,
       prefabKey,
@@ -1918,9 +1891,8 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
   pub const VT_TARGET: ::flatbuffers::VOffsetT = 6;
   pub const VT_ISTOKEN: ::flatbuffers::VOffsetT = 8;
   pub const VT_VALIDINGAMETAG: ::flatbuffers::VOffsetT = 10;
-  pub const VT_VALIDINMAPTAG: ::flatbuffers::VOffsetT = 12;
-  pub const VT_ADDOROVERRIDETALENTDATABUNDLE: ::flatbuffers::VOffsetT = 14;
-  pub const VT_OVERRIDETRAITDATABUNDLE: ::flatbuffers::VOffsetT = 16;
+  pub const VT_ADDOROVERRIDETALENTDATABUNDLE: ::flatbuffers::VOffsetT = 12;
+  pub const VT_OVERRIDETRAITDATABUNDLE: ::flatbuffers::VOffsetT = 14;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -1934,7 +1906,6 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
     let mut builder = clz_Torappu_BattleUniEquipDataBuilder::new(_fbb);
     if let Some(x) = args.overrideTraitDataBundle { builder.add_overrideTraitDataBundle(x); }
     if let Some(x) = args.addOrOverrideTalentDataBundle { builder.add_addOrOverrideTalentDataBundle(x); }
-    if let Some(x) = args.validInMapTag { builder.add_validInMapTag(x); }
     if let Some(x) = args.validInGameTag { builder.add_validInGameTag(x); }
     builder.add_target(args.target);
     if let Some(x) = args.resKey { builder.add_resKey(x); }
@@ -1951,9 +1922,6 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
     let validInGameTag = self.validInGameTag().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let validInMapTag = self.validInMapTag().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let addOrOverrideTalentDataBundle = self.addOrOverrideTalentDataBundle().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
@@ -1965,7 +1933,6 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
       target,
       isToken,
       validInGameTag,
-      validInMapTag,
       addOrOverrideTalentDataBundle,
       overrideTraitDataBundle,
     }
@@ -2000,13 +1967,6 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_BattleUniEquipData::VT_VALIDINGAMETAG, None)}
   }
   #[inline]
-  pub fn validInMapTag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_BattleUniEquipData::VT_VALIDINMAPTAG, None)}
-  }
-  #[inline]
   pub fn addOrOverrideTalentDataBundle(&self) -> Option<clz_Torappu_CharacterData_EquipTalentDataBundle<'a>> {
     // Safety:
     // Created from valid Table for this object
@@ -2032,7 +1992,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BattleUniEquipData<'_> {
      .visit_field::<enum__Torappu_UniEquipTarget>("target", Self::VT_TARGET, false)?
      .visit_field::<bool>("isToken", Self::VT_ISTOKEN, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("validInGameTag", Self::VT_VALIDINGAMETAG, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("validInMapTag", Self::VT_VALIDINMAPTAG, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_EquipTalentDataBundle>>("addOrOverrideTalentDataBundle", Self::VT_ADDOROVERRIDETALENTDATABUNDLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_EquipTraitDataBundle>>("overrideTraitDataBundle", Self::VT_OVERRIDETRAITDATABUNDLE, false)?
      .finish();
@@ -2044,7 +2003,6 @@ pub struct clz_Torappu_BattleUniEquipDataArgs<'a> {
     pub target: enum__Torappu_UniEquipTarget,
     pub isToken: bool,
     pub validInGameTag: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub validInMapTag: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub addOrOverrideTalentDataBundle: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterData_EquipTalentDataBundle<'a>>>,
     pub overrideTraitDataBundle: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterData_EquipTraitDataBundle<'a>>>,
 }
@@ -2056,7 +2014,6 @@ impl<'a> Default for clz_Torappu_BattleUniEquipDataArgs<'a> {
       target: enum__Torappu_UniEquipTarget::NONE,
       isToken: false,
       validInGameTag: None,
-      validInMapTag: None,
       addOrOverrideTalentDataBundle: None,
       overrideTraitDataBundle: None,
     }
@@ -2084,10 +2041,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BattleUniEquipDat
   #[inline]
   pub fn add_validInGameTag(&mut self, validInGameTag: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_BattleUniEquipData::VT_VALIDINGAMETAG, validInGameTag);
-  }
-  #[inline]
-  pub fn add_validInMapTag(&mut self, validInMapTag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_BattleUniEquipData::VT_VALIDINMAPTAG, validInMapTag);
   }
   #[inline]
   pub fn add_addOrOverrideTalentDataBundle(&mut self, addOrOverrideTalentDataBundle: ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_EquipTalentDataBundle<'b >>) {
@@ -2119,7 +2072,6 @@ impl ::core::fmt::Debug for clz_Torappu_BattleUniEquipData<'_> {
       ds.field("target", &self.target());
       ds.field("isToken", &self.isToken());
       ds.field("validInGameTag", &self.validInGameTag());
-      ds.field("validInMapTag", &self.validInMapTag());
       ds.field("addOrOverrideTalentDataBundle", &self.addOrOverrideTalentDataBundle());
       ds.field("overrideTraitDataBundle", &self.overrideTraitDataBundle());
       ds.finish()
@@ -2132,7 +2084,6 @@ pub struct clz_Torappu_BattleUniEquipDataT {
   pub target: enum__Torappu_UniEquipTarget,
   pub isToken: bool,
   pub validInGameTag: Option<alloc::string::String>,
-  pub validInMapTag: Option<alloc::string::String>,
   pub addOrOverrideTalentDataBundle: Option<alloc::boxed::Box<clz_Torappu_CharacterData_EquipTalentDataBundleT>>,
   pub overrideTraitDataBundle: Option<alloc::boxed::Box<clz_Torappu_CharacterData_EquipTraitDataBundleT>>,
 }
@@ -2143,7 +2094,6 @@ impl Default for clz_Torappu_BattleUniEquipDataT {
       target: enum__Torappu_UniEquipTarget::NONE,
       isToken: false,
       validInGameTag: None,
-      validInMapTag: None,
       addOrOverrideTalentDataBundle: None,
       overrideTraitDataBundle: None,
     }
@@ -2162,9 +2112,6 @@ impl clz_Torappu_BattleUniEquipDataT {
     let validInGameTag = self.validInGameTag.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let validInMapTag = self.validInMapTag.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let addOrOverrideTalentDataBundle = self.addOrOverrideTalentDataBundle.as_ref().map(|x|{
       x.pack(_fbb)
     });
@@ -2176,7 +2123,6 @@ impl clz_Torappu_BattleUniEquipDataT {
       target,
       isToken,
       validInGameTag,
-      validInMapTag,
       addOrOverrideTalentDataBundle,
       overrideTraitDataBundle,
     })

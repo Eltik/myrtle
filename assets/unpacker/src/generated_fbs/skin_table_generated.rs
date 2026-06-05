@@ -3430,8 +3430,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
   pub const VT_SPDYNILLUSTID: ::flatbuffers::VOffsetT = 6;
   pub const VT_SPDYNILLUSTSKINTAG: ::flatbuffers::VOffsetT = 8;
   pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SPPORTRAITID: ::flatbuffers::VOffsetT = 12;
-  pub const VT_SPAVATARID: ::flatbuffers::VOffsetT = 14;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -3443,8 +3441,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     args: &'args clz_Torappu_SpDynIllustInfoArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'bldr>> {
     let mut builder = clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
-    if let Some(x) = args.spAvatarId { builder.add_spAvatarId(x); }
-    if let Some(x) = args.spPortraitId { builder.add_spPortraitId(x); }
     if let Some(x) = args.spIllustId { builder.add_spIllustId(x); }
     if let Some(x) = args.spDynIllustSkinTag { builder.add_spDynIllustSkinTag(x); }
     if let Some(x) = args.spDynIllustId { builder.add_spDynIllustId(x); }
@@ -3465,19 +3461,11 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     let spIllustId = self.spIllustId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let spPortraitId = self.spPortraitId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spAvatarId = self.spAvatarId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_SpDynIllustInfoT {
       skinId,
       spDynIllustId,
       spDynIllustSkinTag,
       spIllustId,
-      spPortraitId,
-      spAvatarId,
     }
   }
 
@@ -3509,20 +3497,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID, None)}
   }
-  #[inline]
-  pub fn spPortraitId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID, None)}
-  }
-  #[inline]
-  pub fn spAvatarId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPAVATARID, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
@@ -3535,8 +3509,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spDynIllustId", Self::VT_SPDYNILLUSTID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spDynIllustSkinTag", Self::VT_SPDYNILLUSTSKINTAG, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spIllustId", Self::VT_SPILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spPortraitId", Self::VT_SPPORTRAITID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spAvatarId", Self::VT_SPAVATARID, false)?
      .finish();
     Ok(())
   }
@@ -3546,8 +3518,6 @@ pub struct clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub spDynIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustSkinTag: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub spPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub spAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
   #[inline]
@@ -3557,8 +3527,6 @@ impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
       spDynIllustId: None,
       spDynIllustSkinTag: None,
       spIllustId: None,
-      spPortraitId: None,
-      spAvatarId: None,
     }
   }
 }
@@ -3586,14 +3554,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBu
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID, spIllustId);
   }
   #[inline]
-  pub fn add_spPortraitId(&mut self, spPortraitId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID, spPortraitId);
-  }
-  #[inline]
-  pub fn add_spAvatarId(&mut self, spAvatarId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPAVATARID, spAvatarId);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_SpDynIllustInfoBuilder {
@@ -3615,8 +3575,6 @@ impl ::core::fmt::Debug for clz_Torappu_SpDynIllustInfo<'_> {
       ds.field("spDynIllustId", &self.spDynIllustId());
       ds.field("spDynIllustSkinTag", &self.spDynIllustSkinTag());
       ds.field("spIllustId", &self.spIllustId());
-      ds.field("spPortraitId", &self.spPortraitId());
-      ds.field("spAvatarId", &self.spAvatarId());
       ds.finish()
   }
 }
@@ -3627,8 +3585,6 @@ pub struct clz_Torappu_SpDynIllustInfoT {
   pub spDynIllustId: Option<alloc::string::String>,
   pub spDynIllustSkinTag: Option<alloc::string::String>,
   pub spIllustId: Option<alloc::string::String>,
-  pub spPortraitId: Option<alloc::string::String>,
-  pub spAvatarId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_SpDynIllustInfoT {
   fn default() -> Self {
@@ -3637,8 +3593,6 @@ impl Default for clz_Torappu_SpDynIllustInfoT {
       spDynIllustId: None,
       spDynIllustSkinTag: None,
       spIllustId: None,
-      spPortraitId: None,
-      spAvatarId: None,
     }
   }
 }
@@ -3659,19 +3613,11 @@ impl clz_Torappu_SpDynIllustInfoT {
     let spIllustId = self.spIllustId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let spPortraitId = self.spPortraitId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spAvatarId = self.spAvatarId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_SpDynIllustInfo::create(_fbb, &clz_Torappu_SpDynIllustInfoArgs{
       skinId,
       spDynIllustId,
       spDynIllustSkinTag,
       spIllustId,
-      spPortraitId,
-      spAvatarId,
     })
   }
 }

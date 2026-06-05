@@ -8,10 +8,10 @@ extern crate serde;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: i32 = 12;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: i32 = 8;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: [enum__Torappu_RoguelikeModuleType; 13] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: [enum__Torappu_RoguelikeModuleType; 9] = [
   enum__Torappu_RoguelikeModuleType::NONE,
   enum__Torappu_RoguelikeModuleType::SANCHECK,
   enum__Torappu_RoguelikeModuleType::DICE,
@@ -21,10 +21,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_MODULE_TYPE: [enum__Torappu_Roguel
   enum__Torappu_RoguelikeModuleType::FRAGMENT,
   enum__Torappu_RoguelikeModuleType::DISASTER,
   enum__Torappu_RoguelikeModuleType::NODE_UPGRADE,
-  enum__Torappu_RoguelikeModuleType::COPPER,
-  enum__Torappu_RoguelikeModuleType::WRATH,
-  enum__Torappu_RoguelikeModuleType::CANDLE,
-  enum__Torappu_RoguelikeModuleType::SKY,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -41,13 +37,9 @@ impl enum__Torappu_RoguelikeModuleType {
   pub const FRAGMENT: Self = Self(6);
   pub const DISASTER: Self = Self(7);
   pub const NODE_UPGRADE: Self = Self(8);
-  pub const COPPER: Self = Self(9);
-  pub const WRATH: Self = Self(10);
-  pub const CANDLE: Self = Self(11);
-  pub const SKY: Self = Self(12);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 12;
+  pub const ENUM_MAX: i32 = 8;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::SANCHECK,
@@ -58,10 +50,6 @@ impl enum__Torappu_RoguelikeModuleType {
     Self::FRAGMENT,
     Self::DISASTER,
     Self::NODE_UPGRADE,
-    Self::COPPER,
-    Self::WRATH,
-    Self::CANDLE,
-    Self::SKY,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -75,10 +63,6 @@ impl enum__Torappu_RoguelikeModuleType {
       Self::FRAGMENT => Some("FRAGMENT"),
       Self::DISASTER => Some("DISASTER"),
       Self::NODE_UPGRADE => Some("NODE_UPGRADE"),
-      Self::COPPER => Some("COPPER"),
-      Self::WRATH => Some("WRATH"),
-      Self::CANDLE => Some("CANDLE"),
-      Self::SKY => Some("SKY"),
       _ => None,
     }
   }
@@ -500,10 +484,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeEnrollType 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -589,14 +573,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -689,17 +665,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -786,14 +754,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -883,14 +843,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -1312,16 +1264,15 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeTopicDiffic
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_TOPIC_BANK_REWARD_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_TOPIC_BANK_REWARD_TYPE: i32 = 5;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_TOPIC_BANK_REWARD_TYPE: i32 = 4;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_TOPIC_BANK_REWARD_TYPE: [enum__Torappu_RoguelikeTopicBankRewardType; 6] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_TOPIC_BANK_REWARD_TYPE: [enum__Torappu_RoguelikeTopicBankRewardType; 5] = [
   enum__Torappu_RoguelikeTopicBankRewardType::NONE,
   enum__Torappu_RoguelikeTopicBankRewardType::UNLOCK_ITEM,
   enum__Torappu_RoguelikeTopicBankRewardType::ADD_SHOP_POS,
   enum__Torappu_RoguelikeTopicBankRewardType::UNLOCK_WITHDRAW,
   enum__Torappu_RoguelikeTopicBankRewardType::UNLOCK_SHOP_BATTLE,
-  enum__Torappu_RoguelikeTopicBankRewardType::UNLOCK_SHOP_REFRESH,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -1334,17 +1285,15 @@ impl enum__Torappu_RoguelikeTopicBankRewardType {
   pub const ADD_SHOP_POS: Self = Self(2);
   pub const UNLOCK_WITHDRAW: Self = Self(3);
   pub const UNLOCK_SHOP_BATTLE: Self = Self(4);
-  pub const UNLOCK_SHOP_REFRESH: Self = Self(5);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 5;
+  pub const ENUM_MAX: i32 = 4;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::UNLOCK_ITEM,
     Self::ADD_SHOP_POS,
     Self::UNLOCK_WITHDRAW,
     Self::UNLOCK_SHOP_BATTLE,
-    Self::UNLOCK_SHOP_REFRESH,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -1354,7 +1303,6 @@ impl enum__Torappu_RoguelikeTopicBankRewardType {
       Self::ADD_SHOP_POS => Some("ADD_SHOP_POS"),
       Self::UNLOCK_WITHDRAW => Some("UNLOCK_WITHDRAW"),
       Self::UNLOCK_SHOP_BATTLE => Some("UNLOCK_SHOP_BATTLE"),
-      Self::UNLOCK_SHOP_REFRESH => Some("UNLOCK_SHOP_REFRESH"),
       _ => None,
     }
   }
@@ -1538,360 +1486,12 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ActArchiveTotemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ActArchiveTotemType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ACT_ARCHIVE_COPPER_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_COPPER_TYPE: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_COPPER_TYPE: [enum__Torappu_ActArchiveCopperType; 4] = [
-  enum__Torappu_ActArchiveCopperType::ERR_ZERO,
-  enum__Torappu_ActArchiveCopperType::LUCK,
-  enum__Torappu_ActArchiveCopperType::COPPER,
-  enum__Torappu_ActArchiveCopperType::GILD,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_ActArchiveCopperType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_ActArchiveCopperType {
-  pub const ERR_ZERO: Self = Self(0);
-  pub const LUCK: Self = Self(1);
-  pub const COPPER: Self = Self(2);
-  pub const GILD: Self = Self(3);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::ERR_ZERO,
-    Self::LUCK,
-    Self::COPPER,
-    Self::GILD,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::ERR_ZERO => Some("ERR_ZERO"),
-      Self::LUCK => Some("LUCK"),
-      Self::COPPER => Some("COPPER"),
-      Self::GILD => Some("GILD"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_ActArchiveCopperType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_ActArchiveCopperType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_ActArchiveCopperType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_ActArchiveCopperType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ActArchiveCopperType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_ActArchiveCopperType {
-    type Output = enum__Torappu_ActArchiveCopperType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_ActArchiveCopperType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ActArchiveCopperType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ActArchiveCopperType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_COPPER_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_COPPER_TYPE: i32 = 6;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_COPPER_TYPE: [enum__Torappu_RoguelikeCopperType; 7] = [
-  enum__Torappu_RoguelikeCopperType::NONE,
-  enum__Torappu_RoguelikeCopperType::BLANK,
-  enum__Torappu_RoguelikeCopperType::FIGHT,
-  enum__Torappu_RoguelikeCopperType::RESOURCE,
-  enum__Torappu_RoguelikeCopperType::UNSOUND,
-  enum__Torappu_RoguelikeCopperType::TREASURE,
-  enum__Torappu_RoguelikeCopperType::SPECIAL,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeCopperType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeCopperType {
-  pub const NONE: Self = Self(0);
-  pub const BLANK: Self = Self(1);
-  pub const FIGHT: Self = Self(2);
-  pub const RESOURCE: Self = Self(3);
-  pub const UNSOUND: Self = Self(4);
-  pub const TREASURE: Self = Self(5);
-  pub const SPECIAL: Self = Self(6);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 6;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::BLANK,
-    Self::FIGHT,
-    Self::RESOURCE,
-    Self::UNSOUND,
-    Self::TREASURE,
-    Self::SPECIAL,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::BLANK => Some("BLANK"),
-      Self::FIGHT => Some("FIGHT"),
-      Self::RESOURCE => Some("RESOURCE"),
-      Self::UNSOUND => Some("UNSOUND"),
-      Self::TREASURE => Some("TREASURE"),
-      Self::SPECIAL => Some("SPECIAL"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeCopperType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeCopperType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeCopperType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeCopperType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeCopperType {
-    type Output = enum__Torappu_RoguelikeCopperType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeCopperType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeCopperType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeCopperType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_COPPER_LUCKY_LEVEL: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_COPPER_LUCKY_LEVEL: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_COPPER_LUCKY_LEVEL: [enum__Torappu_RoguelikeCopperLuckyLevel; 4] = [
-  enum__Torappu_RoguelikeCopperLuckyLevel::NONE,
-  enum__Torappu_RoguelikeCopperLuckyLevel::HIGH,
-  enum__Torappu_RoguelikeCopperLuckyLevel::MID,
-  enum__Torappu_RoguelikeCopperLuckyLevel::LOW,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeCopperLuckyLevel(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeCopperLuckyLevel {
-  pub const NONE: Self = Self(0);
-  pub const HIGH: Self = Self(1);
-  pub const MID: Self = Self(2);
-  pub const LOW: Self = Self(3);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::HIGH,
-    Self::MID,
-    Self::LOW,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::HIGH => Some("HIGH"),
-      Self::MID => Some("MID"),
-      Self::LOW => Some("LOW"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeCopperLuckyLevel {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeCopperLuckyLevel {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeCopperLuckyLevel::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeCopperLuckyLevel variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperLuckyLevel {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeCopperLuckyLevel {
-    type Output = enum__Torappu_RoguelikeCopperLuckyLevel;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeCopperLuckyLevel {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeCopperLuckyLevel {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeCopperLuckyLevel {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 27;
+pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 25;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 28] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 26] = [
   enum__Torappu_ActArchiveType::NONE,
   enum__Torappu_ActArchiveType::TIMELINE,
   enum__Torappu_ActArchiveType::MUSIC,
@@ -1918,8 +1518,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveT
   enum__Torappu_ActArchiveType::QUEST,
   enum__Torappu_ActArchiveType::FRAGMENT,
   enum__Torappu_ActArchiveType::DISASTER,
-  enum__Torappu_ActArchiveType::COPPER,
-  enum__Torappu_ActArchiveType::WRATH,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -1953,11 +1551,9 @@ impl enum__Torappu_ActArchiveType {
   pub const QUEST: Self = Self(23);
   pub const FRAGMENT: Self = Self(24);
   pub const DISASTER: Self = Self(25);
-  pub const COPPER: Self = Self(26);
-  pub const WRATH: Self = Self(27);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 27;
+  pub const ENUM_MAX: i32 = 25;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::TIMELINE,
@@ -1985,8 +1581,6 @@ impl enum__Torappu_ActArchiveType {
     Self::QUEST,
     Self::FRAGMENT,
     Self::DISASTER,
-    Self::COPPER,
-    Self::WRATH,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -2017,8 +1611,6 @@ impl enum__Torappu_ActArchiveType {
       Self::QUEST => Some("QUEST"),
       Self::FRAGMENT => Some("FRAGMENT"),
       Self::DISASTER => Some("DISASTER"),
-      Self::COPPER => Some("COPPER"),
-      Self::WRATH => Some("WRATH"),
       _ => None,
     }
   }
@@ -2860,13 +2452,12 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RarityRank {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_CUSTOM_TICKET_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_CUSTOM_TICKET_TYPE: i32 = 2;
+pub const ENUM_MAX_ENUM__TORAPPU_CUSTOM_TICKET_TYPE: i32 = 1;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_CUSTOM_TICKET_TYPE: [enum__Torappu_CustomTicketType; 3] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_CUSTOM_TICKET_TYPE: [enum__Torappu_CustomTicketType; 2] = [
   enum__Torappu_CustomTicketType::NONE,
   enum__Torappu_CustomTicketType::PURIFY,
-  enum__Torappu_CustomTicketType::GET_CANDLE,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -2876,21 +2467,18 @@ pub struct enum__Torappu_CustomTicketType(pub i32);
 impl enum__Torappu_CustomTicketType {
   pub const NONE: Self = Self(0);
   pub const PURIFY: Self = Self(1);
-  pub const GET_CANDLE: Self = Self(2);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
+  pub const ENUM_MAX: i32 = 1;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::PURIFY,
-    Self::GET_CANDLE,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
     match self {
       Self::NONE => Some("NONE"),
       Self::PURIFY => Some("PURIFY"),
-      Self::GET_CANDLE => Some("GET_CANDLE"),
       _ => None,
     }
   }
@@ -3080,10 +2668,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeGameRelicCh
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 23;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 13;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: [enum__Torappu_RoguelikeGameChoiceType; 24] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: [enum__Torappu_RoguelikeGameChoiceType; 14] = [
   enum__Torappu_RoguelikeGameChoiceType::NONE,
   enum__Torappu_RoguelikeGameChoiceType::LEAVE,
   enum__Torappu_RoguelikeGameChoiceType::NEXT,
@@ -3098,16 +2686,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: [enum__Torappu_R
   enum__Torappu_RoguelikeGameChoiceType::SACRIFICE_TOTEM,
   enum__Torappu_RoguelikeGameChoiceType::WISH_ALL,
   enum__Torappu_RoguelikeGameChoiceType::KILL,
-  enum__Torappu_RoguelikeGameChoiceType::USE_STASHED_TICKET,
-  enum__Torappu_RoguelikeGameChoiceType::EXPEDITION_ALL,
-  enum__Torappu_RoguelikeGameChoiceType::EXPEDITION_RETURN_ALL,
-  enum__Torappu_RoguelikeGameChoiceType::PACIFY_WRATH,
-  enum__Torappu_RoguelikeGameChoiceType::GILD_COPPER,
-  enum__Torappu_RoguelikeGameChoiceType::ITEM_REROLL,
-  enum__Torappu_RoguelikeGameChoiceType::ITEM_TOP_UP,
-  enum__Torappu_RoguelikeGameChoiceType::GILD_COPPER_ALL,
-  enum__Torappu_RoguelikeGameChoiceType::JUMP_PROB,
-  enum__Torappu_RoguelikeGameChoiceType::JUMP,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -3129,19 +2707,9 @@ impl enum__Torappu_RoguelikeGameChoiceType {
   pub const SACRIFICE_TOTEM: Self = Self(11);
   pub const WISH_ALL: Self = Self(12);
   pub const KILL: Self = Self(13);
-  pub const USE_STASHED_TICKET: Self = Self(14);
-  pub const EXPEDITION_ALL: Self = Self(15);
-  pub const EXPEDITION_RETURN_ALL: Self = Self(16);
-  pub const PACIFY_WRATH: Self = Self(17);
-  pub const GILD_COPPER: Self = Self(18);
-  pub const ITEM_REROLL: Self = Self(19);
-  pub const ITEM_TOP_UP: Self = Self(20);
-  pub const GILD_COPPER_ALL: Self = Self(21);
-  pub const JUMP_PROB: Self = Self(22);
-  pub const JUMP: Self = Self(23);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 23;
+  pub const ENUM_MAX: i32 = 13;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::LEAVE,
@@ -3157,16 +2725,6 @@ impl enum__Torappu_RoguelikeGameChoiceType {
     Self::SACRIFICE_TOTEM,
     Self::WISH_ALL,
     Self::KILL,
-    Self::USE_STASHED_TICKET,
-    Self::EXPEDITION_ALL,
-    Self::EXPEDITION_RETURN_ALL,
-    Self::PACIFY_WRATH,
-    Self::GILD_COPPER,
-    Self::ITEM_REROLL,
-    Self::ITEM_TOP_UP,
-    Self::GILD_COPPER_ALL,
-    Self::JUMP_PROB,
-    Self::JUMP,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -3185,16 +2743,6 @@ impl enum__Torappu_RoguelikeGameChoiceType {
       Self::SACRIFICE_TOTEM => Some("SACRIFICE_TOTEM"),
       Self::WISH_ALL => Some("WISH_ALL"),
       Self::KILL => Some("KILL"),
-      Self::USE_STASHED_TICKET => Some("USE_STASHED_TICKET"),
-      Self::EXPEDITION_ALL => Some("EXPEDITION_ALL"),
-      Self::EXPEDITION_RETURN_ALL => Some("EXPEDITION_RETURN_ALL"),
-      Self::PACIFY_WRATH => Some("PACIFY_WRATH"),
-      Self::GILD_COPPER => Some("GILD_COPPER"),
-      Self::ITEM_REROLL => Some("ITEM_REROLL"),
-      Self::ITEM_TOP_UP => Some("ITEM_TOP_UP"),
-      Self::GILD_COPPER_ALL => Some("GILD_COPPER_ALL"),
-      Self::JUMP_PROB => Some("JUMP_PROB"),
-      Self::JUMP => Some("JUMP"),
       _ => None,
     }
   }
@@ -3500,26 +3048,18 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeChoiceDispl
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_CHOICE_HINT_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_CHOICE_HINT_TYPE: i32 = 15;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_CHOICE_HINT_TYPE: i32 = 7;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_CHOICE_HINT_TYPE: [enum__Torappu_RoguelikeChoiceHintType; 16] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_CHOICE_HINT_TYPE: [enum__Torappu_RoguelikeChoiceHintType; 8] = [
   enum__Torappu_RoguelikeChoiceHintType::NONE,
   enum__Torappu_RoguelikeChoiceHintType::ITEM,
-  enum__Torappu_RoguelikeChoiceHintType::CANDLED_CHAR,
-  enum__Torappu_RoguelikeChoiceHintType::GUIDED_CHAR,
   enum__Torappu_RoguelikeChoiceHintType::SACRIFICE,
   enum__Torappu_RoguelikeChoiceHintType::SACRIFICE_TOTEM,
   enum__Torappu_RoguelikeChoiceHintType::EXPEDITION,
-  enum__Torappu_RoguelikeChoiceHintType::CANDLE,
-  enum__Torappu_RoguelikeChoiceHintType::GUIDED,
-  enum__Torappu_RoguelikeChoiceHintType::HP,
   enum__Torappu_RoguelikeChoiceHintType::VISION,
-  enum__Torappu_RoguelikeChoiceHintType::STASHED_RECRUIT,
   enum__Torappu_RoguelikeChoiceHintType::CHAOS,
   enum__Torappu_RoguelikeChoiceHintType::FRAGMENT,
-  enum__Torappu_RoguelikeChoiceHintType::SP_ZONE_AP,
-  enum__Torappu_RoguelikeChoiceHintType::COPPER_LUCK,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -3529,60 +3069,36 @@ pub struct enum__Torappu_RoguelikeChoiceHintType(pub i32);
 impl enum__Torappu_RoguelikeChoiceHintType {
   pub const NONE: Self = Self(0);
   pub const ITEM: Self = Self(1);
-  pub const CANDLED_CHAR: Self = Self(2);
-  pub const GUIDED_CHAR: Self = Self(3);
-  pub const SACRIFICE: Self = Self(4);
-  pub const SACRIFICE_TOTEM: Self = Self(5);
-  pub const EXPEDITION: Self = Self(6);
-  pub const CANDLE: Self = Self(7);
-  pub const GUIDED: Self = Self(8);
-  pub const HP: Self = Self(9);
-  pub const VISION: Self = Self(10);
-  pub const STASHED_RECRUIT: Self = Self(11);
-  pub const CHAOS: Self = Self(12);
-  pub const FRAGMENT: Self = Self(13);
-  pub const SP_ZONE_AP: Self = Self(14);
-  pub const COPPER_LUCK: Self = Self(15);
+  pub const SACRIFICE: Self = Self(2);
+  pub const SACRIFICE_TOTEM: Self = Self(3);
+  pub const EXPEDITION: Self = Self(4);
+  pub const VISION: Self = Self(5);
+  pub const CHAOS: Self = Self(6);
+  pub const FRAGMENT: Self = Self(7);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 15;
+  pub const ENUM_MAX: i32 = 7;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::ITEM,
-    Self::CANDLED_CHAR,
-    Self::GUIDED_CHAR,
     Self::SACRIFICE,
     Self::SACRIFICE_TOTEM,
     Self::EXPEDITION,
-    Self::CANDLE,
-    Self::GUIDED,
-    Self::HP,
     Self::VISION,
-    Self::STASHED_RECRUIT,
     Self::CHAOS,
     Self::FRAGMENT,
-    Self::SP_ZONE_AP,
-    Self::COPPER_LUCK,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
     match self {
       Self::NONE => Some("NONE"),
       Self::ITEM => Some("ITEM"),
-      Self::CANDLED_CHAR => Some("CANDLED_CHAR"),
-      Self::GUIDED_CHAR => Some("GUIDED_CHAR"),
       Self::SACRIFICE => Some("SACRIFICE"),
       Self::SACRIFICE_TOTEM => Some("SACRIFICE_TOTEM"),
       Self::EXPEDITION => Some("EXPEDITION"),
-      Self::CANDLE => Some("CANDLE"),
-      Self::GUIDED => Some("GUIDED"),
-      Self::HP => Some("HP"),
       Self::VISION => Some("VISION"),
-      Self::STASHED_RECRUIT => Some("STASHED_RECRUIT"),
       Self::CHAOS => Some("CHAOS"),
       Self::FRAGMENT => Some("FRAGMENT"),
-      Self::SP_ZONE_AP => Some("SP_ZONE_AP"),
-      Self::COPPER_LUCK => Some("COPPER_LUCK"),
       _ => None,
     }
   }
@@ -3660,10 +3176,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeChoiceHintT
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: i32 = 1965823;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: i32 = 392959;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: [enum__Torappu_RoguelikeEventType; 26] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: [enum__Torappu_RoguelikeEventType; 24] = [
   enum__Torappu_RoguelikeEventType::NONE,
   enum__Torappu_RoguelikeEventType::BATTLE_NORMAL,
   enum__Torappu_RoguelikeEventType::BATTLE_ELITE,
@@ -3685,8 +3201,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: [enum__Torappu_Rogueli
   enum__Torappu_RoguelikeEventType::STORY_HIDDEN,
   enum__Torappu_RoguelikeEventType::ALCHEMY,
   enum__Torappu_RoguelikeEventType::DUEL,
-  enum__Torappu_RoguelikeEventType::STASHED_RECRUIT,
-  enum__Torappu_RoguelikeEventType::SPECIAL_ZONE,
   enum__Torappu_RoguelikeEventType::CHOICES,
   enum__Torappu_RoguelikeEventType::EVENTS,
   enum__Torappu_RoguelikeEventType::ALL,
@@ -3718,14 +3232,12 @@ impl enum__Torappu_RoguelikeEventType {
   pub const STORY_HIDDEN: Self = Self(65536);
   pub const ALCHEMY: Self = Self(131072);
   pub const DUEL: Self = Self(262144);
-  pub const STASHED_RECRUIT: Self = Self(524288);
-  pub const SPECIAL_ZONE: Self = Self(1048576);
-  pub const CHOICES: Self = Self(1961712);
-  pub const EVENTS: Self = Self(1965816);
-  pub const ALL: Self = Self(1965823);
+  pub const CHOICES: Self = Self(388848);
+  pub const EVENTS: Self = Self(392952);
+  pub const ALL: Self = Self(392959);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 1965823;
+  pub const ENUM_MAX: i32 = 392959;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::BATTLE_NORMAL,
@@ -3748,8 +3260,6 @@ impl enum__Torappu_RoguelikeEventType {
     Self::STORY_HIDDEN,
     Self::ALCHEMY,
     Self::DUEL,
-    Self::STASHED_RECRUIT,
-    Self::SPECIAL_ZONE,
     Self::CHOICES,
     Self::EVENTS,
     Self::ALL,
@@ -3778,8 +3288,6 @@ impl enum__Torappu_RoguelikeEventType {
       Self::STORY_HIDDEN => Some("STORY_HIDDEN"),
       Self::ALCHEMY => Some("ALCHEMY"),
       Self::DUEL => Some("DUEL"),
-      Self::STASHED_RECRUIT => Some("STASHED_RECRUIT"),
-      Self::SPECIAL_ZONE => Some("SPECIAL_ZONE"),
       Self::CHOICES => Some("CHOICES"),
       Self::EVENTS => Some("EVENTS"),
       Self::ALL => Some("ALL"),
@@ -4186,122 +3694,16 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeTaskRarity {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeTaskRarity {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_BANK_REWARD_COUNT_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_BANK_REWARD_COUNT_TYPE: i32 = 1;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_BANK_REWARD_COUNT_TYPE: [enum__Torappu_RoguelikeBankRewardCountType; 2] = [
-  enum__Torappu_RoguelikeBankRewardCountType::HIGHEST_RECORD,
-  enum__Torappu_RoguelikeBankRewardCountType::TOTAL_SUM,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeBankRewardCountType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeBankRewardCountType {
-  pub const HIGHEST_RECORD: Self = Self(0);
-  pub const TOTAL_SUM: Self = Self(1);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 1;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::HIGHEST_RECORD,
-    Self::TOTAL_SUM,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::HIGHEST_RECORD => Some("HIGHEST_RECORD"),
-      Self::TOTAL_SUM => Some("TOTAL_SUM"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeBankRewardCountType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeBankRewardCountType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeBankRewardCountType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeBankRewardCountType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeBankRewardCountType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeBankRewardCountType {
-    type Output = enum__Torappu_RoguelikeBankRewardCountType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeBankRewardCountType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeBankRewardCountType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeBankRewardCountType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 5;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: i32 = 3;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: [enum__Torappu_RoguelikeRewardExDropTagSrcType; 6] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_REWARD_EX_DROP_TAG_SRC_TYPE: [enum__Torappu_RoguelikeRewardExDropTagSrcType; 4] = [
   enum__Torappu_RoguelikeRewardExDropTagSrcType::NONE,
   enum__Torappu_RoguelikeRewardExDropTagSrcType::TREASURE,
   enum__Torappu_RoguelikeRewardExDropTagSrcType::TOTEM,
   enum__Torappu_RoguelikeRewardExDropTagSrcType::EXPLORE_TOOL,
-  enum__Torappu_RoguelikeRewardExDropTagSrcType::COPPER,
-  enum__Torappu_RoguelikeRewardExDropTagSrcType::EVIL_TEMPLE,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -4313,18 +3715,14 @@ impl enum__Torappu_RoguelikeRewardExDropTagSrcType {
   pub const TREASURE: Self = Self(1);
   pub const TOTEM: Self = Self(2);
   pub const EXPLORE_TOOL: Self = Self(3);
-  pub const COPPER: Self = Self(4);
-  pub const EVIL_TEMPLE: Self = Self(5);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 5;
+  pub const ENUM_MAX: i32 = 3;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::TREASURE,
     Self::TOTEM,
     Self::EXPLORE_TOOL,
-    Self::COPPER,
-    Self::EVIL_TEMPLE,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -4333,8 +3731,6 @@ impl enum__Torappu_RoguelikeRewardExDropTagSrcType {
       Self::TREASURE => Some("TREASURE"),
       Self::TOTEM => Some("TOTEM"),
       Self::EXPLORE_TOOL => Some("EXPLORE_TOOL"),
-      Self::COPPER => Some("COPPER"),
-      Self::EVIL_TEMPLE => Some("EVIL_TEMPLE"),
       _ => None,
     }
   }
@@ -4536,10 +3932,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_TipData_Category {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: i32 = 46;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: i32 = 39;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: [enum__Torappu_RoguelikeGameItemType; 47] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: [enum__Torappu_RoguelikeGameItemType; 40] = [
   enum__Torappu_RoguelikeGameItemType::NONE,
   enum__Torappu_RoguelikeGameItemType::HP,
   enum__Torappu_RoguelikeGameItemType::HPMAX,
@@ -4580,13 +3976,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_ITEM_TYPE: [enum__Torappu_Rog
   enum__Torappu_RoguelikeGameItemType::ABSTRACT_DISASTER,
   enum__Torappu_RoguelikeGameItemType::PILL,
   enum__Torappu_RoguelikeGameItemType::BIGPILL,
-  enum__Torappu_RoguelikeGameItemType::COPPER,
-  enum__Torappu_RoguelikeGameItemType::COPPER_BUFF,
-  enum__Torappu_RoguelikeGameItemType::DIVINATION_KIT,
-  enum__Torappu_RoguelikeGameItemType::WRATH,
-  enum__Torappu_RoguelikeGameItemType::SPECIAL_ZONE_AP,
-  enum__Torappu_RoguelikeGameItemType::COPPER_DRAW_NUM,
-  enum__Torappu_RoguelikeGameItemType::STASH_RECRUIT_LIMIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -4634,16 +4023,9 @@ impl enum__Torappu_RoguelikeGameItemType {
   pub const ABSTRACT_DISASTER: Self = Self(37);
   pub const PILL: Self = Self(38);
   pub const BIGPILL: Self = Self(39);
-  pub const COPPER: Self = Self(40);
-  pub const COPPER_BUFF: Self = Self(41);
-  pub const DIVINATION_KIT: Self = Self(42);
-  pub const WRATH: Self = Self(43);
-  pub const SPECIAL_ZONE_AP: Self = Self(44);
-  pub const COPPER_DRAW_NUM: Self = Self(45);
-  pub const STASH_RECRUIT_LIMIT: Self = Self(46);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 46;
+  pub const ENUM_MAX: i32 = 39;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::HP,
@@ -4685,13 +4067,6 @@ impl enum__Torappu_RoguelikeGameItemType {
     Self::ABSTRACT_DISASTER,
     Self::PILL,
     Self::BIGPILL,
-    Self::COPPER,
-    Self::COPPER_BUFF,
-    Self::DIVINATION_KIT,
-    Self::WRATH,
-    Self::SPECIAL_ZONE_AP,
-    Self::COPPER_DRAW_NUM,
-    Self::STASH_RECRUIT_LIMIT,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -4736,13 +4111,6 @@ impl enum__Torappu_RoguelikeGameItemType {
       Self::ABSTRACT_DISASTER => Some("ABSTRACT_DISASTER"),
       Self::PILL => Some("PILL"),
       Self::BIGPILL => Some("BIGPILL"),
-      Self::COPPER => Some("COPPER"),
-      Self::COPPER_BUFF => Some("COPPER_BUFF"),
-      Self::DIVINATION_KIT => Some("DIVINATION_KIT"),
-      Self::WRATH => Some("WRATH"),
-      Self::SPECIAL_ZONE_AP => Some("SPECIAL_ZONE_AP"),
-      Self::COPPER_DRAW_NUM => Some("COPPER_DRAW_NUM"),
-      Self::STASH_RECRUIT_LIMIT => Some("STASH_RECRUIT_LIMIT"),
       _ => None,
     }
   }
@@ -5064,10 +4432,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeGameItemRar
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: i32 = 15;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: i32 = 14;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: [enum__Torappu_RoguelikeEndingDetailText_Type; 16] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: [enum__Torappu_RoguelikeEndingDetailText_Type; 15] = [
   enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_CHOICE,
   enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_RELIC,
   enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_CAPSULE,
@@ -5083,7 +4451,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_ENDING_DETAIL_TEXT_TYPE: [enum__To
   enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_CONST,
   enum__Torappu_RoguelikeEndingDetailText_Type::SUM,
   enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_BOSS_END,
-  enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_BATTLE,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -5106,10 +4473,9 @@ impl enum__Torappu_RoguelikeEndingDetailText_Type {
   pub const SHOW_CONST: Self = Self(12);
   pub const SUM: Self = Self(13);
   pub const SHOW_BOSS_END: Self = Self(14);
-  pub const SHOW_BATTLE: Self = Self(15);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 15;
+  pub const ENUM_MAX: i32 = 14;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::SHOW_CHOICE,
     Self::SHOW_RELIC,
@@ -5126,7 +4492,6 @@ impl enum__Torappu_RoguelikeEndingDetailText_Type {
     Self::SHOW_CONST,
     Self::SUM,
     Self::SHOW_BOSS_END,
-    Self::SHOW_BATTLE,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -5146,7 +4511,6 @@ impl enum__Torappu_RoguelikeEndingDetailText_Type {
       Self::SHOW_CONST => Some("SHOW_CONST"),
       Self::SUM => Some("SUM"),
       Self::SHOW_BOSS_END => Some("SHOW_BOSS_END"),
-      Self::SHOW_BATTLE => Some("SHOW_BATTLE"),
       _ => None,
     }
   }
@@ -6529,490 +5893,6 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_AlchemyPoolRarityType {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_AlchemyPoolRarityType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_COPPER_BUFF_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_COPPER_BUFF_TYPE: i32 = 2;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_COPPER_BUFF_TYPE: [enum__Torappu_RoguelikeCopperBuffType; 3] = [
-  enum__Torappu_RoguelikeCopperBuffType::NONE,
-  enum__Torappu_RoguelikeCopperBuffType::REFRESH,
-  enum__Torappu_RoguelikeCopperBuffType::MOVE,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeCopperBuffType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeCopperBuffType {
-  pub const NONE: Self = Self(0);
-  pub const REFRESH: Self = Self(1);
-  pub const MOVE: Self = Self(2);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::REFRESH,
-    Self::MOVE,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::REFRESH => Some("REFRESH"),
-      Self::MOVE => Some("MOVE"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeCopperBuffType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeCopperBuffType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeCopperBuffType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeCopperBuffType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperBuffType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeCopperBuffType {
-    type Output = enum__Torappu_RoguelikeCopperBuffType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeCopperBuffType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeCopperBuffType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeCopperBuffType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_TYPE: i32 = 2;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_TYPE: [enum__Torappu_RoguelikeCopperDivineType; 3] = [
-  enum__Torappu_RoguelikeCopperDivineType::NONE,
-  enum__Torappu_RoguelikeCopperDivineType::DIVINE,
-  enum__Torappu_RoguelikeCopperDivineType::EVENT,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeCopperDivineType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeCopperDivineType {
-  pub const NONE: Self = Self(0);
-  pub const DIVINE: Self = Self(1);
-  pub const EVENT: Self = Self(2);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::DIVINE,
-    Self::EVENT,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::DIVINE => Some("DIVINE"),
-      Self::EVENT => Some("EVENT"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeCopperDivineType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeCopperDivineType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeCopperDivineType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeCopperDivineType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperDivineType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeCopperDivineType {
-    type Output = enum__Torappu_RoguelikeCopperDivineType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeCopperDivineType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeCopperDivineType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeCopperDivineType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_RESULT_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_RESULT_TYPE: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_COPPER_DIVINE_RESULT_TYPE: [enum__Torappu_RoguelikeCopperDivineResultType; 4] = [
-  enum__Torappu_RoguelikeCopperDivineResultType::NONE,
-  enum__Torappu_RoguelikeCopperDivineResultType::GOOD,
-  enum__Torappu_RoguelikeCopperDivineResultType::NORMAL,
-  enum__Torappu_RoguelikeCopperDivineResultType::BAD,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeCopperDivineResultType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeCopperDivineResultType {
-  pub const NONE: Self = Self(0);
-  pub const GOOD: Self = Self(1);
-  pub const NORMAL: Self = Self(2);
-  pub const BAD: Self = Self(3);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::GOOD,
-    Self::NORMAL,
-    Self::BAD,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::GOOD => Some("GOOD"),
-      Self::NORMAL => Some("NORMAL"),
-      Self::BAD => Some("BAD"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeCopperDivineResultType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeCopperDivineResultType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeCopperDivineResultType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeCopperDivineResultType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperDivineResultType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeCopperDivineResultType {
-    type Output = enum__Torappu_RoguelikeCopperDivineResultType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeCopperDivineResultType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeCopperDivineResultType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeCopperDivineResultType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_SKY_ZONE_NODE_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_SKY_ZONE_NODE_TYPE: i32 = 3548;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_SKY_ZONE_NODE_TYPE: [enum__Torappu_RoguelikeSkyZoneNodeType; 15] = [
-  enum__Torappu_RoguelikeSkyZoneNodeType::NONE,
-  enum__Torappu_RoguelikeSkyZoneNodeType::ORIGIN,
-  enum__Torappu_RoguelikeSkyZoneNodeType::BATTLE,
-  enum__Torappu_RoguelikeSkyZoneNodeType::TRIAL_GATE,
-  enum__Torappu_RoguelikeSkyZoneNodeType::INCIDENT,
-  enum__Torappu_RoguelikeSkyZoneNodeType::TREASURE,
-  enum__Torappu_RoguelikeSkyZoneNodeType::SHOP,
-  enum__Torappu_RoguelikeSkyZoneNodeType::SACRIFICE,
-  enum__Torappu_RoguelikeSkyZoneNodeType::ENTERTAINMENT,
-  enum__Torappu_RoguelikeSkyZoneNodeType::MARKET,
-  enum__Torappu_RoguelikeSkyZoneNodeType::BATTLE_HARD,
-  enum__Torappu_RoguelikeSkyZoneNodeType::BATTLES,
-  enum__Torappu_RoguelikeSkyZoneNodeType::INCIDENT_BOSS,
-  enum__Torappu_RoguelikeSkyZoneNodeType::INCIDENT_BOSS_ONLY,
-  enum__Torappu_RoguelikeSkyZoneNodeType::CHOICES,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_RoguelikeSkyZoneNodeType(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_RoguelikeSkyZoneNodeType {
-  pub const NONE: Self = Self(0);
-  pub const ORIGIN: Self = Self(1);
-  pub const BATTLE: Self = Self(2);
-  pub const TRIAL_GATE: Self = Self(4);
-  pub const INCIDENT: Self = Self(8);
-  pub const TREASURE: Self = Self(16);
-  pub const SHOP: Self = Self(32);
-  pub const SACRIFICE: Self = Self(64);
-  pub const ENTERTAINMENT: Self = Self(128);
-  pub const MARKET: Self = Self(256);
-  pub const BATTLE_HARD: Self = Self(512);
-  pub const BATTLES: Self = Self(514);
-  pub const INCIDENT_BOSS: Self = Self(1024);
-  pub const INCIDENT_BOSS_ONLY: Self = Self(2048);
-  pub const CHOICES: Self = Self(3548);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3548;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::ORIGIN,
-    Self::BATTLE,
-    Self::TRIAL_GATE,
-    Self::INCIDENT,
-    Self::TREASURE,
-    Self::SHOP,
-    Self::SACRIFICE,
-    Self::ENTERTAINMENT,
-    Self::MARKET,
-    Self::BATTLE_HARD,
-    Self::BATTLES,
-    Self::INCIDENT_BOSS,
-    Self::INCIDENT_BOSS_ONLY,
-    Self::CHOICES,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::ORIGIN => Some("ORIGIN"),
-      Self::BATTLE => Some("BATTLE"),
-      Self::TRIAL_GATE => Some("TRIAL_GATE"),
-      Self::INCIDENT => Some("INCIDENT"),
-      Self::TREASURE => Some("TREASURE"),
-      Self::SHOP => Some("SHOP"),
-      Self::SACRIFICE => Some("SACRIFICE"),
-      Self::ENTERTAINMENT => Some("ENTERTAINMENT"),
-      Self::MARKET => Some("MARKET"),
-      Self::BATTLE_HARD => Some("BATTLE_HARD"),
-      Self::BATTLES => Some("BATTLES"),
-      Self::INCIDENT_BOSS => Some("INCIDENT_BOSS"),
-      Self::INCIDENT_BOSS_ONLY => Some("INCIDENT_BOSS_ONLY"),
-      Self::CHOICES => Some("CHOICES"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_RoguelikeSkyZoneNodeType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_RoguelikeSkyZoneNodeType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_RoguelikeSkyZoneNodeType::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_RoguelikeSkyZoneNodeType variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RoguelikeSkyZoneNodeType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_RoguelikeSkyZoneNodeType {
-    type Output = enum__Torappu_RoguelikeSkyZoneNodeType;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_RoguelikeSkyZoneNodeType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_RoguelikeSkyZoneNodeType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RoguelikeSkyZoneNodeType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_TOPIC_DEV_NODE_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
@@ -10210,8 +9090,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
   pub const VT_ITEMCOUNT: ::flatbuffers::VOffsetT = 16;
   pub const VT_ISGOODPRIZE: ::flatbuffers::VOffsetT = 18;
   pub const VT_ISGRANDPRIZE: ::flatbuffers::VOffsetT = 20;
-  pub const VT_ISRETURNDISPLAY: ::flatbuffers::VOffsetT = 22;
-  pub const VT_RETURNSORTID: ::flatbuffers::VOffsetT = 24;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -10223,7 +9101,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
     args: &'args clz_Torappu_RoguelikeTopicBPArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicBP<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeTopicBPBuilder::new(_fbb);
-    builder.add_returnSortId(args.returnSortId);
     builder.add_itemCount(args.itemCount);
     builder.add_itemType(args.itemType);
     if let Some(x) = args.itemID { builder.add_itemID(x); }
@@ -10231,7 +9108,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
     builder.add_tokenNum(args.tokenNum);
     builder.add_level(args.level);
     if let Some(x) = args.id { builder.add_id(x); }
-    builder.add_isReturnDisplay(args.isReturnDisplay);
     builder.add_isGrandPrize(args.isGrandPrize);
     builder.add_isGoodPrize(args.isGoodPrize);
     builder.finish()
@@ -10251,8 +9127,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
     let itemCount = self.itemCount();
     let isGoodPrize = self.isGoodPrize();
     let isGrandPrize = self.isGrandPrize();
-    let isReturnDisplay = self.isReturnDisplay();
-    let returnSortId = self.returnSortId();
     clz_Torappu_RoguelikeTopicBPT {
       id,
       level,
@@ -10263,8 +9137,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
       itemCount,
       isGoodPrize,
       isGrandPrize,
-      isReturnDisplay,
-      returnSortId,
     }
   }
 
@@ -10331,20 +9203,6 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeTopicBP::VT_ISGRANDPRIZE, Some(false)).unwrap()}
   }
-  #[inline]
-  pub fn isReturnDisplay(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeTopicBP::VT_ISRETURNDISPLAY, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn returnSortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeTopicBP::VT_RETURNSORTID, Some(0)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicBP<'_> {
@@ -10362,8 +9220,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicBP<'_> {
      .visit_field::<i32>("itemCount", Self::VT_ITEMCOUNT, false)?
      .visit_field::<bool>("isGoodPrize", Self::VT_ISGOODPRIZE, false)?
      .visit_field::<bool>("isGrandPrize", Self::VT_ISGRANDPRIZE, false)?
-     .visit_field::<bool>("isReturnDisplay", Self::VT_ISRETURNDISPLAY, false)?
-     .visit_field::<i32>("returnSortId", Self::VT_RETURNSORTID, false)?
      .finish();
     Ok(())
   }
@@ -10378,8 +9234,6 @@ pub struct clz_Torappu_RoguelikeTopicBPArgs<'a> {
     pub itemCount: i32,
     pub isGoodPrize: bool,
     pub isGrandPrize: bool,
-    pub isReturnDisplay: bool,
-    pub returnSortId: i32,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicBPArgs<'a> {
   #[inline]
@@ -10394,8 +9248,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBPArgs<'a> {
       itemCount: 0,
       isGoodPrize: false,
       isGrandPrize: false,
-      isReturnDisplay: false,
-      returnSortId: 0,
     }
   }
 }
@@ -10443,14 +9295,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicBPB
     self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeTopicBP::VT_ISGRANDPRIZE, isGrandPrize, false);
   }
   #[inline]
-  pub fn add_isReturnDisplay(&mut self, isReturnDisplay: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeTopicBP::VT_ISRETURNDISPLAY, isReturnDisplay, false);
-  }
-  #[inline]
-  pub fn add_returnSortId(&mut self, returnSortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeTopicBP::VT_RETURNSORTID, returnSortId, 0);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeTopicBPBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RoguelikeTopicBPBuilder {
@@ -10477,8 +9321,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicBP<'_> {
       ds.field("itemCount", &self.itemCount());
       ds.field("isGoodPrize", &self.isGoodPrize());
       ds.field("isGrandPrize", &self.isGrandPrize());
-      ds.field("isReturnDisplay", &self.isReturnDisplay());
-      ds.field("returnSortId", &self.returnSortId());
       ds.finish()
   }
 }
@@ -10494,8 +9336,6 @@ pub struct clz_Torappu_RoguelikeTopicBPT {
   pub itemCount: i32,
   pub isGoodPrize: bool,
   pub isGrandPrize: bool,
-  pub isReturnDisplay: bool,
-  pub returnSortId: i32,
 }
 impl Default for clz_Torappu_RoguelikeTopicBPT {
   fn default() -> Self {
@@ -10509,8 +9349,6 @@ impl Default for clz_Torappu_RoguelikeTopicBPT {
       itemCount: 0,
       isGoodPrize: false,
       isGrandPrize: false,
-      isReturnDisplay: false,
-      returnSortId: 0,
     }
   }
 }
@@ -10532,8 +9370,6 @@ impl clz_Torappu_RoguelikeTopicBPT {
     let itemCount = self.itemCount;
     let isGoodPrize = self.isGoodPrize;
     let isGrandPrize = self.isGrandPrize;
-    let isReturnDisplay = self.isReturnDisplay;
-    let returnSortId = self.returnSortId;
     clz_Torappu_RoguelikeTopicBP::create(_fbb, &clz_Torappu_RoguelikeTopicBPArgs{
       id,
       level,
@@ -10544,8 +9380,6 @@ impl clz_Torappu_RoguelikeTopicBPT {
       itemCount,
       isGoodPrize,
       isGrandPrize,
-      isReturnDisplay,
-      returnSortId,
     })
   }
 }
@@ -13738,28 +12572,27 @@ impl<'a> clz_Torappu_RoguelikeTopicDifficulty<'a> {
   pub const VT_MODEDIFFICULTY: ::flatbuffers::VOffsetT = 4;
   pub const VT_GRADE: ::flatbuffers::VOffsetT = 6;
   pub const VT_NAME: ::flatbuffers::VOffsetT = 8;
-  pub const VT_NAMEIMAGE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SUBNAME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_ENROLLID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_HAVEINITIALRELICICON: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SCOREFACTOR: ::flatbuffers::VOffsetT = 18;
-  pub const VT_CANUNLOCKITEM: ::flatbuffers::VOffsetT = 20;
-  pub const VT_DOMONTHTASK: ::flatbuffers::VOffsetT = 22;
-  pub const VT_RULEDESC: ::flatbuffers::VOffsetT = 24;
-  pub const VT_RULEDESCREPLACEMENTS: ::flatbuffers::VOffsetT = 26;
-  pub const VT_FAILTITLE: ::flatbuffers::VOffsetT = 28;
-  pub const VT_FAILIMAGEID: ::flatbuffers::VOffsetT = 30;
-  pub const VT_FAILFORCEDESC: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 34;
-  pub const VT_EQUIVALENTGRADE: ::flatbuffers::VOffsetT = 36;
-  pub const VT_COLOR: ::flatbuffers::VOffsetT = 38;
-  pub const VT_BPVALUE: ::flatbuffers::VOffsetT = 40;
-  pub const VT_BOSSVALUE: ::flatbuffers::VOffsetT = 42;
-  pub const VT_ADDDESC: ::flatbuffers::VOffsetT = 44;
-  pub const VT_WARNINGTYPE: ::flatbuffers::VOffsetT = 46;
-  pub const VT_UNLOCKTEXT: ::flatbuffers::VOffsetT = 48;
-  pub const VT_DISPLAYICONID: ::flatbuffers::VOffsetT = 50;
-  pub const VT_HIDEENDINGSTORY: ::flatbuffers::VOffsetT = 52;
+  pub const VT_SUBNAME: ::flatbuffers::VOffsetT = 10;
+  pub const VT_ENROLLID: ::flatbuffers::VOffsetT = 12;
+  pub const VT_HAVEINITIALRELICICON: ::flatbuffers::VOffsetT = 14;
+  pub const VT_SCOREFACTOR: ::flatbuffers::VOffsetT = 16;
+  pub const VT_CANUNLOCKITEM: ::flatbuffers::VOffsetT = 18;
+  pub const VT_DOMONTHTASK: ::flatbuffers::VOffsetT = 20;
+  pub const VT_RULEDESC: ::flatbuffers::VOffsetT = 22;
+  pub const VT_RULEDESCREPLACEMENTS: ::flatbuffers::VOffsetT = 24;
+  pub const VT_FAILTITLE: ::flatbuffers::VOffsetT = 26;
+  pub const VT_FAILIMAGEID: ::flatbuffers::VOffsetT = 28;
+  pub const VT_FAILFORCEDESC: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SORTID: ::flatbuffers::VOffsetT = 32;
+  pub const VT_EQUIVALENTGRADE: ::flatbuffers::VOffsetT = 34;
+  pub const VT_COLOR: ::flatbuffers::VOffsetT = 36;
+  pub const VT_BPVALUE: ::flatbuffers::VOffsetT = 38;
+  pub const VT_BOSSVALUE: ::flatbuffers::VOffsetT = 40;
+  pub const VT_ADDDESC: ::flatbuffers::VOffsetT = 42;
+  pub const VT_WARNINGTYPE: ::flatbuffers::VOffsetT = 44;
+  pub const VT_UNLOCKTEXT: ::flatbuffers::VOffsetT = 46;
+  pub const VT_DISPLAYICONID: ::flatbuffers::VOffsetT = 48;
+  pub const VT_HIDEENDINGSTORY: ::flatbuffers::VOffsetT = 50;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -13788,7 +12621,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDifficulty<'a> {
     builder.add_scoreFactor(args.scoreFactor);
     if let Some(x) = args.enrollId { builder.add_enrollId(x); }
     if let Some(x) = args.subName { builder.add_subName(x); }
-    if let Some(x) = args.nameImage { builder.add_nameImage(x); }
     if let Some(x) = args.name { builder.add_name(x); }
     builder.add_grade(args.grade);
     builder.add_modeDifficulty(args.modeDifficulty);
@@ -13803,9 +12635,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDifficulty<'a> {
     let modeDifficulty = self.modeDifficulty();
     let grade = self.grade();
     let name = self.name().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let nameImage = self.nameImage().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let subName = self.subName().map(|x| {
@@ -13855,7 +12684,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDifficulty<'a> {
       modeDifficulty,
       grade,
       name,
-      nameImage,
       subName,
       enrollId,
       haveInitialRelicIcon,
@@ -13900,13 +12728,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDifficulty<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDifficulty::VT_NAME, None)}
-  }
-  #[inline]
-  pub fn nameImage(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDifficulty::VT_NAMEIMAGE, None)}
   }
   #[inline]
   pub fn subName(&self) -> Option<&'a str> {
@@ -14066,7 +12887,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDifficulty<'_> {
      .visit_field::<enum__Torappu_RoguelikeTopicMode>("modeDifficulty", Self::VT_MODEDIFFICULTY, false)?
      .visit_field::<i32>("grade", Self::VT_GRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("nameImage", Self::VT_NAMEIMAGE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("subName", Self::VT_SUBNAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("enrollId", Self::VT_ENROLLID, false)?
      .visit_field::<bool>("haveInitialRelicIcon", Self::VT_HAVEINITIALRELICICON, false)?
@@ -14096,7 +12916,6 @@ pub struct clz_Torappu_RoguelikeTopicDifficultyArgs<'a> {
     pub modeDifficulty: enum__Torappu_RoguelikeTopicMode,
     pub grade: i32,
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub nameImage: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub subName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub enrollId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub haveInitialRelicIcon: bool,
@@ -14126,7 +12945,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDifficultyArgs<'a> {
       modeDifficulty: enum__Torappu_RoguelikeTopicMode::NONE,
       grade: 0,
       name: None,
-      nameImage: None,
       subName: None,
       enrollId: None,
       haveInitialRelicIcon: false,
@@ -14169,10 +12987,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicDif
   #[inline]
   pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDifficulty::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_nameImage(&mut self, nameImage: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDifficulty::VT_NAMEIMAGE, nameImage);
   }
   #[inline]
   pub fn add_subName(&mut self, subName: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -14279,7 +13093,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicDifficulty<'_> {
       ds.field("modeDifficulty", &self.modeDifficulty());
       ds.field("grade", &self.grade());
       ds.field("name", &self.name());
-      ds.field("nameImage", &self.nameImage());
       ds.field("subName", &self.subName());
       ds.field("enrollId", &self.enrollId());
       ds.field("haveInitialRelicIcon", &self.haveInitialRelicIcon());
@@ -14310,7 +13123,6 @@ pub struct clz_Torappu_RoguelikeTopicDifficultyT {
   pub modeDifficulty: enum__Torappu_RoguelikeTopicMode,
   pub grade: i32,
   pub name: Option<alloc::string::String>,
-  pub nameImage: Option<alloc::string::String>,
   pub subName: Option<alloc::string::String>,
   pub enrollId: Option<alloc::string::String>,
   pub haveInitialRelicIcon: bool,
@@ -14339,7 +13151,6 @@ impl Default for clz_Torappu_RoguelikeTopicDifficultyT {
       modeDifficulty: enum__Torappu_RoguelikeTopicMode::NONE,
       grade: 0,
       name: None,
-      nameImage: None,
       subName: None,
       enrollId: None,
       haveInitialRelicIcon: false,
@@ -14372,9 +13183,6 @@ impl clz_Torappu_RoguelikeTopicDifficultyT {
     let modeDifficulty = self.modeDifficulty;
     let grade = self.grade;
     let name = self.name.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let nameImage = self.nameImage.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let subName = self.subName.as_ref().map(|x|{
@@ -14424,7 +13232,6 @@ impl clz_Torappu_RoguelikeTopicDifficultyT {
       modeDifficulty,
       grade,
       name,
-      nameImage,
       subName,
       enrollId,
       haveInitialRelicIcon,
@@ -20486,2386 +19293,6 @@ impl clz_Torappu_ActArchiveDisasterDataT {
     })
   }
 }
-pub enum clz_Torappu_ActArchiveWrathItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveWrathItemData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveWrathItemData<'a> {
-  type Inner = clz_Torappu_ActArchiveWrathItemData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveWrathItemData<'a> {
-  pub const VT_WRATHID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_PICTITLEID: ::flatbuffers::VOffsetT = 8;
-  pub const VT_PICSMALLINACTIVEID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_PICSMALLACTIVEID: ::flatbuffers::VOffsetT = 12;
-  pub const VT_PICBIGACTIVEID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_PICBIGINACTIVEID: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ENROLLID: ::flatbuffers::VOffsetT = 18;
-  pub const VT_ISSP: ::flatbuffers::VOffsetT = 20;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveWrathItemData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveWrathItemDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveWrathItemDataBuilder::new(_fbb);
-    if let Some(x) = args.enrollId { builder.add_enrollId(x); }
-    if let Some(x) = args.picBigInactiveId { builder.add_picBigInactiveId(x); }
-    if let Some(x) = args.picBigActiveId { builder.add_picBigActiveId(x); }
-    if let Some(x) = args.picSmallActiveId { builder.add_picSmallActiveId(x); }
-    if let Some(x) = args.picSmallInactiveId { builder.add_picSmallInactiveId(x); }
-    if let Some(x) = args.picTitleId { builder.add_picTitleId(x); }
-    builder.add_sortId(args.sortId);
-    if let Some(x) = args.wrathId { builder.add_wrathId(x); }
-    builder.add_isSp(args.isSp);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveWrathItemDataT {
-    let wrathId = self.wrathId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let sortId = self.sortId();
-    let picTitleId = self.picTitleId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let picSmallInactiveId = self.picSmallInactiveId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let picSmallActiveId = self.picSmallActiveId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let picBigActiveId = self.picBigActiveId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let picBigInactiveId = self.picBigInactiveId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let enrollId = self.enrollId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let isSp = self.isSp();
-    clz_Torappu_ActArchiveWrathItemDataT {
-      wrathId,
-      sortId,
-      picTitleId,
-      picSmallInactiveId,
-      picSmallActiveId,
-      picBigActiveId,
-      picBigInactiveId,
-      enrollId,
-      isSp,
-    }
-  }
-
-  #[inline]
-  pub fn wrathId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_WRATHID, None)}
-  }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_ActArchiveWrathItemData::VT_SORTID, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn picTitleId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_PICTITLEID, None)}
-  }
-  #[inline]
-  pub fn picSmallInactiveId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_PICSMALLINACTIVEID, None)}
-  }
-  #[inline]
-  pub fn picSmallActiveId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_PICSMALLACTIVEID, None)}
-  }
-  #[inline]
-  pub fn picBigActiveId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_PICBIGACTIVEID, None)}
-  }
-  #[inline]
-  pub fn picBigInactiveId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_PICBIGINACTIVEID, None)}
-  }
-  #[inline]
-  pub fn enrollId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveWrathItemData::VT_ENROLLID, None)}
-  }
-  #[inline]
-  pub fn isSp(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_ActArchiveWrathItemData::VT_ISSP, Some(false)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveWrathItemData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("wrathId", Self::VT_WRATHID, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("picTitleId", Self::VT_PICTITLEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("picSmallInactiveId", Self::VT_PICSMALLINACTIVEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("picSmallActiveId", Self::VT_PICSMALLACTIVEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("picBigActiveId", Self::VT_PICBIGACTIVEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("picBigInactiveId", Self::VT_PICBIGINACTIVEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("enrollId", Self::VT_ENROLLID, false)?
-     .visit_field::<bool>("isSp", Self::VT_ISSP, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
-    pub wrathId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub sortId: i32,
-    pub picTitleId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub picSmallInactiveId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub picSmallActiveId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub picBigActiveId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub picBigInactiveId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub enrollId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub isSp: bool,
-}
-impl<'a> Default for clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveWrathItemDataArgs {
-      wrathId: None,
-      sortId: 0,
-      picTitleId: None,
-      picSmallInactiveId: None,
-      picSmallActiveId: None,
-      picBigActiveId: None,
-      picBigInactiveId: None,
-      enrollId: None,
-      isSp: false,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveWrathItemDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveWrathItemDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_wrathId(&mut self, wrathId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_WRATHID, wrathId);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_ActArchiveWrathItemData::VT_SORTID, sortId, 0);
-  }
-  #[inline]
-  pub fn add_picTitleId(&mut self, picTitleId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_PICTITLEID, picTitleId);
-  }
-  #[inline]
-  pub fn add_picSmallInactiveId(&mut self, picSmallInactiveId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_PICSMALLINACTIVEID, picSmallInactiveId);
-  }
-  #[inline]
-  pub fn add_picSmallActiveId(&mut self, picSmallActiveId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_PICSMALLACTIVEID, picSmallActiveId);
-  }
-  #[inline]
-  pub fn add_picBigActiveId(&mut self, picBigActiveId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_PICBIGACTIVEID, picBigActiveId);
-  }
-  #[inline]
-  pub fn add_picBigInactiveId(&mut self, picBigInactiveId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_PICBIGINACTIVEID, picBigInactiveId);
-  }
-  #[inline]
-  pub fn add_enrollId(&mut self, enrollId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathItemData::VT_ENROLLID, enrollId);
-  }
-  #[inline]
-  pub fn add_isSp(&mut self, isSp: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_ActArchiveWrathItemData::VT_ISSP, isSp, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveWrathItemDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveWrathItemDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveWrathItemData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveWrathItemData");
-      ds.field("wrathId", &self.wrathId());
-      ds.field("sortId", &self.sortId());
-      ds.field("picTitleId", &self.picTitleId());
-      ds.field("picSmallInactiveId", &self.picSmallInactiveId());
-      ds.field("picSmallActiveId", &self.picSmallActiveId());
-      ds.field("picBigActiveId", &self.picBigActiveId());
-      ds.field("picBigInactiveId", &self.picBigInactiveId());
-      ds.field("enrollId", &self.enrollId());
-      ds.field("isSp", &self.isSp());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveWrathItemDataT {
-  pub wrathId: Option<alloc::string::String>,
-  pub sortId: i32,
-  pub picTitleId: Option<alloc::string::String>,
-  pub picSmallInactiveId: Option<alloc::string::String>,
-  pub picSmallActiveId: Option<alloc::string::String>,
-  pub picBigActiveId: Option<alloc::string::String>,
-  pub picBigInactiveId: Option<alloc::string::String>,
-  pub enrollId: Option<alloc::string::String>,
-  pub isSp: bool,
-}
-impl Default for clz_Torappu_ActArchiveWrathItemDataT {
-  fn default() -> Self {
-    Self {
-      wrathId: None,
-      sortId: 0,
-      picTitleId: None,
-      picSmallInactiveId: None,
-      picSmallActiveId: None,
-      picBigActiveId: None,
-      picBigInactiveId: None,
-      enrollId: None,
-      isSp: false,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveWrathItemDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData<'b>> {
-    let wrathId = self.wrathId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let sortId = self.sortId;
-    let picTitleId = self.picTitleId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let picSmallInactiveId = self.picSmallInactiveId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let picSmallActiveId = self.picSmallActiveId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let picBigActiveId = self.picBigActiveId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let picBigInactiveId = self.picBigInactiveId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let enrollId = self.enrollId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let isSp = self.isSp;
-    clz_Torappu_ActArchiveWrathItemData::create(_fbb, &clz_Torappu_ActArchiveWrathItemDataArgs{
-      wrathId,
-      sortId,
-      picTitleId,
-      picSmallInactiveId,
-      picSmallActiveId,
-      picBigActiveId,
-      picBigInactiveId,
-      enrollId,
-      isSp,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_ActArchiveWrathItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_ActArchiveWrathItemData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActArchiveWrathItemData<'a> {
-  type Inner = dict__string__clz_Torappu_ActArchiveWrathItemData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_ActArchiveWrathItemData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_ActArchiveWrathItemData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_ActArchiveWrathItemDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_ActArchiveWrathItemDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_ActArchiveWrathItemDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_ActArchiveWrathItemData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActArchiveWrathItemData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_ActArchiveWrathItemData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveWrathItemData>>(dict__string__clz_Torappu_ActArchiveWrathItemData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActArchiveWrathItemData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveWrathItemData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_ActArchiveWrathItemDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_ActArchiveWrathItemData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathItemData>>(dict__string__clz_Torappu_ActArchiveWrathItemData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_ActArchiveWrathItemData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_ActArchiveWrathItemData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_ActArchiveWrathItemData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_ActArchiveWrathItemDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_ActArchiveWrathItemDataT>>,
-}
-impl Default for dict__string__clz_Torappu_ActArchiveWrathItemDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_ActArchiveWrathItemDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_ActArchiveWrathItemData::create(_fbb, &dict__string__clz_Torappu_ActArchiveWrathItemDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveWrathDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveWrathData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveWrathData<'a> {
-  type Inner = clz_Torappu_ActArchiveWrathData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveWrathData<'a> {
-  pub const VT_WRATHS: ::flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveWrathData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveWrathDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveWrathDataBuilder::new(_fbb);
-    if let Some(x) = args.wraths { builder.add_wraths(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveWrathDataT {
-    let wraths = self.wraths().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_ActArchiveWrathDataT {
-      wraths,
-    }
-  }
-
-  #[inline]
-  pub fn wraths(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveWrathItemData>>>>(clz_Torappu_ActArchiveWrathData::VT_WRATHS, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveWrathData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveWrathItemData>>>>("wraths", Self::VT_WRATHS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveWrathDataArgs<'a> {
-    pub wraths: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'a>>>>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveWrathDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveWrathDataArgs {
-      wraths: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveWrathDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveWrathDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_wraths(&mut self, wraths: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveWrathItemData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveWrathData::VT_WRATHS, wraths);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveWrathDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveWrathDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveWrathData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveWrathData");
-      ds.field("wraths", &self.wraths());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveWrathDataT {
-  pub wraths: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActArchiveWrathItemDataT>>,
-}
-impl Default for clz_Torappu_ActArchiveWrathDataT {
-  fn default() -> Self {
-    Self {
-      wraths: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveWrathDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData<'b>> {
-    let wraths = self.wraths.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_ActArchiveWrathData::create(_fbb, &clz_Torappu_ActArchiveWrathDataArgs{
-      wraths,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveCopperItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveCopperItemData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveCopperItemData<'a> {
-  type Inner = clz_Torappu_ActArchiveCopperItemData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveCopperItemData<'a> {
-  pub const VT_ID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAYCOPPERID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_ARCHIVETYPE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_COPPERTYPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 12;
-  pub const VT_ENROLLID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_COPPERSINGROUP: ::flatbuffers::VOffsetT = 16;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveCopperItemData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveCopperItemDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveCopperItemDataBuilder::new(_fbb);
-    if let Some(x) = args.coppersInGroup { builder.add_coppersInGroup(x); }
-    if let Some(x) = args.enrollId { builder.add_enrollId(x); }
-    builder.add_sortId(args.sortId);
-    builder.add_copperType(args.copperType);
-    builder.add_archiveType(args.archiveType);
-    if let Some(x) = args.displayCopperId { builder.add_displayCopperId(x); }
-    if let Some(x) = args.id { builder.add_id(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveCopperItemDataT {
-    let id = self.id().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let displayCopperId = self.displayCopperId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let archiveType = self.archiveType();
-    let copperType = self.copperType();
-    let sortId = self.sortId();
-    let enrollId = self.enrollId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let coppersInGroup = self.coppersInGroup().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    clz_Torappu_ActArchiveCopperItemDataT {
-      id,
-      displayCopperId,
-      archiveType,
-      copperType,
-      sortId,
-      enrollId,
-      coppersInGroup,
-    }
-  }
-
-  #[inline]
-  pub fn id(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperItemData::VT_ID, None)}
-  }
-  #[inline]
-  pub fn displayCopperId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperItemData::VT_DISPLAYCOPPERID, None)}
-  }
-  #[inline]
-  pub fn archiveType(&self) -> enum__Torappu_ActArchiveCopperType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_ActArchiveCopperType>(clz_Torappu_ActArchiveCopperItemData::VT_ARCHIVETYPE, Some(enum__Torappu_ActArchiveCopperType::ERR_ZERO)).unwrap()}
-  }
-  #[inline]
-  pub fn copperType(&self) -> enum__Torappu_RoguelikeCopperType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperType>(clz_Torappu_ActArchiveCopperItemData::VT_COPPERTYPE, Some(enum__Torappu_RoguelikeCopperType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_ActArchiveCopperItemData::VT_SORTID, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn enrollId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperItemData::VT_ENROLLID, None)}
-  }
-  #[inline]
-  pub fn coppersInGroup(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_ActArchiveCopperItemData::VT_COPPERSINGROUP, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveCopperItemData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("displayCopperId", Self::VT_DISPLAYCOPPERID, false)?
-     .visit_field::<enum__Torappu_ActArchiveCopperType>("archiveType", Self::VT_ARCHIVETYPE, false)?
-     .visit_field::<enum__Torappu_RoguelikeCopperType>("copperType", Self::VT_COPPERTYPE, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("enrollId", Self::VT_ENROLLID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("coppersInGroup", Self::VT_COPPERSINGROUP, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveCopperItemDataArgs<'a> {
-    pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub displayCopperId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub archiveType: enum__Torappu_ActArchiveCopperType,
-    pub copperType: enum__Torappu_RoguelikeCopperType,
-    pub sortId: i32,
-    pub enrollId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub coppersInGroup: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveCopperItemDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveCopperItemDataArgs {
-      id: None,
-      displayCopperId: None,
-      archiveType: enum__Torappu_ActArchiveCopperType::ERR_ZERO,
-      copperType: enum__Torappu_RoguelikeCopperType::NONE,
-      sortId: 0,
-      enrollId: None,
-      coppersInGroup: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveCopperItemDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveCopperItemDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_id(&mut self, id: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperItemData::VT_ID, id);
-  }
-  #[inline]
-  pub fn add_displayCopperId(&mut self, displayCopperId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperItemData::VT_DISPLAYCOPPERID, displayCopperId);
-  }
-  #[inline]
-  pub fn add_archiveType(&mut self, archiveType: enum__Torappu_ActArchiveCopperType) {
-    self.fbb_.push_slot::<enum__Torappu_ActArchiveCopperType>(clz_Torappu_ActArchiveCopperItemData::VT_ARCHIVETYPE, archiveType, enum__Torappu_ActArchiveCopperType::ERR_ZERO);
-  }
-  #[inline]
-  pub fn add_copperType(&mut self, copperType: enum__Torappu_RoguelikeCopperType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperType>(clz_Torappu_ActArchiveCopperItemData::VT_COPPERTYPE, copperType, enum__Torappu_RoguelikeCopperType::NONE);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_ActArchiveCopperItemData::VT_SORTID, sortId, 0);
-  }
-  #[inline]
-  pub fn add_enrollId(&mut self, enrollId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperItemData::VT_ENROLLID, enrollId);
-  }
-  #[inline]
-  pub fn add_coppersInGroup(&mut self, coppersInGroup: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperItemData::VT_COPPERSINGROUP, coppersInGroup);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveCopperItemDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveCopperItemDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveCopperItemData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveCopperItemData");
-      ds.field("id", &self.id());
-      ds.field("displayCopperId", &self.displayCopperId());
-      ds.field("archiveType", &self.archiveType());
-      ds.field("copperType", &self.copperType());
-      ds.field("sortId", &self.sortId());
-      ds.field("enrollId", &self.enrollId());
-      ds.field("coppersInGroup", &self.coppersInGroup());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveCopperItemDataT {
-  pub id: Option<alloc::string::String>,
-  pub displayCopperId: Option<alloc::string::String>,
-  pub archiveType: enum__Torappu_ActArchiveCopperType,
-  pub copperType: enum__Torappu_RoguelikeCopperType,
-  pub sortId: i32,
-  pub enrollId: Option<alloc::string::String>,
-  pub coppersInGroup: Option<alloc::vec::Vec<alloc::string::String>>,
-}
-impl Default for clz_Torappu_ActArchiveCopperItemDataT {
-  fn default() -> Self {
-    Self {
-      id: None,
-      displayCopperId: None,
-      archiveType: enum__Torappu_ActArchiveCopperType::ERR_ZERO,
-      copperType: enum__Torappu_RoguelikeCopperType::NONE,
-      sortId: 0,
-      enrollId: None,
-      coppersInGroup: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveCopperItemDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData<'b>> {
-    let id = self.id.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let displayCopperId = self.displayCopperId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let archiveType = self.archiveType;
-    let copperType = self.copperType;
-    let sortId = self.sortId;
-    let enrollId = self.enrollId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let coppersInGroup = self.coppersInGroup.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_ActArchiveCopperItemData::create(_fbb, &clz_Torappu_ActArchiveCopperItemDataArgs{
-      id,
-      displayCopperId,
-      archiveType,
-      copperType,
-      sortId,
-      enrollId,
-      coppersInGroup,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_ActArchiveCopperItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperItemData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActArchiveCopperItemData<'a> {
-  type Inner = dict__string__clz_Torappu_ActArchiveCopperItemData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_ActArchiveCopperItemData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperItemData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_ActArchiveCopperItemDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_ActArchiveCopperItemDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_ActArchiveCopperItemDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_ActArchiveCopperItemData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActArchiveCopperItemData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_ActArchiveCopperItemData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperItemData>>(dict__string__clz_Torappu_ActArchiveCopperItemData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActArchiveCopperItemData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperItemData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_ActArchiveCopperItemDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperItemDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperItemDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_ActArchiveCopperItemData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperItemData>>(dict__string__clz_Torappu_ActArchiveCopperItemData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_ActArchiveCopperItemData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_ActArchiveCopperItemData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_ActArchiveCopperItemData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_ActArchiveCopperItemDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_ActArchiveCopperItemDataT>>,
-}
-impl Default for dict__string__clz_Torappu_ActArchiveCopperItemDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_ActArchiveCopperItemDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_ActArchiveCopperItemData::create(_fbb, &dict__string__clz_Torappu_ActArchiveCopperItemDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveCopperTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveCopperTypeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveCopperTypeData<'a> {
-  type Inner = clz_Torappu_ActArchiveCopperTypeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveCopperTypeData<'a> {
-  pub const VT_COPPERTYPE: ::flatbuffers::VOffsetT = 4;
-  pub const VT_TYPENAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_TYPEICONID: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveCopperTypeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveCopperTypeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveCopperTypeDataBuilder::new(_fbb);
-    if let Some(x) = args.typeIconId { builder.add_typeIconId(x); }
-    if let Some(x) = args.typeName { builder.add_typeName(x); }
-    builder.add_copperType(args.copperType);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveCopperTypeDataT {
-    let copperType = self.copperType();
-    let typeName = self.typeName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let typeIconId = self.typeIconId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_ActArchiveCopperTypeDataT {
-      copperType,
-      typeName,
-      typeIconId,
-    }
-  }
-
-  #[inline]
-  pub fn copperType(&self) -> enum__Torappu_RoguelikeCopperType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperType>(clz_Torappu_ActArchiveCopperTypeData::VT_COPPERTYPE, Some(enum__Torappu_RoguelikeCopperType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn typeName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperTypeData::VT_TYPENAME, None)}
-  }
-  #[inline]
-  pub fn typeIconId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperTypeData::VT_TYPEICONID, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveCopperTypeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<enum__Torappu_RoguelikeCopperType>("copperType", Self::VT_COPPERTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("typeName", Self::VT_TYPENAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("typeIconId", Self::VT_TYPEICONID, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveCopperTypeDataArgs<'a> {
-    pub copperType: enum__Torappu_RoguelikeCopperType,
-    pub typeName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub typeIconId: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveCopperTypeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveCopperTypeDataArgs {
-      copperType: enum__Torappu_RoguelikeCopperType::NONE,
-      typeName: None,
-      typeIconId: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveCopperTypeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveCopperTypeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_copperType(&mut self, copperType: enum__Torappu_RoguelikeCopperType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperType>(clz_Torappu_ActArchiveCopperTypeData::VT_COPPERTYPE, copperType, enum__Torappu_RoguelikeCopperType::NONE);
-  }
-  #[inline]
-  pub fn add_typeName(&mut self, typeName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperTypeData::VT_TYPENAME, typeName);
-  }
-  #[inline]
-  pub fn add_typeIconId(&mut self, typeIconId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperTypeData::VT_TYPEICONID, typeIconId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveCopperTypeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveCopperTypeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveCopperTypeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveCopperTypeData");
-      ds.field("copperType", &self.copperType());
-      ds.field("typeName", &self.typeName());
-      ds.field("typeIconId", &self.typeIconId());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveCopperTypeDataT {
-  pub copperType: enum__Torappu_RoguelikeCopperType,
-  pub typeName: Option<alloc::string::String>,
-  pub typeIconId: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_ActArchiveCopperTypeDataT {
-  fn default() -> Self {
-    Self {
-      copperType: enum__Torappu_RoguelikeCopperType::NONE,
-      typeName: None,
-      typeIconId: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveCopperTypeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData<'b>> {
-    let copperType = self.copperType;
-    let typeName = self.typeName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let typeIconId = self.typeIconId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_ActArchiveCopperTypeData::create(_fbb, &clz_Torappu_ActArchiveCopperTypeDataArgs{
-      copperType,
-      typeName,
-      typeIconId,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_ActArchiveCopperTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperTypeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActArchiveCopperTypeData<'a> {
-  type Inner = dict__string__clz_Torappu_ActArchiveCopperTypeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_ActArchiveCopperTypeData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperTypeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_ActArchiveCopperTypeDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_ActArchiveCopperTypeDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_ActArchiveCopperTypeDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_ActArchiveCopperTypeData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActArchiveCopperTypeData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_ActArchiveCopperTypeData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperTypeData>>(dict__string__clz_Torappu_ActArchiveCopperTypeData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActArchiveCopperTypeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperTypeData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperTypeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_ActArchiveCopperTypeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_ActArchiveCopperTypeData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperTypeData>>(dict__string__clz_Torappu_ActArchiveCopperTypeData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_ActArchiveCopperTypeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_ActArchiveCopperTypeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_ActArchiveCopperTypeData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_ActArchiveCopperTypeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_ActArchiveCopperTypeData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_ActArchiveCopperTypeDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_ActArchiveCopperTypeDataT>>,
-}
-impl Default for dict__string__clz_Torappu_ActArchiveCopperTypeDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_ActArchiveCopperTypeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_ActArchiveCopperTypeData::create(_fbb, &dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveCopperGildDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveCopperGildData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveCopperGildData<'a> {
-  type Inner = clz_Torappu_ActArchiveCopperGildData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveCopperGildData<'a> {
-  pub const VT_GILDTYPEID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GILDNAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_GILDDESC: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveCopperGildData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveCopperGildDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveCopperGildDataBuilder::new(_fbb);
-    if let Some(x) = args.gildDesc { builder.add_gildDesc(x); }
-    if let Some(x) = args.gildName { builder.add_gildName(x); }
-    if let Some(x) = args.gildTypeId { builder.add_gildTypeId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveCopperGildDataT {
-    let gildTypeId = self.gildTypeId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildName = self.gildName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildDesc = self.gildDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_ActArchiveCopperGildDataT {
-      gildTypeId,
-      gildName,
-      gildDesc,
-    }
-  }
-
-  #[inline]
-  pub fn gildTypeId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDTYPEID, None)}
-  }
-  #[inline]
-  pub fn gildName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDNAME, None)}
-  }
-  #[inline]
-  pub fn gildDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDDESC, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveCopperGildData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildTypeId", Self::VT_GILDTYPEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildName", Self::VT_GILDNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildDesc", Self::VT_GILDDESC, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveCopperGildDataArgs<'a> {
-    pub gildTypeId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveCopperGildDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveCopperGildDataArgs {
-      gildTypeId: None,
-      gildName: None,
-      gildDesc: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveCopperGildDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveCopperGildDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_gildTypeId(&mut self, gildTypeId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDTYPEID, gildTypeId);
-  }
-  #[inline]
-  pub fn add_gildName(&mut self, gildName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDNAME, gildName);
-  }
-  #[inline]
-  pub fn add_gildDesc(&mut self, gildDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperGildData::VT_GILDDESC, gildDesc);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveCopperGildDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveCopperGildDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveCopperGildData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveCopperGildData");
-      ds.field("gildTypeId", &self.gildTypeId());
-      ds.field("gildName", &self.gildName());
-      ds.field("gildDesc", &self.gildDesc());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveCopperGildDataT {
-  pub gildTypeId: Option<alloc::string::String>,
-  pub gildName: Option<alloc::string::String>,
-  pub gildDesc: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_ActArchiveCopperGildDataT {
-  fn default() -> Self {
-    Self {
-      gildTypeId: None,
-      gildName: None,
-      gildDesc: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveCopperGildDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData<'b>> {
-    let gildTypeId = self.gildTypeId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildName = self.gildName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildDesc = self.gildDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_ActArchiveCopperGildData::create(_fbb, &clz_Torappu_ActArchiveCopperGildDataArgs{
-      gildTypeId,
-      gildName,
-      gildDesc,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_ActArchiveCopperGildDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperGildData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActArchiveCopperGildData<'a> {
-  type Inner = dict__string__clz_Torappu_ActArchiveCopperGildData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_ActArchiveCopperGildData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperGildData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_ActArchiveCopperGildDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_ActArchiveCopperGildDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_ActArchiveCopperGildDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_ActArchiveCopperGildDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_ActArchiveCopperGildData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActArchiveCopperGildData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_ActArchiveCopperGildData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperGildData>>(dict__string__clz_Torappu_ActArchiveCopperGildData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActArchiveCopperGildData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperGildData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_ActArchiveCopperGildDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperGildDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperGildDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperGildDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_ActArchiveCopperGildDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_ActArchiveCopperGildData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperGildData>>(dict__string__clz_Torappu_ActArchiveCopperGildData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_ActArchiveCopperGildDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_ActArchiveCopperGildDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_ActArchiveCopperGildData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_ActArchiveCopperGildData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_ActArchiveCopperGildData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_ActArchiveCopperGildDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_ActArchiveCopperGildDataT>>,
-}
-impl Default for dict__string__clz_Torappu_ActArchiveCopperGildDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_ActArchiveCopperGildDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_ActArchiveCopperGildData::create(_fbb, &dict__string__clz_Torappu_ActArchiveCopperGildDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveCopperLuckyLevelDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  type Inner = clz_Torappu_ActArchiveCopperLuckyLevelData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  pub const VT_LUCKYLEVEL: ::flatbuffers::VOffsetT = 4;
-  pub const VT_LUCKYNAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_LUCKYDESC: ::flatbuffers::VOffsetT = 8;
-  pub const VT_LUCKYUSAGE: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveCopperLuckyLevelData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder::new(_fbb);
-    if let Some(x) = args.luckyUsage { builder.add_luckyUsage(x); }
-    if let Some(x) = args.luckyDesc { builder.add_luckyDesc(x); }
-    if let Some(x) = args.luckyName { builder.add_luckyName(x); }
-    builder.add_luckyLevel(args.luckyLevel);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-    let luckyLevel = self.luckyLevel();
-    let luckyName = self.luckyName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let luckyDesc = self.luckyDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let luckyUsage = self.luckyUsage().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-      luckyLevel,
-      luckyName,
-      luckyDesc,
-      luckyUsage,
-    }
-  }
-
-  #[inline]
-  pub fn luckyLevel(&self) -> enum__Torappu_RoguelikeCopperLuckyLevel {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperLuckyLevel>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYLEVEL, Some(enum__Torappu_RoguelikeCopperLuckyLevel::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn luckyName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYNAME, None)}
-  }
-  #[inline]
-  pub fn luckyDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYDESC, None)}
-  }
-  #[inline]
-  pub fn luckyUsage(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYUSAGE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<enum__Torappu_RoguelikeCopperLuckyLevel>("luckyLevel", Self::VT_LUCKYLEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("luckyName", Self::VT_LUCKYNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("luckyDesc", Self::VT_LUCKYDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("luckyUsage", Self::VT_LUCKYUSAGE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'a> {
-    pub luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel,
-    pub luckyName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub luckyDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub luckyUsage: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveCopperLuckyLevelDataArgs {
-      luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel::NONE,
-      luckyName: None,
-      luckyDesc: None,
-      luckyUsage: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_luckyLevel(&mut self, luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperLuckyLevel>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYLEVEL, luckyLevel, enum__Torappu_RoguelikeCopperLuckyLevel::NONE);
-  }
-  #[inline]
-  pub fn add_luckyName(&mut self, luckyName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYNAME, luckyName);
-  }
-  #[inline]
-  pub fn add_luckyDesc(&mut self, luckyDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYDESC, luckyDesc);
-  }
-  #[inline]
-  pub fn add_luckyUsage(&mut self, luckyUsage: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperLuckyLevelData::VT_LUCKYUSAGE, luckyUsage);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveCopperLuckyLevelData");
-      ds.field("luckyLevel", &self.luckyLevel());
-      ds.field("luckyName", &self.luckyName());
-      ds.field("luckyDesc", &self.luckyDesc());
-      ds.field("luckyUsage", &self.luckyUsage());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  pub luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel,
-  pub luckyName: Option<alloc::string::String>,
-  pub luckyDesc: Option<alloc::string::String>,
-  pub luckyUsage: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  fn default() -> Self {
-    Self {
-      luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel::NONE,
-      luckyName: None,
-      luckyDesc: None,
-      luckyUsage: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData<'b>> {
-    let luckyLevel = self.luckyLevel;
-    let luckyName = self.luckyName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let luckyDesc = self.luckyDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let luckyUsage = self.luckyUsage.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_ActArchiveCopperLuckyLevelData::create(_fbb, &clz_Torappu_ActArchiveCopperLuckyLevelDataArgs{
-      luckyLevel,
-      luckyName,
-      luckyDesc,
-      luckyUsage,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  type Inner = dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_ActArchiveCopperLuckyLevelData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperLuckyLevelData>>(dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperLuckyLevelData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperLuckyLevelData>>(dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_ActArchiveCopperLuckyLevelDataT>>,
-}
-impl Default for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData::create(_fbb, &dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_ActArchiveCopperDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ActArchiveCopperData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ActArchiveCopperData<'a> {
-  type Inner = clz_Torappu_ActArchiveCopperData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_ActArchiveCopperData<'a> {
-  pub const VT_COPPERS: ::flatbuffers::VOffsetT = 4;
-  pub const VT_COPPERTYPES: ::flatbuffers::VOffsetT = 6;
-  pub const VT_GILDS: ::flatbuffers::VOffsetT = 8;
-  pub const VT_LUCKYLEVELS: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_ActArchiveCopperData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_ActArchiveCopperDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData<'bldr>> {
-    let mut builder = clz_Torappu_ActArchiveCopperDataBuilder::new(_fbb);
-    if let Some(x) = args.luckyLevels { builder.add_luckyLevels(x); }
-    if let Some(x) = args.gilds { builder.add_gilds(x); }
-    if let Some(x) = args.copperTypes { builder.add_copperTypes(x); }
-    if let Some(x) = args.coppers { builder.add_coppers(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_ActArchiveCopperDataT {
-    let coppers = self.coppers().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let copperTypes = self.copperTypes().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let gilds = self.gilds().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let luckyLevels = self.luckyLevels().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_ActArchiveCopperDataT {
-      coppers,
-      copperTypes,
-      gilds,
-      luckyLevels,
-    }
-  }
-
-  #[inline]
-  pub fn coppers(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperItemData>>>>(clz_Torappu_ActArchiveCopperData::VT_COPPERS, None)}
-  }
-  #[inline]
-  pub fn copperTypes(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData>>>>(clz_Torappu_ActArchiveCopperData::VT_COPPERTYPES, None)}
-  }
-  #[inline]
-  pub fn gilds(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperGildData>>>>(clz_Torappu_ActArchiveCopperData::VT_GILDS, None)}
-  }
-  #[inline]
-  pub fn luckyLevels(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData>>>>(clz_Torappu_ActArchiveCopperData::VT_LUCKYLEVELS, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_ActArchiveCopperData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperItemData>>>>("coppers", Self::VT_COPPERS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData>>>>("copperTypes", Self::VT_COPPERTYPES, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperGildData>>>>("gilds", Self::VT_GILDS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData>>>>("luckyLevels", Self::VT_LUCKYLEVELS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_ActArchiveCopperDataArgs<'a> {
-    pub coppers: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'a>>>>>,
-    pub copperTypes: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'a>>>>>,
-    pub gilds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'a>>>>>,
-    pub luckyLevels: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'a>>>>>,
-}
-impl<'a> Default for clz_Torappu_ActArchiveCopperDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_ActArchiveCopperDataArgs {
-      coppers: None,
-      copperTypes: None,
-      gilds: None,
-      luckyLevels: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_ActArchiveCopperDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ActArchiveCopperDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_coppers(&mut self, coppers: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperItemData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperData::VT_COPPERS, coppers);
-  }
-  #[inline]
-  pub fn add_copperTypes(&mut self, copperTypes: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperTypeData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperData::VT_COPPERTYPES, copperTypes);
-  }
-  #[inline]
-  pub fn add_gilds(&mut self, gilds: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperGildData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperData::VT_GILDS, gilds);
-  }
-  #[inline]
-  pub fn add_luckyLevels(&mut self, luckyLevels: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ActArchiveCopperData::VT_LUCKYLEVELS, luckyLevels);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_ActArchiveCopperDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_ActArchiveCopperDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_ActArchiveCopperData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_ActArchiveCopperData");
-      ds.field("coppers", &self.coppers());
-      ds.field("copperTypes", &self.copperTypes());
-      ds.field("gilds", &self.gilds());
-      ds.field("luckyLevels", &self.luckyLevels());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ActArchiveCopperDataT {
-  pub coppers: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActArchiveCopperItemDataT>>,
-  pub copperTypes: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActArchiveCopperTypeDataT>>,
-  pub gilds: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActArchiveCopperGildDataT>>,
-  pub luckyLevels: Option<alloc::vec::Vec<dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataT>>,
-}
-impl Default for clz_Torappu_ActArchiveCopperDataT {
-  fn default() -> Self {
-    Self {
-      coppers: None,
-      copperTypes: None,
-      gilds: None,
-      luckyLevels: None,
-    }
-  }
-}
-impl clz_Torappu_ActArchiveCopperDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData<'b>> {
-    let coppers = self.coppers.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let copperTypes = self.copperTypes.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let gilds = self.gilds.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let luckyLevels = self.luckyLevels.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_ActArchiveCopperData::create(_fbb, &clz_Torappu_ActArchiveCopperDataArgs{
-      coppers,
-      copperTypes,
-      gilds,
-      luckyLevels,
-    })
-  }
-}
 pub enum clz_Torappu_RoguelikeArchiveComponentDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -22892,8 +19319,6 @@ impl<'a> clz_Torappu_RoguelikeArchiveComponentData<'a> {
   pub const VT_CHAOS: ::flatbuffers::VOffsetT = 18;
   pub const VT_FRAGMENT: ::flatbuffers::VOffsetT = 20;
   pub const VT_DISASTER: ::flatbuffers::VOffsetT = 22;
-  pub const VT_WRATH: ::flatbuffers::VOffsetT = 24;
-  pub const VT_COPPER: ::flatbuffers::VOffsetT = 26;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -22905,8 +19330,6 @@ impl<'a> clz_Torappu_RoguelikeArchiveComponentData<'a> {
     args: &'args clz_Torappu_RoguelikeArchiveComponentDataArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeArchiveComponentData<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeArchiveComponentDataBuilder::new(_fbb);
-    if let Some(x) = args.copper { builder.add_copper(x); }
-    if let Some(x) = args.wrath { builder.add_wrath(x); }
     if let Some(x) = args.disaster { builder.add_disaster(x); }
     if let Some(x) = args.fragment { builder.add_fragment(x); }
     if let Some(x) = args.chaos { builder.add_chaos(x); }
@@ -22951,12 +19374,6 @@ impl<'a> clz_Torappu_RoguelikeArchiveComponentData<'a> {
     let disaster = self.disaster().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
-    let wrath = self.wrath().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let copper = self.copper().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
     clz_Torappu_RoguelikeArchiveComponentDataT {
       relic,
       capsule,
@@ -22968,8 +19385,6 @@ impl<'a> clz_Torappu_RoguelikeArchiveComponentData<'a> {
       chaos,
       fragment,
       disaster,
-      wrath,
-      copper,
     }
   }
 
@@ -23043,20 +19458,6 @@ impl<'a> clz_Torappu_RoguelikeArchiveComponentData<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveDisasterData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_DISASTER, None)}
   }
-  #[inline]
-  pub fn wrath(&self) -> Option<clz_Torappu_ActArchiveWrathData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveWrathData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_WRATH, None)}
-  }
-  #[inline]
-  pub fn copper(&self) -> Option<clz_Torappu_ActArchiveCopperData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_COPPER, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeArchiveComponentData<'_> {
@@ -23075,8 +19476,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeArchiveComponentData<'_>
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveChaosData>>("chaos", Self::VT_CHAOS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveFragmentData>>("fragment", Self::VT_FRAGMENT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveDisasterData>>("disaster", Self::VT_DISASTER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveWrathData>>("wrath", Self::VT_WRATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ActArchiveCopperData>>("copper", Self::VT_COPPER, false)?
      .finish();
     Ok(())
   }
@@ -23092,8 +19491,6 @@ pub struct clz_Torappu_RoguelikeArchiveComponentDataArgs<'a> {
     pub chaos: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveChaosData<'a>>>,
     pub fragment: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveFragmentData<'a>>>,
     pub disaster: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveDisasterData<'a>>>,
-    pub wrath: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData<'a>>>,
-    pub copper: Option<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeArchiveComponentDataArgs<'a> {
   #[inline]
@@ -23109,8 +19506,6 @@ impl<'a> Default for clz_Torappu_RoguelikeArchiveComponentDataArgs<'a> {
       chaos: None,
       fragment: None,
       disaster: None,
-      wrath: None,
-      copper: None,
     }
   }
 }
@@ -23162,14 +19557,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeArchiveC
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveDisasterData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_DISASTER, disaster);
   }
   #[inline]
-  pub fn add_wrath(&mut self, wrath: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveWrathData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_WRATH, wrath);
-  }
-  #[inline]
-  pub fn add_copper(&mut self, copper: ::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ActArchiveCopperData>>(clz_Torappu_RoguelikeArchiveComponentData::VT_COPPER, copper);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeArchiveComponentDataBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RoguelikeArchiveComponentDataBuilder {
@@ -23197,8 +19584,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeArchiveComponentData<'_> {
       ds.field("chaos", &self.chaos());
       ds.field("fragment", &self.fragment());
       ds.field("disaster", &self.disaster());
-      ds.field("wrath", &self.wrath());
-      ds.field("copper", &self.copper());
       ds.finish()
   }
 }
@@ -23215,8 +19600,6 @@ pub struct clz_Torappu_RoguelikeArchiveComponentDataT {
   pub chaos: Option<alloc::boxed::Box<clz_Torappu_ActArchiveChaosDataT>>,
   pub fragment: Option<alloc::boxed::Box<clz_Torappu_ActArchiveFragmentDataT>>,
   pub disaster: Option<alloc::boxed::Box<clz_Torappu_ActArchiveDisasterDataT>>,
-  pub wrath: Option<alloc::boxed::Box<clz_Torappu_ActArchiveWrathDataT>>,
-  pub copper: Option<alloc::boxed::Box<clz_Torappu_ActArchiveCopperDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeArchiveComponentDataT {
   fn default() -> Self {
@@ -23231,8 +19614,6 @@ impl Default for clz_Torappu_RoguelikeArchiveComponentDataT {
       chaos: None,
       fragment: None,
       disaster: None,
-      wrath: None,
-      copper: None,
     }
   }
 }
@@ -23271,12 +19652,6 @@ impl clz_Torappu_RoguelikeArchiveComponentDataT {
     let disaster = self.disaster.as_ref().map(|x|{
       x.pack(_fbb)
     });
-    let wrath = self.wrath.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let copper = self.copper.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
     clz_Torappu_RoguelikeArchiveComponentData::create(_fbb, &clz_Torappu_RoguelikeArchiveComponentDataArgs{
       relic,
       capsule,
@@ -23288,8 +19663,6 @@ impl clz_Torappu_RoguelikeArchiveComponentDataT {
       chaos,
       fragment,
       disaster,
-      wrath,
-      copper,
     })
   }
 }
@@ -25297,13 +21670,13 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
   pub const VT_PREDEFINEDLEVELTABLE: ::flatbuffers::VOffsetT = 10;
   pub const VT_TOKENBPID: ::flatbuffers::VOffsetT = 12;
   pub const VT_TOKENOUTERBUFFID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SPOPERATORLOCKEDMESSAGE: ::flatbuffers::VOffsetT = 16;
-  pub const VT_PREVIEWEDREWARDSACCORDINGUPDATEID: ::flatbuffers::VOffsetT = 18;
-  pub const VT_TIPBUTTONNAME: ::flatbuffers::VOffsetT = 20;
-  pub const VT_COLLECTBUTTONNAME: ::flatbuffers::VOffsetT = 22;
-  pub const VT_BPSYSTEMNAME: ::flatbuffers::VOffsetT = 24;
-  pub const VT_AUTOSETKV: ::flatbuffers::VOffsetT = 26;
-  pub const VT_BPPURCHASEACTIVEENROLL: ::flatbuffers::VOffsetT = 28;
+  pub const VT_PREVIEWEDREWARDSACCORDINGUPDATEID: ::flatbuffers::VOffsetT = 16;
+  pub const VT_TIPBUTTONNAME: ::flatbuffers::VOffsetT = 18;
+  pub const VT_COLLECTBUTTONNAME: ::flatbuffers::VOffsetT = 20;
+  pub const VT_BPSYSTEMNAME: ::flatbuffers::VOffsetT = 22;
+  pub const VT_AUTOSETKV: ::flatbuffers::VOffsetT = 24;
+  pub const VT_BPPURCHASEACTIVEENROLL: ::flatbuffers::VOffsetT = 26;
+  pub const VT_DEFAULTSACRIFICEDESC: ::flatbuffers::VOffsetT = 28;
   pub const VT_DEFAULTEXPEDITIONSELECTDESC: ::flatbuffers::VOffsetT = 30;
   pub const VT_GOTCHARMUTATIONBUFFTOAST: ::flatbuffers::VOffsetT = 32;
   pub const VT_GOTCHAREVOLUTIONBUFFTOAST: ::flatbuffers::VOffsetT = 34;
@@ -25365,13 +21738,13 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
     if let Some(x) = args.gotCharEvolutionBuffToast { builder.add_gotCharEvolutionBuffToast(x); }
     if let Some(x) = args.gotCharMutationBuffToast { builder.add_gotCharMutationBuffToast(x); }
     if let Some(x) = args.defaultExpeditionSelectDesc { builder.add_defaultExpeditionSelectDesc(x); }
+    if let Some(x) = args.defaultSacrificeDesc { builder.add_defaultSacrificeDesc(x); }
     if let Some(x) = args.bpPurchaseActiveEnroll { builder.add_bpPurchaseActiveEnroll(x); }
     if let Some(x) = args.autoSetKV { builder.add_autoSetKV(x); }
     if let Some(x) = args.bpSystemName { builder.add_bpSystemName(x); }
     if let Some(x) = args.collectButtonName { builder.add_collectButtonName(x); }
     if let Some(x) = args.tipButtonName { builder.add_tipButtonName(x); }
     if let Some(x) = args.previewedRewardsAccordingUpdateId { builder.add_previewedRewardsAccordingUpdateId(x); }
-    if let Some(x) = args.spOperatorLockedMessage { builder.add_spOperatorLockedMessage(x); }
     if let Some(x) = args.tokenOuterBuffId { builder.add_tokenOuterBuffId(x); }
     if let Some(x) = args.tokenBpId { builder.add_tokenBpId(x); }
     if let Some(x) = args.predefinedLevelTable { builder.add_predefinedLevelTable(x); }
@@ -25402,9 +21775,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
     let tokenOuterBuffId = self.tokenOuterBuffId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let spOperatorLockedMessage = self.spOperatorLockedMessage().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let previewedRewardsAccordingUpdateId = self.previewedRewardsAccordingUpdateId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -25421,6 +21791,9 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
       alloc::string::ToString::to_string(x)
     });
     let bpPurchaseActiveEnroll = self.bpPurchaseActiveEnroll().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let defaultSacrificeDesc = self.defaultSacrificeDesc().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let defaultExpeditionSelectDesc = self.defaultExpeditionSelectDesc().map(|x| {
@@ -25492,13 +21865,13 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
       predefinedLevelTable,
       tokenBpId,
       tokenOuterBuffId,
-      spOperatorLockedMessage,
       previewedRewardsAccordingUpdateId,
       tipButtonName,
       collectButtonName,
       bpSystemName,
       autoSetKV,
       bpPurchaseActiveEnroll,
+      defaultSacrificeDesc,
       defaultExpeditionSelectDesc,
       gotCharMutationBuffToast,
       gotCharEvolutionBuffToast,
@@ -25571,13 +21944,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDetailConst::VT_TOKENOUTERBUFFID, None)}
   }
   #[inline]
-  pub fn spOperatorLockedMessage(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDetailConst::VT_SPOPERATORLOCKEDMESSAGE, None)}
-  }
-  #[inline]
   pub fn previewedRewardsAccordingUpdateId(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -25618,6 +21984,13 @@ impl<'a> clz_Torappu_RoguelikeTopicDetailConst<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDetailConst::VT_BPPURCHASEACTIVEENROLL, None)}
+  }
+  #[inline]
+  pub fn defaultSacrificeDesc(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeTopicDetailConst::VT_DEFAULTSACRIFICEDESC, None)}
   }
   #[inline]
   pub fn defaultExpeditionSelectDesc(&self) -> Option<&'a str> {
@@ -25815,13 +22188,13 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetailConst<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData>>>>("predefinedLevelTable", Self::VT_PREDEFINEDLEVELTABLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tokenBpId", Self::VT_TOKENBPID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tokenOuterBuffId", Self::VT_TOKENOUTERBUFFID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spOperatorLockedMessage", Self::VT_SPOPERATORLOCKEDMESSAGE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("previewedRewardsAccordingUpdateId", Self::VT_PREVIEWEDREWARDSACCORDINGUPDATEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tipButtonName", Self::VT_TIPBUTTONNAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("collectButtonName", Self::VT_COLLECTBUTTONNAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("bpSystemName", Self::VT_BPSYSTEMNAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("autoSetKV", Self::VT_AUTOSETKV, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("bpPurchaseActiveEnroll", Self::VT_BPPURCHASEACTIVEENROLL, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("defaultSacrificeDesc", Self::VT_DEFAULTSACRIFICEDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("defaultExpeditionSelectDesc", Self::VT_DEFAULTEXPEDITIONSELECTDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gotCharMutationBuffToast", Self::VT_GOTCHARMUTATIONBUFFTOAST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gotCharEvolutionBuffToast", Self::VT_GOTCHAREVOLUTIONBUFFTOAST, false)?
@@ -25859,13 +22232,13 @@ pub struct clz_Torappu_RoguelikeTopicDetailConstArgs<'a> {
     pub predefinedLevelTable: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData<'a>>>>>,
     pub tokenBpId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tokenOuterBuffId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub spOperatorLockedMessage: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub previewedRewardsAccordingUpdateId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tipButtonName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub collectButtonName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub bpSystemName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub autoSetKV: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub bpPurchaseActiveEnroll: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub defaultSacrificeDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub defaultExpeditionSelectDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub gotCharMutationBuffToast: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub gotCharEvolutionBuffToast: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -25903,13 +22276,13 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailConstArgs<'a> {
       predefinedLevelTable: None,
       tokenBpId: None,
       tokenOuterBuffId: None,
-      spOperatorLockedMessage: None,
       previewedRewardsAccordingUpdateId: None,
       tipButtonName: None,
       collectButtonName: None,
       bpSystemName: None,
       autoSetKV: None,
       bpPurchaseActiveEnroll: None,
+      defaultSacrificeDesc: None,
       defaultExpeditionSelectDesc: None,
       gotCharMutationBuffToast: None,
       gotCharEvolutionBuffToast: None,
@@ -25971,10 +22344,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicDet
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetailConst::VT_TOKENOUTERBUFFID, tokenOuterBuffId);
   }
   #[inline]
-  pub fn add_spOperatorLockedMessage(&mut self, spOperatorLockedMessage: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetailConst::VT_SPOPERATORLOCKEDMESSAGE, spOperatorLockedMessage);
-  }
-  #[inline]
   pub fn add_previewedRewardsAccordingUpdateId(&mut self, previewedRewardsAccordingUpdateId: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetailConst::VT_PREVIEWEDREWARDSACCORDINGUPDATEID, previewedRewardsAccordingUpdateId);
   }
@@ -25997,6 +22366,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicDet
   #[inline]
   pub fn add_bpPurchaseActiveEnroll(&mut self, bpPurchaseActiveEnroll: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetailConst::VT_BPPURCHASEACTIVEENROLL, bpPurchaseActiveEnroll);
+  }
+  #[inline]
+  pub fn add_defaultSacrificeDesc(&mut self, defaultSacrificeDesc: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetailConst::VT_DEFAULTSACRIFICEDESC, defaultSacrificeDesc);
   }
   #[inline]
   pub fn add_defaultExpeditionSelectDesc(&mut self, defaultExpeditionSelectDesc: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -26126,13 +22499,13 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicDetailConst<'_> {
       ds.field("predefinedLevelTable", &self.predefinedLevelTable());
       ds.field("tokenBpId", &self.tokenBpId());
       ds.field("tokenOuterBuffId", &self.tokenOuterBuffId());
-      ds.field("spOperatorLockedMessage", &self.spOperatorLockedMessage());
       ds.field("previewedRewardsAccordingUpdateId", &self.previewedRewardsAccordingUpdateId());
       ds.field("tipButtonName", &self.tipButtonName());
       ds.field("collectButtonName", &self.collectButtonName());
       ds.field("bpSystemName", &self.bpSystemName());
       ds.field("autoSetKV", &self.autoSetKV());
       ds.field("bpPurchaseActiveEnroll", &self.bpPurchaseActiveEnroll());
+      ds.field("defaultSacrificeDesc", &self.defaultSacrificeDesc());
       ds.field("defaultExpeditionSelectDesc", &self.defaultExpeditionSelectDesc());
       ds.field("gotCharMutationBuffToast", &self.gotCharMutationBuffToast());
       ds.field("gotCharEvolutionBuffToast", &self.gotCharEvolutionBuffToast());
@@ -26171,13 +22544,13 @@ pub struct clz_Torappu_RoguelikeTopicDetailConstT {
   pub predefinedLevelTable: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelDataT>>,
   pub tokenBpId: Option<alloc::string::String>,
   pub tokenOuterBuffId: Option<alloc::string::String>,
-  pub spOperatorLockedMessage: Option<alloc::string::String>,
   pub previewedRewardsAccordingUpdateId: Option<alloc::string::String>,
   pub tipButtonName: Option<alloc::string::String>,
   pub collectButtonName: Option<alloc::string::String>,
   pub bpSystemName: Option<alloc::string::String>,
   pub autoSetKV: Option<alloc::string::String>,
   pub bpPurchaseActiveEnroll: Option<alloc::string::String>,
+  pub defaultSacrificeDesc: Option<alloc::string::String>,
   pub defaultExpeditionSelectDesc: Option<alloc::string::String>,
   pub gotCharMutationBuffToast: Option<alloc::string::String>,
   pub gotCharEvolutionBuffToast: Option<alloc::string::String>,
@@ -26214,13 +22587,13 @@ impl Default for clz_Torappu_RoguelikeTopicDetailConstT {
       predefinedLevelTable: None,
       tokenBpId: None,
       tokenOuterBuffId: None,
-      spOperatorLockedMessage: None,
       previewedRewardsAccordingUpdateId: None,
       tipButtonName: None,
       collectButtonName: None,
       bpSystemName: None,
       autoSetKV: None,
       bpPurchaseActiveEnroll: None,
+      defaultSacrificeDesc: None,
       defaultExpeditionSelectDesc: None,
       gotCharMutationBuffToast: None,
       gotCharEvolutionBuffToast: None,
@@ -26273,9 +22646,6 @@ impl clz_Torappu_RoguelikeTopicDetailConstT {
     let tokenOuterBuffId = self.tokenOuterBuffId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let spOperatorLockedMessage = self.spOperatorLockedMessage.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let previewedRewardsAccordingUpdateId = self.previewedRewardsAccordingUpdateId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -26292,6 +22662,9 @@ impl clz_Torappu_RoguelikeTopicDetailConstT {
       _fbb.create_string(x)
     });
     let bpPurchaseActiveEnroll = self.bpPurchaseActiveEnroll.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let defaultSacrificeDesc = self.defaultSacrificeDesc.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let defaultExpeditionSelectDesc = self.defaultExpeditionSelectDesc.as_ref().map(|x|{
@@ -26363,13 +22736,13 @@ impl clz_Torappu_RoguelikeTopicDetailConstT {
       predefinedLevelTable,
       tokenBpId,
       tokenOuterBuffId,
-      spOperatorLockedMessage,
       previewedRewardsAccordingUpdateId,
       tipButtonName,
       collectButtonName,
       bpSystemName,
       autoSetKV,
       bpPurchaseActiveEnroll,
+      defaultSacrificeDesc,
       defaultExpeditionSelectDesc,
       gotCharMutationBuffToast,
       gotCharEvolutionBuffToast,
@@ -30024,333 +26397,6 @@ impl dict__string__clz_Torappu_RoguelikeGameCustomTicketDataT {
       x.pack(_fbb)
     });
     dict__string__clz_Torappu_RoguelikeGameCustomTicketData::create(_fbb, &dict__string__clz_Torappu_RoguelikeGameCustomTicketDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeGameStashableTicketDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  type Inner = clz_Torappu_RoguelikeGameStashableTicketData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  pub const VT_TICKETID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_STASHEDTICKETID: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeGameStashableTicketData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeGameStashableTicketDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeGameStashableTicketDataBuilder::new(_fbb);
-    if let Some(x) = args.stashedTicketId { builder.add_stashedTicketId(x); }
-    if let Some(x) = args.ticketId { builder.add_ticketId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeGameStashableTicketDataT {
-    let ticketId = self.ticketId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let stashedTicketId = self.stashedTicketId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeGameStashableTicketDataT {
-      ticketId,
-      stashedTicketId,
-    }
-  }
-
-  #[inline]
-  pub fn ticketId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameStashableTicketData::VT_TICKETID, None)}
-  }
-  #[inline]
-  pub fn stashedTicketId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameStashableTicketData::VT_STASHEDTICKETID, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("ticketId", Self::VT_TICKETID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("stashedTicketId", Self::VT_STASHEDTICKETID, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeGameStashableTicketDataArgs<'a> {
-    pub ticketId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub stashedTicketId: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeGameStashableTicketDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeGameStashableTicketDataArgs {
-      ticketId: None,
-      stashedTicketId: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_ticketId(&mut self, ticketId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameStashableTicketData::VT_TICKETID, ticketId);
-  }
-  #[inline]
-  pub fn add_stashedTicketId(&mut self, stashedTicketId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameStashableTicketData::VT_STASHEDTICKETID, stashedTicketId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeGameStashableTicketDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeGameStashableTicketData");
-      ds.field("ticketId", &self.ticketId());
-      ds.field("stashedTicketId", &self.stashedTicketId());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeGameStashableTicketDataT {
-  pub ticketId: Option<alloc::string::String>,
-  pub stashedTicketId: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeGameStashableTicketDataT {
-  fn default() -> Self {
-    Self {
-      ticketId: None,
-      stashedTicketId: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeGameStashableTicketDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData<'b>> {
-    let ticketId = self.ticketId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let stashedTicketId = self.stashedTicketId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeGameStashableTicketData::create(_fbb, &clz_Torappu_RoguelikeGameStashableTicketDataArgs{
-      ticketId,
-      stashedTicketId,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeGameStashableTicketDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeGameStashableTicketData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeGameStashableTicketDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeGameStashableTicketDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeGameStashableTicketData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeGameStashableTicketData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeGameStashableTicketData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeGameStashableTicketData>>(dict__string__clz_Torappu_RoguelikeGameStashableTicketData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeGameStashableTicketData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeGameStashableTicketDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameStashableTicketDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeGameStashableTicketDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeGameStashableTicketData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameStashableTicketData>>(dict__string__clz_Torappu_RoguelikeGameStashableTicketData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeGameStashableTicketDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeGameStashableTicketDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeGameStashableTicketData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeGameStashableTicketData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeGameStashableTicketDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeGameStashableTicketData::create(_fbb, &dict__string__clz_Torappu_RoguelikeGameStashableTicketDataArgs{
       key,
       value,
     })
@@ -36204,83 +32250,58 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
   pub const VT_BANKCOSTID: ::flatbuffers::VOffsetT = 22;
   pub const VT_BANKDRAWCOUNT: ::flatbuffers::VOffsetT = 24;
   pub const VT_BANKDRAWLIMIT: ::flatbuffers::VOffsetT = 26;
-  pub const VT_BANKREWARDCOUNTTYPE: ::flatbuffers::VOffsetT = 28;
-  pub const VT_SPZONESHOPBGMSIGNAL: ::flatbuffers::VOffsetT = 30;
-  pub const VT_MIMICENEMYIDS: ::flatbuffers::VOffsetT = 32;
-  pub const VT_BOSSIDS: ::flatbuffers::VOffsetT = 34;
-  pub const VT_GOLDCHESTTRAPID: ::flatbuffers::VOffsetT = 36;
-  pub const VT_NORMBOXTRAPID: ::flatbuffers::VOffsetT = 38;
-  pub const VT_RAREBOXTRAPID: ::flatbuffers::VOffsetT = 40;
-  pub const VT_BADBOXTRAPID: ::flatbuffers::VOffsetT = 42;
-  pub const VT_MAXHPITEMID: ::flatbuffers::VOffsetT = 44;
-  pub const VT_SHIELDITEMID: ::flatbuffers::VOffsetT = 46;
-  pub const VT_KEYITEMID: ::flatbuffers::VOffsetT = 48;
-  pub const VT_DIVINATIONKITITEMID: ::flatbuffers::VOffsetT = 50;
-  pub const VT_CHESTKEYCNT: ::flatbuffers::VOffsetT = 52;
-  pub const VT_CHESTKEYITEMID: ::flatbuffers::VOffsetT = 54;
-  pub const VT_KEYCOLORID: ::flatbuffers::VOffsetT = 56;
-  pub const VT_ONCENODETYPELIST: ::flatbuffers::VOffsetT = 58;
-  pub const VT_VERTNODECOSTDIALOGUSEITEMICONTYPE: ::flatbuffers::VOffsetT = 60;
-  pub const VT_GPSCORERATIO: ::flatbuffers::VOffsetT = 62;
-  pub const VT_OVERFLOWUSAGESQUADBUFF: ::flatbuffers::VOffsetT = 64;
-  pub const VT_SPECIALTRAPID: ::flatbuffers::VOffsetT = 66;
-  pub const VT_TRAPREWARDRELICID: ::flatbuffers::VOffsetT = 68;
-  pub const VT_UNLOCKROUTEITEMID: ::flatbuffers::VOffsetT = 70;
-  pub const VT_UNLOCKROUTEITEMCOUNT: ::flatbuffers::VOffsetT = 72;
-  pub const VT_HIDEBATTLENODENAME: ::flatbuffers::VOffsetT = 74;
-  pub const VT_HIDEBATTLENODEDESCRIPTION: ::flatbuffers::VOffsetT = 76;
-  pub const VT_HIDENONBATTLENODENAME: ::flatbuffers::VOffsetT = 78;
-  pub const VT_HIDENONBATTLENODEDESCRIPTION: ::flatbuffers::VOffsetT = 80;
-  pub const VT_CHARSELECTEXPEDITIONCONFLICTTOAST: ::flatbuffers::VOffsetT = 82;
-  pub const VT_CHARSELECTNOUPGRADECONFLICTTOAST: ::flatbuffers::VOffsetT = 84;
-  pub const VT_ITEMDROPTAGDICT: ::flatbuffers::VOffsetT = 86;
-  pub const VT_SHOPREFRESHCOSTID: ::flatbuffers::VOffsetT = 88;
-  pub const VT_EXPEDITIONLEAVETOASTFORMAT: ::flatbuffers::VOffsetT = 90;
-  pub const VT_EXPEDITIONRETURNDESCCUREUPGRADE: ::flatbuffers::VOffsetT = 92;
-  pub const VT_EXPEDITIONRETURNDESCUPGRADE: ::flatbuffers::VOffsetT = 94;
-  pub const VT_EXPEDITIONRETURNDESCCURE: ::flatbuffers::VOffsetT = 96;
-  pub const VT_EXPEDITIONRETURNDESC: ::flatbuffers::VOffsetT = 98;
-  pub const VT_EXPEDITIONSELECTDESCFORMAT: ::flatbuffers::VOffsetT = 100;
-  pub const VT_EXPEDITIONRETURNDESCITEM: ::flatbuffers::VOffsetT = 102;
-  pub const VT_EXPEDITIONRETURNREWARDBLACKLIST: ::flatbuffers::VOffsetT = 104;
-  pub const VT_TRAVELLEAVETOASTFORMAT: ::flatbuffers::VOffsetT = 106;
-  pub const VT_CHARSELECTTRAVELCONFLICTTOAST: ::flatbuffers::VOffsetT = 108;
-  pub const VT_TRAVELRETURNDESCUPGRADE: ::flatbuffers::VOffsetT = 110;
-  pub const VT_TRAVELRETURNDESC: ::flatbuffers::VOffsetT = 112;
-  pub const VT_TRAVELRETURNDESCITEM: ::flatbuffers::VOffsetT = 114;
-  pub const VT_TRADERRETURNTITLE: ::flatbuffers::VOffsetT = 116;
-  pub const VT_TRADERRETURNDESC: ::flatbuffers::VOffsetT = 118;
-  pub const VT_CANDLERETURNDESCCANDLEUPGRADE: ::flatbuffers::VOffsetT = 120;
-  pub const VT_CANDLERETURNDESCCANDLE: ::flatbuffers::VOffsetT = 122;
-  pub const VT_CHARSELECTCANDLECONFLICTTOAST: ::flatbuffers::VOffsetT = 124;
-  pub const VT_CHARSELECTGUIDEDCONFLICTTOAST: ::flatbuffers::VOffsetT = 126;
-  pub const VT_CHARSELECTNONGUIDEDCONFLICTTOAST: ::flatbuffers::VOffsetT = 128;
-  pub const VT_GAINBUFFDIFFGRADE: ::flatbuffers::VOffsetT = 130;
-  pub const VT_DSPREDICTTIPS: ::flatbuffers::VOffsetT = 132;
-  pub const VT_DSBUFFACTIVETIPS: ::flatbuffers::VOffsetT = 134;
-  pub const VT_TOTEMDESC: ::flatbuffers::VOffsetT = 136;
-  pub const VT_COPPERGILDDESC: ::flatbuffers::VOffsetT = 138;
-  pub const VT_RELICDESC: ::flatbuffers::VOffsetT = 140;
-  pub const VT_BUFFDESC: ::flatbuffers::VOffsetT = 142;
-  pub const VT_REFRESHNODEITEMID: ::flatbuffers::VOffsetT = 144;
-  pub const VT_STORINGRECRUITDESC: ::flatbuffers::VOffsetT = 146;
-  pub const VT_STORINGRECRUITSUCCEEDTOAST: ::flatbuffers::VOffsetT = 148;
-  pub const VT_SPECIALRECRUITREDUCTIONDESC: ::flatbuffers::VOffsetT = 150;
-  pub const VT_SPECIALRECRUITFUNCDESC: ::flatbuffers::VOffsetT = 152;
-  pub const VT_SPECIALRECRUITDETAILDESC: ::flatbuffers::VOffsetT = 154;
-  pub const VT_PORTALZONES: ::flatbuffers::VOffsetT = 156;
-  pub const VT_DIFFDISPLAYZONEID: ::flatbuffers::VOffsetT = 158;
-  pub const VT_EXPLOREEXPONKILL: ::flatbuffers::VOffsetT = 160;
-  pub const VT_FUSIONNAME: ::flatbuffers::VOffsetT = 162;
-  pub const VT_FUSIONNOTIFYTOAST: ::flatbuffers::VOffsetT = 164;
-  pub const VT_HAVESPZONE: ::flatbuffers::VOffsetT = 166;
-  pub const VT_GOTCHARCANDLEBUFFTOAST: ::flatbuffers::VOffsetT = 168;
-  pub const VT_GOTCHARSCANDLEBUFFTOAST: ::flatbuffers::VOffsetT = 170;
-  pub const VT_STASHEDRECRUITNODEDESCRIPTION: ::flatbuffers::VOffsetT = 172;
-  pub const VT_STASHEDRECRUITEMPTYNODEDESCRIPTION: ::flatbuffers::VOffsetT = 174;
-  pub const VT_RECRUITSTASHMAXNUM: ::flatbuffers::VOffsetT = 176;
-  pub const VT_RECRUITSTASHMINNUM: ::flatbuffers::VOffsetT = 178;
-  pub const VT_HASTOPICCHARSELECTMENUBUTTON: ::flatbuffers::VOffsetT = 180;
+  pub const VT_MIMICENEMYIDS: ::flatbuffers::VOffsetT = 28;
+  pub const VT_BOSSIDS: ::flatbuffers::VOffsetT = 30;
+  pub const VT_GOLDCHESTTRAPID: ::flatbuffers::VOffsetT = 32;
+  pub const VT_NORMBOXTRAPID: ::flatbuffers::VOffsetT = 34;
+  pub const VT_RAREBOXTRAPID: ::flatbuffers::VOffsetT = 36;
+  pub const VT_BADBOXTRAPID: ::flatbuffers::VOffsetT = 38;
+  pub const VT_MAXHPITEMID: ::flatbuffers::VOffsetT = 40;
+  pub const VT_SHIELDITEMID: ::flatbuffers::VOffsetT = 42;
+  pub const VT_KEYITEMID: ::flatbuffers::VOffsetT = 44;
+  pub const VT_CHESTKEYCNT: ::flatbuffers::VOffsetT = 46;
+  pub const VT_CHESTKEYITEMID: ::flatbuffers::VOffsetT = 48;
+  pub const VT_KEYCOLORID: ::flatbuffers::VOffsetT = 50;
+  pub const VT_ONCENODETYPELIST: ::flatbuffers::VOffsetT = 52;
+  pub const VT_GPSCORERATIO: ::flatbuffers::VOffsetT = 54;
+  pub const VT_OVERFLOWUSAGESQUADBUFF: ::flatbuffers::VOffsetT = 56;
+  pub const VT_SPECIALTRAPID: ::flatbuffers::VOffsetT = 58;
+  pub const VT_TRAPREWARDRELICID: ::flatbuffers::VOffsetT = 60;
+  pub const VT_UNLOCKROUTEITEMID: ::flatbuffers::VOffsetT = 62;
+  pub const VT_UNLOCKROUTEITEMCOUNT: ::flatbuffers::VOffsetT = 64;
+  pub const VT_HIDEBATTLENODENAME: ::flatbuffers::VOffsetT = 66;
+  pub const VT_HIDEBATTLENODEDESCRIPTION: ::flatbuffers::VOffsetT = 68;
+  pub const VT_HIDENONBATTLENODENAME: ::flatbuffers::VOffsetT = 70;
+  pub const VT_HIDENONBATTLENODEDESCRIPTION: ::flatbuffers::VOffsetT = 72;
+  pub const VT_CHARSELECTEXPEDITIONCONFLICTTOAST: ::flatbuffers::VOffsetT = 74;
+  pub const VT_ITEMDROPTAGDICT: ::flatbuffers::VOffsetT = 76;
+  pub const VT_EXPEDITIONLEAVETOASTFORMAT: ::flatbuffers::VOffsetT = 78;
+  pub const VT_EXPEDITIONRETURNDESCCUREUPGRADE: ::flatbuffers::VOffsetT = 80;
+  pub const VT_EXPEDITIONRETURNDESCUPGRADE: ::flatbuffers::VOffsetT = 82;
+  pub const VT_EXPEDITIONRETURNDESCCURE: ::flatbuffers::VOffsetT = 84;
+  pub const VT_EXPEDITIONRETURNDESC: ::flatbuffers::VOffsetT = 86;
+  pub const VT_EXPEDITIONSELECTDESCFORMAT: ::flatbuffers::VOffsetT = 88;
+  pub const VT_EXPEDITIONRETURNDESCITEM: ::flatbuffers::VOffsetT = 90;
+  pub const VT_EXPEDITIONRETURNREWARDBLACKLIST: ::flatbuffers::VOffsetT = 92;
+  pub const VT_TRAVELLEAVETOASTFORMAT: ::flatbuffers::VOffsetT = 94;
+  pub const VT_CHARSELECTTRAVELCONFLICTTOAST: ::flatbuffers::VOffsetT = 96;
+  pub const VT_TRAVELRETURNDESCUPGRADE: ::flatbuffers::VOffsetT = 98;
+  pub const VT_TRAVELRETURNDESC: ::flatbuffers::VOffsetT = 100;
+  pub const VT_TRAVELRETURNDESCITEM: ::flatbuffers::VOffsetT = 102;
+  pub const VT_TRADERRETURNTITLE: ::flatbuffers::VOffsetT = 104;
+  pub const VT_TRADERRETURNDESC: ::flatbuffers::VOffsetT = 106;
+  pub const VT_GAINBUFFDIFFGRADE: ::flatbuffers::VOffsetT = 108;
+  pub const VT_DSPREDICTTIPS: ::flatbuffers::VOffsetT = 110;
+  pub const VT_DSBUFFACTIVETIPS: ::flatbuffers::VOffsetT = 112;
+  pub const VT_TOTEMDESC: ::flatbuffers::VOffsetT = 114;
+  pub const VT_RELICDESC: ::flatbuffers::VOffsetT = 116;
+  pub const VT_BUFFDESC: ::flatbuffers::VOffsetT = 118;
+  pub const VT_REFRESHNODEITEMID: ::flatbuffers::VOffsetT = 120;
+  pub const VT_PORTALZONES: ::flatbuffers::VOffsetT = 122;
+  pub const VT_SPECIALFAILZONEID: ::flatbuffers::VOffsetT = 124;
+  pub const VT_EXPLOREEXPONKILL: ::flatbuffers::VOffsetT = 126;
+  pub const VT_FUSIONNAME: ::flatbuffers::VOffsetT = 128;
+  pub const VT_FUSIONNOTIFYTOAST: ::flatbuffers::VOffsetT = 130;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -36292,35 +32313,18 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     args: &'args clz_Torappu_RoguelikeGameConstArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameConst<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeGameConstBuilder::new(_fbb);
-    builder.add_recruitStashMinNum(args.recruitStashMinNum);
-    builder.add_recruitStashMaxNum(args.recruitStashMaxNum);
-    if let Some(x) = args.stashedRecruitEmptyNodeDescription { builder.add_stashedRecruitEmptyNodeDescription(x); }
-    if let Some(x) = args.stashedRecruitNodeDescription { builder.add_stashedRecruitNodeDescription(x); }
-    if let Some(x) = args.gotCharsCandleBuffToast { builder.add_gotCharsCandleBuffToast(x); }
-    if let Some(x) = args.gotCharCandleBuffToast { builder.add_gotCharCandleBuffToast(x); }
     if let Some(x) = args.fusionNotifyToast { builder.add_fusionNotifyToast(x); }
     if let Some(x) = args.fusionName { builder.add_fusionName(x); }
     if let Some(x) = args.exploreExpOnKill { builder.add_exploreExpOnKill(x); }
-    if let Some(x) = args.diffDisplayZoneId { builder.add_diffDisplayZoneId(x); }
+    if let Some(x) = args.specialFailZoneId { builder.add_specialFailZoneId(x); }
     if let Some(x) = args.portalZones { builder.add_portalZones(x); }
-    if let Some(x) = args.specialRecruitDetailDesc { builder.add_specialRecruitDetailDesc(x); }
-    if let Some(x) = args.specialRecruitFuncDesc { builder.add_specialRecruitFuncDesc(x); }
-    if let Some(x) = args.specialRecruitReductionDesc { builder.add_specialRecruitReductionDesc(x); }
-    if let Some(x) = args.storingRecruitSucceedToast { builder.add_storingRecruitSucceedToast(x); }
-    if let Some(x) = args.storingRecruitDesc { builder.add_storingRecruitDesc(x); }
     if let Some(x) = args.refreshNodeItemId { builder.add_refreshNodeItemId(x); }
     if let Some(x) = args.buffDesc { builder.add_buffDesc(x); }
     if let Some(x) = args.relicDesc { builder.add_relicDesc(x); }
-    if let Some(x) = args.copperGildDesc { builder.add_copperGildDesc(x); }
     if let Some(x) = args.totemDesc { builder.add_totemDesc(x); }
     if let Some(x) = args.dsBuffActiveTips { builder.add_dsBuffActiveTips(x); }
     if let Some(x) = args.dsPredictTips { builder.add_dsPredictTips(x); }
     builder.add_gainBuffDiffGrade(args.gainBuffDiffGrade);
-    if let Some(x) = args.charSelectNonGuidedConflictToast { builder.add_charSelectNonGuidedConflictToast(x); }
-    if let Some(x) = args.charSelectGuidedConflictToast { builder.add_charSelectGuidedConflictToast(x); }
-    if let Some(x) = args.charSelectCandleConflictToast { builder.add_charSelectCandleConflictToast(x); }
-    if let Some(x) = args.candleReturnDescCandle { builder.add_candleReturnDescCandle(x); }
-    if let Some(x) = args.candleReturnDescCandleUpgrade { builder.add_candleReturnDescCandleUpgrade(x); }
     if let Some(x) = args.traderReturnDesc { builder.add_traderReturnDesc(x); }
     if let Some(x) = args.traderReturnTitle { builder.add_traderReturnTitle(x); }
     if let Some(x) = args.travelReturnDescItem { builder.add_travelReturnDescItem(x); }
@@ -36336,9 +32340,7 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     if let Some(x) = args.expeditionReturnDescUpgrade { builder.add_expeditionReturnDescUpgrade(x); }
     if let Some(x) = args.expeditionReturnDescCureUpgrade { builder.add_expeditionReturnDescCureUpgrade(x); }
     if let Some(x) = args.expeditionLeaveToastFormat { builder.add_expeditionLeaveToastFormat(x); }
-    if let Some(x) = args.shopRefreshCostId { builder.add_shopRefreshCostId(x); }
     if let Some(x) = args.itemDropTagDict { builder.add_itemDropTagDict(x); }
-    if let Some(x) = args.charSelectNoUpgradeConflictToast { builder.add_charSelectNoUpgradeConflictToast(x); }
     if let Some(x) = args.charSelectExpeditionConflictToast { builder.add_charSelectExpeditionConflictToast(x); }
     if let Some(x) = args.hideNonBattleNodeDescription { builder.add_hideNonBattleNodeDescription(x); }
     if let Some(x) = args.hideNonBattleNodeName { builder.add_hideNonBattleNodeName(x); }
@@ -36354,7 +32356,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     if let Some(x) = args.keyColorId { builder.add_keyColorId(x); }
     if let Some(x) = args.chestKeyItemId { builder.add_chestKeyItemId(x); }
     builder.add_chestKeyCnt(args.chestKeyCnt);
-    if let Some(x) = args.divinationKitItemId { builder.add_divinationKitItemId(x); }
     if let Some(x) = args.keyItemId { builder.add_keyItemId(x); }
     if let Some(x) = args.shieldItemId { builder.add_shieldItemId(x); }
     if let Some(x) = args.maxHpItemId { builder.add_maxHpItemId(x); }
@@ -36364,8 +32365,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     if let Some(x) = args.goldChestTrapId { builder.add_goldChestTrapId(x); }
     if let Some(x) = args.bossIds { builder.add_bossIds(x); }
     if let Some(x) = args.mimicEnemyIds { builder.add_mimicEnemyIds(x); }
-    if let Some(x) = args.spZoneShopBgmSignal { builder.add_spZoneShopBgmSignal(x); }
-    builder.add_bankRewardCountType(args.bankRewardCountType);
     builder.add_bankDrawLimit(args.bankDrawLimit);
     builder.add_bankDrawCount(args.bankDrawCount);
     if let Some(x) = args.bankCostId { builder.add_bankCostId(x); }
@@ -36377,9 +32376,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     if let Some(x) = args.hpItemId { builder.add_hpItemId(x); }
     if let Some(x) = args.failSceneName { builder.add_failSceneName(x); }
     if let Some(x) = args.initSceneName { builder.add_initSceneName(x); }
-    builder.add_hasTopicCharSelectMenuButton(args.hasTopicCharSelectMenuButton);
-    builder.add_haveSpZone(args.haveSpZone);
-    builder.add_vertNodeCostDialogUseItemIconType(args.vertNodeCostDialogUseItemIconType);
     builder.add_initialBandShowGradeFlag(args.initialBandShowGradeFlag);
     builder.finish()
   }
@@ -36413,10 +32409,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     });
     let bankDrawCount = self.bankDrawCount();
     let bankDrawLimit = self.bankDrawLimit();
-    let bankRewardCountType = self.bankRewardCountType();
-    let spZoneShopBgmSignal = self.spZoneShopBgmSignal().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let mimicEnemyIds = self.mimicEnemyIds().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
@@ -36444,9 +32436,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let keyItemId = self.keyItemId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let divinationKitItemId = self.divinationKitItemId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let chestKeyCnt = self.chestKeyCnt();
     let chestKeyItemId = self.chestKeyItemId().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -36457,7 +32446,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let onceNodeTypeList = self.onceNodeTypeList().map(|x| {
       x.into_iter().collect()
     });
-    let vertNodeCostDialogUseItemIconType = self.vertNodeCostDialogUseItemIconType();
     let gpScoreRatio = self.gpScoreRatio();
     let overflowUsageSquadBuff = self.overflowUsageSquadBuff().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -36487,14 +32475,8 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let charSelectExpeditionConflictToast = self.charSelectExpeditionConflictToast().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let charSelectNoUpgradeConflictToast = self.charSelectNoUpgradeConflictToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let itemDropTagDict = self.itemDropTagDict().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
-    });
-    let shopRefreshCostId = self.shopRefreshCostId().map(|x| {
-      alloc::string::ToString::to_string(x)
     });
     let expeditionLeaveToastFormat = self.expeditionLeaveToastFormat().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -36541,21 +32523,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let traderReturnDesc = self.traderReturnDesc().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let candleReturnDescCandleUpgrade = self.candleReturnDescCandleUpgrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let candleReturnDescCandle = self.candleReturnDescCandle().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let charSelectCandleConflictToast = self.charSelectCandleConflictToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let charSelectGuidedConflictToast = self.charSelectGuidedConflictToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let charSelectNonGuidedConflictToast = self.charSelectNonGuidedConflictToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let gainBuffDiffGrade = self.gainBuffDiffGrade();
     let dsPredictTips = self.dsPredictTips().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -36564,9 +32531,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
       alloc::string::ToString::to_string(x)
     });
     let totemDesc = self.totemDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let copperGildDesc = self.copperGildDesc().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let relicDesc = self.relicDesc().map(|x| {
@@ -36578,25 +32542,10 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let refreshNodeItemId = self.refreshNodeItemId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let storingRecruitDesc = self.storingRecruitDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let storingRecruitSucceedToast = self.storingRecruitSucceedToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let specialRecruitReductionDesc = self.specialRecruitReductionDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let specialRecruitFuncDesc = self.specialRecruitFuncDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let specialRecruitDetailDesc = self.specialRecruitDetailDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let portalZones = self.portalZones().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
-    let diffDisplayZoneId = self.diffDisplayZoneId().map(|x| {
+    let specialFailZoneId = self.specialFailZoneId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let exploreExpOnKill = self.exploreExpOnKill().map(|x| {
@@ -36608,22 +32557,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     let fusionNotifyToast = self.fusionNotifyToast().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let haveSpZone = self.haveSpZone();
-    let gotCharCandleBuffToast = self.gotCharCandleBuffToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gotCharsCandleBuffToast = self.gotCharsCandleBuffToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let stashedRecruitNodeDescription = self.stashedRecruitNodeDescription().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let stashedRecruitEmptyNodeDescription = self.stashedRecruitEmptyNodeDescription().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let recruitStashMaxNum = self.recruitStashMaxNum();
-    let recruitStashMinNum = self.recruitStashMinNum();
-    let hasTopicCharSelectMenuButton = self.hasTopicCharSelectMenuButton();
     clz_Torappu_RoguelikeGameConstT {
       initSceneName,
       failSceneName,
@@ -36637,8 +32570,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
       bankCostId,
       bankDrawCount,
       bankDrawLimit,
-      bankRewardCountType,
-      spZoneShopBgmSignal,
       mimicEnemyIds,
       bossIds,
       goldChestTrapId,
@@ -36648,12 +32579,10 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
       maxHpItemId,
       shieldItemId,
       keyItemId,
-      divinationKitItemId,
       chestKeyCnt,
       chestKeyItemId,
       keyColorId,
       onceNodeTypeList,
-      vertNodeCostDialogUseItemIconType,
       gpScoreRatio,
       overflowUsageSquadBuff,
       specialTrapId,
@@ -36665,9 +32594,7 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
       hideNonBattleNodeName,
       hideNonBattleNodeDescription,
       charSelectExpeditionConflictToast,
-      charSelectNoUpgradeConflictToast,
       itemDropTagDict,
-      shopRefreshCostId,
       expeditionLeaveToastFormat,
       expeditionReturnDescCureUpgrade,
       expeditionReturnDescUpgrade,
@@ -36683,37 +32610,18 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
       travelReturnDescItem,
       traderReturnTitle,
       traderReturnDesc,
-      candleReturnDescCandleUpgrade,
-      candleReturnDescCandle,
-      charSelectCandleConflictToast,
-      charSelectGuidedConflictToast,
-      charSelectNonGuidedConflictToast,
       gainBuffDiffGrade,
       dsPredictTips,
       dsBuffActiveTips,
       totemDesc,
-      copperGildDesc,
       relicDesc,
       buffDesc,
       refreshNodeItemId,
-      storingRecruitDesc,
-      storingRecruitSucceedToast,
-      specialRecruitReductionDesc,
-      specialRecruitFuncDesc,
-      specialRecruitDetailDesc,
       portalZones,
-      diffDisplayZoneId,
+      specialFailZoneId,
       exploreExpOnKill,
       fusionName,
       fusionNotifyToast,
-      haveSpZone,
-      gotCharCandleBuffToast,
-      gotCharsCandleBuffToast,
-      stashedRecruitNodeDescription,
-      stashedRecruitEmptyNodeDescription,
-      recruitStashMaxNum,
-      recruitStashMinNum,
-      hasTopicCharSelectMenuButton,
     }
   }
 
@@ -36802,20 +32710,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeGameConst::VT_BANKDRAWLIMIT, Some(0)).unwrap()}
   }
   #[inline]
-  pub fn bankRewardCountType(&self) -> enum__Torappu_RoguelikeBankRewardCountType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeBankRewardCountType>(clz_Torappu_RoguelikeGameConst::VT_BANKREWARDCOUNTTYPE, Some(enum__Torappu_RoguelikeBankRewardCountType::HIGHEST_RECORD)).unwrap()}
-  }
-  #[inline]
-  pub fn spZoneShopBgmSignal(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SPZONESHOPBGMSIGNAL, None)}
-  }
-  #[inline]
   pub fn mimicEnemyIds(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
     // Safety:
     // Created from valid Table for this object
@@ -36879,13 +32773,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_KEYITEMID, None)}
   }
   #[inline]
-  pub fn divinationKitItemId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_DIVINATIONKITITEMID, None)}
-  }
-  #[inline]
   pub fn chestKeyCnt(&self) -> i32 {
     // Safety:
     // Created from valid Table for this object
@@ -36912,13 +32799,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, enum__Torappu_RoguelikeEventType>>>(clz_Torappu_RoguelikeGameConst::VT_ONCENODETYPELIST, None)}
-  }
-  #[inline]
-  pub fn vertNodeCostDialogUseItemIconType(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeGameConst::VT_VERTNODECOSTDIALOGUSEITEMICONTYPE, Some(false)).unwrap()}
   }
   #[inline]
   pub fn gpScoreRatio(&self) -> i32 {
@@ -36998,25 +32878,11 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTEXPEDITIONCONFLICTTOAST, None)}
   }
   #[inline]
-  pub fn charSelectNoUpgradeConflictToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTNOUPGRADECONFLICTTOAST, None)}
-  }
-  #[inline]
   pub fn itemDropTagDict(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string<'a>>>> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string>>>>(clz_Torappu_RoguelikeGameConst::VT_ITEMDROPTAGDICT, None)}
-  }
-  #[inline]
-  pub fn shopRefreshCostId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SHOPREFRESHCOSTID, None)}
   }
   #[inline]
   pub fn expeditionLeaveToastFormat(&self) -> Option<&'a str> {
@@ -37124,41 +32990,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_TRADERRETURNDESC, None)}
   }
   #[inline]
-  pub fn candleReturnDescCandleUpgrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CANDLERETURNDESCCANDLEUPGRADE, None)}
-  }
-  #[inline]
-  pub fn candleReturnDescCandle(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CANDLERETURNDESCCANDLE, None)}
-  }
-  #[inline]
-  pub fn charSelectCandleConflictToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTCANDLECONFLICTTOAST, None)}
-  }
-  #[inline]
-  pub fn charSelectGuidedConflictToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTGUIDEDCONFLICTTOAST, None)}
-  }
-  #[inline]
-  pub fn charSelectNonGuidedConflictToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTNONGUIDEDCONFLICTTOAST, None)}
-  }
-  #[inline]
   pub fn gainBuffDiffGrade(&self) -> i32 {
     // Safety:
     // Created from valid Table for this object
@@ -37187,13 +33018,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_TOTEMDESC, None)}
   }
   #[inline]
-  pub fn copperGildDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_COPPERGILDDESC, None)}
-  }
-  #[inline]
   pub fn relicDesc(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -37215,41 +33039,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_REFRESHNODEITEMID, None)}
   }
   #[inline]
-  pub fn storingRecruitDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_STORINGRECRUITDESC, None)}
-  }
-  #[inline]
-  pub fn storingRecruitSucceedToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_STORINGRECRUITSUCCEEDTOAST, None)}
-  }
-  #[inline]
-  pub fn specialRecruitReductionDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITREDUCTIONDESC, None)}
-  }
-  #[inline]
-  pub fn specialRecruitFuncDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITFUNCDESC, None)}
-  }
-  #[inline]
-  pub fn specialRecruitDetailDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITDETAILDESC, None)}
-  }
-  #[inline]
   pub fn portalZones(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
     // Safety:
     // Created from valid Table for this object
@@ -37257,11 +33046,11 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RoguelikeGameConst::VT_PORTALZONES, None)}
   }
   #[inline]
-  pub fn diffDisplayZoneId(&self) -> Option<&'a str> {
+  pub fn specialFailZoneId(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_DIFFDISPLAYZONEID, None)}
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALFAILZONEID, None)}
   }
   #[inline]
   pub fn exploreExpOnKill(&self) -> Option<&'a str> {
@@ -37284,62 +33073,6 @@ impl<'a> clz_Torappu_RoguelikeGameConst<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_FUSIONNOTIFYTOAST, None)}
   }
-  #[inline]
-  pub fn haveSpZone(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeGameConst::VT_HAVESPZONE, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn gotCharCandleBuffToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_GOTCHARCANDLEBUFFTOAST, None)}
-  }
-  #[inline]
-  pub fn gotCharsCandleBuffToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_GOTCHARSCANDLEBUFFTOAST, None)}
-  }
-  #[inline]
-  pub fn stashedRecruitNodeDescription(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_STASHEDRECRUITNODEDESCRIPTION, None)}
-  }
-  #[inline]
-  pub fn stashedRecruitEmptyNodeDescription(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameConst::VT_STASHEDRECRUITEMPTYNODEDESCRIPTION, None)}
-  }
-  #[inline]
-  pub fn recruitStashMaxNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeGameConst::VT_RECRUITSTASHMAXNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn recruitStashMinNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeGameConst::VT_RECRUITSTASHMINNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn hasTopicCharSelectMenuButton(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeGameConst::VT_HASTOPICCHARSELECTMENUBUTTON, Some(false)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameConst<'_> {
@@ -37360,8 +33093,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameConst<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("bankCostId", Self::VT_BANKCOSTID, false)?
      .visit_field::<i32>("bankDrawCount", Self::VT_BANKDRAWCOUNT, false)?
      .visit_field::<i32>("bankDrawLimit", Self::VT_BANKDRAWLIMIT, false)?
-     .visit_field::<enum__Torappu_RoguelikeBankRewardCountType>("bankRewardCountType", Self::VT_BANKREWARDCOUNTTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spZoneShopBgmSignal", Self::VT_SPZONESHOPBGMSIGNAL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("mimicEnemyIds", Self::VT_MIMICENEMYIDS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("bossIds", Self::VT_BOSSIDS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("goldChestTrapId", Self::VT_GOLDCHESTTRAPID, false)?
@@ -37371,12 +33102,10 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameConst<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("maxHpItemId", Self::VT_MAXHPITEMID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("shieldItemId", Self::VT_SHIELDITEMID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("keyItemId", Self::VT_KEYITEMID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("divinationKitItemId", Self::VT_DIVINATIONKITITEMID, false)?
      .visit_field::<i32>("chestKeyCnt", Self::VT_CHESTKEYCNT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("chestKeyItemId", Self::VT_CHESTKEYITEMID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("keyColorId", Self::VT_KEYCOLORID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, enum__Torappu_RoguelikeEventType>>>("onceNodeTypeList", Self::VT_ONCENODETYPELIST, false)?
-     .visit_field::<bool>("vertNodeCostDialogUseItemIconType", Self::VT_VERTNODECOSTDIALOGUSEITEMICONTYPE, false)?
      .visit_field::<i32>("gpScoreRatio", Self::VT_GPSCORERATIO, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("overflowUsageSquadBuff", Self::VT_OVERFLOWUSAGESQUADBUFF, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("specialTrapId", Self::VT_SPECIALTRAPID, false)?
@@ -37388,9 +33117,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameConst<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("hideNonBattleNodeName", Self::VT_HIDENONBATTLENODENAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("hideNonBattleNodeDescription", Self::VT_HIDENONBATTLENODEDESCRIPTION, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charSelectExpeditionConflictToast", Self::VT_CHARSELECTEXPEDITIONCONFLICTTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charSelectNoUpgradeConflictToast", Self::VT_CHARSELECTNOUPGRADECONFLICTTOAST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string>>>>("itemDropTagDict", Self::VT_ITEMDROPTAGDICT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("shopRefreshCostId", Self::VT_SHOPREFRESHCOSTID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("expeditionLeaveToastFormat", Self::VT_EXPEDITIONLEAVETOASTFORMAT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("expeditionReturnDescCureUpgrade", Self::VT_EXPEDITIONRETURNDESCCUREUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("expeditionReturnDescUpgrade", Self::VT_EXPEDITIONRETURNDESCUPGRADE, false)?
@@ -37406,37 +33133,18 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameConst<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("travelReturnDescItem", Self::VT_TRAVELRETURNDESCITEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("traderReturnTitle", Self::VT_TRADERRETURNTITLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("traderReturnDesc", Self::VT_TRADERRETURNDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("candleReturnDescCandleUpgrade", Self::VT_CANDLERETURNDESCCANDLEUPGRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("candleReturnDescCandle", Self::VT_CANDLERETURNDESCCANDLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charSelectCandleConflictToast", Self::VT_CHARSELECTCANDLECONFLICTTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charSelectGuidedConflictToast", Self::VT_CHARSELECTGUIDEDCONFLICTTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charSelectNonGuidedConflictToast", Self::VT_CHARSELECTNONGUIDEDCONFLICTTOAST, false)?
      .visit_field::<i32>("gainBuffDiffGrade", Self::VT_GAINBUFFDIFFGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dsPredictTips", Self::VT_DSPREDICTTIPS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dsBuffActiveTips", Self::VT_DSBUFFACTIVETIPS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("totemDesc", Self::VT_TOTEMDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("copperGildDesc", Self::VT_COPPERGILDDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("relicDesc", Self::VT_RELICDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("buffDesc", Self::VT_BUFFDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("refreshNodeItemId", Self::VT_REFRESHNODEITEMID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("storingRecruitDesc", Self::VT_STORINGRECRUITDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("storingRecruitSucceedToast", Self::VT_STORINGRECRUITSUCCEEDTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("specialRecruitReductionDesc", Self::VT_SPECIALRECRUITREDUCTIONDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("specialRecruitFuncDesc", Self::VT_SPECIALRECRUITFUNCDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("specialRecruitDetailDesc", Self::VT_SPECIALRECRUITDETAILDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("portalZones", Self::VT_PORTALZONES, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("diffDisplayZoneId", Self::VT_DIFFDISPLAYZONEID, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("specialFailZoneId", Self::VT_SPECIALFAILZONEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("exploreExpOnKill", Self::VT_EXPLOREEXPONKILL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("fusionName", Self::VT_FUSIONNAME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("fusionNotifyToast", Self::VT_FUSIONNOTIFYTOAST, false)?
-     .visit_field::<bool>("haveSpZone", Self::VT_HAVESPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gotCharCandleBuffToast", Self::VT_GOTCHARCANDLEBUFFTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gotCharsCandleBuffToast", Self::VT_GOTCHARSCANDLEBUFFTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("stashedRecruitNodeDescription", Self::VT_STASHEDRECRUITNODEDESCRIPTION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("stashedRecruitEmptyNodeDescription", Self::VT_STASHEDRECRUITEMPTYNODEDESCRIPTION, false)?
-     .visit_field::<i32>("recruitStashMaxNum", Self::VT_RECRUITSTASHMAXNUM, false)?
-     .visit_field::<i32>("recruitStashMinNum", Self::VT_RECRUITSTASHMINNUM, false)?
-     .visit_field::<bool>("hasTopicCharSelectMenuButton", Self::VT_HASTOPICCHARSELECTMENUBUTTON, false)?
      .finish();
     Ok(())
   }
@@ -37454,8 +33162,6 @@ pub struct clz_Torappu_RoguelikeGameConstArgs<'a> {
     pub bankCostId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub bankDrawCount: i32,
     pub bankDrawLimit: i32,
-    pub bankRewardCountType: enum__Torappu_RoguelikeBankRewardCountType,
-    pub spZoneShopBgmSignal: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub mimicEnemyIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub bossIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub goldChestTrapId: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -37465,12 +33171,10 @@ pub struct clz_Torappu_RoguelikeGameConstArgs<'a> {
     pub maxHpItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub shieldItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub keyItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub divinationKitItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub chestKeyCnt: i32,
     pub chestKeyItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub keyColorId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub onceNodeTypeList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, enum__Torappu_RoguelikeEventType>>>,
-    pub vertNodeCostDialogUseItemIconType: bool,
     pub gpScoreRatio: i32,
     pub overflowUsageSquadBuff: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub specialTrapId: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -37482,9 +33186,7 @@ pub struct clz_Torappu_RoguelikeGameConstArgs<'a> {
     pub hideNonBattleNodeName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub hideNonBattleNodeDescription: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub charSelectExpeditionConflictToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub charSelectNoUpgradeConflictToast: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub itemDropTagDict: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string<'a>>>>>,
-    pub shopRefreshCostId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub expeditionLeaveToastFormat: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub expeditionReturnDescCureUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub expeditionReturnDescUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -37500,37 +33202,18 @@ pub struct clz_Torappu_RoguelikeGameConstArgs<'a> {
     pub travelReturnDescItem: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub traderReturnTitle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub traderReturnDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub candleReturnDescCandleUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub candleReturnDescCandle: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub charSelectCandleConflictToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub charSelectGuidedConflictToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub charSelectNonGuidedConflictToast: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub gainBuffDiffGrade: i32,
     pub dsPredictTips: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub dsBuffActiveTips: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub totemDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub copperGildDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub relicDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub buffDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub refreshNodeItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub storingRecruitDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub storingRecruitSucceedToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub specialRecruitReductionDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub specialRecruitFuncDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub specialRecruitDetailDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub portalZones: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub diffDisplayZoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub specialFailZoneId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub exploreExpOnKill: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub fusionName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub fusionNotifyToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub haveSpZone: bool,
-    pub gotCharCandleBuffToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gotCharsCandleBuffToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub stashedRecruitNodeDescription: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub stashedRecruitEmptyNodeDescription: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub recruitStashMaxNum: i32,
-    pub recruitStashMinNum: i32,
-    pub hasTopicCharSelectMenuButton: bool,
 }
 impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
   #[inline]
@@ -37548,8 +33231,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
       bankCostId: None,
       bankDrawCount: 0,
       bankDrawLimit: 0,
-      bankRewardCountType: enum__Torappu_RoguelikeBankRewardCountType::HIGHEST_RECORD,
-      spZoneShopBgmSignal: None,
       mimicEnemyIds: None,
       bossIds: None,
       goldChestTrapId: None,
@@ -37559,12 +33240,10 @@ impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
       maxHpItemId: None,
       shieldItemId: None,
       keyItemId: None,
-      divinationKitItemId: None,
       chestKeyCnt: 0,
       chestKeyItemId: None,
       keyColorId: None,
       onceNodeTypeList: None,
-      vertNodeCostDialogUseItemIconType: false,
       gpScoreRatio: 0,
       overflowUsageSquadBuff: None,
       specialTrapId: None,
@@ -37576,9 +33255,7 @@ impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
       hideNonBattleNodeName: None,
       hideNonBattleNodeDescription: None,
       charSelectExpeditionConflictToast: None,
-      charSelectNoUpgradeConflictToast: None,
       itemDropTagDict: None,
-      shopRefreshCostId: None,
       expeditionLeaveToastFormat: None,
       expeditionReturnDescCureUpgrade: None,
       expeditionReturnDescUpgrade: None,
@@ -37594,37 +33271,18 @@ impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
       travelReturnDescItem: None,
       traderReturnTitle: None,
       traderReturnDesc: None,
-      candleReturnDescCandleUpgrade: None,
-      candleReturnDescCandle: None,
-      charSelectCandleConflictToast: None,
-      charSelectGuidedConflictToast: None,
-      charSelectNonGuidedConflictToast: None,
       gainBuffDiffGrade: 0,
       dsPredictTips: None,
       dsBuffActiveTips: None,
       totemDesc: None,
-      copperGildDesc: None,
       relicDesc: None,
       buffDesc: None,
       refreshNodeItemId: None,
-      storingRecruitDesc: None,
-      storingRecruitSucceedToast: None,
-      specialRecruitReductionDesc: None,
-      specialRecruitFuncDesc: None,
-      specialRecruitDetailDesc: None,
       portalZones: None,
-      diffDisplayZoneId: None,
+      specialFailZoneId: None,
       exploreExpOnKill: None,
       fusionName: None,
       fusionNotifyToast: None,
-      haveSpZone: false,
-      gotCharCandleBuffToast: None,
-      gotCharsCandleBuffToast: None,
-      stashedRecruitNodeDescription: None,
-      stashedRecruitEmptyNodeDescription: None,
-      recruitStashMaxNum: 0,
-      recruitStashMinNum: 0,
-      hasTopicCharSelectMenuButton: false,
     }
   }
 }
@@ -37684,14 +33342,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameConst::VT_BANKDRAWLIMIT, bankDrawLimit, 0);
   }
   #[inline]
-  pub fn add_bankRewardCountType(&mut self, bankRewardCountType: enum__Torappu_RoguelikeBankRewardCountType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeBankRewardCountType>(clz_Torappu_RoguelikeGameConst::VT_BANKREWARDCOUNTTYPE, bankRewardCountType, enum__Torappu_RoguelikeBankRewardCountType::HIGHEST_RECORD);
-  }
-  #[inline]
-  pub fn add_spZoneShopBgmSignal(&mut self, spZoneShopBgmSignal: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SPZONESHOPBGMSIGNAL, spZoneShopBgmSignal);
-  }
-  #[inline]
   pub fn add_mimicEnemyIds(&mut self, mimicEnemyIds: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_MIMICENEMYIDS, mimicEnemyIds);
   }
@@ -37728,10 +33378,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_KEYITEMID, keyItemId);
   }
   #[inline]
-  pub fn add_divinationKitItemId(&mut self, divinationKitItemId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_DIVINATIONKITITEMID, divinationKitItemId);
-  }
-  #[inline]
   pub fn add_chestKeyCnt(&mut self, chestKeyCnt: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameConst::VT_CHESTKEYCNT, chestKeyCnt, 0);
   }
@@ -37746,10 +33392,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
   #[inline]
   pub fn add_onceNodeTypeList(&mut self, onceNodeTypeList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , enum__Torappu_RoguelikeEventType>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_ONCENODETYPELIST, onceNodeTypeList);
-  }
-  #[inline]
-  pub fn add_vertNodeCostDialogUseItemIconType(&mut self, vertNodeCostDialogUseItemIconType: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeGameConst::VT_VERTNODECOSTDIALOGUSEITEMICONTYPE, vertNodeCostDialogUseItemIconType, false);
   }
   #[inline]
   pub fn add_gpScoreRatio(&mut self, gpScoreRatio: i32) {
@@ -37796,16 +33438,8 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTEXPEDITIONCONFLICTTOAST, charSelectExpeditionConflictToast);
   }
   #[inline]
-  pub fn add_charSelectNoUpgradeConflictToast(&mut self, charSelectNoUpgradeConflictToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTNOUPGRADECONFLICTTOAST, charSelectNoUpgradeConflictToast);
-  }
-  #[inline]
   pub fn add_itemDropTagDict(&mut self, itemDropTagDict: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string<'b >>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_ITEMDROPTAGDICT, itemDropTagDict);
-  }
-  #[inline]
-  pub fn add_shopRefreshCostId(&mut self, shopRefreshCostId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SHOPREFRESHCOSTID, shopRefreshCostId);
   }
   #[inline]
   pub fn add_expeditionLeaveToastFormat(&mut self, expeditionLeaveToastFormat: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -37868,26 +33502,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_TRADERRETURNDESC, traderReturnDesc);
   }
   #[inline]
-  pub fn add_candleReturnDescCandleUpgrade(&mut self, candleReturnDescCandleUpgrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CANDLERETURNDESCCANDLEUPGRADE, candleReturnDescCandleUpgrade);
-  }
-  #[inline]
-  pub fn add_candleReturnDescCandle(&mut self, candleReturnDescCandle: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CANDLERETURNDESCCANDLE, candleReturnDescCandle);
-  }
-  #[inline]
-  pub fn add_charSelectCandleConflictToast(&mut self, charSelectCandleConflictToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTCANDLECONFLICTTOAST, charSelectCandleConflictToast);
-  }
-  #[inline]
-  pub fn add_charSelectGuidedConflictToast(&mut self, charSelectGuidedConflictToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTGUIDEDCONFLICTTOAST, charSelectGuidedConflictToast);
-  }
-  #[inline]
-  pub fn add_charSelectNonGuidedConflictToast(&mut self, charSelectNonGuidedConflictToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_CHARSELECTNONGUIDEDCONFLICTTOAST, charSelectNonGuidedConflictToast);
-  }
-  #[inline]
   pub fn add_gainBuffDiffGrade(&mut self, gainBuffDiffGrade: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameConst::VT_GAINBUFFDIFFGRADE, gainBuffDiffGrade, 0);
   }
@@ -37904,10 +33518,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_TOTEMDESC, totemDesc);
   }
   #[inline]
-  pub fn add_copperGildDesc(&mut self, copperGildDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_COPPERGILDDESC, copperGildDesc);
-  }
-  #[inline]
   pub fn add_relicDesc(&mut self, relicDesc: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_RELICDESC, relicDesc);
   }
@@ -37920,32 +33530,12 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_REFRESHNODEITEMID, refreshNodeItemId);
   }
   #[inline]
-  pub fn add_storingRecruitDesc(&mut self, storingRecruitDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_STORINGRECRUITDESC, storingRecruitDesc);
-  }
-  #[inline]
-  pub fn add_storingRecruitSucceedToast(&mut self, storingRecruitSucceedToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_STORINGRECRUITSUCCEEDTOAST, storingRecruitSucceedToast);
-  }
-  #[inline]
-  pub fn add_specialRecruitReductionDesc(&mut self, specialRecruitReductionDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITREDUCTIONDESC, specialRecruitReductionDesc);
-  }
-  #[inline]
-  pub fn add_specialRecruitFuncDesc(&mut self, specialRecruitFuncDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITFUNCDESC, specialRecruitFuncDesc);
-  }
-  #[inline]
-  pub fn add_specialRecruitDetailDesc(&mut self, specialRecruitDetailDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALRECRUITDETAILDESC, specialRecruitDetailDesc);
-  }
-  #[inline]
   pub fn add_portalZones(&mut self, portalZones: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_PORTALZONES, portalZones);
   }
   #[inline]
-  pub fn add_diffDisplayZoneId(&mut self, diffDisplayZoneId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_DIFFDISPLAYZONEID, diffDisplayZoneId);
+  pub fn add_specialFailZoneId(&mut self, specialFailZoneId: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_SPECIALFAILZONEID, specialFailZoneId);
   }
   #[inline]
   pub fn add_exploreExpOnKill(&mut self, exploreExpOnKill: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -37958,38 +33548,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameCons
   #[inline]
   pub fn add_fusionNotifyToast(&mut self, fusionNotifyToast: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_FUSIONNOTIFYTOAST, fusionNotifyToast);
-  }
-  #[inline]
-  pub fn add_haveSpZone(&mut self, haveSpZone: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeGameConst::VT_HAVESPZONE, haveSpZone, false);
-  }
-  #[inline]
-  pub fn add_gotCharCandleBuffToast(&mut self, gotCharCandleBuffToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_GOTCHARCANDLEBUFFTOAST, gotCharCandleBuffToast);
-  }
-  #[inline]
-  pub fn add_gotCharsCandleBuffToast(&mut self, gotCharsCandleBuffToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_GOTCHARSCANDLEBUFFTOAST, gotCharsCandleBuffToast);
-  }
-  #[inline]
-  pub fn add_stashedRecruitNodeDescription(&mut self, stashedRecruitNodeDescription: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_STASHEDRECRUITNODEDESCRIPTION, stashedRecruitNodeDescription);
-  }
-  #[inline]
-  pub fn add_stashedRecruitEmptyNodeDescription(&mut self, stashedRecruitEmptyNodeDescription: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameConst::VT_STASHEDRECRUITEMPTYNODEDESCRIPTION, stashedRecruitEmptyNodeDescription);
-  }
-  #[inline]
-  pub fn add_recruitStashMaxNum(&mut self, recruitStashMaxNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameConst::VT_RECRUITSTASHMAXNUM, recruitStashMaxNum, 0);
-  }
-  #[inline]
-  pub fn add_recruitStashMinNum(&mut self, recruitStashMinNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameConst::VT_RECRUITSTASHMINNUM, recruitStashMinNum, 0);
-  }
-  #[inline]
-  pub fn add_hasTopicCharSelectMenuButton(&mut self, hasTopicCharSelectMenuButton: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeGameConst::VT_HASTOPICCHARSELECTMENUBUTTON, hasTopicCharSelectMenuButton, false);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeGameConstBuilder<'a, 'b, A> {
@@ -38021,8 +33579,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameConst<'_> {
       ds.field("bankCostId", &self.bankCostId());
       ds.field("bankDrawCount", &self.bankDrawCount());
       ds.field("bankDrawLimit", &self.bankDrawLimit());
-      ds.field("bankRewardCountType", &self.bankRewardCountType());
-      ds.field("spZoneShopBgmSignal", &self.spZoneShopBgmSignal());
       ds.field("mimicEnemyIds", &self.mimicEnemyIds());
       ds.field("bossIds", &self.bossIds());
       ds.field("goldChestTrapId", &self.goldChestTrapId());
@@ -38032,12 +33588,10 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameConst<'_> {
       ds.field("maxHpItemId", &self.maxHpItemId());
       ds.field("shieldItemId", &self.shieldItemId());
       ds.field("keyItemId", &self.keyItemId());
-      ds.field("divinationKitItemId", &self.divinationKitItemId());
       ds.field("chestKeyCnt", &self.chestKeyCnt());
       ds.field("chestKeyItemId", &self.chestKeyItemId());
       ds.field("keyColorId", &self.keyColorId());
       ds.field("onceNodeTypeList", &self.onceNodeTypeList());
-      ds.field("vertNodeCostDialogUseItemIconType", &self.vertNodeCostDialogUseItemIconType());
       ds.field("gpScoreRatio", &self.gpScoreRatio());
       ds.field("overflowUsageSquadBuff", &self.overflowUsageSquadBuff());
       ds.field("specialTrapId", &self.specialTrapId());
@@ -38049,9 +33603,7 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameConst<'_> {
       ds.field("hideNonBattleNodeName", &self.hideNonBattleNodeName());
       ds.field("hideNonBattleNodeDescription", &self.hideNonBattleNodeDescription());
       ds.field("charSelectExpeditionConflictToast", &self.charSelectExpeditionConflictToast());
-      ds.field("charSelectNoUpgradeConflictToast", &self.charSelectNoUpgradeConflictToast());
       ds.field("itemDropTagDict", &self.itemDropTagDict());
-      ds.field("shopRefreshCostId", &self.shopRefreshCostId());
       ds.field("expeditionLeaveToastFormat", &self.expeditionLeaveToastFormat());
       ds.field("expeditionReturnDescCureUpgrade", &self.expeditionReturnDescCureUpgrade());
       ds.field("expeditionReturnDescUpgrade", &self.expeditionReturnDescUpgrade());
@@ -38067,37 +33619,18 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameConst<'_> {
       ds.field("travelReturnDescItem", &self.travelReturnDescItem());
       ds.field("traderReturnTitle", &self.traderReturnTitle());
       ds.field("traderReturnDesc", &self.traderReturnDesc());
-      ds.field("candleReturnDescCandleUpgrade", &self.candleReturnDescCandleUpgrade());
-      ds.field("candleReturnDescCandle", &self.candleReturnDescCandle());
-      ds.field("charSelectCandleConflictToast", &self.charSelectCandleConflictToast());
-      ds.field("charSelectGuidedConflictToast", &self.charSelectGuidedConflictToast());
-      ds.field("charSelectNonGuidedConflictToast", &self.charSelectNonGuidedConflictToast());
       ds.field("gainBuffDiffGrade", &self.gainBuffDiffGrade());
       ds.field("dsPredictTips", &self.dsPredictTips());
       ds.field("dsBuffActiveTips", &self.dsBuffActiveTips());
       ds.field("totemDesc", &self.totemDesc());
-      ds.field("copperGildDesc", &self.copperGildDesc());
       ds.field("relicDesc", &self.relicDesc());
       ds.field("buffDesc", &self.buffDesc());
       ds.field("refreshNodeItemId", &self.refreshNodeItemId());
-      ds.field("storingRecruitDesc", &self.storingRecruitDesc());
-      ds.field("storingRecruitSucceedToast", &self.storingRecruitSucceedToast());
-      ds.field("specialRecruitReductionDesc", &self.specialRecruitReductionDesc());
-      ds.field("specialRecruitFuncDesc", &self.specialRecruitFuncDesc());
-      ds.field("specialRecruitDetailDesc", &self.specialRecruitDetailDesc());
       ds.field("portalZones", &self.portalZones());
-      ds.field("diffDisplayZoneId", &self.diffDisplayZoneId());
+      ds.field("specialFailZoneId", &self.specialFailZoneId());
       ds.field("exploreExpOnKill", &self.exploreExpOnKill());
       ds.field("fusionName", &self.fusionName());
       ds.field("fusionNotifyToast", &self.fusionNotifyToast());
-      ds.field("haveSpZone", &self.haveSpZone());
-      ds.field("gotCharCandleBuffToast", &self.gotCharCandleBuffToast());
-      ds.field("gotCharsCandleBuffToast", &self.gotCharsCandleBuffToast());
-      ds.field("stashedRecruitNodeDescription", &self.stashedRecruitNodeDescription());
-      ds.field("stashedRecruitEmptyNodeDescription", &self.stashedRecruitEmptyNodeDescription());
-      ds.field("recruitStashMaxNum", &self.recruitStashMaxNum());
-      ds.field("recruitStashMinNum", &self.recruitStashMinNum());
-      ds.field("hasTopicCharSelectMenuButton", &self.hasTopicCharSelectMenuButton());
       ds.finish()
   }
 }
@@ -38116,8 +33649,6 @@ pub struct clz_Torappu_RoguelikeGameConstT {
   pub bankCostId: Option<alloc::string::String>,
   pub bankDrawCount: i32,
   pub bankDrawLimit: i32,
-  pub bankRewardCountType: enum__Torappu_RoguelikeBankRewardCountType,
-  pub spZoneShopBgmSignal: Option<alloc::string::String>,
   pub mimicEnemyIds: Option<alloc::vec::Vec<alloc::string::String>>,
   pub bossIds: Option<alloc::vec::Vec<alloc::string::String>>,
   pub goldChestTrapId: Option<alloc::string::String>,
@@ -38127,12 +33658,10 @@ pub struct clz_Torappu_RoguelikeGameConstT {
   pub maxHpItemId: Option<alloc::string::String>,
   pub shieldItemId: Option<alloc::string::String>,
   pub keyItemId: Option<alloc::string::String>,
-  pub divinationKitItemId: Option<alloc::string::String>,
   pub chestKeyCnt: i32,
   pub chestKeyItemId: Option<alloc::string::String>,
   pub keyColorId: Option<alloc::string::String>,
   pub onceNodeTypeList: Option<alloc::vec::Vec<enum__Torappu_RoguelikeEventType>>,
-  pub vertNodeCostDialogUseItemIconType: bool,
   pub gpScoreRatio: i32,
   pub overflowUsageSquadBuff: Option<alloc::string::String>,
   pub specialTrapId: Option<alloc::string::String>,
@@ -38144,9 +33673,7 @@ pub struct clz_Torappu_RoguelikeGameConstT {
   pub hideNonBattleNodeName: Option<alloc::string::String>,
   pub hideNonBattleNodeDescription: Option<alloc::string::String>,
   pub charSelectExpeditionConflictToast: Option<alloc::string::String>,
-  pub charSelectNoUpgradeConflictToast: Option<alloc::string::String>,
   pub itemDropTagDict: Option<alloc::vec::Vec<dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__stringT>>,
-  pub shopRefreshCostId: Option<alloc::string::String>,
   pub expeditionLeaveToastFormat: Option<alloc::string::String>,
   pub expeditionReturnDescCureUpgrade: Option<alloc::string::String>,
   pub expeditionReturnDescUpgrade: Option<alloc::string::String>,
@@ -38162,37 +33689,18 @@ pub struct clz_Torappu_RoguelikeGameConstT {
   pub travelReturnDescItem: Option<alloc::string::String>,
   pub traderReturnTitle: Option<alloc::string::String>,
   pub traderReturnDesc: Option<alloc::string::String>,
-  pub candleReturnDescCandleUpgrade: Option<alloc::string::String>,
-  pub candleReturnDescCandle: Option<alloc::string::String>,
-  pub charSelectCandleConflictToast: Option<alloc::string::String>,
-  pub charSelectGuidedConflictToast: Option<alloc::string::String>,
-  pub charSelectNonGuidedConflictToast: Option<alloc::string::String>,
   pub gainBuffDiffGrade: i32,
   pub dsPredictTips: Option<alloc::string::String>,
   pub dsBuffActiveTips: Option<alloc::string::String>,
   pub totemDesc: Option<alloc::string::String>,
-  pub copperGildDesc: Option<alloc::string::String>,
   pub relicDesc: Option<alloc::string::String>,
   pub buffDesc: Option<alloc::string::String>,
   pub refreshNodeItemId: Option<alloc::string::String>,
-  pub storingRecruitDesc: Option<alloc::string::String>,
-  pub storingRecruitSucceedToast: Option<alloc::string::String>,
-  pub specialRecruitReductionDesc: Option<alloc::string::String>,
-  pub specialRecruitFuncDesc: Option<alloc::string::String>,
-  pub specialRecruitDetailDesc: Option<alloc::string::String>,
   pub portalZones: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub diffDisplayZoneId: Option<alloc::string::String>,
+  pub specialFailZoneId: Option<alloc::string::String>,
   pub exploreExpOnKill: Option<alloc::string::String>,
   pub fusionName: Option<alloc::string::String>,
   pub fusionNotifyToast: Option<alloc::string::String>,
-  pub haveSpZone: bool,
-  pub gotCharCandleBuffToast: Option<alloc::string::String>,
-  pub gotCharsCandleBuffToast: Option<alloc::string::String>,
-  pub stashedRecruitNodeDescription: Option<alloc::string::String>,
-  pub stashedRecruitEmptyNodeDescription: Option<alloc::string::String>,
-  pub recruitStashMaxNum: i32,
-  pub recruitStashMinNum: i32,
-  pub hasTopicCharSelectMenuButton: bool,
 }
 impl Default for clz_Torappu_RoguelikeGameConstT {
   fn default() -> Self {
@@ -38209,8 +33717,6 @@ impl Default for clz_Torappu_RoguelikeGameConstT {
       bankCostId: None,
       bankDrawCount: 0,
       bankDrawLimit: 0,
-      bankRewardCountType: enum__Torappu_RoguelikeBankRewardCountType::HIGHEST_RECORD,
-      spZoneShopBgmSignal: None,
       mimicEnemyIds: None,
       bossIds: None,
       goldChestTrapId: None,
@@ -38220,12 +33726,10 @@ impl Default for clz_Torappu_RoguelikeGameConstT {
       maxHpItemId: None,
       shieldItemId: None,
       keyItemId: None,
-      divinationKitItemId: None,
       chestKeyCnt: 0,
       chestKeyItemId: None,
       keyColorId: None,
       onceNodeTypeList: None,
-      vertNodeCostDialogUseItemIconType: false,
       gpScoreRatio: 0,
       overflowUsageSquadBuff: None,
       specialTrapId: None,
@@ -38237,9 +33741,7 @@ impl Default for clz_Torappu_RoguelikeGameConstT {
       hideNonBattleNodeName: None,
       hideNonBattleNodeDescription: None,
       charSelectExpeditionConflictToast: None,
-      charSelectNoUpgradeConflictToast: None,
       itemDropTagDict: None,
-      shopRefreshCostId: None,
       expeditionLeaveToastFormat: None,
       expeditionReturnDescCureUpgrade: None,
       expeditionReturnDescUpgrade: None,
@@ -38255,37 +33757,18 @@ impl Default for clz_Torappu_RoguelikeGameConstT {
       travelReturnDescItem: None,
       traderReturnTitle: None,
       traderReturnDesc: None,
-      candleReturnDescCandleUpgrade: None,
-      candleReturnDescCandle: None,
-      charSelectCandleConflictToast: None,
-      charSelectGuidedConflictToast: None,
-      charSelectNonGuidedConflictToast: None,
       gainBuffDiffGrade: 0,
       dsPredictTips: None,
       dsBuffActiveTips: None,
       totemDesc: None,
-      copperGildDesc: None,
       relicDesc: None,
       buffDesc: None,
       refreshNodeItemId: None,
-      storingRecruitDesc: None,
-      storingRecruitSucceedToast: None,
-      specialRecruitReductionDesc: None,
-      specialRecruitFuncDesc: None,
-      specialRecruitDetailDesc: None,
       portalZones: None,
-      diffDisplayZoneId: None,
+      specialFailZoneId: None,
       exploreExpOnKill: None,
       fusionName: None,
       fusionNotifyToast: None,
-      haveSpZone: false,
-      gotCharCandleBuffToast: None,
-      gotCharsCandleBuffToast: None,
-      stashedRecruitNodeDescription: None,
-      stashedRecruitEmptyNodeDescription: None,
-      recruitStashMaxNum: 0,
-      recruitStashMinNum: 0,
-      hasTopicCharSelectMenuButton: false,
     }
   }
 }
@@ -38322,10 +33805,6 @@ impl clz_Torappu_RoguelikeGameConstT {
     });
     let bankDrawCount = self.bankDrawCount;
     let bankDrawLimit = self.bankDrawLimit;
-    let bankRewardCountType = self.bankRewardCountType;
-    let spZoneShopBgmSignal = self.spZoneShopBgmSignal.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let mimicEnemyIds = self.mimicEnemyIds.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
@@ -38353,9 +33832,6 @@ impl clz_Torappu_RoguelikeGameConstT {
     let keyItemId = self.keyItemId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let divinationKitItemId = self.divinationKitItemId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let chestKeyCnt = self.chestKeyCnt;
     let chestKeyItemId = self.chestKeyItemId.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -38366,7 +33842,6 @@ impl clz_Torappu_RoguelikeGameConstT {
     let onceNodeTypeList = self.onceNodeTypeList.as_ref().map(|x|{
       _fbb.create_vector(x)
     });
-    let vertNodeCostDialogUseItemIconType = self.vertNodeCostDialogUseItemIconType;
     let gpScoreRatio = self.gpScoreRatio;
     let overflowUsageSquadBuff = self.overflowUsageSquadBuff.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -38396,14 +33871,8 @@ impl clz_Torappu_RoguelikeGameConstT {
     let charSelectExpeditionConflictToast = self.charSelectExpeditionConflictToast.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let charSelectNoUpgradeConflictToast = self.charSelectNoUpgradeConflictToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let itemDropTagDict = self.itemDropTagDict.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let shopRefreshCostId = self.shopRefreshCostId.as_ref().map(|x|{
-      _fbb.create_string(x)
     });
     let expeditionLeaveToastFormat = self.expeditionLeaveToastFormat.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -38450,21 +33919,6 @@ impl clz_Torappu_RoguelikeGameConstT {
     let traderReturnDesc = self.traderReturnDesc.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let candleReturnDescCandleUpgrade = self.candleReturnDescCandleUpgrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let candleReturnDescCandle = self.candleReturnDescCandle.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let charSelectCandleConflictToast = self.charSelectCandleConflictToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let charSelectGuidedConflictToast = self.charSelectGuidedConflictToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let charSelectNonGuidedConflictToast = self.charSelectNonGuidedConflictToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let gainBuffDiffGrade = self.gainBuffDiffGrade;
     let dsPredictTips = self.dsPredictTips.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -38473,9 +33927,6 @@ impl clz_Torappu_RoguelikeGameConstT {
       _fbb.create_string(x)
     });
     let totemDesc = self.totemDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let copperGildDesc = self.copperGildDesc.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let relicDesc = self.relicDesc.as_ref().map(|x|{
@@ -38487,25 +33938,10 @@ impl clz_Torappu_RoguelikeGameConstT {
     let refreshNodeItemId = self.refreshNodeItemId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let storingRecruitDesc = self.storingRecruitDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let storingRecruitSucceedToast = self.storingRecruitSucceedToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let specialRecruitReductionDesc = self.specialRecruitReductionDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let specialRecruitFuncDesc = self.specialRecruitFuncDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let specialRecruitDetailDesc = self.specialRecruitDetailDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let portalZones = self.portalZones.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
-    let diffDisplayZoneId = self.diffDisplayZoneId.as_ref().map(|x|{
+    let specialFailZoneId = self.specialFailZoneId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let exploreExpOnKill = self.exploreExpOnKill.as_ref().map(|x|{
@@ -38517,22 +33953,6 @@ impl clz_Torappu_RoguelikeGameConstT {
     let fusionNotifyToast = self.fusionNotifyToast.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let haveSpZone = self.haveSpZone;
-    let gotCharCandleBuffToast = self.gotCharCandleBuffToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gotCharsCandleBuffToast = self.gotCharsCandleBuffToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let stashedRecruitNodeDescription = self.stashedRecruitNodeDescription.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let stashedRecruitEmptyNodeDescription = self.stashedRecruitEmptyNodeDescription.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let recruitStashMaxNum = self.recruitStashMaxNum;
-    let recruitStashMinNum = self.recruitStashMinNum;
-    let hasTopicCharSelectMenuButton = self.hasTopicCharSelectMenuButton;
     clz_Torappu_RoguelikeGameConst::create(_fbb, &clz_Torappu_RoguelikeGameConstArgs{
       initSceneName,
       failSceneName,
@@ -38546,8 +33966,6 @@ impl clz_Torappu_RoguelikeGameConstT {
       bankCostId,
       bankDrawCount,
       bankDrawLimit,
-      bankRewardCountType,
-      spZoneShopBgmSignal,
       mimicEnemyIds,
       bossIds,
       goldChestTrapId,
@@ -38557,12 +33975,10 @@ impl clz_Torappu_RoguelikeGameConstT {
       maxHpItemId,
       shieldItemId,
       keyItemId,
-      divinationKitItemId,
       chestKeyCnt,
       chestKeyItemId,
       keyColorId,
       onceNodeTypeList,
-      vertNodeCostDialogUseItemIconType,
       gpScoreRatio,
       overflowUsageSquadBuff,
       specialTrapId,
@@ -38574,9 +33990,7 @@ impl clz_Torappu_RoguelikeGameConstT {
       hideNonBattleNodeName,
       hideNonBattleNodeDescription,
       charSelectExpeditionConflictToast,
-      charSelectNoUpgradeConflictToast,
       itemDropTagDict,
-      shopRefreshCostId,
       expeditionLeaveToastFormat,
       expeditionReturnDescCureUpgrade,
       expeditionReturnDescUpgrade,
@@ -38592,37 +34006,18 @@ impl clz_Torappu_RoguelikeGameConstT {
       travelReturnDescItem,
       traderReturnTitle,
       traderReturnDesc,
-      candleReturnDescCandleUpgrade,
-      candleReturnDescCandle,
-      charSelectCandleConflictToast,
-      charSelectGuidedConflictToast,
-      charSelectNonGuidedConflictToast,
       gainBuffDiffGrade,
       dsPredictTips,
       dsBuffActiveTips,
       totemDesc,
-      copperGildDesc,
       relicDesc,
       buffDesc,
       refreshNodeItemId,
-      storingRecruitDesc,
-      storingRecruitSucceedToast,
-      specialRecruitReductionDesc,
-      specialRecruitFuncDesc,
-      specialRecruitDetailDesc,
       portalZones,
-      diffDisplayZoneId,
+      specialFailZoneId,
       exploreExpOnKill,
       fusionName,
       fusionNotifyToast,
-      haveSpZone,
-      gotCharCandleBuffToast,
-      gotCharsCandleBuffToast,
-      stashedRecruitNodeDescription,
-      stashedRecruitEmptyNodeDescription,
-      recruitStashMaxNum,
-      recruitStashMinNum,
-      hasTopicCharSelectMenuButton,
     })
   }
 }
@@ -41262,15 +36657,13 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
   pub const VT_USAGE: ::flatbuffers::VOffsetT = 10;
   pub const VT_OBTAINAPPROACH: ::flatbuffers::VOffsetT = 12;
   pub const VT_ICONID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ITEMICONGROUPID: ::flatbuffers::VOffsetT = 16;
-  pub const VT_TYPE_: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SUBTYPE: ::flatbuffers::VOffsetT = 20;
-  pub const VT_RARITY: ::flatbuffers::VOffsetT = 22;
+  pub const VT_TYPE_: ::flatbuffers::VOffsetT = 16;
+  pub const VT_SUBTYPE: ::flatbuffers::VOffsetT = 18;
+  pub const VT_RARITY: ::flatbuffers::VOffsetT = 20;
+  pub const VT_VALUE: ::flatbuffers::VOffsetT = 22;
   pub const VT_SORTID: ::flatbuffers::VOffsetT = 24;
   pub const VT_CANSACRIFICE: ::flatbuffers::VOffsetT = 26;
-  pub const VT_TINYICONCOLOR: ::flatbuffers::VOffsetT = 28;
-  pub const VT_UNLOCKCONDDESC: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SHORTUSAGE: ::flatbuffers::VOffsetT = 32;
+  pub const VT_UNLOCKCONDDESC: ::flatbuffers::VOffsetT = 28;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -41282,14 +36675,12 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
     args: &'args clz_Torappu_RoguelikeGameItemDataArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameItemData<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeGameItemDataBuilder::new(_fbb);
-    if let Some(x) = args.shortUsage { builder.add_shortUsage(x); }
     if let Some(x) = args.unlockCondDesc { builder.add_unlockCondDesc(x); }
-    if let Some(x) = args.tinyIconColor { builder.add_tinyIconColor(x); }
     builder.add_sortId(args.sortId);
+    builder.add_value(args.value);
     builder.add_rarity(args.rarity);
     builder.add_subType(args.subType);
     builder.add_type_(args.type_);
-    if let Some(x) = args.itemIconGroupId { builder.add_itemIconGroupId(x); }
     if let Some(x) = args.iconId { builder.add_iconId(x); }
     if let Some(x) = args.obtainApproach { builder.add_obtainApproach(x); }
     if let Some(x) = args.usage { builder.add_usage(x); }
@@ -41319,21 +36710,13 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
     let iconId = self.iconId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let itemIconGroupId = self.itemIconGroupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let type_ = self.type_();
     let subType = self.subType();
     let rarity = self.rarity();
+    let value = self.value();
     let sortId = self.sortId();
     let canSacrifice = self.canSacrifice();
-    let tinyIconColor = self.tinyIconColor().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let unlockCondDesc = self.unlockCondDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let shortUsage = self.shortUsage().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     clz_Torappu_RoguelikeGameItemDataT {
@@ -41343,15 +36726,13 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
       usage,
       obtainApproach,
       iconId,
-      itemIconGroupId,
       type_,
       subType,
       rarity,
+      value,
       sortId,
       canSacrifice,
-      tinyIconColor,
       unlockCondDesc,
-      shortUsage,
     }
   }
 
@@ -41398,13 +36779,6 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameItemData::VT_ICONID, None)}
   }
   #[inline]
-  pub fn itemIconGroupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameItemData::VT_ITEMICONGROUPID, None)}
-  }
-  #[inline]
   pub fn type_(&self) -> enum__Torappu_RoguelikeGameItemType {
     // Safety:
     // Created from valid Table for this object
@@ -41426,6 +36800,13 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
     unsafe { self._tab.get::<enum__Torappu_RoguelikeGameItemRarity>(clz_Torappu_RoguelikeGameItemData::VT_RARITY, Some(enum__Torappu_RoguelikeGameItemRarity::NONE)).unwrap()}
   }
   #[inline]
+  pub fn value(&self) -> i32 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeGameItemData::VT_VALUE, Some(0)).unwrap()}
+  }
+  #[inline]
   pub fn sortId(&self) -> i32 {
     // Safety:
     // Created from valid Table for this object
@@ -41440,25 +36821,11 @@ impl<'a> clz_Torappu_RoguelikeGameItemData<'a> {
     unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeGameItemData::VT_CANSACRIFICE, Some(false)).unwrap()}
   }
   #[inline]
-  pub fn tinyIconColor(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameItemData::VT_TINYICONCOLOR, None)}
-  }
-  #[inline]
   pub fn unlockCondDesc(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameItemData::VT_UNLOCKCONDDESC, None)}
-  }
-  #[inline]
-  pub fn shortUsage(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeGameItemData::VT_SHORTUSAGE, None)}
   }
 }
 
@@ -41474,15 +36841,13 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeGameItemData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("usage", Self::VT_USAGE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("obtainApproach", Self::VT_OBTAINAPPROACH, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("itemIconGroupId", Self::VT_ITEMICONGROUPID, false)?
      .visit_field::<enum__Torappu_RoguelikeGameItemType>("type_", Self::VT_TYPE_, false)?
      .visit_field::<enum__Torappu_RoguelikeGameItemSubType>("subType", Self::VT_SUBTYPE, false)?
      .visit_field::<enum__Torappu_RoguelikeGameItemRarity>("rarity", Self::VT_RARITY, false)?
+     .visit_field::<i32>("value", Self::VT_VALUE, false)?
      .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
      .visit_field::<bool>("canSacrifice", Self::VT_CANSACRIFICE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tinyIconColor", Self::VT_TINYICONCOLOR, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("unlockCondDesc", Self::VT_UNLOCKCONDDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("shortUsage", Self::VT_SHORTUSAGE, false)?
      .finish();
     Ok(())
   }
@@ -41494,15 +36859,13 @@ pub struct clz_Torappu_RoguelikeGameItemDataArgs<'a> {
     pub usage: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub obtainApproach: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub iconId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub itemIconGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub type_: enum__Torappu_RoguelikeGameItemType,
     pub subType: enum__Torappu_RoguelikeGameItemSubType,
     pub rarity: enum__Torappu_RoguelikeGameItemRarity,
+    pub value: i32,
     pub sortId: i32,
     pub canSacrifice: bool,
-    pub tinyIconColor: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub unlockCondDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub shortUsage: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeGameItemDataArgs<'a> {
   #[inline]
@@ -41514,15 +36877,13 @@ impl<'a> Default for clz_Torappu_RoguelikeGameItemDataArgs<'a> {
       usage: None,
       obtainApproach: None,
       iconId: None,
-      itemIconGroupId: None,
       type_: enum__Torappu_RoguelikeGameItemType::NONE,
       subType: enum__Torappu_RoguelikeGameItemSubType::NONE,
       rarity: enum__Torappu_RoguelikeGameItemRarity::NONE,
+      value: 0,
       sortId: 0,
       canSacrifice: false,
-      tinyIconColor: None,
       unlockCondDesc: None,
-      shortUsage: None,
     }
   }
 }
@@ -41558,10 +36919,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameItem
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameItemData::VT_ICONID, iconId);
   }
   #[inline]
-  pub fn add_itemIconGroupId(&mut self, itemIconGroupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameItemData::VT_ITEMICONGROUPID, itemIconGroupId);
-  }
-  #[inline]
   pub fn add_type_(&mut self, type_: enum__Torappu_RoguelikeGameItemType) {
     self.fbb_.push_slot::<enum__Torappu_RoguelikeGameItemType>(clz_Torappu_RoguelikeGameItemData::VT_TYPE_, type_, enum__Torappu_RoguelikeGameItemType::NONE);
   }
@@ -41574,6 +36931,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameItem
     self.fbb_.push_slot::<enum__Torappu_RoguelikeGameItemRarity>(clz_Torappu_RoguelikeGameItemData::VT_RARITY, rarity, enum__Torappu_RoguelikeGameItemRarity::NONE);
   }
   #[inline]
+  pub fn add_value(&mut self, value: i32) {
+    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameItemData::VT_VALUE, value, 0);
+  }
+  #[inline]
   pub fn add_sortId(&mut self, sortId: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeGameItemData::VT_SORTID, sortId, 0);
   }
@@ -41582,16 +36943,8 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeGameItem
     self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeGameItemData::VT_CANSACRIFICE, canSacrifice, false);
   }
   #[inline]
-  pub fn add_tinyIconColor(&mut self, tinyIconColor: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameItemData::VT_TINYICONCOLOR, tinyIconColor);
-  }
-  #[inline]
   pub fn add_unlockCondDesc(&mut self, unlockCondDesc: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameItemData::VT_UNLOCKCONDDESC, unlockCondDesc);
-  }
-  #[inline]
-  pub fn add_shortUsage(&mut self, shortUsage: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeGameItemData::VT_SHORTUSAGE, shortUsage);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeGameItemDataBuilder<'a, 'b, A> {
@@ -41617,15 +36970,13 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeGameItemData<'_> {
       ds.field("usage", &self.usage());
       ds.field("obtainApproach", &self.obtainApproach());
       ds.field("iconId", &self.iconId());
-      ds.field("itemIconGroupId", &self.itemIconGroupId());
       ds.field("type_", &self.type_());
       ds.field("subType", &self.subType());
       ds.field("rarity", &self.rarity());
+      ds.field("value", &self.value());
       ds.field("sortId", &self.sortId());
       ds.field("canSacrifice", &self.canSacrifice());
-      ds.field("tinyIconColor", &self.tinyIconColor());
       ds.field("unlockCondDesc", &self.unlockCondDesc());
-      ds.field("shortUsage", &self.shortUsage());
       ds.finish()
   }
 }
@@ -41638,15 +36989,13 @@ pub struct clz_Torappu_RoguelikeGameItemDataT {
   pub usage: Option<alloc::string::String>,
   pub obtainApproach: Option<alloc::string::String>,
   pub iconId: Option<alloc::string::String>,
-  pub itemIconGroupId: Option<alloc::string::String>,
   pub type_: enum__Torappu_RoguelikeGameItemType,
   pub subType: enum__Torappu_RoguelikeGameItemSubType,
   pub rarity: enum__Torappu_RoguelikeGameItemRarity,
+  pub value: i32,
   pub sortId: i32,
   pub canSacrifice: bool,
-  pub tinyIconColor: Option<alloc::string::String>,
   pub unlockCondDesc: Option<alloc::string::String>,
-  pub shortUsage: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_RoguelikeGameItemDataT {
   fn default() -> Self {
@@ -41657,15 +37006,13 @@ impl Default for clz_Torappu_RoguelikeGameItemDataT {
       usage: None,
       obtainApproach: None,
       iconId: None,
-      itemIconGroupId: None,
       type_: enum__Torappu_RoguelikeGameItemType::NONE,
       subType: enum__Torappu_RoguelikeGameItemSubType::NONE,
       rarity: enum__Torappu_RoguelikeGameItemRarity::NONE,
+      value: 0,
       sortId: 0,
       canSacrifice: false,
-      tinyIconColor: None,
       unlockCondDesc: None,
-      shortUsage: None,
     }
   }
 }
@@ -41692,21 +37039,13 @@ impl clz_Torappu_RoguelikeGameItemDataT {
     let iconId = self.iconId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let itemIconGroupId = self.itemIconGroupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let type_ = self.type_;
     let subType = self.subType;
     let rarity = self.rarity;
+    let value = self.value;
     let sortId = self.sortId;
     let canSacrifice = self.canSacrifice;
-    let tinyIconColor = self.tinyIconColor.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let unlockCondDesc = self.unlockCondDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let shortUsage = self.shortUsage.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     clz_Torappu_RoguelikeGameItemData::create(_fbb, &clz_Torappu_RoguelikeGameItemDataArgs{
@@ -41716,15 +37055,13 @@ impl clz_Torappu_RoguelikeGameItemDataT {
       usage,
       obtainApproach,
       iconId,
-      itemIconGroupId,
       type_,
       subType,
       rarity,
+      value,
       sortId,
       canSacrifice,
-      tinyIconColor,
       unlockCondDesc,
-      shortUsage,
     })
   }
 }
@@ -42267,11 +37604,10 @@ impl<'a> clz_Torappu_RoguelikeEndingDetailText<'a> {
   pub const VT_TEXTID: ::flatbuffers::VOffsetT = 4;
   pub const VT_TEXT: ::flatbuffers::VOffsetT = 6;
   pub const VT_EVENTTYPE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_SPZONEEVTTYPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SHOWTYPE: ::flatbuffers::VOffsetT = 12;
-  pub const VT_CHOICESCENEID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_PARAMLIST: ::flatbuffers::VOffsetT = 16;
-  pub const VT_OTHERPARA1: ::flatbuffers::VOffsetT = 18;
+  pub const VT_SHOWTYPE: ::flatbuffers::VOffsetT = 10;
+  pub const VT_CHOICESCENEID: ::flatbuffers::VOffsetT = 12;
+  pub const VT_PARAMLIST: ::flatbuffers::VOffsetT = 14;
+  pub const VT_OTHERPARA1: ::flatbuffers::VOffsetT = 16;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -42287,7 +37623,6 @@ impl<'a> clz_Torappu_RoguelikeEndingDetailText<'a> {
     if let Some(x) = args.paramList { builder.add_paramList(x); }
     if let Some(x) = args.choiceSceneId { builder.add_choiceSceneId(x); }
     builder.add_showType(args.showType);
-    if let Some(x) = args.spZoneEvtType { builder.add_spZoneEvtType(x); }
     builder.add_eventType(args.eventType);
     if let Some(x) = args.text { builder.add_text(x); }
     if let Some(x) = args.textId { builder.add_textId(x); }
@@ -42302,9 +37637,6 @@ impl<'a> clz_Torappu_RoguelikeEndingDetailText<'a> {
       alloc::string::ToString::to_string(x)
     });
     let eventType = self.eventType();
-    let spZoneEvtType = self.spZoneEvtType().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let showType = self.showType();
     let choiceSceneId = self.choiceSceneId().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -42319,7 +37651,6 @@ impl<'a> clz_Torappu_RoguelikeEndingDetailText<'a> {
       textId,
       text,
       eventType,
-      spZoneEvtType,
       showType,
       choiceSceneId,
       paramList,
@@ -42347,13 +37678,6 @@ impl<'a> clz_Torappu_RoguelikeEndingDetailText<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<enum__Torappu_RoguelikeEventType>(clz_Torappu_RoguelikeEndingDetailText::VT_EVENTTYPE, Some(enum__Torappu_RoguelikeEventType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn spZoneEvtType(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeEndingDetailText::VT_SPZONEEVTTYPE, None)}
   }
   #[inline]
   pub fn showType(&self) -> enum__Torappu_RoguelikeEndingDetailText_Type {
@@ -42394,7 +37718,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeEndingDetailText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("textId", Self::VT_TEXTID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("text", Self::VT_TEXT, false)?
      .visit_field::<enum__Torappu_RoguelikeEventType>("eventType", Self::VT_EVENTTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spZoneEvtType", Self::VT_SPZONEEVTTYPE, false)?
      .visit_field::<enum__Torappu_RoguelikeEndingDetailText_Type>("showType", Self::VT_SHOWTYPE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("choiceSceneId", Self::VT_CHOICESCENEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("paramList", Self::VT_PARAMLIST, false)?
@@ -42407,7 +37730,6 @@ pub struct clz_Torappu_RoguelikeEndingDetailTextArgs<'a> {
     pub textId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub text: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub eventType: enum__Torappu_RoguelikeEventType,
-    pub spZoneEvtType: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub showType: enum__Torappu_RoguelikeEndingDetailText_Type,
     pub choiceSceneId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub paramList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
@@ -42420,7 +37742,6 @@ impl<'a> Default for clz_Torappu_RoguelikeEndingDetailTextArgs<'a> {
       textId: None,
       text: None,
       eventType: enum__Torappu_RoguelikeEventType::NONE,
-      spZoneEvtType: None,
       showType: enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_CHOICE,
       choiceSceneId: None,
       paramList: None,
@@ -42446,10 +37767,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeEndingDe
   #[inline]
   pub fn add_eventType(&mut self, eventType: enum__Torappu_RoguelikeEventType) {
     self.fbb_.push_slot::<enum__Torappu_RoguelikeEventType>(clz_Torappu_RoguelikeEndingDetailText::VT_EVENTTYPE, eventType, enum__Torappu_RoguelikeEventType::NONE);
-  }
-  #[inline]
-  pub fn add_spZoneEvtType(&mut self, spZoneEvtType: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeEndingDetailText::VT_SPZONEEVTTYPE, spZoneEvtType);
   }
   #[inline]
   pub fn add_showType(&mut self, showType: enum__Torappu_RoguelikeEndingDetailText_Type) {
@@ -42488,7 +37805,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeEndingDetailText<'_> {
       ds.field("textId", &self.textId());
       ds.field("text", &self.text());
       ds.field("eventType", &self.eventType());
-      ds.field("spZoneEvtType", &self.spZoneEvtType());
       ds.field("showType", &self.showType());
       ds.field("choiceSceneId", &self.choiceSceneId());
       ds.field("paramList", &self.paramList());
@@ -42502,7 +37818,6 @@ pub struct clz_Torappu_RoguelikeEndingDetailTextT {
   pub textId: Option<alloc::string::String>,
   pub text: Option<alloc::string::String>,
   pub eventType: enum__Torappu_RoguelikeEventType,
-  pub spZoneEvtType: Option<alloc::string::String>,
   pub showType: enum__Torappu_RoguelikeEndingDetailText_Type,
   pub choiceSceneId: Option<alloc::string::String>,
   pub paramList: Option<alloc::vec::Vec<alloc::string::String>>,
@@ -42514,7 +37829,6 @@ impl Default for clz_Torappu_RoguelikeEndingDetailTextT {
       textId: None,
       text: None,
       eventType: enum__Torappu_RoguelikeEventType::NONE,
-      spZoneEvtType: None,
       showType: enum__Torappu_RoguelikeEndingDetailText_Type::SHOW_CHOICE,
       choiceSceneId: None,
       paramList: None,
@@ -42534,9 +37848,6 @@ impl clz_Torappu_RoguelikeEndingDetailTextT {
       _fbb.create_string(x)
     });
     let eventType = self.eventType;
-    let spZoneEvtType = self.spZoneEvtType.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let showType = self.showType;
     let choiceSceneId = self.choiceSceneId.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -42551,7 +37862,6 @@ impl clz_Torappu_RoguelikeEndingDetailTextT {
       textId,
       text,
       eventType,
-      spZoneEvtType,
       showType,
       choiceSceneId,
       paramList,
@@ -45296,333 +40606,6 @@ impl dict__string__clz_Torappu_RoguelikeRollNodeDataT {
     })
   }
 }
-pub enum clz_Torappu_RoguelikeRelicTipsDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeRelicTipsData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeRelicTipsData<'a> {
-  type Inner = clz_Torappu_RoguelikeRelicTipsData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeRelicTipsData<'a> {
-  pub const VT_ITEMID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_TOASTTEXT: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeRelicTipsData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeRelicTipsDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeRelicTipsDataBuilder::new(_fbb);
-    if let Some(x) = args.toastText { builder.add_toastText(x); }
-    if let Some(x) = args.itemId { builder.add_itemId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeRelicTipsDataT {
-    let itemId = self.itemId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let toastText = self.toastText().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeRelicTipsDataT {
-      itemId,
-      toastText,
-    }
-  }
-
-  #[inline]
-  pub fn itemId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeRelicTipsData::VT_ITEMID, None)}
-  }
-  #[inline]
-  pub fn toastText(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeRelicTipsData::VT_TOASTTEXT, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeRelicTipsData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("itemId", Self::VT_ITEMID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("toastText", Self::VT_TOASTTEXT, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
-    pub itemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub toastText: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeRelicTipsDataArgs {
-      itemId: None,
-      toastText: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeRelicTipsDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_itemId(&mut self, itemId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeRelicTipsData::VT_ITEMID, itemId);
-  }
-  #[inline]
-  pub fn add_toastText(&mut self, toastText: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeRelicTipsData::VT_TOASTTEXT, toastText);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeRelicTipsDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeRelicTipsData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeRelicTipsData");
-      ds.field("itemId", &self.itemId());
-      ds.field("toastText", &self.toastText());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeRelicTipsDataT {
-  pub itemId: Option<alloc::string::String>,
-  pub toastText: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeRelicTipsDataT {
-  fn default() -> Self {
-    Self {
-      itemId: None,
-      toastText: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeRelicTipsDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'b>> {
-    let itemId = self.itemId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let toastText = self.toastText.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeRelicTipsData::create(_fbb, &clz_Torappu_RoguelikeRelicTipsDataArgs{
-      itemId,
-      toastText,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeRelicTipsDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeRelicTipsData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeRelicTipsData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeRelicTipsData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeRelicTipsData>>(dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeRelicTipsData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeRelicTipsData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData>>(dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeRelicTipsData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeRelicTipsData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeRelicTipsDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeRelicTipsData::create(_fbb, &dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs{
-      key,
-      value,
-    })
-  }
-}
 pub enum clz_Torappu_RoguelikeActivityBasicDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -47346,38 +42329,36 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
   pub const VT_RECRUITTICKETS: ::flatbuffers::VOffsetT = 40;
   pub const VT_UPGRADETICKETS: ::flatbuffers::VOffsetT = 42;
   pub const VT_CUSTOMTICKETS: ::flatbuffers::VOffsetT = 44;
-  pub const VT_STASHABLETICKETS: ::flatbuffers::VOffsetT = 46;
-  pub const VT_RELICS: ::flatbuffers::VOffsetT = 48;
-  pub const VT_RELICPARAMS: ::flatbuffers::VOffsetT = 50;
-  pub const VT_RECRUITGRPS: ::flatbuffers::VOffsetT = 52;
-  pub const VT_CHOICES: ::flatbuffers::VOffsetT = 54;
-  pub const VT_CHOICESCENES: ::flatbuffers::VOffsetT = 56;
-  pub const VT_NODETYPEDATA: ::flatbuffers::VOffsetT = 58;
-  pub const VT_SUBTYPEDATA: ::flatbuffers::VOffsetT = 60;
-  pub const VT_VARIATIONDATA: ::flatbuffers::VOffsetT = 62;
-  pub const VT_FUSIONDATA: ::flatbuffers::VOffsetT = 64;
-  pub const VT_CHARBUFFDATA: ::flatbuffers::VOffsetT = 66;
-  pub const VT_SQUADBUFFDATA: ::flatbuffers::VOffsetT = 68;
-  pub const VT_TASKDATA: ::flatbuffers::VOffsetT = 70;
-  pub const VT_GAMECONST: ::flatbuffers::VOffsetT = 72;
-  pub const VT_SHOPDIALOGDATA: ::flatbuffers::VOffsetT = 74;
-  pub const VT_CAPSULEDICT: ::flatbuffers::VOffsetT = 76;
-  pub const VT_ENDINGS: ::flatbuffers::VOffsetT = 78;
-  pub const VT_FAILENDINGS: ::flatbuffers::VOffsetT = 80;
-  pub const VT_BATTLESUMMERYDESCRIPTIONS: ::flatbuffers::VOffsetT = 82;
-  pub const VT_BATTLELOADINGTIPS: ::flatbuffers::VOffsetT = 84;
-  pub const VT_ITEMS: ::flatbuffers::VOffsetT = 86;
-  pub const VT_BANDREF: ::flatbuffers::VOffsetT = 88;
-  pub const VT_ENDINGDETAILLIST: ::flatbuffers::VOffsetT = 90;
-  pub const VT_ENDINGRELICDETAILLIST: ::flatbuffers::VOffsetT = 92;
-  pub const VT_TREASURES: ::flatbuffers::VOffsetT = 94;
-  pub const VT_DIFFICULTYUPGRADERELICGROUPS: ::flatbuffers::VOffsetT = 96;
-  pub const VT_STYLES: ::flatbuffers::VOffsetT = 98;
-  pub const VT_STYLECONFIG: ::flatbuffers::VOffsetT = 100;
-  pub const VT_EXPLORETOOLS: ::flatbuffers::VOffsetT = 102;
-  pub const VT_ROLLNODEDATA: ::flatbuffers::VOffsetT = 104;
-  pub const VT_ACTIVITY: ::flatbuffers::VOffsetT = 106;
-  pub const VT_RELICTIPSDATA: ::flatbuffers::VOffsetT = 108;
+  pub const VT_RELICS: ::flatbuffers::VOffsetT = 46;
+  pub const VT_RELICPARAMS: ::flatbuffers::VOffsetT = 48;
+  pub const VT_RECRUITGRPS: ::flatbuffers::VOffsetT = 50;
+  pub const VT_CHOICES: ::flatbuffers::VOffsetT = 52;
+  pub const VT_CHOICESCENES: ::flatbuffers::VOffsetT = 54;
+  pub const VT_NODETYPEDATA: ::flatbuffers::VOffsetT = 56;
+  pub const VT_SUBTYPEDATA: ::flatbuffers::VOffsetT = 58;
+  pub const VT_VARIATIONDATA: ::flatbuffers::VOffsetT = 60;
+  pub const VT_FUSIONDATA: ::flatbuffers::VOffsetT = 62;
+  pub const VT_CHARBUFFDATA: ::flatbuffers::VOffsetT = 64;
+  pub const VT_SQUADBUFFDATA: ::flatbuffers::VOffsetT = 66;
+  pub const VT_TASKDATA: ::flatbuffers::VOffsetT = 68;
+  pub const VT_GAMECONST: ::flatbuffers::VOffsetT = 70;
+  pub const VT_SHOPDIALOGDATA: ::flatbuffers::VOffsetT = 72;
+  pub const VT_CAPSULEDICT: ::flatbuffers::VOffsetT = 74;
+  pub const VT_ENDINGS: ::flatbuffers::VOffsetT = 76;
+  pub const VT_FAILENDINGS: ::flatbuffers::VOffsetT = 78;
+  pub const VT_BATTLESUMMERYDESCRIPTIONS: ::flatbuffers::VOffsetT = 80;
+  pub const VT_BATTLELOADINGTIPS: ::flatbuffers::VOffsetT = 82;
+  pub const VT_ITEMS: ::flatbuffers::VOffsetT = 84;
+  pub const VT_BANDREF: ::flatbuffers::VOffsetT = 86;
+  pub const VT_ENDINGDETAILLIST: ::flatbuffers::VOffsetT = 88;
+  pub const VT_ENDINGRELICDETAILLIST: ::flatbuffers::VOffsetT = 90;
+  pub const VT_TREASURES: ::flatbuffers::VOffsetT = 92;
+  pub const VT_DIFFICULTYUPGRADERELICGROUPS: ::flatbuffers::VOffsetT = 94;
+  pub const VT_STYLES: ::flatbuffers::VOffsetT = 96;
+  pub const VT_STYLECONFIG: ::flatbuffers::VOffsetT = 98;
+  pub const VT_EXPLORETOOLS: ::flatbuffers::VOffsetT = 100;
+  pub const VT_ROLLNODEDATA: ::flatbuffers::VOffsetT = 102;
+  pub const VT_ACTIVITY: ::flatbuffers::VOffsetT = 104;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -47389,7 +42370,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     args: &'args clz_Torappu_RoguelikeTopicDetailArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicDetail<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeTopicDetailBuilder::new(_fbb);
-    if let Some(x) = args.relicTipsData { builder.add_relicTipsData(x); }
     if let Some(x) = args.activity { builder.add_activity(x); }
     if let Some(x) = args.rollNodeData { builder.add_rollNodeData(x); }
     if let Some(x) = args.exploreTools { builder.add_exploreTools(x); }
@@ -47420,7 +42400,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     if let Some(x) = args.recruitGrps { builder.add_recruitGrps(x); }
     if let Some(x) = args.relicParams { builder.add_relicParams(x); }
     if let Some(x) = args.relics { builder.add_relics(x); }
-    if let Some(x) = args.stashableTickets { builder.add_stashableTickets(x); }
     if let Some(x) = args.customTickets { builder.add_customTickets(x); }
     if let Some(x) = args.upgradeTickets { builder.add_upgradeTickets(x); }
     if let Some(x) = args.recruitTickets { builder.add_recruitTickets(x); }
@@ -47507,9 +42486,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
       x.iter().map(|t| t.unpack()).collect()
     });
     let customTickets = self.customTickets().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let stashableTickets = self.stashableTickets().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
     let relics = self.relics().map(|x| {
@@ -47602,9 +42578,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     let activity = self.activity().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
-    let relicTipsData = self.relicTipsData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
     clz_Torappu_RoguelikeTopicDetailT {
       updates,
       enrolls,
@@ -47627,7 +42600,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
       recruitTickets,
       upgradeTickets,
       customTickets,
-      stashableTickets,
       relics,
       relicParams,
       recruitGrps,
@@ -47658,7 +42630,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
       exploreTools,
       rollNodeData,
       activity,
-      relicTipsData,
     }
   }
 
@@ -47808,13 +42779,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameCustomTicketData>>>>(clz_Torappu_RoguelikeTopicDetail::VT_CUSTOMTICKETS, None)}
-  }
-  #[inline]
-  pub fn stashableTickets(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData>>>>(clz_Torappu_RoguelikeTopicDetail::VT_STASHABLETICKETS, None)}
   }
   #[inline]
   pub fn relics(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicData<'a>>>> {
@@ -48026,13 +42990,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>(clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY, None)}
   }
-  #[inline]
-  pub fn relicTipsData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>>>>(clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
@@ -48062,7 +43019,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRecruitTicketData>>>>("recruitTickets", Self::VT_RECRUITTICKETS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameUpgradeTicketData>>>>("upgradeTickets", Self::VT_UPGRADETICKETS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameCustomTicketData>>>>("customTickets", Self::VT_CUSTOMTICKETS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData>>>>("stashableTickets", Self::VT_STASHABLETICKETS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicData>>>>("relics", Self::VT_RELICS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicParamData>>>>("relicParams", Self::VT_RELICPARAMS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRecruitGrpData>>>>("recruitGrps", Self::VT_RECRUITGRPS, false)?
@@ -48093,7 +43049,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData>>>>("exploreTools", Self::VT_EXPLORETOOLS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData>>>>("rollNodeData", Self::VT_ROLLNODEDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>("activity", Self::VT_ACTIVITY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>>>>("relicTipsData", Self::VT_RELICTIPSDATA, false)?
      .finish();
     Ok(())
   }
@@ -48120,7 +43075,6 @@ pub struct clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     pub recruitTickets: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRecruitTicketData<'a>>>>>,
     pub upgradeTickets: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameUpgradeTicketData<'a>>>>>,
     pub customTickets: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameCustomTicketData<'a>>>>>,
-    pub stashableTickets: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'a>>>>>,
     pub relics: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicData<'a>>>>>,
     pub relicParams: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicParamData<'a>>>>>,
     pub recruitGrps: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRecruitGrpData<'a>>>>>,
@@ -48151,7 +43105,6 @@ pub struct clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     pub exploreTools: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData<'a>>>>>,
     pub rollNodeData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData<'a>>>>>,
     pub activity: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData<'a>>>,
-    pub relicTipsData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
   #[inline]
@@ -48178,7 +43131,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
       recruitTickets: None,
       upgradeTickets: None,
       customTickets: None,
-      stashableTickets: None,
       relics: None,
       relicParams: None,
       recruitGrps: None,
@@ -48209,7 +43161,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
       exploreTools: None,
       rollNodeData: None,
       activity: None,
-      relicTipsData: None,
     }
   }
 }
@@ -48303,10 +43254,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicDet
   #[inline]
   pub fn add_customTickets(&mut self, customTickets: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameCustomTicketData<'b >>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetail::VT_CUSTOMTICKETS, customTickets);
-  }
-  #[inline]
-  pub fn add_stashableTickets(&mut self, stashableTickets: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetail::VT_STASHABLETICKETS, stashableTickets);
   }
   #[inline]
   pub fn add_relics(&mut self, relics: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameRelicData<'b >>>>) {
@@ -48429,10 +43376,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicDet
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData>>(clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY, activity);
   }
   #[inline]
-  pub fn add_relicTipsData(&mut self, relicTipsData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA, relicTipsData);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeTopicDetailBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RoguelikeTopicDetailBuilder {
@@ -48471,7 +43414,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicDetail<'_> {
       ds.field("recruitTickets", &self.recruitTickets());
       ds.field("upgradeTickets", &self.upgradeTickets());
       ds.field("customTickets", &self.customTickets());
-      ds.field("stashableTickets", &self.stashableTickets());
       ds.field("relics", &self.relics());
       ds.field("relicParams", &self.relicParams());
       ds.field("recruitGrps", &self.recruitGrps());
@@ -48502,7 +43444,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicDetail<'_> {
       ds.field("exploreTools", &self.exploreTools());
       ds.field("rollNodeData", &self.rollNodeData());
       ds.field("activity", &self.activity());
-      ds.field("relicTipsData", &self.relicTipsData());
       ds.finish()
   }
 }
@@ -48530,7 +43471,6 @@ pub struct clz_Torappu_RoguelikeTopicDetailT {
   pub recruitTickets: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameRecruitTicketDataT>>,
   pub upgradeTickets: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameUpgradeTicketDataT>>,
   pub customTickets: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameCustomTicketDataT>>,
-  pub stashableTickets: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameStashableTicketDataT>>,
   pub relics: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameRelicDataT>>,
   pub relicParams: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameRelicParamDataT>>,
   pub recruitGrps: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameRecruitGrpDataT>>,
@@ -48561,7 +43501,6 @@ pub struct clz_Torappu_RoguelikeTopicDetailT {
   pub exploreTools: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeGameExploreToolDataT>>,
   pub rollNodeData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeRollNodeDataT>>,
   pub activity: Option<alloc::boxed::Box<clz_Torappu_RoguelikeActivityDataT>>,
-  pub relicTipsData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeRelicTipsDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeTopicDetailT {
   fn default() -> Self {
@@ -48587,7 +43526,6 @@ impl Default for clz_Torappu_RoguelikeTopicDetailT {
       recruitTickets: None,
       upgradeTickets: None,
       customTickets: None,
-      stashableTickets: None,
       relics: None,
       relicParams: None,
       recruitGrps: None,
@@ -48618,7 +43556,6 @@ impl Default for clz_Torappu_RoguelikeTopicDetailT {
       exploreTools: None,
       rollNodeData: None,
       activity: None,
-      relicTipsData: None,
     }
   }
 }
@@ -48688,9 +43625,6 @@ impl clz_Torappu_RoguelikeTopicDetailT {
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
     let customTickets = self.customTickets.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let stashableTickets = self.stashableTickets.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
     let relics = self.relics.as_ref().map(|x|{
@@ -48783,9 +43717,6 @@ impl clz_Torappu_RoguelikeTopicDetailT {
     let activity = self.activity.as_ref().map(|x|{
       x.pack(_fbb)
     });
-    let relicTipsData = self.relicTipsData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     clz_Torappu_RoguelikeTopicDetail::create(_fbb, &clz_Torappu_RoguelikeTopicDetailArgs{
       updates,
       enrolls,
@@ -48808,7 +43739,6 @@ impl clz_Torappu_RoguelikeTopicDetailT {
       recruitTickets,
       upgradeTickets,
       customTickets,
-      stashableTickets,
       relics,
       relicParams,
       recruitGrps,
@@ -48839,7 +43769,6 @@ impl clz_Torappu_RoguelikeTopicDetailT {
       exploreTools,
       rollNodeData,
       activity,
-      relicTipsData,
     })
   }
 }
@@ -60701,3935 +55630,6 @@ impl clz_Torappu_RoguelikeNodeUpgradeModuleDataT {
     })
   }
 }
-pub enum clz_Torappu_RoguelikeCopperDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCopperData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperData<'a> {
-  type Inner = clz_Torappu_RoguelikeCopperData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
-  pub const VT_ID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GROUPID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_GILDTYPEID: ::flatbuffers::VOffsetT = 8;
-  pub const VT_LUCKYLEVEL: ::flatbuffers::VOffsetT = 10;
-  pub const VT_BUFFTYPE: ::flatbuffers::VOffsetT = 12;
-  pub const VT_LAYERCNTDESC: ::flatbuffers::VOffsetT = 14;
-  pub const VT_POEMLIST: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ALWAYSSHOWCOUNTDOWN: ::flatbuffers::VOffsetT = 18;
-  pub const VT_BUFFITEMIDLIST: ::flatbuffers::VOffsetT = 20;
-  pub const VT_ISALLLUCKYLEVEL: ::flatbuffers::VOffsetT = 22;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCopperData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCopperDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCopperDataBuilder::new(_fbb);
-    if let Some(x) = args.buffItemIdList { builder.add_buffItemIdList(x); }
-    if let Some(x) = args.poemList { builder.add_poemList(x); }
-    if let Some(x) = args.layerCntDesc { builder.add_layerCntDesc(x); }
-    builder.add_buffType(args.buffType);
-    builder.add_luckyLevel(args.luckyLevel);
-    if let Some(x) = args.gildTypeId { builder.add_gildTypeId(x); }
-    if let Some(x) = args.groupId { builder.add_groupId(x); }
-    if let Some(x) = args.id { builder.add_id(x); }
-    builder.add_isAllLuckyLevel(args.isAllLuckyLevel);
-    builder.add_alwaysShowCountDown(args.alwaysShowCountDown);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperDataT {
-    let id = self.id().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let groupId = self.groupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildTypeId = self.gildTypeId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let luckyLevel = self.luckyLevel();
-    let buffType = self.buffType();
-    let layerCntDesc = self.layerCntDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let poemList = self.poemList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let alwaysShowCountDown = self.alwaysShowCountDown();
-    let buffItemIdList = self.buffItemIdList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let isAllLuckyLevel = self.isAllLuckyLevel();
-    clz_Torappu_RoguelikeCopperDataT {
-      id,
-      groupId,
-      gildTypeId,
-      luckyLevel,
-      buffType,
-      layerCntDesc,
-      poemList,
-      alwaysShowCountDown,
-      buffItemIdList,
-      isAllLuckyLevel,
-    }
-  }
-
-  #[inline]
-  pub fn id(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperData::VT_ID, None)}
-  }
-  #[inline]
-  pub fn groupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperData::VT_GROUPID, None)}
-  }
-  #[inline]
-  pub fn gildTypeId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperData::VT_GILDTYPEID, None)}
-  }
-  #[inline]
-  pub fn luckyLevel(&self) -> enum__Torappu_RoguelikeCopperLuckyLevel {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperLuckyLevel>(clz_Torappu_RoguelikeCopperData::VT_LUCKYLEVEL, Some(enum__Torappu_RoguelikeCopperLuckyLevel::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn buffType(&self) -> enum__Torappu_RoguelikeCopperBuffType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperBuffType>(clz_Torappu_RoguelikeCopperData::VT_BUFFTYPE, Some(enum__Torappu_RoguelikeCopperBuffType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn layerCntDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperData::VT_LAYERCNTDESC, None)}
-  }
-  #[inline]
-  pub fn poemList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RoguelikeCopperData::VT_POEMLIST, None)}
-  }
-  #[inline]
-  pub fn alwaysShowCountDown(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeCopperData::VT_ALWAYSSHOWCOUNTDOWN, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn buffItemIdList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RoguelikeCopperData::VT_BUFFITEMIDLIST, None)}
-  }
-  #[inline]
-  pub fn isAllLuckyLevel(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeCopperData::VT_ISALLLUCKYLEVEL, Some(false)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildTypeId", Self::VT_GILDTYPEID, false)?
-     .visit_field::<enum__Torappu_RoguelikeCopperLuckyLevel>("luckyLevel", Self::VT_LUCKYLEVEL, false)?
-     .visit_field::<enum__Torappu_RoguelikeCopperBuffType>("buffType", Self::VT_BUFFTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("layerCntDesc", Self::VT_LAYERCNTDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("poemList", Self::VT_POEMLIST, false)?
-     .visit_field::<bool>("alwaysShowCountDown", Self::VT_ALWAYSSHOWCOUNTDOWN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("buffItemIdList", Self::VT_BUFFITEMIDLIST, false)?
-     .visit_field::<bool>("isAllLuckyLevel", Self::VT_ISALLLUCKYLEVEL, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCopperDataArgs<'a> {
-    pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub groupId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildTypeId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel,
-    pub buffType: enum__Torappu_RoguelikeCopperBuffType,
-    pub layerCntDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub poemList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub alwaysShowCountDown: bool,
-    pub buffItemIdList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub isAllLuckyLevel: bool,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCopperDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCopperDataArgs {
-      id: None,
-      groupId: None,
-      gildTypeId: None,
-      luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel::NONE,
-      buffType: enum__Torappu_RoguelikeCopperBuffType::NONE,
-      layerCntDesc: None,
-      poemList: None,
-      alwaysShowCountDown: false,
-      buffItemIdList: None,
-      isAllLuckyLevel: false,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCopperDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_id(&mut self, id: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_ID, id);
-  }
-  #[inline]
-  pub fn add_groupId(&mut self, groupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_GROUPID, groupId);
-  }
-  #[inline]
-  pub fn add_gildTypeId(&mut self, gildTypeId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_GILDTYPEID, gildTypeId);
-  }
-  #[inline]
-  pub fn add_luckyLevel(&mut self, luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperLuckyLevel>(clz_Torappu_RoguelikeCopperData::VT_LUCKYLEVEL, luckyLevel, enum__Torappu_RoguelikeCopperLuckyLevel::NONE);
-  }
-  #[inline]
-  pub fn add_buffType(&mut self, buffType: enum__Torappu_RoguelikeCopperBuffType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperBuffType>(clz_Torappu_RoguelikeCopperData::VT_BUFFTYPE, buffType, enum__Torappu_RoguelikeCopperBuffType::NONE);
-  }
-  #[inline]
-  pub fn add_layerCntDesc(&mut self, layerCntDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_LAYERCNTDESC, layerCntDesc);
-  }
-  #[inline]
-  pub fn add_poemList(&mut self, poemList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_POEMLIST, poemList);
-  }
-  #[inline]
-  pub fn add_alwaysShowCountDown(&mut self, alwaysShowCountDown: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeCopperData::VT_ALWAYSSHOWCOUNTDOWN, alwaysShowCountDown, false);
-  }
-  #[inline]
-  pub fn add_buffItemIdList(&mut self, buffItemIdList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperData::VT_BUFFITEMIDLIST, buffItemIdList);
-  }
-  #[inline]
-  pub fn add_isAllLuckyLevel(&mut self, isAllLuckyLevel: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeCopperData::VT_ISALLLUCKYLEVEL, isAllLuckyLevel, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCopperDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCopperDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCopperData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperData");
-      ds.field("id", &self.id());
-      ds.field("groupId", &self.groupId());
-      ds.field("gildTypeId", &self.gildTypeId());
-      ds.field("luckyLevel", &self.luckyLevel());
-      ds.field("buffType", &self.buffType());
-      ds.field("layerCntDesc", &self.layerCntDesc());
-      ds.field("poemList", &self.poemList());
-      ds.field("alwaysShowCountDown", &self.alwaysShowCountDown());
-      ds.field("buffItemIdList", &self.buffItemIdList());
-      ds.field("isAllLuckyLevel", &self.isAllLuckyLevel());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCopperDataT {
-  pub id: Option<alloc::string::String>,
-  pub groupId: Option<alloc::string::String>,
-  pub gildTypeId: Option<alloc::string::String>,
-  pub luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel,
-  pub buffType: enum__Torappu_RoguelikeCopperBuffType,
-  pub layerCntDesc: Option<alloc::string::String>,
-  pub poemList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub alwaysShowCountDown: bool,
-  pub buffItemIdList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub isAllLuckyLevel: bool,
-}
-impl Default for clz_Torappu_RoguelikeCopperDataT {
-  fn default() -> Self {
-    Self {
-      id: None,
-      groupId: None,
-      gildTypeId: None,
-      luckyLevel: enum__Torappu_RoguelikeCopperLuckyLevel::NONE,
-      buffType: enum__Torappu_RoguelikeCopperBuffType::NONE,
-      layerCntDesc: None,
-      poemList: None,
-      alwaysShowCountDown: false,
-      buffItemIdList: None,
-      isAllLuckyLevel: false,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCopperDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData<'b>> {
-    let id = self.id.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let groupId = self.groupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildTypeId = self.gildTypeId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let luckyLevel = self.luckyLevel;
-    let buffType = self.buffType;
-    let layerCntDesc = self.layerCntDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let poemList = self.poemList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let alwaysShowCountDown = self.alwaysShowCountDown;
-    let buffItemIdList = self.buffItemIdList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let isAllLuckyLevel = self.isAllLuckyLevel;
-    clz_Torappu_RoguelikeCopperData::create(_fbb, &clz_Torappu_RoguelikeCopperDataArgs{
-      id,
-      groupId,
-      gildTypeId,
-      luckyLevel,
-      buffType,
-      layerCntDesc,
-      poemList,
-      alwaysShowCountDown,
-      buffItemIdList,
-      isAllLuckyLevel,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeCopperDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeCopperData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeCopperData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeCopperData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeCopperDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeCopperDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeCopperDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeCopperDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeCopperData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeCopperData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeCopperData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperData>>(dict__string__clz_Torappu_RoguelikeCopperData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeCopperData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeCopperDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeCopperDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeCopperData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperData>>(dict__string__clz_Torappu_RoguelikeCopperData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeCopperDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeCopperDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeCopperData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeCopperData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeCopperData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeCopperDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCopperDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeCopperDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeCopperDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeCopperData::create(_fbb, &dict__string__clz_Torappu_RoguelikeCopperDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCopperDivineDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCopperDivineData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperDivineData<'a> {
-  type Inner = clz_Torappu_RoguelikeCopperDivineData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCopperDivineData<'a> {
-  pub const VT_EVENTID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GROUPID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SHOWDESC: ::flatbuffers::VOffsetT = 8;
-  pub const VT_DIVINETYPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_RESULTTYPE: ::flatbuffers::VOffsetT = 12;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCopperDivineData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCopperDivineDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCopperDivineDataBuilder::new(_fbb);
-    builder.add_resultType(args.resultType);
-    builder.add_divineType(args.divineType);
-    if let Some(x) = args.showDesc { builder.add_showDesc(x); }
-    if let Some(x) = args.groupId { builder.add_groupId(x); }
-    if let Some(x) = args.eventId { builder.add_eventId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperDivineDataT {
-    let eventId = self.eventId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let groupId = self.groupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let showDesc = self.showDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let divineType = self.divineType();
-    let resultType = self.resultType();
-    clz_Torappu_RoguelikeCopperDivineDataT {
-      eventId,
-      groupId,
-      showDesc,
-      divineType,
-      resultType,
-    }
-  }
-
-  #[inline]
-  pub fn eventId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperDivineData::VT_EVENTID, None)}
-  }
-  #[inline]
-  pub fn groupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperDivineData::VT_GROUPID, None)}
-  }
-  #[inline]
-  pub fn showDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperDivineData::VT_SHOWDESC, None)}
-  }
-  #[inline]
-  pub fn divineType(&self) -> enum__Torappu_RoguelikeCopperDivineType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperDivineType>(clz_Torappu_RoguelikeCopperDivineData::VT_DIVINETYPE, Some(enum__Torappu_RoguelikeCopperDivineType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn resultType(&self) -> enum__Torappu_RoguelikeCopperDivineResultType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeCopperDivineResultType>(clz_Torappu_RoguelikeCopperDivineData::VT_RESULTTYPE, Some(enum__Torappu_RoguelikeCopperDivineResultType::NONE)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperDivineData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("eventId", Self::VT_EVENTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("showDesc", Self::VT_SHOWDESC, false)?
-     .visit_field::<enum__Torappu_RoguelikeCopperDivineType>("divineType", Self::VT_DIVINETYPE, false)?
-     .visit_field::<enum__Torappu_RoguelikeCopperDivineResultType>("resultType", Self::VT_RESULTTYPE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCopperDivineDataArgs<'a> {
-    pub eventId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub groupId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub showDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub divineType: enum__Torappu_RoguelikeCopperDivineType,
-    pub resultType: enum__Torappu_RoguelikeCopperDivineResultType,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCopperDivineDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCopperDivineDataArgs {
-      eventId: None,
-      groupId: None,
-      showDesc: None,
-      divineType: enum__Torappu_RoguelikeCopperDivineType::NONE,
-      resultType: enum__Torappu_RoguelikeCopperDivineResultType::NONE,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCopperDivineDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperDivineDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_eventId(&mut self, eventId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperDivineData::VT_EVENTID, eventId);
-  }
-  #[inline]
-  pub fn add_groupId(&mut self, groupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperDivineData::VT_GROUPID, groupId);
-  }
-  #[inline]
-  pub fn add_showDesc(&mut self, showDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperDivineData::VT_SHOWDESC, showDesc);
-  }
-  #[inline]
-  pub fn add_divineType(&mut self, divineType: enum__Torappu_RoguelikeCopperDivineType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperDivineType>(clz_Torappu_RoguelikeCopperDivineData::VT_DIVINETYPE, divineType, enum__Torappu_RoguelikeCopperDivineType::NONE);
-  }
-  #[inline]
-  pub fn add_resultType(&mut self, resultType: enum__Torappu_RoguelikeCopperDivineResultType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeCopperDivineResultType>(clz_Torappu_RoguelikeCopperDivineData::VT_RESULTTYPE, resultType, enum__Torappu_RoguelikeCopperDivineResultType::NONE);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCopperDivineDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCopperDivineDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCopperDivineData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperDivineData");
-      ds.field("eventId", &self.eventId());
-      ds.field("groupId", &self.groupId());
-      ds.field("showDesc", &self.showDesc());
-      ds.field("divineType", &self.divineType());
-      ds.field("resultType", &self.resultType());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCopperDivineDataT {
-  pub eventId: Option<alloc::string::String>,
-  pub groupId: Option<alloc::string::String>,
-  pub showDesc: Option<alloc::string::String>,
-  pub divineType: enum__Torappu_RoguelikeCopperDivineType,
-  pub resultType: enum__Torappu_RoguelikeCopperDivineResultType,
-}
-impl Default for clz_Torappu_RoguelikeCopperDivineDataT {
-  fn default() -> Self {
-    Self {
-      eventId: None,
-      groupId: None,
-      showDesc: None,
-      divineType: enum__Torappu_RoguelikeCopperDivineType::NONE,
-      resultType: enum__Torappu_RoguelikeCopperDivineResultType::NONE,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCopperDivineDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData<'b>> {
-    let eventId = self.eventId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let groupId = self.groupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let showDesc = self.showDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let divineType = self.divineType;
-    let resultType = self.resultType;
-    clz_Torappu_RoguelikeCopperDivineData::create(_fbb, &clz_Torappu_RoguelikeCopperDivineDataArgs{
-      eventId,
-      groupId,
-      showDesc,
-      divineType,
-      resultType,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeCopperDivineDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperDivineData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeCopperDivineData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeCopperDivineData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeCopperDivineData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperDivineData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeCopperDivineData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeCopperDivineData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeCopperDivineData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperDivineData>>(dict__string__clz_Torappu_RoguelikeCopperDivineData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeCopperDivineData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperDivineData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeCopperDivineData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperDivineData>>(dict__string__clz_Torappu_RoguelikeCopperDivineData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeCopperDivineData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeCopperDivineData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeCopperDivineData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCopperDivineDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeCopperDivineData::create(_fbb, &dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCopperGildTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  type Inner = clz_Torappu_RoguelikeCopperGildTypeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  pub const VT_GILDTYPEID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GILDNAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_GILDDESC: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCopperGildTypeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCopperGildTypeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCopperGildTypeDataBuilder::new(_fbb);
-    if let Some(x) = args.gildDesc { builder.add_gildDesc(x); }
-    if let Some(x) = args.gildName { builder.add_gildName(x); }
-    if let Some(x) = args.gildTypeId { builder.add_gildTypeId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperGildTypeDataT {
-    let gildTypeId = self.gildTypeId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildName = self.gildName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildDesc = self.gildDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeCopperGildTypeDataT {
-      gildTypeId,
-      gildName,
-      gildDesc,
-    }
-  }
-
-  #[inline]
-  pub fn gildTypeId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDTYPEID, None)}
-  }
-  #[inline]
-  pub fn gildName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDNAME, None)}
-  }
-  #[inline]
-  pub fn gildDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDDESC, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperGildTypeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildTypeId", Self::VT_GILDTYPEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildName", Self::VT_GILDNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildDesc", Self::VT_GILDDESC, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
-    pub gildTypeId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCopperGildTypeDataArgs {
-      gildTypeId: None,
-      gildName: None,
-      gildDesc: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_gildTypeId(&mut self, gildTypeId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDTYPEID, gildTypeId);
-  }
-  #[inline]
-  pub fn add_gildName(&mut self, gildName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDNAME, gildName);
-  }
-  #[inline]
-  pub fn add_gildDesc(&mut self, gildDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDDESC, gildDesc);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCopperGildTypeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCopperGildTypeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperGildTypeData");
-      ds.field("gildTypeId", &self.gildTypeId());
-      ds.field("gildName", &self.gildName());
-      ds.field("gildDesc", &self.gildDesc());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCopperGildTypeDataT {
-  pub gildTypeId: Option<alloc::string::String>,
-  pub gildName: Option<alloc::string::String>,
-  pub gildDesc: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeCopperGildTypeDataT {
-  fn default() -> Self {
-    Self {
-      gildTypeId: None,
-      gildName: None,
-      gildDesc: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCopperGildTypeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'b>> {
-    let gildTypeId = self.gildTypeId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildName = self.gildName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildDesc = self.gildDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeCopperGildTypeData::create(_fbb, &clz_Torappu_RoguelikeCopperGildTypeDataArgs{
-      gildTypeId,
-      gildName,
-      gildDesc,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeCopperGildTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperGildTypeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeCopperGildTypeData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperGildTypeData>>(dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperGildTypeData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData>>(dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeCopperGildTypeData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCopperGildTypeDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeCopperGildTypeData::create(_fbb, &dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCopperModuleConstsOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCopperModuleConsts<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperModuleConsts<'a> {
-  type Inner = clz_Torappu_RoguelikeCopperModuleConsts<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCopperModuleConsts<'a> {
-  pub const VT_COPPERDRAWMAXNUM: ::flatbuffers::VOffsetT = 4;
-  pub const VT_COPPERDRAWMINNUM: ::flatbuffers::VOffsetT = 6;
-  pub const VT_COPPERALLLUCKYLEVELGILDID: ::flatbuffers::VOffsetT = 8;
-  pub const VT_COPPERDRAWFREEZECOSTITEMID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_COPPERDRAWFREEZECOSTCOUNT: ::flatbuffers::VOffsetT = 12;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCopperModuleConsts { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCopperModuleConstsArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCopperModuleConstsBuilder::new(_fbb);
-    if let Some(x) = args.copperDrawFreezeCostCount { builder.add_copperDrawFreezeCostCount(x); }
-    if let Some(x) = args.copperDrawFreezeCostItemId { builder.add_copperDrawFreezeCostItemId(x); }
-    if let Some(x) = args.copperAllLuckyLevelGildId { builder.add_copperAllLuckyLevelGildId(x); }
-    builder.add_copperDrawMinNum(args.copperDrawMinNum);
-    builder.add_copperDrawMaxNum(args.copperDrawMaxNum);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperModuleConstsT {
-    let copperDrawMaxNum = self.copperDrawMaxNum();
-    let copperDrawMinNum = self.copperDrawMinNum();
-    let copperAllLuckyLevelGildId = self.copperAllLuckyLevelGildId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let copperDrawFreezeCostItemId = self.copperDrawFreezeCostItemId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let copperDrawFreezeCostCount = self.copperDrawFreezeCostCount().map(|x| {
-      x.into_iter().collect()
-    });
-    clz_Torappu_RoguelikeCopperModuleConstsT {
-      copperDrawMaxNum,
-      copperDrawMinNum,
-      copperAllLuckyLevelGildId,
-      copperDrawFreezeCostItemId,
-      copperDrawFreezeCostCount,
-    }
-  }
-
-  #[inline]
-  pub fn copperDrawMaxNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWMAXNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn copperDrawMinNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWMINNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn copperAllLuckyLevelGildId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERALLLUCKYLEVELGILDID, None)}
-  }
-  #[inline]
-  pub fn copperDrawFreezeCostItemId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTITEMID, None)}
-  }
-  #[inline]
-  pub fn copperDrawFreezeCostCount(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, i32>>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTCOUNT, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("copperDrawMaxNum", Self::VT_COPPERDRAWMAXNUM, false)?
-     .visit_field::<i32>("copperDrawMinNum", Self::VT_COPPERDRAWMINNUM, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("copperAllLuckyLevelGildId", Self::VT_COPPERALLLUCKYLEVELGILDID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("copperDrawFreezeCostItemId", Self::VT_COPPERDRAWFREEZECOSTITEMID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, i32>>>("copperDrawFreezeCostCount", Self::VT_COPPERDRAWFREEZECOSTCOUNT, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCopperModuleConstsArgs<'a> {
-    pub copperDrawMaxNum: i32,
-    pub copperDrawMinNum: i32,
-    pub copperAllLuckyLevelGildId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub copperDrawFreezeCostItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub copperDrawFreezeCostCount: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCopperModuleConstsArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCopperModuleConstsArgs {
-      copperDrawMaxNum: 0,
-      copperDrawMinNum: 0,
-      copperAllLuckyLevelGildId: None,
-      copperDrawFreezeCostItemId: None,
-      copperDrawFreezeCostCount: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCopperModuleConstsBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperModuleConstsBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_copperDrawMaxNum(&mut self, copperDrawMaxNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWMAXNUM, copperDrawMaxNum, 0);
-  }
-  #[inline]
-  pub fn add_copperDrawMinNum(&mut self, copperDrawMinNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWMINNUM, copperDrawMinNum, 0);
-  }
-  #[inline]
-  pub fn add_copperAllLuckyLevelGildId(&mut self, copperAllLuckyLevelGildId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERALLLUCKYLEVELGILDID, copperAllLuckyLevelGildId);
-  }
-  #[inline]
-  pub fn add_copperDrawFreezeCostItemId(&mut self, copperDrawFreezeCostItemId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTITEMID, copperDrawFreezeCostItemId);
-  }
-  #[inline]
-  pub fn add_copperDrawFreezeCostCount(&mut self, copperDrawFreezeCostCount: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , i32>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTCOUNT, copperDrawFreezeCostCount);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCopperModuleConstsBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCopperModuleConstsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperModuleConsts");
-      ds.field("copperDrawMaxNum", &self.copperDrawMaxNum());
-      ds.field("copperDrawMinNum", &self.copperDrawMinNum());
-      ds.field("copperAllLuckyLevelGildId", &self.copperAllLuckyLevelGildId());
-      ds.field("copperDrawFreezeCostItemId", &self.copperDrawFreezeCostItemId());
-      ds.field("copperDrawFreezeCostCount", &self.copperDrawFreezeCostCount());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCopperModuleConstsT {
-  pub copperDrawMaxNum: i32,
-  pub copperDrawMinNum: i32,
-  pub copperAllLuckyLevelGildId: Option<alloc::string::String>,
-  pub copperDrawFreezeCostItemId: Option<alloc::string::String>,
-  pub copperDrawFreezeCostCount: Option<alloc::vec::Vec<i32>>,
-}
-impl Default for clz_Torappu_RoguelikeCopperModuleConstsT {
-  fn default() -> Self {
-    Self {
-      copperDrawMaxNum: 0,
-      copperDrawMinNum: 0,
-      copperAllLuckyLevelGildId: None,
-      copperDrawFreezeCostItemId: None,
-      copperDrawFreezeCostCount: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCopperModuleConstsT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'b>> {
-    let copperDrawMaxNum = self.copperDrawMaxNum;
-    let copperDrawMinNum = self.copperDrawMinNum;
-    let copperAllLuckyLevelGildId = self.copperAllLuckyLevelGildId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let copperDrawFreezeCostItemId = self.copperDrawFreezeCostItemId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let copperDrawFreezeCostCount = self.copperDrawFreezeCostCount.as_ref().map(|x|{
-      _fbb.create_vector(x)
-    });
-    clz_Torappu_RoguelikeCopperModuleConsts::create(_fbb, &clz_Torappu_RoguelikeCopperModuleConstsArgs{
-      copperDrawMaxNum,
-      copperDrawMinNum,
-      copperAllLuckyLevelGildId,
-      copperDrawFreezeCostItemId,
-      copperDrawFreezeCostCount,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCopperModuleDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCopperModuleData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperModuleData<'a> {
-  type Inner = clz_Torappu_RoguelikeCopperModuleData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
-  pub const VT_COPPERDATA: ::flatbuffers::VOffsetT = 4;
-  pub const VT_COPPERDIVINEDATA: ::flatbuffers::VOffsetT = 6;
-  pub const VT_COPPERGILDTYPEDATA: ::flatbuffers::VOffsetT = 8;
-  pub const VT_CHANGECOPPERMAP: ::flatbuffers::VOffsetT = 10;
-  pub const VT_MODULECONSTS: ::flatbuffers::VOffsetT = 12;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCopperModuleData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCopperModuleDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCopperModuleDataBuilder::new(_fbb);
-    if let Some(x) = args.moduleConsts { builder.add_moduleConsts(x); }
-    if let Some(x) = args.changeCopperMap { builder.add_changeCopperMap(x); }
-    if let Some(x) = args.copperGildTypeData { builder.add_copperGildTypeData(x); }
-    if let Some(x) = args.copperDivineData { builder.add_copperDivineData(x); }
-    if let Some(x) = args.copperData { builder.add_copperData(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperModuleDataT {
-    let copperData = self.copperData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let copperDivineData = self.copperDivineData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let copperGildTypeData = self.copperGildTypeData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let changeCopperMap = self.changeCopperMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let moduleConsts = self.moduleConsts().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    clz_Torappu_RoguelikeCopperModuleDataT {
-      copperData,
-      copperDivineData,
-      copperGildTypeData,
-      changeCopperMap,
-      moduleConsts,
-    }
-  }
-
-  #[inline]
-  pub fn copperData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperData>>>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDATA, None)}
-  }
-  #[inline]
-  pub fn copperDivineData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData>>>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDIVINEDATA, None)}
-  }
-  #[inline]
-  pub fn copperGildTypeData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData>>>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERGILDTYPEDATA, None)}
-  }
-  #[inline]
-  pub fn changeCopperMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>(clz_Torappu_RoguelikeCopperModuleData::VT_CHANGECOPPERMAP, None)}
-  }
-  #[inline]
-  pub fn moduleConsts(&self) -> Option<clz_Torappu_RoguelikeCopperModuleConsts<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperModuleConsts>>(clz_Torappu_RoguelikeCopperModuleData::VT_MODULECONSTS, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperModuleData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperData>>>>("copperData", Self::VT_COPPERDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData>>>>("copperDivineData", Self::VT_COPPERDIVINEDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData>>>>("copperGildTypeData", Self::VT_COPPERGILDTYPEDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("changeCopperMap", Self::VT_CHANGECOPPERMAP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperModuleConsts>>("moduleConsts", Self::VT_MODULECONSTS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCopperModuleDataArgs<'a> {
-    pub copperData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperData<'a>>>>>,
-    pub copperDivineData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'a>>>>>,
-    pub copperGildTypeData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>>>>>,
-    pub changeCopperMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>>,
-    pub moduleConsts: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'a>>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCopperModuleDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCopperModuleDataArgs {
-      copperData: None,
-      copperDivineData: None,
-      copperGildTypeData: None,
-      changeCopperMap: None,
-      moduleConsts: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCopperModuleDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperModuleDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_copperData(&mut self, copperData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDATA, copperData);
-  }
-  #[inline]
-  pub fn add_copperDivineData(&mut self, copperDivineData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperDivineData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDIVINEDATA, copperDivineData);
-  }
-  #[inline]
-  pub fn add_copperGildTypeData(&mut self, copperGildTypeData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleData::VT_COPPERGILDTYPEDATA, copperGildTypeData);
-  }
-  #[inline]
-  pub fn add_changeCopperMap(&mut self, changeCopperMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCopperModuleData::VT_CHANGECOPPERMAP, changeCopperMap);
-  }
-  #[inline]
-  pub fn add_moduleConsts(&mut self, moduleConsts: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts>>(clz_Torappu_RoguelikeCopperModuleData::VT_MODULECONSTS, moduleConsts);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCopperModuleDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCopperModuleDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperModuleData");
-      ds.field("copperData", &self.copperData());
-      ds.field("copperDivineData", &self.copperDivineData());
-      ds.field("copperGildTypeData", &self.copperGildTypeData());
-      ds.field("changeCopperMap", &self.changeCopperMap());
-      ds.field("moduleConsts", &self.moduleConsts());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCopperModuleDataT {
-  pub copperData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeCopperDataT>>,
-  pub copperDivineData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeCopperDivineDataT>>,
-  pub copperGildTypeData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT>>,
-  pub changeCopperMap: Option<alloc::vec::Vec<dict__string__stringT>>,
-  pub moduleConsts: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCopperModuleConstsT>>,
-}
-impl Default for clz_Torappu_RoguelikeCopperModuleDataT {
-  fn default() -> Self {
-    Self {
-      copperData: None,
-      copperDivineData: None,
-      copperGildTypeData: None,
-      changeCopperMap: None,
-      moduleConsts: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCopperModuleDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData<'b>> {
-    let copperData = self.copperData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let copperDivineData = self.copperDivineData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let copperGildTypeData = self.copperGildTypeData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let changeCopperMap = self.changeCopperMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let moduleConsts = self.moduleConsts.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    clz_Torappu_RoguelikeCopperModuleData::create(_fbb, &clz_Torappu_RoguelikeCopperModuleDataArgs{
-      copperData,
-      copperDivineData,
-      copperGildTypeData,
-      changeCopperMap,
-      moduleConsts,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeWrathDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeWrathData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeWrathData<'a> {
-  type Inner = clz_Torappu_RoguelikeWrathData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
-  pub const VT_ID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GROUP: ::flatbuffers::VOffsetT = 6;
-  pub const VT_LEVEL: ::flatbuffers::VOffsetT = 8;
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_LEVELNAME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_FUNCTIONDESC: ::flatbuffers::VOffsetT = 14;
-  pub const VT_DESC: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ISPACIFIED: ::flatbuffers::VOffsetT = 18;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeWrathData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeWrathDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeWrathDataBuilder::new(_fbb);
-    if let Some(x) = args.desc { builder.add_desc(x); }
-    if let Some(x) = args.functionDesc { builder.add_functionDesc(x); }
-    if let Some(x) = args.levelName { builder.add_levelName(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_level(args.level);
-    if let Some(x) = args.group { builder.add_group(x); }
-    if let Some(x) = args.id { builder.add_id(x); }
-    builder.add_isPacified(args.isPacified);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeWrathDataT {
-    let id = self.id().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let group = self.group().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let level = self.level();
-    let name = self.name().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let levelName = self.levelName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let functionDesc = self.functionDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let desc = self.desc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let isPacified = self.isPacified();
-    clz_Torappu_RoguelikeWrathDataT {
-      id,
-      group,
-      level,
-      name,
-      levelName,
-      functionDesc,
-      desc,
-      isPacified,
-    }
-  }
-
-  #[inline]
-  pub fn id(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_ID, None)}
-  }
-  #[inline]
-  pub fn group(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_GROUP, None)}
-  }
-  #[inline]
-  pub fn level(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeWrathData::VT_LEVEL, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_NAME, None)}
-  }
-  #[inline]
-  pub fn levelName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_LEVELNAME, None)}
-  }
-  #[inline]
-  pub fn functionDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_FUNCTIONDESC, None)}
-  }
-  #[inline]
-  pub fn desc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathData::VT_DESC, None)}
-  }
-  #[inline]
-  pub fn isPacified(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeWrathData::VT_ISPACIFIED, Some(false)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("group", Self::VT_GROUP, false)?
-     .visit_field::<i32>("level", Self::VT_LEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("levelName", Self::VT_LEVELNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("functionDesc", Self::VT_FUNCTIONDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-     .visit_field::<bool>("isPacified", Self::VT_ISPACIFIED, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeWrathDataArgs<'a> {
-    pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub group: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub level: i32,
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub levelName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub functionDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub desc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub isPacified: bool,
-}
-impl<'a> Default for clz_Torappu_RoguelikeWrathDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeWrathDataArgs {
-      id: None,
-      group: None,
-      level: 0,
-      name: None,
-      levelName: None,
-      functionDesc: None,
-      desc: None,
-      isPacified: false,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeWrathDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeWrathDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_id(&mut self, id: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_ID, id);
-  }
-  #[inline]
-  pub fn add_group(&mut self, group: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_GROUP, group);
-  }
-  #[inline]
-  pub fn add_level(&mut self, level: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeWrathData::VT_LEVEL, level, 0);
-  }
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_levelName(&mut self, levelName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_LEVELNAME, levelName);
-  }
-  #[inline]
-  pub fn add_functionDesc(&mut self, functionDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_FUNCTIONDESC, functionDesc);
-  }
-  #[inline]
-  pub fn add_desc(&mut self, desc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathData::VT_DESC, desc);
-  }
-  #[inline]
-  pub fn add_isPacified(&mut self, isPacified: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeWrathData::VT_ISPACIFIED, isPacified, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeWrathDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeWrathDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeWrathData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeWrathData");
-      ds.field("id", &self.id());
-      ds.field("group", &self.group());
-      ds.field("level", &self.level());
-      ds.field("name", &self.name());
-      ds.field("levelName", &self.levelName());
-      ds.field("functionDesc", &self.functionDesc());
-      ds.field("desc", &self.desc());
-      ds.field("isPacified", &self.isPacified());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeWrathDataT {
-  pub id: Option<alloc::string::String>,
-  pub group: Option<alloc::string::String>,
-  pub level: i32,
-  pub name: Option<alloc::string::String>,
-  pub levelName: Option<alloc::string::String>,
-  pub functionDesc: Option<alloc::string::String>,
-  pub desc: Option<alloc::string::String>,
-  pub isPacified: bool,
-}
-impl Default for clz_Torappu_RoguelikeWrathDataT {
-  fn default() -> Self {
-    Self {
-      id: None,
-      group: None,
-      level: 0,
-      name: None,
-      levelName: None,
-      functionDesc: None,
-      desc: None,
-      isPacified: false,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeWrathDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData<'b>> {
-    let id = self.id.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let group = self.group.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let level = self.level;
-    let name = self.name.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let levelName = self.levelName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let functionDesc = self.functionDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let desc = self.desc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let isPacified = self.isPacified;
-    clz_Torappu_RoguelikeWrathData::create(_fbb, &clz_Torappu_RoguelikeWrathDataArgs{
-      id,
-      group,
-      level,
-      name,
-      levelName,
-      functionDesc,
-      desc,
-      isPacified,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeWrathDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeWrathData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeWrathData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeWrathData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeWrathData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeWrathData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeWrathDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeWrathData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeWrathDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeWrathDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeWrathDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeWrathData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeWrathData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeWrathData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathData>>(dict__string__clz_Torappu_RoguelikeWrathData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeWrathData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeWrathDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeWrathDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeWrathDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeWrathDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeWrathDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeWrathData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathData>>(dict__string__clz_Torappu_RoguelikeWrathData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeWrathDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeWrathDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeWrathData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeWrathData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeWrathData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeWrathData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeWrathDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeWrathDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeWrathDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeWrathDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeWrathData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeWrathData::create(_fbb, &dict__string__clz_Torappu_RoguelikeWrathDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeWrathModuleConstsOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeWrathModuleConsts<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeWrathModuleConsts<'a> {
-  type Inner = clz_Torappu_RoguelikeWrathModuleConsts<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeWrathModuleConsts<'a> {
-  pub const VT_GETWRATHTRANSITION: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GETWRATHTOAST: ::flatbuffers::VOffsetT = 6;
-  pub const VT_HIDDENWRATHTYPE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_PACIFIEDWRATHLEVEL: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeWrathModuleConsts { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeWrathModuleConstsArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeWrathModuleConstsBuilder::new(_fbb);
-    builder.add_pacifiedWrathLevel(args.pacifiedWrathLevel);
-    if let Some(x) = args.hiddenWrathType { builder.add_hiddenWrathType(x); }
-    if let Some(x) = args.getWrathToast { builder.add_getWrathToast(x); }
-    if let Some(x) = args.getWrathTransition { builder.add_getWrathTransition(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeWrathModuleConstsT {
-    let getWrathTransition = self.getWrathTransition().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let getWrathToast = self.getWrathToast().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let hiddenWrathType = self.hiddenWrathType().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let pacifiedWrathLevel = self.pacifiedWrathLevel();
-    clz_Torappu_RoguelikeWrathModuleConstsT {
-      getWrathTransition,
-      getWrathToast,
-      hiddenWrathType,
-      pacifiedWrathLevel,
-    }
-  }
-
-  #[inline]
-  pub fn getWrathTransition(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_GETWRATHTRANSITION, None)}
-  }
-  #[inline]
-  pub fn getWrathToast(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_GETWRATHTOAST, None)}
-  }
-  #[inline]
-  pub fn hiddenWrathType(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_HIDDENWRATHTYPE, None)}
-  }
-  #[inline]
-  pub fn pacifiedWrathLevel(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeWrathModuleConsts::VT_PACIFIEDWRATHLEVEL, Some(0)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("getWrathTransition", Self::VT_GETWRATHTRANSITION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("getWrathToast", Self::VT_GETWRATHTOAST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("hiddenWrathType", Self::VT_HIDDENWRATHTYPE, false)?
-     .visit_field::<i32>("pacifiedWrathLevel", Self::VT_PACIFIEDWRATHLEVEL, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeWrathModuleConstsArgs<'a> {
-    pub getWrathTransition: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub getWrathToast: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub hiddenWrathType: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub pacifiedWrathLevel: i32,
-}
-impl<'a> Default for clz_Torappu_RoguelikeWrathModuleConstsArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeWrathModuleConstsArgs {
-      getWrathTransition: None,
-      getWrathToast: None,
-      hiddenWrathType: None,
-      pacifiedWrathLevel: 0,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeWrathModuleConstsBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeWrathModuleConstsBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_getWrathTransition(&mut self, getWrathTransition: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_GETWRATHTRANSITION, getWrathTransition);
-  }
-  #[inline]
-  pub fn add_getWrathToast(&mut self, getWrathToast: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_GETWRATHTOAST, getWrathToast);
-  }
-  #[inline]
-  pub fn add_hiddenWrathType(&mut self, hiddenWrathType: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathModuleConsts::VT_HIDDENWRATHTYPE, hiddenWrathType);
-  }
-  #[inline]
-  pub fn add_pacifiedWrathLevel(&mut self, pacifiedWrathLevel: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeWrathModuleConsts::VT_PACIFIEDWRATHLEVEL, pacifiedWrathLevel, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeWrathModuleConstsBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeWrathModuleConstsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeWrathModuleConsts");
-      ds.field("getWrathTransition", &self.getWrathTransition());
-      ds.field("getWrathToast", &self.getWrathToast());
-      ds.field("hiddenWrathType", &self.hiddenWrathType());
-      ds.field("pacifiedWrathLevel", &self.pacifiedWrathLevel());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeWrathModuleConstsT {
-  pub getWrathTransition: Option<alloc::string::String>,
-  pub getWrathToast: Option<alloc::string::String>,
-  pub hiddenWrathType: Option<alloc::string::String>,
-  pub pacifiedWrathLevel: i32,
-}
-impl Default for clz_Torappu_RoguelikeWrathModuleConstsT {
-  fn default() -> Self {
-    Self {
-      getWrathTransition: None,
-      getWrathToast: None,
-      hiddenWrathType: None,
-      pacifiedWrathLevel: 0,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeWrathModuleConstsT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'b>> {
-    let getWrathTransition = self.getWrathTransition.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let getWrathToast = self.getWrathToast.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let hiddenWrathType = self.hiddenWrathType.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let pacifiedWrathLevel = self.pacifiedWrathLevel;
-    clz_Torappu_RoguelikeWrathModuleConsts::create(_fbb, &clz_Torappu_RoguelikeWrathModuleConstsArgs{
-      getWrathTransition,
-      getWrathToast,
-      hiddenWrathType,
-      pacifiedWrathLevel,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeWrathModuleDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeWrathModuleData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeWrathModuleData<'a> {
-  type Inner = clz_Torappu_RoguelikeWrathModuleData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeWrathModuleData<'a> {
-  pub const VT_WRATHDATA: ::flatbuffers::VOffsetT = 4;
-  pub const VT_MODULECONSTS: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeWrathModuleData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeWrathModuleDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeWrathModuleDataBuilder::new(_fbb);
-    if let Some(x) = args.moduleConsts { builder.add_moduleConsts(x); }
-    if let Some(x) = args.wrathData { builder.add_wrathData(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeWrathModuleDataT {
-    let wrathData = self.wrathData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let moduleConsts = self.moduleConsts().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    clz_Torappu_RoguelikeWrathModuleDataT {
-      wrathData,
-      moduleConsts,
-    }
-  }
-
-  #[inline]
-  pub fn wrathData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeWrathData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeWrathData>>>>(clz_Torappu_RoguelikeWrathModuleData::VT_WRATHDATA, None)}
-  }
-  #[inline]
-  pub fn moduleConsts(&self) -> Option<clz_Torappu_RoguelikeWrathModuleConsts<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathModuleConsts>>(clz_Torappu_RoguelikeWrathModuleData::VT_MODULECONSTS, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathModuleData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeWrathData>>>>("wrathData", Self::VT_WRATHDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathModuleConsts>>("moduleConsts", Self::VT_MODULECONSTS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeWrathModuleDataArgs<'a> {
-    pub wrathData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeWrathData<'a>>>>>,
-    pub moduleConsts: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'a>>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeWrathModuleDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeWrathModuleDataArgs {
-      wrathData: None,
-      moduleConsts: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeWrathModuleDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeWrathModuleDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_wrathData(&mut self, wrathData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeWrathData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeWrathModuleData::VT_WRATHDATA, wrathData);
-  }
-  #[inline]
-  pub fn add_moduleConsts(&mut self, moduleConsts: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts>>(clz_Torappu_RoguelikeWrathModuleData::VT_MODULECONSTS, moduleConsts);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeWrathModuleDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeWrathModuleDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeWrathModuleData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeWrathModuleData");
-      ds.field("wrathData", &self.wrathData());
-      ds.field("moduleConsts", &self.moduleConsts());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeWrathModuleDataT {
-  pub wrathData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeWrathDataT>>,
-  pub moduleConsts: Option<alloc::boxed::Box<clz_Torappu_RoguelikeWrathModuleConstsT>>,
-}
-impl Default for clz_Torappu_RoguelikeWrathModuleDataT {
-  fn default() -> Self {
-    Self {
-      wrathData: None,
-      moduleConsts: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeWrathModuleDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData<'b>> {
-    let wrathData = self.wrathData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let moduleConsts = self.moduleConsts.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    clz_Torappu_RoguelikeWrathModuleData::create(_fbb, &clz_Torappu_RoguelikeWrathModuleDataArgs{
-      wrathData,
-      moduleConsts,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCandleModuleConstsOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCandleModuleConsts<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCandleModuleConsts<'a> {
-  type Inner = clz_Torappu_RoguelikeCandleModuleConsts<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCandleModuleConsts<'a> {
-  pub const VT_CANDLEHOLDERBUFFID: ::flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCandleModuleConsts { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCandleModuleConstsArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCandleModuleConstsBuilder::new(_fbb);
-    if let Some(x) = args.candleHolderBuffId { builder.add_candleHolderBuffId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCandleModuleConstsT {
-    let candleHolderBuffId = self.candleHolderBuffId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeCandleModuleConstsT {
-      candleHolderBuffId,
-    }
-  }
-
-  #[inline]
-  pub fn candleHolderBuffId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeCandleModuleConsts::VT_CANDLEHOLDERBUFFID, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCandleModuleConsts<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("candleHolderBuffId", Self::VT_CANDLEHOLDERBUFFID, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCandleModuleConstsArgs<'a> {
-    pub candleHolderBuffId: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCandleModuleConstsArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCandleModuleConstsArgs {
-      candleHolderBuffId: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCandleModuleConstsBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCandleModuleConstsBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_candleHolderBuffId(&mut self, candleHolderBuffId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCandleModuleConsts::VT_CANDLEHOLDERBUFFID, candleHolderBuffId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCandleModuleConstsBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCandleModuleConstsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCandleModuleConsts<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCandleModuleConsts");
-      ds.field("candleHolderBuffId", &self.candleHolderBuffId());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCandleModuleConstsT {
-  pub candleHolderBuffId: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeCandleModuleConstsT {
-  fn default() -> Self {
-    Self {
-      candleHolderBuffId: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCandleModuleConstsT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts<'b>> {
-    let candleHolderBuffId = self.candleHolderBuffId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeCandleModuleConsts::create(_fbb, &clz_Torappu_RoguelikeCandleModuleConstsArgs{
-      candleHolderBuffId,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeCandleModuleDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeCandleModuleData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCandleModuleData<'a> {
-  type Inner = clz_Torappu_RoguelikeCandleModuleData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeCandleModuleData<'a> {
-  pub const VT_CANDLETICKETIDLIST: ::flatbuffers::VOffsetT = 4;
-  pub const VT_MODULECONSTS: ::flatbuffers::VOffsetT = 6;
-  pub const VT_CANDLEBATTLESTAGEIDLIST: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeCandleModuleData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeCandleModuleDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeCandleModuleDataBuilder::new(_fbb);
-    if let Some(x) = args.candleBattleStageIdList { builder.add_candleBattleStageIdList(x); }
-    if let Some(x) = args.moduleConsts { builder.add_moduleConsts(x); }
-    if let Some(x) = args.candleTicketIdList { builder.add_candleTicketIdList(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeCandleModuleDataT {
-    let candleTicketIdList = self.candleTicketIdList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let moduleConsts = self.moduleConsts().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let candleBattleStageIdList = self.candleBattleStageIdList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    clz_Torappu_RoguelikeCandleModuleDataT {
-      candleTicketIdList,
-      moduleConsts,
-      candleBattleStageIdList,
-    }
-  }
-
-  #[inline]
-  pub fn candleTicketIdList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RoguelikeCandleModuleData::VT_CANDLETICKETIDLIST, None)}
-  }
-  #[inline]
-  pub fn moduleConsts(&self) -> Option<clz_Torappu_RoguelikeCandleModuleConsts<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCandleModuleConsts>>(clz_Torappu_RoguelikeCandleModuleData::VT_MODULECONSTS, None)}
-  }
-  #[inline]
-  pub fn candleBattleStageIdList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RoguelikeCandleModuleData::VT_CANDLEBATTLESTAGEIDLIST, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeCandleModuleData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("candleTicketIdList", Self::VT_CANDLETICKETIDLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCandleModuleConsts>>("moduleConsts", Self::VT_MODULECONSTS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("candleBattleStageIdList", Self::VT_CANDLEBATTLESTAGEIDLIST, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeCandleModuleDataArgs<'a> {
-    pub candleTicketIdList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub moduleConsts: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts<'a>>>,
-    pub candleBattleStageIdList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeCandleModuleDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeCandleModuleDataArgs {
-      candleTicketIdList: None,
-      moduleConsts: None,
-      candleBattleStageIdList: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeCandleModuleDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCandleModuleDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_candleTicketIdList(&mut self, candleTicketIdList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCandleModuleData::VT_CANDLETICKETIDLIST, candleTicketIdList);
-  }
-  #[inline]
-  pub fn add_moduleConsts(&mut self, moduleConsts: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleConsts>>(clz_Torappu_RoguelikeCandleModuleData::VT_MODULECONSTS, moduleConsts);
-  }
-  #[inline]
-  pub fn add_candleBattleStageIdList(&mut self, candleBattleStageIdList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeCandleModuleData::VT_CANDLEBATTLESTAGEIDLIST, candleBattleStageIdList);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeCandleModuleDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeCandleModuleDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeCandleModuleData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeCandleModuleData");
-      ds.field("candleTicketIdList", &self.candleTicketIdList());
-      ds.field("moduleConsts", &self.moduleConsts());
-      ds.field("candleBattleStageIdList", &self.candleBattleStageIdList());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeCandleModuleDataT {
-  pub candleTicketIdList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub moduleConsts: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCandleModuleConstsT>>,
-  pub candleBattleStageIdList: Option<alloc::vec::Vec<alloc::string::String>>,
-}
-impl Default for clz_Torappu_RoguelikeCandleModuleDataT {
-  fn default() -> Self {
-    Self {
-      candleTicketIdList: None,
-      moduleConsts: None,
-      candleBattleStageIdList: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeCandleModuleDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData<'b>> {
-    let candleTicketIdList = self.candleTicketIdList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let moduleConsts = self.moduleConsts.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let candleBattleStageIdList = self.candleBattleStageIdList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_RoguelikeCandleModuleData::create(_fbb, &clz_Torappu_RoguelikeCandleModuleDataArgs{
-      candleTicketIdList,
-      moduleConsts,
-      candleBattleStageIdList,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeSkyNodeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeSkyNodeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeSkyNodeData<'a> {
-  type Inner = clz_Torappu_RoguelikeSkyNodeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeSkyNodeData<'a> {
-  pub const VT_EVTTYPE: ::flatbuffers::VOffsetT = 4;
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_ICONID: ::flatbuffers::VOffsetT = 8;
-  pub const VT_EFFID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_DESC: ::flatbuffers::VOffsetT = 12;
-  pub const VT_NAMEBKGCLR: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SELECTCLR: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ISREPEATEDLY: ::flatbuffers::VOffsetT = 18;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeSkyNodeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeSkyNodeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeSkyNodeDataBuilder::new(_fbb);
-    if let Some(x) = args.selectClr { builder.add_selectClr(x); }
-    if let Some(x) = args.nameBkgClr { builder.add_nameBkgClr(x); }
-    if let Some(x) = args.desc { builder.add_desc(x); }
-    if let Some(x) = args.effId { builder.add_effId(x); }
-    if let Some(x) = args.iconId { builder.add_iconId(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_evtType(args.evtType);
-    builder.add_isRepeatedly(args.isRepeatedly);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeSkyNodeDataT {
-    let evtType = self.evtType();
-    let name = self.name().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let iconId = self.iconId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let effId = self.effId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let desc = self.desc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let nameBkgClr = self.nameBkgClr().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let selectClr = self.selectClr().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let isRepeatedly = self.isRepeatedly();
-    clz_Torappu_RoguelikeSkyNodeDataT {
-      evtType,
-      name,
-      iconId,
-      effId,
-      desc,
-      nameBkgClr,
-      selectClr,
-      isRepeatedly,
-    }
-  }
-
-  #[inline]
-  pub fn evtType(&self) -> enum__Torappu_RoguelikeSkyZoneNodeType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeSkyZoneNodeType>(clz_Torappu_RoguelikeSkyNodeData::VT_EVTTYPE, Some(enum__Torappu_RoguelikeSkyZoneNodeType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_NAME, None)}
-  }
-  #[inline]
-  pub fn iconId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_ICONID, None)}
-  }
-  #[inline]
-  pub fn effId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_EFFID, None)}
-  }
-  #[inline]
-  pub fn desc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_DESC, None)}
-  }
-  #[inline]
-  pub fn nameBkgClr(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_NAMEBKGCLR, None)}
-  }
-  #[inline]
-  pub fn selectClr(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeData::VT_SELECTCLR, None)}
-  }
-  #[inline]
-  pub fn isRepeatedly(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_RoguelikeSkyNodeData::VT_ISREPEATEDLY, Some(false)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeSkyNodeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<enum__Torappu_RoguelikeSkyZoneNodeType>("evtType", Self::VT_EVTTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("effId", Self::VT_EFFID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("nameBkgClr", Self::VT_NAMEBKGCLR, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("selectClr", Self::VT_SELECTCLR, false)?
-     .visit_field::<bool>("isRepeatedly", Self::VT_ISREPEATEDLY, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
-    pub evtType: enum__Torappu_RoguelikeSkyZoneNodeType,
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub iconId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub effId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub desc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub nameBkgClr: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub selectClr: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub isRepeatedly: bool,
-}
-impl<'a> Default for clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeSkyNodeDataArgs {
-      evtType: enum__Torappu_RoguelikeSkyZoneNodeType::NONE,
-      name: None,
-      iconId: None,
-      effId: None,
-      desc: None,
-      nameBkgClr: None,
-      selectClr: None,
-      isRepeatedly: false,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeSkyNodeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeSkyNodeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_evtType(&mut self, evtType: enum__Torappu_RoguelikeSkyZoneNodeType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeSkyZoneNodeType>(clz_Torappu_RoguelikeSkyNodeData::VT_EVTTYPE, evtType, enum__Torappu_RoguelikeSkyZoneNodeType::NONE);
-  }
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_iconId(&mut self, iconId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_ICONID, iconId);
-  }
-  #[inline]
-  pub fn add_effId(&mut self, effId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_EFFID, effId);
-  }
-  #[inline]
-  pub fn add_desc(&mut self, desc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_DESC, desc);
-  }
-  #[inline]
-  pub fn add_nameBkgClr(&mut self, nameBkgClr: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_NAMEBKGCLR, nameBkgClr);
-  }
-  #[inline]
-  pub fn add_selectClr(&mut self, selectClr: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeData::VT_SELECTCLR, selectClr);
-  }
-  #[inline]
-  pub fn add_isRepeatedly(&mut self, isRepeatedly: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_RoguelikeSkyNodeData::VT_ISREPEATEDLY, isRepeatedly, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeSkyNodeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeSkyNodeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeSkyNodeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeSkyNodeData");
-      ds.field("evtType", &self.evtType());
-      ds.field("name", &self.name());
-      ds.field("iconId", &self.iconId());
-      ds.field("effId", &self.effId());
-      ds.field("desc", &self.desc());
-      ds.field("nameBkgClr", &self.nameBkgClr());
-      ds.field("selectClr", &self.selectClr());
-      ds.field("isRepeatedly", &self.isRepeatedly());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeSkyNodeDataT {
-  pub evtType: enum__Torappu_RoguelikeSkyZoneNodeType,
-  pub name: Option<alloc::string::String>,
-  pub iconId: Option<alloc::string::String>,
-  pub effId: Option<alloc::string::String>,
-  pub desc: Option<alloc::string::String>,
-  pub nameBkgClr: Option<alloc::string::String>,
-  pub selectClr: Option<alloc::string::String>,
-  pub isRepeatedly: bool,
-}
-impl Default for clz_Torappu_RoguelikeSkyNodeDataT {
-  fn default() -> Self {
-    Self {
-      evtType: enum__Torappu_RoguelikeSkyZoneNodeType::NONE,
-      name: None,
-      iconId: None,
-      effId: None,
-      desc: None,
-      nameBkgClr: None,
-      selectClr: None,
-      isRepeatedly: false,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeSkyNodeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData<'b>> {
-    let evtType = self.evtType;
-    let name = self.name.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let iconId = self.iconId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let effId = self.effId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let desc = self.desc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let nameBkgClr = self.nameBkgClr.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let selectClr = self.selectClr.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let isRepeatedly = self.isRepeatedly;
-    clz_Torappu_RoguelikeSkyNodeData::create(_fbb, &clz_Torappu_RoguelikeSkyNodeDataArgs{
-      evtType,
-      name,
-      iconId,
-      effId,
-      desc,
-      nameBkgClr,
-      selectClr,
-      isRepeatedly,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_RoguelikeSkyNodeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_RoguelikeSkyNodeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeSkyNodeData<'a> {
-  type Inner = dict__string__clz_Torappu_RoguelikeSkyNodeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_RoguelikeSkyNodeData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_RoguelikeSkyNodeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeSkyNodeDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_RoguelikeSkyNodeDataT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_RoguelikeSkyNodeData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_RoguelikeSkyNodeData) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_RoguelikeSkyNodeData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeData>>(dict__string__clz_Torappu_RoguelikeSkyNodeData::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeSkyNodeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_RoguelikeSkyNodeData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeData>>(dict__string__clz_Torappu_RoguelikeSkyNodeData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_RoguelikeSkyNodeData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_RoguelikeSkyNodeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeSkyNodeData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_RoguelikeSkyNodeDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_RoguelikeSkyNodeDataT>>,
-}
-impl Default for dict__string__clz_Torappu_RoguelikeSkyNodeDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_RoguelikeSkyNodeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_RoguelikeSkyNodeData::create(_fbb, &dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs{
-      key,
-      value,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeSkyNodeSubTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeSkyNodeSubTypeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeSkyNodeSubTypeData<'a> {
-  type Inner = clz_Torappu_RoguelikeSkyNodeSubTypeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeSkyNodeSubTypeData<'a> {
-  pub const VT_EVTTYPE: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SUBTYPEID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DESC: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeSkyNodeSubTypeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeSkyNodeSubTypeDataBuilder::new(_fbb);
-    if let Some(x) = args.desc { builder.add_desc(x); }
-    builder.add_subTypeId(args.subTypeId);
-    builder.add_evtType(args.evtType);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeSkyNodeSubTypeDataT {
-    let evtType = self.evtType();
-    let subTypeId = self.subTypeId();
-    let desc = self.desc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeSkyNodeSubTypeDataT {
-      evtType,
-      subTypeId,
-      desc,
-    }
-  }
-
-  #[inline]
-  pub fn evtType(&self) -> enum__Torappu_RoguelikeSkyZoneNodeType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeSkyZoneNodeType>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_EVTTYPE, Some(enum__Torappu_RoguelikeSkyZoneNodeType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn subTypeId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_SUBTYPEID, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn desc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_DESC, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeSkyNodeSubTypeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<enum__Torappu_RoguelikeSkyZoneNodeType>("evtType", Self::VT_EVTTYPE, false)?
-     .visit_field::<i32>("subTypeId", Self::VT_SUBTYPEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs<'a> {
-    pub evtType: enum__Torappu_RoguelikeSkyZoneNodeType,
-    pub subTypeId: i32,
-    pub desc: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs {
-      evtType: enum__Torappu_RoguelikeSkyZoneNodeType::NONE,
-      subTypeId: 0,
-      desc: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeSkyNodeSubTypeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeSkyNodeSubTypeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_evtType(&mut self, evtType: enum__Torappu_RoguelikeSkyZoneNodeType) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeSkyZoneNodeType>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_EVTTYPE, evtType, enum__Torappu_RoguelikeSkyZoneNodeType::NONE);
-  }
-  #[inline]
-  pub fn add_subTypeId(&mut self, subTypeId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_SUBTYPEID, subTypeId, 0);
-  }
-  #[inline]
-  pub fn add_desc(&mut self, desc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyNodeSubTypeData::VT_DESC, desc);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeSkyNodeSubTypeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeSkyNodeSubTypeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeSkyNodeSubTypeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeSkyNodeSubTypeData");
-      ds.field("evtType", &self.evtType());
-      ds.field("subTypeId", &self.subTypeId());
-      ds.field("desc", &self.desc());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeSkyNodeSubTypeDataT {
-  pub evtType: enum__Torappu_RoguelikeSkyZoneNodeType,
-  pub subTypeId: i32,
-  pub desc: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeSkyNodeSubTypeDataT {
-  fn default() -> Self {
-    Self {
-      evtType: enum__Torappu_RoguelikeSkyZoneNodeType::NONE,
-      subTypeId: 0,
-      desc: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeSkyNodeSubTypeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'b>> {
-    let evtType = self.evtType;
-    let subTypeId = self.subTypeId;
-    let desc = self.desc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeSkyNodeSubTypeData::create(_fbb, &clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs{
-      evtType,
-      subTypeId,
-      desc,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeSkyModuleConstsOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeSkyModuleConsts<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeSkyModuleConsts<'a> {
-  type Inner = clz_Torappu_RoguelikeSkyModuleConsts<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeSkyModuleConsts<'a> {
-  pub const VT_SKYAPITEMID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SKYMAXCOLUMNS: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SKYSACRIFICECHOICEDYNAMICKEY: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeSkyModuleConsts { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeSkyModuleConstsArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeSkyModuleConstsBuilder::new(_fbb);
-    if let Some(x) = args.skySacrificeChoiceDynamicKey { builder.add_skySacrificeChoiceDynamicKey(x); }
-    builder.add_skyMaxColumns(args.skyMaxColumns);
-    if let Some(x) = args.skyApItemId { builder.add_skyApItemId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeSkyModuleConstsT {
-    let skyApItemId = self.skyApItemId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let skyMaxColumns = self.skyMaxColumns();
-    let skySacrificeChoiceDynamicKey = self.skySacrificeChoiceDynamicKey().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RoguelikeSkyModuleConstsT {
-      skyApItemId,
-      skyMaxColumns,
-      skySacrificeChoiceDynamicKey,
-    }
-  }
-
-  #[inline]
-  pub fn skyApItemId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYAPITEMID, None)}
-  }
-  #[inline]
-  pub fn skyMaxColumns(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYMAXCOLUMNS, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn skySacrificeChoiceDynamicKey(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYSACRIFICECHOICEDYNAMICKEY, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeSkyModuleConsts<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skyApItemId", Self::VT_SKYAPITEMID, false)?
-     .visit_field::<i32>("skyMaxColumns", Self::VT_SKYMAXCOLUMNS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skySacrificeChoiceDynamicKey", Self::VT_SKYSACRIFICECHOICEDYNAMICKEY, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeSkyModuleConstsArgs<'a> {
-    pub skyApItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub skyMaxColumns: i32,
-    pub skySacrificeChoiceDynamicKey: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeSkyModuleConstsArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeSkyModuleConstsArgs {
-      skyApItemId: None,
-      skyMaxColumns: 0,
-      skySacrificeChoiceDynamicKey: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeSkyModuleConstsBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeSkyModuleConstsBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skyApItemId(&mut self, skyApItemId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYAPITEMID, skyApItemId);
-  }
-  #[inline]
-  pub fn add_skyMaxColumns(&mut self, skyMaxColumns: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYMAXCOLUMNS, skyMaxColumns, 0);
-  }
-  #[inline]
-  pub fn add_skySacrificeChoiceDynamicKey(&mut self, skySacrificeChoiceDynamicKey: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyModuleConsts::VT_SKYSACRIFICECHOICEDYNAMICKEY, skySacrificeChoiceDynamicKey);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeSkyModuleConstsBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeSkyModuleConstsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeSkyModuleConsts<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeSkyModuleConsts");
-      ds.field("skyApItemId", &self.skyApItemId());
-      ds.field("skyMaxColumns", &self.skyMaxColumns());
-      ds.field("skySacrificeChoiceDynamicKey", &self.skySacrificeChoiceDynamicKey());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeSkyModuleConstsT {
-  pub skyApItemId: Option<alloc::string::String>,
-  pub skyMaxColumns: i32,
-  pub skySacrificeChoiceDynamicKey: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RoguelikeSkyModuleConstsT {
-  fn default() -> Self {
-    Self {
-      skyApItemId: None,
-      skyMaxColumns: 0,
-      skySacrificeChoiceDynamicKey: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeSkyModuleConstsT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts<'b>> {
-    let skyApItemId = self.skyApItemId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let skyMaxColumns = self.skyMaxColumns;
-    let skySacrificeChoiceDynamicKey = self.skySacrificeChoiceDynamicKey.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RoguelikeSkyModuleConsts::create(_fbb, &clz_Torappu_RoguelikeSkyModuleConstsArgs{
-      skyApItemId,
-      skyMaxColumns,
-      skySacrificeChoiceDynamicKey,
-    })
-  }
-}
-pub enum clz_Torappu_RoguelikeSkyModuleDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RoguelikeSkyModuleData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RoguelikeSkyModuleData<'a> {
-  type Inner = clz_Torappu_RoguelikeSkyModuleData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RoguelikeSkyModuleData<'a> {
-  pub const VT_NODEDATA: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SUBTYPEDATA: ::flatbuffers::VOffsetT = 6;
-  pub const VT_MODULECONSTS: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RoguelikeSkyModuleData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RoguelikeSkyModuleDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData<'bldr>> {
-    let mut builder = clz_Torappu_RoguelikeSkyModuleDataBuilder::new(_fbb);
-    if let Some(x) = args.moduleConsts { builder.add_moduleConsts(x); }
-    if let Some(x) = args.subTypeData { builder.add_subTypeData(x); }
-    if let Some(x) = args.nodeData { builder.add_nodeData(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RoguelikeSkyModuleDataT {
-    let nodeData = self.nodeData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let subTypeData = self.subTypeData().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let moduleConsts = self.moduleConsts().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    clz_Torappu_RoguelikeSkyModuleDataT {
-      nodeData,
-      subTypeData,
-      moduleConsts,
-    }
-  }
-
-  #[inline]
-  pub fn nodeData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData>>>>(clz_Torappu_RoguelikeSkyModuleData::VT_NODEDATA, None)}
-  }
-  #[inline]
-  pub fn subTypeData(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData>>>>(clz_Torappu_RoguelikeSkyModuleData::VT_SUBTYPEDATA, None)}
-  }
-  #[inline]
-  pub fn moduleConsts(&self) -> Option<clz_Torappu_RoguelikeSkyModuleConsts<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyModuleConsts>>(clz_Torappu_RoguelikeSkyModuleData::VT_MODULECONSTS, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeSkyModuleData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData>>>>("nodeData", Self::VT_NODEDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData>>>>("subTypeData", Self::VT_SUBTYPEDATA, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyModuleConsts>>("moduleConsts", Self::VT_MODULECONSTS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RoguelikeSkyModuleDataArgs<'a> {
-    pub nodeData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'a>>>>>,
-    pub subTypeData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'a>>>>>,
-    pub moduleConsts: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts<'a>>>,
-}
-impl<'a> Default for clz_Torappu_RoguelikeSkyModuleDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RoguelikeSkyModuleDataArgs {
-      nodeData: None,
-      subTypeData: None,
-      moduleConsts: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RoguelikeSkyModuleDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeSkyModuleDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_nodeData(&mut self, nodeData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeSkyNodeData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyModuleData::VT_NODEDATA, nodeData);
-  }
-  #[inline]
-  pub fn add_subTypeData(&mut self, subTypeData: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyNodeSubTypeData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RoguelikeSkyModuleData::VT_SUBTYPEDATA, subTypeData);
-  }
-  #[inline]
-  pub fn add_moduleConsts(&mut self, moduleConsts: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleConsts>>(clz_Torappu_RoguelikeSkyModuleData::VT_MODULECONSTS, moduleConsts);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeSkyModuleDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RoguelikeSkyModuleDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RoguelikeSkyModuleData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RoguelikeSkyModuleData");
-      ds.field("nodeData", &self.nodeData());
-      ds.field("subTypeData", &self.subTypeData());
-      ds.field("moduleConsts", &self.moduleConsts());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RoguelikeSkyModuleDataT {
-  pub nodeData: Option<alloc::vec::Vec<dict__string__clz_Torappu_RoguelikeSkyNodeDataT>>,
-  pub subTypeData: Option<alloc::vec::Vec<clz_Torappu_RoguelikeSkyNodeSubTypeDataT>>,
-  pub moduleConsts: Option<alloc::boxed::Box<clz_Torappu_RoguelikeSkyModuleConstsT>>,
-}
-impl Default for clz_Torappu_RoguelikeSkyModuleDataT {
-  fn default() -> Self {
-    Self {
-      nodeData: None,
-      subTypeData: None,
-      moduleConsts: None,
-    }
-  }
-}
-impl clz_Torappu_RoguelikeSkyModuleDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData<'b>> {
-    let nodeData = self.nodeData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let subTypeData = self.subTypeData.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let moduleConsts = self.moduleConsts.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    clz_Torappu_RoguelikeSkyModuleData::create(_fbb, &clz_Torappu_RoguelikeSkyModuleDataArgs{
-      nodeData,
-      subTypeData,
-      moduleConsts,
-    })
-  }
-}
 pub enum clz_Torappu_RoguelikeModuleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -64655,10 +55655,6 @@ impl<'a> clz_Torappu_RoguelikeModule<'a> {
   pub const VT_FRAGMENT: ::flatbuffers::VOffsetT = 16;
   pub const VT_DISASTER: ::flatbuffers::VOffsetT = 18;
   pub const VT_NODEUPGRADE: ::flatbuffers::VOffsetT = 20;
-  pub const VT_COPPER: ::flatbuffers::VOffsetT = 22;
-  pub const VT_WRATH: ::flatbuffers::VOffsetT = 24;
-  pub const VT_CANDLE: ::flatbuffers::VOffsetT = 26;
-  pub const VT_SKY: ::flatbuffers::VOffsetT = 28;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -64670,10 +55666,6 @@ impl<'a> clz_Torappu_RoguelikeModule<'a> {
     args: &'args clz_Torappu_RoguelikeModuleArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeModule<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeModuleBuilder::new(_fbb);
-    if let Some(x) = args.sky { builder.add_sky(x); }
-    if let Some(x) = args.candle { builder.add_candle(x); }
-    if let Some(x) = args.wrath { builder.add_wrath(x); }
-    if let Some(x) = args.copper { builder.add_copper(x); }
     if let Some(x) = args.nodeUpgrade { builder.add_nodeUpgrade(x); }
     if let Some(x) = args.disaster { builder.add_disaster(x); }
     if let Some(x) = args.fragment { builder.add_fragment(x); }
@@ -64714,18 +55706,6 @@ impl<'a> clz_Torappu_RoguelikeModule<'a> {
     let nodeUpgrade = self.nodeUpgrade().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
-    let copper = self.copper().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let wrath = self.wrath().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let candle = self.candle().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let sky = self.sky().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
     clz_Torappu_RoguelikeModuleT {
       moduleTypes,
       sanCheck,
@@ -64736,10 +55716,6 @@ impl<'a> clz_Torappu_RoguelikeModule<'a> {
       fragment,
       disaster,
       nodeUpgrade,
-      copper,
-      wrath,
-      candle,
-      sky,
     }
   }
 
@@ -64806,34 +55782,6 @@ impl<'a> clz_Torappu_RoguelikeModule<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeNodeUpgradeModuleData>>(clz_Torappu_RoguelikeModule::VT_NODEUPGRADE, None)}
   }
-  #[inline]
-  pub fn copper(&self) -> Option<clz_Torappu_RoguelikeCopperModuleData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperModuleData>>(clz_Torappu_RoguelikeModule::VT_COPPER, None)}
-  }
-  #[inline]
-  pub fn wrath(&self) -> Option<clz_Torappu_RoguelikeWrathModuleData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathModuleData>>(clz_Torappu_RoguelikeModule::VT_WRATH, None)}
-  }
-  #[inline]
-  pub fn candle(&self) -> Option<clz_Torappu_RoguelikeCandleModuleData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCandleModuleData>>(clz_Torappu_RoguelikeModule::VT_CANDLE, None)}
-  }
-  #[inline]
-  pub fn sky(&self) -> Option<clz_Torappu_RoguelikeSkyModuleData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyModuleData>>(clz_Torappu_RoguelikeModule::VT_SKY, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeModule<'_> {
@@ -64851,10 +55799,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeModule<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeFragmentModuleData>>("fragment", Self::VT_FRAGMENT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeDisasterModuleData>>("disaster", Self::VT_DISASTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeNodeUpgradeModuleData>>("nodeUpgrade", Self::VT_NODEUPGRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperModuleData>>("copper", Self::VT_COPPER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeWrathModuleData>>("wrath", Self::VT_WRATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCandleModuleData>>("candle", Self::VT_CANDLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeSkyModuleData>>("sky", Self::VT_SKY, false)?
      .finish();
     Ok(())
   }
@@ -64869,10 +55813,6 @@ pub struct clz_Torappu_RoguelikeModuleArgs<'a> {
     pub fragment: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeFragmentModuleData<'a>>>,
     pub disaster: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeDisasterModuleData<'a>>>,
     pub nodeUpgrade: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeNodeUpgradeModuleData<'a>>>,
-    pub copper: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData<'a>>>,
-    pub wrath: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData<'a>>>,
-    pub candle: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData<'a>>>,
-    pub sky: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeModuleArgs<'a> {
   #[inline]
@@ -64887,10 +55827,6 @@ impl<'a> Default for clz_Torappu_RoguelikeModuleArgs<'a> {
       fragment: None,
       disaster: None,
       nodeUpgrade: None,
-      copper: None,
-      wrath: None,
-      candle: None,
-      sky: None,
     }
   }
 }
@@ -64938,22 +55874,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeModuleBu
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeNodeUpgradeModuleData>>(clz_Torappu_RoguelikeModule::VT_NODEUPGRADE, nodeUpgrade);
   }
   #[inline]
-  pub fn add_copper(&mut self, copper: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleData>>(clz_Torappu_RoguelikeModule::VT_COPPER, copper);
-  }
-  #[inline]
-  pub fn add_wrath(&mut self, wrath: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleData>>(clz_Torappu_RoguelikeModule::VT_WRATH, wrath);
-  }
-  #[inline]
-  pub fn add_candle(&mut self, candle: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCandleModuleData>>(clz_Torappu_RoguelikeModule::VT_CANDLE, candle);
-  }
-  #[inline]
-  pub fn add_sky(&mut self, sky: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeSkyModuleData>>(clz_Torappu_RoguelikeModule::VT_SKY, sky);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeModuleBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RoguelikeModuleBuilder {
@@ -64980,10 +55900,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeModule<'_> {
       ds.field("fragment", &self.fragment());
       ds.field("disaster", &self.disaster());
       ds.field("nodeUpgrade", &self.nodeUpgrade());
-      ds.field("copper", &self.copper());
-      ds.field("wrath", &self.wrath());
-      ds.field("candle", &self.candle());
-      ds.field("sky", &self.sky());
       ds.finish()
   }
 }
@@ -64999,10 +55915,6 @@ pub struct clz_Torappu_RoguelikeModuleT {
   pub fragment: Option<alloc::boxed::Box<clz_Torappu_RoguelikeFragmentModuleDataT>>,
   pub disaster: Option<alloc::boxed::Box<clz_Torappu_RoguelikeDisasterModuleDataT>>,
   pub nodeUpgrade: Option<alloc::boxed::Box<clz_Torappu_RoguelikeNodeUpgradeModuleDataT>>,
-  pub copper: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCopperModuleDataT>>,
-  pub wrath: Option<alloc::boxed::Box<clz_Torappu_RoguelikeWrathModuleDataT>>,
-  pub candle: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCandleModuleDataT>>,
-  pub sky: Option<alloc::boxed::Box<clz_Torappu_RoguelikeSkyModuleDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeModuleT {
   fn default() -> Self {
@@ -65016,10 +55928,6 @@ impl Default for clz_Torappu_RoguelikeModuleT {
       fragment: None,
       disaster: None,
       nodeUpgrade: None,
-      copper: None,
-      wrath: None,
-      candle: None,
-      sky: None,
     }
   }
 }
@@ -65055,18 +55963,6 @@ impl clz_Torappu_RoguelikeModuleT {
     let nodeUpgrade = self.nodeUpgrade.as_ref().map(|x|{
       x.pack(_fbb)
     });
-    let copper = self.copper.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let wrath = self.wrath.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let candle = self.candle.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let sky = self.sky.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
     clz_Torappu_RoguelikeModule::create(_fbb, &clz_Torappu_RoguelikeModuleArgs{
       moduleTypes,
       sanCheck,
@@ -65077,10 +55973,6 @@ impl clz_Torappu_RoguelikeModuleT {
       fragment,
       disaster,
       nodeUpgrade,
-      copper,
-      wrath,
-      candle,
-      sky,
     })
   }
 }
@@ -66375,46 +57267,38 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RL01EndingText<'a> {
 impl<'a> clz_Torappu_RL01EndingText<'a> {
   pub const VT_SUMMARYVARIATION: ::flatbuffers::VOffsetT = 4;
   pub const VT_SUMMARYFUSION: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SUMMARYCAPSULE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 12;
-  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 20;
-  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 24;
-  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 26;
-  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 28;
-  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 34;
-  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 36;
-  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 38;
-  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 40;
-  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 42;
-  pub const VT_SUMMARYMEETSPZONE: ::flatbuffers::VOffsetT = 44;
-  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 46;
-  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 48;
-  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 50;
-  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 52;
-  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 54;
-  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 56;
-  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 58;
-  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 60;
-  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 62;
-  pub const VT_SUMMARYBUYWITHPRICEID: ::flatbuffers::VOffsetT = 64;
-  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 66;
-  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 68;
-  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 70;
-  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 72;
-  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 74;
-  pub const VT_SUMMARYSTOCKRECRUITTICKET: ::flatbuffers::VOffsetT = 76;
-  pub const VT_SUMMARYDUELWIN: ::flatbuffers::VOffsetT = 78;
-  pub const VT_SUMMARYDUELTIE: ::flatbuffers::VOffsetT = 80;
-  pub const VT_SUMMARYDUELLOSE: ::flatbuffers::VOffsetT = 82;
-  pub const VT_SUMMARYEXPEDITIONGO: ::flatbuffers::VOffsetT = 84;
-  pub const VT_SUMMARYEXPEDITIONBACK: ::flatbuffers::VOffsetT = 86;
+  pub const VT_SUMMARYDEFEATBOSS: ::flatbuffers::VOffsetT = 8;
+  pub const VT_SUMMARYACCIDENTMEET: ::flatbuffers::VOffsetT = 10;
+  pub const VT_SUMMARYCAPSULE: ::flatbuffers::VOffsetT = 12;
+  pub const VT_SUMMARYACTIVETOOL: ::flatbuffers::VOffsetT = 14;
+  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 16;
+  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 18;
+  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 20;
+  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 22;
+  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 24;
+  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 26;
+  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 28;
+  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 32;
+  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 34;
+  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 36;
+  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 38;
+  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 40;
+  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 42;
+  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 44;
+  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 46;
+  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 48;
+  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 50;
+  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 52;
+  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 54;
+  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 56;
+  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 58;
+  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 60;
+  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 62;
+  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 64;
+  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 66;
+  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 68;
+  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 70;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -66426,28 +57310,17 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     args: &'args clz_Torappu_RL01EndingTextArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL01EndingText<'bldr>> {
     let mut builder = clz_Torappu_RL01EndingTextBuilder::new(_fbb);
-    if let Some(x) = args.summaryExpeditionBack { builder.add_summaryExpeditionBack(x); }
-    if let Some(x) = args.summaryExpeditionGo { builder.add_summaryExpeditionGo(x); }
-    if let Some(x) = args.summaryDuelLose { builder.add_summaryDuelLose(x); }
-    if let Some(x) = args.summaryDuelTie { builder.add_summaryDuelTie(x); }
-    if let Some(x) = args.summaryDuelWin { builder.add_summaryDuelWin(x); }
-    if let Some(x) = args.summaryStockRecruitTicket { builder.add_summaryStockRecruitTicket(x); }
     if let Some(x) = args.summaryFailEnd { builder.add_summaryFailEnd(x); }
     if let Some(x) = args.summarySafeHouse { builder.add_summarySafeHouse(x); }
     if let Some(x) = args.summaryRelic { builder.add_summaryRelic(x); }
     if let Some(x) = args.summaryGet { builder.add_summaryGet(x); }
     if let Some(x) = args.summaryInvest { builder.add_summaryInvest(x); }
-    if let Some(x) = args.summaryBuyWithPriceId { builder.add_summaryBuyWithPriceId(x); }
     if let Some(x) = args.summaryBuy { builder.add_summaryBuy(x); }
-    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
-    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
-    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
     if let Some(x) = args.summaryMeetTreasure { builder.add_summaryMeetTreasure(x); }
     if let Some(x) = args.summaryMeetShop { builder.add_summaryMeetShop(x); }
     if let Some(x) = args.summaryMeetEvent { builder.add_summaryMeetEvent(x); }
     if let Some(x) = args.summaryMeetBattle { builder.add_summaryMeetBattle(x); }
     if let Some(x) = args.summaryPerfectBattle { builder.add_summaryPerfectBattle(x); }
-    if let Some(x) = args.summaryMeetSpZone { builder.add_summaryMeetSpZone(x); }
     if let Some(x) = args.summaryEachZone { builder.add_summaryEachZone(x); }
     if let Some(x) = args.summaryCompleteEnding { builder.add_summaryCompleteEnding(x); }
     if let Some(x) = args.summaryUpgrade { builder.add_summaryUpgrade(x); }
@@ -66465,7 +57338,10 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     if let Some(x) = args.summaryZone { builder.add_summaryZone(x); }
     if let Some(x) = args.summaryTop { builder.add_summaryTop(x); }
     if let Some(x) = args.summaryActor { builder.add_summaryActor(x); }
+    if let Some(x) = args.summaryActiveTool { builder.add_summaryActiveTool(x); }
     if let Some(x) = args.summaryCapsule { builder.add_summaryCapsule(x); }
+    if let Some(x) = args.summaryAccidentMeet { builder.add_summaryAccidentMeet(x); }
+    if let Some(x) = args.summaryDefeatBoss { builder.add_summaryDefeatBoss(x); }
     if let Some(x) = args.summaryFusion { builder.add_summaryFusion(x); }
     if let Some(x) = args.summaryVariation { builder.add_summaryVariation(x); }
     builder.finish()
@@ -66478,7 +57354,16 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     let summaryFusion = self.summaryFusion().map(|x| {
       alloc::string::ToString::to_string(x)
     });
+    let summaryDefeatBoss = self.summaryDefeatBoss().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryAccidentMeet = self.summaryAccidentMeet().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
     let summaryCapsule = self.summaryCapsule().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryActiveTool = self.summaryActiveTool().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryActor = self.summaryActor().map(|x| {
@@ -66532,9 +57417,6 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     let summaryEachZone = self.summaryEachZone().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -66550,19 +57432,7 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     let summaryMeetTreasure = self.summaryMeetTreasure().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryBuy = self.summaryBuy().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryInvest = self.summaryInvest().map(|x| {
@@ -66580,28 +57450,13 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     let summaryFailEnd = self.summaryFailEnd().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_RL01EndingTextT {
       summaryVariation,
       summaryFusion,
+      summaryDefeatBoss,
+      summaryAccidentMeet,
       summaryCapsule,
+      summaryActiveTool,
       summaryActor,
       summaryTop,
       summaryZone,
@@ -66619,28 +57474,17 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     }
   }
 
@@ -66659,11 +57503,32 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYFUSION, None)}
   }
   #[inline]
+  pub fn summaryDefeatBoss(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYDEFEATBOSS, None)}
+  }
+  #[inline]
+  pub fn summaryAccidentMeet(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYACCIDENTMEET, None)}
+  }
+  #[inline]
   pub fn summaryCapsule(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYCAPSULE, None)}
+  }
+  #[inline]
+  pub fn summaryActiveTool(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYACTIVETOOL, None)}
   }
   #[inline]
   pub fn summaryActor(&self) -> Option<&'a str> {
@@ -66785,13 +57650,6 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYEACHZONE, None)}
   }
   #[inline]
-  pub fn summaryMeetSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETSPZONE, None)}
-  }
-  #[inline]
   pub fn summaryPerfectBattle(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -66827,39 +57685,11 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETTREASURE, None)}
   }
   #[inline]
-  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETSECRETPATH, None)}
-  }
-  #[inline]
-  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXCHANGERELIC, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETTRADE, None)}
-  }
-  #[inline]
   pub fn summaryBuy(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYBUY, None)}
-  }
-  #[inline]
-  pub fn summaryBuyWithPriceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYBUYWITHPRICEID, None)}
   }
   #[inline]
   pub fn summaryInvest(&self) -> Option<&'a str> {
@@ -66896,48 +57726,6 @@ impl<'a> clz_Torappu_RL01EndingText<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYFAILEND, None)}
   }
-  #[inline]
-  pub fn summaryStockRecruitTicket(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYSTOCKRECRUITTICKET, None)}
-  }
-  #[inline]
-  pub fn summaryDuelWin(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELWIN, None)}
-  }
-  #[inline]
-  pub fn summaryDuelTie(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELTIE, None)}
-  }
-  #[inline]
-  pub fn summaryDuelLose(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELLOSE, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGo(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXPEDITIONGO, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBack(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXPEDITIONBACK, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RL01EndingText<'_> {
@@ -66948,7 +57736,10 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL01EndingText<'_> {
     v.visit_table(pos)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryVariation", Self::VT_SUMMARYVARIATION, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFusion", Self::VT_SUMMARYFUSION, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDefeatBoss", Self::VT_SUMMARYDEFEATBOSS, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryAccidentMeet", Self::VT_SUMMARYACCIDENTMEET, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCapsule", Self::VT_SUMMARYCAPSULE, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryActiveTool", Self::VT_SUMMARYACTIVETOOL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryActor", Self::VT_SUMMARYACTOR, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryTop", Self::VT_SUMMARYTOP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryZone", Self::VT_SUMMARYZONE, false)?
@@ -66966,28 +57757,17 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL01EndingText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryUpgrade", Self::VT_SUMMARYUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCompleteEnding", Self::VT_SUMMARYCOMPLETEENDING, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryEachZone", Self::VT_SUMMARYEACHZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSpZone", Self::VT_SUMMARYMEETSPZONE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryPerfectBattle", Self::VT_SUMMARYPERFECTBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetBattle", Self::VT_SUMMARYMEETBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetEvent", Self::VT_SUMMARYMEETEVENT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetShop", Self::VT_SUMMARYMEETSHOP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTreasure", Self::VT_SUMMARYMEETTREASURE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuy", Self::VT_SUMMARYBUY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuyWithPriceId", Self::VT_SUMMARYBUYWITHPRICEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryInvest", Self::VT_SUMMARYINVEST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGet", Self::VT_SUMMARYGET, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryRelic", Self::VT_SUMMARYRELIC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySafeHouse", Self::VT_SUMMARYSAFEHOUSE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFailEnd", Self::VT_SUMMARYFAILEND, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryStockRecruitTicket", Self::VT_SUMMARYSTOCKRECRUITTICKET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelWin", Self::VT_SUMMARYDUELWIN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelTie", Self::VT_SUMMARYDUELTIE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelLose", Self::VT_SUMMARYDUELLOSE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGo", Self::VT_SUMMARYEXPEDITIONGO, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBack", Self::VT_SUMMARYEXPEDITIONBACK, false)?
      .finish();
     Ok(())
   }
@@ -66995,7 +57775,10 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL01EndingText<'_> {
 pub struct clz_Torappu_RL01EndingTextArgs<'a> {
     pub summaryVariation: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFusion: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryDefeatBoss: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryAccidentMeet: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryCapsule: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryActiveTool: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryActor: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryTop: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryZone: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -67013,28 +57796,17 @@ pub struct clz_Torappu_RL01EndingTextArgs<'a> {
     pub summaryUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryCompleteEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryEachZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryPerfectBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetEvent: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetShop: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetTreasure: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryBuy: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBuyWithPriceId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryInvest: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryGet: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summarySafeHouse: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFailEnd: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryStockRecruitTicket: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelWin: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelTie: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelLose: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGo: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBack: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_RL01EndingTextArgs<'a> {
   #[inline]
@@ -67042,7 +57814,10 @@ impl<'a> Default for clz_Torappu_RL01EndingTextArgs<'a> {
     clz_Torappu_RL01EndingTextArgs {
       summaryVariation: None,
       summaryFusion: None,
+      summaryDefeatBoss: None,
+      summaryAccidentMeet: None,
       summaryCapsule: None,
+      summaryActiveTool: None,
       summaryActor: None,
       summaryTop: None,
       summaryZone: None,
@@ -67060,28 +57835,17 @@ impl<'a> Default for clz_Torappu_RL01EndingTextArgs<'a> {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -67101,8 +57865,20 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL01EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYFUSION, summaryFusion);
   }
   #[inline]
+  pub fn add_summaryDefeatBoss(&mut self, summaryDefeatBoss: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYDEFEATBOSS, summaryDefeatBoss);
+  }
+  #[inline]
+  pub fn add_summaryAccidentMeet(&mut self, summaryAccidentMeet: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYACCIDENTMEET, summaryAccidentMeet);
+  }
+  #[inline]
   pub fn add_summaryCapsule(&mut self, summaryCapsule: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYCAPSULE, summaryCapsule);
+  }
+  #[inline]
+  pub fn add_summaryActiveTool(&mut self, summaryActiveTool: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYACTIVETOOL, summaryActiveTool);
   }
   #[inline]
   pub fn add_summaryActor(&mut self, summaryActor: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -67173,10 +57949,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL01EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYEACHZONE, summaryEachZone);
   }
   #[inline]
-  pub fn add_summaryMeetSpZone(&mut self, summaryMeetSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETSPZONE, summaryMeetSpZone);
-  }
-  #[inline]
   pub fn add_summaryPerfectBattle(&mut self, summaryPerfectBattle: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYPERFECTBATTLE, summaryPerfectBattle);
   }
@@ -67197,24 +57969,8 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL01EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETTREASURE, summaryMeetTreasure);
   }
   #[inline]
-  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
-  }
-  #[inline]
-  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
-  }
-  #[inline]
-  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
-  }
-  #[inline]
   pub fn add_summaryBuy(&mut self, summaryBuy: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYBUY, summaryBuy);
-  }
-  #[inline]
-  pub fn add_summaryBuyWithPriceId(&mut self, summaryBuyWithPriceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYBUYWITHPRICEID, summaryBuyWithPriceId);
   }
   #[inline]
   pub fn add_summaryInvest(&mut self, summaryInvest: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -67237,30 +57993,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL01EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYFAILEND, summaryFailEnd);
   }
   #[inline]
-  pub fn add_summaryStockRecruitTicket(&mut self, summaryStockRecruitTicket: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYSTOCKRECRUITTICKET, summaryStockRecruitTicket);
-  }
-  #[inline]
-  pub fn add_summaryDuelWin(&mut self, summaryDuelWin: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELWIN, summaryDuelWin);
-  }
-  #[inline]
-  pub fn add_summaryDuelTie(&mut self, summaryDuelTie: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELTIE, summaryDuelTie);
-  }
-  #[inline]
-  pub fn add_summaryDuelLose(&mut self, summaryDuelLose: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYDUELLOSE, summaryDuelLose);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGo(&mut self, summaryExpeditionGo: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXPEDITIONGO, summaryExpeditionGo);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBack(&mut self, summaryExpeditionBack: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL01EndingText::VT_SUMMARYEXPEDITIONBACK, summaryExpeditionBack);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL01EndingTextBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RL01EndingTextBuilder {
@@ -67280,7 +58012,10 @@ impl ::core::fmt::Debug for clz_Torappu_RL01EndingText<'_> {
     let mut ds = f.debug_struct("clz_Torappu_RL01EndingText");
       ds.field("summaryVariation", &self.summaryVariation());
       ds.field("summaryFusion", &self.summaryFusion());
+      ds.field("summaryDefeatBoss", &self.summaryDefeatBoss());
+      ds.field("summaryAccidentMeet", &self.summaryAccidentMeet());
       ds.field("summaryCapsule", &self.summaryCapsule());
+      ds.field("summaryActiveTool", &self.summaryActiveTool());
       ds.field("summaryActor", &self.summaryActor());
       ds.field("summaryTop", &self.summaryTop());
       ds.field("summaryZone", &self.summaryZone());
@@ -67298,28 +58033,17 @@ impl ::core::fmt::Debug for clz_Torappu_RL01EndingText<'_> {
       ds.field("summaryUpgrade", &self.summaryUpgrade());
       ds.field("summaryCompleteEnding", &self.summaryCompleteEnding());
       ds.field("summaryEachZone", &self.summaryEachZone());
-      ds.field("summaryMeetSpZone", &self.summaryMeetSpZone());
       ds.field("summaryPerfectBattle", &self.summaryPerfectBattle());
       ds.field("summaryMeetBattle", &self.summaryMeetBattle());
       ds.field("summaryMeetEvent", &self.summaryMeetEvent());
       ds.field("summaryMeetShop", &self.summaryMeetShop());
       ds.field("summaryMeetTreasure", &self.summaryMeetTreasure());
-      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
-      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
-      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
       ds.field("summaryBuy", &self.summaryBuy());
-      ds.field("summaryBuyWithPriceId", &self.summaryBuyWithPriceId());
       ds.field("summaryInvest", &self.summaryInvest());
       ds.field("summaryGet", &self.summaryGet());
       ds.field("summaryRelic", &self.summaryRelic());
       ds.field("summarySafeHouse", &self.summarySafeHouse());
       ds.field("summaryFailEnd", &self.summaryFailEnd());
-      ds.field("summaryStockRecruitTicket", &self.summaryStockRecruitTicket());
-      ds.field("summaryDuelWin", &self.summaryDuelWin());
-      ds.field("summaryDuelTie", &self.summaryDuelTie());
-      ds.field("summaryDuelLose", &self.summaryDuelLose());
-      ds.field("summaryExpeditionGo", &self.summaryExpeditionGo());
-      ds.field("summaryExpeditionBack", &self.summaryExpeditionBack());
       ds.finish()
   }
 }
@@ -67328,7 +58052,10 @@ impl ::core::fmt::Debug for clz_Torappu_RL01EndingText<'_> {
 pub struct clz_Torappu_RL01EndingTextT {
   pub summaryVariation: Option<alloc::string::String>,
   pub summaryFusion: Option<alloc::string::String>,
+  pub summaryDefeatBoss: Option<alloc::string::String>,
+  pub summaryAccidentMeet: Option<alloc::string::String>,
   pub summaryCapsule: Option<alloc::string::String>,
+  pub summaryActiveTool: Option<alloc::string::String>,
   pub summaryActor: Option<alloc::string::String>,
   pub summaryTop: Option<alloc::string::String>,
   pub summaryZone: Option<alloc::string::String>,
@@ -67346,35 +58073,27 @@ pub struct clz_Torappu_RL01EndingTextT {
   pub summaryUpgrade: Option<alloc::string::String>,
   pub summaryCompleteEnding: Option<alloc::string::String>,
   pub summaryEachZone: Option<alloc::string::String>,
-  pub summaryMeetSpZone: Option<alloc::string::String>,
   pub summaryPerfectBattle: Option<alloc::string::String>,
   pub summaryMeetBattle: Option<alloc::string::String>,
   pub summaryMeetEvent: Option<alloc::string::String>,
   pub summaryMeetShop: Option<alloc::string::String>,
   pub summaryMeetTreasure: Option<alloc::string::String>,
-  pub summaryMeetSecretpath: Option<alloc::string::String>,
-  pub summaryExchangeRelic: Option<alloc::string::String>,
-  pub summaryMeetTrade: Option<alloc::string::String>,
   pub summaryBuy: Option<alloc::string::String>,
-  pub summaryBuyWithPriceId: Option<alloc::string::String>,
   pub summaryInvest: Option<alloc::string::String>,
   pub summaryGet: Option<alloc::string::String>,
   pub summaryRelic: Option<alloc::string::String>,
   pub summarySafeHouse: Option<alloc::string::String>,
   pub summaryFailEnd: Option<alloc::string::String>,
-  pub summaryStockRecruitTicket: Option<alloc::string::String>,
-  pub summaryDuelWin: Option<alloc::string::String>,
-  pub summaryDuelTie: Option<alloc::string::String>,
-  pub summaryDuelLose: Option<alloc::string::String>,
-  pub summaryExpeditionGo: Option<alloc::string::String>,
-  pub summaryExpeditionBack: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_RL01EndingTextT {
   fn default() -> Self {
     Self {
       summaryVariation: None,
       summaryFusion: None,
+      summaryDefeatBoss: None,
+      summaryAccidentMeet: None,
       summaryCapsule: None,
+      summaryActiveTool: None,
       summaryActor: None,
       summaryTop: None,
       summaryZone: None,
@@ -67392,28 +58111,17 @@ impl Default for clz_Torappu_RL01EndingTextT {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -67428,7 +58136,16 @@ impl clz_Torappu_RL01EndingTextT {
     let summaryFusion = self.summaryFusion.as_ref().map(|x|{
       _fbb.create_string(x)
     });
+    let summaryDefeatBoss = self.summaryDefeatBoss.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryAccidentMeet = self.summaryAccidentMeet.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
     let summaryCapsule = self.summaryCapsule.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryActiveTool = self.summaryActiveTool.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryActor = self.summaryActor.as_ref().map(|x|{
@@ -67482,9 +58199,6 @@ impl clz_Torappu_RL01EndingTextT {
     let summaryEachZone = self.summaryEachZone.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -67500,19 +58214,7 @@ impl clz_Torappu_RL01EndingTextT {
     let summaryMeetTreasure = self.summaryMeetTreasure.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryBuy = self.summaryBuy.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryInvest = self.summaryInvest.as_ref().map(|x|{
@@ -67530,28 +58232,13 @@ impl clz_Torappu_RL01EndingTextT {
     let summaryFailEnd = self.summaryFailEnd.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_RL01EndingText::create(_fbb, &clz_Torappu_RL01EndingTextArgs{
       summaryVariation,
       summaryFusion,
+      summaryDefeatBoss,
+      summaryAccidentMeet,
       summaryCapsule,
+      summaryActiveTool,
       summaryActor,
       summaryTop,
       summaryZone,
@@ -67569,28 +58256,17 @@ impl clz_Torappu_RL01EndingTextT {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     })
   }
 }
@@ -71610,50 +62286,42 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
   pub const VT_SUMMARYVISIONPOINTDOWN: ::flatbuffers::VOffsetT = 16;
   pub const VT_SUMMARYVISIONGRADEUP: ::flatbuffers::VOffsetT = 18;
   pub const VT_SUMMARYVISIONGRADEDOWN: ::flatbuffers::VOffsetT = 20;
-  pub const VT_SUMMARYFIGHTWIN: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SUMMARYFIGHTFAIL: ::flatbuffers::VOffsetT = 24;
-  pub const VT_SUMMARYEXCHANGETOTEM: ::flatbuffers::VOffsetT = 26;
-  pub const VT_SUMMARYUSETOTEM: ::flatbuffers::VOffsetT = 28;
-  pub const VT_SUMMARYVISIONGRADE: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 34;
-  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 36;
-  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 38;
-  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 40;
-  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 42;
-  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 44;
-  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 46;
-  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 48;
-  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 50;
-  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 52;
-  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 54;
-  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 56;
-  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 58;
-  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 60;
-  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 62;
-  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 64;
-  pub const VT_SUMMARYMEETSPZONE: ::flatbuffers::VOffsetT = 66;
-  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 68;
-  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 70;
-  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 72;
-  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 74;
-  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 76;
-  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 78;
-  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 80;
-  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 82;
-  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 84;
-  pub const VT_SUMMARYBUYWITHPRICEID: ::flatbuffers::VOffsetT = 86;
-  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 88;
-  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 90;
-  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 92;
-  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 94;
-  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 96;
-  pub const VT_SUMMARYSTOCKRECRUITTICKET: ::flatbuffers::VOffsetT = 98;
-  pub const VT_SUMMARYDUELWIN: ::flatbuffers::VOffsetT = 100;
-  pub const VT_SUMMARYDUELTIE: ::flatbuffers::VOffsetT = 102;
-  pub const VT_SUMMARYDUELLOSE: ::flatbuffers::VOffsetT = 104;
-  pub const VT_SUMMARYEXPEDITIONGO: ::flatbuffers::VOffsetT = 106;
-  pub const VT_SUMMARYEXPEDITIONBACK: ::flatbuffers::VOffsetT = 108;
+  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 22;
+  pub const VT_SUMMARYFIGHTWIN: ::flatbuffers::VOffsetT = 24;
+  pub const VT_SUMMARYFIGHTFAIL: ::flatbuffers::VOffsetT = 26;
+  pub const VT_SUMMARYEXCHANGETOTEM: ::flatbuffers::VOffsetT = 28;
+  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 32;
+  pub const VT_SUMMARYUSETOTEM: ::flatbuffers::VOffsetT = 34;
+  pub const VT_SUMMARYVISIONGRADE: ::flatbuffers::VOffsetT = 36;
+  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 38;
+  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 40;
+  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 42;
+  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 44;
+  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 46;
+  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 48;
+  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 50;
+  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 52;
+  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 54;
+  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 56;
+  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 58;
+  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 60;
+  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 62;
+  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 64;
+  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 66;
+  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 68;
+  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 70;
+  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 72;
+  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 74;
+  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 76;
+  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 78;
+  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 80;
+  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 82;
+  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 84;
+  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 86;
+  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 88;
+  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 90;
+  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 92;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -71665,28 +62333,17 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     args: &'args clz_Torappu_RL03EndingTextArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL03EndingText<'bldr>> {
     let mut builder = clz_Torappu_RL03EndingTextBuilder::new(_fbb);
-    if let Some(x) = args.summaryExpeditionBack { builder.add_summaryExpeditionBack(x); }
-    if let Some(x) = args.summaryExpeditionGo { builder.add_summaryExpeditionGo(x); }
-    if let Some(x) = args.summaryDuelLose { builder.add_summaryDuelLose(x); }
-    if let Some(x) = args.summaryDuelTie { builder.add_summaryDuelTie(x); }
-    if let Some(x) = args.summaryDuelWin { builder.add_summaryDuelWin(x); }
-    if let Some(x) = args.summaryStockRecruitTicket { builder.add_summaryStockRecruitTicket(x); }
     if let Some(x) = args.summaryFailEnd { builder.add_summaryFailEnd(x); }
     if let Some(x) = args.summarySafeHouse { builder.add_summarySafeHouse(x); }
     if let Some(x) = args.summaryRelic { builder.add_summaryRelic(x); }
     if let Some(x) = args.summaryGet { builder.add_summaryGet(x); }
     if let Some(x) = args.summaryInvest { builder.add_summaryInvest(x); }
-    if let Some(x) = args.summaryBuyWithPriceId { builder.add_summaryBuyWithPriceId(x); }
     if let Some(x) = args.summaryBuy { builder.add_summaryBuy(x); }
-    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
-    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
-    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
     if let Some(x) = args.summaryMeetTreasure { builder.add_summaryMeetTreasure(x); }
     if let Some(x) = args.summaryMeetShop { builder.add_summaryMeetShop(x); }
     if let Some(x) = args.summaryMeetEvent { builder.add_summaryMeetEvent(x); }
     if let Some(x) = args.summaryMeetBattle { builder.add_summaryMeetBattle(x); }
     if let Some(x) = args.summaryPerfectBattle { builder.add_summaryPerfectBattle(x); }
-    if let Some(x) = args.summaryMeetSpZone { builder.add_summaryMeetSpZone(x); }
     if let Some(x) = args.summaryEachZone { builder.add_summaryEachZone(x); }
     if let Some(x) = args.summaryCompleteEnding { builder.add_summaryCompleteEnding(x); }
     if let Some(x) = args.summaryUpgrade { builder.add_summaryUpgrade(x); }
@@ -71706,9 +62363,12 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     if let Some(x) = args.summaryActor { builder.add_summaryActor(x); }
     if let Some(x) = args.summaryVisionGrade { builder.add_summaryVisionGrade(x); }
     if let Some(x) = args.summaryUseTotem { builder.add_summaryUseTotem(x); }
+    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
+    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
     if let Some(x) = args.summaryExchangeTotem { builder.add_summaryExchangeTotem(x); }
     if let Some(x) = args.summaryFightFail { builder.add_summaryFightFail(x); }
     if let Some(x) = args.summaryFightWin { builder.add_summaryFightWin(x); }
+    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
     if let Some(x) = args.summaryVisionGradeDown { builder.add_summaryVisionGradeDown(x); }
     if let Some(x) = args.summaryVisionGradeUp { builder.add_summaryVisionGradeUp(x); }
     if let Some(x) = args.summaryVisionPointDown { builder.add_summaryVisionPointDown(x); }
@@ -71749,6 +62409,9 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     let summaryVisionGradeDown = self.summaryVisionGradeDown().map(|x| {
       alloc::string::ToString::to_string(x)
     });
+    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
     let summaryFightWin = self.summaryFightWin().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -71756,6 +62419,12 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
       alloc::string::ToString::to_string(x)
     });
     let summaryExchangeTotem = self.summaryExchangeTotem().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryUseTotem = self.summaryUseTotem().map(|x| {
@@ -71815,9 +62484,6 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     let summaryEachZone = self.summaryEachZone().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -71833,19 +62499,7 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     let summaryMeetTreasure = self.summaryMeetTreasure().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryBuy = self.summaryBuy().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryInvest = self.summaryInvest().map(|x| {
@@ -71863,24 +62517,6 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     let summaryFailEnd = self.summaryFailEnd().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_RL03EndingTextT {
       summaryGetTotem,
       summaryDemoPointUp,
@@ -71891,9 +62527,12 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
       summaryVisionPointDown,
       summaryVisionGradeUp,
       summaryVisionGradeDown,
+      summaryMeetTrade,
       summaryFightWin,
       summaryFightFail,
       summaryExchangeTotem,
+      summaryExchangeRelic,
+      summaryMeetSecretpath,
       summaryUseTotem,
       summaryVisionGrade,
       summaryActor,
@@ -71913,28 +62552,17 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     }
   }
 
@@ -72002,6 +62630,13 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYVISIONGRADEDOWN, None)}
   }
   #[inline]
+  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTRADE, None)}
+  }
+  #[inline]
   pub fn summaryFightWin(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -72021,6 +62656,20 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGETOTEM, None)}
+  }
+  #[inline]
+  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGERELIC, None)}
+  }
+  #[inline]
+  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSECRETPATH, None)}
   }
   #[inline]
   pub fn summaryUseTotem(&self) -> Option<&'a str> {
@@ -72156,13 +62805,6 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEACHZONE, None)}
   }
   #[inline]
-  pub fn summaryMeetSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSPZONE, None)}
-  }
-  #[inline]
   pub fn summaryPerfectBattle(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -72198,39 +62840,11 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTREASURE, None)}
   }
   #[inline]
-  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSECRETPATH, None)}
-  }
-  #[inline]
-  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGERELIC, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTRADE, None)}
-  }
-  #[inline]
   pub fn summaryBuy(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYBUY, None)}
-  }
-  #[inline]
-  pub fn summaryBuyWithPriceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYBUYWITHPRICEID, None)}
   }
   #[inline]
   pub fn summaryInvest(&self) -> Option<&'a str> {
@@ -72267,48 +62881,6 @@ impl<'a> clz_Torappu_RL03EndingText<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYFAILEND, None)}
   }
-  #[inline]
-  pub fn summaryStockRecruitTicket(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYSTOCKRECRUITTICKET, None)}
-  }
-  #[inline]
-  pub fn summaryDuelWin(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELWIN, None)}
-  }
-  #[inline]
-  pub fn summaryDuelTie(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELTIE, None)}
-  }
-  #[inline]
-  pub fn summaryDuelLose(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELLOSE, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGo(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXPEDITIONGO, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBack(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXPEDITIONBACK, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RL03EndingText<'_> {
@@ -72326,9 +62898,12 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL03EndingText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryVisionPointDown", Self::VT_SUMMARYVISIONPOINTDOWN, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryVisionGradeUp", Self::VT_SUMMARYVISIONGRADEUP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryVisionGradeDown", Self::VT_SUMMARYVISIONGRADEDOWN, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFightWin", Self::VT_SUMMARYFIGHTWIN, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFightFail", Self::VT_SUMMARYFIGHTFAIL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeTotem", Self::VT_SUMMARYEXCHANGETOTEM, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryUseTotem", Self::VT_SUMMARYUSETOTEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryVisionGrade", Self::VT_SUMMARYVISIONGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryActor", Self::VT_SUMMARYACTOR, false)?
@@ -72348,28 +62923,17 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL03EndingText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryUpgrade", Self::VT_SUMMARYUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCompleteEnding", Self::VT_SUMMARYCOMPLETEENDING, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryEachZone", Self::VT_SUMMARYEACHZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSpZone", Self::VT_SUMMARYMEETSPZONE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryPerfectBattle", Self::VT_SUMMARYPERFECTBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetBattle", Self::VT_SUMMARYMEETBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetEvent", Self::VT_SUMMARYMEETEVENT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetShop", Self::VT_SUMMARYMEETSHOP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTreasure", Self::VT_SUMMARYMEETTREASURE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuy", Self::VT_SUMMARYBUY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuyWithPriceId", Self::VT_SUMMARYBUYWITHPRICEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryInvest", Self::VT_SUMMARYINVEST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGet", Self::VT_SUMMARYGET, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryRelic", Self::VT_SUMMARYRELIC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySafeHouse", Self::VT_SUMMARYSAFEHOUSE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFailEnd", Self::VT_SUMMARYFAILEND, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryStockRecruitTicket", Self::VT_SUMMARYSTOCKRECRUITTICKET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelWin", Self::VT_SUMMARYDUELWIN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelTie", Self::VT_SUMMARYDUELTIE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelLose", Self::VT_SUMMARYDUELLOSE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGo", Self::VT_SUMMARYEXPEDITIONGO, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBack", Self::VT_SUMMARYEXPEDITIONBACK, false)?
      .finish();
     Ok(())
   }
@@ -72384,9 +62948,12 @@ pub struct clz_Torappu_RL03EndingTextArgs<'a> {
     pub summaryVisionPointDown: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryVisionGradeUp: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryVisionGradeDown: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFightWin: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFightFail: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryExchangeTotem: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryUseTotem: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryVisionGrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryActor: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -72406,28 +62973,17 @@ pub struct clz_Torappu_RL03EndingTextArgs<'a> {
     pub summaryUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryCompleteEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryEachZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryPerfectBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetEvent: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetShop: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetTreasure: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryBuy: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBuyWithPriceId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryInvest: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryGet: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summarySafeHouse: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFailEnd: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryStockRecruitTicket: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelWin: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelTie: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelLose: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGo: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBack: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_RL03EndingTextArgs<'a> {
   #[inline]
@@ -72442,9 +62998,12 @@ impl<'a> Default for clz_Torappu_RL03EndingTextArgs<'a> {
       summaryVisionPointDown: None,
       summaryVisionGradeUp: None,
       summaryVisionGradeDown: None,
+      summaryMeetTrade: None,
       summaryFightWin: None,
       summaryFightFail: None,
       summaryExchangeTotem: None,
+      summaryExchangeRelic: None,
+      summaryMeetSecretpath: None,
       summaryUseTotem: None,
       summaryVisionGrade: None,
       summaryActor: None,
@@ -72464,28 +63023,17 @@ impl<'a> Default for clz_Torappu_RL03EndingTextArgs<'a> {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -72533,6 +63081,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL03EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYVISIONGRADEDOWN, summaryVisionGradeDown);
   }
   #[inline]
+  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
+  }
+  #[inline]
   pub fn add_summaryFightWin(&mut self, summaryFightWin: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYFIGHTWIN, summaryFightWin);
   }
@@ -72543,6 +63095,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL03EndingTextBui
   #[inline]
   pub fn add_summaryExchangeTotem(&mut self, summaryExchangeTotem: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGETOTEM, summaryExchangeTotem);
+  }
+  #[inline]
+  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
+  }
+  #[inline]
+  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
   }
   #[inline]
   pub fn add_summaryUseTotem(&mut self, summaryUseTotem: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -72621,10 +63181,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL03EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEACHZONE, summaryEachZone);
   }
   #[inline]
-  pub fn add_summaryMeetSpZone(&mut self, summaryMeetSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSPZONE, summaryMeetSpZone);
-  }
-  #[inline]
   pub fn add_summaryPerfectBattle(&mut self, summaryPerfectBattle: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYPERFECTBATTLE, summaryPerfectBattle);
   }
@@ -72645,24 +63201,8 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL03EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTREASURE, summaryMeetTreasure);
   }
   #[inline]
-  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
-  }
-  #[inline]
-  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
-  }
-  #[inline]
-  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
-  }
-  #[inline]
   pub fn add_summaryBuy(&mut self, summaryBuy: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYBUY, summaryBuy);
-  }
-  #[inline]
-  pub fn add_summaryBuyWithPriceId(&mut self, summaryBuyWithPriceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYBUYWITHPRICEID, summaryBuyWithPriceId);
   }
   #[inline]
   pub fn add_summaryInvest(&mut self, summaryInvest: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -72683,30 +63223,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL03EndingTextBui
   #[inline]
   pub fn add_summaryFailEnd(&mut self, summaryFailEnd: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYFAILEND, summaryFailEnd);
-  }
-  #[inline]
-  pub fn add_summaryStockRecruitTicket(&mut self, summaryStockRecruitTicket: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYSTOCKRECRUITTICKET, summaryStockRecruitTicket);
-  }
-  #[inline]
-  pub fn add_summaryDuelWin(&mut self, summaryDuelWin: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELWIN, summaryDuelWin);
-  }
-  #[inline]
-  pub fn add_summaryDuelTie(&mut self, summaryDuelTie: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELTIE, summaryDuelTie);
-  }
-  #[inline]
-  pub fn add_summaryDuelLose(&mut self, summaryDuelLose: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYDUELLOSE, summaryDuelLose);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGo(&mut self, summaryExpeditionGo: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXPEDITIONGO, summaryExpeditionGo);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBack(&mut self, summaryExpeditionBack: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL03EndingText::VT_SUMMARYEXPEDITIONBACK, summaryExpeditionBack);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL03EndingTextBuilder<'a, 'b, A> {
@@ -72735,9 +63251,12 @@ impl ::core::fmt::Debug for clz_Torappu_RL03EndingText<'_> {
       ds.field("summaryVisionPointDown", &self.summaryVisionPointDown());
       ds.field("summaryVisionGradeUp", &self.summaryVisionGradeUp());
       ds.field("summaryVisionGradeDown", &self.summaryVisionGradeDown());
+      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
       ds.field("summaryFightWin", &self.summaryFightWin());
       ds.field("summaryFightFail", &self.summaryFightFail());
       ds.field("summaryExchangeTotem", &self.summaryExchangeTotem());
+      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
+      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
       ds.field("summaryUseTotem", &self.summaryUseTotem());
       ds.field("summaryVisionGrade", &self.summaryVisionGrade());
       ds.field("summaryActor", &self.summaryActor());
@@ -72757,28 +63276,17 @@ impl ::core::fmt::Debug for clz_Torappu_RL03EndingText<'_> {
       ds.field("summaryUpgrade", &self.summaryUpgrade());
       ds.field("summaryCompleteEnding", &self.summaryCompleteEnding());
       ds.field("summaryEachZone", &self.summaryEachZone());
-      ds.field("summaryMeetSpZone", &self.summaryMeetSpZone());
       ds.field("summaryPerfectBattle", &self.summaryPerfectBattle());
       ds.field("summaryMeetBattle", &self.summaryMeetBattle());
       ds.field("summaryMeetEvent", &self.summaryMeetEvent());
       ds.field("summaryMeetShop", &self.summaryMeetShop());
       ds.field("summaryMeetTreasure", &self.summaryMeetTreasure());
-      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
-      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
-      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
       ds.field("summaryBuy", &self.summaryBuy());
-      ds.field("summaryBuyWithPriceId", &self.summaryBuyWithPriceId());
       ds.field("summaryInvest", &self.summaryInvest());
       ds.field("summaryGet", &self.summaryGet());
       ds.field("summaryRelic", &self.summaryRelic());
       ds.field("summarySafeHouse", &self.summarySafeHouse());
       ds.field("summaryFailEnd", &self.summaryFailEnd());
-      ds.field("summaryStockRecruitTicket", &self.summaryStockRecruitTicket());
-      ds.field("summaryDuelWin", &self.summaryDuelWin());
-      ds.field("summaryDuelTie", &self.summaryDuelTie());
-      ds.field("summaryDuelLose", &self.summaryDuelLose());
-      ds.field("summaryExpeditionGo", &self.summaryExpeditionGo());
-      ds.field("summaryExpeditionBack", &self.summaryExpeditionBack());
       ds.finish()
   }
 }
@@ -72794,9 +63302,12 @@ pub struct clz_Torappu_RL03EndingTextT {
   pub summaryVisionPointDown: Option<alloc::string::String>,
   pub summaryVisionGradeUp: Option<alloc::string::String>,
   pub summaryVisionGradeDown: Option<alloc::string::String>,
+  pub summaryMeetTrade: Option<alloc::string::String>,
   pub summaryFightWin: Option<alloc::string::String>,
   pub summaryFightFail: Option<alloc::string::String>,
   pub summaryExchangeTotem: Option<alloc::string::String>,
+  pub summaryExchangeRelic: Option<alloc::string::String>,
+  pub summaryMeetSecretpath: Option<alloc::string::String>,
   pub summaryUseTotem: Option<alloc::string::String>,
   pub summaryVisionGrade: Option<alloc::string::String>,
   pub summaryActor: Option<alloc::string::String>,
@@ -72816,28 +63327,17 @@ pub struct clz_Torappu_RL03EndingTextT {
   pub summaryUpgrade: Option<alloc::string::String>,
   pub summaryCompleteEnding: Option<alloc::string::String>,
   pub summaryEachZone: Option<alloc::string::String>,
-  pub summaryMeetSpZone: Option<alloc::string::String>,
   pub summaryPerfectBattle: Option<alloc::string::String>,
   pub summaryMeetBattle: Option<alloc::string::String>,
   pub summaryMeetEvent: Option<alloc::string::String>,
   pub summaryMeetShop: Option<alloc::string::String>,
   pub summaryMeetTreasure: Option<alloc::string::String>,
-  pub summaryMeetSecretpath: Option<alloc::string::String>,
-  pub summaryExchangeRelic: Option<alloc::string::String>,
-  pub summaryMeetTrade: Option<alloc::string::String>,
   pub summaryBuy: Option<alloc::string::String>,
-  pub summaryBuyWithPriceId: Option<alloc::string::String>,
   pub summaryInvest: Option<alloc::string::String>,
   pub summaryGet: Option<alloc::string::String>,
   pub summaryRelic: Option<alloc::string::String>,
   pub summarySafeHouse: Option<alloc::string::String>,
   pub summaryFailEnd: Option<alloc::string::String>,
-  pub summaryStockRecruitTicket: Option<alloc::string::String>,
-  pub summaryDuelWin: Option<alloc::string::String>,
-  pub summaryDuelTie: Option<alloc::string::String>,
-  pub summaryDuelLose: Option<alloc::string::String>,
-  pub summaryExpeditionGo: Option<alloc::string::String>,
-  pub summaryExpeditionBack: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_RL03EndingTextT {
   fn default() -> Self {
@@ -72851,9 +63351,12 @@ impl Default for clz_Torappu_RL03EndingTextT {
       summaryVisionPointDown: None,
       summaryVisionGradeUp: None,
       summaryVisionGradeDown: None,
+      summaryMeetTrade: None,
       summaryFightWin: None,
       summaryFightFail: None,
       summaryExchangeTotem: None,
+      summaryExchangeRelic: None,
+      summaryMeetSecretpath: None,
       summaryUseTotem: None,
       summaryVisionGrade: None,
       summaryActor: None,
@@ -72873,28 +63376,17 @@ impl Default for clz_Torappu_RL03EndingTextT {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -72930,6 +63422,9 @@ impl clz_Torappu_RL03EndingTextT {
     let summaryVisionGradeDown = self.summaryVisionGradeDown.as_ref().map(|x|{
       _fbb.create_string(x)
     });
+    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
     let summaryFightWin = self.summaryFightWin.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -72937,6 +63432,12 @@ impl clz_Torappu_RL03EndingTextT {
       _fbb.create_string(x)
     });
     let summaryExchangeTotem = self.summaryExchangeTotem.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryUseTotem = self.summaryUseTotem.as_ref().map(|x|{
@@ -72996,9 +63497,6 @@ impl clz_Torappu_RL03EndingTextT {
     let summaryEachZone = self.summaryEachZone.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -73014,19 +63512,7 @@ impl clz_Torappu_RL03EndingTextT {
     let summaryMeetTreasure = self.summaryMeetTreasure.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryBuy = self.summaryBuy.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryInvest = self.summaryInvest.as_ref().map(|x|{
@@ -73044,24 +63530,6 @@ impl clz_Torappu_RL03EndingTextT {
     let summaryFailEnd = self.summaryFailEnd.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_RL03EndingText::create(_fbb, &clz_Torappu_RL03EndingTextArgs{
       summaryGetTotem,
       summaryDemoPointUp,
@@ -73072,9 +63540,12 @@ impl clz_Torappu_RL03EndingTextT {
       summaryVisionPointDown,
       summaryVisionGradeUp,
       summaryVisionGradeDown,
+      summaryMeetTrade,
       summaryFightWin,
       summaryFightFail,
       summaryExchangeTotem,
+      summaryExchangeRelic,
+      summaryMeetSecretpath,
       summaryUseTotem,
       summaryVisionGrade,
       summaryActor,
@@ -73094,28 +63565,17 @@ impl clz_Torappu_RL03EndingTextT {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     })
   }
 }
@@ -75640,48 +66100,45 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
   pub const VT_SUMMARYWEIGHTOVERWEIGHT: ::flatbuffers::VOffsetT = 22;
   pub const VT_SUMMARYWEIGHTLIMIT: ::flatbuffers::VOffsetT = 24;
   pub const VT_SUMMARYWEIGHTSAFE: ::flatbuffers::VOffsetT = 26;
-  pub const VT_SUMMARYPERMUPGRADE: ::flatbuffers::VOffsetT = 28;
-  pub const VT_SUMMARYTEMPUPGRADE: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SUMMARYSELLFRAGMENT: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 34;
-  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 36;
-  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 38;
-  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 40;
-  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 42;
-  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 44;
-  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 46;
-  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 48;
-  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 50;
-  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 52;
-  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 54;
-  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 56;
-  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 58;
-  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 60;
-  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 62;
-  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 64;
-  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 66;
-  pub const VT_SUMMARYMEETSPZONE: ::flatbuffers::VOffsetT = 68;
-  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 70;
-  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 72;
-  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 74;
-  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 76;
-  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 78;
-  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 80;
-  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 82;
-  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 84;
-  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 86;
-  pub const VT_SUMMARYBUYWITHPRICEID: ::flatbuffers::VOffsetT = 88;
-  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 90;
-  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 92;
-  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 94;
-  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 96;
-  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 98;
-  pub const VT_SUMMARYDUELWIN: ::flatbuffers::VOffsetT = 100;
-  pub const VT_SUMMARYDUELTIE: ::flatbuffers::VOffsetT = 102;
-  pub const VT_SUMMARYDUELLOSE: ::flatbuffers::VOffsetT = 104;
-  pub const VT_SUMMARYSTOCKRECRUITTICKET: ::flatbuffers::VOffsetT = 106;
-  pub const VT_SUMMARYEXPEDITIONGO: ::flatbuffers::VOffsetT = 108;
-  pub const VT_SUMMARYEXPEDITIONBACK: ::flatbuffers::VOffsetT = 110;
+  pub const VT_SUMMARYDUELWIN: ::flatbuffers::VOffsetT = 28;
+  pub const VT_SUMMARYDUELTIE: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SUMMARYDUELLOSE: ::flatbuffers::VOffsetT = 32;
+  pub const VT_SUMMARYPERMUPGRADE: ::flatbuffers::VOffsetT = 34;
+  pub const VT_SUMMARYTEMPUPGRADE: ::flatbuffers::VOffsetT = 36;
+  pub const VT_SUMMARYSELLFRAGMENT: ::flatbuffers::VOffsetT = 38;
+  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 40;
+  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 42;
+  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 44;
+  pub const VT_SUMMARYFIGHTWIN: ::flatbuffers::VOffsetT = 46;
+  pub const VT_SUMMARYFIGHTFAIL: ::flatbuffers::VOffsetT = 48;
+  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 50;
+  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 52;
+  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 54;
+  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 56;
+  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 58;
+  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 60;
+  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 62;
+  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 64;
+  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 66;
+  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 68;
+  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 70;
+  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 72;
+  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 74;
+  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 76;
+  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 78;
+  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 80;
+  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 82;
+  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 84;
+  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 86;
+  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 88;
+  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 90;
+  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 92;
+  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 94;
+  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 96;
+  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 98;
+  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 100;
+  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 102;
+  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 104;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -75693,28 +66150,17 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     args: &'args clz_Torappu_RL04EndingTextArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL04EndingText<'bldr>> {
     let mut builder = clz_Torappu_RL04EndingTextBuilder::new(_fbb);
-    if let Some(x) = args.summaryExpeditionBack { builder.add_summaryExpeditionBack(x); }
-    if let Some(x) = args.summaryExpeditionGo { builder.add_summaryExpeditionGo(x); }
-    if let Some(x) = args.summaryStockRecruitTicket { builder.add_summaryStockRecruitTicket(x); }
-    if let Some(x) = args.summaryDuelLose { builder.add_summaryDuelLose(x); }
-    if let Some(x) = args.summaryDuelTie { builder.add_summaryDuelTie(x); }
-    if let Some(x) = args.summaryDuelWin { builder.add_summaryDuelWin(x); }
     if let Some(x) = args.summaryFailEnd { builder.add_summaryFailEnd(x); }
     if let Some(x) = args.summarySafeHouse { builder.add_summarySafeHouse(x); }
     if let Some(x) = args.summaryRelic { builder.add_summaryRelic(x); }
     if let Some(x) = args.summaryGet { builder.add_summaryGet(x); }
     if let Some(x) = args.summaryInvest { builder.add_summaryInvest(x); }
-    if let Some(x) = args.summaryBuyWithPriceId { builder.add_summaryBuyWithPriceId(x); }
     if let Some(x) = args.summaryBuy { builder.add_summaryBuy(x); }
-    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
-    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
-    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
     if let Some(x) = args.summaryMeetTreasure { builder.add_summaryMeetTreasure(x); }
     if let Some(x) = args.summaryMeetShop { builder.add_summaryMeetShop(x); }
     if let Some(x) = args.summaryMeetEvent { builder.add_summaryMeetEvent(x); }
     if let Some(x) = args.summaryMeetBattle { builder.add_summaryMeetBattle(x); }
     if let Some(x) = args.summaryPerfectBattle { builder.add_summaryPerfectBattle(x); }
-    if let Some(x) = args.summaryMeetSpZone { builder.add_summaryMeetSpZone(x); }
     if let Some(x) = args.summaryEachZone { builder.add_summaryEachZone(x); }
     if let Some(x) = args.summaryCompleteEnding { builder.add_summaryCompleteEnding(x); }
     if let Some(x) = args.summaryUpgrade { builder.add_summaryUpgrade(x); }
@@ -75732,9 +66178,17 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     if let Some(x) = args.summaryZone { builder.add_summaryZone(x); }
     if let Some(x) = args.summaryTop { builder.add_summaryTop(x); }
     if let Some(x) = args.summaryActor { builder.add_summaryActor(x); }
+    if let Some(x) = args.summaryFightFail { builder.add_summaryFightFail(x); }
+    if let Some(x) = args.summaryFightWin { builder.add_summaryFightWin(x); }
+    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
+    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
+    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
     if let Some(x) = args.summarySellFragment { builder.add_summarySellFragment(x); }
     if let Some(x) = args.summaryTempUpgrade { builder.add_summaryTempUpgrade(x); }
     if let Some(x) = args.summaryPermUpgrade { builder.add_summaryPermUpgrade(x); }
+    if let Some(x) = args.summaryDuelLose { builder.add_summaryDuelLose(x); }
+    if let Some(x) = args.summaryDuelTie { builder.add_summaryDuelTie(x); }
+    if let Some(x) = args.summaryDuelWin { builder.add_summaryDuelWin(x); }
     if let Some(x) = args.summaryWeightSafe { builder.add_summaryWeightSafe(x); }
     if let Some(x) = args.summaryWeightLimit { builder.add_summaryWeightLimit(x); }
     if let Some(x) = args.summaryWeightOverweight { builder.add_summaryWeightOverweight(x); }
@@ -75787,6 +66241,15 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     let summaryWeightSafe = self.summaryWeightSafe().map(|x| {
       alloc::string::ToString::to_string(x)
     });
+    let summaryDuelWin = self.summaryDuelWin().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryDuelTie = self.summaryDuelTie().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryDuelLose = self.summaryDuelLose().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
     let summaryPermUpgrade = self.summaryPermUpgrade().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -75794,6 +66257,21 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
       alloc::string::ToString::to_string(x)
     });
     let summarySellFragment = self.summarySellFragment().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryFightWin = self.summaryFightWin().map(|x| {
+      alloc::string::ToString::to_string(x)
+    });
+    let summaryFightFail = self.summaryFightFail().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryActor = self.summaryActor().map(|x| {
@@ -75847,9 +66325,6 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     let summaryEachZone = self.summaryEachZone().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -75865,19 +66340,7 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     let summaryMeetTreasure = self.summaryMeetTreasure().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     let summaryBuy = self.summaryBuy().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
     let summaryInvest = self.summaryInvest().map(|x| {
@@ -75895,24 +66358,6 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     let summaryFailEnd = self.summaryFailEnd().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let summaryDuelWin = self.summaryDuelWin().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_RL04EndingTextT {
       summaryGetFragment,
       summaryUseIdea,
@@ -75926,9 +66371,17 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
       summaryWeightOverweight,
       summaryWeightLimit,
       summaryWeightSafe,
+      summaryDuelWin,
+      summaryDuelTie,
+      summaryDuelLose,
       summaryPermUpgrade,
       summaryTempUpgrade,
       summarySellFragment,
+      summaryMeetTrade,
+      summaryMeetSecretpath,
+      summaryExchangeRelic,
+      summaryFightWin,
+      summaryFightFail,
       summaryActor,
       summaryTop,
       summaryZone,
@@ -75946,28 +66399,17 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryStockRecruitTicket,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     }
   }
 
@@ -76056,6 +66498,27 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYWEIGHTSAFE, None)}
   }
   #[inline]
+  pub fn summaryDuelWin(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELWIN, None)}
+  }
+  #[inline]
+  pub fn summaryDuelTie(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELTIE, None)}
+  }
+  #[inline]
+  pub fn summaryDuelLose(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELLOSE, None)}
+  }
+  #[inline]
   pub fn summaryPermUpgrade(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -76075,6 +66538,41 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYSELLFRAGMENT, None)}
+  }
+  #[inline]
+  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTRADE, None)}
+  }
+  #[inline]
+  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSECRETPATH, None)}
+  }
+  #[inline]
+  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXCHANGERELIC, None)}
+  }
+  #[inline]
+  pub fn summaryFightWin(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYFIGHTWIN, None)}
+  }
+  #[inline]
+  pub fn summaryFightFail(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYFIGHTFAIL, None)}
   }
   #[inline]
   pub fn summaryActor(&self) -> Option<&'a str> {
@@ -76196,13 +66694,6 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYEACHZONE, None)}
   }
   #[inline]
-  pub fn summaryMeetSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSPZONE, None)}
-  }
-  #[inline]
   pub fn summaryPerfectBattle(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -76238,39 +66729,11 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTREASURE, None)}
   }
   #[inline]
-  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSECRETPATH, None)}
-  }
-  #[inline]
-  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXCHANGERELIC, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTRADE, None)}
-  }
-  #[inline]
   pub fn summaryBuy(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYBUY, None)}
-  }
-  #[inline]
-  pub fn summaryBuyWithPriceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYBUYWITHPRICEID, None)}
   }
   #[inline]
   pub fn summaryInvest(&self) -> Option<&'a str> {
@@ -76307,48 +66770,6 @@ impl<'a> clz_Torappu_RL04EndingText<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYFAILEND, None)}
   }
-  #[inline]
-  pub fn summaryDuelWin(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELWIN, None)}
-  }
-  #[inline]
-  pub fn summaryDuelTie(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELTIE, None)}
-  }
-  #[inline]
-  pub fn summaryDuelLose(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELLOSE, None)}
-  }
-  #[inline]
-  pub fn summaryStockRecruitTicket(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYSTOCKRECRUITTICKET, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGo(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXPEDITIONGO, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBack(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXPEDITIONBACK, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RL04EndingText<'_> {
@@ -76369,9 +66790,17 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL04EndingText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryWeightOverweight", Self::VT_SUMMARYWEIGHTOVERWEIGHT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryWeightLimit", Self::VT_SUMMARYWEIGHTLIMIT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryWeightSafe", Self::VT_SUMMARYWEIGHTSAFE, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelWin", Self::VT_SUMMARYDUELWIN, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelTie", Self::VT_SUMMARYDUELTIE, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelLose", Self::VT_SUMMARYDUELLOSE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryPermUpgrade", Self::VT_SUMMARYPERMUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryTempUpgrade", Self::VT_SUMMARYTEMPUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySellFragment", Self::VT_SUMMARYSELLFRAGMENT, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFightWin", Self::VT_SUMMARYFIGHTWIN, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFightFail", Self::VT_SUMMARYFIGHTFAIL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryActor", Self::VT_SUMMARYACTOR, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryTop", Self::VT_SUMMARYTOP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryZone", Self::VT_SUMMARYZONE, false)?
@@ -76389,28 +66818,17 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RL04EndingText<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryUpgrade", Self::VT_SUMMARYUPGRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCompleteEnding", Self::VT_SUMMARYCOMPLETEENDING, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryEachZone", Self::VT_SUMMARYEACHZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSpZone", Self::VT_SUMMARYMEETSPZONE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryPerfectBattle", Self::VT_SUMMARYPERFECTBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetBattle", Self::VT_SUMMARYMEETBATTLE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetEvent", Self::VT_SUMMARYMEETEVENT, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetShop", Self::VT_SUMMARYMEETSHOP, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTreasure", Self::VT_SUMMARYMEETTREASURE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuy", Self::VT_SUMMARYBUY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuyWithPriceId", Self::VT_SUMMARYBUYWITHPRICEID, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryInvest", Self::VT_SUMMARYINVEST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGet", Self::VT_SUMMARYGET, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryRelic", Self::VT_SUMMARYRELIC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySafeHouse", Self::VT_SUMMARYSAFEHOUSE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFailEnd", Self::VT_SUMMARYFAILEND, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelWin", Self::VT_SUMMARYDUELWIN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelTie", Self::VT_SUMMARYDUELTIE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelLose", Self::VT_SUMMARYDUELLOSE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryStockRecruitTicket", Self::VT_SUMMARYSTOCKRECRUITTICKET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGo", Self::VT_SUMMARYEXPEDITIONGO, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBack", Self::VT_SUMMARYEXPEDITIONBACK, false)?
      .finish();
     Ok(())
   }
@@ -76428,9 +66846,17 @@ pub struct clz_Torappu_RL04EndingTextArgs<'a> {
     pub summaryWeightOverweight: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryWeightLimit: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryWeightSafe: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryDuelWin: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryDuelTie: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryDuelLose: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryPermUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryTempUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summarySellFragment: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryFightWin: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub summaryFightFail: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryActor: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryTop: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryZone: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -76448,28 +66874,17 @@ pub struct clz_Torappu_RL04EndingTextArgs<'a> {
     pub summaryUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryCompleteEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryEachZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryPerfectBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetEvent: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetShop: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetTreasure: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryBuy: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBuyWithPriceId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryInvest: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryGet: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summarySafeHouse: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub summaryFailEnd: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelWin: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelTie: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelLose: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryStockRecruitTicket: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGo: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBack: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_RL04EndingTextArgs<'a> {
   #[inline]
@@ -76487,9 +66902,17 @@ impl<'a> Default for clz_Torappu_RL04EndingTextArgs<'a> {
       summaryWeightOverweight: None,
       summaryWeightLimit: None,
       summaryWeightSafe: None,
+      summaryDuelWin: None,
+      summaryDuelTie: None,
+      summaryDuelLose: None,
       summaryPermUpgrade: None,
       summaryTempUpgrade: None,
       summarySellFragment: None,
+      summaryMeetTrade: None,
+      summaryMeetSecretpath: None,
+      summaryExchangeRelic: None,
+      summaryFightWin: None,
+      summaryFightFail: None,
       summaryActor: None,
       summaryTop: None,
       summaryZone: None,
@@ -76507,28 +66930,17 @@ impl<'a> Default for clz_Torappu_RL04EndingTextArgs<'a> {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryStockRecruitTicket: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -76588,6 +67000,18 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL04EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYWEIGHTSAFE, summaryWeightSafe);
   }
   #[inline]
+  pub fn add_summaryDuelWin(&mut self, summaryDuelWin: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELWIN, summaryDuelWin);
+  }
+  #[inline]
+  pub fn add_summaryDuelTie(&mut self, summaryDuelTie: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELTIE, summaryDuelTie);
+  }
+  #[inline]
+  pub fn add_summaryDuelLose(&mut self, summaryDuelLose: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELLOSE, summaryDuelLose);
+  }
+  #[inline]
   pub fn add_summaryPermUpgrade(&mut self, summaryPermUpgrade: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYPERMUPGRADE, summaryPermUpgrade);
   }
@@ -76598,6 +67022,26 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL04EndingTextBui
   #[inline]
   pub fn add_summarySellFragment(&mut self, summarySellFragment: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYSELLFRAGMENT, summarySellFragment);
+  }
+  #[inline]
+  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
+  }
+  #[inline]
+  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
+  }
+  #[inline]
+  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
+  }
+  #[inline]
+  pub fn add_summaryFightWin(&mut self, summaryFightWin: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYFIGHTWIN, summaryFightWin);
+  }
+  #[inline]
+  pub fn add_summaryFightFail(&mut self, summaryFightFail: ::flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYFIGHTFAIL, summaryFightFail);
   }
   #[inline]
   pub fn add_summaryActor(&mut self, summaryActor: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -76668,10 +67112,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL04EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYEACHZONE, summaryEachZone);
   }
   #[inline]
-  pub fn add_summaryMeetSpZone(&mut self, summaryMeetSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSPZONE, summaryMeetSpZone);
-  }
-  #[inline]
   pub fn add_summaryPerfectBattle(&mut self, summaryPerfectBattle: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYPERFECTBATTLE, summaryPerfectBattle);
   }
@@ -76692,24 +67132,8 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL04EndingTextBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTREASURE, summaryMeetTreasure);
   }
   #[inline]
-  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
-  }
-  #[inline]
-  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
-  }
-  #[inline]
-  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
-  }
-  #[inline]
   pub fn add_summaryBuy(&mut self, summaryBuy: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYBUY, summaryBuy);
-  }
-  #[inline]
-  pub fn add_summaryBuyWithPriceId(&mut self, summaryBuyWithPriceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYBUYWITHPRICEID, summaryBuyWithPriceId);
   }
   #[inline]
   pub fn add_summaryInvest(&mut self, summaryInvest: ::flatbuffers::WIPOffset<&'b  str>) {
@@ -76730,30 +67154,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL04EndingTextBui
   #[inline]
   pub fn add_summaryFailEnd(&mut self, summaryFailEnd: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYFAILEND, summaryFailEnd);
-  }
-  #[inline]
-  pub fn add_summaryDuelWin(&mut self, summaryDuelWin: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELWIN, summaryDuelWin);
-  }
-  #[inline]
-  pub fn add_summaryDuelTie(&mut self, summaryDuelTie: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELTIE, summaryDuelTie);
-  }
-  #[inline]
-  pub fn add_summaryDuelLose(&mut self, summaryDuelLose: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYDUELLOSE, summaryDuelLose);
-  }
-  #[inline]
-  pub fn add_summaryStockRecruitTicket(&mut self, summaryStockRecruitTicket: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYSTOCKRECRUITTICKET, summaryStockRecruitTicket);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGo(&mut self, summaryExpeditionGo: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXPEDITIONGO, summaryExpeditionGo);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBack(&mut self, summaryExpeditionBack: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL04EndingText::VT_SUMMARYEXPEDITIONBACK, summaryExpeditionBack);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL04EndingTextBuilder<'a, 'b, A> {
@@ -76785,9 +67185,17 @@ impl ::core::fmt::Debug for clz_Torappu_RL04EndingText<'_> {
       ds.field("summaryWeightOverweight", &self.summaryWeightOverweight());
       ds.field("summaryWeightLimit", &self.summaryWeightLimit());
       ds.field("summaryWeightSafe", &self.summaryWeightSafe());
+      ds.field("summaryDuelWin", &self.summaryDuelWin());
+      ds.field("summaryDuelTie", &self.summaryDuelTie());
+      ds.field("summaryDuelLose", &self.summaryDuelLose());
       ds.field("summaryPermUpgrade", &self.summaryPermUpgrade());
       ds.field("summaryTempUpgrade", &self.summaryTempUpgrade());
       ds.field("summarySellFragment", &self.summarySellFragment());
+      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
+      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
+      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
+      ds.field("summaryFightWin", &self.summaryFightWin());
+      ds.field("summaryFightFail", &self.summaryFightFail());
       ds.field("summaryActor", &self.summaryActor());
       ds.field("summaryTop", &self.summaryTop());
       ds.field("summaryZone", &self.summaryZone());
@@ -76805,28 +67213,17 @@ impl ::core::fmt::Debug for clz_Torappu_RL04EndingText<'_> {
       ds.field("summaryUpgrade", &self.summaryUpgrade());
       ds.field("summaryCompleteEnding", &self.summaryCompleteEnding());
       ds.field("summaryEachZone", &self.summaryEachZone());
-      ds.field("summaryMeetSpZone", &self.summaryMeetSpZone());
       ds.field("summaryPerfectBattle", &self.summaryPerfectBattle());
       ds.field("summaryMeetBattle", &self.summaryMeetBattle());
       ds.field("summaryMeetEvent", &self.summaryMeetEvent());
       ds.field("summaryMeetShop", &self.summaryMeetShop());
       ds.field("summaryMeetTreasure", &self.summaryMeetTreasure());
-      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
-      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
-      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
       ds.field("summaryBuy", &self.summaryBuy());
-      ds.field("summaryBuyWithPriceId", &self.summaryBuyWithPriceId());
       ds.field("summaryInvest", &self.summaryInvest());
       ds.field("summaryGet", &self.summaryGet());
       ds.field("summaryRelic", &self.summaryRelic());
       ds.field("summarySafeHouse", &self.summarySafeHouse());
       ds.field("summaryFailEnd", &self.summaryFailEnd());
-      ds.field("summaryDuelWin", &self.summaryDuelWin());
-      ds.field("summaryDuelTie", &self.summaryDuelTie());
-      ds.field("summaryDuelLose", &self.summaryDuelLose());
-      ds.field("summaryStockRecruitTicket", &self.summaryStockRecruitTicket());
-      ds.field("summaryExpeditionGo", &self.summaryExpeditionGo());
-      ds.field("summaryExpeditionBack", &self.summaryExpeditionBack());
       ds.finish()
   }
 }
@@ -76845,9 +67242,17 @@ pub struct clz_Torappu_RL04EndingTextT {
   pub summaryWeightOverweight: Option<alloc::string::String>,
   pub summaryWeightLimit: Option<alloc::string::String>,
   pub summaryWeightSafe: Option<alloc::string::String>,
+  pub summaryDuelWin: Option<alloc::string::String>,
+  pub summaryDuelTie: Option<alloc::string::String>,
+  pub summaryDuelLose: Option<alloc::string::String>,
   pub summaryPermUpgrade: Option<alloc::string::String>,
   pub summaryTempUpgrade: Option<alloc::string::String>,
   pub summarySellFragment: Option<alloc::string::String>,
+  pub summaryMeetTrade: Option<alloc::string::String>,
+  pub summaryMeetSecretpath: Option<alloc::string::String>,
+  pub summaryExchangeRelic: Option<alloc::string::String>,
+  pub summaryFightWin: Option<alloc::string::String>,
+  pub summaryFightFail: Option<alloc::string::String>,
   pub summaryActor: Option<alloc::string::String>,
   pub summaryTop: Option<alloc::string::String>,
   pub summaryZone: Option<alloc::string::String>,
@@ -76865,28 +67270,17 @@ pub struct clz_Torappu_RL04EndingTextT {
   pub summaryUpgrade: Option<alloc::string::String>,
   pub summaryCompleteEnding: Option<alloc::string::String>,
   pub summaryEachZone: Option<alloc::string::String>,
-  pub summaryMeetSpZone: Option<alloc::string::String>,
   pub summaryPerfectBattle: Option<alloc::string::String>,
   pub summaryMeetBattle: Option<alloc::string::String>,
   pub summaryMeetEvent: Option<alloc::string::String>,
   pub summaryMeetShop: Option<alloc::string::String>,
   pub summaryMeetTreasure: Option<alloc::string::String>,
-  pub summaryMeetSecretpath: Option<alloc::string::String>,
-  pub summaryExchangeRelic: Option<alloc::string::String>,
-  pub summaryMeetTrade: Option<alloc::string::String>,
   pub summaryBuy: Option<alloc::string::String>,
-  pub summaryBuyWithPriceId: Option<alloc::string::String>,
   pub summaryInvest: Option<alloc::string::String>,
   pub summaryGet: Option<alloc::string::String>,
   pub summaryRelic: Option<alloc::string::String>,
   pub summarySafeHouse: Option<alloc::string::String>,
   pub summaryFailEnd: Option<alloc::string::String>,
-  pub summaryDuelWin: Option<alloc::string::String>,
-  pub summaryDuelTie: Option<alloc::string::String>,
-  pub summaryDuelLose: Option<alloc::string::String>,
-  pub summaryStockRecruitTicket: Option<alloc::string::String>,
-  pub summaryExpeditionGo: Option<alloc::string::String>,
-  pub summaryExpeditionBack: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_RL04EndingTextT {
   fn default() -> Self {
@@ -76903,9 +67297,17 @@ impl Default for clz_Torappu_RL04EndingTextT {
       summaryWeightOverweight: None,
       summaryWeightLimit: None,
       summaryWeightSafe: None,
+      summaryDuelWin: None,
+      summaryDuelTie: None,
+      summaryDuelLose: None,
       summaryPermUpgrade: None,
       summaryTempUpgrade: None,
       summarySellFragment: None,
+      summaryMeetTrade: None,
+      summaryMeetSecretpath: None,
+      summaryExchangeRelic: None,
+      summaryFightWin: None,
+      summaryFightFail: None,
       summaryActor: None,
       summaryTop: None,
       summaryZone: None,
@@ -76923,28 +67325,17 @@ impl Default for clz_Torappu_RL04EndingTextT {
       summaryUpgrade: None,
       summaryCompleteEnding: None,
       summaryEachZone: None,
-      summaryMeetSpZone: None,
       summaryPerfectBattle: None,
       summaryMeetBattle: None,
       summaryMeetEvent: None,
       summaryMeetShop: None,
       summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
       summaryBuy: None,
-      summaryBuyWithPriceId: None,
       summaryInvest: None,
       summaryGet: None,
       summaryRelic: None,
       summarySafeHouse: None,
       summaryFailEnd: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryStockRecruitTicket: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
     }
   }
 }
@@ -76989,6 +67380,15 @@ impl clz_Torappu_RL04EndingTextT {
     let summaryWeightSafe = self.summaryWeightSafe.as_ref().map(|x|{
       _fbb.create_string(x)
     });
+    let summaryDuelWin = self.summaryDuelWin.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryDuelTie = self.summaryDuelTie.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryDuelLose = self.summaryDuelLose.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
     let summaryPermUpgrade = self.summaryPermUpgrade.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -76996,6 +67396,21 @@ impl clz_Torappu_RL04EndingTextT {
       _fbb.create_string(x)
     });
     let summarySellFragment = self.summarySellFragment.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryFightWin = self.summaryFightWin.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let summaryFightFail = self.summaryFightFail.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryActor = self.summaryActor.as_ref().map(|x|{
@@ -77049,9 +67464,6 @@ impl clz_Torappu_RL04EndingTextT {
     let summaryEachZone = self.summaryEachZone.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSpZone = self.summaryMeetSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryPerfectBattle = self.summaryPerfectBattle.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -77067,19 +67479,7 @@ impl clz_Torappu_RL04EndingTextT {
     let summaryMeetTreasure = self.summaryMeetTreasure.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     let summaryBuy = self.summaryBuy.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
     let summaryInvest = self.summaryInvest.as_ref().map(|x|{
@@ -77097,24 +67497,6 @@ impl clz_Torappu_RL04EndingTextT {
     let summaryFailEnd = self.summaryFailEnd.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let summaryDuelWin = self.summaryDuelWin.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_RL04EndingText::create(_fbb, &clz_Torappu_RL04EndingTextArgs{
       summaryGetFragment,
       summaryUseIdea,
@@ -77128,9 +67510,17 @@ impl clz_Torappu_RL04EndingTextT {
       summaryWeightOverweight,
       summaryWeightLimit,
       summaryWeightSafe,
+      summaryDuelWin,
+      summaryDuelTie,
+      summaryDuelLose,
       summaryPermUpgrade,
       summaryTempUpgrade,
       summarySellFragment,
+      summaryMeetTrade,
+      summaryMeetSecretpath,
+      summaryExchangeRelic,
+      summaryFightWin,
+      summaryFightFail,
       summaryActor,
       summaryTop,
       summaryZone,
@@ -77148,28 +67538,17 @@ impl clz_Torappu_RL04EndingTextT {
       summaryUpgrade,
       summaryCompleteEnding,
       summaryEachZone,
-      summaryMeetSpZone,
       summaryPerfectBattle,
       summaryMeetBattle,
       summaryMeetEvent,
       summaryMeetShop,
       summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
       summaryBuy,
-      summaryBuyWithPriceId,
       summaryInvest,
       summaryGet,
       summaryRelic,
       summarySafeHouse,
       summaryFailEnd,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryStockRecruitTicket,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
     })
   }
 }
@@ -77357,2386 +67736,6 @@ impl clz_Torappu_RL04CustomizeDataT {
     })
   }
 }
-pub enum clz_Torappu_RL05DifficultyExtOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RL05DifficultyExt<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RL05DifficultyExt<'a> {
-  type Inner = clz_Torappu_RL05DifficultyExt<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RL05DifficultyExt<'a> {
-  pub const VT_MODEDIFFICULTY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GRADE: ::flatbuffers::VOffsetT = 6;
-  pub const VT_BUFFS: ::flatbuffers::VOffsetT = 8;
-  pub const VT_BUFFDESC: ::flatbuffers::VOffsetT = 10;
-  pub const VT_LEFTWRATHDESC: ::flatbuffers::VOffsetT = 12;
-  pub const VT_RELICDEVLEVEL: ::flatbuffers::VOffsetT = 14;
-  pub const VT_GILDPROBDISPLAY: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SKYSTEPDESCRIPTION: ::flatbuffers::VOffsetT = 18;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RL05DifficultyExt { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RL05DifficultyExtArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05DifficultyExt<'bldr>> {
-    let mut builder = clz_Torappu_RL05DifficultyExtBuilder::new(_fbb);
-    if let Some(x) = args.skyStepDescription { builder.add_skyStepDescription(x); }
-    if let Some(x) = args.gildProbDisplay { builder.add_gildProbDisplay(x); }
-    if let Some(x) = args.relicDevLevel { builder.add_relicDevLevel(x); }
-    if let Some(x) = args.leftWrathDesc { builder.add_leftWrathDesc(x); }
-    if let Some(x) = args.buffDesc { builder.add_buffDesc(x); }
-    if let Some(x) = args.buffs { builder.add_buffs(x); }
-    builder.add_grade(args.grade);
-    builder.add_modeDifficulty(args.modeDifficulty);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RL05DifficultyExtT {
-    let modeDifficulty = self.modeDifficulty();
-    let grade = self.grade();
-    let buffs = self.buffs().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let buffDesc = self.buffDesc().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let leftWrathDesc = self.leftWrathDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let relicDevLevel = self.relicDevLevel().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let gildProbDisplay = self.gildProbDisplay().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let skyStepDescription = self.skyStepDescription().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RL05DifficultyExtT {
-      modeDifficulty,
-      grade,
-      buffs,
-      buffDesc,
-      leftWrathDesc,
-      relicDevLevel,
-      gildProbDisplay,
-      skyStepDescription,
-    }
-  }
-
-  #[inline]
-  pub fn modeDifficulty(&self) -> enum__Torappu_RoguelikeTopicMode {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_RoguelikeTopicMode>(clz_Torappu_RL05DifficultyExt::VT_MODEDIFFICULTY, Some(enum__Torappu_RoguelikeTopicMode::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn grade(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_RL05DifficultyExt::VT_GRADE, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn buffs(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RL05DifficultyExt::VT_BUFFS, None)}
-  }
-  #[inline]
-  pub fn buffDesc(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RL05DifficultyExt::VT_BUFFDESC, None)}
-  }
-  #[inline]
-  pub fn leftWrathDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05DifficultyExt::VT_LEFTWRATHDESC, None)}
-  }
-  #[inline]
-  pub fn relicDevLevel(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05DifficultyExt::VT_RELICDEVLEVEL, None)}
-  }
-  #[inline]
-  pub fn gildProbDisplay(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05DifficultyExt::VT_GILDPROBDISPLAY, None)}
-  }
-  #[inline]
-  pub fn skyStepDescription(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05DifficultyExt::VT_SKYSTEPDESCRIPTION, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RL05DifficultyExt<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<enum__Torappu_RoguelikeTopicMode>("modeDifficulty", Self::VT_MODEDIFFICULTY, false)?
-     .visit_field::<i32>("grade", Self::VT_GRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("buffs", Self::VT_BUFFS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("buffDesc", Self::VT_BUFFDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("leftWrathDesc", Self::VT_LEFTWRATHDESC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("relicDevLevel", Self::VT_RELICDEVLEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("gildProbDisplay", Self::VT_GILDPROBDISPLAY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skyStepDescription", Self::VT_SKYSTEPDESCRIPTION, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RL05DifficultyExtArgs<'a> {
-    pub modeDifficulty: enum__Torappu_RoguelikeTopicMode,
-    pub grade: i32,
-    pub buffs: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub buffDesc: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub leftWrathDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub relicDevLevel: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub gildProbDisplay: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub skyStepDescription: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RL05DifficultyExtArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RL05DifficultyExtArgs {
-      modeDifficulty: enum__Torappu_RoguelikeTopicMode::NONE,
-      grade: 0,
-      buffs: None,
-      buffDesc: None,
-      leftWrathDesc: None,
-      relicDevLevel: None,
-      gildProbDisplay: None,
-      skyStepDescription: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RL05DifficultyExtBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL05DifficultyExtBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_modeDifficulty(&mut self, modeDifficulty: enum__Torappu_RoguelikeTopicMode) {
-    self.fbb_.push_slot::<enum__Torappu_RoguelikeTopicMode>(clz_Torappu_RL05DifficultyExt::VT_MODEDIFFICULTY, modeDifficulty, enum__Torappu_RoguelikeTopicMode::NONE);
-  }
-  #[inline]
-  pub fn add_grade(&mut self, grade: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_RL05DifficultyExt::VT_GRADE, grade, 0);
-  }
-  #[inline]
-  pub fn add_buffs(&mut self, buffs: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_BUFFS, buffs);
-  }
-  #[inline]
-  pub fn add_buffDesc(&mut self, buffDesc: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_BUFFDESC, buffDesc);
-  }
-  #[inline]
-  pub fn add_leftWrathDesc(&mut self, leftWrathDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_LEFTWRATHDESC, leftWrathDesc);
-  }
-  #[inline]
-  pub fn add_relicDevLevel(&mut self, relicDevLevel: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_RELICDEVLEVEL, relicDevLevel);
-  }
-  #[inline]
-  pub fn add_gildProbDisplay(&mut self, gildProbDisplay: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_GILDPROBDISPLAY, gildProbDisplay);
-  }
-  #[inline]
-  pub fn add_skyStepDescription(&mut self, skyStepDescription: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05DifficultyExt::VT_SKYSTEPDESCRIPTION, skyStepDescription);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL05DifficultyExtBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RL05DifficultyExtBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05DifficultyExt<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RL05DifficultyExt<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RL05DifficultyExt");
-      ds.field("modeDifficulty", &self.modeDifficulty());
-      ds.field("grade", &self.grade());
-      ds.field("buffs", &self.buffs());
-      ds.field("buffDesc", &self.buffDesc());
-      ds.field("leftWrathDesc", &self.leftWrathDesc());
-      ds.field("relicDevLevel", &self.relicDevLevel());
-      ds.field("gildProbDisplay", &self.gildProbDisplay());
-      ds.field("skyStepDescription", &self.skyStepDescription());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RL05DifficultyExtT {
-  pub modeDifficulty: enum__Torappu_RoguelikeTopicMode,
-  pub grade: i32,
-  pub buffs: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub buffDesc: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub leftWrathDesc: Option<alloc::string::String>,
-  pub relicDevLevel: Option<alloc::string::String>,
-  pub gildProbDisplay: Option<alloc::string::String>,
-  pub skyStepDescription: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RL05DifficultyExtT {
-  fn default() -> Self {
-    Self {
-      modeDifficulty: enum__Torappu_RoguelikeTopicMode::NONE,
-      grade: 0,
-      buffs: None,
-      buffDesc: None,
-      leftWrathDesc: None,
-      relicDevLevel: None,
-      gildProbDisplay: None,
-      skyStepDescription: None,
-    }
-  }
-}
-impl clz_Torappu_RL05DifficultyExtT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05DifficultyExt<'b>> {
-    let modeDifficulty = self.modeDifficulty;
-    let grade = self.grade;
-    let buffs = self.buffs.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let buffDesc = self.buffDesc.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let leftWrathDesc = self.leftWrathDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let relicDevLevel = self.relicDevLevel.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let gildProbDisplay = self.gildProbDisplay.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let skyStepDescription = self.skyStepDescription.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RL05DifficultyExt::create(_fbb, &clz_Torappu_RL05DifficultyExtArgs{
-      modeDifficulty,
-      grade,
-      buffs,
-      buffDesc,
-      leftWrathDesc,
-      relicDevLevel,
-      gildProbDisplay,
-      skyStepDescription,
-    })
-  }
-}
-pub enum clz_Torappu_RL05EndingTextOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RL05EndingText<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RL05EndingText<'a> {
-  type Inner = clz_Torappu_RL05EndingText<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RL05EndingText<'a> {
-  pub const VT_SUMMARYGETCOPPER: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SUMMARYLOSTCOPPER: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SUMMARYDRAWCOPPER: ::flatbuffers::VOffsetT = 8;
-  pub const VT_SUMMARYCOPPERRESULTGOOD: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SUMMARYCOPPERRESULTBAD: ::flatbuffers::VOffsetT = 12;
-  pub const VT_SUMMARYCOPPERRESULTNORMAL: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SUMMARYCOPPERCHECKSUCCESS: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SUMMARYCOPPERCHECKFAIL: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SUMMARYCOPPERCHECKNORMAL: ::flatbuffers::VOffsetT = 20;
-  pub const VT_SUMMARYMEETWRATH: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SUMMARYEXPEDITIONGOENDINGFOUR: ::flatbuffers::VOffsetT = 24;
-  pub const VT_SUMMARYEXPEDITIONBACKENDINGFOUR: ::flatbuffers::VOffsetT = 26;
-  pub const VT_SUMMARYEXPEDITIONBACKCANDLE: ::flatbuffers::VOffsetT = 28;
-  pub const VT_SUMMARYEXPEDITIONGOENDING: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SUMMARYEXPEDITIONBACKENDING: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUMMARYHOLDCANDLE: ::flatbuffers::VOffsetT = 34;
-  pub const VT_SUMMARYHOLDCANDLERECRUIT: ::flatbuffers::VOffsetT = 36;
-  pub const VT_SUMMARYHOLDCANDLEUPGRADE: ::flatbuffers::VOffsetT = 38;
-  pub const VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE: ::flatbuffers::VOffsetT = 40;
-  pub const VT_SUMMARYEXCHANGESPZONEGET: ::flatbuffers::VOffsetT = 42;
-  pub const VT_SUMMARYMEETSHOPSPZONE: ::flatbuffers::VOffsetT = 44;
-  pub const VT_SUMMARYBATTLEFAILSPZONE: ::flatbuffers::VOffsetT = 46;
-  pub const VT_SUMMARYMEETEVENTLOCK: ::flatbuffers::VOffsetT = 48;
-  pub const VT_SUMMARYTREASURESPZONE: ::flatbuffers::VOffsetT = 50;
-  pub const VT_SUMMARYMEETEXCHANGESPZONE: ::flatbuffers::VOffsetT = 52;
-  pub const VT_SUMMARYMEETTRADESPZONE: ::flatbuffers::VOffsetT = 54;
-  pub const VT_SUMMARYACTOR: ::flatbuffers::VOffsetT = 56;
-  pub const VT_SUMMARYTOP: ::flatbuffers::VOffsetT = 58;
-  pub const VT_SUMMARYZONE: ::flatbuffers::VOffsetT = 60;
-  pub const VT_SUMMARYENDING: ::flatbuffers::VOffsetT = 62;
-  pub const VT_SUMMARYDIFFICULTYZONE: ::flatbuffers::VOffsetT = 64;
-  pub const VT_SUMMARYDIFFICULTYENDING: ::flatbuffers::VOffsetT = 66;
-  pub const VT_SUMMARYMODE: ::flatbuffers::VOffsetT = 68;
-  pub const VT_SUMMARYSUPPORT: ::flatbuffers::VOffsetT = 70;
-  pub const VT_SUMMARYGROUP: ::flatbuffers::VOffsetT = 72;
-  pub const VT_SUMMARYNORMALRECRUIT: ::flatbuffers::VOffsetT = 74;
-  pub const VT_SUMMARYDIRECTRECRUIT: ::flatbuffers::VOffsetT = 76;
-  pub const VT_SUMMARYFRIENDRECRUIT: ::flatbuffers::VOffsetT = 78;
-  pub const VT_SUMMARYFREERECRUIT: ::flatbuffers::VOffsetT = 80;
-  pub const VT_SUMMARYMONTHRECRUIT: ::flatbuffers::VOffsetT = 82;
-  pub const VT_SUMMARYUPGRADE: ::flatbuffers::VOffsetT = 84;
-  pub const VT_SUMMARYCOMPLETEENDING: ::flatbuffers::VOffsetT = 86;
-  pub const VT_SUMMARYEACHZONE: ::flatbuffers::VOffsetT = 88;
-  pub const VT_SUMMARYMEETSPZONE: ::flatbuffers::VOffsetT = 90;
-  pub const VT_SUMMARYPERFECTBATTLE: ::flatbuffers::VOffsetT = 92;
-  pub const VT_SUMMARYMEETBATTLE: ::flatbuffers::VOffsetT = 94;
-  pub const VT_SUMMARYMEETEVENT: ::flatbuffers::VOffsetT = 96;
-  pub const VT_SUMMARYMEETSHOP: ::flatbuffers::VOffsetT = 98;
-  pub const VT_SUMMARYMEETTREASURE: ::flatbuffers::VOffsetT = 100;
-  pub const VT_SUMMARYMEETSECRETPATH: ::flatbuffers::VOffsetT = 102;
-  pub const VT_SUMMARYEXCHANGERELIC: ::flatbuffers::VOffsetT = 104;
-  pub const VT_SUMMARYMEETTRADE: ::flatbuffers::VOffsetT = 106;
-  pub const VT_SUMMARYBUY: ::flatbuffers::VOffsetT = 108;
-  pub const VT_SUMMARYBUYWITHPRICEID: ::flatbuffers::VOffsetT = 110;
-  pub const VT_SUMMARYINVEST: ::flatbuffers::VOffsetT = 112;
-  pub const VT_SUMMARYGET: ::flatbuffers::VOffsetT = 114;
-  pub const VT_SUMMARYRELIC: ::flatbuffers::VOffsetT = 116;
-  pub const VT_SUMMARYSAFEHOUSE: ::flatbuffers::VOffsetT = 118;
-  pub const VT_SUMMARYFAILEND: ::flatbuffers::VOffsetT = 120;
-  pub const VT_SUMMARYSTOCKRECRUITTICKET: ::flatbuffers::VOffsetT = 122;
-  pub const VT_SUMMARYDUELWIN: ::flatbuffers::VOffsetT = 124;
-  pub const VT_SUMMARYDUELTIE: ::flatbuffers::VOffsetT = 126;
-  pub const VT_SUMMARYDUELLOSE: ::flatbuffers::VOffsetT = 128;
-  pub const VT_SUMMARYEXPEDITIONGO: ::flatbuffers::VOffsetT = 130;
-  pub const VT_SUMMARYEXPEDITIONBACK: ::flatbuffers::VOffsetT = 132;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RL05EndingText { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RL05EndingTextArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText<'bldr>> {
-    let mut builder = clz_Torappu_RL05EndingTextBuilder::new(_fbb);
-    if let Some(x) = args.summaryExpeditionBack { builder.add_summaryExpeditionBack(x); }
-    if let Some(x) = args.summaryExpeditionGo { builder.add_summaryExpeditionGo(x); }
-    if let Some(x) = args.summaryDuelLose { builder.add_summaryDuelLose(x); }
-    if let Some(x) = args.summaryDuelTie { builder.add_summaryDuelTie(x); }
-    if let Some(x) = args.summaryDuelWin { builder.add_summaryDuelWin(x); }
-    if let Some(x) = args.summaryStockRecruitTicket { builder.add_summaryStockRecruitTicket(x); }
-    if let Some(x) = args.summaryFailEnd { builder.add_summaryFailEnd(x); }
-    if let Some(x) = args.summarySafeHouse { builder.add_summarySafeHouse(x); }
-    if let Some(x) = args.summaryRelic { builder.add_summaryRelic(x); }
-    if let Some(x) = args.summaryGet { builder.add_summaryGet(x); }
-    if let Some(x) = args.summaryInvest { builder.add_summaryInvest(x); }
-    if let Some(x) = args.summaryBuyWithPriceId { builder.add_summaryBuyWithPriceId(x); }
-    if let Some(x) = args.summaryBuy { builder.add_summaryBuy(x); }
-    if let Some(x) = args.summaryMeetTrade { builder.add_summaryMeetTrade(x); }
-    if let Some(x) = args.summaryExchangeRelic { builder.add_summaryExchangeRelic(x); }
-    if let Some(x) = args.summaryMeetSecretpath { builder.add_summaryMeetSecretpath(x); }
-    if let Some(x) = args.summaryMeetTreasure { builder.add_summaryMeetTreasure(x); }
-    if let Some(x) = args.summaryMeetShop { builder.add_summaryMeetShop(x); }
-    if let Some(x) = args.summaryMeetEvent { builder.add_summaryMeetEvent(x); }
-    if let Some(x) = args.summaryMeetBattle { builder.add_summaryMeetBattle(x); }
-    if let Some(x) = args.summaryPerfectBattle { builder.add_summaryPerfectBattle(x); }
-    if let Some(x) = args.summaryMeetSpZone { builder.add_summaryMeetSpZone(x); }
-    if let Some(x) = args.summaryEachZone { builder.add_summaryEachZone(x); }
-    if let Some(x) = args.summaryCompleteEnding { builder.add_summaryCompleteEnding(x); }
-    if let Some(x) = args.summaryUpgrade { builder.add_summaryUpgrade(x); }
-    if let Some(x) = args.summaryMonthRecruit { builder.add_summaryMonthRecruit(x); }
-    if let Some(x) = args.summaryFreeRecruit { builder.add_summaryFreeRecruit(x); }
-    if let Some(x) = args.summaryFriendRecruit { builder.add_summaryFriendRecruit(x); }
-    if let Some(x) = args.summaryDirectRecruit { builder.add_summaryDirectRecruit(x); }
-    if let Some(x) = args.summaryNormalRecruit { builder.add_summaryNormalRecruit(x); }
-    if let Some(x) = args.summaryGroup { builder.add_summaryGroup(x); }
-    if let Some(x) = args.summarySupport { builder.add_summarySupport(x); }
-    if let Some(x) = args.summaryMode { builder.add_summaryMode(x); }
-    if let Some(x) = args.summaryDifficultyEnding { builder.add_summaryDifficultyEnding(x); }
-    if let Some(x) = args.summaryDifficultyZone { builder.add_summaryDifficultyZone(x); }
-    if let Some(x) = args.summaryEnding { builder.add_summaryEnding(x); }
-    if let Some(x) = args.summaryZone { builder.add_summaryZone(x); }
-    if let Some(x) = args.summaryTop { builder.add_summaryTop(x); }
-    if let Some(x) = args.summaryActor { builder.add_summaryActor(x); }
-    if let Some(x) = args.summaryMeetTradeSpZone { builder.add_summaryMeetTradeSpZone(x); }
-    if let Some(x) = args.summaryMeetExchangeSpZone { builder.add_summaryMeetExchangeSpZone(x); }
-    if let Some(x) = args.summaryTreasureSpZone { builder.add_summaryTreasureSpZone(x); }
-    if let Some(x) = args.summaryMeetEventLock { builder.add_summaryMeetEventLock(x); }
-    if let Some(x) = args.summaryBattleFailSpZone { builder.add_summaryBattleFailSpZone(x); }
-    if let Some(x) = args.summaryMeetShopSpZone { builder.add_summaryMeetShopSpZone(x); }
-    if let Some(x) = args.summaryExchangeSpZoneGet { builder.add_summaryExchangeSpZoneGet(x); }
-    if let Some(x) = args.summaryExpeditionEndingFourToFive { builder.add_summaryExpeditionEndingFourToFive(x); }
-    if let Some(x) = args.summaryHoldCandleUpgrade { builder.add_summaryHoldCandleUpgrade(x); }
-    if let Some(x) = args.summaryHoldCandleRecruit { builder.add_summaryHoldCandleRecruit(x); }
-    if let Some(x) = args.summaryHoldCandle { builder.add_summaryHoldCandle(x); }
-    if let Some(x) = args.summaryExpeditionBackEnding { builder.add_summaryExpeditionBackEnding(x); }
-    if let Some(x) = args.summaryExpeditionGoEnding { builder.add_summaryExpeditionGoEnding(x); }
-    if let Some(x) = args.summaryExpeditionBackCandle { builder.add_summaryExpeditionBackCandle(x); }
-    if let Some(x) = args.summaryExpeditionBackEndingFour { builder.add_summaryExpeditionBackEndingFour(x); }
-    if let Some(x) = args.summaryExpeditionGoEndingFour { builder.add_summaryExpeditionGoEndingFour(x); }
-    if let Some(x) = args.summaryMeetWrath { builder.add_summaryMeetWrath(x); }
-    if let Some(x) = args.summaryCopperCheckNormal { builder.add_summaryCopperCheckNormal(x); }
-    if let Some(x) = args.summaryCopperCheckFail { builder.add_summaryCopperCheckFail(x); }
-    if let Some(x) = args.summaryCopperCheckSuccess { builder.add_summaryCopperCheckSuccess(x); }
-    if let Some(x) = args.summaryCopperResultNormal { builder.add_summaryCopperResultNormal(x); }
-    if let Some(x) = args.summaryCopperResultBad { builder.add_summaryCopperResultBad(x); }
-    if let Some(x) = args.summaryCopperResultGood { builder.add_summaryCopperResultGood(x); }
-    if let Some(x) = args.summaryDrawCopper { builder.add_summaryDrawCopper(x); }
-    if let Some(x) = args.summaryLostCopper { builder.add_summaryLostCopper(x); }
-    if let Some(x) = args.summaryGetCopper { builder.add_summaryGetCopper(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RL05EndingTextT {
-    let summaryGetCopper = self.summaryGetCopper().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryLostCopper = self.summaryLostCopper().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDrawCopper = self.summaryDrawCopper().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperResultGood = self.summaryCopperResultGood().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperResultBad = self.summaryCopperResultBad().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperResultNormal = self.summaryCopperResultNormal().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperCheckSuccess = self.summaryCopperCheckSuccess().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperCheckFail = self.summaryCopperCheckFail().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCopperCheckNormal = self.summaryCopperCheckNormal().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetWrath = self.summaryMeetWrath().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGoEndingFour = self.summaryExpeditionGoEndingFour().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBackEndingFour = self.summaryExpeditionBackEndingFour().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBackCandle = self.summaryExpeditionBackCandle().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGoEnding = self.summaryExpeditionGoEnding().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBackEnding = self.summaryExpeditionBackEnding().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryHoldCandle = self.summaryHoldCandle().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryHoldCandleRecruit = self.summaryHoldCandleRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryHoldCandleUpgrade = self.summaryHoldCandleUpgrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionEndingFourToFive = self.summaryExpeditionEndingFourToFive().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExchangeSpZoneGet = self.summaryExchangeSpZoneGet().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetShopSpZone = self.summaryMeetShopSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBattleFailSpZone = self.summaryBattleFailSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetEventLock = self.summaryMeetEventLock().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryTreasureSpZone = self.summaryTreasureSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetExchangeSpZone = self.summaryMeetExchangeSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTradeSpZone = self.summaryMeetTradeSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryActor = self.summaryActor().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryTop = self.summaryTop().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryZone = self.summaryZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryEnding = self.summaryEnding().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDifficultyZone = self.summaryDifficultyZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDifficultyEnding = self.summaryDifficultyEnding().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMode = self.summaryMode().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summarySupport = self.summarySupport().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryGroup = self.summaryGroup().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryNormalRecruit = self.summaryNormalRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDirectRecruit = self.summaryDirectRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryFriendRecruit = self.summaryFriendRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryFreeRecruit = self.summaryFreeRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMonthRecruit = self.summaryMonthRecruit().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryUpgrade = self.summaryUpgrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryCompleteEnding = self.summaryCompleteEnding().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryEachZone = self.summaryEachZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetSpZone = self.summaryMeetSpZone().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryPerfectBattle = self.summaryPerfectBattle().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetBattle = self.summaryMeetBattle().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetEvent = self.summaryMeetEvent().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetShop = self.summaryMeetShop().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTreasure = self.summaryMeetTreasure().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBuy = self.summaryBuy().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryInvest = self.summaryInvest().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryGet = self.summaryGet().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryRelic = self.summaryRelic().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summarySafeHouse = self.summarySafeHouse().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryFailEnd = self.summaryFailEnd().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_RL05EndingTextT {
-      summaryGetCopper,
-      summaryLostCopper,
-      summaryDrawCopper,
-      summaryCopperResultGood,
-      summaryCopperResultBad,
-      summaryCopperResultNormal,
-      summaryCopperCheckSuccess,
-      summaryCopperCheckFail,
-      summaryCopperCheckNormal,
-      summaryMeetWrath,
-      summaryExpeditionGoEndingFour,
-      summaryExpeditionBackEndingFour,
-      summaryExpeditionBackCandle,
-      summaryExpeditionGoEnding,
-      summaryExpeditionBackEnding,
-      summaryHoldCandle,
-      summaryHoldCandleRecruit,
-      summaryHoldCandleUpgrade,
-      summaryExpeditionEndingFourToFive,
-      summaryExchangeSpZoneGet,
-      summaryMeetShopSpZone,
-      summaryBattleFailSpZone,
-      summaryMeetEventLock,
-      summaryTreasureSpZone,
-      summaryMeetExchangeSpZone,
-      summaryMeetTradeSpZone,
-      summaryActor,
-      summaryTop,
-      summaryZone,
-      summaryEnding,
-      summaryDifficultyZone,
-      summaryDifficultyEnding,
-      summaryMode,
-      summarySupport,
-      summaryGroup,
-      summaryNormalRecruit,
-      summaryDirectRecruit,
-      summaryFriendRecruit,
-      summaryFreeRecruit,
-      summaryMonthRecruit,
-      summaryUpgrade,
-      summaryCompleteEnding,
-      summaryEachZone,
-      summaryMeetSpZone,
-      summaryPerfectBattle,
-      summaryMeetBattle,
-      summaryMeetEvent,
-      summaryMeetShop,
-      summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
-      summaryBuy,
-      summaryBuyWithPriceId,
-      summaryInvest,
-      summaryGet,
-      summaryRelic,
-      summarySafeHouse,
-      summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
-    }
-  }
-
-  #[inline]
-  pub fn summaryGetCopper(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYGETCOPPER, None)}
-  }
-  #[inline]
-  pub fn summaryLostCopper(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYLOSTCOPPER, None)}
-  }
-  #[inline]
-  pub fn summaryDrawCopper(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDRAWCOPPER, None)}
-  }
-  #[inline]
-  pub fn summaryCopperResultGood(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTGOOD, None)}
-  }
-  #[inline]
-  pub fn summaryCopperResultBad(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTBAD, None)}
-  }
-  #[inline]
-  pub fn summaryCopperResultNormal(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTNORMAL, None)}
-  }
-  #[inline]
-  pub fn summaryCopperCheckSuccess(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKSUCCESS, None)}
-  }
-  #[inline]
-  pub fn summaryCopperCheckFail(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKFAIL, None)}
-  }
-  #[inline]
-  pub fn summaryCopperCheckNormal(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKNORMAL, None)}
-  }
-  #[inline]
-  pub fn summaryMeetWrath(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETWRATH, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGoEndingFour(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGOENDINGFOUR, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBackEndingFour(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKENDINGFOUR, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBackCandle(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKCANDLE, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGoEnding(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGOENDING, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBackEnding(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKENDING, None)}
-  }
-  #[inline]
-  pub fn summaryHoldCandle(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLE, None)}
-  }
-  #[inline]
-  pub fn summaryHoldCandleRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLERECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryHoldCandleUpgrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLEUPGRADE, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionEndingFourToFive(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE, None)}
-  }
-  #[inline]
-  pub fn summaryExchangeSpZoneGet(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXCHANGESPZONEGET, None)}
-  }
-  #[inline]
-  pub fn summaryMeetShopSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSHOPSPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryBattleFailSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYBATTLEFAILSPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetEventLock(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEVENTLOCK, None)}
-  }
-  #[inline]
-  pub fn summaryTreasureSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYTREASURESPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetExchangeSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEXCHANGESPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTradeSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTRADESPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryActor(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYACTOR, None)}
-  }
-  #[inline]
-  pub fn summaryTop(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYTOP, None)}
-  }
-  #[inline]
-  pub fn summaryZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYZONE, None)}
-  }
-  #[inline]
-  pub fn summaryEnding(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYENDING, None)}
-  }
-  #[inline]
-  pub fn summaryDifficultyZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIFFICULTYZONE, None)}
-  }
-  #[inline]
-  pub fn summaryDifficultyEnding(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIFFICULTYENDING, None)}
-  }
-  #[inline]
-  pub fn summaryMode(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMODE, None)}
-  }
-  #[inline]
-  pub fn summarySupport(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYSUPPORT, None)}
-  }
-  #[inline]
-  pub fn summaryGroup(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYGROUP, None)}
-  }
-  #[inline]
-  pub fn summaryNormalRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYNORMALRECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryDirectRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIRECTRECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryFriendRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYFRIENDRECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryFreeRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYFREERECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryMonthRecruit(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMONTHRECRUIT, None)}
-  }
-  #[inline]
-  pub fn summaryUpgrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYUPGRADE, None)}
-  }
-  #[inline]
-  pub fn summaryCompleteEnding(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOMPLETEENDING, None)}
-  }
-  #[inline]
-  pub fn summaryEachZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEACHZONE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetSpZone(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSPZONE, None)}
-  }
-  #[inline]
-  pub fn summaryPerfectBattle(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYPERFECTBATTLE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetBattle(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETBATTLE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetEvent(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEVENT, None)}
-  }
-  #[inline]
-  pub fn summaryMeetShop(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSHOP, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTreasure(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTREASURE, None)}
-  }
-  #[inline]
-  pub fn summaryMeetSecretpath(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSECRETPATH, None)}
-  }
-  #[inline]
-  pub fn summaryExchangeRelic(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXCHANGERELIC, None)}
-  }
-  #[inline]
-  pub fn summaryMeetTrade(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTRADE, None)}
-  }
-  #[inline]
-  pub fn summaryBuy(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYBUY, None)}
-  }
-  #[inline]
-  pub fn summaryBuyWithPriceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYBUYWITHPRICEID, None)}
-  }
-  #[inline]
-  pub fn summaryInvest(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYINVEST, None)}
-  }
-  #[inline]
-  pub fn summaryGet(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYGET, None)}
-  }
-  #[inline]
-  pub fn summaryRelic(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYRELIC, None)}
-  }
-  #[inline]
-  pub fn summarySafeHouse(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYSAFEHOUSE, None)}
-  }
-  #[inline]
-  pub fn summaryFailEnd(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYFAILEND, None)}
-  }
-  #[inline]
-  pub fn summaryStockRecruitTicket(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYSTOCKRECRUITTICKET, None)}
-  }
-  #[inline]
-  pub fn summaryDuelWin(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELWIN, None)}
-  }
-  #[inline]
-  pub fn summaryDuelTie(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELTIE, None)}
-  }
-  #[inline]
-  pub fn summaryDuelLose(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELLOSE, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionGo(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGO, None)}
-  }
-  #[inline]
-  pub fn summaryExpeditionBack(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACK, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RL05EndingText<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGetCopper", Self::VT_SUMMARYGETCOPPER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryLostCopper", Self::VT_SUMMARYLOSTCOPPER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDrawCopper", Self::VT_SUMMARYDRAWCOPPER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperResultGood", Self::VT_SUMMARYCOPPERRESULTGOOD, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperResultBad", Self::VT_SUMMARYCOPPERRESULTBAD, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperResultNormal", Self::VT_SUMMARYCOPPERRESULTNORMAL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperCheckSuccess", Self::VT_SUMMARYCOPPERCHECKSUCCESS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperCheckFail", Self::VT_SUMMARYCOPPERCHECKFAIL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCopperCheckNormal", Self::VT_SUMMARYCOPPERCHECKNORMAL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetWrath", Self::VT_SUMMARYMEETWRATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGoEndingFour", Self::VT_SUMMARYEXPEDITIONGOENDINGFOUR, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBackEndingFour", Self::VT_SUMMARYEXPEDITIONBACKENDINGFOUR, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBackCandle", Self::VT_SUMMARYEXPEDITIONBACKCANDLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGoEnding", Self::VT_SUMMARYEXPEDITIONGOENDING, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBackEnding", Self::VT_SUMMARYEXPEDITIONBACKENDING, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryHoldCandle", Self::VT_SUMMARYHOLDCANDLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryHoldCandleRecruit", Self::VT_SUMMARYHOLDCANDLERECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryHoldCandleUpgrade", Self::VT_SUMMARYHOLDCANDLEUPGRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionEndingFourToFive", Self::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeSpZoneGet", Self::VT_SUMMARYEXCHANGESPZONEGET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetShopSpZone", Self::VT_SUMMARYMEETSHOPSPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBattleFailSpZone", Self::VT_SUMMARYBATTLEFAILSPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetEventLock", Self::VT_SUMMARYMEETEVENTLOCK, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryTreasureSpZone", Self::VT_SUMMARYTREASURESPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetExchangeSpZone", Self::VT_SUMMARYMEETEXCHANGESPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTradeSpZone", Self::VT_SUMMARYMEETTRADESPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryActor", Self::VT_SUMMARYACTOR, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryTop", Self::VT_SUMMARYTOP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryZone", Self::VT_SUMMARYZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryEnding", Self::VT_SUMMARYENDING, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDifficultyZone", Self::VT_SUMMARYDIFFICULTYZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDifficultyEnding", Self::VT_SUMMARYDIFFICULTYENDING, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMode", Self::VT_SUMMARYMODE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySupport", Self::VT_SUMMARYSUPPORT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGroup", Self::VT_SUMMARYGROUP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryNormalRecruit", Self::VT_SUMMARYNORMALRECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDirectRecruit", Self::VT_SUMMARYDIRECTRECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFriendRecruit", Self::VT_SUMMARYFRIENDRECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFreeRecruit", Self::VT_SUMMARYFREERECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMonthRecruit", Self::VT_SUMMARYMONTHRECRUIT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryUpgrade", Self::VT_SUMMARYUPGRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryCompleteEnding", Self::VT_SUMMARYCOMPLETEENDING, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryEachZone", Self::VT_SUMMARYEACHZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSpZone", Self::VT_SUMMARYMEETSPZONE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryPerfectBattle", Self::VT_SUMMARYPERFECTBATTLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetBattle", Self::VT_SUMMARYMEETBATTLE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetEvent", Self::VT_SUMMARYMEETEVENT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetShop", Self::VT_SUMMARYMEETSHOP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTreasure", Self::VT_SUMMARYMEETTREASURE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetSecretpath", Self::VT_SUMMARYMEETSECRETPATH, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExchangeRelic", Self::VT_SUMMARYEXCHANGERELIC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryMeetTrade", Self::VT_SUMMARYMEETTRADE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuy", Self::VT_SUMMARYBUY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryBuyWithPriceId", Self::VT_SUMMARYBUYWITHPRICEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryInvest", Self::VT_SUMMARYINVEST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryGet", Self::VT_SUMMARYGET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryRelic", Self::VT_SUMMARYRELIC, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summarySafeHouse", Self::VT_SUMMARYSAFEHOUSE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryFailEnd", Self::VT_SUMMARYFAILEND, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryStockRecruitTicket", Self::VT_SUMMARYSTOCKRECRUITTICKET, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelWin", Self::VT_SUMMARYDUELWIN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelTie", Self::VT_SUMMARYDUELTIE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryDuelLose", Self::VT_SUMMARYDUELLOSE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionGo", Self::VT_SUMMARYEXPEDITIONGO, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("summaryExpeditionBack", Self::VT_SUMMARYEXPEDITIONBACK, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RL05EndingTextArgs<'a> {
-    pub summaryGetCopper: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryLostCopper: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDrawCopper: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperResultGood: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperResultBad: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperResultNormal: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperCheckSuccess: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperCheckFail: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCopperCheckNormal: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetWrath: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGoEndingFour: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBackEndingFour: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBackCandle: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGoEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBackEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryHoldCandle: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryHoldCandleRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryHoldCandleUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionEndingFourToFive: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExchangeSpZoneGet: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetShopSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBattleFailSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetEventLock: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryTreasureSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetExchangeSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTradeSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryActor: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryTop: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDifficultyZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDifficultyEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMode: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summarySupport: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryGroup: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryNormalRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDirectRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryFriendRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryFreeRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMonthRecruit: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryUpgrade: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryCompleteEnding: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryEachZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSpZone: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryPerfectBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetBattle: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetEvent: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetShop: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTreasure: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetSecretpath: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExchangeRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryMeetTrade: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBuy: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryBuyWithPriceId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryInvest: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryGet: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryRelic: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summarySafeHouse: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryFailEnd: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryStockRecruitTicket: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelWin: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelTie: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryDuelLose: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionGo: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summaryExpeditionBack: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_RL05EndingTextArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RL05EndingTextArgs {
-      summaryGetCopper: None,
-      summaryLostCopper: None,
-      summaryDrawCopper: None,
-      summaryCopperResultGood: None,
-      summaryCopperResultBad: None,
-      summaryCopperResultNormal: None,
-      summaryCopperCheckSuccess: None,
-      summaryCopperCheckFail: None,
-      summaryCopperCheckNormal: None,
-      summaryMeetWrath: None,
-      summaryExpeditionGoEndingFour: None,
-      summaryExpeditionBackEndingFour: None,
-      summaryExpeditionBackCandle: None,
-      summaryExpeditionGoEnding: None,
-      summaryExpeditionBackEnding: None,
-      summaryHoldCandle: None,
-      summaryHoldCandleRecruit: None,
-      summaryHoldCandleUpgrade: None,
-      summaryExpeditionEndingFourToFive: None,
-      summaryExchangeSpZoneGet: None,
-      summaryMeetShopSpZone: None,
-      summaryBattleFailSpZone: None,
-      summaryMeetEventLock: None,
-      summaryTreasureSpZone: None,
-      summaryMeetExchangeSpZone: None,
-      summaryMeetTradeSpZone: None,
-      summaryActor: None,
-      summaryTop: None,
-      summaryZone: None,
-      summaryEnding: None,
-      summaryDifficultyZone: None,
-      summaryDifficultyEnding: None,
-      summaryMode: None,
-      summarySupport: None,
-      summaryGroup: None,
-      summaryNormalRecruit: None,
-      summaryDirectRecruit: None,
-      summaryFriendRecruit: None,
-      summaryFreeRecruit: None,
-      summaryMonthRecruit: None,
-      summaryUpgrade: None,
-      summaryCompleteEnding: None,
-      summaryEachZone: None,
-      summaryMeetSpZone: None,
-      summaryPerfectBattle: None,
-      summaryMeetBattle: None,
-      summaryMeetEvent: None,
-      summaryMeetShop: None,
-      summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
-      summaryBuy: None,
-      summaryBuyWithPriceId: None,
-      summaryInvest: None,
-      summaryGet: None,
-      summaryRelic: None,
-      summarySafeHouse: None,
-      summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RL05EndingTextBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL05EndingTextBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_summaryGetCopper(&mut self, summaryGetCopper: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYGETCOPPER, summaryGetCopper);
-  }
-  #[inline]
-  pub fn add_summaryLostCopper(&mut self, summaryLostCopper: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYLOSTCOPPER, summaryLostCopper);
-  }
-  #[inline]
-  pub fn add_summaryDrawCopper(&mut self, summaryDrawCopper: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDRAWCOPPER, summaryDrawCopper);
-  }
-  #[inline]
-  pub fn add_summaryCopperResultGood(&mut self, summaryCopperResultGood: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTGOOD, summaryCopperResultGood);
-  }
-  #[inline]
-  pub fn add_summaryCopperResultBad(&mut self, summaryCopperResultBad: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTBAD, summaryCopperResultBad);
-  }
-  #[inline]
-  pub fn add_summaryCopperResultNormal(&mut self, summaryCopperResultNormal: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERRESULTNORMAL, summaryCopperResultNormal);
-  }
-  #[inline]
-  pub fn add_summaryCopperCheckSuccess(&mut self, summaryCopperCheckSuccess: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKSUCCESS, summaryCopperCheckSuccess);
-  }
-  #[inline]
-  pub fn add_summaryCopperCheckFail(&mut self, summaryCopperCheckFail: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKFAIL, summaryCopperCheckFail);
-  }
-  #[inline]
-  pub fn add_summaryCopperCheckNormal(&mut self, summaryCopperCheckNormal: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOPPERCHECKNORMAL, summaryCopperCheckNormal);
-  }
-  #[inline]
-  pub fn add_summaryMeetWrath(&mut self, summaryMeetWrath: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETWRATH, summaryMeetWrath);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGoEndingFour(&mut self, summaryExpeditionGoEndingFour: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGOENDINGFOUR, summaryExpeditionGoEndingFour);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBackEndingFour(&mut self, summaryExpeditionBackEndingFour: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKENDINGFOUR, summaryExpeditionBackEndingFour);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBackCandle(&mut self, summaryExpeditionBackCandle: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKCANDLE, summaryExpeditionBackCandle);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGoEnding(&mut self, summaryExpeditionGoEnding: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGOENDING, summaryExpeditionGoEnding);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBackEnding(&mut self, summaryExpeditionBackEnding: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACKENDING, summaryExpeditionBackEnding);
-  }
-  #[inline]
-  pub fn add_summaryHoldCandle(&mut self, summaryHoldCandle: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLE, summaryHoldCandle);
-  }
-  #[inline]
-  pub fn add_summaryHoldCandleRecruit(&mut self, summaryHoldCandleRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLERECRUIT, summaryHoldCandleRecruit);
-  }
-  #[inline]
-  pub fn add_summaryHoldCandleUpgrade(&mut self, summaryHoldCandleUpgrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLEUPGRADE, summaryHoldCandleUpgrade);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionEndingFourToFive(&mut self, summaryExpeditionEndingFourToFive: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE, summaryExpeditionEndingFourToFive);
-  }
-  #[inline]
-  pub fn add_summaryExchangeSpZoneGet(&mut self, summaryExchangeSpZoneGet: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXCHANGESPZONEGET, summaryExchangeSpZoneGet);
-  }
-  #[inline]
-  pub fn add_summaryMeetShopSpZone(&mut self, summaryMeetShopSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSHOPSPZONE, summaryMeetShopSpZone);
-  }
-  #[inline]
-  pub fn add_summaryBattleFailSpZone(&mut self, summaryBattleFailSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYBATTLEFAILSPZONE, summaryBattleFailSpZone);
-  }
-  #[inline]
-  pub fn add_summaryMeetEventLock(&mut self, summaryMeetEventLock: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEVENTLOCK, summaryMeetEventLock);
-  }
-  #[inline]
-  pub fn add_summaryTreasureSpZone(&mut self, summaryTreasureSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYTREASURESPZONE, summaryTreasureSpZone);
-  }
-  #[inline]
-  pub fn add_summaryMeetExchangeSpZone(&mut self, summaryMeetExchangeSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEXCHANGESPZONE, summaryMeetExchangeSpZone);
-  }
-  #[inline]
-  pub fn add_summaryMeetTradeSpZone(&mut self, summaryMeetTradeSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTRADESPZONE, summaryMeetTradeSpZone);
-  }
-  #[inline]
-  pub fn add_summaryActor(&mut self, summaryActor: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYACTOR, summaryActor);
-  }
-  #[inline]
-  pub fn add_summaryTop(&mut self, summaryTop: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYTOP, summaryTop);
-  }
-  #[inline]
-  pub fn add_summaryZone(&mut self, summaryZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYZONE, summaryZone);
-  }
-  #[inline]
-  pub fn add_summaryEnding(&mut self, summaryEnding: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYENDING, summaryEnding);
-  }
-  #[inline]
-  pub fn add_summaryDifficultyZone(&mut self, summaryDifficultyZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIFFICULTYZONE, summaryDifficultyZone);
-  }
-  #[inline]
-  pub fn add_summaryDifficultyEnding(&mut self, summaryDifficultyEnding: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIFFICULTYENDING, summaryDifficultyEnding);
-  }
-  #[inline]
-  pub fn add_summaryMode(&mut self, summaryMode: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMODE, summaryMode);
-  }
-  #[inline]
-  pub fn add_summarySupport(&mut self, summarySupport: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYSUPPORT, summarySupport);
-  }
-  #[inline]
-  pub fn add_summaryGroup(&mut self, summaryGroup: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYGROUP, summaryGroup);
-  }
-  #[inline]
-  pub fn add_summaryNormalRecruit(&mut self, summaryNormalRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYNORMALRECRUIT, summaryNormalRecruit);
-  }
-  #[inline]
-  pub fn add_summaryDirectRecruit(&mut self, summaryDirectRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDIRECTRECRUIT, summaryDirectRecruit);
-  }
-  #[inline]
-  pub fn add_summaryFriendRecruit(&mut self, summaryFriendRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYFRIENDRECRUIT, summaryFriendRecruit);
-  }
-  #[inline]
-  pub fn add_summaryFreeRecruit(&mut self, summaryFreeRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYFREERECRUIT, summaryFreeRecruit);
-  }
-  #[inline]
-  pub fn add_summaryMonthRecruit(&mut self, summaryMonthRecruit: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMONTHRECRUIT, summaryMonthRecruit);
-  }
-  #[inline]
-  pub fn add_summaryUpgrade(&mut self, summaryUpgrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYUPGRADE, summaryUpgrade);
-  }
-  #[inline]
-  pub fn add_summaryCompleteEnding(&mut self, summaryCompleteEnding: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYCOMPLETEENDING, summaryCompleteEnding);
-  }
-  #[inline]
-  pub fn add_summaryEachZone(&mut self, summaryEachZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEACHZONE, summaryEachZone);
-  }
-  #[inline]
-  pub fn add_summaryMeetSpZone(&mut self, summaryMeetSpZone: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSPZONE, summaryMeetSpZone);
-  }
-  #[inline]
-  pub fn add_summaryPerfectBattle(&mut self, summaryPerfectBattle: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYPERFECTBATTLE, summaryPerfectBattle);
-  }
-  #[inline]
-  pub fn add_summaryMeetBattle(&mut self, summaryMeetBattle: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETBATTLE, summaryMeetBattle);
-  }
-  #[inline]
-  pub fn add_summaryMeetEvent(&mut self, summaryMeetEvent: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETEVENT, summaryMeetEvent);
-  }
-  #[inline]
-  pub fn add_summaryMeetShop(&mut self, summaryMeetShop: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSHOP, summaryMeetShop);
-  }
-  #[inline]
-  pub fn add_summaryMeetTreasure(&mut self, summaryMeetTreasure: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTREASURE, summaryMeetTreasure);
-  }
-  #[inline]
-  pub fn add_summaryMeetSecretpath(&mut self, summaryMeetSecretpath: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETSECRETPATH, summaryMeetSecretpath);
-  }
-  #[inline]
-  pub fn add_summaryExchangeRelic(&mut self, summaryExchangeRelic: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXCHANGERELIC, summaryExchangeRelic);
-  }
-  #[inline]
-  pub fn add_summaryMeetTrade(&mut self, summaryMeetTrade: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYMEETTRADE, summaryMeetTrade);
-  }
-  #[inline]
-  pub fn add_summaryBuy(&mut self, summaryBuy: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYBUY, summaryBuy);
-  }
-  #[inline]
-  pub fn add_summaryBuyWithPriceId(&mut self, summaryBuyWithPriceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYBUYWITHPRICEID, summaryBuyWithPriceId);
-  }
-  #[inline]
-  pub fn add_summaryInvest(&mut self, summaryInvest: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYINVEST, summaryInvest);
-  }
-  #[inline]
-  pub fn add_summaryGet(&mut self, summaryGet: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYGET, summaryGet);
-  }
-  #[inline]
-  pub fn add_summaryRelic(&mut self, summaryRelic: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYRELIC, summaryRelic);
-  }
-  #[inline]
-  pub fn add_summarySafeHouse(&mut self, summarySafeHouse: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYSAFEHOUSE, summarySafeHouse);
-  }
-  #[inline]
-  pub fn add_summaryFailEnd(&mut self, summaryFailEnd: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYFAILEND, summaryFailEnd);
-  }
-  #[inline]
-  pub fn add_summaryStockRecruitTicket(&mut self, summaryStockRecruitTicket: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYSTOCKRECRUITTICKET, summaryStockRecruitTicket);
-  }
-  #[inline]
-  pub fn add_summaryDuelWin(&mut self, summaryDuelWin: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELWIN, summaryDuelWin);
-  }
-  #[inline]
-  pub fn add_summaryDuelTie(&mut self, summaryDuelTie: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELTIE, summaryDuelTie);
-  }
-  #[inline]
-  pub fn add_summaryDuelLose(&mut self, summaryDuelLose: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYDUELLOSE, summaryDuelLose);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionGo(&mut self, summaryExpeditionGo: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONGO, summaryExpeditionGo);
-  }
-  #[inline]
-  pub fn add_summaryExpeditionBack(&mut self, summaryExpeditionBack: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONBACK, summaryExpeditionBack);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL05EndingTextBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RL05EndingTextBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RL05EndingText<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RL05EndingText");
-      ds.field("summaryGetCopper", &self.summaryGetCopper());
-      ds.field("summaryLostCopper", &self.summaryLostCopper());
-      ds.field("summaryDrawCopper", &self.summaryDrawCopper());
-      ds.field("summaryCopperResultGood", &self.summaryCopperResultGood());
-      ds.field("summaryCopperResultBad", &self.summaryCopperResultBad());
-      ds.field("summaryCopperResultNormal", &self.summaryCopperResultNormal());
-      ds.field("summaryCopperCheckSuccess", &self.summaryCopperCheckSuccess());
-      ds.field("summaryCopperCheckFail", &self.summaryCopperCheckFail());
-      ds.field("summaryCopperCheckNormal", &self.summaryCopperCheckNormal());
-      ds.field("summaryMeetWrath", &self.summaryMeetWrath());
-      ds.field("summaryExpeditionGoEndingFour", &self.summaryExpeditionGoEndingFour());
-      ds.field("summaryExpeditionBackEndingFour", &self.summaryExpeditionBackEndingFour());
-      ds.field("summaryExpeditionBackCandle", &self.summaryExpeditionBackCandle());
-      ds.field("summaryExpeditionGoEnding", &self.summaryExpeditionGoEnding());
-      ds.field("summaryExpeditionBackEnding", &self.summaryExpeditionBackEnding());
-      ds.field("summaryHoldCandle", &self.summaryHoldCandle());
-      ds.field("summaryHoldCandleRecruit", &self.summaryHoldCandleRecruit());
-      ds.field("summaryHoldCandleUpgrade", &self.summaryHoldCandleUpgrade());
-      ds.field("summaryExpeditionEndingFourToFive", &self.summaryExpeditionEndingFourToFive());
-      ds.field("summaryExchangeSpZoneGet", &self.summaryExchangeSpZoneGet());
-      ds.field("summaryMeetShopSpZone", &self.summaryMeetShopSpZone());
-      ds.field("summaryBattleFailSpZone", &self.summaryBattleFailSpZone());
-      ds.field("summaryMeetEventLock", &self.summaryMeetEventLock());
-      ds.field("summaryTreasureSpZone", &self.summaryTreasureSpZone());
-      ds.field("summaryMeetExchangeSpZone", &self.summaryMeetExchangeSpZone());
-      ds.field("summaryMeetTradeSpZone", &self.summaryMeetTradeSpZone());
-      ds.field("summaryActor", &self.summaryActor());
-      ds.field("summaryTop", &self.summaryTop());
-      ds.field("summaryZone", &self.summaryZone());
-      ds.field("summaryEnding", &self.summaryEnding());
-      ds.field("summaryDifficultyZone", &self.summaryDifficultyZone());
-      ds.field("summaryDifficultyEnding", &self.summaryDifficultyEnding());
-      ds.field("summaryMode", &self.summaryMode());
-      ds.field("summarySupport", &self.summarySupport());
-      ds.field("summaryGroup", &self.summaryGroup());
-      ds.field("summaryNormalRecruit", &self.summaryNormalRecruit());
-      ds.field("summaryDirectRecruit", &self.summaryDirectRecruit());
-      ds.field("summaryFriendRecruit", &self.summaryFriendRecruit());
-      ds.field("summaryFreeRecruit", &self.summaryFreeRecruit());
-      ds.field("summaryMonthRecruit", &self.summaryMonthRecruit());
-      ds.field("summaryUpgrade", &self.summaryUpgrade());
-      ds.field("summaryCompleteEnding", &self.summaryCompleteEnding());
-      ds.field("summaryEachZone", &self.summaryEachZone());
-      ds.field("summaryMeetSpZone", &self.summaryMeetSpZone());
-      ds.field("summaryPerfectBattle", &self.summaryPerfectBattle());
-      ds.field("summaryMeetBattle", &self.summaryMeetBattle());
-      ds.field("summaryMeetEvent", &self.summaryMeetEvent());
-      ds.field("summaryMeetShop", &self.summaryMeetShop());
-      ds.field("summaryMeetTreasure", &self.summaryMeetTreasure());
-      ds.field("summaryMeetSecretpath", &self.summaryMeetSecretpath());
-      ds.field("summaryExchangeRelic", &self.summaryExchangeRelic());
-      ds.field("summaryMeetTrade", &self.summaryMeetTrade());
-      ds.field("summaryBuy", &self.summaryBuy());
-      ds.field("summaryBuyWithPriceId", &self.summaryBuyWithPriceId());
-      ds.field("summaryInvest", &self.summaryInvest());
-      ds.field("summaryGet", &self.summaryGet());
-      ds.field("summaryRelic", &self.summaryRelic());
-      ds.field("summarySafeHouse", &self.summarySafeHouse());
-      ds.field("summaryFailEnd", &self.summaryFailEnd());
-      ds.field("summaryStockRecruitTicket", &self.summaryStockRecruitTicket());
-      ds.field("summaryDuelWin", &self.summaryDuelWin());
-      ds.field("summaryDuelTie", &self.summaryDuelTie());
-      ds.field("summaryDuelLose", &self.summaryDuelLose());
-      ds.field("summaryExpeditionGo", &self.summaryExpeditionGo());
-      ds.field("summaryExpeditionBack", &self.summaryExpeditionBack());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RL05EndingTextT {
-  pub summaryGetCopper: Option<alloc::string::String>,
-  pub summaryLostCopper: Option<alloc::string::String>,
-  pub summaryDrawCopper: Option<alloc::string::String>,
-  pub summaryCopperResultGood: Option<alloc::string::String>,
-  pub summaryCopperResultBad: Option<alloc::string::String>,
-  pub summaryCopperResultNormal: Option<alloc::string::String>,
-  pub summaryCopperCheckSuccess: Option<alloc::string::String>,
-  pub summaryCopperCheckFail: Option<alloc::string::String>,
-  pub summaryCopperCheckNormal: Option<alloc::string::String>,
-  pub summaryMeetWrath: Option<alloc::string::String>,
-  pub summaryExpeditionGoEndingFour: Option<alloc::string::String>,
-  pub summaryExpeditionBackEndingFour: Option<alloc::string::String>,
-  pub summaryExpeditionBackCandle: Option<alloc::string::String>,
-  pub summaryExpeditionGoEnding: Option<alloc::string::String>,
-  pub summaryExpeditionBackEnding: Option<alloc::string::String>,
-  pub summaryHoldCandle: Option<alloc::string::String>,
-  pub summaryHoldCandleRecruit: Option<alloc::string::String>,
-  pub summaryHoldCandleUpgrade: Option<alloc::string::String>,
-  pub summaryExpeditionEndingFourToFive: Option<alloc::string::String>,
-  pub summaryExchangeSpZoneGet: Option<alloc::string::String>,
-  pub summaryMeetShopSpZone: Option<alloc::string::String>,
-  pub summaryBattleFailSpZone: Option<alloc::string::String>,
-  pub summaryMeetEventLock: Option<alloc::string::String>,
-  pub summaryTreasureSpZone: Option<alloc::string::String>,
-  pub summaryMeetExchangeSpZone: Option<alloc::string::String>,
-  pub summaryMeetTradeSpZone: Option<alloc::string::String>,
-  pub summaryActor: Option<alloc::string::String>,
-  pub summaryTop: Option<alloc::string::String>,
-  pub summaryZone: Option<alloc::string::String>,
-  pub summaryEnding: Option<alloc::string::String>,
-  pub summaryDifficultyZone: Option<alloc::string::String>,
-  pub summaryDifficultyEnding: Option<alloc::string::String>,
-  pub summaryMode: Option<alloc::string::String>,
-  pub summarySupport: Option<alloc::string::String>,
-  pub summaryGroup: Option<alloc::string::String>,
-  pub summaryNormalRecruit: Option<alloc::string::String>,
-  pub summaryDirectRecruit: Option<alloc::string::String>,
-  pub summaryFriendRecruit: Option<alloc::string::String>,
-  pub summaryFreeRecruit: Option<alloc::string::String>,
-  pub summaryMonthRecruit: Option<alloc::string::String>,
-  pub summaryUpgrade: Option<alloc::string::String>,
-  pub summaryCompleteEnding: Option<alloc::string::String>,
-  pub summaryEachZone: Option<alloc::string::String>,
-  pub summaryMeetSpZone: Option<alloc::string::String>,
-  pub summaryPerfectBattle: Option<alloc::string::String>,
-  pub summaryMeetBattle: Option<alloc::string::String>,
-  pub summaryMeetEvent: Option<alloc::string::String>,
-  pub summaryMeetShop: Option<alloc::string::String>,
-  pub summaryMeetTreasure: Option<alloc::string::String>,
-  pub summaryMeetSecretpath: Option<alloc::string::String>,
-  pub summaryExchangeRelic: Option<alloc::string::String>,
-  pub summaryMeetTrade: Option<alloc::string::String>,
-  pub summaryBuy: Option<alloc::string::String>,
-  pub summaryBuyWithPriceId: Option<alloc::string::String>,
-  pub summaryInvest: Option<alloc::string::String>,
-  pub summaryGet: Option<alloc::string::String>,
-  pub summaryRelic: Option<alloc::string::String>,
-  pub summarySafeHouse: Option<alloc::string::String>,
-  pub summaryFailEnd: Option<alloc::string::String>,
-  pub summaryStockRecruitTicket: Option<alloc::string::String>,
-  pub summaryDuelWin: Option<alloc::string::String>,
-  pub summaryDuelTie: Option<alloc::string::String>,
-  pub summaryDuelLose: Option<alloc::string::String>,
-  pub summaryExpeditionGo: Option<alloc::string::String>,
-  pub summaryExpeditionBack: Option<alloc::string::String>,
-}
-impl Default for clz_Torappu_RL05EndingTextT {
-  fn default() -> Self {
-    Self {
-      summaryGetCopper: None,
-      summaryLostCopper: None,
-      summaryDrawCopper: None,
-      summaryCopperResultGood: None,
-      summaryCopperResultBad: None,
-      summaryCopperResultNormal: None,
-      summaryCopperCheckSuccess: None,
-      summaryCopperCheckFail: None,
-      summaryCopperCheckNormal: None,
-      summaryMeetWrath: None,
-      summaryExpeditionGoEndingFour: None,
-      summaryExpeditionBackEndingFour: None,
-      summaryExpeditionBackCandle: None,
-      summaryExpeditionGoEnding: None,
-      summaryExpeditionBackEnding: None,
-      summaryHoldCandle: None,
-      summaryHoldCandleRecruit: None,
-      summaryHoldCandleUpgrade: None,
-      summaryExpeditionEndingFourToFive: None,
-      summaryExchangeSpZoneGet: None,
-      summaryMeetShopSpZone: None,
-      summaryBattleFailSpZone: None,
-      summaryMeetEventLock: None,
-      summaryTreasureSpZone: None,
-      summaryMeetExchangeSpZone: None,
-      summaryMeetTradeSpZone: None,
-      summaryActor: None,
-      summaryTop: None,
-      summaryZone: None,
-      summaryEnding: None,
-      summaryDifficultyZone: None,
-      summaryDifficultyEnding: None,
-      summaryMode: None,
-      summarySupport: None,
-      summaryGroup: None,
-      summaryNormalRecruit: None,
-      summaryDirectRecruit: None,
-      summaryFriendRecruit: None,
-      summaryFreeRecruit: None,
-      summaryMonthRecruit: None,
-      summaryUpgrade: None,
-      summaryCompleteEnding: None,
-      summaryEachZone: None,
-      summaryMeetSpZone: None,
-      summaryPerfectBattle: None,
-      summaryMeetBattle: None,
-      summaryMeetEvent: None,
-      summaryMeetShop: None,
-      summaryMeetTreasure: None,
-      summaryMeetSecretpath: None,
-      summaryExchangeRelic: None,
-      summaryMeetTrade: None,
-      summaryBuy: None,
-      summaryBuyWithPriceId: None,
-      summaryInvest: None,
-      summaryGet: None,
-      summaryRelic: None,
-      summarySafeHouse: None,
-      summaryFailEnd: None,
-      summaryStockRecruitTicket: None,
-      summaryDuelWin: None,
-      summaryDuelTie: None,
-      summaryDuelLose: None,
-      summaryExpeditionGo: None,
-      summaryExpeditionBack: None,
-    }
-  }
-}
-impl clz_Torappu_RL05EndingTextT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText<'b>> {
-    let summaryGetCopper = self.summaryGetCopper.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryLostCopper = self.summaryLostCopper.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDrawCopper = self.summaryDrawCopper.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperResultGood = self.summaryCopperResultGood.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperResultBad = self.summaryCopperResultBad.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperResultNormal = self.summaryCopperResultNormal.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperCheckSuccess = self.summaryCopperCheckSuccess.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperCheckFail = self.summaryCopperCheckFail.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCopperCheckNormal = self.summaryCopperCheckNormal.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetWrath = self.summaryMeetWrath.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGoEndingFour = self.summaryExpeditionGoEndingFour.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBackEndingFour = self.summaryExpeditionBackEndingFour.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBackCandle = self.summaryExpeditionBackCandle.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGoEnding = self.summaryExpeditionGoEnding.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBackEnding = self.summaryExpeditionBackEnding.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryHoldCandle = self.summaryHoldCandle.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryHoldCandleRecruit = self.summaryHoldCandleRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryHoldCandleUpgrade = self.summaryHoldCandleUpgrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionEndingFourToFive = self.summaryExpeditionEndingFourToFive.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExchangeSpZoneGet = self.summaryExchangeSpZoneGet.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetShopSpZone = self.summaryMeetShopSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBattleFailSpZone = self.summaryBattleFailSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetEventLock = self.summaryMeetEventLock.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryTreasureSpZone = self.summaryTreasureSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetExchangeSpZone = self.summaryMeetExchangeSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTradeSpZone = self.summaryMeetTradeSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryActor = self.summaryActor.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryTop = self.summaryTop.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryZone = self.summaryZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryEnding = self.summaryEnding.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDifficultyZone = self.summaryDifficultyZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDifficultyEnding = self.summaryDifficultyEnding.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMode = self.summaryMode.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summarySupport = self.summarySupport.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryGroup = self.summaryGroup.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryNormalRecruit = self.summaryNormalRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDirectRecruit = self.summaryDirectRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryFriendRecruit = self.summaryFriendRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryFreeRecruit = self.summaryFreeRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMonthRecruit = self.summaryMonthRecruit.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryUpgrade = self.summaryUpgrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryCompleteEnding = self.summaryCompleteEnding.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryEachZone = self.summaryEachZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetSpZone = self.summaryMeetSpZone.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryPerfectBattle = self.summaryPerfectBattle.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetBattle = self.summaryMeetBattle.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetEvent = self.summaryMeetEvent.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetShop = self.summaryMeetShop.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTreasure = self.summaryMeetTreasure.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetSecretpath = self.summaryMeetSecretpath.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExchangeRelic = self.summaryExchangeRelic.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryMeetTrade = self.summaryMeetTrade.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBuy = self.summaryBuy.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryBuyWithPriceId = self.summaryBuyWithPriceId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryInvest = self.summaryInvest.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryGet = self.summaryGet.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryRelic = self.summaryRelic.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summarySafeHouse = self.summarySafeHouse.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryFailEnd = self.summaryFailEnd.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryStockRecruitTicket = self.summaryStockRecruitTicket.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelWin = self.summaryDuelWin.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelTie = self.summaryDuelTie.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryDuelLose = self.summaryDuelLose.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionGo = self.summaryExpeditionGo.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let summaryExpeditionBack = self.summaryExpeditionBack.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_RL05EndingText::create(_fbb, &clz_Torappu_RL05EndingTextArgs{
-      summaryGetCopper,
-      summaryLostCopper,
-      summaryDrawCopper,
-      summaryCopperResultGood,
-      summaryCopperResultBad,
-      summaryCopperResultNormal,
-      summaryCopperCheckSuccess,
-      summaryCopperCheckFail,
-      summaryCopperCheckNormal,
-      summaryMeetWrath,
-      summaryExpeditionGoEndingFour,
-      summaryExpeditionBackEndingFour,
-      summaryExpeditionBackCandle,
-      summaryExpeditionGoEnding,
-      summaryExpeditionBackEnding,
-      summaryHoldCandle,
-      summaryHoldCandleRecruit,
-      summaryHoldCandleUpgrade,
-      summaryExpeditionEndingFourToFive,
-      summaryExchangeSpZoneGet,
-      summaryMeetShopSpZone,
-      summaryBattleFailSpZone,
-      summaryMeetEventLock,
-      summaryTreasureSpZone,
-      summaryMeetExchangeSpZone,
-      summaryMeetTradeSpZone,
-      summaryActor,
-      summaryTop,
-      summaryZone,
-      summaryEnding,
-      summaryDifficultyZone,
-      summaryDifficultyEnding,
-      summaryMode,
-      summarySupport,
-      summaryGroup,
-      summaryNormalRecruit,
-      summaryDirectRecruit,
-      summaryFriendRecruit,
-      summaryFreeRecruit,
-      summaryMonthRecruit,
-      summaryUpgrade,
-      summaryCompleteEnding,
-      summaryEachZone,
-      summaryMeetSpZone,
-      summaryPerfectBattle,
-      summaryMeetBattle,
-      summaryMeetEvent,
-      summaryMeetShop,
-      summaryMeetTreasure,
-      summaryMeetSecretpath,
-      summaryExchangeRelic,
-      summaryMeetTrade,
-      summaryBuy,
-      summaryBuyWithPriceId,
-      summaryInvest,
-      summaryGet,
-      summaryRelic,
-      summarySafeHouse,
-      summaryFailEnd,
-      summaryStockRecruitTicket,
-      summaryDuelWin,
-      summaryDuelTie,
-      summaryDuelLose,
-      summaryExpeditionGo,
-      summaryExpeditionBack,
-    })
-  }
-}
-pub enum clz_Torappu_RL05CustomizeDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_RL05CustomizeData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RL05CustomizeData<'a> {
-  type Inner = clz_Torappu_RL05CustomizeData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_RL05CustomizeData<'a> {
-  pub const VT_COMMONDEVELOPMENT: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DIFFICULTIES: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SPECIALSHOPDIALOG: ::flatbuffers::VOffsetT = 8;
-  pub const VT_ENDINGTEXT: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_RL05CustomizeData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_RL05CustomizeDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData<'bldr>> {
-    let mut builder = clz_Torappu_RL05CustomizeDataBuilder::new(_fbb);
-    if let Some(x) = args.endingText { builder.add_endingText(x); }
-    if let Some(x) = args.specialShopDialog { builder.add_specialShopDialog(x); }
-    if let Some(x) = args.difficulties { builder.add_difficulties(x); }
-    if let Some(x) = args.commonDevelopment { builder.add_commonDevelopment(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_RL05CustomizeDataT {
-    let commonDevelopment = self.commonDevelopment().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let difficulties = self.difficulties().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let specialShopDialog = self.specialShopDialog().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let endingText = self.endingText().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    clz_Torappu_RL05CustomizeDataT {
-      commonDevelopment,
-      difficulties,
-      specialShopDialog,
-      endingText,
-    }
-  }
-
-  #[inline]
-  pub fn commonDevelopment(&self) -> Option<clz_Torappu_RoguelikeCommonDevelopmentData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCommonDevelopmentData>>(clz_Torappu_RL05CustomizeData::VT_COMMONDEVELOPMENT, None)}
-  }
-  #[inline]
-  pub fn difficulties(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RL05DifficultyExt<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RL05DifficultyExt>>>>(clz_Torappu_RL05CustomizeData::VT_DIFFICULTIES, None)}
-  }
-  #[inline]
-  pub fn specialShopDialog(&self) -> Option<clz_Torappu_RoguelikeGameShopDialogData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeGameShopDialogData>>(clz_Torappu_RL05CustomizeData::VT_SPECIALSHOPDIALOG, None)}
-  }
-  #[inline]
-  pub fn endingText(&self) -> Option<clz_Torappu_RL05EndingText<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL05EndingText>>(clz_Torappu_RL05CustomizeData::VT_ENDINGTEXT, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_RL05CustomizeData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCommonDevelopmentData>>("commonDevelopment", Self::VT_COMMONDEVELOPMENT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_RL05DifficultyExt>>>>("difficulties", Self::VT_DIFFICULTIES, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeGameShopDialogData>>("specialShopDialog", Self::VT_SPECIALSHOPDIALOG, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL05EndingText>>("endingText", Self::VT_ENDINGTEXT, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_RL05CustomizeDataArgs<'a> {
-    pub commonDevelopment: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCommonDevelopmentData<'a>>>,
-    pub difficulties: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_RL05DifficultyExt<'a>>>>>,
-    pub specialShopDialog: Option<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameShopDialogData<'a>>>,
-    pub endingText: Option<::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText<'a>>>,
-}
-impl<'a> Default for clz_Torappu_RL05CustomizeDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_RL05CustomizeDataArgs {
-      commonDevelopment: None,
-      difficulties: None,
-      specialShopDialog: None,
-      endingText: None,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_RL05CustomizeDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RL05CustomizeDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_commonDevelopment(&mut self, commonDevelopment: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCommonDevelopmentData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeCommonDevelopmentData>>(clz_Torappu_RL05CustomizeData::VT_COMMONDEVELOPMENT, commonDevelopment);
-  }
-  #[inline]
-  pub fn add_difficulties(&mut self, difficulties: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_RL05DifficultyExt<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RL05CustomizeData::VT_DIFFICULTIES, difficulties);
-  }
-  #[inline]
-  pub fn add_specialShopDialog(&mut self, specialShopDialog: ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameShopDialogData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RoguelikeGameShopDialogData>>(clz_Torappu_RL05CustomizeData::VT_SPECIALSHOPDIALOG, specialShopDialog);
-  }
-  #[inline]
-  pub fn add_endingText(&mut self, endingText: ::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RL05EndingText>>(clz_Torappu_RL05CustomizeData::VT_ENDINGTEXT, endingText);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RL05CustomizeDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_RL05CustomizeDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_RL05CustomizeData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_RL05CustomizeData");
-      ds.field("commonDevelopment", &self.commonDevelopment());
-      ds.field("difficulties", &self.difficulties());
-      ds.field("specialShopDialog", &self.specialShopDialog());
-      ds.field("endingText", &self.endingText());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_RL05CustomizeDataT {
-  pub commonDevelopment: Option<alloc::boxed::Box<clz_Torappu_RoguelikeCommonDevelopmentDataT>>,
-  pub difficulties: Option<alloc::vec::Vec<clz_Torappu_RL05DifficultyExtT>>,
-  pub specialShopDialog: Option<alloc::boxed::Box<clz_Torappu_RoguelikeGameShopDialogDataT>>,
-  pub endingText: Option<alloc::boxed::Box<clz_Torappu_RL05EndingTextT>>,
-}
-impl Default for clz_Torappu_RL05CustomizeDataT {
-  fn default() -> Self {
-    Self {
-      commonDevelopment: None,
-      difficulties: None,
-      specialShopDialog: None,
-      endingText: None,
-    }
-  }
-}
-impl clz_Torappu_RL05CustomizeDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData<'b>> {
-    let commonDevelopment = self.commonDevelopment.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let difficulties = self.difficulties.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let specialShopDialog = self.specialShopDialog.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let endingText = self.endingText.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    clz_Torappu_RL05CustomizeData::create(_fbb, &clz_Torappu_RL05CustomizeDataArgs{
-      commonDevelopment,
-      difficulties,
-      specialShopDialog,
-      endingText,
-    })
-  }
-}
 pub enum clz_Torappu_RoguelikeTopicCustomizeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -79757,7 +67756,6 @@ impl<'a> clz_Torappu_RoguelikeTopicCustomizeData<'a> {
   pub const VT_ROGUE_2: ::flatbuffers::VOffsetT = 6;
   pub const VT_ROGUE_3: ::flatbuffers::VOffsetT = 8;
   pub const VT_ROGUE_4: ::flatbuffers::VOffsetT = 10;
-  pub const VT_ROGUE_5: ::flatbuffers::VOffsetT = 12;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -79769,7 +67767,6 @@ impl<'a> clz_Torappu_RoguelikeTopicCustomizeData<'a> {
     args: &'args clz_Torappu_RoguelikeTopicCustomizeDataArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicCustomizeData<'bldr>> {
     let mut builder = clz_Torappu_RoguelikeTopicCustomizeDataBuilder::new(_fbb);
-    if let Some(x) = args.rogue_5 { builder.add_rogue_5(x); }
     if let Some(x) = args.rogue_4 { builder.add_rogue_4(x); }
     if let Some(x) = args.rogue_3 { builder.add_rogue_3(x); }
     if let Some(x) = args.rogue_2 { builder.add_rogue_2(x); }
@@ -79790,15 +67787,11 @@ impl<'a> clz_Torappu_RoguelikeTopicCustomizeData<'a> {
     let rogue_4 = self.rogue_4().map(|x| {
       alloc::boxed::Box::new(x.unpack())
     });
-    let rogue_5 = self.rogue_5().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
     clz_Torappu_RoguelikeTopicCustomizeDataT {
       rogue_1,
       rogue_2,
       rogue_3,
       rogue_4,
-      rogue_5,
     }
   }
 
@@ -79830,13 +67823,6 @@ impl<'a> clz_Torappu_RoguelikeTopicCustomizeData<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL04CustomizeData>>(clz_Torappu_RoguelikeTopicCustomizeData::VT_ROGUE_4, None)}
   }
-  #[inline]
-  pub fn rogue_5(&self) -> Option<clz_Torappu_RL05CustomizeData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL05CustomizeData>>(clz_Torappu_RoguelikeTopicCustomizeData::VT_ROGUE_5, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicCustomizeData<'_> {
@@ -79849,7 +67835,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicCustomizeData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL02CustomizeData>>("rogue_2", Self::VT_ROGUE_2, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL03CustomizeData>>("rogue_3", Self::VT_ROGUE_3, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL04CustomizeData>>("rogue_4", Self::VT_ROGUE_4, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_RL05CustomizeData>>("rogue_5", Self::VT_ROGUE_5, false)?
      .finish();
     Ok(())
   }
@@ -79859,7 +67844,6 @@ pub struct clz_Torappu_RoguelikeTopicCustomizeDataArgs<'a> {
     pub rogue_2: Option<::flatbuffers::WIPOffset<clz_Torappu_RL02CustomizeData<'a>>>,
     pub rogue_3: Option<::flatbuffers::WIPOffset<clz_Torappu_RL03CustomizeData<'a>>>,
     pub rogue_4: Option<::flatbuffers::WIPOffset<clz_Torappu_RL04CustomizeData<'a>>>,
-    pub rogue_5: Option<::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicCustomizeDataArgs<'a> {
   #[inline]
@@ -79869,7 +67853,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicCustomizeDataArgs<'a> {
       rogue_2: None,
       rogue_3: None,
       rogue_4: None,
-      rogue_5: None,
     }
   }
 }
@@ -79897,10 +67880,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicCus
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RL04CustomizeData>>(clz_Torappu_RoguelikeTopicCustomizeData::VT_ROGUE_4, rogue_4);
   }
   #[inline]
-  pub fn add_rogue_5(&mut self, rogue_5: ::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_RL05CustomizeData>>(clz_Torappu_RoguelikeTopicCustomizeData::VT_ROGUE_5, rogue_5);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RoguelikeTopicCustomizeDataBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RoguelikeTopicCustomizeDataBuilder {
@@ -79922,7 +67901,6 @@ impl ::core::fmt::Debug for clz_Torappu_RoguelikeTopicCustomizeData<'_> {
       ds.field("rogue_2", &self.rogue_2());
       ds.field("rogue_3", &self.rogue_3());
       ds.field("rogue_4", &self.rogue_4());
-      ds.field("rogue_5", &self.rogue_5());
       ds.finish()
   }
 }
@@ -79933,7 +67911,6 @@ pub struct clz_Torappu_RoguelikeTopicCustomizeDataT {
   pub rogue_2: Option<alloc::boxed::Box<clz_Torappu_RL02CustomizeDataT>>,
   pub rogue_3: Option<alloc::boxed::Box<clz_Torappu_RL03CustomizeDataT>>,
   pub rogue_4: Option<alloc::boxed::Box<clz_Torappu_RL04CustomizeDataT>>,
-  pub rogue_5: Option<alloc::boxed::Box<clz_Torappu_RL05CustomizeDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeTopicCustomizeDataT {
   fn default() -> Self {
@@ -79942,7 +67919,6 @@ impl Default for clz_Torappu_RoguelikeTopicCustomizeDataT {
       rogue_2: None,
       rogue_3: None,
       rogue_4: None,
-      rogue_5: None,
     }
   }
 }
@@ -79963,15 +67939,11 @@ impl clz_Torappu_RoguelikeTopicCustomizeDataT {
     let rogue_4 = self.rogue_4.as_ref().map(|x|{
       x.pack(_fbb)
     });
-    let rogue_5 = self.rogue_5.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
     clz_Torappu_RoguelikeTopicCustomizeData::create(_fbb, &clz_Torappu_RoguelikeTopicCustomizeDataArgs{
       rogue_1,
       rogue_2,
       rogue_3,
       rogue_4,
-      rogue_5,
     })
   }
 }

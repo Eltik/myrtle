@@ -8,10 +8,10 @@ extern crate serde;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_MISSION_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 9;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 10] = [
   enum__Torappu_MissionType::UNKNOWN,
   enum__Torappu_MissionType::MAIN,
   enum__Torappu_MissionType::DAILY,
@@ -22,8 +22,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12
   enum__Torappu_MissionType::OPENSERVER,
   enum__Torappu_MissionType::TOWERSEASON,
   enum__Torappu_MissionType::RETRO,
-  enum__Torappu_MissionType::SPECIAL_OPERATOR,
-  enum__Torappu_MissionType::SPECIAL_OPERATOR_WEEKLY,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -41,11 +39,9 @@ impl enum__Torappu_MissionType {
   pub const OPENSERVER: Self = Self(7);
   pub const TOWERSEASON: Self = Self(8);
   pub const RETRO: Self = Self(9);
-  pub const SPECIAL_OPERATOR: Self = Self(10);
-  pub const SPECIAL_OPERATOR_WEEKLY: Self = Self(11);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 11;
+  pub const ENUM_MAX: i32 = 9;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::UNKNOWN,
     Self::MAIN,
@@ -57,8 +53,6 @@ impl enum__Torappu_MissionType {
     Self::OPENSERVER,
     Self::TOWERSEASON,
     Self::RETRO,
-    Self::SPECIAL_OPERATOR,
-    Self::SPECIAL_OPERATOR_WEEKLY,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -73,8 +67,6 @@ impl enum__Torappu_MissionType {
       Self::OPENSERVER => Some("OPENSERVER"),
       Self::TOWERSEASON => Some("TOWERSEASON"),
       Self::RETRO => Some("RETRO"),
-      Self::SPECIAL_OPERATOR => Some("SPECIAL_OPERATOR"),
-      Self::SPECIAL_OPERATOR_WEEKLY => Some("SPECIAL_OPERATOR_WEEKLY"),
       _ => None,
     }
   }
@@ -260,10 +252,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_MissionItemBgType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -349,14 +341,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -449,17 +433,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -546,14 +522,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -643,14 +611,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -3163,379 +3123,6 @@ impl dict__string__clz_Torappu_MissionWeeklyRewardConfT {
     })
   }
 }
-pub enum clz_Torappu_SOCharMissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_SOCharMissionGroup<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SOCharMissionGroup<'a> {
-  type Inner = clz_Torappu_SOCharMissionGroup<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
-  pub const VT_GROUPID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_MISSIONIDS: ::flatbuffers::VOffsetT = 6;
-  pub const VT_STARTTS: ::flatbuffers::VOffsetT = 8;
-  pub const VT_ENDTS: ::flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_SOCharMissionGroup { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_SOCharMissionGroupArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'bldr>> {
-    let mut builder = clz_Torappu_SOCharMissionGroupBuilder::new(_fbb);
-    builder.add_endTs(args.endTs);
-    builder.add_startTs(args.startTs);
-    if let Some(x) = args.missionIds { builder.add_missionIds(x); }
-    if let Some(x) = args.groupId { builder.add_groupId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_SOCharMissionGroupT {
-    let groupId = self.groupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let missionIds = self.missionIds().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let startTs = self.startTs();
-    let endTs = self.endTs();
-    clz_Torappu_SOCharMissionGroupT {
-      groupId,
-      missionIds,
-      startTs,
-      endTs,
-    }
-  }
-
-  #[inline]
-  pub fn groupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SOCharMissionGroup::VT_GROUPID, None)}
-  }
-  #[inline]
-  pub fn missionIds(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_SOCharMissionGroup::VT_MISSIONIDS, None)}
-  }
-  #[inline]
-  pub fn startTs(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_SOCharMissionGroup::VT_STARTTS, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn endTs(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_SOCharMissionGroup::VT_ENDTS, Some(0)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_SOCharMissionGroup<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("missionIds", Self::VT_MISSIONIDS, false)?
-     .visit_field::<i64>("startTs", Self::VT_STARTTS, false)?
-     .visit_field::<i64>("endTs", Self::VT_ENDTS, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_SOCharMissionGroupArgs<'a> {
-    pub groupId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub missionIds: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub startTs: i64,
-    pub endTs: i64,
-}
-impl<'a> Default for clz_Torappu_SOCharMissionGroupArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_SOCharMissionGroupArgs {
-      groupId: None,
-      missionIds: None,
-      startTs: 0,
-      endTs: 0,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_SOCharMissionGroupBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_groupId(&mut self, groupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SOCharMissionGroup::VT_GROUPID, groupId);
-  }
-  #[inline]
-  pub fn add_missionIds(&mut self, missionIds: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SOCharMissionGroup::VT_MISSIONIDS, missionIds);
-  }
-  #[inline]
-  pub fn add_startTs(&mut self, startTs: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_SOCharMissionGroup::VT_STARTTS, startTs, 0);
-  }
-  #[inline]
-  pub fn add_endTs(&mut self, endTs: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_SOCharMissionGroup::VT_ENDTS, endTs, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_SOCharMissionGroupBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_SOCharMissionGroup<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_SOCharMissionGroup");
-      ds.field("groupId", &self.groupId());
-      ds.field("missionIds", &self.missionIds());
-      ds.field("startTs", &self.startTs());
-      ds.field("endTs", &self.endTs());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_SOCharMissionGroupT {
-  pub groupId: Option<alloc::string::String>,
-  pub missionIds: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub startTs: i64,
-  pub endTs: i64,
-}
-impl Default for clz_Torappu_SOCharMissionGroupT {
-  fn default() -> Self {
-    Self {
-      groupId: None,
-      missionIds: None,
-      startTs: 0,
-      endTs: 0,
-    }
-  }
-}
-impl clz_Torappu_SOCharMissionGroupT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'b>> {
-    let groupId = self.groupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let missionIds = self.missionIds.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let startTs = self.startTs;
-    let endTs = self.endTs;
-    clz_Torappu_SOCharMissionGroup::create(_fbb, &clz_Torappu_SOCharMissionGroupArgs{
-      groupId,
-      missionIds,
-      startTs,
-      endTs,
-    })
-  }
-}
-pub enum dict__string__clz_Torappu_SOCharMissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__string__clz_Torappu_SOCharMissionGroup<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_SOCharMissionGroup<'a> {
-  type Inner = dict__string__clz_Torappu_SOCharMissionGroup<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> dict__string__clz_Torappu_SOCharMissionGroup<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_SOCharMissionGroup { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_SOCharMissionGroupArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SOCharMissionGroup<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_SOCharMissionGroupBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_SOCharMissionGroupT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_SOCharMissionGroupT {
-      key,
-      value,
-    }
-  }
-
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_SOCharMissionGroup::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_SOCharMissionGroup) -> bool {
-    self.key() < o.key()
-  }
-
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_SOCharMissionGroup<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_SOCharMissionGroup>>(dict__string__clz_Torappu_SOCharMissionGroup::VT_VALUE, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_SOCharMissionGroup<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_SOCharMissionGroup>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct dict__string__clz_Torappu_SOCharMissionGroupArgs<'a> {
-    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'a>>>,
-}
-impl<'a> Default for dict__string__clz_Torappu_SOCharMissionGroupArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_SOCharMissionGroupArgs {
-      key: None, // required field
-      value: None,
-    }
-  }
-}
-
-
-pub struct dict__string__clz_Torappu_SOCharMissionGroupBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_SOCharMissionGroup::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup>>(dict__string__clz_Torappu_SOCharMissionGroup::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_SOCharMissionGroupBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SOCharMissionGroup<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_SOCharMissionGroup::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for dict__string__clz_Torappu_SOCharMissionGroup<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_SOCharMissionGroup");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__clz_Torappu_SOCharMissionGroupT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_SOCharMissionGroupT>>,
-}
-impl Default for dict__string__clz_Torappu_SOCharMissionGroupT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
-    }
-  }
-}
-impl dict__string__clz_Torappu_SOCharMissionGroupT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SOCharMissionGroup<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_SOCharMissionGroup::create(_fbb, &dict__string__clz_Torappu_SOCharMissionGroupArgs{
-      key,
-      value,
-    })
-  }
-}
 pub enum clz_Torappu_DailyMissionGroupInfo_periodInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5273,13 +4860,12 @@ impl<'a> clz_Torappu_MissionTable<'a> {
   pub const VT_MISSIONGROUPS: ::flatbuffers::VOffsetT = 6;
   pub const VT_PERIODICALREWARDS: ::flatbuffers::VOffsetT = 8;
   pub const VT_WEEKLYREWARDS: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SOCHARMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 12;
-  pub const VT_DAILYMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 14;
-  pub const VT_DAILYMISSIONPERIODINFO: ::flatbuffers::VOffsetT = 16;
-  pub const VT_MAINLINEMISSIONENDIMAGEDATALIST: ::flatbuffers::VOffsetT = 18;
-  pub const VT_CROSSAPPSHAREMISSIONS: ::flatbuffers::VOffsetT = 20;
-  pub const VT_CROSSAPPSHAREMISSIONCONST: ::flatbuffers::VOffsetT = 22;
-  pub const VT_GUIDEMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 24;
+  pub const VT_DAILYMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 12;
+  pub const VT_DAILYMISSIONPERIODINFO: ::flatbuffers::VOffsetT = 14;
+  pub const VT_MAINLINEMISSIONENDIMAGEDATALIST: ::flatbuffers::VOffsetT = 16;
+  pub const VT_CROSSAPPSHAREMISSIONS: ::flatbuffers::VOffsetT = 18;
+  pub const VT_CROSSAPPSHAREMISSIONCONST: ::flatbuffers::VOffsetT = 20;
+  pub const VT_GUIDEMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 22;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -5297,7 +4883,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
     if let Some(x) = args.mainlineMissionEndImageDataList { builder.add_mainlineMissionEndImageDataList(x); }
     if let Some(x) = args.dailyMissionPeriodInfo { builder.add_dailyMissionPeriodInfo(x); }
     if let Some(x) = args.dailyMissionGroupInfo { builder.add_dailyMissionGroupInfo(x); }
-    if let Some(x) = args.soCharMissionGroupInfo { builder.add_soCharMissionGroupInfo(x); }
     if let Some(x) = args.weeklyRewards { builder.add_weeklyRewards(x); }
     if let Some(x) = args.periodicalRewards { builder.add_periodicalRewards(x); }
     if let Some(x) = args.missionGroups { builder.add_missionGroups(x); }
@@ -5316,9 +4901,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
       x.iter().map(|t| t.unpack()).collect()
     });
     let weeklyRewards = self.weeklyRewards().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let soCharMissionGroupInfo = self.soCharMissionGroupInfo().map(|x| {
       x.iter().map(|t| t.unpack()).collect()
     });
     let dailyMissionGroupInfo = self.dailyMissionGroupInfo().map(|x| {
@@ -5344,7 +4926,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
       missionGroups,
       periodicalRewards,
       weeklyRewards,
-      soCharMissionGroupInfo,
       dailyMissionGroupInfo,
       dailyMissionPeriodInfo,
       mainlineMissionEndImageDataList,
@@ -5381,13 +4962,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionWeeklyRewardConf>>>>(clz_Torappu_MissionTable::VT_WEEKLYREWARDS, None)}
-  }
-  #[inline]
-  pub fn soCharMissionGroupInfo(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SOCharMissionGroup<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SOCharMissionGroup>>>>(clz_Torappu_MissionTable::VT_SOCHARMISSIONGROUPINFO, None)}
   }
   #[inline]
   pub fn dailyMissionGroupInfo(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_DailyMissionGroupInfo<'a>>>> {
@@ -5443,7 +5017,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_MissionTable<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionGroup>>>>("missionGroups", Self::VT_MISSIONGROUPS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionDailyRewardConf>>>>("periodicalRewards", Self::VT_PERIODICALREWARDS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionWeeklyRewardConf>>>>("weeklyRewards", Self::VT_WEEKLYREWARDS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SOCharMissionGroup>>>>("soCharMissionGroupInfo", Self::VT_SOCHARMISSIONGROUPINFO, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_DailyMissionGroupInfo>>>>("dailyMissionGroupInfo", Self::VT_DAILYMISSIONGROUPINFO, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_DailyMissionGroupInfo>>>>("dailyMissionPeriodInfo", Self::VT_DAILYMISSIONPERIODINFO, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_MainlineMissionEndImageData>>>>("mainlineMissionEndImageDataList", Self::VT_MAINLINEMISSIONENDIMAGEDATALIST, false)?
@@ -5459,7 +5032,6 @@ pub struct clz_Torappu_MissionTableArgs<'a> {
     pub missionGroups: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionGroup<'a>>>>>,
     pub periodicalRewards: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionDailyRewardConf<'a>>>>>,
     pub weeklyRewards: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionWeeklyRewardConf<'a>>>>>,
-    pub soCharMissionGroupInfo: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SOCharMissionGroup<'a>>>>>,
     pub dailyMissionGroupInfo: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_DailyMissionGroupInfo<'a>>>>>,
     pub dailyMissionPeriodInfo: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_DailyMissionGroupInfo<'a>>>>>,
     pub mainlineMissionEndImageDataList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_MainlineMissionEndImageData<'a>>>>>,
@@ -5475,7 +5047,6 @@ impl<'a> Default for clz_Torappu_MissionTableArgs<'a> {
       missionGroups: None,
       periodicalRewards: None,
       weeklyRewards: None,
-      soCharMissionGroupInfo: None,
       dailyMissionGroupInfo: None,
       dailyMissionPeriodInfo: None,
       mainlineMissionEndImageDataList: None,
@@ -5507,10 +5078,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionTableBuild
   #[inline]
   pub fn add_weeklyRewards(&mut self, weeklyRewards: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_MissionWeeklyRewardConf<'b >>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_MissionTable::VT_WEEKLYREWARDS, weeklyRewards);
-  }
-  #[inline]
-  pub fn add_soCharMissionGroupInfo(&mut self, soCharMissionGroupInfo: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SOCharMissionGroup<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_MissionTable::VT_SOCHARMISSIONGROUPINFO, soCharMissionGroupInfo);
   }
   #[inline]
   pub fn add_dailyMissionGroupInfo(&mut self, dailyMissionGroupInfo: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_DailyMissionGroupInfo<'b >>>>) {
@@ -5558,7 +5125,6 @@ impl ::core::fmt::Debug for clz_Torappu_MissionTable<'_> {
       ds.field("missionGroups", &self.missionGroups());
       ds.field("periodicalRewards", &self.periodicalRewards());
       ds.field("weeklyRewards", &self.weeklyRewards());
-      ds.field("soCharMissionGroupInfo", &self.soCharMissionGroupInfo());
       ds.field("dailyMissionGroupInfo", &self.dailyMissionGroupInfo());
       ds.field("dailyMissionPeriodInfo", &self.dailyMissionPeriodInfo());
       ds.field("mainlineMissionEndImageDataList", &self.mainlineMissionEndImageDataList());
@@ -5575,7 +5141,6 @@ pub struct clz_Torappu_MissionTableT {
   pub missionGroups: Option<alloc::vec::Vec<dict__string__clz_Torappu_MissionGroupT>>,
   pub periodicalRewards: Option<alloc::vec::Vec<dict__string__clz_Torappu_MissionDailyRewardConfT>>,
   pub weeklyRewards: Option<alloc::vec::Vec<dict__string__clz_Torappu_MissionWeeklyRewardConfT>>,
-  pub soCharMissionGroupInfo: Option<alloc::vec::Vec<dict__string__clz_Torappu_SOCharMissionGroupT>>,
   pub dailyMissionGroupInfo: Option<alloc::vec::Vec<dict__string__clz_Torappu_DailyMissionGroupInfoT>>,
   pub dailyMissionPeriodInfo: Option<alloc::vec::Vec<clz_Torappu_DailyMissionGroupInfoT>>,
   pub mainlineMissionEndImageDataList: Option<alloc::vec::Vec<clz_Torappu_MainlineMissionEndImageDataT>>,
@@ -5590,7 +5155,6 @@ impl Default for clz_Torappu_MissionTableT {
       missionGroups: None,
       periodicalRewards: None,
       weeklyRewards: None,
-      soCharMissionGroupInfo: None,
       dailyMissionGroupInfo: None,
       dailyMissionPeriodInfo: None,
       mainlineMissionEndImageDataList: None,
@@ -5617,9 +5181,6 @@ impl clz_Torappu_MissionTableT {
     let weeklyRewards = self.weeklyRewards.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
-    let soCharMissionGroupInfo = self.soCharMissionGroupInfo.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
     let dailyMissionGroupInfo = self.dailyMissionGroupInfo.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
     });
@@ -5643,7 +5204,6 @@ impl clz_Torappu_MissionTableT {
       missionGroups,
       periodicalRewards,
       weeklyRewards,
-      soCharMissionGroupInfo,
       dailyMissionGroupInfo,
       dailyMissionPeriodInfo,
       mainlineMissionEndImageDataList,

@@ -8,10 +8,10 @@ extern crate serde;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -97,14 +97,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -197,17 +189,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -294,14 +278,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -391,14 +367,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -1889,327 +1857,6 @@ impl dict__string__enum__Torappu_SubProfessionAttackTypeT {
     })
   }
 }
-pub enum clz_Torappu_GameDataConsts_FeverGameDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_GameDataConsts_FeverGameData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts_FeverGameData<'a> {
-  type Inner = clz_Torappu_GameDataConsts_FeverGameData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_GameDataConsts_FeverGameData<'a> {
-  pub const VT_FEVERDURATION: ::flatbuffers::VOffsetT = 4;
-  pub const VT_FEVERNEED: ::flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_GameDataConsts_FeverGameData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_GameDataConsts_FeverGameDataArgs
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'bldr>> {
-    let mut builder = clz_Torappu_GameDataConsts_FeverGameDataBuilder::new(_fbb);
-    builder.add_feverNeed(args.feverNeed);
-    builder.add_feverDuration(args.feverDuration);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_GameDataConsts_FeverGameDataT {
-    let feverDuration = self.feverDuration();
-    let feverNeed = self.feverNeed();
-    clz_Torappu_GameDataConsts_FeverGameDataT {
-      feverDuration,
-      feverNeed,
-    }
-  }
-
-  #[inline]
-  pub fn feverDuration(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(clz_Torappu_GameDataConsts_FeverGameData::VT_FEVERDURATION, Some(0.0)).unwrap()}
-  }
-  #[inline]
-  pub fn feverNeed(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(clz_Torappu_GameDataConsts_FeverGameData::VT_FEVERNEED, Some(0.0)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts_FeverGameData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<f32>("feverDuration", Self::VT_FEVERDURATION, false)?
-     .visit_field::<f32>("feverNeed", Self::VT_FEVERNEED, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_GameDataConsts_FeverGameDataArgs {
-    pub feverDuration: f32,
-    pub feverNeed: f32,
-}
-impl<'a> Default for clz_Torappu_GameDataConsts_FeverGameDataArgs {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_GameDataConsts_FeverGameDataArgs {
-      feverDuration: 0.0,
-      feverNeed: 0.0,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_GameDataConsts_FeverGameDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConsts_FeverGameDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_feverDuration(&mut self, feverDuration: f32) {
-    self.fbb_.push_slot::<f32>(clz_Torappu_GameDataConsts_FeverGameData::VT_FEVERDURATION, feverDuration, 0.0);
-  }
-  #[inline]
-  pub fn add_feverNeed(&mut self, feverNeed: f32) {
-    self.fbb_.push_slot::<f32>(clz_Torappu_GameDataConsts_FeverGameData::VT_FEVERNEED, feverNeed, 0.0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_GameDataConsts_FeverGameDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_GameDataConsts_FeverGameDataBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_GameDataConsts_FeverGameData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_GameDataConsts_FeverGameData");
-      ds.field("feverDuration", &self.feverDuration());
-      ds.field("feverNeed", &self.feverNeed());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_GameDataConsts_FeverGameDataT {
-  pub feverDuration: f32,
-  pub feverNeed: f32,
-}
-impl Default for clz_Torappu_GameDataConsts_FeverGameDataT {
-  fn default() -> Self {
-    Self {
-      feverDuration: 0.0,
-      feverNeed: 0.0,
-    }
-  }
-}
-impl clz_Torappu_GameDataConsts_FeverGameDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'b>> {
-    let feverDuration = self.feverDuration;
-    let feverNeed = self.feverNeed;
-    clz_Torappu_GameDataConsts_FeverGameData::create(_fbb, &clz_Torappu_GameDataConsts_FeverGameDataArgs{
-      feverDuration,
-      feverNeed,
-    })
-  }
-}
-pub enum clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
-  type Inner = clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
-
-impl<'a> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
-  pub const VT_DEFAULTREADERFONTSIZE: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DEFAULTREADERLINESPACE: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DEFAULTREADERBACKGROUNDALPHA: ::flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'bldr>> {
-    let mut builder = clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder::new(_fbb);
-    builder.add_defaultReaderBackgroundAlpha(args.defaultReaderBackgroundAlpha);
-    builder.add_defaultReaderLinespace(args.defaultReaderLinespace);
-    builder.add_defaultReaderFontsize(args.defaultReaderFontsize);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
-    let defaultReaderFontsize = self.defaultReaderFontsize();
-    let defaultReaderLinespace = self.defaultReaderLinespace();
-    let defaultReaderBackgroundAlpha = self.defaultReaderBackgroundAlpha();
-    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
-      defaultReaderFontsize,
-      defaultReaderLinespace,
-      defaultReaderBackgroundAlpha,
-    }
-  }
-
-  #[inline]
-  pub fn defaultReaderFontsize(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERFONTSIZE, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn defaultReaderLinespace(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERLINESPACE, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn defaultReaderBackgroundAlpha(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERBACKGROUNDALPHA, Some(0)).unwrap()}
-  }
-}
-
-impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("defaultReaderFontsize", Self::VT_DEFAULTREADERFONTSIZE, false)?
-     .visit_field::<i32>("defaultReaderLinespace", Self::VT_DEFAULTREADERLINESPACE, false)?
-     .visit_field::<i32>("defaultReaderBackgroundAlpha", Self::VT_DEFAULTREADERBACKGROUNDALPHA, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
-    pub defaultReaderFontsize: i32,
-    pub defaultReaderLinespace: i32,
-    pub defaultReaderBackgroundAlpha: i32,
-}
-impl<'a> Default for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
-      defaultReaderFontsize: 0,
-      defaultReaderLinespace: 0,
-      defaultReaderBackgroundAlpha: 0,
-    }
-  }
-}
-
-
-pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_defaultReaderFontsize(&mut self, defaultReaderFontsize: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERFONTSIZE, defaultReaderFontsize, 0);
-  }
-  #[inline]
-  pub fn add_defaultReaderLinespace(&mut self, defaultReaderLinespace: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERLINESPACE, defaultReaderLinespace, 0);
-  }
-  #[inline]
-  pub fn add_defaultReaderBackgroundAlpha(&mut self, defaultReaderBackgroundAlpha: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERBACKGROUNDALPHA, defaultReaderBackgroundAlpha, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting");
-      ds.field("defaultReaderFontsize", &self.defaultReaderFontsize());
-      ds.field("defaultReaderLinespace", &self.defaultReaderLinespace());
-      ds.field("defaultReaderBackgroundAlpha", &self.defaultReaderBackgroundAlpha());
-      ds.finish()
-  }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
-  pub defaultReaderFontsize: i32,
-  pub defaultReaderLinespace: i32,
-  pub defaultReaderBackgroundAlpha: i32,
-}
-impl Default for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
-  fn default() -> Self {
-    Self {
-      defaultReaderFontsize: 0,
-      defaultReaderLinespace: 0,
-      defaultReaderBackgroundAlpha: 0,
-    }
-  }
-}
-impl clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'b>> {
-    let defaultReaderFontsize = self.defaultReaderFontsize;
-    let defaultReaderLinespace = self.defaultReaderLinespace;
-    let defaultReaderBackgroundAlpha = self.defaultReaderBackgroundAlpha;
-    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::create(_fbb, &clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs{
-      defaultReaderFontsize,
-      defaultReaderLinespace,
-      defaultReaderBackgroundAlpha,
-    })
-  }
-}
 pub enum clz_Torappu_GameDataConstsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2250,107 +1897,100 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
   pub const VT_DIAMONDTOSHDRATE: ::flatbuffers::VOffsetT = 46;
   pub const VT_REQUESTSAMEFRIENDCD: ::flatbuffers::VOffsetT = 48;
   pub const VT_BASEMAXFRIENDNUM: ::flatbuffers::VOffsetT = 50;
-  pub const VT_MAXSTARFRIENDNUM: ::flatbuffers::VOffsetT = 52;
-  pub const VT_MAXSQUADASSISTDISPLAYNUM: ::flatbuffers::VOffsetT = 54;
-  pub const VT_FRIENDSTAREDITTRACKTS: ::flatbuffers::VOffsetT = 56;
-  pub const VT_HARDDIAMONDDROP: ::flatbuffers::VOffsetT = 58;
-  pub const VT_INSTFINDMDSHDCOST: ::flatbuffers::VOffsetT = 60;
-  pub const VT_EASYCRYSTALBONUS: ::flatbuffers::VOffsetT = 62;
-  pub const VT_DIAMONDMATERIALTOSHARDEXCHANGERATIO: ::flatbuffers::VOffsetT = 64;
-  pub const VT_DIAMONDHANDBOOKSTAGEGAIN: ::flatbuffers::VOffsetT = 66;
-  pub const VT_APBUYCOST: ::flatbuffers::VOffsetT = 68;
-  pub const VT_APBUYTHRESHOLD: ::flatbuffers::VOffsetT = 70;
-  pub const VT_CREDITLIMIT: ::flatbuffers::VOffsetT = 72;
-  pub const VT_MONTHLYSUBREMAINTIMELIMITDAYS: ::flatbuffers::VOffsetT = 74;
-  pub const VT_FRIENDASSISTRARITYLIMIT: ::flatbuffers::VOffsetT = 76;
-  pub const VT_MAINLINECOMPATIBLEDESC: ::flatbuffers::VOffsetT = 78;
-  pub const VT_MAINLINETOUGHDESC: ::flatbuffers::VOffsetT = 80;
-  pub const VT_MAINLINEEASYDESC: ::flatbuffers::VOffsetT = 82;
-  pub const VT_MAINLINENORMALDESC: ::flatbuffers::VOffsetT = 84;
-  pub const VT_REJECTSPCHARMISSION: ::flatbuffers::VOffsetT = 86;
-  pub const VT_ADDEDREWARDDISPLAYZONE: ::flatbuffers::VOffsetT = 88;
-  pub const VT_ONEDIAMONDAP: ::flatbuffers::VOffsetT = 90;
-  pub const VT_CHARROTATIONPRESETMAXCNT: ::flatbuffers::VOffsetT = 92;
-  pub const VT_CHARROTATIONSKINLISTMAXCNT: ::flatbuffers::VOffsetT = 94;
-  pub const VT_DEFAULTCRPRESETCHARID: ::flatbuffers::VOffsetT = 96;
-  pub const VT_DEFAULTCRPRESETCHARSKINID: ::flatbuffers::VOffsetT = 98;
-  pub const VT_DEFAULTCRPRESETBGID: ::flatbuffers::VOffsetT = 100;
-  pub const VT_DEFAULTCRPRESETTHEMEID: ::flatbuffers::VOffsetT = 102;
-  pub const VT_DEFAULTCRPRESETNAME: ::flatbuffers::VOffsetT = 104;
-  pub const VT_CHARROTATIONPRESETTRACKTS: ::flatbuffers::VOffsetT = 106;
-  pub const VT_UNIEQUIPARCHIVESYSTRACKTS: ::flatbuffers::VOffsetT = 108;
-  pub const VT_MANUFACTPROMPTTIME: ::flatbuffers::VOffsetT = 110;
-  pub const VT_MAINGUIDEACTIVEDSTAGEID: ::flatbuffers::VOffsetT = 112;
-  pub const VT_RICHTEXTSTYLES: ::flatbuffers::VOffsetT = 114;
-  pub const VT_CHARASSISTREFRESHTIME: ::flatbuffers::VOffsetT = 116;
-  pub const VT_NORMALRECRUITLOCKEDSTRING: ::flatbuffers::VOffsetT = 118;
-  pub const VT_COMMONPOTENTIALLVLUPCOUNT: ::flatbuffers::VOffsetT = 120;
-  pub const VT_WEEKLYOVERRIDEDESC: ::flatbuffers::VOffsetT = 122;
-  pub const VT_VOUCHERDIV: ::flatbuffers::VOffsetT = 124;
-  pub const VT_RECRUITPOOLVERSION: ::flatbuffers::VOffsetT = 126;
-  pub const VT_V006RECRUITTIMESTEP1REFRESH: ::flatbuffers::VOffsetT = 128;
-  pub const VT_V006RECRUITTIMESTEP2CHECK: ::flatbuffers::VOffsetT = 130;
-  pub const VT_V006RECRUITTIMESTEP2FLUSH: ::flatbuffers::VOffsetT = 132;
-  pub const VT_BUYAPTIMENOLIMITFLAG: ::flatbuffers::VOffsetT = 134;
-  pub const VT_ISLMGTSENABLED: ::flatbuffers::VOffsetT = 136;
-  pub const VT_LEGACYTIME: ::flatbuffers::VOffsetT = 138;
-  pub const VT_LEGACYITEMLIST: ::flatbuffers::VOffsetT = 140;
-  pub const VT_USEASSISTSOCIALPT: ::flatbuffers::VOffsetT = 142;
-  pub const VT_USEASSISTSOCIALPTMAXCOUNT: ::flatbuffers::VOffsetT = 144;
-  pub const VT_ASSISTBEUSEDSOCIALPT: ::flatbuffers::VOffsetT = 146;
-  pub const VT_PUSHFORCES: ::flatbuffers::VOffsetT = 148;
-  pub const VT_PUSHFORCEZEROINDEX: ::flatbuffers::VOffsetT = 150;
-  pub const VT_NORMALGACHAUNLOCKPRICE: ::flatbuffers::VOffsetT = 152;
-  pub const VT_PULLFORCES: ::flatbuffers::VOffsetT = 154;
-  pub const VT_PULLFORCEZEROINDEX: ::flatbuffers::VOffsetT = 156;
-  pub const VT_MULTIINCOMEBYRANK: ::flatbuffers::VOffsetT = 158;
-  pub const VT_LMTGSTOEPGSRATIO: ::flatbuffers::VOffsetT = 160;
-  pub const VT_NEWBEEGIFTEPGS: ::flatbuffers::VOffsetT = 162;
-  pub const VT_LMTGSDESCCONSTONE: ::flatbuffers::VOffsetT = 164;
-  pub const VT_LMTGSDESCCONSTTWO: ::flatbuffers::VOffsetT = 166;
-  pub const VT_DEFCDPRIMCOLOR: ::flatbuffers::VOffsetT = 168;
-  pub const VT_DEFCDSECCOLOR: ::flatbuffers::VOffsetT = 170;
-  pub const VT_MAILBANNERTYPE: ::flatbuffers::VOffsetT = 172;
-  pub const VT_MONTHLYSUBWARNINGTIME: ::flatbuffers::VOffsetT = 174;
-  pub const VT_UNLIMITSKINOUTOFTIME: ::flatbuffers::VOffsetT = 176;
-  pub const VT_REPLICATESHOPSTARTTIME: ::flatbuffers::VOffsetT = 178;
-  pub const VT_TSO: ::flatbuffers::VOffsetT = 180;
-  pub const VT_ISDYNILLUSTENABLED: ::flatbuffers::VOffsetT = 182;
-  pub const VT_ISDYNILLUSTSTARTENABLED: ::flatbuffers::VOffsetT = 184;
-  pub const VT_ISCLASSICQCSHOPENABLED: ::flatbuffers::VOffsetT = 186;
-  pub const VT_ISROGUELIKETOPICFUNCENABLED: ::flatbuffers::VOffsetT = 188;
-  pub const VT_ISSANDBOXPERMFUNCENABLED: ::flatbuffers::VOffsetT = 190;
-  pub const VT_ISROGUELIKEAVGACHIEVEFUNCENABLED: ::flatbuffers::VOffsetT = 192;
-  pub const VT_ISCLASSICPOTENTIALITEMFUNCENABLED: ::flatbuffers::VOffsetT = 194;
-  pub const VT_ISCLASSICGACHAPOOLFUNCENABLED: ::flatbuffers::VOffsetT = 196;
-  pub const VT_ISSPECIALGACHAPOOLFUNCENABLED: ::flatbuffers::VOffsetT = 198;
-  pub const VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE: ::flatbuffers::VOffsetT = 200;
-  pub const VT_ISRECALRUNEFUNCENABLED: ::flatbuffers::VOffsetT = 202;
-  pub const VT_VOUCHERSKINREDEEM: ::flatbuffers::VOffsetT = 204;
-  pub const VT_VOUCHERSKINDESC: ::flatbuffers::VOffsetT = 206;
-  pub const VT_CHARMEQUIPCOUNT: ::flatbuffers::VOffsetT = 208;
-  pub const VT_TERMDESCRIPTIONDICT: ::flatbuffers::VOffsetT = 210;
-  pub const VT_STORYREVIEWUNLOCKITEMLACKTIP: ::flatbuffers::VOffsetT = 212;
-  pub const VT_DATAVERSION: ::flatbuffers::VOffsetT = 214;
-  pub const VT_RESPREFVERSION: ::flatbuffers::VOffsetT = 216;
-  pub const VT_ANNOUNCEWEBBUSTYPE: ::flatbuffers::VOffsetT = 218;
-  pub const VT_VIDEOPLAYERWEBBUSTYPE: ::flatbuffers::VOffsetT = 220;
-  pub const VT_GACHALOGBUSTYPE: ::flatbuffers::VOffsetT = 222;
-  pub const VT_DEFAULTMINMULTIPLEBATTLETIMES: ::flatbuffers::VOffsetT = 224;
-  pub const VT_DEFAULTMAXMULTIPLEBATTLETIMES: ::flatbuffers::VOffsetT = 226;
-  pub const VT_MULTIPLEACTIONOPEN: ::flatbuffers::VOffsetT = 228;
-  pub const VT_SUBPROFESSIONDAMAGETYPEPAIRS: ::flatbuffers::VOffsetT = 230;
-  pub const VT_CLASSICPROTECTCHAR: ::flatbuffers::VOffsetT = 232;
-  pub const VT_FEVERGAMEDATA: ::flatbuffers::VOffsetT = 234;
-  pub const VT_BIRTHDAYSETTINGDESC: ::flatbuffers::VOffsetT = 236;
-  pub const VT_BIRTHDAYSETTINGCONFIRMDESC: ::flatbuffers::VOffsetT = 238;
-  pub const VT_BIRTHDAYSETTINGLEAPCONFIRMDESC: ::flatbuffers::VOffsetT = 240;
-  pub const VT_LEAPBIRTHDAYREWARDMONTH: ::flatbuffers::VOffsetT = 242;
-  pub const VT_LEAPBIRTHDAYREWARDDAY: ::flatbuffers::VOffsetT = 244;
-  pub const VT_BIRTHDAYSETTINGSHOWSTAGEID: ::flatbuffers::VOffsetT = 246;
-  pub const VT_ISBIRTHDAYFUNCENABLED: ::flatbuffers::VOffsetT = 248;
-  pub const VT_ISSOCHARENABLED: ::flatbuffers::VOffsetT = 250;
-  pub const VT_AVGREADERMODEDEFAULTSETTING: ::flatbuffers::VOffsetT = 252;
+  pub const VT_HARDDIAMONDDROP: ::flatbuffers::VOffsetT = 52;
+  pub const VT_INSTFINDMDSHDCOST: ::flatbuffers::VOffsetT = 54;
+  pub const VT_EASYCRYSTALBONUS: ::flatbuffers::VOffsetT = 56;
+  pub const VT_DIAMONDMATERIALTOSHARDEXCHANGERATIO: ::flatbuffers::VOffsetT = 58;
+  pub const VT_DIAMONDHANDBOOKSTAGEGAIN: ::flatbuffers::VOffsetT = 60;
+  pub const VT_APBUYCOST: ::flatbuffers::VOffsetT = 62;
+  pub const VT_APBUYTHRESHOLD: ::flatbuffers::VOffsetT = 64;
+  pub const VT_CREDITLIMIT: ::flatbuffers::VOffsetT = 66;
+  pub const VT_MONTHLYSUBREMAINTIMELIMITDAYS: ::flatbuffers::VOffsetT = 68;
+  pub const VT_FRIENDASSISTRARITYLIMIT: ::flatbuffers::VOffsetT = 70;
+  pub const VT_MAINLINECOMPATIBLEDESC: ::flatbuffers::VOffsetT = 72;
+  pub const VT_MAINLINETOUGHDESC: ::flatbuffers::VOffsetT = 74;
+  pub const VT_MAINLINEEASYDESC: ::flatbuffers::VOffsetT = 76;
+  pub const VT_MAINLINENORMALDESC: ::flatbuffers::VOffsetT = 78;
+  pub const VT_REJECTSPCHARMISSION: ::flatbuffers::VOffsetT = 80;
+  pub const VT_ADDEDREWARDDISPLAYZONE: ::flatbuffers::VOffsetT = 82;
+  pub const VT_ONEDIAMONDAP: ::flatbuffers::VOffsetT = 84;
+  pub const VT_CHARROTATIONPRESETMAXCNT: ::flatbuffers::VOffsetT = 86;
+  pub const VT_CHARROTATIONSKINLISTMAXCNT: ::flatbuffers::VOffsetT = 88;
+  pub const VT_DEFAULTCRPRESETCHARID: ::flatbuffers::VOffsetT = 90;
+  pub const VT_DEFAULTCRPRESETCHARSKINID: ::flatbuffers::VOffsetT = 92;
+  pub const VT_DEFAULTCRPRESETBGID: ::flatbuffers::VOffsetT = 94;
+  pub const VT_DEFAULTCRPRESETTHEMEID: ::flatbuffers::VOffsetT = 96;
+  pub const VT_DEFAULTCRPRESETNAME: ::flatbuffers::VOffsetT = 98;
+  pub const VT_CHARROTATIONPRESETTRACKTS: ::flatbuffers::VOffsetT = 100;
+  pub const VT_UNIEQUIPARCHIVESYSTRACKTS: ::flatbuffers::VOffsetT = 102;
+  pub const VT_MANUFACTPROMPTTIME: ::flatbuffers::VOffsetT = 104;
+  pub const VT_MAINGUIDEACTIVEDSTAGEID: ::flatbuffers::VOffsetT = 106;
+  pub const VT_RICHTEXTSTYLES: ::flatbuffers::VOffsetT = 108;
+  pub const VT_CHARASSISTREFRESHTIME: ::flatbuffers::VOffsetT = 110;
+  pub const VT_NORMALRECRUITLOCKEDSTRING: ::flatbuffers::VOffsetT = 112;
+  pub const VT_COMMONPOTENTIALLVLUPCOUNT: ::flatbuffers::VOffsetT = 114;
+  pub const VT_WEEKLYOVERRIDEDESC: ::flatbuffers::VOffsetT = 116;
+  pub const VT_VOUCHERDIV: ::flatbuffers::VOffsetT = 118;
+  pub const VT_RECRUITPOOLVERSION: ::flatbuffers::VOffsetT = 120;
+  pub const VT_V006RECRUITTIMESTEP1REFRESH: ::flatbuffers::VOffsetT = 122;
+  pub const VT_V006RECRUITTIMESTEP2CHECK: ::flatbuffers::VOffsetT = 124;
+  pub const VT_V006RECRUITTIMESTEP2FLUSH: ::flatbuffers::VOffsetT = 126;
+  pub const VT_BUYAPTIMENOLIMITFLAG: ::flatbuffers::VOffsetT = 128;
+  pub const VT_ISLMGTSENABLED: ::flatbuffers::VOffsetT = 130;
+  pub const VT_LEGACYTIME: ::flatbuffers::VOffsetT = 132;
+  pub const VT_LEGACYITEMLIST: ::flatbuffers::VOffsetT = 134;
+  pub const VT_USEASSISTSOCIALPT: ::flatbuffers::VOffsetT = 136;
+  pub const VT_USEASSISTSOCIALPTMAXCOUNT: ::flatbuffers::VOffsetT = 138;
+  pub const VT_ASSISTBEUSEDSOCIALPT: ::flatbuffers::VOffsetT = 140;
+  pub const VT_PUSHFORCES: ::flatbuffers::VOffsetT = 142;
+  pub const VT_PUSHFORCEZEROINDEX: ::flatbuffers::VOffsetT = 144;
+  pub const VT_NORMALGACHAUNLOCKPRICE: ::flatbuffers::VOffsetT = 146;
+  pub const VT_PULLFORCES: ::flatbuffers::VOffsetT = 148;
+  pub const VT_PULLFORCEZEROINDEX: ::flatbuffers::VOffsetT = 150;
+  pub const VT_MULTIINCOMEBYRANK: ::flatbuffers::VOffsetT = 152;
+  pub const VT_LMTGSTOEPGSRATIO: ::flatbuffers::VOffsetT = 154;
+  pub const VT_NEWBEEGIFTEPGS: ::flatbuffers::VOffsetT = 156;
+  pub const VT_LMTGSDESCCONSTONE: ::flatbuffers::VOffsetT = 158;
+  pub const VT_LMTGSDESCCONSTTWO: ::flatbuffers::VOffsetT = 160;
+  pub const VT_DEFCDPRIMCOLOR: ::flatbuffers::VOffsetT = 162;
+  pub const VT_DEFCDSECCOLOR: ::flatbuffers::VOffsetT = 164;
+  pub const VT_MAILBANNERTYPE: ::flatbuffers::VOffsetT = 166;
+  pub const VT_MONTHLYSUBWARNINGTIME: ::flatbuffers::VOffsetT = 168;
+  pub const VT_UNLIMITSKINOUTOFTIME: ::flatbuffers::VOffsetT = 170;
+  pub const VT_REPLICATESHOPSTARTTIME: ::flatbuffers::VOffsetT = 172;
+  pub const VT_TSO: ::flatbuffers::VOffsetT = 174;
+  pub const VT_ISDYNILLUSTENABLED: ::flatbuffers::VOffsetT = 176;
+  pub const VT_ISDYNILLUSTSTARTENABLED: ::flatbuffers::VOffsetT = 178;
+  pub const VT_ISCLASSICQCSHOPENABLED: ::flatbuffers::VOffsetT = 180;
+  pub const VT_ISROGUELIKETOPICFUNCENABLED: ::flatbuffers::VOffsetT = 182;
+  pub const VT_ISSANDBOXPERMFUNCENABLED: ::flatbuffers::VOffsetT = 184;
+  pub const VT_ISROGUELIKEAVGACHIEVEFUNCENABLED: ::flatbuffers::VOffsetT = 186;
+  pub const VT_ISCLASSICPOTENTIALITEMFUNCENABLED: ::flatbuffers::VOffsetT = 188;
+  pub const VT_ISCLASSICGACHAPOOLFUNCENABLED: ::flatbuffers::VOffsetT = 190;
+  pub const VT_ISSPECIALGACHAPOOLFUNCENABLED: ::flatbuffers::VOffsetT = 192;
+  pub const VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE: ::flatbuffers::VOffsetT = 194;
+  pub const VT_VOUCHERSKINREDEEM: ::flatbuffers::VOffsetT = 196;
+  pub const VT_VOUCHERSKINDESC: ::flatbuffers::VOffsetT = 198;
+  pub const VT_CHARMEQUIPCOUNT: ::flatbuffers::VOffsetT = 200;
+  pub const VT_TERMDESCRIPTIONDICT: ::flatbuffers::VOffsetT = 202;
+  pub const VT_STORYREVIEWUNLOCKITEMLACKTIP: ::flatbuffers::VOffsetT = 204;
+  pub const VT_DATAVERSION: ::flatbuffers::VOffsetT = 206;
+  pub const VT_RESPREFVERSION: ::flatbuffers::VOffsetT = 208;
+  pub const VT_ANNOUNCEWEBBUSTYPE: ::flatbuffers::VOffsetT = 210;
+  pub const VT_VIDEOPLAYERWEBBUSTYPE: ::flatbuffers::VOffsetT = 212;
+  pub const VT_GACHALOGBUSTYPE: ::flatbuffers::VOffsetT = 214;
+  pub const VT_DEFAULTMINMULTIPLEBATTLETIMES: ::flatbuffers::VOffsetT = 216;
+  pub const VT_DEFAULTMAXMULTIPLEBATTLETIMES: ::flatbuffers::VOffsetT = 218;
+  pub const VT_MULTIPLEACTIONOPEN: ::flatbuffers::VOffsetT = 220;
+  pub const VT_SUBPROFESSIONDAMAGETYPEPAIRS: ::flatbuffers::VOffsetT = 222;
+  pub const VT_CLASSICPROTECTCHAR: ::flatbuffers::VOffsetT = 224;
+  pub const VT_BIRTHDAYSETTINGDESC: ::flatbuffers::VOffsetT = 226;
+  pub const VT_BIRTHDAYSETTINGCONFIRMDESC: ::flatbuffers::VOffsetT = 228;
+  pub const VT_BIRTHDAYSETTINGLEAPCONFIRMDESC: ::flatbuffers::VOffsetT = 230;
+  pub const VT_LEAPBIRTHDAYREWARDMONTH: ::flatbuffers::VOffsetT = 232;
+  pub const VT_LEAPBIRTHDAYREWARDDAY: ::flatbuffers::VOffsetT = 234;
+  pub const VT_BIRTHDAYSETTINGSHOWSTAGEID: ::flatbuffers::VOffsetT = 236;
+  pub const VT_ISBIRTHDAYFUNCENABLED: ::flatbuffers::VOffsetT = 238;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -2373,15 +2013,12 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     builder.add_uniequipArchiveSysTrackTs(args.uniequipArchiveSysTrackTs);
     builder.add_charRotationPresetTrackTs(args.charRotationPresetTrackTs);
     builder.add_rejectSpCharMission(args.rejectSpCharMission);
-    builder.add_friendStarEditTrackTs(args.friendStarEditTrackTs);
-    if let Some(x) = args.avgReaderModeDefaultSetting { builder.add_avgReaderModeDefaultSetting(x); }
     if let Some(x) = args.birthdaySettingShowStageId { builder.add_birthdaySettingShowStageId(x); }
     builder.add_leapBirthdayRewardDay(args.leapBirthdayRewardDay);
     builder.add_leapBirthdayRewardMonth(args.leapBirthdayRewardMonth);
     if let Some(x) = args.birthdaySettingLeapConfirmDesc { builder.add_birthdaySettingLeapConfirmDesc(x); }
     if let Some(x) = args.birthdaySettingConfirmDesc { builder.add_birthdaySettingConfirmDesc(x); }
     if let Some(x) = args.birthdaySettingDesc { builder.add_birthdaySettingDesc(x); }
-    if let Some(x) = args.feverGameData { builder.add_feverGameData(x); }
     if let Some(x) = args.classicProtectChar { builder.add_classicProtectChar(x); }
     if let Some(x) = args.subProfessionDamageTypePairs { builder.add_subProfessionDamageTypePairs(x); }
     builder.add_defaultMaxMultipleBattleTimes(args.defaultMaxMultipleBattleTimes);
@@ -2445,8 +2082,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     builder.add_easyCrystalBonus(args.easyCrystalBonus);
     builder.add_instFinDmdShdCost(args.instFinDmdShdCost);
     builder.add_hardDiamondDrop(args.hardDiamondDrop);
-    builder.add_maxSquadAssistDisplayNum(args.maxSquadAssistDisplayNum);
-    builder.add_maxStarFriendNum(args.maxStarFriendNum);
     builder.add_baseMaxFriendNum(args.baseMaxFriendNum);
     builder.add_requestSameFriendCD(args.requestSameFriendCD);
     builder.add_diamondToShdRate(args.diamondToShdRate);
@@ -2471,10 +2106,8 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     if let Some(x) = args.playerApMap { builder.add_playerApMap(x); }
     if let Some(x) = args.playerExpMap { builder.add_playerExpMap(x); }
     builder.add_maxPlayerLevel(args.maxPlayerLevel);
-    builder.add_isSoCharEnabled(args.isSoCharEnabled);
     builder.add_isBirthdayFuncEnabled(args.isBirthdayFuncEnabled);
     builder.add_multipleActionOpen(args.multipleActionOpen);
-    builder.add_isRecalRuneFuncEnabled(args.isRecalRuneFuncEnabled);
     builder.add_isVoucherClassicItemDistinguishable(args.isVoucherClassicItemDistinguishable);
     builder.add_isSpecialGachaPoolFuncEnabled(args.isSpecialGachaPoolFuncEnabled);
     builder.add_isClassicGachaPoolFuncEnabled(args.isClassicGachaPoolFuncEnabled);
@@ -2531,9 +2164,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     let diamondToShdRate = self.diamondToShdRate();
     let requestSameFriendCD = self.requestSameFriendCD();
     let baseMaxFriendNum = self.baseMaxFriendNum();
-    let maxStarFriendNum = self.maxStarFriendNum();
-    let maxSquadAssistDisplayNum = self.maxSquadAssistDisplayNum();
-    let friendStarEditTrackTs = self.friendStarEditTrackTs();
     let hardDiamondDrop = self.hardDiamondDrop();
     let instFinDmdShdCost = self.instFinDmdShdCost();
     let easyCrystalBonus = self.easyCrystalBonus();
@@ -2660,7 +2290,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     let isClassicGachaPoolFuncEnabled = self.isClassicGachaPoolFuncEnabled();
     let isSpecialGachaPoolFuncEnabled = self.isSpecialGachaPoolFuncEnabled();
     let isVoucherClassicItemDistinguishable = self.isVoucherClassicItemDistinguishable();
-    let isRecalRuneFuncEnabled = self.isRecalRuneFuncEnabled();
     let voucherSkinRedeem = self.voucherSkinRedeem();
     let voucherSkinDesc = self.voucherSkinDesc().map(|x| {
       alloc::string::ToString::to_string(x)
@@ -2696,9 +2325,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     let classicProtectChar = self.classicProtectChar().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
-    let feverGameData = self.feverGameData().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
     let birthdaySettingDesc = self.birthdaySettingDesc().map(|x| {
       alloc::string::ToString::to_string(x)
     });
@@ -2714,10 +2340,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
       alloc::string::ToString::to_string(x)
     });
     let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled();
-    let isSoCharEnabled = self.isSoCharEnabled();
-    let avgReaderModeDefaultSetting = self.avgReaderModeDefaultSetting().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
     clz_Torappu_GameDataConstsT {
       maxPlayerLevel,
       playerExpMap,
@@ -2743,9 +2365,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
       diamondToShdRate,
       requestSameFriendCD,
       baseMaxFriendNum,
-      maxStarFriendNum,
-      maxSquadAssistDisplayNum,
-      friendStarEditTrackTs,
       hardDiamondDrop,
       instFinDmdShdCost,
       easyCrystalBonus,
@@ -2818,7 +2437,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
       isClassicGachaPoolFuncEnabled,
       isSpecialGachaPoolFuncEnabled,
       isVoucherClassicItemDistinguishable,
-      isRecalRuneFuncEnabled,
       voucherSkinRedeem,
       voucherSkinDesc,
       charmEquipCount,
@@ -2834,7 +2452,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
       multipleActionOpen,
       subProfessionDamageTypePairs,
       classicProtectChar,
-      feverGameData,
       birthdaySettingDesc,
       birthdaySettingConfirmDesc,
       birthdaySettingLeapConfirmDesc,
@@ -2842,8 +2459,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
       leapBirthdayRewardDay,
       birthdaySettingShowStageId,
       isBirthdayFuncEnabled,
-      isSoCharEnabled,
-      avgReaderModeDefaultSetting,
     }
   }
 
@@ -3014,27 +2629,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts::VT_BASEMAXFRIENDNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn maxStarFriendNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts::VT_MAXSTARFRIENDNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn maxSquadAssistDisplayNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_GameDataConsts::VT_MAXSQUADASSISTDISPLAYNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn friendStarEditTrackTs(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_GameDataConsts::VT_FRIENDSTAREDITTRACKTS, Some(0)).unwrap()}
   }
   #[inline]
   pub fn hardDiamondDrop(&self) -> i32 {
@@ -3541,13 +3135,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     unsafe { self._tab.get::<bool>(clz_Torappu_GameDataConsts::VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE, Some(false)).unwrap()}
   }
   #[inline]
-  pub fn isRecalRuneFuncEnabled(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_GameDataConsts::VT_ISRECALRUNEFUNCENABLED, Some(false)).unwrap()}
-  }
-  #[inline]
   pub fn voucherSkinRedeem(&self) -> i32 {
     // Safety:
     // Created from valid Table for this object
@@ -3653,13 +3240,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_GameDataConsts::VT_CLASSICPROTECTCHAR, None)}
   }
   #[inline]
-  pub fn feverGameData(&self) -> Option<clz_Torappu_GameDataConsts_FeverGameData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_FeverGameData>>(clz_Torappu_GameDataConsts::VT_FEVERGAMEDATA, None)}
-  }
-  #[inline]
   pub fn birthdaySettingDesc(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
@@ -3708,20 +3288,6 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<bool>(clz_Torappu_GameDataConsts::VT_ISBIRTHDAYFUNCENABLED, Some(false)).unwrap()}
   }
-  #[inline]
-  pub fn isSoCharEnabled(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_GameDataConsts::VT_ISSOCHARENABLED, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn avgReaderModeDefaultSetting(&self) -> Option<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>(clz_Torappu_GameDataConsts::VT_AVGREADERMODEDEFAULTSETTING, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
@@ -3754,9 +3320,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
      .visit_field::<i32>("diamondToShdRate", Self::VT_DIAMONDTOSHDRATE, false)?
      .visit_field::<i32>("requestSameFriendCD", Self::VT_REQUESTSAMEFRIENDCD, false)?
      .visit_field::<i32>("baseMaxFriendNum", Self::VT_BASEMAXFRIENDNUM, false)?
-     .visit_field::<i32>("maxStarFriendNum", Self::VT_MAXSTARFRIENDNUM, false)?
-     .visit_field::<i32>("maxSquadAssistDisplayNum", Self::VT_MAXSQUADASSISTDISPLAYNUM, false)?
-     .visit_field::<i64>("friendStarEditTrackTs", Self::VT_FRIENDSTAREDITTRACKTS, false)?
      .visit_field::<i32>("hardDiamondDrop", Self::VT_HARDDIAMONDDROP, false)?
      .visit_field::<i32>("instFinDmdShdCost", Self::VT_INSTFINDMDSHDCOST, false)?
      .visit_field::<i32>("easyCrystalBonus", Self::VT_EASYCRYSTALBONUS, false)?
@@ -3829,7 +3392,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
      .visit_field::<bool>("isClassicGachaPoolFuncEnabled", Self::VT_ISCLASSICGACHAPOOLFUNCENABLED, false)?
      .visit_field::<bool>("isSpecialGachaPoolFuncEnabled", Self::VT_ISSPECIALGACHAPOOLFUNCENABLED, false)?
      .visit_field::<bool>("isVoucherClassicItemDistinguishable", Self::VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE, false)?
-     .visit_field::<bool>("isRecalRuneFuncEnabled", Self::VT_ISRECALRUNEFUNCENABLED, false)?
      .visit_field::<i32>("voucherSkinRedeem", Self::VT_VOUCHERSKINREDEEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("voucherSkinDesc", Self::VT_VOUCHERSKINDESC, false)?
      .visit_field::<i32>("charmEquipCount", Self::VT_CHARMEQUIPCOUNT, false)?
@@ -3845,7 +3407,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
      .visit_field::<bool>("multipleActionOpen", Self::VT_MULTIPLEACTIONOPEN, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__enum__Torappu_SubProfessionAttackType>>>>("subProfessionDamageTypePairs", Self::VT_SUBPROFESSIONDAMAGETYPEPAIRS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("classicProtectChar", Self::VT_CLASSICPROTECTCHAR, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_FeverGameData>>("feverGameData", Self::VT_FEVERGAMEDATA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("birthdaySettingDesc", Self::VT_BIRTHDAYSETTINGDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("birthdaySettingConfirmDesc", Self::VT_BIRTHDAYSETTINGCONFIRMDESC, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("birthdaySettingLeapConfirmDesc", Self::VT_BIRTHDAYSETTINGLEAPCONFIRMDESC, false)?
@@ -3853,8 +3414,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
      .visit_field::<i32>("leapBirthdayRewardDay", Self::VT_LEAPBIRTHDAYREWARDDAY, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("birthdaySettingShowStageId", Self::VT_BIRTHDAYSETTINGSHOWSTAGEID, false)?
      .visit_field::<bool>("isBirthdayFuncEnabled", Self::VT_ISBIRTHDAYFUNCENABLED, false)?
-     .visit_field::<bool>("isSoCharEnabled", Self::VT_ISSOCHARENABLED, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>("avgReaderModeDefaultSetting", Self::VT_AVGREADERMODEDEFAULTSETTING, false)?
      .finish();
     Ok(())
   }
@@ -3884,9 +3443,6 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub diamondToShdRate: i32,
     pub requestSameFriendCD: i32,
     pub baseMaxFriendNum: i32,
-    pub maxStarFriendNum: i32,
-    pub maxSquadAssistDisplayNum: i32,
-    pub friendStarEditTrackTs: i64,
     pub hardDiamondDrop: i32,
     pub instFinDmdShdCost: i32,
     pub easyCrystalBonus: i32,
@@ -3959,7 +3515,6 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub isClassicGachaPoolFuncEnabled: bool,
     pub isSpecialGachaPoolFuncEnabled: bool,
     pub isVoucherClassicItemDistinguishable: bool,
-    pub isRecalRuneFuncEnabled: bool,
     pub voucherSkinRedeem: i32,
     pub voucherSkinDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub charmEquipCount: i32,
@@ -3975,7 +3530,6 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub multipleActionOpen: bool,
     pub subProfessionDamageTypePairs: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__enum__Torappu_SubProfessionAttackType<'a>>>>>,
     pub classicProtectChar: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub feverGameData: Option<::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'a>>>,
     pub birthdaySettingDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub birthdaySettingConfirmDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub birthdaySettingLeapConfirmDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -3983,8 +3537,6 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub leapBirthdayRewardDay: i32,
     pub birthdaySettingShowStageId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub isBirthdayFuncEnabled: bool,
-    pub isSoCharEnabled: bool,
-    pub avgReaderModeDefaultSetting: Option<::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>>>,
 }
 impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
   #[inline]
@@ -4014,9 +3566,6 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
       diamondToShdRate: 0,
       requestSameFriendCD: 0,
       baseMaxFriendNum: 0,
-      maxStarFriendNum: 0,
-      maxSquadAssistDisplayNum: 0,
-      friendStarEditTrackTs: 0,
       hardDiamondDrop: 0,
       instFinDmdShdCost: 0,
       easyCrystalBonus: 0,
@@ -4089,7 +3638,6 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
       isClassicGachaPoolFuncEnabled: false,
       isSpecialGachaPoolFuncEnabled: false,
       isVoucherClassicItemDistinguishable: false,
-      isRecalRuneFuncEnabled: false,
       voucherSkinRedeem: 0,
       voucherSkinDesc: None,
       charmEquipCount: 0,
@@ -4105,7 +3653,6 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
       multipleActionOpen: false,
       subProfessionDamageTypePairs: None,
       classicProtectChar: None,
-      feverGameData: None,
       birthdaySettingDesc: None,
       birthdaySettingConfirmDesc: None,
       birthdaySettingLeapConfirmDesc: None,
@@ -4113,8 +3660,6 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
       leapBirthdayRewardDay: 0,
       birthdaySettingShowStageId: None,
       isBirthdayFuncEnabled: false,
-      isSoCharEnabled: false,
-      avgReaderModeDefaultSetting: None,
     }
   }
 }
@@ -4220,18 +3765,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBui
   #[inline]
   pub fn add_baseMaxFriendNum(&mut self, baseMaxFriendNum: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts::VT_BASEMAXFRIENDNUM, baseMaxFriendNum, 0);
-  }
-  #[inline]
-  pub fn add_maxStarFriendNum(&mut self, maxStarFriendNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts::VT_MAXSTARFRIENDNUM, maxStarFriendNum, 0);
-  }
-  #[inline]
-  pub fn add_maxSquadAssistDisplayNum(&mut self, maxSquadAssistDisplayNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts::VT_MAXSQUADASSISTDISPLAYNUM, maxSquadAssistDisplayNum, 0);
-  }
-  #[inline]
-  pub fn add_friendStarEditTrackTs(&mut self, friendStarEditTrackTs: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_GameDataConsts::VT_FRIENDSTAREDITTRACKTS, friendStarEditTrackTs, 0);
   }
   #[inline]
   pub fn add_hardDiamondDrop(&mut self, hardDiamondDrop: i32) {
@@ -4522,10 +4055,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBui
     self.fbb_.push_slot::<bool>(clz_Torappu_GameDataConsts::VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE, isVoucherClassicItemDistinguishable, false);
   }
   #[inline]
-  pub fn add_isRecalRuneFuncEnabled(&mut self, isRecalRuneFuncEnabled: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_GameDataConsts::VT_ISRECALRUNEFUNCENABLED, isRecalRuneFuncEnabled, false);
-  }
-  #[inline]
   pub fn add_voucherSkinRedeem(&mut self, voucherSkinRedeem: i32) {
     self.fbb_.push_slot::<i32>(clz_Torappu_GameDataConsts::VT_VOUCHERSKINREDEEM, voucherSkinRedeem, 0);
   }
@@ -4586,10 +4115,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBui
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_GameDataConsts::VT_CLASSICPROTECTCHAR, classicProtectChar);
   }
   #[inline]
-  pub fn add_feverGameData(&mut self, feverGameData: ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData>>(clz_Torappu_GameDataConsts::VT_FEVERGAMEDATA, feverGameData);
-  }
-  #[inline]
   pub fn add_birthdaySettingDesc(&mut self, birthdaySettingDesc: ::flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_GameDataConsts::VT_BIRTHDAYSETTINGDESC, birthdaySettingDesc);
   }
@@ -4616,14 +4141,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBui
   #[inline]
   pub fn add_isBirthdayFuncEnabled(&mut self, isBirthdayFuncEnabled: bool) {
     self.fbb_.push_slot::<bool>(clz_Torappu_GameDataConsts::VT_ISBIRTHDAYFUNCENABLED, isBirthdayFuncEnabled, false);
-  }
-  #[inline]
-  pub fn add_isSoCharEnabled(&mut self, isSoCharEnabled: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_GameDataConsts::VT_ISSOCHARENABLED, isSoCharEnabled, false);
-  }
-  #[inline]
-  pub fn add_avgReaderModeDefaultSetting(&mut self, avgReaderModeDefaultSetting: ::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>(clz_Torappu_GameDataConsts::VT_AVGREADERMODEDEFAULTSETTING, avgReaderModeDefaultSetting);
   }
   #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_GameDataConstsBuilder<'a, 'b, A> {
@@ -4667,9 +4184,6 @@ impl ::core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
       ds.field("diamondToShdRate", &self.diamondToShdRate());
       ds.field("requestSameFriendCD", &self.requestSameFriendCD());
       ds.field("baseMaxFriendNum", &self.baseMaxFriendNum());
-      ds.field("maxStarFriendNum", &self.maxStarFriendNum());
-      ds.field("maxSquadAssistDisplayNum", &self.maxSquadAssistDisplayNum());
-      ds.field("friendStarEditTrackTs", &self.friendStarEditTrackTs());
       ds.field("hardDiamondDrop", &self.hardDiamondDrop());
       ds.field("instFinDmdShdCost", &self.instFinDmdShdCost());
       ds.field("easyCrystalBonus", &self.easyCrystalBonus());
@@ -4742,7 +4256,6 @@ impl ::core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
       ds.field("isClassicGachaPoolFuncEnabled", &self.isClassicGachaPoolFuncEnabled());
       ds.field("isSpecialGachaPoolFuncEnabled", &self.isSpecialGachaPoolFuncEnabled());
       ds.field("isVoucherClassicItemDistinguishable", &self.isVoucherClassicItemDistinguishable());
-      ds.field("isRecalRuneFuncEnabled", &self.isRecalRuneFuncEnabled());
       ds.field("voucherSkinRedeem", &self.voucherSkinRedeem());
       ds.field("voucherSkinDesc", &self.voucherSkinDesc());
       ds.field("charmEquipCount", &self.charmEquipCount());
@@ -4758,7 +4271,6 @@ impl ::core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
       ds.field("multipleActionOpen", &self.multipleActionOpen());
       ds.field("subProfessionDamageTypePairs", &self.subProfessionDamageTypePairs());
       ds.field("classicProtectChar", &self.classicProtectChar());
-      ds.field("feverGameData", &self.feverGameData());
       ds.field("birthdaySettingDesc", &self.birthdaySettingDesc());
       ds.field("birthdaySettingConfirmDesc", &self.birthdaySettingConfirmDesc());
       ds.field("birthdaySettingLeapConfirmDesc", &self.birthdaySettingLeapConfirmDesc());
@@ -4766,8 +4278,6 @@ impl ::core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
       ds.field("leapBirthdayRewardDay", &self.leapBirthdayRewardDay());
       ds.field("birthdaySettingShowStageId", &self.birthdaySettingShowStageId());
       ds.field("isBirthdayFuncEnabled", &self.isBirthdayFuncEnabled());
-      ds.field("isSoCharEnabled", &self.isSoCharEnabled());
-      ds.field("avgReaderModeDefaultSetting", &self.avgReaderModeDefaultSetting());
       ds.finish()
   }
 }
@@ -4798,9 +4308,6 @@ pub struct clz_Torappu_GameDataConstsT {
   pub diamondToShdRate: i32,
   pub requestSameFriendCD: i32,
   pub baseMaxFriendNum: i32,
-  pub maxStarFriendNum: i32,
-  pub maxSquadAssistDisplayNum: i32,
-  pub friendStarEditTrackTs: i64,
   pub hardDiamondDrop: i32,
   pub instFinDmdShdCost: i32,
   pub easyCrystalBonus: i32,
@@ -4873,7 +4380,6 @@ pub struct clz_Torappu_GameDataConstsT {
   pub isClassicGachaPoolFuncEnabled: bool,
   pub isSpecialGachaPoolFuncEnabled: bool,
   pub isVoucherClassicItemDistinguishable: bool,
-  pub isRecalRuneFuncEnabled: bool,
   pub voucherSkinRedeem: i32,
   pub voucherSkinDesc: Option<alloc::string::String>,
   pub charmEquipCount: i32,
@@ -4889,7 +4395,6 @@ pub struct clz_Torappu_GameDataConstsT {
   pub multipleActionOpen: bool,
   pub subProfessionDamageTypePairs: Option<alloc::vec::Vec<dict__string__enum__Torappu_SubProfessionAttackTypeT>>,
   pub classicProtectChar: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub feverGameData: Option<alloc::boxed::Box<clz_Torappu_GameDataConsts_FeverGameDataT>>,
   pub birthdaySettingDesc: Option<alloc::string::String>,
   pub birthdaySettingConfirmDesc: Option<alloc::string::String>,
   pub birthdaySettingLeapConfirmDesc: Option<alloc::string::String>,
@@ -4897,8 +4402,6 @@ pub struct clz_Torappu_GameDataConstsT {
   pub leapBirthdayRewardDay: i32,
   pub birthdaySettingShowStageId: Option<alloc::string::String>,
   pub isBirthdayFuncEnabled: bool,
-  pub isSoCharEnabled: bool,
-  pub avgReaderModeDefaultSetting: Option<alloc::boxed::Box<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT>>,
 }
 impl Default for clz_Torappu_GameDataConstsT {
   fn default() -> Self {
@@ -4927,9 +4430,6 @@ impl Default for clz_Torappu_GameDataConstsT {
       diamondToShdRate: 0,
       requestSameFriendCD: 0,
       baseMaxFriendNum: 0,
-      maxStarFriendNum: 0,
-      maxSquadAssistDisplayNum: 0,
-      friendStarEditTrackTs: 0,
       hardDiamondDrop: 0,
       instFinDmdShdCost: 0,
       easyCrystalBonus: 0,
@@ -5002,7 +4502,6 @@ impl Default for clz_Torappu_GameDataConstsT {
       isClassicGachaPoolFuncEnabled: false,
       isSpecialGachaPoolFuncEnabled: false,
       isVoucherClassicItemDistinguishable: false,
-      isRecalRuneFuncEnabled: false,
       voucherSkinRedeem: 0,
       voucherSkinDesc: None,
       charmEquipCount: 0,
@@ -5018,7 +4517,6 @@ impl Default for clz_Torappu_GameDataConstsT {
       multipleActionOpen: false,
       subProfessionDamageTypePairs: None,
       classicProtectChar: None,
-      feverGameData: None,
       birthdaySettingDesc: None,
       birthdaySettingConfirmDesc: None,
       birthdaySettingLeapConfirmDesc: None,
@@ -5026,8 +4524,6 @@ impl Default for clz_Torappu_GameDataConstsT {
       leapBirthdayRewardDay: 0,
       birthdaySettingShowStageId: None,
       isBirthdayFuncEnabled: false,
-      isSoCharEnabled: false,
-      avgReaderModeDefaultSetting: None,
     }
   }
 }
@@ -5076,9 +4572,6 @@ impl clz_Torappu_GameDataConstsT {
     let diamondToShdRate = self.diamondToShdRate;
     let requestSameFriendCD = self.requestSameFriendCD;
     let baseMaxFriendNum = self.baseMaxFriendNum;
-    let maxStarFriendNum = self.maxStarFriendNum;
-    let maxSquadAssistDisplayNum = self.maxSquadAssistDisplayNum;
-    let friendStarEditTrackTs = self.friendStarEditTrackTs;
     let hardDiamondDrop = self.hardDiamondDrop;
     let instFinDmdShdCost = self.instFinDmdShdCost;
     let easyCrystalBonus = self.easyCrystalBonus;
@@ -5205,7 +4698,6 @@ impl clz_Torappu_GameDataConstsT {
     let isClassicGachaPoolFuncEnabled = self.isClassicGachaPoolFuncEnabled;
     let isSpecialGachaPoolFuncEnabled = self.isSpecialGachaPoolFuncEnabled;
     let isVoucherClassicItemDistinguishable = self.isVoucherClassicItemDistinguishable;
-    let isRecalRuneFuncEnabled = self.isRecalRuneFuncEnabled;
     let voucherSkinRedeem = self.voucherSkinRedeem;
     let voucherSkinDesc = self.voucherSkinDesc.as_ref().map(|x|{
       _fbb.create_string(x)
@@ -5241,9 +4733,6 @@ impl clz_Torappu_GameDataConstsT {
     let classicProtectChar = self.classicProtectChar.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
-    let feverGameData = self.feverGameData.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
     let birthdaySettingDesc = self.birthdaySettingDesc.as_ref().map(|x|{
       _fbb.create_string(x)
     });
@@ -5259,10 +4748,6 @@ impl clz_Torappu_GameDataConstsT {
       _fbb.create_string(x)
     });
     let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled;
-    let isSoCharEnabled = self.isSoCharEnabled;
-    let avgReaderModeDefaultSetting = self.avgReaderModeDefaultSetting.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
     clz_Torappu_GameDataConsts::create(_fbb, &clz_Torappu_GameDataConstsArgs{
       maxPlayerLevel,
       playerExpMap,
@@ -5288,9 +4773,6 @@ impl clz_Torappu_GameDataConstsT {
       diamondToShdRate,
       requestSameFriendCD,
       baseMaxFriendNum,
-      maxStarFriendNum,
-      maxSquadAssistDisplayNum,
-      friendStarEditTrackTs,
       hardDiamondDrop,
       instFinDmdShdCost,
       easyCrystalBonus,
@@ -5363,7 +4845,6 @@ impl clz_Torappu_GameDataConstsT {
       isClassicGachaPoolFuncEnabled,
       isSpecialGachaPoolFuncEnabled,
       isVoucherClassicItemDistinguishable,
-      isRecalRuneFuncEnabled,
       voucherSkinRedeem,
       voucherSkinDesc,
       charmEquipCount,
@@ -5379,7 +4860,6 @@ impl clz_Torappu_GameDataConstsT {
       multipleActionOpen,
       subProfessionDamageTypePairs,
       classicProtectChar,
-      feverGameData,
       birthdaySettingDesc,
       birthdaySettingConfirmDesc,
       birthdaySettingLeapConfirmDesc,
@@ -5387,8 +4867,6 @@ impl clz_Torappu_GameDataConstsT {
       leapBirthdayRewardDay,
       birthdaySettingShowStageId,
       isBirthdayFuncEnabled,
-      isSoCharEnabled,
-      avgReaderModeDefaultSetting,
     })
   }
 }

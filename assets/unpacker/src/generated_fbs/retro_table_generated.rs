@@ -8,10 +8,10 @@ extern crate serde;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
   enum__Torappu_ItemType::NONE,
   enum__Torappu_ItemType::CHAR,
   enum__Torappu_ItemType::CARD_EXP,
@@ -97,14 +97,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
   enum__Torappu_ItemType::EMOTICON_SET,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
   enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
-  enum__Torappu_ItemType::SO_CHAR_EXP,
-  enum__Torappu_ItemType::GIFTPACKAGE_TKT,
-  enum__Torappu_ItemType::VOUCHER_SKIN_V2,
-  enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
-  enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
-  enum__Torappu_ItemType::PLOT_ITEM,
-  enum__Torappu_ItemType::MAGAZINE_LEAF,
-  enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -197,17 +189,9 @@ impl enum__Torappu_ItemType {
   pub const EMOTICON_SET: Self = Self(82);
   pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
   pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
-  pub const SO_CHAR_EXP: Self = Self(85);
-  pub const GIFTPACKAGE_TKT: Self = Self(86);
-  pub const VOUCHER_SKIN_V2: Self = Self(87);
-  pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
-  pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
-  pub const PLOT_ITEM: Self = Self(90);
-  pub const MAGAZINE_LEAF: Self = Self(91);
-  pub const STICKER: Self = Self(92);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 92;
+  pub const ENUM_MAX: i32 = 84;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::CHAR,
@@ -294,14 +278,6 @@ impl enum__Torappu_ItemType {
     Self::EMOTICON_SET,
     Self::EXCLUSIVE_TKT_GACHA,
     Self::EXCLUSIVE_TKT_GACHA_10,
-    Self::SO_CHAR_EXP,
-    Self::GIFTPACKAGE_TKT,
-    Self::VOUCHER_SKIN_V2,
-    Self::RANDOM_VOUCHER_SKIN,
-    Self::ACT1VHALFIDLE_ITEM,
-    Self::PLOT_ITEM,
-    Self::MAGAZINE_LEAF,
-    Self::STICKER,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -391,14 +367,6 @@ impl enum__Torappu_ItemType {
       Self::EMOTICON_SET => Some("EMOTICON_SET"),
       Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
       Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
-      Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
-      Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
-      Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
-      Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
-      Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
-      Self::PLOT_ITEM => Some("PLOT_ITEM"),
-      Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
-      Self::STICKER => Some("STICKER"),
       _ => None,
     }
   }
@@ -476,10 +444,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_STAGE_DROP_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_STAGE_DROP_TYPE: i32 = 12;
+pub const ENUM_MAX_ENUM__TORAPPU_STAGE_DROP_TYPE: i32 = 11;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_STAGE_DROP_TYPE: [enum__Torappu_StageDropType; 13] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_STAGE_DROP_TYPE: [enum__Torappu_StageDropType; 12] = [
   enum__Torappu_StageDropType::NONE,
   enum__Torappu_StageDropType::ONCE,
   enum__Torappu_StageDropType::NORMAL,
@@ -492,7 +460,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_STAGE_DROP_TYPE: [enum__Torappu_StageDropTyp
   enum__Torappu_StageDropType::CHARM_DROP,
   enum__Torappu_StageDropType::OVERRIDE_DROP,
   enum__Torappu_StageDropType::ITEM_RETURN,
-  enum__Torappu_StageDropType::CONDITION_DROP,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -512,10 +479,9 @@ impl enum__Torappu_StageDropType {
   pub const CHARM_DROP: Self = Self(9);
   pub const OVERRIDE_DROP: Self = Self(10);
   pub const ITEM_RETURN: Self = Self(11);
-  pub const CONDITION_DROP: Self = Self(12);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 12;
+  pub const ENUM_MAX: i32 = 11;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::ONCE,
@@ -529,7 +495,6 @@ impl enum__Torappu_StageDropType {
     Self::CHARM_DROP,
     Self::OVERRIDE_DROP,
     Self::ITEM_RETURN,
-    Self::CONDITION_DROP,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -546,7 +511,6 @@ impl enum__Torappu_StageDropType {
       Self::CHARM_DROP => Some("CHARM_DROP"),
       Self::OVERRIDE_DROP => Some("OVERRIDE_DROP"),
       Self::ITEM_RETURN => Some("ITEM_RETURN"),
-      Self::CONDITION_DROP => Some("CONDITION_DROP"),
       _ => None,
     }
   }
@@ -852,10 +816,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_RetroType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 62;
+pub const ENUM_MAX_ENUM__TORAPPU_ACTIVITY_TYPE: i32 = 55;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 63] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 56] = [
   enum__Torappu_ActivityType::DEFAULT,
   enum__Torappu_ActivityType::MISSION_ONLY,
   enum__Torappu_ActivityType::CHECKIN_ONLY,
@@ -911,13 +875,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACTIVITY_TYPE: [enum__Torappu_ActivityType; 
   enum__Torappu_ActivityType::ENEMY_DUEL,
   enum__Torappu_ActivityType::VEC_BREAK_V2,
   enum__Torappu_ActivityType::TYPE_ACT42SIDE,
-  enum__Torappu_ActivityType::TYPE_ACT44SIDE,
-  enum__Torappu_ActivityType::HALFIDLE_VERIFY1,
-  enum__Torappu_ActivityType::TYPE_ACT45SIDE,
-  enum__Torappu_ActivityType::TEAM_QUEST,
-  enum__Torappu_ActivityType::RECRUIT_ONLY,
-  enum__Torappu_ActivityType::TYPE_ACT46SIDE,
-  enum__Torappu_ActivityType::AUTOCHESS_SEASON,
   enum__Torappu_ActivityType::ENUM,
 ];
 
@@ -981,17 +938,10 @@ impl enum__Torappu_ActivityType {
   pub const ENEMY_DUEL: Self = Self(52);
   pub const VEC_BREAK_V2: Self = Self(53);
   pub const TYPE_ACT42SIDE: Self = Self(54);
-  pub const TYPE_ACT44SIDE: Self = Self(55);
-  pub const HALFIDLE_VERIFY1: Self = Self(56);
-  pub const TYPE_ACT45SIDE: Self = Self(57);
-  pub const TEAM_QUEST: Self = Self(58);
-  pub const RECRUIT_ONLY: Self = Self(59);
-  pub const TYPE_ACT46SIDE: Self = Self(60);
-  pub const AUTOCHESS_SEASON: Self = Self(61);
-  pub const ENUM: Self = Self(62);
+  pub const ENUM: Self = Self(55);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 62;
+  pub const ENUM_MAX: i32 = 55;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::DEFAULT,
     Self::MISSION_ONLY,
@@ -1048,13 +998,6 @@ impl enum__Torappu_ActivityType {
     Self::ENEMY_DUEL,
     Self::VEC_BREAK_V2,
     Self::TYPE_ACT42SIDE,
-    Self::TYPE_ACT44SIDE,
-    Self::HALFIDLE_VERIFY1,
-    Self::TYPE_ACT45SIDE,
-    Self::TEAM_QUEST,
-    Self::RECRUIT_ONLY,
-    Self::TYPE_ACT46SIDE,
-    Self::AUTOCHESS_SEASON,
     Self::ENUM,
   ];
   /// Returns the variant's name or "" if unknown.
@@ -1115,13 +1058,6 @@ impl enum__Torappu_ActivityType {
       Self::ENEMY_DUEL => Some("ENEMY_DUEL"),
       Self::VEC_BREAK_V2 => Some("VEC_BREAK_V2"),
       Self::TYPE_ACT42SIDE => Some("TYPE_ACT42SIDE"),
-      Self::TYPE_ACT44SIDE => Some("TYPE_ACT44SIDE"),
-      Self::HALFIDLE_VERIFY1 => Some("HALFIDLE_VERIFY1"),
-      Self::TYPE_ACT45SIDE => Some("TYPE_ACT45SIDE"),
-      Self::TEAM_QUEST => Some("TEAM_QUEST"),
-      Self::RECRUIT_ONLY => Some("RECRUIT_ONLY"),
-      Self::TYPE_ACT46SIDE => Some("TYPE_ACT46SIDE"),
-      Self::AUTOCHESS_SEASON => Some("AUTOCHESS_SEASON"),
       Self::ENUM => Some("ENUM"),
       _ => None,
     }
@@ -2360,10 +2296,10 @@ impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Act17sideData_Treasu
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 27;
+pub const ENUM_MAX_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: i32 = 25;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 28] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveType; 26] = [
   enum__Torappu_ActArchiveType::NONE,
   enum__Torappu_ActArchiveType::TIMELINE,
   enum__Torappu_ActArchiveType::MUSIC,
@@ -2390,8 +2326,6 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ACT_ARCHIVE_TYPE: [enum__Torappu_ActArchiveT
   enum__Torappu_ActArchiveType::QUEST,
   enum__Torappu_ActArchiveType::FRAGMENT,
   enum__Torappu_ActArchiveType::DISASTER,
-  enum__Torappu_ActArchiveType::COPPER,
-  enum__Torappu_ActArchiveType::WRATH,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -2425,11 +2359,9 @@ impl enum__Torappu_ActArchiveType {
   pub const QUEST: Self = Self(23);
   pub const FRAGMENT: Self = Self(24);
   pub const DISASTER: Self = Self(25);
-  pub const COPPER: Self = Self(26);
-  pub const WRATH: Self = Self(27);
 
   pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 27;
+  pub const ENUM_MAX: i32 = 25;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::NONE,
     Self::TIMELINE,
@@ -2457,8 +2389,6 @@ impl enum__Torappu_ActArchiveType {
     Self::QUEST,
     Self::FRAGMENT,
     Self::DISASTER,
-    Self::COPPER,
-    Self::WRATH,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -2489,8 +2419,6 @@ impl enum__Torappu_ActArchiveType {
       Self::QUEST => Some("QUEST"),
       Self::FRAGMENT => Some("FRAGMENT"),
       Self::DISASTER => Some("DISASTER"),
-      Self::COPPER => Some("COPPER"),
-      Self::WRATH => Some("WRATH"),
       _ => None,
     }
   }
@@ -3269,118 +3197,6 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_Battle_SideType {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_Battle_SideType {}
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_TILE_DATA_HEIGHT_TYPE_MASK: [enum__Torappu_TileData_HeightTypeMask; 4] = [
-  enum__Torappu_TileData_HeightTypeMask::NONE,
-  enum__Torappu_TileData_HeightTypeMask::LOWLAND,
-  enum__Torappu_TileData_HeightTypeMask::HIGHLAND,
-  enum__Torappu_TileData_HeightTypeMask::ALL,
-];
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct enum__Torappu_TileData_HeightTypeMask(pub i32);
-#[allow(non_upper_case_globals)]
-impl enum__Torappu_TileData_HeightTypeMask {
-  pub const NONE: Self = Self(0);
-  pub const LOWLAND: Self = Self(1);
-  pub const HIGHLAND: Self = Self(2);
-  pub const ALL: Self = Self(3);
-
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::LOWLAND,
-    Self::HIGHLAND,
-    Self::ALL,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::LOWLAND => Some("LOWLAND"),
-      Self::HIGHLAND => Some("HIGHLAND"),
-      Self::ALL => Some("ALL"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for enum__Torappu_TileData_HeightTypeMask {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for enum__Torappu_TileData_HeightTypeMask {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_TileData_HeightTypeMask::ENUM_VALUES {
-            if let Some(item_name) = item.variant_name() {
-                if item_name == s {
-                    return Ok(item.clone());
-                }
-            }
-        }
-        Err(serde::de::Error::custom(format!(
-            "Unknown enum__Torappu_TileData_HeightTypeMask variant: {s}"
-        )))
-    }
-}
-
-impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_TileData_HeightTypeMask {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
-
-impl ::flatbuffers::Push for enum__Torappu_TileData_HeightTypeMask {
-    type Output = enum__Torappu_TileData_HeightTypeMask;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
-
-impl ::flatbuffers::EndianScalar for enum__Torappu_TileData_HeightTypeMask {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
-
-impl<'a> ::flatbuffers::Verifiable for enum__Torappu_TileData_HeightTypeMask {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
-
-impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_TileData_HeightTypeMask {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_ENUM__TORAPPU_ACT_17SIDE_DATA_CHAPTER_ICON_TYPE: i32 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
@@ -5776,7 +5592,6 @@ impl<'a> clz_Torappu_RetroActData<'a> {
   pub const VT_HAVETRAIL: ::flatbuffers::VOffsetT = 18;
   pub const VT_CUSTOMACTID: ::flatbuffers::VOffsetT = 20;
   pub const VT_CUSTOMACTTYPE: ::flatbuffers::VOffsetT = 22;
-  pub const VT_TRAPDOMAINID: ::flatbuffers::VOffsetT = 24;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -5790,7 +5605,6 @@ impl<'a> clz_Torappu_RetroActData<'a> {
     let mut builder = clz_Torappu_RetroActDataBuilder::new(_fbb);
     builder.add_trailStartTime(args.trailStartTime);
     builder.add_startTime(args.startTime);
-    if let Some(x) = args.trapDomainId { builder.add_trapDomainId(x); }
     builder.add_customActType(args.customActType);
     if let Some(x) = args.customActId { builder.add_customActId(x); }
     if let Some(x) = args.name { builder.add_name(x); }
@@ -5821,9 +5635,6 @@ impl<'a> clz_Torappu_RetroActData<'a> {
       alloc::string::ToString::to_string(x)
     });
     let customActType = self.customActType();
-    let trapDomainId = self.trapDomainId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_RetroActDataT {
       retroId,
       type_,
@@ -5835,7 +5646,6 @@ impl<'a> clz_Torappu_RetroActData<'a> {
       haveTrail,
       customActId,
       customActType,
-      trapDomainId,
     }
   }
 
@@ -5909,13 +5719,6 @@ impl<'a> clz_Torappu_RetroActData<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<enum__Torappu_ActivityType>(clz_Torappu_RetroActData::VT_CUSTOMACTTYPE, Some(enum__Torappu_ActivityType::DEFAULT)).unwrap()}
   }
-  #[inline]
-  pub fn trapDomainId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_RetroActData::VT_TRAPDOMAINID, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RetroActData<'_> {
@@ -5934,7 +5737,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RetroActData<'_> {
      .visit_field::<bool>("haveTrail", Self::VT_HAVETRAIL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("customActId", Self::VT_CUSTOMACTID, false)?
      .visit_field::<enum__Torappu_ActivityType>("customActType", Self::VT_CUSTOMACTTYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("trapDomainId", Self::VT_TRAPDOMAINID, false)?
      .finish();
     Ok(())
   }
@@ -5950,7 +5752,6 @@ pub struct clz_Torappu_RetroActDataArgs<'a> {
     pub haveTrail: bool,
     pub customActId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub customActType: enum__Torappu_ActivityType,
-    pub trapDomainId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_RetroActDataArgs<'a> {
   #[inline]
@@ -5966,7 +5767,6 @@ impl<'a> Default for clz_Torappu_RetroActDataArgs<'a> {
       haveTrail: false,
       customActId: None,
       customActType: enum__Torappu_ActivityType::DEFAULT,
-      trapDomainId: None,
     }
   }
 }
@@ -6018,10 +5818,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RetroActDataBuild
     self.fbb_.push_slot::<enum__Torappu_ActivityType>(clz_Torappu_RetroActData::VT_CUSTOMACTTYPE, customActType, enum__Torappu_ActivityType::DEFAULT);
   }
   #[inline]
-  pub fn add_trapDomainId(&mut self, trapDomainId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RetroActData::VT_TRAPDOMAINID, trapDomainId);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RetroActDataBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RetroActDataBuilder {
@@ -6049,7 +5845,6 @@ impl ::core::fmt::Debug for clz_Torappu_RetroActData<'_> {
       ds.field("haveTrail", &self.haveTrail());
       ds.field("customActId", &self.customActId());
       ds.field("customActType", &self.customActType());
-      ds.field("trapDomainId", &self.trapDomainId());
       ds.finish()
   }
 }
@@ -6066,7 +5861,6 @@ pub struct clz_Torappu_RetroActDataT {
   pub haveTrail: bool,
   pub customActId: Option<alloc::string::String>,
   pub customActType: enum__Torappu_ActivityType,
-  pub trapDomainId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_RetroActDataT {
   fn default() -> Self {
@@ -6081,7 +5875,6 @@ impl Default for clz_Torappu_RetroActDataT {
       haveTrail: false,
       customActId: None,
       customActType: enum__Torappu_ActivityType::DEFAULT,
-      trapDomainId: None,
     }
   }
 }
@@ -6108,9 +5901,6 @@ impl clz_Torappu_RetroActDataT {
       _fbb.create_string(x)
     });
     let customActType = self.customActType;
-    let trapDomainId = self.trapDomainId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_RetroActData::create(_fbb, &clz_Torappu_RetroActDataArgs{
       retroId,
       type_,
@@ -6122,7 +5912,6 @@ impl clz_Torappu_RetroActDataT {
       haveTrail,
       customActId,
       customActType,
-      trapDomainId,
     })
   }
 }
@@ -7630,8 +7419,6 @@ impl<'a> clz_Torappu_StageData_SpecialStoryInfo<'a> {
   pub const VT_REWARDS: ::flatbuffers::VOffsetT = 6;
   pub const VT_PROGRESSINFO: ::flatbuffers::VOffsetT = 8;
   pub const VT_IMAGEID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_KEYITEMID: ::flatbuffers::VOffsetT = 12;
-  pub const VT_UNLOCKDESC: ::flatbuffers::VOffsetT = 14;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -7643,8 +7430,6 @@ impl<'a> clz_Torappu_StageData_SpecialStoryInfo<'a> {
     args: &'args clz_Torappu_StageData_SpecialStoryInfoArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_StageData_SpecialStoryInfo<'bldr>> {
     let mut builder = clz_Torappu_StageData_SpecialStoryInfoBuilder::new(_fbb);
-    if let Some(x) = args.unlockDesc { builder.add_unlockDesc(x); }
-    if let Some(x) = args.keyItemId { builder.add_keyItemId(x); }
     if let Some(x) = args.imageId { builder.add_imageId(x); }
     if let Some(x) = args.progressInfo { builder.add_progressInfo(x); }
     if let Some(x) = args.rewards { builder.add_rewards(x); }
@@ -7665,19 +7450,11 @@ impl<'a> clz_Torappu_StageData_SpecialStoryInfo<'a> {
     let imageId = self.imageId().map(|x| {
       alloc::string::ToString::to_string(x)
     });
-    let keyItemId = self.keyItemId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let unlockDesc = self.unlockDesc().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
     clz_Torappu_StageData_SpecialStoryInfoT {
       stageId,
       rewards,
       progressInfo,
       imageId,
-      keyItemId,
-      unlockDesc,
     }
   }
 
@@ -7709,20 +7486,6 @@ impl<'a> clz_Torappu_StageData_SpecialStoryInfo<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_StageData_SpecialStoryInfo::VT_IMAGEID, None)}
   }
-  #[inline]
-  pub fn keyItemId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_StageData_SpecialStoryInfo::VT_KEYITEMID, None)}
-  }
-  #[inline]
-  pub fn unlockDesc(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_StageData_SpecialStoryInfo::VT_UNLOCKDESC, None)}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_StageData_SpecialStoryInfo<'_> {
@@ -7735,8 +7498,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_StageData_SpecialStoryInfo<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>>>("rewards", Self::VT_REWARDS, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_StageData_SpecialProgressInfo>>("progressInfo", Self::VT_PROGRESSINFO, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("imageId", Self::VT_IMAGEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("keyItemId", Self::VT_KEYITEMID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("unlockDesc", Self::VT_UNLOCKDESC, false)?
      .finish();
     Ok(())
   }
@@ -7746,8 +7507,6 @@ pub struct clz_Torappu_StageData_SpecialStoryInfoArgs<'a> {
     pub rewards: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>>,
     pub progressInfo: Option<::flatbuffers::WIPOffset<clz_Torappu_StageData_SpecialProgressInfo<'a>>>,
     pub imageId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub keyItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub unlockDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_StageData_SpecialStoryInfoArgs<'a> {
   #[inline]
@@ -7757,8 +7516,6 @@ impl<'a> Default for clz_Torappu_StageData_SpecialStoryInfoArgs<'a> {
       rewards: None,
       progressInfo: None,
       imageId: None,
-      keyItemId: None,
-      unlockDesc: None,
     }
   }
 }
@@ -7786,14 +7543,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_StageData_Special
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_StageData_SpecialStoryInfo::VT_IMAGEID, imageId);
   }
   #[inline]
-  pub fn add_keyItemId(&mut self, keyItemId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_StageData_SpecialStoryInfo::VT_KEYITEMID, keyItemId);
-  }
-  #[inline]
-  pub fn add_unlockDesc(&mut self, unlockDesc: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_StageData_SpecialStoryInfo::VT_UNLOCKDESC, unlockDesc);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_StageData_SpecialStoryInfoBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_StageData_SpecialStoryInfoBuilder {
@@ -7815,8 +7564,6 @@ impl ::core::fmt::Debug for clz_Torappu_StageData_SpecialStoryInfo<'_> {
       ds.field("rewards", &self.rewards());
       ds.field("progressInfo", &self.progressInfo());
       ds.field("imageId", &self.imageId());
-      ds.field("keyItemId", &self.keyItemId());
-      ds.field("unlockDesc", &self.unlockDesc());
       ds.finish()
   }
 }
@@ -7827,8 +7574,6 @@ pub struct clz_Torappu_StageData_SpecialStoryInfoT {
   pub rewards: Option<alloc::vec::Vec<clz_Torappu_ItemBundleT>>,
   pub progressInfo: Option<alloc::boxed::Box<clz_Torappu_StageData_SpecialProgressInfoT>>,
   pub imageId: Option<alloc::string::String>,
-  pub keyItemId: Option<alloc::string::String>,
-  pub unlockDesc: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_StageData_SpecialStoryInfoT {
   fn default() -> Self {
@@ -7837,8 +7582,6 @@ impl Default for clz_Torappu_StageData_SpecialStoryInfoT {
       rewards: None,
       progressInfo: None,
       imageId: None,
-      keyItemId: None,
-      unlockDesc: None,
     }
   }
 }
@@ -7859,19 +7602,11 @@ impl clz_Torappu_StageData_SpecialStoryInfoT {
     let imageId = self.imageId.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let keyItemId = self.keyItemId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let unlockDesc = self.unlockDesc.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
     clz_Torappu_StageData_SpecialStoryInfo::create(_fbb, &clz_Torappu_StageData_SpecialStoryInfoArgs{
       stageId,
       rewards,
       progressInfo,
       imageId,
-      keyItemId,
-      unlockDesc,
     })
   }
 }
@@ -7951,7 +7686,6 @@ impl<'a> clz_Torappu_StageData<'a> {
   pub const VT_SIXSTARDISPLAYREWARDLIST: ::flatbuffers::VOffsetT = 118;
   pub const VT_ADVANCEDRUNEIDLIST1: ::flatbuffers::VOffsetT = 120;
   pub const VT_ADVANCEDRUNEIDLIST2: ::flatbuffers::VOffsetT = 122;
-  pub const VT_USESPECIALSIZEMAPPREVIEW: ::flatbuffers::VOffsetT = 124;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -8008,7 +7742,6 @@ impl<'a> clz_Torappu_StageData<'a> {
     builder.add_performanceStageFlag(args.performanceStageFlag);
     builder.add_difficulty(args.difficulty);
     builder.add_stageType(args.stageType);
-    builder.add_useSpecialSizeMapPreview(args.useSpecialSizeMapPreview);
     builder.add_isStagePatch(args.isStagePatch);
     builder.add_canMultipleBattle(args.canMultipleBattle);
     builder.add_canUseFirework(args.canUseFirework);
@@ -8134,7 +7867,6 @@ impl<'a> clz_Torappu_StageData<'a> {
     let advancedRuneIdList2 = self.advancedRuneIdList2().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
-    let useSpecialSizeMapPreview = self.useSpecialSizeMapPreview();
     clz_Torappu_StageDataT {
       stageType,
       difficulty,
@@ -8196,7 +7928,6 @@ impl<'a> clz_Torappu_StageData<'a> {
       sixStarDisplayRewardList,
       advancedRuneIdList1,
       advancedRuneIdList2,
-      useSpecialSizeMapPreview,
     }
   }
 
@@ -8620,13 +8351,6 @@ impl<'a> clz_Torappu_StageData<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_StageData::VT_ADVANCEDRUNEIDLIST2, None)}
   }
-  #[inline]
-  pub fn useSpecialSizeMapPreview(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_StageData::VT_USESPECIALSIZEMAPPREVIEW, Some(false)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_StageData<'_> {
@@ -8695,7 +8419,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_StageData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>>>("sixStarDisplayRewardList", Self::VT_SIXSTARDISPLAYREWARDLIST, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("advancedRuneIdList1", Self::VT_ADVANCEDRUNEIDLIST1, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("advancedRuneIdList2", Self::VT_ADVANCEDRUNEIDLIST2, false)?
-     .visit_field::<bool>("useSpecialSizeMapPreview", Self::VT_USESPECIALSIZEMAPPREVIEW, false)?
      .finish();
     Ok(())
   }
@@ -8761,7 +8484,6 @@ pub struct clz_Torappu_StageDataArgs<'a> {
     pub sixStarDisplayRewardList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>>,
     pub advancedRuneIdList1: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub advancedRuneIdList2: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub useSpecialSizeMapPreview: bool,
 }
 impl<'a> Default for clz_Torappu_StageDataArgs<'a> {
   #[inline]
@@ -8827,7 +8549,6 @@ impl<'a> Default for clz_Torappu_StageDataArgs<'a> {
       sixStarDisplayRewardList: None,
       advancedRuneIdList1: None,
       advancedRuneIdList2: None,
-      useSpecialSizeMapPreview: false,
     }
   }
 }
@@ -9079,10 +8800,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_StageDataBuilder<
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_StageData::VT_ADVANCEDRUNEIDLIST2, advancedRuneIdList2);
   }
   #[inline]
-  pub fn add_useSpecialSizeMapPreview(&mut self, useSpecialSizeMapPreview: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_StageData::VT_USESPECIALSIZEMAPPREVIEW, useSpecialSizeMapPreview, false);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_StageDataBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_StageDataBuilder {
@@ -9160,7 +8877,6 @@ impl ::core::fmt::Debug for clz_Torappu_StageData<'_> {
       ds.field("sixStarDisplayRewardList", &self.sixStarDisplayRewardList());
       ds.field("advancedRuneIdList1", &self.advancedRuneIdList1());
       ds.field("advancedRuneIdList2", &self.advancedRuneIdList2());
-      ds.field("useSpecialSizeMapPreview", &self.useSpecialSizeMapPreview());
       ds.finish()
   }
 }
@@ -9227,7 +8943,6 @@ pub struct clz_Torappu_StageDataT {
   pub sixStarDisplayRewardList: Option<alloc::vec::Vec<clz_Torappu_ItemBundleT>>,
   pub advancedRuneIdList1: Option<alloc::vec::Vec<alloc::string::String>>,
   pub advancedRuneIdList2: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub useSpecialSizeMapPreview: bool,
 }
 impl Default for clz_Torappu_StageDataT {
   fn default() -> Self {
@@ -9292,7 +9007,6 @@ impl Default for clz_Torappu_StageDataT {
       sixStarDisplayRewardList: None,
       advancedRuneIdList1: None,
       advancedRuneIdList2: None,
-      useSpecialSizeMapPreview: false,
     }
   }
 }
@@ -9407,7 +9121,6 @@ impl clz_Torappu_StageDataT {
     let advancedRuneIdList2 = self.advancedRuneIdList2.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
-    let useSpecialSizeMapPreview = self.useSpecialSizeMapPreview;
     clz_Torappu_StageData::create(_fbb, &clz_Torappu_StageDataArgs{
       stageType,
       difficulty,
@@ -9469,7 +9182,6 @@ impl clz_Torappu_StageDataT {
       sixStarDisplayRewardList,
       advancedRuneIdList1,
       advancedRuneIdList2,
-      useSpecialSizeMapPreview,
     })
   }
 }
@@ -15420,19 +15132,17 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
   pub const VT_PLAYERSIDEMASK: ::flatbuffers::VOffsetT = 8;
   pub const VT_SIDETYPE: ::flatbuffers::VOffsetT = 10;
   pub const VT_CHARIDFILTER: ::flatbuffers::VOffsetT = 12;
-  pub const VT_CHARIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 18;
-  pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 20;
-  pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 22;
-  pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 24;
-  pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 26;
-  pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 28;
-  pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 30;
-  pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 32;
-  pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 34;
-  pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 36;
-  pub const VT_HEIGHTTYPEMASK: ::flatbuffers::VOffsetT = 38;
+  pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 14;
+  pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 16;
+  pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 18;
+  pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 20;
+  pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 22;
+  pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 24;
+  pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 26;
+  pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 28;
+  pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 30;
+  pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 32;
+  pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 34;
 
   #[inline]
   pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -15444,7 +15154,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     args: &'args clz_Torappu_RuneData_SelectorArgs<'args>
   ) -> ::flatbuffers::WIPOffset<clz_Torappu_RuneData_Selector<'bldr>> {
     let mut builder = clz_Torappu_RuneData_SelectorBuilder::new(_fbb);
-    builder.add_heightTypeMask(args.heightTypeMask);
     if let Some(x) = args.mapTagFilter { builder.add_mapTagFilter(x); }
     if let Some(x) = args.subProfessionExcludeFilter { builder.add_subProfessionExcludeFilter(x); }
     if let Some(x) = args.filterTagExcludeFilter { builder.add_filterTagExcludeFilter(x); }
@@ -15456,7 +15165,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     if let Some(x) = args.enemyLevelTypeFilter { builder.add_enemyLevelTypeFilter(x); }
     if let Some(x) = args.enemyIdExcludeFilter { builder.add_enemyIdExcludeFilter(x); }
     if let Some(x) = args.enemyIdFilter { builder.add_enemyIdFilter(x); }
-    if let Some(x) = args.charIdExcludeFilter { builder.add_charIdExcludeFilter(x); }
     if let Some(x) = args.charIdFilter { builder.add_charIdFilter(x); }
     builder.add_sideType(args.sideType);
     builder.add_buildableMask(args.buildableMask);
@@ -15471,9 +15179,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     let playerSideMask = self.playerSideMask();
     let sideType = self.sideType();
     let charIdFilter = self.charIdFilter().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let charIdExcludeFilter = self.charIdExcludeFilter().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
     let enemyIdFilter = self.enemyIdFilter().map(|x| {
@@ -15509,14 +15214,12 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     let mapTagFilter = self.mapTagFilter().map(|x| {
       x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
     });
-    let heightTypeMask = self.heightTypeMask();
     clz_Torappu_RuneData_SelectorT {
       professionMask,
       buildableMask,
       playerSideMask,
       sideType,
       charIdFilter,
-      charIdExcludeFilter,
       enemyIdFilter,
       enemyIdExcludeFilter,
       enemyLevelTypeFilter,
@@ -15528,7 +15231,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
       filterTagExcludeFilter,
       subProfessionExcludeFilter,
       mapTagFilter,
-      heightTypeMask,
     }
   }
 
@@ -15566,13 +15268,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_CHARIDFILTER, None)}
-  }
-  #[inline]
-  pub fn charIdExcludeFilter(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER, None)}
   }
   #[inline]
   pub fn enemyIdFilter(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -15651,13 +15346,6 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_RuneData_Selector::VT_MAPTAGFILTER, None)}
   }
-  #[inline]
-  pub fn heightTypeMask(&self) -> enum__Torappu_TileData_HeightTypeMask {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_TileData_HeightTypeMask>(clz_Torappu_RuneData_Selector::VT_HEIGHTTYPEMASK, Some(enum__Torappu_TileData_HeightTypeMask::NONE)).unwrap()}
-  }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
@@ -15671,7 +15359,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
      .visit_field::<enum__Torappu_PlayerSideMask>("playerSideMask", Self::VT_PLAYERSIDEMASK, false)?
      .visit_field::<enum__Torappu_Battle_SideType>("sideType", Self::VT_SIDETYPE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("charIdFilter", Self::VT_CHARIDFILTER, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("charIdExcludeFilter", Self::VT_CHARIDEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyIdFilter", Self::VT_ENEMYIDFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyIdExcludeFilter", Self::VT_ENEMYIDEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("enemyLevelTypeFilter", Self::VT_ENEMYLEVELTYPEFILTER, false)?
@@ -15683,7 +15370,6 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("filterTagExcludeFilter", Self::VT_FILTERTAGEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("subProfessionExcludeFilter", Self::VT_SUBPROFESSIONEXCLUDEFILTER, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("mapTagFilter", Self::VT_MAPTAGFILTER, false)?
-     .visit_field::<enum__Torappu_TileData_HeightTypeMask>("heightTypeMask", Self::VT_HEIGHTTYPEMASK, false)?
      .finish();
     Ok(())
   }
@@ -15694,7 +15380,6 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub playerSideMask: enum__Torappu_PlayerSideMask,
     pub sideType: enum__Torappu_Battle_SideType,
     pub charIdFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub charIdExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyIdFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyIdExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub enemyLevelTypeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
@@ -15706,7 +15391,6 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub filterTagExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub subProfessionExcludeFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
     pub mapTagFilter: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub heightTypeMask: enum__Torappu_TileData_HeightTypeMask,
 }
 impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
   #[inline]
@@ -15717,7 +15401,6 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
       playerSideMask: enum__Torappu_PlayerSideMask::ALL,
       sideType: enum__Torappu_Battle_SideType::NONE,
       charIdFilter: None,
-      charIdExcludeFilter: None,
       enemyIdFilter: None,
       enemyIdExcludeFilter: None,
       enemyLevelTypeFilter: None,
@@ -15729,7 +15412,6 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
       filterTagExcludeFilter: None,
       subProfessionExcludeFilter: None,
       mapTagFilter: None,
-      heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
     }
   }
 }
@@ -15759,10 +15441,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RuneData_Selector
   #[inline]
   pub fn add_charIdFilter(&mut self, charIdFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_CHARIDFILTER, charIdFilter);
-  }
-  #[inline]
-  pub fn add_charIdExcludeFilter(&mut self, charIdExcludeFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER, charIdExcludeFilter);
   }
   #[inline]
   pub fn add_enemyIdFilter(&mut self, enemyIdFilter: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
@@ -15809,10 +15487,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RuneData_Selector
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_RuneData_Selector::VT_MAPTAGFILTER, mapTagFilter);
   }
   #[inline]
-  pub fn add_heightTypeMask(&mut self, heightTypeMask: enum__Torappu_TileData_HeightTypeMask) {
-    self.fbb_.push_slot::<enum__Torappu_TileData_HeightTypeMask>(clz_Torappu_RuneData_Selector::VT_HEIGHTTYPEMASK, heightTypeMask, enum__Torappu_TileData_HeightTypeMask::NONE);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_RuneData_SelectorBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_RuneData_SelectorBuilder {
@@ -15835,7 +15509,6 @@ impl ::core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
       ds.field("playerSideMask", &self.playerSideMask());
       ds.field("sideType", &self.sideType());
       ds.field("charIdFilter", &self.charIdFilter());
-      ds.field("charIdExcludeFilter", &self.charIdExcludeFilter());
       ds.field("enemyIdFilter", &self.enemyIdFilter());
       ds.field("enemyIdExcludeFilter", &self.enemyIdExcludeFilter());
       ds.field("enemyLevelTypeFilter", &self.enemyLevelTypeFilter());
@@ -15847,7 +15520,6 @@ impl ::core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
       ds.field("filterTagExcludeFilter", &self.filterTagExcludeFilter());
       ds.field("subProfessionExcludeFilter", &self.subProfessionExcludeFilter());
       ds.field("mapTagFilter", &self.mapTagFilter());
-      ds.field("heightTypeMask", &self.heightTypeMask());
       ds.finish()
   }
 }
@@ -15859,7 +15531,6 @@ pub struct clz_Torappu_RuneData_SelectorT {
   pub playerSideMask: enum__Torappu_PlayerSideMask,
   pub sideType: enum__Torappu_Battle_SideType,
   pub charIdFilter: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub charIdExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyIdFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyIdExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub enemyLevelTypeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
@@ -15871,7 +15542,6 @@ pub struct clz_Torappu_RuneData_SelectorT {
   pub filterTagExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub subProfessionExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
   pub mapTagFilter: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub heightTypeMask: enum__Torappu_TileData_HeightTypeMask,
 }
 impl Default for clz_Torappu_RuneData_SelectorT {
   fn default() -> Self {
@@ -15881,7 +15551,6 @@ impl Default for clz_Torappu_RuneData_SelectorT {
       playerSideMask: enum__Torappu_PlayerSideMask::ALL,
       sideType: enum__Torappu_Battle_SideType::NONE,
       charIdFilter: None,
-      charIdExcludeFilter: None,
       enemyIdFilter: None,
       enemyIdExcludeFilter: None,
       enemyLevelTypeFilter: None,
@@ -15893,7 +15562,6 @@ impl Default for clz_Torappu_RuneData_SelectorT {
       filterTagExcludeFilter: None,
       subProfessionExcludeFilter: None,
       mapTagFilter: None,
-      heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
     }
   }
 }
@@ -15907,9 +15575,6 @@ impl clz_Torappu_RuneData_SelectorT {
     let playerSideMask = self.playerSideMask;
     let sideType = self.sideType;
     let charIdFilter = self.charIdFilter.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let charIdExcludeFilter = self.charIdExcludeFilter.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
     let enemyIdFilter = self.enemyIdFilter.as_ref().map(|x|{
@@ -15945,14 +15610,12 @@ impl clz_Torappu_RuneData_SelectorT {
     let mapTagFilter = self.mapTagFilter.as_ref().map(|x|{
       let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
     });
-    let heightTypeMask = self.heightTypeMask;
     clz_Torappu_RuneData_Selector::create(_fbb, &clz_Torappu_RuneData_SelectorArgs{
       professionMask,
       buildableMask,
       playerSideMask,
       sideType,
       charIdFilter,
-      charIdExcludeFilter,
       enemyIdFilter,
       enemyIdExcludeFilter,
       enemyLevelTypeFilter,
@@ -15964,7 +15627,6 @@ impl clz_Torappu_RuneData_SelectorT {
       filterTagExcludeFilter,
       subProfessionExcludeFilter,
       mapTagFilter,
-      heightTypeMask,
     })
   }
 }
