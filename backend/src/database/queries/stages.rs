@@ -19,7 +19,9 @@ pub struct UserStageData {
 /// server (e.g. EN players grading against CN-era `stage_table`), which leaves
 /// the universe full of stages no one on that server can possibly clear.
 /// Filtering the universe by this set caps each server's universe at content
-/// that's actually live there.
+/// that's actually live there. Mere key presence (any `state`, including a
+/// `state: 0` "unlocked but not cleared" entry) is intentional here: it lets a
+/// currently-running event count as available even before anyone has cleared it.
 pub async fn get_known_stage_ids_for_server(
     pool: &PgPool,
     user_id: Uuid,

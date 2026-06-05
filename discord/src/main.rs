@@ -45,9 +45,6 @@ async fn main() {
         tx: assets_tx,
     });
 
-    // GUILDS gates channel/role/guild structural events; GUILD_MEMBERS gates member add/update/
-    // remove (privileged — toggle in Developer Portal); GUILD_MODERATION gates ban add/remove and
-    // GuildAuditLogEntryCreate, which is the canonical source of "who did what" for moderation.
     let intents = GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MEMBERS
         | GatewayIntents::GUILD_MODERATION
@@ -83,7 +80,6 @@ async fn main() {
             Box::pin(async move {
                 let commands = &framework.options().commands;
 
-                // "Playing Arknights"
                 ctx.set_presence(
                     Some(serenity::all::ActivityData::playing("Arknights")),
                     serenity::all::OnlineStatus::Online,

@@ -17,7 +17,10 @@
 //!       permanent Annihilation maps (`camp_01/02/03`) stay in the permanent pool.
 
 use serde::{Deserialize, Serialize};
-use std::{cmp::Reverse, collections::HashMap};
+use std::{
+    cmp::Reverse,
+    collections::{HashMap, HashSet},
+};
 
 use super::{
     activity::ActivityBasicInfo,
@@ -40,6 +43,11 @@ pub struct EventEntry {
     /// launched after a user's last sync so stale data isn't penalized.
     pub start_time: Option<i64>,
     pub end_time: Option<i64>,
+    /// `true` once this event has entered the permanent retrospective record
+    /// (`retro_table` - i.e. it has rerun and become permanently replayable).
+    /// Permanent events count toward grading at all times; limited events that
+    /// have yet to rerun only count while their run window is currently open.
+    pub is_permanent: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -55,6 +63,7 @@ impl StageUniverse {
         zones: &HashMap<String, Zone>,
         activities: &HashMap<String, ActivityBasicInfo>,
         campaign: &CampaignRotations,
+        retro_linked_acts: &HashSet<String>,
     ) -> Self {
         let mut sorted_activities: Vec<&ActivityBasicInfo> = activities.values().collect();
         sorted_activities.sort_by_key(|a| Reverse(a.id.len()));
@@ -87,6 +96,7 @@ impl StageUniverse {
                     weight,
                     start_time: Some(window.start_ts),
                     end_time: Some(window.end_ts),
+                    is_permanent: false,
                 });
                 continue;
             }
@@ -113,11 +123,14 @@ impl StageUniverse {
                     )
                 });
 
+                let is_permanent = activity.is_some_and(|a| retro_linked_acts.contains(&a.id));
+
                 event.push(EventEntry {
                     stage_id: stage.stage_id.clone(),
                     weight,
                     start_time,
                     end_time,
+                    is_permanent,
                 });
             }
         }

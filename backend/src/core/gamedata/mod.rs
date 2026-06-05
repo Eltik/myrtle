@@ -116,11 +116,17 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let mut medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
     let campaign_rotations = CampaignRotations::from_table(campaign_file);
+    let retro_linked_acts: std::collections::HashSet<String> = retro_file
+        .retro_act_list
+        .values()
+        .flat_map(|r| r.linked_act_id.iter().cloned())
+        .collect();
     let stage_universe = StageUniverse::build(
         &stages,
         &zones,
         &activity_file.basic_info,
         &campaign_rotations,
+        &retro_linked_acts,
     );
 
     let sandbox_perm_raw: serde_json::Value =
