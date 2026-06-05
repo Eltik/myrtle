@@ -204,10 +204,7 @@ pub enum BuffResolutionStrategy {
     /// productivity itself, but every `FacilityCountScaling` buff that scales per that facility
     /// (factory automation - Weedy/Eunectes/Pudding) reads the boosted count, so it powers those
     /// combos. Resolved by adjusting the facility counts the optimizer scores against.
-    FacilityCountModifier {
-        target_room: String,
-        amount: i32,
-    },
+    FacilityCountModifier { target_room: String, amount: i32 },
 
     /// Efficiency scales with the number of teammates that match a keyword the
     /// buff names for itself. The keyword is parsed straight from the buff text
@@ -771,7 +768,8 @@ pub fn build_registry(
                 // `low`% if its capacity bonus is <= threshold, else `high`%. Strong when paired
                 // with high-capacity operators (Vulcan/Ceobe/Wulfenite etc.).
                 else if prefix == "manu_prod_spd_variable3" {
-                    let threshold = parse_first_vup_number(&buff.description).unwrap_or(16.0) as i32;
+                    let threshold =
+                        parse_first_vup_number(&buff.description).unwrap_or(16.0) as i32;
                     let low = parse_nth_pct(&buff.description, 0).unwrap_or(1.0);
                     let high = parse_nth_pct(&buff.description, 1).unwrap_or(3.0);
                     BuffResolutionStrategy::CapacityTierScaling {
@@ -1077,14 +1075,20 @@ fn parse_morale_recovery(desc: &str) -> Option<f64> {
 fn parse_tag_keyword(desc: &str) -> Option<String> {
     let kw = RE_TAG_KEYWORD.captures(desc)?.get(1)?.as_str();
     if kw.contains('.') && kw.chars().all(|c| c.is_ascii_alphabetic() || c == '.') {
-        let collapsed: String =
-            kw.chars().filter(char::is_ascii_alphabetic).map(|c| c.to_ascii_lowercase()).collect();
+        let collapsed: String = kw
+            .chars()
+            .filter(char::is_ascii_alphabetic)
+            .map(|c| c.to_ascii_lowercase())
+            .collect();
         if !collapsed.is_empty() {
             return Some(collapsed);
         }
     }
-    let first: String =
-        kw.chars().take_while(char::is_ascii_alphanumeric).map(|c| c.to_ascii_lowercase()).collect();
+    let first: String = kw
+        .chars()
+        .take_while(char::is_ascii_alphanumeric)
+        .map(|c| c.to_ascii_lowercase())
+        .collect();
     (!first.is_empty()).then_some(first)
 }
 

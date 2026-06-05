@@ -175,7 +175,11 @@ fn resource_refs(desc: &str) -> Vec<Ref<'_>> {
         .captures_iter(desc)
         .map(|c| {
             let m = c.get(0).unwrap();
-            Ref { id: c.get(1).unwrap().as_str(), start: m.start(), end: m.end() }
+            Ref {
+                id: c.get(1).unwrap().as_str(),
+                start: m.start(),
+                end: m.end(),
+            }
         })
         .collect()
 }
@@ -210,10 +214,16 @@ fn generated_amount_after(desc: &str, pos: usize, window_end: usize) -> Option<f
         .and_then(|c| c[1].parse().ok())
 }
 
-type Classified = (Vec<Generator>, Vec<Converter>, Vec<Consumer>, Vec<Conditional>);
+type Classified = (
+    Vec<Generator>,
+    Vec<Converter>,
+    Vec<Consumer>,
+    Vec<Conditional>,
+);
 
 fn classify(desc: &str, room_type: &str) -> Classified {
-    let (mut gens, mut convs, mut cons, mut conds) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+    let (mut gens, mut convs, mut cons, mut conds) =
+        (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     let refs = resource_refs(desc);
     let lower = desc.to_lowercase();
 
@@ -245,20 +255,22 @@ fn classify(desc: &str, room_type: &str) -> Classified {
         } else if let Some(p) = lower.find("that dormitor") {
             Some((Unit::SingleDorm, p.saturating_sub(20)))
         } else if lower.contains("ormitor") {
-            lower.find("perator").map(|p| (Unit::Resting, p.saturating_sub(20)))
+            lower
+                .find("perator")
+                .map(|p| (Unit::Resting, p.saturating_sub(20)))
         } else {
             None
         };
         if let Some((unit, scope_pos)) = scope {
             // "for every K <scope>" - K (default 1) divides the per-unit amount.
-            let k = number_before(desc, scope_pos + 12).filter(|n| *n > 0.0).unwrap_or(1.0);
+            let k = number_before(desc, scope_pos + 12)
+                .filter(|n| *n > 0.0)
+                .unwrap_or(1.0);
             if let Some(r) = refs.iter().find(|r| r.start >= scope_pos)
                 && let Some(amount) = number_after(desc, r.end, false)
             {
                 // Optional "(max N)" cap on the contribution.
-                let cap = lower
-                    .find("max")
-                    .and_then(|m| number_after(desc, m, false));
+                let cap = lower.find("max").and_then(|m| number_after(desc, m, false));
                 gens.push(Generator {
                     resource: r.id.to_string(),
                     per_unit: amount / k,
@@ -273,12 +285,17 @@ fn classify(desc: &str, room_type: &str) -> Classified {
             // make it a CONSUMED resource - Mutsumi's "for every 8 Passion" - not a generated one).
             for r in &refs {
                 let before = &lower[r.start.saturating_sub(24)..r.start];
-                if before.contains("for every") || before.contains("for each") || before.contains("per ") {
+                if before.contains("for every")
+                    || before.contains("for each")
+                    || before.contains("per ")
+                {
                     continue;
                 }
                 // Require a `+`-signed amount: "Passion +20" generates, but "when Passion is 40 or
                 // higher" is a threshold whose bare 40 must not be read as +40 generated.
-                if let Some(amount) = generated_amount_after(desc, r.end, r.end + 30).filter(|n| *n > 0.0) {
+                if let Some(amount) =
+                    generated_amount_after(desc, r.end, r.end + 30).filter(|n| *n > 0.0)
+                {
                     gens.push(Generator {
                         resource: r.id.to_string(),
                         per_unit: amount,
@@ -302,14 +319,21 @@ fn classify(desc: &str, room_type: &str) -> Classified {
                 .or_else(|| number_after(desc, cidx, false))
                 .unwrap_or(1.0);
             let ratio = if n > 0.0 { m / n } else { 1.0 };
-            convs.push(Converter { from: from.id.to_string(), to: to.id.to_string(), ratio });
+            convs.push(Converter {
+                from: from.id.to_string(),
+                to: to.id.to_string(),
+                ratio,
+            });
         }
     }
 
     // Consumer: "for every N [points of] <RES>, productivity/efficiency +Y%". The
     // resource is whichever one sits next to the productivity payoff. (Match any
     // "efficiency" - "order efficiency", "order acquisition efficiency", etc.)
-    if let Some(eidx) = lower.find("productivity").or_else(|| lower.find("efficiency")) {
+    if let Some(eidx) = lower
+        .find("productivity")
+        .or_else(|| lower.find("efficiency"))
+    {
         let res = refs
             .iter()
             .min_by_key(|r| r.start.abs_diff(eidx).min(r.end.abs_diff(eidx)));
@@ -317,12 +341,18 @@ fn classify(desc: &str, room_type: &str) -> Classified {
         if let Some(res) = res
             && let Some(pct) = number_after(desc, eidx.saturating_sub(48), true)
         {
-            let count = number_before(desc, res.start).filter(|n| *n > 0.0).unwrap_or(1.0);
+            let count = number_before(desc, res.start)
+                .filter(|n| *n > 0.0)
+                .unwrap_or(1.0);
             // A Control-Center consumer boosts a whole production room type globally (Sakiko's
             // factory Precious-Metal productivity per Passion); its effect room is the one it
             // names, and the bonus is granted as a global Control-Center buff, not a per-room one.
             let (effect_room, global) = if room_type == "CONTROL" {
-                let target = if lower.contains("trading") { "TRADING" } else { "MANUFACTURE" };
+                let target = if lower.contains("trading") {
+                    "TRADING"
+                } else {
+                    "MANUFACTURE"
+                };
                 (target.to_string(), true)
             } else {
                 (room_type.to_string(), false)
@@ -370,15 +400,25 @@ fn parse_economy(operators: &[OperatorBaseProfile], building_data: &BuildingData
         (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     for op in operators {
         for buff_id in &op.available_buffs {
-            let Some(buff) = building_data.buffs.get(buff_id) else { continue };
+            let Some(buff) = building_data.buffs.get(buff_id) else {
+                continue;
+            };
             let (gens, convs, cons, conds) = classify(&buff.description, &buff.room_type);
             generators.extend(gens.into_iter().map(|g| (op.char_id.clone(), g)));
             converters.extend(convs);
-            consumers.extend(cons.into_iter().map(|c| (op.char_id.clone(), buff_id.clone(), c)));
+            consumers.extend(
+                cons.into_iter()
+                    .map(|c| (op.char_id.clone(), buff_id.clone(), c)),
+            );
             conditionals.extend(conds.into_iter().map(|c| (op.char_id.clone(), c)));
         }
     }
-    Economy { generators, converters, consumers, conditionals }
+    Economy {
+        generators,
+        converters,
+        consumers,
+        conditionals,
+    }
 }
 
 /// Productivity % a single point of each resource is worth, propagating consumer rates back
@@ -410,7 +450,11 @@ fn effective_rates(
 
 /// Total stationing capacity for `room_type` across the building (sum over rooms of that
 /// type of their level's max stationed).
-fn room_capacity(building: &UserBuilding, building_data: &BuildingDataFile, room_type: &str) -> i32 {
+fn room_capacity(
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    room_type: &str,
+) -> i32 {
     building
         .rooms
         .iter()
@@ -502,8 +546,10 @@ fn solve_cc_bundle(
     // demand; the resources they read are the combo's pool.
     let global_cons: Vec<&(String, String, Consumer)> =
         econ.consumers.iter().filter(|(_, _, c)| c.global).collect();
-    let global_resources: HashSet<String> =
-        global_cons.iter().map(|(_, _, c)| c.resource.clone()).collect();
+    let global_resources: HashSet<String> = global_cons
+        .iter()
+        .map(|(_, _, c)| c.resource.clone())
+        .collect();
     let mut bundle = CcBundle {
         global_resources,
         generator_pins: Vec::new(),
@@ -531,7 +577,9 @@ fn solve_cc_bundle(
         if consumer_chars.contains(char_id.as_str()) {
             self_gen.push((char_id.clone(), g.resource.clone(), pts));
         } else {
-            let slot = pure_gen.entry(char_id.clone()).or_insert_with(|| (g.resource.clone(), 0.0));
+            let slot = pure_gen
+                .entry(char_id.clone())
+                .or_insert_with(|| (g.resource.clone(), 0.0));
             slot.1 += pts;
         }
     }
@@ -553,47 +601,68 @@ fn solve_cc_bundle(
         .map(|s| (*s).to_string())
         .chain(pure.iter().map(|(c, _, _)| c.clone()))
         .collect();
-    let baseline =
-        best_ordinary_cc_fill(operators, building, building_data, registry, control_slots, &HashSet::new());
+    let baseline = best_ordinary_cc_fill(
+        operators,
+        building,
+        building_data,
+        registry,
+        control_slots,
+        &HashSet::new(),
+    );
     let room_count = |rt: &str| building.rooms.iter().filter(|r| r.room_type == rt).count();
     // Ordinary value of the leftover seats depends only on HOW MANY the combo leaves free, so
     // precompute it per generator-count instead of inside the subset loop.
     let filler_by_used: Vec<f64> = (0..=optional_seats)
         .map(|used| {
             let leftover = control_slots - reserved - used as i32;
-            best_ordinary_cc_fill(operators, building, building_data, registry, leftover, &exclude_combo)
+            best_ordinary_cc_fill(
+                operators,
+                building,
+                building_data,
+                registry,
+                leftover,
+                &exclude_combo,
+            )
         })
         .collect();
 
     // Realized consumer bonus (LMD-equivalent) for a seating of `subset` pure generators, plus the
     // direct pool contributions (pre-conversion) to merge if this seating wins.
-    let value_of = |subset: &[&(String, String, f64)]| -> (f64, HashMap<String, Vec<(String, f64)>>) {
-        let mut direct: HashMap<String, Vec<(String, f64)>> = HashMap::new();
-        for (c, r, p) in &self_gen {
-            direct.entry(r.clone()).or_default().push((c.clone(), *p));
-        }
-        for (c, r, p) in subset {
-            direct.entry(r.clone()).or_default().push((c.clone(), *p));
-        }
-        // Apply conversions onto a pre-conversion snapshot (matches `solve`), for valuation only.
-        let mut converted = direct.clone();
-        for cv in &econ.converters {
-            if let Some(from) = direct.get(&cv.from) {
-                for (contributor, amount) in from {
-                    converted.entry(cv.to.clone()).or_default().push((contributor.clone(), amount * cv.ratio));
+    let value_of =
+        |subset: &[&(String, String, f64)]| -> (f64, HashMap<String, Vec<(String, f64)>>) {
+            let mut direct: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+            for (c, r, p) in &self_gen {
+                direct.entry(r.clone()).or_default().push((c.clone(), *p));
+            }
+            for (c, r, p) in subset {
+                direct.entry(r.clone()).or_default().push((c.clone(), *p));
+            }
+            // Apply conversions onto a pre-conversion snapshot (matches `solve`), for valuation only.
+            let mut converted = direct.clone();
+            for cv in &econ.converters {
+                if let Some(from) = direct.get(&cv.from) {
+                    for (contributor, amount) in from {
+                        converted
+                            .entry(cv.to.clone())
+                            .or_default()
+                            .push((contributor.clone(), amount * cv.ratio));
+                    }
                 }
             }
-        }
-        let mut consumer_value = 0.0;
-        for (_c, _b, cons) in &global_cons {
-            let points: f64 =
-                converted.get(&cons.resource).map_or(0.0, |v| v.iter().map(|(_, a)| a).sum());
-            let pct = points * cons.pct_per_point;
-            consumer_value +=
-                super::yield_model::global_bonus_value(&cons.room_type, room_count(&cons.room_type), pct);
-        }
-        (consumer_value + filler_by_used[subset.len()], direct)
-    };
+            let mut consumer_value = 0.0;
+            for (_c, _b, cons) in &global_cons {
+                let points: f64 = converted
+                    .get(&cons.resource)
+                    .map_or(0.0, |v| v.iter().map(|(_, a)| a).sum());
+                let pct = points * cons.pct_per_point;
+                consumer_value += super::yield_model::global_bonus_value(
+                    &cons.room_type,
+                    room_count(&cons.room_type),
+                    pct,
+                );
+            }
+            (consumer_value + filler_by_used[subset.len()], direct)
+        };
 
     // Exhaustive subset search (control_slots is tiny, so the generator pool is too). Bound the
     // bitmask defensively in case a future roster fields an unusually large combo. The best seating
@@ -602,8 +671,10 @@ fn solve_cc_bundle(
     let n = pure.len().min(16);
     let mut best: Option<Seating> = None;
     for mask in 0u32..(1u32 << n) {
-        let subset: Vec<&(String, String, f64)> =
-            (0..n).filter(|i| mask & (1 << i) != 0).map(|i| &pure[i]).collect();
+        let subset: Vec<&(String, String, f64)> = (0..n)
+            .filter(|i| mask & (1 << i) != 0)
+            .map(|i| &pure[i])
+            .collect();
         if subset.len() > optional_seats {
             continue;
         }
@@ -644,8 +715,7 @@ fn solve(
     let ctx = base_context(building, building_data);
     let econ = parse_economy(operators, building_data);
     let rates = effective_rates(&econ.consumers, &econ.converters);
-    let consumer_chars: HashSet<&str> =
-        econ.consumers.iter().map(|(c, _, _)| c.as_str()).collect();
+    let consumer_chars: HashSet<&str> = econ.consumers.iter().map(|(c, _, _)| c.as_str()).collect();
     let rate = |res: &str| rates.get(res).copied().unwrap_or(0.0);
 
     let mut pool: HashMap<String, Vec<(String, f64)>> = HashMap::new();
@@ -659,12 +729,22 @@ fn solve(
     // the generic support packing below, so the credited pool reflects what the room can actually
     // hold rather than every generator at once.
     let control_slots = room_capacity(building, building_data, "CONTROL");
-    let bundle = solve_cc_bundle(&econ, ctx, control_slots, operators, building, building_data, registry);
+    let bundle = solve_cc_bundle(
+        &econ,
+        ctx,
+        control_slots,
+        operators,
+        building,
+        building_data,
+        registry,
+    );
     for id in &bundle.generator_pins {
         deployed.push((id.clone(), "CONTROL".to_string()));
     }
     for (res, contribs) in &bundle.pool {
-        pool.entry(res.clone()).or_default().extend(contribs.iter().cloned());
+        pool.entry(res.clone())
+            .or_default()
+            .extend(contribs.iter().cloned());
     }
 
     for (char_id, g) in econ.generators {
@@ -679,7 +759,9 @@ fn solve(
             // its own char_id: it is co-present with its consumption, so it never gets
             // uptime-scaled against itself.
             "MANUFACTURE" | "TRADING" if consumer_chars.contains(char_id.as_str()) => {
-                pool.entry(g.resource.clone()).or_default().push((char_id.clone(), g.contribution(ctx)));
+                pool.entry(g.resource.clone())
+                    .or_default()
+                    .push((char_id.clone(), g.contribution(ctx)));
             }
             "DORMITORY" | "HIRE" | "CONTROL" => {
                 let amount = g.contribution(ctx);
@@ -698,8 +780,9 @@ fn solve(
     // morale sides, then keep only the side that pays more (the operator can't be on both).
     let mut sides: ConditionalSides = HashMap::new();
     for (char_id, c) in econ.conditionals {
-        let entry =
-            sides.entry(char_id).or_insert_with(|| (Vec::new(), Vec::new(), c.room_type.clone()));
+        let entry = sides
+            .entry(char_id)
+            .or_insert_with(|| (Vec::new(), Vec::new(), c.room_type.clone()));
         if c.above { &mut entry.0 } else { &mut entry.1 }.push((c.resource, c.amount));
     }
     let conditional_chars: std::collections::HashSet<String> = sides.keys().cloned().collect();
@@ -714,13 +797,22 @@ fn solve(
         // (Fall back to the low side only if an operator has no high-morale branch at all.)
         let contributions = if above.is_empty() { below } else { above };
         let value = contributions.iter().map(|(r, a)| a * rate(r)).sum();
-        support.push(SupportCandidate { value, char_id, room_type: room, contributions });
+        support.push(SupportCandidate {
+            value,
+            char_id,
+            room_type: room,
+            contributions,
+        });
     }
 
     // Fill each support room with its highest-value candidates up to capacity, skipping any
     // whose contribution has no downstream consumer (value 0). Sorting globally then checking
     // each candidate's room capacity packs every room with its best candidates first.
-    support.sort_by(|a, b| b.value.partial_cmp(&a.value).unwrap_or(std::cmp::Ordering::Equal));
+    support.sort_by(|a, b| {
+        b.value
+            .partial_cmp(&a.value)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     let mut used: HashMap<String, i32> = HashMap::new();
     // The committed Control-Center combo already holds `cc_seats` of the room (its consumers, seated
     // by the optimizer's bonus-greedy, plus the pinned generators), so other support generators
@@ -741,7 +833,9 @@ fn solve(
         for (res, amount) in cand.contributions {
             // A support generator feeds the pool only while it is itself working, so its
             // contribution is tagged with its char_id and gets uptime-scaled downstream.
-            pool.entry(res).or_default().push((cand.char_id.clone(), amount));
+            pool.entry(res)
+                .or_default()
+                .push((cand.char_id.clone(), amount));
         }
         deployed.push((cand.char_id, cand.room_type));
     }
@@ -756,13 +850,20 @@ fn solve(
     for c in &econ.converters {
         if let Some(from) = direct.get(&c.from) {
             for (contributor, amount) in from {
-                pool.entry(c.to.clone()).or_default().push((contributor.clone(), amount * c.ratio));
+                pool.entry(c.to.clone())
+                    .or_default()
+                    .push((contributor.clone(), amount * c.ratio));
             }
         }
     }
 
     let uses_conditional = deployed.iter().any(|(c, _)| conditional_chars.contains(c));
-    Solved { pool, deployed, consumers: econ.consumers, uses_conditional }
+    Solved {
+        pool,
+        deployed,
+        consumers: econ.consumers,
+        uses_conditional,
+    }
 }
 
 /// The roster's morale-swap manager (Fiammetta and any future equivalent): an operator with
@@ -776,10 +877,10 @@ fn morale_swap_enabler(
         .iter()
         .find(|op| {
             op.available_buffs.iter().any(|b| {
-                building_data
-                    .buffs
-                    .get(b)
-                    .is_some_and(|buff| buff.description.to_lowercase().contains("swap") && buff.description.to_lowercase().contains("morale with"))
+                building_data.buffs.get(b).is_some_and(|buff| {
+                    buff.description.to_lowercase().contains("swap")
+                        && buff.description.to_lowercase().contains("morale with")
+                })
             })
         })
         .map(|op| op.char_id.clone())
@@ -860,7 +961,11 @@ pub fn evaluate(
         let sustained_points: f64 = contribs.map_or(0.0, |v| {
             v.iter()
                 .map(|(contributor, a)| {
-                    let factor = if contributor == char_id { 1.0 } else { uptimes.get(contributor.as_str()).copied().unwrap_or(1.0) };
+                    let factor = if contributor == char_id {
+                        1.0
+                    } else {
+                        uptimes.get(contributor.as_str()).copied().unwrap_or(1.0)
+                    };
                     a * factor
                 })
                 .sum()
@@ -882,13 +987,15 @@ pub fn evaluate(
             let ov = overrides.entry(buff_id.clone()).or_insert(0.0);
             *ov = ov.max(bonus);
         }
-        let slot = by_char.entry(char_id.clone()).or_insert_with(|| PerceptionConsumer {
-            char_id: char_id.clone(),
-            room_type: c.room_type.clone(),
-            resource: c.resource.clone(),
-            bonus_pct: 0.0,
-            sustained_pct: 0.0,
-        });
+        let slot = by_char
+            .entry(char_id.clone())
+            .or_insert_with(|| PerceptionConsumer {
+                char_id: char_id.clone(),
+                room_type: c.room_type.clone(),
+                resource: c.resource.clone(),
+                bonus_pct: 0.0,
+                sustained_pct: 0.0,
+            });
         if bonus > slot.bonus_pct {
             slot.room_type = c.room_type.clone();
             slot.resource = c.resource.clone();
@@ -897,7 +1004,10 @@ pub fn evaluate(
         }
     }
     // The morale-conditional rotation (Ling/Dusk) needs a morale-swap manager to sustain.
-    let enabler = s.uses_conditional.then(|| morale_swap_enabler(operators, building_data)).flatten();
+    let enabler = s
+        .uses_conditional
+        .then(|| morale_swap_enabler(operators, building_data))
+        .flatten();
     let needs_rotation_manager = s.uses_conditional && enabler.is_none();
     PerceptionResult {
         overrides,
@@ -911,7 +1021,7 @@ pub fn evaluate(
 
 #[cfg(test)]
 mod bd_tests {
-    use super::{classify, Unit};
+    use super::{Unit, classify};
 
     #[test]
     fn control_center_global_consumer_targets_the_production_room() {
@@ -921,7 +1031,10 @@ mod bd_tests {
             additional <@cc.vup>+1%</> for every <@cc.vup>20</> <$cc.bd_mujica><@cc.rem>Passion</></>";
         let (_g, _conv, cons, _cond) = classify(desc, "CONTROL");
         assert_eq!(cons.len(), 1, "expected one consumer, got {}", cons.len());
-        assert!(cons[0].global, "a CC factory-productivity consumer should be global");
+        assert!(
+            cons[0].global,
+            "a CC factory-productivity consumer should be global"
+        );
         assert_eq!(cons[0].room_type, "MANUFACTURE");
         assert_eq!(cons[0].resource, "bd_mujica");
     }
@@ -930,18 +1043,21 @@ mod bd_tests {
     fn flat_resource_generation_is_parsed() {
         // "Passion +20" with no per-unit scope is a FLAT generator; the "for every 20 Passion"
         // form is a CONSUMED resource and must NOT be read as flat generation.
-        let gen_desc =
-            "<$cc.bd_mujica><@cc.rem>Passion</></> <@cc.vup>+20</>; clue collection speed <@cc.vup>+5%</>";
+        let gen_desc = "<$cc.bd_mujica><@cc.rem>Passion</></> <@cc.vup>+20</>; clue collection speed <@cc.vup>+5%</>";
         let (gens, _c, _co, _cd) = classify(gen_desc, "CONTROL");
         assert!(
-            gens.iter().any(|g| g.resource == "bd_mujica" && matches!(g.unit, Unit::Flat)),
+            gens.iter()
+                .any(|g| g.resource == "bd_mujica" && matches!(g.unit, Unit::Flat)),
             "flat Passion generation should be parsed, got {} gens",
             gens.len()
         );
         let consume_desc = "for every <@cc.vup>8</> <$cc.bd_mujica><@cc.rem>Passion</></>, all \
             Trading Posts' order efficiency <@cc.vup>+1%</>";
         let (gens2, _c2, _co2, _cd2) = classify(consume_desc, "CONTROL");
-        assert!(gens2.is_empty(), "a consumed resource must not be read as flat generation");
+        assert!(
+            gens2.is_empty(),
+            "a consumed resource must not be read as flat generation"
+        );
     }
 
     #[test]
@@ -952,7 +1068,11 @@ mod bd_tests {
         let desc = "self Morale loss per hour <@cc.vdown>+0.05</> when Passion is \
             <@cc.kw>40</> or higher";
         let (gens, _c, _co, _cd) = classify(desc, "CONTROL");
-        assert!(gens.is_empty(), "a 'Passion is N' threshold must not be flat generation, got {} gens", gens.len());
+        assert!(
+            gens.is_empty(),
+            "a 'Passion is N' threshold must not be flat generation, got {} gens",
+            gens.len()
+        );
     }
 
     #[test]
@@ -964,11 +1084,22 @@ mod bd_tests {
             <$cc.bd_mujica><@cc.rem>Passion</></>, self Morale consumed per hour <@cc.vdown>+0.01</> \
             and all Trading Posts' order efficiency <@cc.vup>+1%</> (Only the strongest effect of this type takes place)";
         let (gens, _conv, cons, _cond) = classify(desc, "CONTROL");
-        assert_eq!(gens.len(), 1, "expected exactly one (+20) generator, got {}", gens.len());
-        assert!(matches!(gens[0].unit, Unit::Flat) && (gens[0].per_unit - 20.0).abs() < 1e-9, "the generator should be a flat +20");
+        assert_eq!(
+            gens.len(),
+            1,
+            "expected exactly one (+20) generator, got {}",
+            gens.len()
+        );
+        assert!(
+            matches!(gens[0].unit, Unit::Flat) && (gens[0].per_unit - 20.0).abs() < 1e-9,
+            "the generator should be a flat +20"
+        );
         assert_eq!(cons.len(), 1, "expected one global trading consumer");
         assert!(cons[0].global && cons[0].room_type == "TRADING");
-        assert_eq!(gens[0].resource, cons[0].resource, "generator and consumer share the resource");
+        assert_eq!(
+            gens[0].resource, cons[0].resource,
+            "generator and consumer share the resource"
+        );
     }
 
     #[test]
@@ -980,7 +1111,15 @@ mod bd_tests {
         let (gens, _conv, _cons, _cond) = classify(desc, "CONTROL");
         assert_eq!(gens.len(), 1);
         assert!(matches!(gens[0].unit, super::Unit::Resting));
-        let ctx = super::BaseContext { resting: 17, single_dorm: 5, recruit_slots: 4, sui_count: 5 };
-        assert!((gens[0].contribution(ctx) - 17.0).abs() < 1e-9, "17 resting operators -> +17 Passion");
+        let ctx = super::BaseContext {
+            resting: 17,
+            single_dorm: 5,
+            recruit_slots: 4,
+            sui_count: 5,
+        };
+        assert!(
+            (gens[0].contribution(ctx) - 17.0).abs() < 1e-9,
+            "17 resting operators -> +17 Passion"
+        );
     }
 }

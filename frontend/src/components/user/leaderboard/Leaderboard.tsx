@@ -15,7 +15,7 @@ import { MoversCard } from "./impl/components/MoversCard";
 // import { ServerSplitCard } from "./impl/components/ServerSplitCard"; // hidden: server share
 import { Toolbar } from "./impl/components/Toolbar";
 import { YouCard } from "./impl/components/YouCard";
-import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
+import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, type LeaderboardSort, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
 import type { LeaderboardEntry } from "./impl/types";
 
 export function Leaderboard() {
@@ -28,6 +28,7 @@ export function Leaderboard() {
     const scope: LeaderboardScope = search.scope;
     const server: ServerCode | "All" = search.server;
     const interval: LeaderboardInterval = search.interval;
+    const sort: LeaderboardSort = search.sort;
     const movementOnly = search.movement;
     const page = search.page;
 
@@ -44,6 +45,7 @@ export function Leaderboard() {
     const pageQuery = useQuery(
         leaderboardQueryOptions({
             server: apiServer,
+            sort,
             movement_interval: interval,
             movement_only: movementOnly,
             q: apiQuery,
@@ -98,6 +100,10 @@ export function Leaderboard() {
         navigate({ search: { ...search, interval: next, page: 1 }, replace: true, resetScroll: false });
     };
 
+    const handleSort = (next: LeaderboardSort) => {
+        navigate({ search: { ...search, sort: next, page: 1 }, replace: true, resetScroll: false });
+    };
+
     const handleMovementOnly = (next: boolean) => {
         navigate({ search: { ...search, movement: next, page: 1 }, replace: true, resetScroll: false });
     };
@@ -119,7 +125,7 @@ export function Leaderboard() {
                     <Toolbar scope={scope} onScope={handleScope} server={server} onServer={handleServer} interval={interval} onInterval={handleInterval} movementOnly={movementOnly} onMovementOnly={handleMovementOnly} query={inputValue} onQuery={setInputValue} />
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} referenceScore={referenceScore} isLoading={isLoading} intervalLabel={intervalMeta.since} />}
+                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} sort={sort} onSort={handleSort} isLoading={isLoading} intervalLabel={intervalMeta.since} />}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
                             <span className="font-mono text-muted-foreground text-xs tabular-nums leading-none">
                                 Showing {start}-{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
