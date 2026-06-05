@@ -22,10 +22,7 @@ pub async fn run(state: AppState) -> Result<()> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3060").await?;
     tracing::info!("listening on :3060");
     axum::serve(listener, app)
-        .with_graceful_shutdown(async {
-             shutdown_signal().await;
-             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-        })
+        .with_graceful_shutdown(shutdown_signal())
         .await?;
     Ok(())
 }

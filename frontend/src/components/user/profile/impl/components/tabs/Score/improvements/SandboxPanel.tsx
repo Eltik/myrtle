@@ -18,7 +18,7 @@ export function SandboxPanel({ improvements, accent }: IProps) {
                 <ProgressLine label="Achievements" current={s.achievements.current} max={s.achievements.max} accent={accent} />
                 <ProgressLine label="Map nodes" current={s.nodes.current} max={s.nodes.max} accent={accent} />
                 <ProgressLine label="Tech unlocks" current={s.tech.current} max={s.tech.max} accent={accent} />
-                <ProgressLine label="Quests" current={s.quests.current} max={s.quests.max} accent={accent} />
+                <ProgressLine label="Story Acts" current={s.quests.current} max={s.quests.max} accent={accent} />
             </div>
         </div>
     );
