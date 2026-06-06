@@ -426,6 +426,9 @@ export interface IShift {
 
 export interface IShiftRotation {
     shifts: IShift[];
+    /** Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
+     *  shift instead of resting the middle one. Badged as "24/7 · Fiammetta". */
+    sustained: IAssignedOperator[];
 }
 
 /** A support operator to station outside production to feed the resource economy. */

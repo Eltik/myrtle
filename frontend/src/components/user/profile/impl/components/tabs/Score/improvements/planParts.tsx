@@ -70,7 +70,7 @@ export function RoomBlock({ roomType, formula, badge, right, dim, children }: { 
  * (your team already ties the recommendation) states. `interactive` adds hover tooltips for the
  * dialog; the export passes it off so html-to-image captures a clean, static image.
  */
-export function ShiftRoomBlock({ room, interactive = false }: { room: IShiftRoom; interactive?: boolean }) {
+export function ShiftRoomBlock({ room, interactive = false, sustained }: { room: IShiftRoom; interactive?: boolean; sustained?: Set<string> }) {
     const swapIn = new Set(room.swap_in.map((o) => o.operator_id));
     const hasPreset = room.current.length > 0;
     // A tie on output: show the player's OWN team (keep it) rather than nudging a pointless swap.
@@ -94,16 +94,19 @@ export function ShiftRoomBlock({ room, interactive = false }: { room: IShiftRoom
                 {crew.length === 0 && <span className="text-[10px] text-muted-foreground/50">-</span>}
                 {crew.map((op) => {
                     const add = !isEquivalent && swapIn.has(op.operator_id);
+                    const is247 = sustained?.has(op.operator_id) ?? false;
                     return (
                         <MiniChip
                             key={op.operator_id}
                             op={op}
                             tone={add ? "add" : "keep"}
+                            suffix={is247 ? <span className="rounded-sm bg-amber-500/20 px-0.5 font-semibold text-[8px] text-amber-500/90 leading-none">24/7</span> : undefined}
                             tip={
                                 interactive ? (
                                     <p>
                                         {add ? "Add to this shift - " : ""}
                                         {op.name}
+                                        {is247 ? " · kept at full morale 24/7 by Fiammetta" : ""}
                                     </p>
                                 ) : undefined
                             }

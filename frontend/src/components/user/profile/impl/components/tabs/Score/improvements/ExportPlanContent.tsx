@@ -16,6 +16,7 @@ const PRODUCTION_OR_CONTROL = new Set(["MANUFACTURE", "TRADING", "POWER", "CONTR
  */
 export function ExportPlanContent({ base }: { base: IBaseImprovements }) {
     const rotation = base.shift_rotation;
+    const sustainedSet = new Set(rotation?.sustained.map((o) => o.operator_id) ?? []);
     return (
         <div className="flex w-240 flex-col gap-3 bg-background p-5 text-foreground">
             <div className="flex items-end justify-between border-border/40 border-b pb-2">
@@ -43,7 +44,7 @@ export function ExportPlanContent({ base }: { base: IBaseImprovements }) {
                             <div key={shift.index} className="flex flex-col gap-1.5 rounded-md border border-border/35 bg-muted/10 p-2">
                                 <span className="font-semibold text-[11px]">Shift {shift.index}</span>
                                 {shift.rooms.map((room) => (
-                                    <ShiftRoomBlock key={room.slot_id} room={room} />
+                                    <ShiftRoomBlock key={room.slot_id} room={room} sustained={sustainedSet} />
                                 ))}
                             </div>
                         ))}
