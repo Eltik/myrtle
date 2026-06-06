@@ -32,6 +32,10 @@ use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_operators::{
     UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
 };
+use crate::core::grade::sandbox::grade_sandbox_detail;
+use crate::core::grade::sandbox::score::{
+    ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
+};
 use crate::core::grade::stages::event_is_gradeable;
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::building::get_building;
@@ -39,7 +43,6 @@ use crate::database::queries::medals::get_user_medals;
 use crate::database::queries::roguelike::get_roguelike_progress;
 use crate::database::queries::roster::get_roster;
 use crate::database::queries::roster::get_supports;
-use crate::database::queries::sandbox::get_user_sandbox_progress;
 use crate::database::queries::stages::get_known_stage_ids_for_server;
 use crate::database::queries::stages::get_user_stage_clears;
 use crate::database::queries::users::find_by_uid;
@@ -129,10 +132,32 @@ pub struct RoguelikeCollectibles {
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
-    pub achievements: ProgressPair,
-    pub nodes: ProgressPair,
-    pub tech: ProgressPair,
-    pub quests: ProgressPair,
+    /// Overall RA score (0..1) - the weighted sum of every category below. This
+    /// is the same value the headline percentage is computed from.
+    pub total: f64,
+    /// One entry per scored category, in grade-weight order. Each carries its
+    /// weight, its own completion, and the concrete counts behind it - so the
+    /// breakdown fully accounts for the headline percentage.
+    pub categories: Vec<SandboxCategory>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SandboxCategory {
+    pub key: &'static str,
+    pub label: &'static str,
+    /// Fraction of the total RA grade this category contributes (0..1).
+    pub weight: f64,
+    /// This category's own completion (0..1) - what its bar fills to.
+    pub score: f64,
+    /// The concrete progress counts that make up this category's score.
+    pub parts: Vec<SandboxPart>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SandboxPart {
+    pub label: &'static str,
+    pub current: usize,
+    pub max: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -686,89 +711,76 @@ async fn build_sandbox_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<SandboxImprovements, ApiError> {
-    let progress = get_user_sandbox_progress(pool, user_id).await?;
-    let universe = &game_data.sandbox_universe;
+    let d = grade_sandbox_detail(pool, user_id, game_data).await?;
 
-    let Some(sandbox) = progress.as_ref().and_then(|p| {
-        p.get("template")
-            .and_then(|t| t.get("SANDBOX_V2"))
-            .and_then(|t| t.get("sandbox_1"))
-    }) else {
-        return Ok(SandboxImprovements {
-            achievements: ProgressPair {
-                current: 0,
-                max: universe.max_achievements,
-            },
-            nodes: ProgressPair {
-                current: 0,
-                max: universe.max_nodes,
-            },
-            tech: ProgressPair {
-                current: 0,
-                max: universe.max_tech_nodes,
-            },
-            quests: ProgressPair {
-                current: 0,
-                max: universe.max_quests,
-            },
-        });
+    let part = |label: &'static str, current: usize, max: usize| SandboxPart {
+        label,
+        current,
+        max,
     };
 
-    let achievements = sandbox
-        .get("collect")
-        .and_then(|c| c.get("complete"))
-        .and_then(|c| c.get("achievement"))
-        .and_then(|a| a.as_array())
-        .map_or(0, std::vec::Vec::len);
-
-    let nodes_explored = sandbox
-        .get("main")
-        .and_then(|m| m.get("map"))
-        .and_then(|m| m.get("node"))
-        .and_then(|n| n.as_object())
-        .map_or(0, |obj| {
-            obj.values()
-                .filter(|v| {
-                    v.get("state")
-                        .and_then(serde_json::Value::as_i64)
-                        .unwrap_or(0)
-                        >= 1
-                })
-                .count()
-        });
-
-    let tech_unlocked = sandbox
-        .get("tech")
-        .and_then(|t| t.get("unlock"))
-        .and_then(|u| u.as_array())
-        .map_or(0, std::vec::Vec::len);
-
-    // Completed Records/Archive quests (`story_*` ids) - the same set
-    // `max_quests` (`ArchiveQuestData`) counts.
-    let quests_completed = sandbox
-        .get("collect")
-        .and_then(|c| c.get("complete"))
-        .and_then(|c| c.get("quest"))
-        .and_then(|q| q.as_array())
-        .map_or(0, std::vec::Vec::len);
+    let categories = vec![
+        SandboxCategory {
+            key: "achievements",
+            label: "Achievements",
+            weight: ACHIEVEMENT_WEIGHT,
+            score: d.achievements,
+            parts: vec![part(
+                "Completed",
+                d.achievements_completed,
+                d.achievements_total,
+            )],
+        },
+        SandboxCategory {
+            key: "exploration",
+            label: "Exploration",
+            weight: EXPLORATION_WEIGHT,
+            score: d.exploration,
+            parts: vec![
+                part("Map nodes", d.nodes_explored, d.nodes_total),
+                part("Zones", d.zones_unlocked, d.zones_total),
+            ],
+        },
+        SandboxCategory {
+            key: "tech",
+            label: "Tech unlocks",
+            weight: TECH_WEIGHT,
+            score: d.tech_tree,
+            parts: vec![part("Unlocked", d.tech_unlocked, d.tech_total)],
+        },
+        SandboxCategory {
+            key: "quests",
+            label: "Story acts",
+            weight: QUEST_WEIGHT,
+            score: d.quests,
+            parts: vec![part("Completed", d.quests_completed, d.quests_total)],
+        },
+        SandboxCategory {
+            key: "base",
+            label: "Base building",
+            weight: BASE_WEIGHT,
+            score: d.base_building,
+            parts: vec![
+                part("Base level", d.base_level, d.base_level_max),
+                part("Blueprints", d.blueprints, d.blueprints_total),
+            ],
+        },
+        SandboxCategory {
+            key: "content",
+            label: "Content depth",
+            weight: CONTENT_WEIGHT,
+            score: d.content_depth,
+            parts: vec![
+                part("Recipes", d.recipes, d.recipes_total),
+                part("Music", d.music, d.music_total),
+                part("Rifts cleared", d.rift_levels, d.rift_levels_max),
+            ],
+        },
+    ];
 
     Ok(SandboxImprovements {
-        achievements: ProgressPair {
-            current: achievements,
-            max: universe.max_achievements,
-        },
-        nodes: ProgressPair {
-            current: nodes_explored,
-            max: universe.max_nodes,
-        },
-        tech: ProgressPair {
-            current: tech_unlocked,
-            max: universe.max_tech_nodes,
-        },
-        quests: ProgressPair {
-            current: quests_completed,
-            max: universe.max_quests,
-        },
+        total: d.total,
+        categories,
     })
 }
 
