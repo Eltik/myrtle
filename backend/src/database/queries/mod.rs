@@ -3,6 +3,7 @@ pub mod gacha;
 pub mod items;
 pub mod medals;
 pub mod operator_notes;
+pub mod planner;
 pub mod roguelike;
 pub mod roster;
 pub mod sandbox;
