@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::material::ItemType;
+use super::serde_helpers::deserialize_null_default;
 use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
 // ============================================================================
@@ -121,7 +122,7 @@ pub struct ModuleBlackboard {
         alias = "Value",
         alias = "value",
         default,
-        deserialize_with = "super::serde_helpers::deserialize_null_default"
+        deserialize_with = "deserialize_null_default"
     )]
     pub value: f64,
 }

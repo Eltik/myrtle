@@ -18,6 +18,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::core::gamedata::types::building::BuildingDataFile;
 
+use super::types::UserRoom;
 use super::{
     assignment::{compute_optimal_assignment, morale_recovery, morale_sustained_beneficiaries},
     buff_registry::BuffResolutionStrategy,
@@ -418,7 +419,7 @@ fn build_power_plan(
     primary: &BaseAssignment,
     reserve: &BaseAssignment,
 ) -> Vec<PowerPlant> {
-    let power_rooms: Vec<&super::types::UserRoom> = building
+    let power_rooms: Vec<&UserRoom> = building
         .rooms
         .iter()
         .filter(|r| r.room_type == "POWER")

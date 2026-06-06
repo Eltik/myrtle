@@ -22,19 +22,27 @@ use crate::core::grade::base::buff_registry::{
     BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
 };
 use crate::core::grade::base::perception;
+use crate::core::grade::base::perception::evaluate;
+use crate::core::grade::base::shift_rotation::ShiftRotation;
 use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, RotationAssignment, UserBuilding,
 };
+use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_operators::{
     UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
 };
 use crate::core::grade::stages::event_is_gradeable;
 use crate::database::models::roster::RosterEntry;
-use crate::database::queries::{
-    building as building_queries, medals as medal_queries, roguelike as roguelike_queries,
-    roster as roster_queries, sandbox as sandbox_queries, stages as stage_queries, users,
-};
+use crate::database::queries::building::get_building;
+use crate::database::queries::medals::get_user_medals;
+use crate::database::queries::roguelike::get_roguelike_progress;
+use crate::database::queries::roster::get_roster;
+use crate::database::queries::roster::get_supports;
+use crate::database::queries::sandbox::get_user_sandbox_progress;
+use crate::database::queries::stages::get_known_stage_ids_for_server;
+use crate::database::queries::stages::get_user_stage_clears;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ImprovementsResponse {
@@ -404,15 +412,15 @@ pub async fn get_improvements(
     state: &AppState,
     uid: &str,
 ) -> Result<ImprovementsResponse, ApiError> {
-    let user = users::find_by_uid(&state.db, uid)
+    let user = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
     let user_id = user.id;
     let game_data = state.game_data.load();
 
     let (roster, supports) = tokio::try_join!(
-        roster_queries::get_roster(&state.db, user_id),
-        roster_queries::get_supports(&state.db, user_id),
+        get_roster(&state.db, user_id),
+        get_supports(&state.db, user_id),
     )?;
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
     let owned_operators: HashSet<&str> = roster.iter().map(|e| e.operator_id.as_str()).collect();
@@ -441,8 +449,8 @@ async fn build_stage_improvements(
     game_data: &GameData,
 ) -> Result<StageImprovements, ApiError> {
     let (data, known) = tokio::try_join!(
-        stage_queries::get_user_stage_clears(pool, user_id),
-        stage_queries::get_known_stage_ids_for_server(pool, user_id),
+        get_user_stage_clears(pool, user_id),
+        get_known_stage_ids_for_server(pool, user_id),
     )?;
     let clears = &data.clears;
     let last_synced_ts = data.last_synced_ts;
@@ -553,7 +561,7 @@ async fn build_roguelike_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<Vec<RoguelikeThemeImprovement>, ApiError> {
-    let progress_rows = roguelike_queries::get_roguelike_progress(pool, user_id).await?;
+    let progress_rows = get_roguelike_progress(pool, user_id).await?;
     let progress_by_theme: HashMap<String, &serde_json::Value> = progress_rows
         .iter()
         .map(|(theme_id, json)| (theme_id.clone(), json))
@@ -675,7 +683,7 @@ async fn build_sandbox_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<SandboxImprovements, ApiError> {
-    let progress = sandbox_queries::get_user_sandbox_progress(pool, user_id).await?;
+    let progress = get_user_sandbox_progress(pool, user_id).await?;
     let universe = &game_data.sandbox_universe;
 
     let Some(sandbox) = progress.as_ref().and_then(|p| {
@@ -767,7 +775,7 @@ async fn build_medal_improvements(
     game_data: &GameData,
     owned_operators: &HashSet<&str>,
 ) -> Result<MedalImprovements, ApiError> {
-    let rows = medal_queries::get_user_medals(pool, user_id).await?;
+    let rows = get_user_medals(pool, user_id).await?;
     let earned: HashSet<String> = rows
         .iter()
         .filter(|(_, val, fts, rts)| {
@@ -1093,7 +1101,7 @@ async fn build_base_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
 ) -> Result<BaseImprovements, ApiError> {
-    let building_json = building_queries::get_building(pool, user_id).await?;
+    let building_json = get_building(pool, user_id).await?;
     let Some(building_json) = building_json else {
         return Ok(BaseImprovements::default());
     };
@@ -1133,7 +1141,7 @@ async fn build_base_improvements(
     // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
     // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
     let perception = is_243_layout(&user_building).then(|| {
-        perception::evaluate(
+        evaluate(
             &profiles,
             &user_building,
             &game_data.building,
@@ -1336,9 +1344,7 @@ fn is_243_layout(building: &UserBuilding) -> bool {
 /// itself still matters (it is compared as a whole set). Returns `(shift_index, slot_id) ->
 /// matched current team`; a recommended cell with no preset left to pair against maps to an
 /// empty team (a full swap-in).
-fn match_current_teams(
-    rotation: &crate::core::grade::base::shift_rotation::ShiftRotation,
-) -> HashMap<(usize, String), Vec<String>> {
+fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec<String>> {
     struct Cell {
         key: (usize, String),
         set: HashSet<String>,
@@ -1412,7 +1418,7 @@ fn match_current_teams(
 /// is flagged `equivalent` and suggests no swap - the player's team is already as good.
 #[allow(clippy::too_many_arguments)]
 fn shift_rotation_to_dto(
-    rotation: &crate::core::grade::base::shift_rotation::ShiftRotation,
+    rotation: &ShiftRotation,
     game_data: &GameData,
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1640,7 +1646,7 @@ fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDt
 }
 
 fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAssignmentDto {
-    let y = crate::core::grade::base::yield_model::room_yield(
+    let y = room_yield(
         &room.room_type,
         room.formula_type.as_deref(),
         room.level,

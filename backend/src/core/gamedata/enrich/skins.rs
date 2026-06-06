@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::gamedata::assets::AssetKind;
 use crate::core::gamedata::{
     assets::AssetIndex,
     types::skin::{EnrichedSkin, Skin, SkinData, SkinImages},
@@ -44,25 +45,16 @@ pub fn enrich_all_skins(
 
 fn get_skin_images(skin: &Skin, assets: &AssetIndex) -> SkinImages {
     let avatar = assets
-        .path(
-            crate::core::gamedata::assets::AssetKind::Avatar,
-            &skin.avatar_id,
-        )
+        .path(AssetKind::Avatar, &skin.avatar_id)
         .map(str::to_owned);
 
     let portrait = if skin.skin_id.contains('@') || skin.skin_id.contains('#') {
         assets
-            .path(
-                crate::core::gamedata::assets::AssetKind::SkinPortrait,
-                &skin.portrait_id,
-            )
+            .path(AssetKind::SkinPortrait, &skin.portrait_id)
             .map(str::to_owned)
     } else {
         assets
-            .path(
-                crate::core::gamedata::assets::AssetKind::Avatar,
-                &skin.portrait_id,
-            )
+            .path(AssetKind::Avatar, &skin.portrait_id)
             .map(str::to_owned)
     };
 

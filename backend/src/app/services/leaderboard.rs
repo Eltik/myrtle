@@ -1,6 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::database::queries::score::count_leaderboard;
+use crate::database::queries::score::get_last_updated;
+use crate::database::queries::score::get_player_standing;
+use crate::database::queries::score::get_server_distribution;
 use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     database::{
@@ -53,8 +57,8 @@ pub async fn get_leaderboard(
             i64::from(limit),
             i64::from(offset)
         ),
-        score::count_leaderboard(&state.db, server, movement_interval, movement_only, q),
-        score::get_last_updated(&state.db, server),
+        count_leaderboard(&state.db, server, movement_interval, movement_only, q),
+        get_last_updated(&state.db, server),
     )?;
 
     let page = LeaderboardPage {
@@ -92,7 +96,7 @@ pub async fn get_distribution(state: &AppState, top_n: u32) -> Result<Vec<Server
     if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
-    let dist = score::get_server_distribution(&state.db, i64::from(top_n)).await?;
+    let dist = get_server_distribution(&state.db, i64::from(top_n)).await?;
     state.cache.set(&key, &dist).await;
     Ok(dist)
 }
@@ -104,7 +108,7 @@ pub async fn get_standing(
     window: u32,
     interval: &str,
 ) -> Result<PlayerStanding, ApiError> {
-    score::get_player_standing(&state.db, uid, server, i64::from(window), interval)
+    get_player_standing(&state.db, uid, server, i64::from(window), interval)
         .await?
         .ok_or(ApiError::NotFound)
 }

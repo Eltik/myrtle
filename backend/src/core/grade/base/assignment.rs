@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::core::grade::base::yield_model::BaseFlows;
+use crate::core::grade::base::yield_model::global_bonus_value;
 use crate::core::{
     gamedata::types::building::{Buff, BuildingDataFile},
     grade::base::{
@@ -1728,7 +1730,7 @@ pub(crate) fn best_ordinary_cc_fill(
                 .iter()
                 .filter(|r| &r.room_type == room)
                 .count();
-            crate::core::grade::base::yield_model::global_bonus_value(room, count, *pct)
+            global_bonus_value(room, count, *pct)
         })
         .sum()
 }
@@ -3153,7 +3155,7 @@ fn team_capacity_bonus(
 /// throughput ceiling) and converted to its resource yield; the gold→trade loop
 /// is then coupled so LMD = min(gold made, gold sold) × 500 and EXP adds at 1:1.
 fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
-    let mut flows = crate::core::grade::base::yield_model::BaseFlows::default();
+    let mut flows = BaseFlows::default();
     for r in rooms {
         let speed = room_value(r.total_efficiency, &r.room_type);
         flows.add_room(

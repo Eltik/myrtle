@@ -41,6 +41,7 @@ use super::assignment::{best_ordinary_cc_fill, morale_recovery, op_uptime};
 use super::buff_registry::BuffResolutionStrategy;
 use super::types::{OperatorBaseProfile, UserBuilding};
 use super::util::max_stationed_at_level;
+use super::yield_model::global_bonus_value;
 
 /// A `<$cc.bd_XXX><@cc.rem>Name</>` resource reference: its stable id and display name.
 static RE_RESOURCE: LazyLock<Regex> =
@@ -655,11 +656,8 @@ fn solve_cc_bundle(
                     .get(&cons.resource)
                     .map_or(0.0, |v| v.iter().map(|(_, a)| a).sum());
                 let pct = points * cons.pct_per_point;
-                consumer_value += super::yield_model::global_bonus_value(
-                    &cons.room_type,
-                    room_count(&cons.room_type),
-                    pct,
-                );
+                consumer_value +=
+                    global_bonus_value(&cons.room_type, room_count(&cons.room_type), pct);
             }
             (consumer_value + filler_by_used[subset.len()], direct)
         };

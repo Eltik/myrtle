@@ -1,6 +1,9 @@
 use chrono::Utc;
 use serde::Deserialize;
 
+use crate::database::queries::roster::sync_user_data;
+use crate::database::queries::score::update_score;
+use crate::database::queries::users::find_by_uid;
 use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     core::{
@@ -10,10 +13,7 @@ use crate::{
             yostar::sync_data_raw,
         },
     },
-    database::{
-        models::score::UserScore,
-        queries::{roster, score, users},
-    },
+    database::models::score::UserScore,
 };
 
 #[derive(Deserialize)]
@@ -258,7 +258,7 @@ pub async fn refresh(
         .cloned()
         .unwrap_or_else(|| serde_json::json!({}));
 
-    roster::sync_user_data(
+    sync_user_data(
         &state.db,
         user_id,
         server.index() as i16,
@@ -286,10 +286,10 @@ pub async fn refresh(
     )
     .await?;
 
-    if let Some(user) = users::find_by_uid(&state.db, user_id).await? {
+    if let Some(user) = find_by_uid(&state.db, user_id).await? {
         let grade = calculate_user_grade(&state.db, user.id, &state.game_data.load()).await?;
 
-        score::update_score(
+        update_score(
             &state.db,
             &UserScore {
                 user_id: user.id,

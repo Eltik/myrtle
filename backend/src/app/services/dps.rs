@@ -2,6 +2,10 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::module::ModuleType;
 use crate::core::gamedata::types::operator::Operator;
+use crate::core::gamedata::types::operator::OperatorModule;
+use crate::dps::engine::calculate_dps;
+use crate::dps::engine::supported_healers;
+use crate::dps::engine::supported_operators;
 use crate::dps::engine::{self, DpsResult, HpsResult, OperatorFormula};
 use crate::dps::operator_unit::{
     EnemyStats, OperatorBuffs, OperatorConditionals, OperatorParams, OperatorShred,
@@ -31,7 +35,7 @@ pub struct OperatorListEntry {
     pub conditionals: Vec<ConditionalInfo>,
 }
 
-type OperatorModuleRef<'a> = &'a crate::core::gamedata::types::operator::OperatorModule;
+type OperatorModuleRef<'a> = &'a OperatorModule;
 
 /// The operator's ADVANCED modules, sorted by uniequip number - the same order
 /// `OperatorData` uses, so a formula module's position indexes into it.
@@ -115,11 +119,11 @@ fn build_list_entries(
 }
 
 pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
-    build_list_entries(state, engine::supported_operators())
+    build_list_entries(state, supported_operators())
 }
 
 pub fn list_healers(state: &AppState) -> Vec<OperatorListEntry> {
-    build_list_entries(state, engine::supported_healers())
+    build_list_entries(state, supported_healers())
 }
 
 #[derive(Deserialize)]
@@ -232,7 +236,7 @@ pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, A
     };
     let params = build_params(req);
 
-    engine::calculate_dps(operator, params, &enemy).ok_or(ApiError::BadRequest(
+    calculate_dps(operator, params, &enemy).ok_or(ApiError::BadRequest(
         "DPS calculation failed for this operator/config".into(),
     ))
 }

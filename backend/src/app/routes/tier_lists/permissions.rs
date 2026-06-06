@@ -5,9 +5,13 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
+use crate::app::routes::ok_status;
 use crate::app::state::AppState;
 use crate::database::models::tier_list::TierListPermission;
-use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::find_by_slug;
+use crate::database::queries::tier_lists::get_permissions;
+use crate::database::queries::tier_lists::grant_permission;
+use crate::database::queries::tier_lists::revoke_permission;
 
 pub async fn list(
     State(state): State<AppState>,
@@ -17,11 +21,11 @@ pub async fn list(
     if !auth.role.is_tier_list_admin() {
         return Err(ApiError::Forbidden);
     }
-    let tier_list = queries::find_by_slug(&state.db, &slug)
+    let tier_list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    let perms = queries::get_permissions(&state.db, tier_list.id).await?;
+    let perms = get_permissions(&state.db, tier_list.id).await?;
     Ok(Json(perms))
 }
 
@@ -41,11 +45,11 @@ pub async fn grant(
         return Err(ApiError::Forbidden);
     }
     let granter_id: Uuid = auth.user_uuid()?;
-    let tier_list = queries::find_by_slug(&state.db, &slug)
+    let tier_list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    queries::grant_permission(
+    grant_permission(
         &state.db,
         tier_list.id,
         body.user_id,
@@ -53,7 +57,7 @@ pub async fn grant(
         granter_id,
     )
     .await?;
-    Ok(crate::app::routes::ok_status())
+    Ok(ok_status())
 }
 
 pub async fn revoke(
@@ -64,10 +68,10 @@ pub async fn revoke(
     if !auth.role.is_tier_list_admin() {
         return Err(ApiError::Forbidden);
     }
-    let tier_list = queries::find_by_slug(&state.db, &slug)
+    let tier_list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
 
-    queries::revoke_permission(&state.db, tier_list.id, target_user_id, &permission).await?;
-    Ok(crate::app::routes::ok_status())
+    revoke_permission(&state.db, tier_list.id, target_user_id, &permission).await?;
+    Ok(ok_status())
 }

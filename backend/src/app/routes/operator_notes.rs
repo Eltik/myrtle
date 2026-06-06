@@ -6,11 +6,15 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
 use crate::app::services::operator_notes::GlobalAuditLogResponse;
+use crate::app::services::operator_notes::get_all;
+use crate::app::services::operator_notes::get_audit_log;
+use crate::app::services::operator_notes::get_by_operator;
+use crate::app::services::operator_notes::get_global_audit_log;
 use crate::app::state::AppState;
 use crate::database::models::operator_notes::{OperatorNote, OperatorNoteAuditEntry};
 
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<OperatorNote>>, ApiError> {
-    let notes = services::operator_notes::get_all(&state).await?;
+    let notes = get_all(&state).await?;
     Ok(Json(notes))
 }
 
@@ -18,7 +22,7 @@ pub async fn get(
     State(state): State<AppState>,
     Path(operator_id): Path<String>,
 ) -> Result<Json<OperatorNote>, ApiError> {
-    let note = services::operator_notes::get_by_operator(&state, &operator_id).await?;
+    let note = get_by_operator(&state, &operator_id).await?;
     Ok(Json(note))
 }
 
@@ -26,7 +30,7 @@ pub async fn audit_log(
     State(state): State<AppState>,
     Path(operator_id): Path<String>,
 ) -> Result<Json<Vec<OperatorNoteAuditEntry>>, ApiError> {
-    let log = services::operator_notes::get_audit_log(&state, &operator_id).await?;
+    let log = get_audit_log(&state, &operator_id).await?;
     Ok(Json(log))
 }
 
@@ -47,8 +51,7 @@ pub async fn global_audit_log(
         return Err(ApiError::Forbidden);
     }
     let limit = params.limit.unwrap_or(100);
-    let response =
-        services::operator_notes::get_global_audit_log(&state, limit, params.before).await?;
+    let response = get_global_audit_log(&state, limit, params.before).await?;
     Ok(Json(response))
 }
 

@@ -6,7 +6,11 @@ use futures_util::StreamExt;
 use tokio_tungstenite::connect_async;
 
 use crate::app::state::AppState;
+use crate::core::gacha_resync::reconcile_rarities;
 use crate::core::gamedata::assets::AssetIndex;
+use crate::core::gamedata::init_game_data;
+use crate::core::gamedata::tables::DataError;
+use crate::core::hypergryph::loaders::reload;
 
 const DEBOUNCE_SECS: u64 = 5;
 const MAX_BACKOFF: Duration = Duration::from_secs(30);
@@ -122,10 +126,9 @@ async fn perform_reload(state: &AppState) {
     let http_client = state.http_client.clone();
 
     let result = tokio::task::spawn_blocking(move || {
-        let game_data =
-            crate::core::gamedata::init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
+        let game_data = init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
         let asset_index = AssetIndex::build(Path::new(&assets_dir));
-        Ok::<_, crate::core::gamedata::tables::DataError>((game_data, asset_index))
+        Ok::<_, DataError>((game_data, asset_index))
     })
     .await;
 
@@ -136,7 +139,7 @@ async fn perform_reload(state: &AppState) {
             state.swap_asset_index(asset_index);
 
             // Reload version/network configs from Hypergryph servers
-            crate::core::hypergryph::loaders::reload(&http_client).await;
+            reload(&http_client).await;
 
             // Flush cached static data so next request rebuilds from new game data
             state.cache.invalidate_by_prefix("static:").await;
@@ -150,7 +153,7 @@ async fn perform_reload(state: &AppState) {
             let state = state.clone();
             tokio::spawn(async move {
                 let gd = state.game_data.load_full();
-                match crate::core::gacha_resync::reconcile_rarities(&state.db, &gd).await {
+                match reconcile_rarities(&state.db, &gd).await {
                     Ok(stats) if stats.rows_updated > 0 => {
                         tracing::info!(
                             rows = stats.rows_updated,

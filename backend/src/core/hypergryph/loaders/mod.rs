@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use reqwest::Client;
 
+use self::network::load_network_config;
+use self::version::load_version_config;
 use crate::core::hypergryph::config::{DeviceIds, config};
 
 pub mod device_ids;
@@ -18,15 +20,15 @@ pub async fn init(client: &Client) {
         cfg.device_ids = DeviceIds::generate();
     }
 
-    network::load_network_config(client).await;
-    version::load_version_config(client).await;
+    load_network_config(client).await;
+    load_version_config(client).await;
 
     // TODO: Emit event for when everything is initialized
 }
 
 pub async fn reload(client: &Client) {
-    network::load_network_config(client).await;
-    version::load_version_config(client).await;
+    load_network_config(client).await;
+    load_version_config(client).await;
 
     // TODO: Emit event for when everything is reloaded
 }

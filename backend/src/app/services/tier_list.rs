@@ -5,6 +5,15 @@ use crate::database::models::tier_list::{
     Tier, TierList, TierListFlair, TierListStats, TierPlacement,
 };
 use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::count_by_user;
+use crate::database::queries::tier_lists::ensure_stats_row;
+use crate::database::queries::tier_lists::find_by_slug;
+use crate::database::queries::tier_lists::get_flair_by_id;
+use crate::database::queries::tier_lists::get_placements;
+use crate::database::queries::tier_lists::get_stats;
+use crate::database::queries::tier_lists::get_tiers;
+use crate::database::queries::tier_lists::get_user_permission;
+use crate::database::queries::tier_lists::update;
 use serde::Serialize;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -56,7 +65,7 @@ pub async fn check_permission(
     }
 
     // Check per-list permission
-    let perm = queries::get_user_permission(&state.db, tier_list.id, user_id).await?;
+    let perm = get_user_permission(&state.db, tier_list.id, user_id).await?;
     match perm {
         Some(p) => {
             let level = Permission::from_str(&p.permission).map_err(|_| ApiError::Forbidden)?;
@@ -79,7 +88,7 @@ pub async fn find_and_authorize(
     role: GlobalRole,
     required: Permission,
 ) -> Result<TierList, ApiError> {
-    let list = queries::find_by_slug(&state.db, slug)
+    let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
     check_permission(state, &list, user_id, role, required).await?;
@@ -87,21 +96,21 @@ pub async fn find_and_authorize(
 }
 
 pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail, ApiError> {
-    let list = queries::find_by_slug(&state.db, slug)
+    let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let tiers = queries::get_tiers(&state.db, list.id).await?;
+    let tiers = get_tiers(&state.db, list.id).await?;
 
     // For each tier, load placements
     let mut tier_details = Vec::new();
     for tier in tiers {
-        let placements = queries::get_placements(&state.db, tier.id).await?;
+        let placements = get_placements(&state.db, tier.id).await?;
         tier_details.push(TierDetail { tier, placements });
     }
 
-    let stats = queries::get_stats(&state.db, list.id).await?;
+    let stats = get_stats(&state.db, list.id).await?;
     let flair = match list.flair_id {
-        Some(id) => queries::get_flair_by_id(&state.db, id).await?,
+        Some(id) => get_flair_by_id(&state.db, id).await?,
         None => None,
     };
     let author = match list.created_by {
@@ -135,7 +144,7 @@ pub async fn create(
 ) -> Result<TierList, ApiError> {
     // Community lists: 10-per-user limit
     if list_type == "community" {
-        let count = queries::count_by_user(&state.db, user_id).await?;
+        let count = count_by_user(&state.db, user_id).await?;
         if count >= 10 {
             return Err(ApiError::Conflict("maximum 10 tier lists per user".into()));
         }
@@ -147,7 +156,7 @@ pub async fn create(
 
     let slug = generate_slug(name);
     let list = queries::create(&state.db, name, &slug, description, list_type, user_id).await?;
-    queries::ensure_stats_row(&state.db, list.id).await?;
+    ensure_stats_row(&state.db, list.id).await?;
     Ok(list)
 }
 
@@ -159,11 +168,11 @@ pub async fn update_list(
     name: &str,
     description: Option<&str>,
 ) -> Result<TierList, ApiError> {
-    let list = queries::find_by_slug(&state.db, slug)
+    let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
     check_permission(state, &list, user_id, role, Permission::Edit).await?;
-    queries::update(&state.db, list.id, name, description)
+    update(&state.db, list.id, name, description)
         .await
         .map_err(std::convert::Into::into)
 }

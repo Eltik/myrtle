@@ -7,7 +7,8 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
 use crate::database::models::roster::{RosterEntry, SupportUnit};
-use crate::database::queries::{roster, users};
+use crate::database::queries::roster;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct RosterParams {
@@ -22,7 +23,7 @@ async fn resolve_user_id(
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 

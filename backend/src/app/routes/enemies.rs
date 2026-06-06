@@ -6,7 +6,8 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
-use crate::database::queries::{enemies, users};
+use crate::database::queries::enemies::get_user_encountered_enemies;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct EncounteredEnemiesParams {
@@ -42,7 +43,7 @@ async fn resolve_user_id(
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 
@@ -69,7 +70,7 @@ pub async fn get_encountered_enemies(
     Query(params): Query<EncounteredEnemiesParams>,
 ) -> Result<Json<EncounteredEnemiesResponse>, ApiError> {
     let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
-    let ids = enemies::get_user_encountered_enemies(&state.db, user_id).await?;
+    let ids = get_user_encountered_enemies(&state.db, user_id).await?;
 
     let game_data = state.game_data.load();
     let handbook = &game_data.enemies.enemy_data;

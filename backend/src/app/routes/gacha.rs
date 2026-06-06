@@ -5,6 +5,16 @@ use axum::{
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::app::services::gacha::fetch_and_store;
+use crate::app::services::gacha::get_enhanced_stats;
+use crate::app::services::gacha::get_gacha_settings;
+use crate::app::services::gacha::get_global_stats;
+use crate::app::services::gacha::get_history_envelope;
+use crate::app::services::gacha::get_history_for_char;
+use crate::app::services::gacha::get_per_banner_stats;
+use crate::app::services::gacha::get_stats;
+use crate::app::services::gacha::get_stored_records;
+use crate::app::services::gacha::update_gacha_settings;
 use crate::{
     app::{
         error::ApiError,
@@ -39,14 +49,14 @@ pub async fn fetch(
     auth: AuthUser,
 ) -> Result<Json<services::gacha::FetchResult>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let result = services::gacha::fetch_and_store(&state, user_id, &auth.uid).await?;
+    let result = fetch_and_store(&state, user_id, &auth.uid).await?;
     Ok(Json(result))
 }
 
 pub async fn global_stats(
     State(state): State<AppState>,
 ) -> Result<Json<services::gacha::GlobalGachaStats>, ApiError> {
-    let stats = services::gacha::get_global_stats(&state).await?;
+    let stats = get_global_stats(&state).await?;
     Ok(Json(stats))
 }
 
@@ -64,14 +74,14 @@ pub async fn enhanced_stats(
 ) -> Result<Json<services::gacha::GachaEnhancedStats>, ApiError> {
     let top_n = params.top_n.unwrap_or(20).clamp(1, 50);
     let include_timing = params.include_timing.unwrap_or(false);
-    let stats = services::gacha::get_enhanced_stats(&state, top_n, include_timing).await?;
+    let stats = get_enhanced_stats(&state, top_n, include_timing).await?;
     Ok(Json(stats))
 }
 
 pub async fn per_banner_stats(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<services::gacha::BannerPullStat>>, ApiError> {
-    let stats = services::gacha::get_per_banner_stats(&state).await?;
+    let stats = get_per_banner_stats(&state).await?;
     Ok(Json(stats))
 }
 
@@ -82,7 +92,7 @@ pub async fn history(
 ) -> Result<Json<services::gacha::GachaHistoryEnvelopeDto>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let order_desc = !matches!(params.order.as_deref(), Some("asc"));
-    let envelope = services::gacha::get_history_envelope(
+    let envelope = get_history_envelope(
         &state,
         user_id,
         params.rarity,
@@ -104,7 +114,7 @@ pub async fn history_by_char(
     Path(char_id): Path<String>,
 ) -> Result<Json<Vec<services::gacha::GachaRecordEntryDto>>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let rows = services::gacha::get_history_for_char(&state, user_id, &char_id).await?;
+    let rows = get_history_for_char(&state, user_id, &char_id).await?;
     Ok(Json(rows))
 }
 
@@ -113,7 +123,7 @@ pub async fn stored_records(
     auth: AuthUser,
 ) -> Result<Json<services::gacha::GachaRecordsDto>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let records = services::gacha::get_stored_records(&state, user_id).await?;
+    let records = get_stored_records(&state, user_id).await?;
     Ok(Json(records))
 }
 
@@ -122,7 +132,7 @@ pub async fn stats(
     auth: AuthUser,
 ) -> Result<Json<GachaStats>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let stats = services::gacha::get_stats(&state, user_id).await?;
+    let stats = get_stats(&state, user_id).await?;
     Ok(Json(stats))
 }
 
@@ -131,7 +141,7 @@ pub async fn get_settings(
     auth: AuthUser,
 ) -> Result<Json<services::gacha::GachaSettingsDto>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let settings = services::gacha::get_gacha_settings(&state, user_id).await?;
+    let settings = get_gacha_settings(&state, user_id).await?;
     Ok(Json(settings))
 }
 
@@ -148,7 +158,7 @@ pub async fn update_settings(
     Json(body): Json<UpdateSettingsBody>,
 ) -> Result<Json<services::gacha::GachaSettingsDto>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let settings = services::gacha::update_gacha_settings(
+    let settings = update_gacha_settings(
         &state,
         user_id,
         body.store_records,

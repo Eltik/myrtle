@@ -13,11 +13,18 @@ use sha2::Sha256;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
+use crate::app::extractors::auth::AuthUser;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::ok_status;
+use crate::app::services::tier_list::check_permission;
 use crate::app::state::AppState;
 use crate::app::validation::validate_hex_color;
 use crate::database::models::tier_list::{TierListFlair, TierListStats};
 use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::add_favorite;
+use crate::database::queries::tier_lists::find_by_slug;
+use crate::database::queries::tier_lists::is_favorited;
+use crate::database::queries::tier_lists::remove_favorite;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -90,7 +97,7 @@ pub async fn record_view(
     headers: HeaderMap,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
     let user_id = auth
@@ -118,7 +125,7 @@ pub async fn get_stats(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<TierListStats>, ApiError> {
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
     let stats = queries::get_stats(&state.db, list.id)
@@ -129,18 +136,18 @@ pub async fn get_stats(
 
 pub async fn toggle_favorite(
     State(state): State<AppState>,
-    auth: crate::app::extractors::auth::AuthUser,
+    auth: AuthUser,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let favorited = if queries::is_favorited(&state.db, list.id, user_id).await? {
-        queries::remove_favorite(&state.db, list.id, user_id).await?;
+    let favorited = if is_favorited(&state.db, list.id, user_id).await? {
+        remove_favorite(&state.db, list.id, user_id).await?;
         false
     } else {
-        queries::add_favorite(&state.db, list.id, user_id).await?;
+        add_favorite(&state.db, list.id, user_id).await?;
         true
     };
     Ok(Json(serde_json::json!({ "favorited": favorited })))
@@ -148,14 +155,14 @@ pub async fn toggle_favorite(
 
 pub async fn get_favorite(
     State(state): State<AppState>,
-    auth: crate::app::extractors::auth::AuthUser,
+    auth: AuthUser,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let favorited = queries::is_favorited(&state.db, list.id, user_id).await?;
+    let favorited = is_favorited(&state.db, list.id, user_id).await?;
     Ok(Json(serde_json::json!({ "favorited": favorited })))
 }
 
@@ -166,25 +173,18 @@ pub struct SetFlairRequest {
 
 pub async fn set_flair(
     State(state): State<AppState>,
-    auth: crate::app::extractors::auth::AuthUser,
+    auth: AuthUser,
     Path(slug): Path<String>,
     Json(body): Json<SetFlairRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     use crate::core::auth::permissions::Permission;
     let user_id: Uuid = auth.user_uuid()?;
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    crate::app::services::tier_list::check_permission(
-        &state,
-        &list,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_flair(&state.db, list.id, body.flair_id).await?;
-    Ok(crate::app::routes::ok_status())
+    Ok(ok_status())
 }
 
 pub async fn list_flairs(
@@ -200,23 +200,16 @@ pub struct SetVisibilityRequest {
 
 pub async fn set_visibility(
     State(state): State<AppState>,
-    auth: crate::app::extractors::auth::AuthUser,
+    auth: AuthUser,
     Path(slug): Path<String>,
     Json(body): Json<SetVisibilityRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     use crate::core::auth::permissions::Permission;
     let user_id: Uuid = auth.user_uuid()?;
-    let list = queries::find_by_slug(&state.db, &slug)
+    let list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    crate::app::services::tier_list::check_permission(
-        &state,
-        &list,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_visibility(&state.db, list.id, body.is_listed).await?;
     Ok(Json(serde_json::json!({ "is_listed": body.is_listed })))
 }
@@ -231,7 +224,7 @@ pub struct CreateFlairRequest {
 
 pub async fn create_flair(
     State(state): State<AppState>,
-    auth: crate::app::extractors::auth::AuthUser,
+    auth: AuthUser,
     Json(body): Json<CreateFlairRequest>,
 ) -> Result<Json<TierListFlair>, ApiError> {
     if !auth.role.is_tier_list_admin() {

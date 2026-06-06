@@ -6,7 +6,8 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::services::improvements::{ImprovementsResponse, get_improvements};
 use crate::app::state::AppState;
-use crate::database::queries::users;
+use crate::database::queries::users::find_by_id;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct ImprovementsParams {
@@ -29,7 +30,7 @@ async fn resolve_uid(
     uid_param: Option<&str>,
 ) -> Result<String, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 
@@ -47,7 +48,7 @@ async fn resolve_uid(
     } else {
         let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
         let user_uuid: uuid::Uuid = auth.user_uuid()?;
-        let profile = users::find_by_id(&state.db, user_uuid)
+        let profile = find_by_id(&state.db, user_uuid)
             .await?
             .ok_or(ApiError::Unauthorized)?;
         Ok(profile.uid)
