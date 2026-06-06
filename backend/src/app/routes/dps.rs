@@ -3,13 +3,15 @@ use axum::extract::State;
 
 use crate::app::error::ApiError;
 use crate::app::services;
+use crate::app::services::dps::list_healers;
+use crate::app::services::dps::list_operators;
 use crate::app::state::AppState;
 use crate::dps::engine::{DpsResult, HpsResult};
 
 pub async fn operators(
     State(state): State<AppState>,
 ) -> Json<Vec<services::dps::OperatorListEntry>> {
-    Json(services::dps::list_operators(&state))
+    Json(list_operators(&state))
 }
 
 pub async fn calculate(
@@ -21,7 +23,7 @@ pub async fn calculate(
 }
 
 pub async fn healers(State(state): State<AppState>) -> Json<Vec<services::dps::OperatorListEntry>> {
-    Json(services::dps::list_healers(&state))
+    Json(list_healers(&state))
 }
 
 pub async fn calculate_hps(

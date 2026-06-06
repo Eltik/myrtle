@@ -5,6 +5,10 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::database::models::operator_notes::{OperatorNote, OperatorNoteAuditEntry};
 use crate::database::queries::operator_notes as queries;
+use crate::database::queries::operator_notes::count_audit_log;
+use crate::database::queries::operator_notes::get_audit_log_global;
+use crate::database::queries::operator_notes::insert_audit;
+use crate::database::queries::operator_notes::upsert;
 
 #[derive(Debug, Serialize)]
 pub struct AuditLogActor {
@@ -64,8 +68,8 @@ pub async fn get_global_audit_log(
 ) -> Result<GlobalAuditLogResponse, ApiError> {
     let capped_limit = limit.clamp(1, 500);
     let (rows, total) = tokio::try_join!(
-        queries::get_audit_log_global(&state.db, capped_limit, before),
-        queries::count_audit_log(&state.db),
+        get_audit_log_global(&state.db, capped_limit, before),
+        count_audit_log(&state.db),
     )?;
 
     let entries = rows
@@ -108,7 +112,7 @@ pub async fn update(
 ) -> Result<OperatorNote, ApiError> {
     let existing = queries::get_by_operator(&state.db, operator_id).await?;
 
-    let note = queries::upsert(
+    let note = upsert(
         &state.db,
         operator_id,
         fields.pros.as_deref(),
@@ -152,8 +156,7 @@ pub async fn update(
         if let Some(new_val) = new
             && old != Some(new_val)
         {
-            queries::insert_audit(&state.db, note.id, field, old, Some(new_val), changed_by)
-                .await?;
+            insert_audit(&state.db, note.id, field, old, Some(new_val), changed_by).await?;
         }
     }
 

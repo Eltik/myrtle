@@ -1,5 +1,5 @@
 use crate::app::state::AppState;
-use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::recompute_trending;
 use std::time::Duration;
 
 async fn run_loop(state: AppState, interval_secs: u64, top_n: i64) {
@@ -7,7 +7,7 @@ async fn run_loop(state: AppState, interval_secs: u64, top_n: i64) {
     let mut tick = tokio::time::interval(Duration::from_secs(interval_secs));
     loop {
         tick.tick().await;
-        match queries::recompute_trending(&state.db, top_n).await {
+        match recompute_trending(&state.db, top_n).await {
             Ok(()) => tracing::debug!("trending recomputed"),
             Err(e) => tracing::warn!(error = %e, "trending recompute failed"),
         }

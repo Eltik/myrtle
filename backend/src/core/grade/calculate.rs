@@ -3,16 +3,18 @@ use std::collections::HashSet;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{
-    core::{
-        gamedata::types::GameData,
-        grade::{
-            base::score::grade_base, grade_medals::grade_medals, grade_operators::grade_operators,
-            grade_roguelike::grade_roguelike, sandbox::grade_sandbox, stages::grade_stages,
-        },
+use crate::core::{
+    gamedata::types::GameData,
+    grade::{
+        base::score::grade_base, grade_medals::grade_medals, grade_operators::grade_operators,
+        grade_roguelike::grade_roguelike, sandbox::grade_sandbox, stages::grade_stages,
     },
-    database::queries::{building, medals, roguelike, roster},
 };
+use crate::database::queries::building::get_building;
+use crate::database::queries::medals::get_user_medals;
+use crate::database::queries::roguelike::get_roguelike_progress;
+use crate::database::queries::roster::get_roster;
+use crate::database::queries::roster::get_supports;
 
 pub struct UserGrade {
     pub operator_grade: f64,
@@ -39,11 +41,11 @@ pub async fn calculate_user_grade(
         stage_grade,
         sandbox_grade,
     ) = tokio::try_join!(
-        roster::get_roster(pool, user_id),
-        roster::get_supports(pool, user_id),
-        building::get_building(pool, user_id),
-        roguelike::get_roguelike_progress(pool, user_id),
-        medals::get_user_medals(pool, user_id),
+        get_roster(pool, user_id),
+        get_supports(pool, user_id),
+        get_building(pool, user_id),
+        get_roguelike_progress(pool, user_id),
+        get_user_medals(pool, user_id),
         grade_stages(pool, user_id, game_data),
         grade_sandbox(pool, user_id, game_data),
     )?;

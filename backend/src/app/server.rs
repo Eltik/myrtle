@@ -5,7 +5,8 @@ use tower_http::compression::predicate::{DefaultPredicate, NotForContentType, Pr
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::app::{routes, state::AppState};
+use crate::app::routes::router;
+use crate::app::state::AppState;
 
 pub async fn run(state: AppState) -> Result<()> {
     let compression_predicate = DefaultPredicate::new()
@@ -13,7 +14,7 @@ pub async fn run(state: AppState) -> Result<()> {
         .and(NotForContentType::const_new("video/"));
 
     let app = Router::new()
-        .nest("/api", routes::router())
+        .nest("/api", router())
         .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new().compress_when(compression_predicate))

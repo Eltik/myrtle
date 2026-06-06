@@ -6,8 +6,9 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
+use crate::database::queries::items;
 use crate::database::queries::items::ItemEntry;
-use crate::database::queries::{items, users};
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct InventoryParams {
@@ -20,7 +21,7 @@ async fn resolve_user_id(
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 

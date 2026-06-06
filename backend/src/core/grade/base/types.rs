@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::gamedata::types::building::BuildingDataFile;
 use crate::{core::gamedata::types::building::BuildingChar, database::models::roster::RosterEntry};
 
 pub struct UserBuilding {
@@ -181,7 +182,7 @@ impl OperatorBaseProfile {
         building_char: &BuildingChar,
         faction_tags: Vec<String>,
         rarity: i16,
-        building_data: &crate::core::gamedata::types::building::BuildingDataFile,
+        building_data: &BuildingDataFile,
     ) -> Self {
         let mut available_buffs = Vec::new();
 
@@ -216,7 +217,7 @@ impl OperatorBaseProfile {
 pub fn compute_match_tags(
     faction_tags: &[String],
     available_buffs: &[String],
-    building_data: &crate::core::gamedata::types::building::BuildingDataFile,
+    building_data: &BuildingDataFile,
 ) -> Vec<String> {
     let mut tags = faction_tags.to_vec();
     for buff_id in available_buffs {

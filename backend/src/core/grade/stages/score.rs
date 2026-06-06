@@ -6,6 +6,8 @@ use crate::database::queries::stages::{get_known_stage_ids_for_server, get_user_
 
 use super::event::{event_is_gradeable, score_event_pool};
 use super::permanent::score_permanent_pool;
+use super::types::StageClear;
+use crate::core::gamedata::types::stage_universe::EventEntry;
 
 const PERMANENT_POOL_WEIGHT: f64 = 0.70;
 const EVENT_POOL_WEIGHT: f64 = 0.30;
@@ -70,11 +72,7 @@ pub async fn grade_stages_detail(
         .permanent
         .iter()
         .filter(|e| in_known(&e.stage_id))
-        .filter(|e| {
-            clears
-                .get(&e.stage_id)
-                .is_some_and(super::types::StageClear::is_cleared)
-        })
+        .filter(|e| clears.get(&e.stage_id).is_some_and(StageClear::is_cleared))
         .count();
     let permanent_three_starred = universe
         .permanent
@@ -87,20 +85,15 @@ pub async fn grade_stages_detail(
         })
         .count();
 
-    let event_in_window = |e: &crate::core::gamedata::types::stage_universe::EventEntry| -> bool {
-        event_is_gradeable(e, now, last_synced_ts, allowed)
-    };
+    let event_in_window =
+        |e: &EventEntry| -> bool { event_is_gradeable(e, now, last_synced_ts, allowed) };
 
     let event_total = universe.event.iter().filter(|e| event_in_window(e)).count();
     let event_cleared = universe
         .event
         .iter()
         .filter(|e| event_in_window(e))
-        .filter(|e| {
-            clears
-                .get(&e.stage_id)
-                .is_some_and(super::types::StageClear::is_cleared)
-        })
+        .filter(|e| clears.get(&e.stage_id).is_some_and(StageClear::is_cleared))
         .count();
     let event_three_starred = universe
         .event

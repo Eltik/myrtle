@@ -2,6 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::roster::RosterEntry;
+use crate::database::models::roster::SupportUnit;
 
 /// Get full roster for a user
 pub async fn get_roster(pool: &PgPool, user_id: Uuid) -> Result<Vec<RosterEntry>, sqlx::Error> {
@@ -86,11 +87,8 @@ pub async fn sync_user_data(
 }
 
 /// Get support units for a user (joined with operator state).
-pub async fn get_supports(
-    pool: &PgPool,
-    user_id: Uuid,
-) -> Result<Vec<crate::database::models::roster::SupportUnit>, sqlx::Error> {
-    sqlx::query_as::<_, crate::database::models::roster::SupportUnit>(
+pub async fn get_supports(pool: &PgPool, user_id: Uuid) -> Result<Vec<SupportUnit>, sqlx::Error> {
+    sqlx::query_as::<_, SupportUnit>(
         r"
         SELECT
             su.slot,

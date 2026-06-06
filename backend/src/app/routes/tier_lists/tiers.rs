@@ -5,14 +5,17 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
-use crate::app::services;
+use crate::app::routes::ok_status;
+use crate::app::services::tier_list::find_and_authorize;
 use crate::app::state::AppState;
 use crate::app::validation::{
     TIER_DESCRIPTION_MAX, TIER_NAME_MAX, validate_hex_color, validate_length, validate_opt_length,
 };
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::Tier;
-use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::create_tier;
+use crate::database::queries::tier_lists::delete_tier;
+use crate::database::queries::tier_lists::update_tier;
 
 #[derive(Deserialize)]
 pub struct CreateTierRequest {
@@ -42,16 +45,9 @@ pub async fn create(
     validate_tier_body(&body)?;
 
     let user_id: Uuid = auth.user_uuid()?;
-    let list = services::tier_list::find_and_authorize(
-        &state,
-        &slug,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    let tier = queries::create_tier(
+    let tier = create_tier(
         &state.db,
         list.id,
         &body.name,
@@ -72,10 +68,9 @@ pub async fn update(
     validate_tier_body(&body)?;
 
     let user_id: Uuid = auth.user_uuid()?;
-    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit)
-        .await?;
+    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    let tier = queries::update_tier(
+    let tier = update_tier(
         &state.db,
         tier_id,
         &body.name,
@@ -93,9 +88,8 @@ pub async fn delete(
     Path((slug, tier_id)): Path<(String, Uuid)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin)
-        .await?;
+    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin).await?;
 
-    queries::delete_tier(&state.db, tier_id).await?;
-    Ok(crate::app::routes::ok_status())
+    delete_tier(&state.db, tier_id).await?;
+    Ok(ok_status())
 }

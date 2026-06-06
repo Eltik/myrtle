@@ -1,7 +1,8 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::database::{models::user::UserProfile, queries::users};
+use crate::database::models::user::UserProfile;
+use crate::database::queries::users::find_by_uid;
 
 pub async fn get_user(state: &AppState, uid: &str) -> Result<UserProfile, ApiError> {
     let key = CacheKey::User { uid };
@@ -9,7 +10,7 @@ pub async fn get_user(state: &AppState, uid: &str) -> Result<UserProfile, ApiErr
         return Ok(cached);
     }
 
-    let profile = users::find_by_uid(&state.db, uid)
+    let profile = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
 

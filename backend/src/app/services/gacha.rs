@@ -5,6 +5,12 @@ use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::yostar::AccountPortalSession;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::queries::gacha;
+use crate::database::queries::gacha::get_all_for_user;
+use crate::database::queries::gacha::get_by_char_for_user;
+use crate::database::queries::gacha::get_history_filtered;
+use crate::database::queries::gacha::get_or_create_settings;
+use crate::database::queries::gacha::insert_batch;
+use crate::database::queries::gacha::update_gacha_flags;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -209,7 +215,7 @@ pub async fn fetch_and_store(
     let records_value =
         serde_json::to_value(&records_json).map_err(|e| ApiError::Internal(e.into()))?;
 
-    gacha::insert_batch(&state.db, user_id, &records_value).await?;
+    insert_batch(&state.db, user_id, &records_value).await?;
 
     Ok(FetchResult {
         total_fetched,
@@ -779,7 +785,7 @@ pub async fn get_stored_records(
     state: &AppState,
     user_id: Uuid,
 ) -> Result<GachaRecordsDto, ApiError> {
-    let rows = gacha::get_all_for_user(&state.db, user_id).await?;
+    let rows = get_all_for_user(&state.db, user_id).await?;
 
     let mut limited = Vec::new();
     let mut regular = Vec::new();
@@ -861,7 +867,7 @@ pub async fn get_history_envelope(
     limit: u32,
     offset: u32,
 ) -> Result<GachaHistoryEnvelopeDto, ApiError> {
-    let (rows, total) = gacha::get_history_filtered(
+    let (rows, total) = get_history_filtered(
         &state.db,
         user_id,
         rarity,
@@ -909,7 +915,7 @@ pub async fn get_history_for_char(
     user_id: Uuid,
     char_id: &str,
 ) -> Result<Vec<GachaRecordEntryDto>, ApiError> {
-    let rows = gacha::get_by_char_for_user(&state.db, user_id, char_id).await?;
+    let rows = get_by_char_for_user(&state.db, user_id, char_id).await?;
     Ok(rows.into_iter().map(Into::into).collect())
 }
 
@@ -932,7 +938,7 @@ pub async fn get_gacha_settings(
     state: &AppState,
     user_id: Uuid,
 ) -> Result<GachaSettingsDto, ApiError> {
-    let settings = gacha::get_or_create_settings(&state.db, user_id).await?;
+    let settings = get_or_create_settings(&state.db, user_id).await?;
     let stats = gacha::get_stats(&state.db, user_id).await?;
     Ok(GachaSettingsDto {
         user_id: user_id.to_string(),
@@ -951,6 +957,6 @@ pub async fn update_gacha_settings(
     store_records: Option<bool>,
     share_anonymous_stats: Option<bool>,
 ) -> Result<GachaSettingsDto, ApiError> {
-    gacha::update_gacha_flags(&state.db, user_id, store_records, share_anonymous_stats).await?;
+    update_gacha_flags(&state.db, user_id, store_records, share_anonymous_stats).await?;
     get_gacha_settings(state, user_id).await
 }
