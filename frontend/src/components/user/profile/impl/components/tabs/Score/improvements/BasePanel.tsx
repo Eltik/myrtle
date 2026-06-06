@@ -252,27 +252,34 @@ function PlanHeader({ base, accent }: { base: IBaseImprovements; accent: string 
  *  preset, red = remove. */
 function ShiftPoster({ rotation }: { rotation: IShiftRotation }) {
     if (rotation.shifts.length === 0) return null;
+    const sustained = new Set(rotation.sustained.map((o) => o.operator_id));
     return (
         <div className="flex flex-col gap-2.5">
             <p className={cn(TEXT_META, "text-muted-foreground")}>
                 Run your main team on shifts 1 &amp; 3 and rest it on the middle shift, where a backup covers - so operators recover instead of grinding all three. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove.
                 Power plants swap every shift; the Control Center runs two on, one off.
+                {sustained.size > 0 && (
+                    <>
+                        {" "}
+                        Operators tagged <span className="rounded-sm bg-amber-500/20 px-0.5 font-semibold text-[9px] text-amber-500/90">24/7</span> are held at full morale every shift by a morale-swap manager (Fiammetta).
+                    </>
+                )}
             </p>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                 {rotation.shifts.map((shift) => (
-                    <ShiftColumn key={shift.index} shift={shift} />
+                    <ShiftColumn key={shift.index} shift={shift} sustained={sustained} />
                 ))}
             </div>
         </div>
     );
 }
 
-function ShiftColumn({ shift }: { shift: IShift }) {
+function ShiftColumn({ shift, sustained }: { shift: IShift; sustained?: Set<string> }) {
     return (
         <div className="flex flex-col gap-1.5 rounded-md border border-border/35 bg-muted/10 p-2">
             <span className="font-semibold text-[11px]">Shift {shift.index}</span>
             {shift.rooms.map((room) => (
-                <ShiftRoomBlock key={room.slot_id} room={room} interactive />
+                <ShiftRoomBlock key={room.slot_id} room={room} interactive sustained={sustained} />
             ))}
         </div>
     );

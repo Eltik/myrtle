@@ -112,12 +112,13 @@ static RE_FACTION_TOKEN: LazyLock<Regex> =
 static RE_NULLIFY_SELF_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap());
 
+// Some skills phrase it "...per hour BY +2" (Enforcer's reception skill); allow the optional "by".
 static RE_MORALE_INCREASE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap()
+    Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vdown>\+?([\d.]+)</>").unwrap()
 });
 
 static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap()
+    Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vup>-?([\d.]+)</>").unwrap()
 });
 
 #[derive(Clone)]

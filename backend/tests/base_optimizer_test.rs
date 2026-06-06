@@ -8,7 +8,8 @@
 #![allow(
     clippy::items_after_statements,
     clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap
+    clippy::cast_possible_wrap,
+    clippy::too_many_lines
 )]
 
 mod common;
@@ -2402,10 +2403,10 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         );
     }
 
-    // Each production room runs its MAIN team on shifts 1 & 3 (exactly like the Control Center) and
-    // rests operators on the middle shift - covered by the reserve off-team. A Fiammetta-sustained
-    // operator may stay through the rest shift, but its teammates still rest.
-    let tp_crew = |shift: usize, slot: &str| -> Vec<String> {
+    // Every production room runs its MAIN team on shifts 1 & 3 and rests the MIDDLE shift (an
+    // off-team covers it) - a clean work / rest / work cycle. The main never works two shifts
+    // back-to-back, no operator is in both the main and its off-team, and nobody works all three.
+    let tp_team = |shift: usize, slot: &str| -> Vec<String> {
         let mut v = rot.shifts[shift]
             .rooms
             .iter()
@@ -2416,57 +2417,49 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         v.sort();
         v
     };
-    let mut any_rests_middle = false;
     for slot in ["tp0", "tp1"] {
-        assert!(!tp_crew(0, slot).is_empty(), "{slot} should be staffed");
+        assert!(!tp_team(0, slot).is_empty(), "{slot} should be staffed");
         assert_eq!(
-            tp_crew(0, slot),
-            tp_crew(2, slot),
+            tp_team(0, slot),
+            tp_team(2, slot),
             "{slot} runs its main team on shifts 1 and 3"
         );
-        // A room rests if at least one main operator is pulled out on the middle shift.
-        if tp_crew(0, slot)
-            .iter()
-            .any(|o| !tp_crew(1, slot).contains(o))
-        {
-            any_rests_middle = true;
-        }
-    }
-    assert!(
-        any_rests_middle,
-        "at least one trading post rests operators on the middle shift"
-    );
-
-    // A power plant runs its best specialist two shifts, then a stable OFF-TEAM (next-best)
-    // covers the rest shift - a clean two-operator pair, not the old nine-operator churn. So
-    // shifts 1 and 2 share one crew and the last shift differs, and no operator appears in both
-    // the main and the off-team.
-    let p0_crews: Vec<Vec<String>> = (0..3)
-        .map(|s| {
-            let mut v = rot.shifts[s]
-                .rooms
+        assert_ne!(
+            tp_team(0, slot),
+            tp_team(1, slot),
+            "{slot} rests its main on the middle shift"
+        );
+        assert!(
+            !tp_team(0, slot)
                 .iter()
-                .find(|r| r.slot_id == "p0")
-                .unwrap()
-                .recommended
-                .clone();
-            v.sort();
-            v
-        })
-        .collect();
-    assert!(!p0_crews[0].is_empty(), "the power plant should be staffed");
+                .any(|o| tp_team(1, slot).contains(o)),
+            "no operator is in both {slot}'s main and its middle-shift off-team"
+        );
+    }
+
+    // A power plant ALSO works shifts 1 & 3 and rests the middle (its off-team covers, or it rests
+    // dark) - so its operators recover too, instead of working two shifts in a row.
+    let p0 = |s: usize| -> Vec<String> {
+        let mut v = rot.shifts[s]
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "p0")
+            .unwrap()
+            .recommended
+            .clone();
+        v.sort();
+        v
+    };
+    assert!(!p0(0).is_empty(), "the power plant should be staffed");
     assert_eq!(
-        p0_crews[0], p0_crews[1],
-        "the power plant runs one crew the first two shifts"
+        p0(0),
+        p0(2),
+        "the power plant runs its main crew on shifts 1 and 3"
     );
     assert_ne!(
-        p0_crews[1], p0_crews[2],
-        "a distinct off-team covers the rest shift"
-    );
-    let overlap = p0_crews[0].iter().any(|o| p0_crews[2].contains(o));
-    assert!(
-        !overlap,
-        "the off-team should be different operators, got {p0_crews:?}"
+        p0(0),
+        p0(1),
+        "a distinct off-team (or rest) covers the middle shift"
     );
 }
 
@@ -3359,7 +3352,6 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
 // ─── Part C: Reception Room ambience model (rarity + elite + skill, exchange & solo) ─────────
 
 const CAPER: &str = "char_4100_caper"; // +30% clue search, ONLY during Clue Exchange
-const HARMONIE: &str = "char_297_hamoni"; // +50% clue search, ONLY when alone (solo)
 const VIGIL: &str = "char_427_vigil"; // +25% clue search
 const RED: &str = "char_144_red"; // +25% clue search
 
@@ -3409,25 +3401,29 @@ fn reception_total_includes_rarity_elite_and_level() {
 }
 
 #[test]
-fn reception_staffs_a_strong_solo_operator_alone() {
+fn reception_applies_the_solo_skill_when_an_operator_works_alone() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = meeting_room(3);
-    // Harmonie's +50% fires only when she's the room's sole worker; with just one ordinary partner
-    // available, running her ALONE beats the two-operator fill.
-    let roster: Vec<_> = [HARMONIE, "char_009_12fce"]
-        .iter()
-        .map(|id| profile(&gd, id))
-        .collect();
+    // Kazemaru clue-searches at +15% paired but +35% when he's the room's sole worker (no morale
+    // cost). With no partner available he's staffed alone, and the room's total reflects his higher
+    // SOLO skill, not the paired one.
+    const KAZEMARU: &str = "char_4016_kazema";
+    let roster = vec![profile(&gd, KAZEMARU)];
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let m = asn.rooms.iter().find(|r| r.room_type == "MEETING").unwrap();
     assert_eq!(
-        m.operators.len(),
-        1,
-        "a strong solo operator is staffed alone, got {:?}",
-        m.operators
+        m.operators,
+        vec![KAZEMARU.to_string()],
+        "the lone operator is staffed"
     );
-    assert_eq!(m.operators[0], HARMONIE);
+    // Solo skill 35 + rarity (5★ +4) + elite (E2 +16) + RR-level (L3 +11) = 66; the paired skill
+    // (15) would only reach ~46, so a total well above 50 proves the solo skill was used.
+    assert!(
+        m.total_efficiency > 50.0,
+        "the room should use Kazemaru's +35% solo skill, got {}",
+        m.total_efficiency
+    );
 }
 
 #[test]
@@ -3449,106 +3445,280 @@ fn ines_reception_skill_uses_the_sustained_time_ceiling() {
 }
 
 #[test]
-fn production_rooms_rest_the_middle_not_two_shifts_in_a_row() {
-    // The reported bug: an EXP team shown working two CONSECUTIVE shifts (1 & 2) and resting the
-    // last, instead of a clean work/rest/work. Every production room must now run its main on
-    // shifts 1 & 3 (resting the middle, covered by an off-team) - or, if it holds a Fiammetta-
-    // sustained operator, run all three shifts - so a team is never scheduled two shifts back-to-back.
-    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+fn enforcer_loses_to_chen_in_reception_because_he_burns_out() {
+    // Enforcer's reception skill is higher (+35% vs Ch'en's/FEater's +25%), but his "+2 Morale
+    // consumed per hour" burns him out in ~5h of a 12h shift, so his prorated clue output drops
+    // below both sustainable operators. The 2-seat Reception Room fills with Ch'en + FEater and
+    // leaves Enforcer out - without the morale penalty he'd be the top pick.
+    const ENFORCER: &str = "char_4036_forcer";
+    const CHEN: &str = "char_010_chen";
+    const FEATER: &str = "char_109_fmout"; // +25% reception, no morale cost
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let building = bd_base_243(); // 4 factories (gold/EXP) + 2 trading posts
-    let rot = recommend_shift_rotation(
+    let building = UserBuilding {
+        rooms: vec![room("rc", "MEETING", 3)],
+    };
+    let roster: Vec<_> = [ENFORCER, CHEN, FEATER]
+        .iter()
+        .map(|id| profile(&gd, id))
+        .collect();
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let m = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MEETING")
+        .expect("a reception room");
+    assert!(
+        m.operators.iter().any(|o| o == CHEN),
+        "the sustainable Ch'en should be staffed, got {:?}",
+        m.operators
+    );
+    assert!(
+        !m.operators.iter().any(|o| o == ENFORCER),
+        "Enforcer should be dropped - he burns out before the shift ends, got {:?}",
+        m.operators
+    );
+}
+
+#[test]
+fn factory_formula_assignment_respects_the_players_current_layout() {
+    // The optimizer picks the gold/EXP COUNT, but must lay it onto the slots the player ALREADY
+    // runs that way - otherwise it flips every factory's formula and the whole comparison reads as
+    // "change everything" (the reported "very wrong" plan).
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let fac = |slot: &str, formula: &str| UserRoom {
+        slot_id: slot.into(),
+        room_type: "MANUFACTURE".into(),
+        level: 3,
+        current_formula: Some(formula.into()),
+        ..Default::default()
+    };
+    // 2 trading posts force the split to at least 2 gold; the player runs mf0/mf1 as EXP and
+    // mf2/mf3 as GOLD.
+    let mut rooms = vec![room("cc", "CONTROL", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.push(fac("mf0", "F_EXP"));
+    rooms.push(fac("mf1", "F_EXP"));
+    rooms.push(fac("mf2", "F_GOLD"));
+    rooms.push(fac("mf3", "F_GOLD"));
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+
+    let asn = compute_optimal_assignment(
         &full_roster(&gd),
         &building,
         &gd.building,
         &registry,
         &drains,
     );
-    let crew = |s: usize, slot: &str| -> Vec<String> {
-        let mut v = rot.shifts[s]
-            .rooms
+    let formula_of = |slot: &str| -> Option<String> {
+        asn.rooms
             .iter()
             .find(|r| r.slot_id == slot)
-            .map(|r| r.recommended.clone())
-            .unwrap_or_default();
-        v.sort();
-        v
+            .and_then(|r| r.formula_type.clone())
     };
-    for slot in ["mf0", "mf1", "mf2", "mf3", "tp0", "tp1"] {
-        assert_eq!(
-            crew(0, slot),
-            crew(2, slot),
-            "{slot}: the main team must run shifts 1 and 3 (rest the middle), never two shifts in a row"
+    // The split is >= 2 gold (>= trading posts), so the player's two GOLD slots stay gold.
+    assert_eq!(
+        formula_of("mf2").as_deref(),
+        Some("F_GOLD"),
+        "mf2 (your gold slot) should stay gold"
+    );
+    assert_eq!(
+        formula_of("mf3").as_deref(),
+        Some("F_GOLD"),
+        "mf3 (your gold slot) should stay gold"
+    );
+}
+
+// ─── Preset-based Fiammetta 24/7 sustain in the shift rotation ───────────────────────────────
+
+#[test]
+fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const PROVISO: &str = "char_4032_provs";
+    const FIAMMETTA: &str = "char_300_phenxi"; // swaps morale with another operator
+    const QUARTZ: &str = "char_4063_quartz";
+    // The player runs Proviso in BOTH saved presets of the trading post (a deliberate 24/7 hold)
+    // and owns Fiammetta to sustain her.
+    let building = UserBuilding {
+        rooms: vec![UserRoom {
+            slot_id: "tp".into(),
+            room_type: "TRADING".into(),
+            level: 3,
+            preset_shifts: vec![
+                vec![PROVISO.into(), QUARTZ.into(), EXUSIAI.into()],
+                vec![
+                    PROVISO.into(),
+                    "char_502_nblade".into(),
+                    "char_185_frncat".into(),
+                ],
+            ],
+            ..Default::default()
+        }],
+    };
+    let roster: Vec<_> = [
+        PROVISO,
+        FIAMMETTA,
+        QUARTZ,
+        EXUSIAI,
+        "char_502_nblade",
+        "char_185_frncat",
+        "char_211_adnach",
+    ]
+    .iter()
+    .map(|id| profile(&gd, id))
+    .collect();
+
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+
+    assert_eq!(
+        rot.sustained,
+        vec![PROVISO.to_string()],
+        "Proviso (run 24/7 in both presets, with Fiammetta owned) should be flagged sustained"
+    );
+    // She works the trading post in ALL THREE shifts, including the middle (rest) shift.
+    for shift in &rot.shifts {
+        let tp = shift
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "TRADING")
+            .expect("a trading post each shift");
+        assert!(
+            tp.active && tp.recommended.iter().any(|o| o == PROVISO),
+            "Proviso must keep working on shift {} (got active={}, {:?})",
+            shift.index,
+            tp.active,
+            tp.recommended
         );
     }
 }
 
 #[test]
-fn fiammetta_sustains_only_one_operator_its_teammates_still_rest() {
-    // Fiammetta holds ONE operator at full morale, not a whole team. The sustained operator works
-    // every shift, but its teammates must still rest the middle shift (the prior fix wrongly ran
-    // the entire team 24/7).
-    use backend::core::grade::base::assignment::{
-        compute_optimal_assignment, morale_recovery, morale_sustained_beneficiaries,
-    };
+fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let building = bd_base_243();
-    let roster = full_roster(&gd); // includes Fiammetta (char_300_phenxi)
-
-    let primary = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
-    let sustained = morale_sustained_beneficiaries(
-        &primary,
-        &roster,
-        &drains,
-        morale_recovery(&building),
-        &gd.building,
-    );
-    assert_eq!(
-        sustained.len(),
-        1,
-        "one Fiammetta sustains exactly one operator, got {sustained:?}"
-    );
-    let sus_op = sustained.iter().next().unwrap().clone();
+    const PROVISO: &str = "char_4032_provs";
+    const QUARTZ: &str = "char_4063_quartz";
+    // Same 24/7 preset, but NO morale-swap manager owned -> she is not held 24/7.
+    let building = UserBuilding {
+        rooms: vec![UserRoom {
+            slot_id: "tp".into(),
+            room_type: "TRADING".into(),
+            level: 3,
+            preset_shifts: vec![
+                vec![PROVISO.into(), QUARTZ.into(), EXUSIAI.into()],
+                vec![
+                    PROVISO.into(),
+                    "char_502_nblade".into(),
+                    "char_185_frncat".into(),
+                ],
+            ],
+            ..Default::default()
+        }],
+    };
+    let roster: Vec<_> = [
+        PROVISO,
+        QUARTZ,
+        EXUSIAI,
+        "char_502_nblade",
+        "char_185_frncat",
+        "char_211_adnach",
+    ]
+    .iter()
+    .map(|id| profile(&gd, id))
+    .collect();
 
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
-    // The production room whose shift-1 main holds the sustained operator.
-    let slot = rot.shifts[0]
+
+    assert!(
+        rot.sustained.is_empty(),
+        "without a manager nobody is sustained, got {:?}",
+        rot.sustained
+    );
+    // The middle (off) shift must NOT keep Proviso working - she rests like everyone else.
+    let middle = &rot.shifts[rot.shifts.len() / 2];
+    let tp = middle
         .rooms
         .iter()
-        .find(|r| {
-            matches!(r.room_type.as_str(), "MANUFACTURE" | "TRADING")
-                && r.recommended.contains(&sus_op)
-        })
-        .map(|r| r.slot_id.clone())
-        .expect("the sustained operator should staff a production room");
-    let crew = |s: usize| -> Vec<String> {
-        rot.shifts[s]
-            .rooms
-            .iter()
-            .find(|r| r.slot_id == slot)
-            .unwrap()
-            .recommended
-            .clone()
+        .find(|r| r.room_type == "TRADING")
+        .expect("a trading post");
+    assert!(
+        !(tp.active && tp.recommended.iter().any(|o| o == PROVISO)),
+        "Proviso should rest the middle shift without a manager (got active={}, {:?})",
+        tp.active,
+        tp.recommended
+    );
+}
+
+// ─── DTO: the rest shift never keeps a main-team operator working (the "24/7" bug) ────────────
+
+#[test]
+fn rest_shift_does_not_keep_a_main_team_operator_working() {
+    // An operator recommended on the MAIN shifts (1 & 3) whom the player ALSO keeps in their
+    // rest-shift preset (i.e. they currently run them 24/7) must NOT be shown working the middle
+    // shift via the "≈ yours" overlay - that made a main operator look 24/7. The rest shift should
+    // flag them OUT instead.
+    use backend::app::services::improvements::shift_rotation_to_dto;
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let building = UserBuilding { rooms: vec![] };
+    let profiles: Vec<OperatorBaseProfile> = vec![];
+    let exp = |slot: &str, rec: &[&str], cur: &[&str]| ShiftRoom {
+        slot_id: slot.into(),
+        room_type: "MANUFACTURE".into(),
+        formula_type: Some("F_EXP".into()),
+        recommended: rec.iter().map(|s| (*s).to_string()).collect(),
+        current: cur.iter().map(|s| (*s).to_string()).collect(),
+        active: true,
+    };
+    // "X" is a main operator (recommended in slots a on shifts 1 & 3) the player also keeps on the
+    // rest shift. The shared P/Q makes the rest cell match the player's [X,P,Q] team deterministically.
+    let main = |idx| Shift {
+        index: idx,
+        rooms: vec![
+            exp("a", &["X", "P", "Q"], &["X", "P", "Q"]),
+            exp("b", &["R", "S", "T"], &["R", "S", "T"]),
+        ],
+    };
+    let rest = Shift {
+        index: 2,
+        rooms: vec![
+            exp("a", &["P", "Q", "Z"], &["X", "P", "Q"]),
+            exp("b", &["U", "V", "W"], &["R", "S", "T"]),
+        ],
+    };
+    let rotation = ShiftRotation {
+        shifts: vec![main(1), rest, main(3)],
+        sustained: vec![],
     };
 
-    // The sustained operator works ALL three shifts...
-    for s in 0..3 {
-        assert!(
-            crew(s).contains(&sus_op),
-            "the sustained operator should work shift {}",
-            s + 1
-        );
-    }
-    // ...but at least one of its shift-1 teammates rests the middle shift.
-    let teammates_rest = crew(0)
+    let dto = shift_rotation_to_dto(&rotation, &gd, &profiles, &building, &registry, &drains);
+    let s2 = dto
+        .shifts
         .iter()
-        .filter(|o| **o != sus_op)
-        .any(|o| !crew(1).contains(o));
+        .find(|s| s.index == 2)
+        .expect("rest shift");
+    let a = s2.rooms.iter().find(|r| r.slot_id == "a").expect("slot a");
     assert!(
-        teammates_rest,
-        "the sustained operator's teammates should still rest the middle shift"
+        !a.equivalent && !a.matches,
+        "the rest shift must not keep the player's main-operator team as '≈ yours'"
+    );
+    let shown = if a.equivalent || a.matches {
+        &a.current
+    } else {
+        &a.recommended
+    };
+    assert!(
+        !shown.iter().any(|o| o.operator_id == "X"),
+        "main operator X must not be shown working the rest shift, got {shown:?}"
+    );
+    assert!(
+        a.swap_out.iter().any(|o| o.operator_id == "X"),
+        "main operator X should be flagged OUT (rest) on the middle shift"
     );
 }

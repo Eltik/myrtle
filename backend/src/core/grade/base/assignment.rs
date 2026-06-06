@@ -233,6 +233,7 @@ fn optimal_inner(
         building_data,
         operators,
         registry,
+        morale_drains,
         &mut assigned,
     );
 
@@ -328,17 +329,31 @@ fn reception_skill(
         .fold(0.0, f64::max)
 }
 
+/// Hours in one ~12h shift, for prorating a Reception Room operator that can't last the whole shift.
+const SHIFT_HOURS: f64 = 12.0;
+
+/// The fraction of a 12h shift a Reception Room operator can actually work before its morale runs
+/// out. Most operators last well beyond a shift (factor 1.0), but a high-drain skill - Enforcer's
+/// "+2 Morale consumed per hour" burns him out in ~5h - only contributes for part of the shift, so
+/// its clue output is prorated and it loses to a sustainable operator (Ch'en) of similar skill.
+fn reception_sustain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+    (op_lasts_hours(op, morale_drains) / SHIFT_HOURS).min(1.0)
+}
+
 /// An operator's full Reception Room value: its clue-search skill (solo skills active only when
-/// `alone`) plus the rarity and elite ambience bonuses.
+/// `alone`) plus the rarity and elite ambience bonuses, prorated by how much of a shift it can
+/// actually sustain (a fast-draining operator burns out partway through and contributes less).
 fn reception_op_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
+    morale_drains: &HashMap<String, f64>,
     alone: bool,
 ) -> f64 {
-    reception_skill(op, registry, building_data, alone)
+    let raw = reception_skill(op, registry, building_data, alone)
         + rarity_bonus(op.rarity)
-        + elite_bonus(op.elite)
+        + elite_bonus(op.elite);
+    raw * reception_sustain(op, morale_drains)
 }
 
 /// Best crew for a Reception Room's `cap` slots: the higher of (a) the best PAIR of operators by
@@ -351,6 +366,7 @@ fn best_reception_crew(
     level: i32,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
+    morale_drains: &HashMap<String, f64>,
 ) -> Option<(Vec<String>, f64)> {
     if candidates.is_empty() || cap == 0 {
         return None;
@@ -360,7 +376,7 @@ fn best_reception_crew(
         .map(|op| {
             (
                 op.char_id.clone(),
-                reception_op_value(op, registry, building_data, false),
+                reception_op_value(op, registry, building_data, morale_drains, false),
             )
         })
         .collect();
@@ -374,7 +390,7 @@ fn best_reception_crew(
         .map(|op| {
             (
                 op.char_id.clone(),
-                reception_op_value(op, registry, building_data, true),
+                reception_op_value(op, registry, building_data, morale_drains, true),
             )
         })
         .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -402,6 +418,7 @@ fn assign_auxiliary_rooms(
     building_data: &BuildingDataFile,
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
     assigned: &mut HashSet<String>,
 ) {
     for room_type in ["HIRE", "MEETING"] {
@@ -427,7 +444,14 @@ fn assign_auxiliary_rooms(
                         })
                     })
                     .collect();
-                match best_reception_crew(&candidates, cap, room.level, registry, building_data) {
+                match best_reception_crew(
+                    &candidates,
+                    cap,
+                    room.level,
+                    registry,
+                    building_data,
+                    morale_drains,
+                ) {
                     Some(x) => x,
                     None => continue,
                 }
@@ -699,7 +723,7 @@ fn op_lasts_hours(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>
 
 /// Number of morale-swap managers (Fiammetta and equivalents) the roster owns - each can hold ONE
 /// working operator at full morale 24/7. Mirrors `perception::morale_swap_enabler`'s detection.
-fn num_morale_swap_managers(
+pub(crate) fn num_morale_swap_managers(
     operators: &[OperatorBaseProfile],
     building_data: &BuildingDataFile,
 ) -> usize {
@@ -1749,10 +1773,19 @@ fn assign_production_rooms(
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
 ) -> Vec<RoomAssignment> {
-    let factory_rooms: Vec<&&UserRoom> = rooms
+    let mut factory_rooms: Vec<&&UserRoom> = rooms
         .iter()
         .filter(|r| r.room_type == "MANUFACTURE")
         .collect();
+    // Lay the gold/EXP split onto the slots the player ALREADY runs that way: the COUNT of gold vs
+    // EXP is what's optimized, but which physical factory runs which keeps the player's existing
+    // layout. Ordering gold-preference slots first means "first num_gold get gold" preserves them,
+    // so the recommendation compares like-for-like instead of flipping every factory's formula.
+    factory_rooms.sort_by_key(|r| match r.current_formula.as_deref() {
+        Some("F_GOLD") => 0,
+        Some("F_EXP") => 1,
+        _ => 2,
+    });
     let trading_rooms: Vec<&&UserRoom> =
         rooms.iter().filter(|r| r.room_type == "TRADING").collect();
 

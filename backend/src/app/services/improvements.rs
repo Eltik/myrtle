@@ -369,6 +369,9 @@ pub struct AssignedOperator {
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRotationDto {
     pub shifts: Vec<ShiftDto>,
+    /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
+    /// shift instead of resting the middle one. The frontend badges these as "24/7 - Fiammetta".
+    pub sustained: Vec<AssignedOperator>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1350,36 +1353,41 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
         set: HashSet<String>,
         ops: Vec<String>,
     }
-    let mut rec_by_type: HashMap<&str, Vec<Cell>> = HashMap::new();
-    let mut cur_by_type: HashMap<&str, Vec<Cell>> = HashMap::new();
+    // Group by (shift, what the room PRODUCES) - shift index + room type + factory formula. Matching
+    // stays order-independent across the SLOTS of one shift (teams 1/2/3 in either Trading Post, in
+    // any order), but NOT across shifts: the player's shift-1 preset is compared to the shift-1
+    // recommendation, never shuffled into another shift. Grouping by formula also stops a Gold
+    // factory's recommendation being matched against an EXP preset (and vice versa).
+    type Group = (usize, String, Option<String>);
+    let mut rec_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
+    let mut cur_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
     for shift in &rotation.shifts {
         for room in &shift.rooms {
             let key = (shift.index, room.slot_id.clone());
-            rec_by_type
-                .entry(room.room_type.as_str())
-                .or_default()
-                .push(Cell {
-                    key: key.clone(),
-                    set: room.recommended.iter().cloned().collect(),
-                    ops: room.recommended.clone(),
-                });
+            let group = (
+                shift.index,
+                room.room_type.clone(),
+                room.formula_type.clone(),
+            );
+            rec_by_type.entry(group.clone()).or_default().push(Cell {
+                key: key.clone(),
+                set: room.recommended.iter().cloned().collect(),
+                ops: room.recommended.clone(),
+            });
             if !room.current.is_empty() {
-                cur_by_type
-                    .entry(room.room_type.as_str())
-                    .or_default()
-                    .push(Cell {
-                        key,
-                        set: room.current.iter().cloned().collect(),
-                        ops: room.current.clone(),
-                    });
+                cur_by_type.entry(group).or_default().push(Cell {
+                    key,
+                    set: room.current.iter().cloned().collect(),
+                    ops: room.current.clone(),
+                });
             }
         }
     }
 
     let mut out: HashMap<(usize, String), Vec<String>> = HashMap::new();
-    for (room_type, rec_cells) in &rec_by_type {
+    for (group, rec_cells) in &rec_by_type {
         let empty: Vec<Cell> = Vec::new();
-        let cur_cells = cur_by_type.get(room_type).unwrap_or(&empty);
+        let cur_cells = cur_by_type.get(group).unwrap_or(&empty);
         // Rank every (recommended, current) pairing by how few swaps it costs (the symmetric
         // difference of the two teams), then greedily lock in the cheapest pairings - each
         // recommended cell and each preset used at most once. Cost-0 (exact) pairings win
@@ -1417,7 +1425,8 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
 /// isn't the recommended set but scores at least as high (an exact tie on the room's objective)
 /// is flagged `equivalent` and suggests no swap - the player's team is already as good.
 #[allow(clippy::too_many_arguments)]
-fn shift_rotation_to_dto(
+#[doc(hidden)]
+pub fn shift_rotation_to_dto(
     rotation: &ShiftRotation,
     game_data: &GameData,
     profiles: &[OperatorBaseProfile],
@@ -1433,6 +1442,23 @@ fn shift_rotation_to_dto(
     };
     // Order-independent pairing of each recommended cell to the player's closest current team.
     let matched = match_current_teams(rotation);
+    // The shifts each operator is RECOMMENDED to work (their "home" shifts). A main-team operator
+    // works shifts 1 & 3 and rests the middle one; the order-independent overlay can match the
+    // player's preset (which keeps running them) into that rest shift and mark it "≈ yours", showing
+    // them working a shift the rotation deliberately rests them on - the reported "24/7" operator.
+    // So a cell may only KEEP a team containing such an operator on a shift that actually recommends
+    // them.
+    let mut rec_shifts: HashMap<&str, HashSet<usize>> = HashMap::new();
+    for shift in &rotation.shifts {
+        for room in shift.rooms.iter().filter(|r| r.active) {
+            for id in &room.recommended {
+                rec_shifts
+                    .entry(id.as_str())
+                    .or_default()
+                    .insert(shift.index);
+            }
+        }
+    }
     let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
     for shift in &rotation.shifts {
         // An operator can physically be in only ONE room per shift. The recommended teams are
@@ -1472,6 +1498,10 @@ fn shift_rotation_to_dto(
             let mut swap_out: Vec<String> = current
                 .iter()
                 .filter(|id| !rec.contains(id.as_str()))
+                // An operator recommended to WORK in another room this shift isn't being removed -
+                // they're relocating to their recommended slot (shown as an add there). Flagging them
+                // OUT here too made an operator look like they both work and leave the same shift.
+                .filter(|id| !matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id))
                 .cloned()
                 .collect();
             let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
@@ -1506,10 +1536,15 @@ fn shift_rotation_to_dto(
                     morale_drains,
                 );
                 // Keeping this team is only valid if it doesn't double-book an operator the shift
-                // needs in another room (recommended there, or already kept here).
+                // needs in another room (recommended there, or already kept here), and doesn't keep
+                // an operator working a shift the rotation rests them on (recommended on another
+                // shift but not this one) - that's what made a main-team operator look 24/7.
                 let conflicts = current.iter().any(|id| {
                     matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id)
                         || kept.contains(id)
+                        || rec_shifts
+                            .get(id.as_str())
+                            .is_some_and(|shifts| !shifts.contains(&shift.index))
                 });
                 if cur_v + 1e-4 >= rec_v && !conflicts {
                     equivalent = true;
@@ -1548,7 +1583,10 @@ fn shift_rotation_to_dto(
             rooms: room_dtos,
         });
     }
-    ShiftRotationDto { shifts: shift_dtos }
+    ShiftRotationDto {
+        shifts: shift_dtos,
+        sustained: ops(&rotation.sustained),
+    }
 }
 
 fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {
@@ -1727,6 +1765,7 @@ mod shift_match_tests {
                     room("b", &["D", "E", "F"], &["A", "B", "C"]),
                 ],
             }],
+            sustained: vec![],
         };
         let m = match_current_teams(&rotation);
         assert_eq!(
@@ -1753,6 +1792,7 @@ mod shift_match_tests {
                     room("b", &["M", "N", "O"], &["X", "Y", "Q"]),
                 ],
             }],
+            sustained: vec![],
         };
         let m = match_current_teams(&rotation);
         let a = &m[&(1, "a".to_string())];
