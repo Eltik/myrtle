@@ -293,23 +293,21 @@ fn enrich_phases(phases: &[Phase], rarity: usize, ctx: &EnrichCtx) -> Vec<Phase>
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-            if elite_index > 0 && rarity > 0 {
-                if let Some(gold_cost_entry) = ctx.consts.evolve_gold_cost.get(rarity - 1) {
-                    if let Some(&promo_lmd) = gold_cost_entry.values.get(elite_index - 1) {
-                        if promo_lmd > 0 {
-                            let (icon_id, image) =
-                                resolve_item_icon("4001", ctx.materials, ctx.assets);
-                            let lmd_cost_item = EvolveCost {
-                                id: "4001".to_owned(),
-                                count: promo_lmd,
-                                item_type: crate::core::gamedata::types::material::ItemType::Gold,
-                                icon_id,
-                                image,
-                            };
-                            evolve_cost.push(lmd_cost_item);
-                        }
-                    }
-                }
+            if elite_index > 0
+                && rarity > 0
+                && let Some(gold_cost_entry) = ctx.consts.evolve_gold_cost.get(rarity - 1)
+                && let Some(&promo_lmd) = gold_cost_entry.values.get(elite_index - 1)
+                && promo_lmd > 0
+            {
+                let (icon_id, image) = resolve_item_icon("4001", ctx.materials, ctx.assets);
+                let lmd_cost_item = EvolveCost {
+                    id: "4001".to_owned(),
+                    count: promo_lmd,
+                    item_type: crate::core::gamedata::types::material::ItemType::Gold,
+                    icon_id,
+                    image,
+                };
+                evolve_cost.push(lmd_cost_item);
             }
 
             evolve_cost.sort_by(|a, b| {
