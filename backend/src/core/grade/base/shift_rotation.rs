@@ -265,9 +265,12 @@ fn build_production_groups(primary: &BaseAssignment, reserve: &BaseAssignment) -
 /// An operator with no power skill (e.g. a pure Dormitory/Training operator) is dead
 /// weight there, so only genuine power specialists are recommended for the plants.
 fn has_power_skill(op: &OperatorBaseProfile, building_data: &BuildingDataFile) -> bool {
-    op.available_buffs
-        .iter()
-        .any(|b| building_data.buffs.get(b).is_some_and(|buff| buff.room_type == "POWER"))
+    op.available_buffs.iter().any(|b| {
+        building_data
+            .buffs
+            .get(b)
+            .is_some_and(|buff| buff.room_type == "POWER")
+    })
 }
 
 /// Power plants generate power regardless of who staffs them, so the optimizer doesn't
