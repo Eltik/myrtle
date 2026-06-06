@@ -249,11 +249,23 @@ export interface IRoguelikeThemeImprovement {
     challenges: IProgressPair;
 }
 
+export interface ISandboxPart {
+    label: string;
+    current: number;
+    max: number;
+}
+
+export interface ISandboxCategory {
+    key: string;
+    label: string;
+    weight: number;
+    score: number;
+    parts: ISandboxPart[];
+}
+
 export interface ISandboxImprovements {
-    achievements: IProgressPair;
-    nodes: IProgressPair;
-    tech: IProgressPair;
-    quests: IProgressPair;
+    total: number;
+    categories: ISandboxCategory[];
 }
 
 export interface IMedalOperatorLock {

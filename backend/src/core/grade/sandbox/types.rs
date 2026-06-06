@@ -11,8 +11,22 @@ pub struct SandboxGradeDetail {
     pub achievements_total: usize,
     pub nodes_explored: usize,
     pub nodes_total: usize,
+    pub zones_unlocked: usize,
+    pub zones_total: usize,
     pub tech_unlocked: usize,
     pub tech_total: usize,
     pub quests_completed: usize,
     pub quests_total: usize,
+    pub base_level: usize,
+    pub base_level_max: usize,
+    pub blueprints: usize,
+    pub blueprints_total: usize,
+    pub recipes: usize,
+    pub recipes_total: usize,
+    pub music: usize,
+    pub music_total: usize,
+    /// Summed rift difficulty levels cleared (the numerator of the rift score).
+    pub rift_levels: usize,
+    /// Max possible summed rift difficulty (`rifts × 16`); the rift-score denominator.
+    pub rift_levels_max: usize,
 }
