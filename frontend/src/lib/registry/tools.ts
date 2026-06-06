@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart" | "list-todo";
 
 export type ToolCategory = "calculator" | "fun";
 
@@ -35,6 +35,15 @@ export const TOOLS: ITool[] = [
         icon: "calc",
         category: "calculator",
         keywords: ["recruit", "tag", "calculator", "hire"],
+    },
+    {
+        id: "planner",
+        href: "/tools/planner",
+        label: "Operator planner",
+        desc: "Plan promotions, skills, and modules",
+        icon: "list-todo",
+        category: "calculator",
+        keywords: ["plan", "planner", "promotion", "skill", "module", "target"],
     },
     {
         id: "dps",

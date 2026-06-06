@@ -69,6 +69,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Calculate recruitment combos.",
         activeTag: "Tools",
     },
+    "tools-planner": {
+        title: "Operator Planner",
+        subtitle: "Plan your operator promotions, skills, and module targets.",
+        activeTag: "Tools",
+    },
     "tools-randomizer": {
         title: "Randomizer",
         subtitle: "Roll a random stage, squad, and modifier for your next run.",

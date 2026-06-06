@@ -28,7 +28,13 @@ interface IMainNavProps extends React.ComponentProps<"nav"> {
 }
 
 function ToolsIcon({ name }: { name: string }) {
-    const p = { fill: "none", stroke: "currentColor", strokeWidth: "1.9", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+    const p = {
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "1.9",
+        strokeLinecap: "round" as const,
+        strokeLinejoin: "round" as const,
+    };
     switch (name) {
         case "chart":
             return (
@@ -49,6 +55,16 @@ function ToolsIcon({ name }: { name: string }) {
                 <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <rect x="4" y="3" width="16" height="18" rx="2" />
                     <path d="M8 7h8M8 12h2M14 12h2M8 17h2M14 17h2" />
+                </svg>
+            );
+        case "list-todo":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <path d="M13 5h8" />
+                    <path d="M13 12h8" />
+                    <path d="M13 19h8" />
+                    <path d="m3 17 2 2 4-4" />
+                    <rect x="3" y="4" width="6" height="6" rx="1" />
                 </svg>
             );
         case "star":
