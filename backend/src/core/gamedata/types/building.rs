@@ -451,5 +451,12 @@ pub struct WorkshopFormula {
     #[serde(default)]
     pub require_rooms: Vec<FormulaRoomReq>,
     #[serde(default)]
-    pub require_stages: Vec<serde_json::Value>,
+    pub require_stages: Vec<WorkshopFormulaUnlockStage>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WorkshopFormulaUnlockStage {
+    pub stage_id: String,
+    pub rank: i32,
 }

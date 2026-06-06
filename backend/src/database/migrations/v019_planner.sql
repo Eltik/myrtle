@@ -1,4 +1,4 @@
-CREATE TABLE planner_plans (
+CREATE TABLE operator_plans (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     operator_id         VARCHAR(50) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE planner_plans (
     UNIQUE(user_id, operator_id)
 );
 
-CREATE TRIGGER trg_planner_plans_timestamp
-BEFORE UPDATE ON planner_plans
+CREATE TRIGGER trg_operator_plans_timestamp
+BEFORE UPDATE ON operator_plans
 FOR EACH ROW
 EXECUTE FUNCTION fn_update_timestamp();
