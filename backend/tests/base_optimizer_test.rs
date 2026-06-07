@@ -737,12 +737,12 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
 }
 
 #[test]
-fn quartz_recipe_scaling_is_modeled_as_base_plus_factory_count() {
-    // Quartz "Precise Scheduling" (trade_ord_spd&formula[000]): base +30% trading,
-    // plus +2% per recipe type being processed at Factories. We approximate recipe
-    // types by the Factory count, so her buff must resolve to a FacilityCountScaling
-    // targeting MANUFACTURE with a +30% base - not a flat DirectEfficiency that
-    // drops the recipe term. In a 5-factory base she then reads +40% (30 + 5×2).
+fn quartz_recipe_scaling_counts_distinct_recipe_types_not_factories() {
+    // Quartz "Precise Scheduling" (trade_ord_spd&formula[000]): base +30% trading, plus +2% per
+    // recipe TYPE being processed at Factories. That scales on the number of distinct formulas the
+    // base runs (gold + EXP = 2), NOT the factory count - four gold/EXP factories still process two
+    // recipe types. Her buff resolves to a FacilityCountScaling targeting the synthetic
+    // MANUFACTURE_RECIPE_TYPES count with a +30% base, so a 2-recipe base reads +34% (30 + 2×2).
     use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
     let gd = load_game_data();
@@ -762,10 +762,10 @@ fn quartz_recipe_scaling_is_modeled_as_base_plus_factory_count() {
             ..
         } => {
             assert_eq!(
-                target_room, "MANUFACTURE",
-                "recipe types scale off Factories"
+                target_room, "MANUFACTURE_RECIPE_TYPES",
+                "recipe scaling counts distinct recipe types, not the factory count"
             );
-            assert!(!per_level, "scaling is per-facility, not per-level");
+            assert!(!per_level, "scaling is per-recipe-type, not per-level");
             assert!(
                 (*base_pct - 30.0).abs() < 0.01,
                 "base should be +30%, got {base_pct}"
@@ -3720,5 +3720,160 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
     assert!(
         a.swap_out.iter().any(|o| o.operator_id == "X"),
         "main operator X should be flagged OUT (rest) on the middle shift"
+    );
+}
+
+#[test]
+fn reception_does_not_credit_a_co_op_conditional_without_the_partner() {
+    // Vulpisfoglia's +30% only applies "together with Suzuran"; without Suzuran in the room she's a
+    // +20% operator and should lose her slot to unconditional higher-skill operators - not be
+    // over-credited the conditional and beat them.
+    const VULPIS: &str = "char_4026_vulpis"; // +20%, plus +30% ONLY together with Suzuran
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let building = meeting_room(3); // capacity 2
+    let roster: Vec<_> = [VULPIS, RED, VIGIL]
+        .iter()
+        .map(|id| profile(&gd, id))
+        .collect();
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let crew: Vec<&str> = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MEETING")
+        .expect("a reception room")
+        .operators
+        .iter()
+        .map(String::as_str)
+        .collect();
+    assert!(
+        !crew.contains(&VULPIS),
+        "Vulpisfoglia's Suzuran-conditional +30% must not be credited without Suzuran: {crew:?}"
+    );
+    assert!(
+        crew.contains(&RED),
+        "Projekt Red (+25%, unconditional) should be staffed: {crew:?}"
+    );
+}
+
+#[test]
+fn power_plant_is_equivalent_when_drone_recovery_matches() {
+    // Two Power Plant specialists with the SAME drone-recovery % (Pudding and Indigo, both +15%)
+    // are interchangeable - the diff should read "≈ yours", not a pointless swap.
+    use backend::app::services::improvements::shift_rotation_to_dto;
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    const PUDDING: &str = "char_4004_pudd";
+    const INDIGO: &str = "char_469_indigo";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let profiles: Vec<_> = [PUDDING, INDIGO]
+        .iter()
+        .map(|id| profile(&gd, id))
+        .collect();
+    let building = UserBuilding { rooms: vec![] };
+    let rotation = ShiftRotation {
+        shifts: vec![Shift {
+            index: 1,
+            rooms: vec![ShiftRoom {
+                slot_id: "pp".into(),
+                room_type: "POWER".into(),
+                formula_type: None,
+                recommended: vec![PUDDING.into()],
+                current: vec![INDIGO.into()],
+                active: true,
+            }],
+        }],
+        sustained: vec![],
+    };
+    let dto = shift_rotation_to_dto(&rotation, &gd, &profiles, &building, &registry, &drains);
+    let pp = &dto.shifts[0].rooms[0];
+    assert!(
+        pp.equivalent,
+        "Pudding and Indigo (both +15% drone recovery) should be equivalent"
+    );
+    assert!(
+        pp.swap_in.is_empty() && pp.swap_out.is_empty(),
+        "an equivalent power team suggests no swap"
+    );
+}
+
+#[test]
+fn base_wide_bonus_applies_only_when_the_partner_works_a_work_area() {
+    // Hoederer's "+5% when Ines or W is assigned to any Work Area" must be credited only when Ines is
+    // actually deployed in a work area - not merely owned, and not while she has nowhere to work.
+    // With a Reception Room she works (a Work Area) and the bonus applies; without one (and no
+    // production skill of her own) she can't be stationed, so it doesn't.
+    const HOEDERER: &str = "char_4088_hodrer";
+    const INES: &str = "char_4087_ines";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster: Vec<_> = [HOEDERER, INES, "char_502_nblade", "char_185_frncat"]
+        .iter()
+        .map(|id| profile(&gd, id))
+        .collect();
+    let trading_eff = |building: &UserBuilding| -> f64 {
+        compute_optimal_assignment(&roster, building, &gd.building, &registry, &drains)
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == "TRADING")
+            .map(|r| r.total_efficiency)
+            .sum()
+    };
+    let with_work_area = UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            room("rr", "MEETING", 3),
+            room("d0", "DORMITORY", 5),
+        ],
+    };
+    let without_work_area = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
+    };
+    let with = trading_eff(&with_work_area);
+    let without = trading_eff(&without_work_area);
+    assert!(
+        with > without + 1.0,
+        "Hoederer's +5% should apply only when Ines works a Work Area (with={with}, without={without})"
+    );
+}
+
+#[test]
+fn quartz_value_reflects_distinct_recipe_types_not_factory_count() {
+    // A base with FOUR factories but only TWO distinct recipe types (2 gold + 2 EXP) processes two
+    // recipe types, so Quartz reads +34% (30 + 2×2), not the +38% a raw 4-factory count would give.
+    use backend::core::grade::base::assignment::team_value;
+    const QUARTZ: &str = "char_4063_quartz";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let profiles = vec![profile(&gd, QUARTZ)];
+    let fac = |slot: &str, formula: &str| UserRoom {
+        slot_id: slot.into(),
+        room_type: "MANUFACTURE".into(),
+        level: 3,
+        current_formula: Some(formula.into()),
+        ..Default::default()
+    };
+    let building = UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            fac("m0", "F_GOLD"),
+            fac("m1", "F_GOLD"),
+            fac("m2", "F_EXP"),
+            fac("m3", "F_EXP"),
+        ],
+    };
+    let v = team_value(
+        &[QUARTZ.to_string()],
+        "TRADING",
+        None,
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+    );
+    assert!(
+        (v - 1.34).abs() < 0.01,
+        "Quartz should read +34% (2 recipe types), not +38% (4 factories): got {v}"
     );
 }

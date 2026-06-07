@@ -143,6 +143,15 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             };
             *base_efficiency + bonus
         }
+        BuffResolutionStrategy::ConditionalOnBaseWide {
+            base_efficiency, ..
+        } => {
+            // The bonus depends on a named operator actively working a Work Area somewhere in the
+            // base. The optimizer resolves that to a flat efficiency up front (two-pass over the
+            // deployed roster) and scores against the resolved value, so here - where only the room
+            // is known - just the always-on base applies.
+            *base_efficiency
+        }
         BuffResolutionStrategy::ConditionalOnFaction {
             faction_token,
             base_efficiency,

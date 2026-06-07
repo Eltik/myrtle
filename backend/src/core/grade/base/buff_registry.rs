@@ -176,6 +176,18 @@ pub enum BuffResolutionStrategy {
         order_limit: i32,
     },
 
+    /// A base efficiency that's always applied, plus a bonus that applies when one of several named
+    /// operators is actively WORKING somewhere in the base ("any Work Area, excluding Assistants") -
+    /// not just present in the room, and not while resting in a dormitory.
+    /// e.g. Hoederer "Starting From Scratch β": +30%, and +5% more when Ines or W works any Work Area.
+    /// The optimizer resolves this to a flat efficiency per assignment once it knows who is actually
+    /// deployed in a work area (two-pass), so the scorer treats it as base-only on its own.
+    ConditionalOnBaseWide {
+        required_char_ids: Vec<String>,
+        base_efficiency: f64,
+        bonus_efficiency: f64,
+    },
+
     /// Scales with total order limit contributions from teammates.
     /// e.g. Degenbrecher E2: "+25% per 5 CAP from teammates, max +100%"
     /// e.g. Jaye E0+1: "+4% per 1 order limit increase from others"
@@ -501,13 +513,34 @@ pub fn build_registry(
                 }
             }
             "MANUFACTURE" | "TRADING" | "POWER" => {
+                // Base-wide named-operator conditional: "+30%, and +5% more when Ines or W is
+                // assigned to any Work Area" (Hoederer). The bonus depends on a named operator
+                // actively WORKING somewhere in the base, distinguished by the "Work Area" phrasing
+                // (vs the same-room "...same Trading Post as <op>"). Carries the base, the bonus %
+                // stated after the named list, and the required operators; the optimizer credits the
+                // bonus only once it knows who is deployed in a work area.
+                let base_wide = buff
+                    .description
+                    .contains("Work Area")
+                    .then(|| find_all_operator_char_ids(&buff.description, name_to_char))
+                    .filter(|(ids, _)| !ids.is_empty());
+                if let Some((required_char_ids, name_end)) = base_wide {
+                    let base_efficiency = f64::from(buff.efficiency);
+                    let bonus_efficiency =
+                        parse_first_pct_from(&buff.description, name_end).unwrap_or(0.0);
+                    BuffResolutionStrategy::ConditionalOnBaseWide {
+                        required_char_ids,
+                        base_efficiency,
+                        bonus_efficiency,
+                    }
+                }
                 // Named-teammate conditional. Handles both phrasings:
                 //   "...same Trading Post as <@cc.kw>Lappland</> … +65%"   (Texas)
                 //   "+20%; if <@cc.kw>Exusiai</> … same Trading Post … +25%" (Lemuen)
                 // The base efficiency (always applied) is the Efficiency field; the
                 // bonus is the % stated alongside the named operator. Faction-count
                 // buffs ("for every Glasgow Gang operator…") are excluded.
-                if buff.description.contains("same")
+                else if buff.description.contains("same")
                     && !buff.description.contains("for every")
                     && let Some((req_name, name_end)) =
                         find_operator_keyword(&buff.description, name_to_char)
@@ -781,12 +814,14 @@ pub fn build_registry(
                 }
                 // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
                 // efficiency PLUS "+N% per recipe type being processed at Factories".
-                // Distinct recipe types are approximated by the Factory count - the
-                // base % is the Efficiency field, the per-unit % is the trailing %.
+                // Scales on the count of DISTINCT recipe types (the synthetic
+                // `MANUFACTURE_RECIPE_TYPES` count - gold + EXP is 2, not the 4-factory
+                // count), with the base % from the Efficiency field and the per-unit % the
+                // trailing %.
                 else if prefix.contains("&formula") && buff.description.contains("recipe type") {
                     let per_unit = parse_last_pct(&buff.description).unwrap_or(2.0);
                     BuffResolutionStrategy::FacilityCountScaling {
-                        target_room: "MANUFACTURE".to_string(),
+                        target_room: "MANUFACTURE_RECIPE_TYPES".to_string(),
                         per_unit_pct: per_unit,
                         per_level: false,
                         nullifies_others: false,
@@ -1034,6 +1069,27 @@ fn find_operator_keyword(
         }
     }
     None
+}
+
+/// Every `<@cc.kw>…</>` keyword that resolves to a known operator, as `char_id`s, plus the byte
+/// offset just past the LAST one (so the caller can read a bonus % stated after the named list).
+/// Handles multi-operator conditions ("when <Ines> or <W> are assigned…").
+fn find_all_operator_char_ids(
+    desc: &str,
+    name_to_char: &HashMap<String, String>,
+) -> (Vec<String>, usize) {
+    let mut ids = Vec::new();
+    let mut last_end = 0;
+    for cap in RE_KW_BLOCK.captures_iter(desc) {
+        let name = RE_INNER_TAG.replace_all(&cap[1], "").trim().to_lowercase();
+        if let Some(char_id) = name_to_char.get(&name) {
+            ids.push(char_id.clone());
+            if let Some(block) = cap.get(0) {
+                last_end = block.end();
+            }
+        }
+    }
+    (ids, last_end)
 }
 
 /// First faction marker (`<$cc.g.glasgow>` etc.) in the text. Returns the token
