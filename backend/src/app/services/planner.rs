@@ -447,6 +447,13 @@ pub async fn upsert_plan(
         .get(operator_id)
         .ok_or(ApiError::NotFound)?;
 
+    if operator.is_not_obtainable {
+        return Err(ApiError::BadRequest(format!(
+            "Operator {} is not obtainable, and their upgrades cannot be planned",
+            operator.name
+        )));
+    }
+
     let max_elite = (operator.phases.len() as i16) - 1;
     if target_elite < 0 || target_elite > max_elite {
         return Err(ApiError::BadRequest(format!(
