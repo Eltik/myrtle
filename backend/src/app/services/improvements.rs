@@ -1518,13 +1518,15 @@ pub fn shift_rotation_to_dto(
                 .collect();
             let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
 
-            // A factory / trading-post team the player ALREADY runs that ties the recommendation's
-            // output needs no swap (Bryophyta vs a Dorothy-boosted Rhine operator). Only checked
-            // when there's a difference to suppress, and only for production rooms.
+            // A team the player ALREADY runs that ties the recommendation's output needs no swap -
+            // a factory/trading team (Bryophyta vs a Dorothy-boosted Rhine operator), or a Power
+            // Plant specialist with the same drone-recovery % (Pudding vs Indigo, both +15%). Only
+            // checked when there's a difference to suppress, and only for rooms whose output
+            // `team_value` can score (production + power).
             let mut equivalent = false;
             if !matches
                 && !current.is_empty()
-                && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING")
+                && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING" | "POWER")
             {
                 let f = room.formula_type.as_deref();
                 let rec_v = team_value(

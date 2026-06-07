@@ -78,12 +78,140 @@ pub fn compute_optimal_assignment_with_pins(
     )
 }
 
-/// The shared optimizer body. `cap_aware` switches production-team scoring to the SUSTAINED
-/// objective (factory product-buffer stall during AFK), so a high-capacity team is preferred
-/// where it out-produces a denser team over a long unattended stretch; `false` is the plain
-/// peak objective used everywhere else.
+/// True when the roster owns an operator whose base-wide conditional (Hoederer's "+5% when Ines or
+/// W works any Work Area") could fire - i.e. at least one required partner is itself in the candidate
+/// pool and so could be deployed. Only then is the two-pass resolution worth running.
+fn base_wide_relevant(
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> bool {
+    let roster: HashSet<&str> = operators.iter().map(|o| o.char_id.as_str()).collect();
+    operators.iter().any(|op| {
+        op.available_buffs.iter().any(|b| {
+            matches!(
+                registry.get(b),
+                Some(BuffResolutionStrategy::ConditionalOnBaseWide { required_char_ids, .. })
+                    if required_char_ids.iter().any(|id| roster.contains(id.as_str()))
+            )
+        })
+    })
+}
+
+/// True when some base-wide bonus is actually unlocked by `deployed` - a required partner ended up
+/// stationed in a work area. If none did, the second optimizer pass would be identical to the first.
+fn base_wide_unlocked(
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    deployed: &HashSet<String>,
+) -> bool {
+    operators.iter().any(|op| {
+        op.available_buffs.iter().any(|b| {
+            matches!(
+                registry.get(b),
+                Some(BuffResolutionStrategy::ConditionalOnBaseWide { required_char_ids, bonus_efficiency, .. })
+                    if *bonus_efficiency != 0.0 && required_char_ids.iter().any(|id| deployed.contains(id))
+            )
+        })
+    })
+}
+
+/// A copy of `registry` with every base-wide conditional collapsed to a flat `DirectEfficiency`:
+/// its base, plus the bonus when one of its required partners is in `present` (the operators
+/// deployed in work areas). This lets the room scorer stay deployment-agnostic - it just reads the
+/// already-resolved efficiency.
+fn resolve_base_wide(
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    present: &HashSet<String>,
+) -> HashMap<String, BuffResolutionStrategy> {
+    registry
+        .iter()
+        .map(|(id, strategy)| {
+            let resolved = match strategy {
+                BuffResolutionStrategy::ConditionalOnBaseWide {
+                    required_char_ids,
+                    base_efficiency,
+                    bonus_efficiency,
+                } => {
+                    let bonus = if required_char_ids.iter().any(|c| present.contains(c)) {
+                        *bonus_efficiency
+                    } else {
+                        0.0
+                    };
+                    BuffResolutionStrategy::DirectEfficiency {
+                        value: base_efficiency + bonus,
+                    }
+                }
+                other => other.clone(),
+            };
+            (id.clone(), resolved)
+        })
+        .collect()
+}
+
+/// The shared optimizer body, wrapped so a base-wide conditional (Hoederer's "+5% when Ines or W
+/// works any Work Area") is credited only when its partner is ACTUALLY deployed in a work area.
+/// Because a partner's deployment doesn't depend on the conditional operator, two passes suffice:
+/// pass 1 deploys everyone with the bonus off, then pass 2 re-optimizes with the bonus baked in for
+/// partners that pass 1 stationed. Gated on the roster actually owning such a buff with its partner
+/// available, so ordinary bases run a single pass with no overhead.
 #[allow(clippy::too_many_arguments)]
 fn optimal_inner(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+    cap_aware: bool,
+) -> BaseAssignment {
+    if !base_wide_relevant(operators, registry) {
+        return optimal_inner_core(
+            operators,
+            building,
+            building_data,
+            registry,
+            morale_drains,
+            pins,
+            cap_aware,
+        );
+    }
+    // Pass 1: bonus off, to learn who actually ends up deployed in a work area.
+    let pass1_registry = resolve_base_wide(registry, &HashSet::new());
+    let pass1 = optimal_inner_core(
+        operators,
+        building,
+        building_data,
+        &pass1_registry,
+        morale_drains,
+        pins,
+        cap_aware,
+    );
+    // Operators the assignment stationed - all of which are work areas (the optimizer never benches
+    // anyone in a dormitory). A resting/benched partner is therefore absent here, so its bonus stays
+    // off, which is exactly the "Work Area, not resting" semantics.
+    let deployed: HashSet<String> = pass1
+        .rooms
+        .iter()
+        .flat_map(|r| r.operators.iter().cloned())
+        .collect();
+    if !base_wide_unlocked(operators, registry, &deployed) {
+        return pass1; // no partner deployed → no bonus → pass 1 is already correct
+    }
+    // Pass 2: re-optimize with the bonus credited for the partners pass 1 deployed.
+    let pass2_registry = resolve_base_wide(registry, &deployed);
+    optimal_inner_core(
+        operators,
+        building,
+        building_data,
+        &pass2_registry,
+        morale_drains,
+        pins,
+        cap_aware,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn optimal_inner_core(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
     building_data: &BuildingDataFile,
@@ -322,6 +450,14 @@ fn reception_skill(
             let d = buff.description.to_lowercase();
             // A solo skill only fires when the operator is the room's only worker.
             if (d.contains("no other operator") || d.contains("if no other")) && !alone {
+                return None;
+            }
+            // A co-operation skill ("...together with <operator>... +30%") only fires when that
+            // specific partner shares the room. We value operators independently here, so we can't
+            // confirm the partner is present - crediting it anyway over-valued the conditional
+            // (Vulpisfoglia's +30%-with-Suzuran beating an unconditional +25% Tracker). Skip it, so
+            // the operator is scored on its always-on clue skill.
+            if d.contains("together with") {
                 return None;
             }
             Some(value)
@@ -1131,6 +1267,25 @@ pub fn compute_current_assignment(
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
 
+    // Credit Hoederer-style base-wide bonuses against the operators the player actually has WORKING
+    // this shift - everyone they've stationed outside a dormitory (where operators only rest). This
+    // scores the current base on the same "partner in a Work Area, not resting" rule as the
+    // recommendation. The current deployment is fixed, so no second pass is needed.
+    let resolved_registry;
+    let registry: &HashMap<String, BuffResolutionStrategy> =
+        if base_wide_relevant(operators, registry) {
+            let working: HashSet<String> = building
+                .rooms
+                .iter()
+                .filter(|r| r.room_type != "DORMITORY")
+                .flat_map(|r| room_ops_for_shift(r, shift))
+                .collect();
+            resolved_registry = resolve_base_wide(registry, &working);
+            &resolved_registry
+        } else {
+            registry
+        };
+
     // Global bonuses from whoever the player has in the Control Center for this
     // shift (same non-stacking rule as the optimizer).
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
@@ -1257,8 +1412,29 @@ fn effective_facility_counts(
             }
         }
     }
+    // Distinct recipe TYPES the factories process (Pure Gold, Battle Records, ...) - what Quartz's
+    // "+2% per recipe type" scales on, NOT the raw factory count: four gold/EXP factories still
+    // process only two recipe types. Use the player's set formulas; if none are set yet, assume the
+    // optimizer's usual gold + EXP split (2), capped at the factory count.
+    let factory_count = counts.get("MANUFACTURE").copied().unwrap_or(0);
+    let distinct_formulas: HashSet<&str> = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "MANUFACTURE")
+        .filter_map(|r| r.current_formula.as_deref())
+        .collect();
+    let recipe_types = if distinct_formulas.is_empty() {
+        factory_count.min(2)
+    } else {
+        distinct_formulas.len()
+    };
+    counts.insert(MANUFACTURE_RECIPE_TYPES.to_string(), recipe_types);
     counts
 }
+
+/// Synthetic `facility_counts` key holding the number of DISTINCT recipe types the factories run
+/// (not the factory count) - the quantity Quartz's recipe-type trading scaler reads.
+const MANUFACTURE_RECIPE_TYPES: &str = "MANUFACTURE_RECIPE_TYPES";
 
 /// Max stationed for the user's highest-level room of `room_type` (e.g. their CC).
 fn max_stationed_for_room(
