@@ -37,6 +37,5 @@ export type OperatorSortMode = "rarity-desc" | "common-first";
 
 export interface ICalculatorOptions {
     includeRobots?: boolean;
-    prioritizeFiveStarChance?: boolean;
     operatorSortMode?: OperatorSortMode;
 }
