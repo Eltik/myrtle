@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use ::serenity::builder::CreateEmbed;
 use ::serenity::builder::CreateEmbedAuthor;
 use ::serenity::model::Timestamp;
@@ -132,16 +134,16 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
 
     let by_server = {
         let rows = [
-            ("EN", s.users.by_server.en as u64),
-            ("JP", s.users.by_server.jp as u64),
-            ("KR", s.users.by_server.kr as u64),
-            ("CN", s.users.by_server.cn as u64),
-            ("BILI", s.users.by_server.bili as u64),
-            ("TW", s.users.by_server.tw as u64),
+            ("EN", s.users.by_server.en),
+            ("JP", s.users.by_server.jp),
+            ("KR", s.users.by_server.kr),
+            ("CN", s.users.by_server.cn),
+            ("BILI", s.users.by_server.bili),
+            ("TW", s.users.by_server.tw),
         ];
         let mut t = format!("```\n{:<6}{:>11}\n", "Server", "Players");
         for (name, count) in rows {
-            t.push_str(&format!("{name:<6}{:>11}\n", commafy(count)));
+            let _ = writeln!(t, "{name:<6}{:>11}", commafy(count));
         }
         t.push_str("```");
         t
@@ -150,17 +152,17 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
     let game_data = {
         let g = &s.game_data;
         let rows = [
-            ("Operators", g.operators as u64),
-            ("Skills", g.skills as u64),
-            ("Modules", g.modules as u64),
-            ("Skins", g.skins as u64),
-            ("Stages", g.stages as u64),
-            ("Zones", g.zones as u64),
-            ("Enemies", g.enemies as u64),
+            ("Operators", g.operators),
+            ("Skills", g.skills),
+            ("Modules", g.modules),
+            ("Skins", g.skins),
+            ("Stages", g.stages),
+            ("Zones", g.zones),
+            ("Enemies", g.enemies),
         ];
         let mut t = String::from("```\n");
         for (name, count) in rows {
-            t.push_str(&format!("{name:<10}{:>9}\n", commafy(count)));
+            let _ = writeln!(t, "{name:<10}{:>9}", commafy(count));
         }
         t.push_str("```");
         t
@@ -174,10 +176,10 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
             "Users",
             format!(
                 "**{}** total\n`{}` public profiles\n`+{}` this week\n`+{}` this month",
-                commafy(s.users.total as u64),
-                commafy(s.users.public_profiles as u64),
-                commafy(s.users.signups7d as u64),
-                commafy(s.users.signups30d as u64),
+                commafy(s.users.total),
+                commafy(s.users.public_profiles),
+                commafy(s.users.signups7d),
+                commafy(s.users.signups30d),
             ),
             true,
         )
@@ -185,14 +187,14 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
             "Gacha",
             format!(
                 "**{}** pulls · {} contributors\n★6: {} (`{}%`)\n★5: {} (`{}%`)\n★4: {} (`{}%`)",
-                commafy(s.gacha.total_pulls as u64),
-                commafy(s.gacha.contributing_users as u64),
-                commafy(s.gacha.six_star_count as u64),
-                pct(s.gacha.six_star_count as u64, s.gacha.total_pulls as u64),
-                commafy(s.gacha.five_star_count as u64),
-                pct(s.gacha.five_star_count as u64, s.gacha.total_pulls as u64),
-                commafy(s.gacha.four_star_count as u64),
-                pct(s.gacha.four_star_count as u64, s.gacha.total_pulls as u64),
+                commafy(s.gacha.total_pulls),
+                commafy(s.gacha.contributing_users),
+                commafy(s.gacha.six_star_count),
+                pct(s.gacha.six_star_count, s.gacha.total_pulls),
+                commafy(s.gacha.five_star_count),
+                pct(s.gacha.five_star_count, s.gacha.total_pulls),
+                commafy(s.gacha.four_star_count),
+                pct(s.gacha.four_star_count, s.gacha.total_pulls),
             ),
             true,
         )
@@ -200,11 +202,11 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
             "Tier Lists & Rosters",
             format!(
                 "**{}** tier lists (`{}` active)\n`{}` versions · `{}` placements\n**{}** rosters",
-                commafy(s.tier_lists.total as u64),
-                commafy(s.tier_lists.active as u64),
-                commafy(s.tier_lists.total_versions as u64),
-                commafy(s.tier_lists.total_placements as u64),
-                commafy(s.rosters.total as u64),
+                commafy(s.tier_lists.total),
+                commafy(s.tier_lists.active),
+                commafy(s.tier_lists.total_versions),
+                commafy(s.tier_lists.total_placements),
+                commafy(s.rosters.total),
             ),
             true,
         )
@@ -219,7 +221,7 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
 fn format_endpoint(s: &api::status::EndpointStatus) -> String {
     if s.reachable {
         format!(
-            "**OK {}** — {} ms\n<{}>",
+            "**OK {}** - {} ms\n<{}>",
             s.status_code.unwrap_or(0),
             s.response_time_ms.unwrap_or(0),
             s.url,
