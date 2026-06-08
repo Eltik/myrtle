@@ -1,8 +1,4 @@
 {
-  "registration": {
-    "use_guild_commands": true,
-    "guild_id": "000000000000000000"
-  },
   "endpoints": {
     "local_backend": "http://localhost:3000",
     "local_frontend": "http://localhost:5173",

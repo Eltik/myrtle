@@ -1,7 +1,6 @@
 use std::{fs, path::Path};
 
 use serde::Deserialize;
-use serenity::all::GuildId;
 
 use crate::types::Error;
 
@@ -15,23 +14,9 @@ pub const DEFAULT_CONFIG_PATH: &str = "config.json";
 #[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default)]
-    pub registration: RegistrationConfig,
-    #[serde(default)]
     pub endpoints: EndpointsConfig,
     #[serde(default)]
     pub assets: AssetsConfig,
-}
-
-/// Command-registration target.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RegistrationConfig {
-    /// When `true`, commands are registered in `guild_id` only (fast iteration, no global cache).
-    #[serde(default)]
-    pub use_guild_commands: bool,
-    /// Required when `use_guild_commands` is `true`. Accepts either a JSON number or quoted string.
-    #[serde(default)]
-    pub guild_id: Option<GuildId>,
 }
 
 /// HTTP endpoints the status check pings.
@@ -74,14 +59,13 @@ const fn default_reconnect_secs() -> u64 {
 }
 
 impl Config {
-    /// Load and parse `path`, then validate cross-field invariants.
+    /// Load and parse `path`.
     pub fn load(path: impl AsRef<Path>) -> Result<Self, Error> {
         let path = path.as_ref();
         let bytes = fs::read(path)
             .map_err(|e| format!("Failed to read config at {}: {e}", path.display()))?;
         let config: Self = serde_json::from_slice(&bytes)
             .map_err(|e| format!("Failed to parse config at {}: {e}", path.display()))?;
-        config.validate()?;
         Ok(config)
     }
 
@@ -90,15 +74,5 @@ impl Config {
         let path = std::env::var("DISCORD_CONFIG_PATH")
             .unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string());
         Self::load(path)
-    }
-
-    fn validate(&self) -> Result<(), Error> {
-        if self.registration.use_guild_commands && self.registration.guild_id.is_none() {
-            return Err(
-                "registration.guild_id is required when registration.use_guild_commands is true"
-                    .into(),
-            );
-        }
-        Ok(())
     }
 }

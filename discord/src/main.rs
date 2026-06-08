@@ -74,31 +74,14 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(options)
-        .setup(move |ctx, _ready, framework| {
+        .setup(move |ctx, _ready, _framework| {
             let assets_state = setup_state;
             let assets_rx = assets_rx_slot.take().expect("framework setup runs once");
             Box::pin(async move {
-                let commands = &framework.options().commands;
-
                 ctx.set_presence(
                     Some(serenity::all::ActivityData::playing("Arknights")),
                     serenity::all::OnlineStatus::Online,
                 );
-
-                if config.registration.use_guild_commands {
-                    let guild_id = config
-                        .registration
-                        .guild_id
-                        .expect("guild_id validated at config load");
-                    poise::builtins::register_in_guild(ctx, commands, guild_id).await?;
-                    tracing::info!(
-                        "Registered {} command(s) in guild {guild_id}",
-                        commands.len()
-                    );
-                } else {
-                    poise::builtins::register_globally(ctx, commands).await?;
-                    tracing::info!("Registered {} command(s) globally", commands.len());
-                }
 
                 let tracked: HashSet<_> = db::list_tracked_message_ids(&pool)
                     .await?
