@@ -9,8 +9,9 @@ import { Badge } from "#/components/ui/badge";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Toggle } from "#/components/ui/toggle";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
-import { enemiesListQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
+import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
 import type { IEncounteredEnemies } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 
@@ -56,6 +57,7 @@ interface IEnemiesTabProps {
 
 export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     const { data: handbook, isLoading: isHandbookLoading } = useQuery(enemiesListQueryOptions());
+    const { data: community } = useQuery(enemyCommunityAverageQueryOptions());
     const [status, setStatus] = useState<StatusFilter>("all");
     const [level, setLevel] = useState<LevelFilter>("ALL");
     const [search, setSearch] = useState("");
@@ -69,6 +71,9 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     const total = rows.length;
     const seenCount = useMemo(() => rows.reduce((n, r) => n + (r.seen ? 1 : 0), 0), [rows]);
     const pct = total > 0 ? Math.round((seenCount / total) * 100) : 0;
+
+    const avg = community?.averageEncountered;
+    const avgPct = avg != null && total > 0 ? Math.min(100, Math.max(0, (avg / total) * 100)) : null;
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -100,7 +105,7 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
 
     return (
         <section aria-label="Enemy handbook" className="flex flex-col gap-5">
-            <ProgressHeader pct={pct} seen={seenCount} total={total} />
+            <ProgressHeader avg={avg ?? null} avgPct={avgPct} pct={pct} seen={seenCount} total={total} />
 
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <InputGroup className="w-full sm:w-64 sm:min-w-48 sm:max-w-80 sm:flex-1">
@@ -234,7 +239,9 @@ function VirtualizedEnemyGrid({ rows }: { rows: IEnemyRow[] }) {
     );
 }
 
-function ProgressHeader({ seen, total, pct }: { seen: number; total: number; pct: number }) {
+function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total: number; pct: number; avg: number | null; avgPct: number | null }) {
+    const avgLabel = avg != null ? Math.round(avg).toLocaleString() : null;
+    const avgPctLabel = avgPct != null ? Math.round(avgPct) : null;
     return (
         <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/40 p-5">
             <div className="flex items-end justify-between gap-4">
@@ -250,9 +257,49 @@ function ProgressHeader({ seen, total, pct }: { seen: number; total: number; pct
                 </div>
                 <span className="font-mono font-semibold text-primary text-xl tabular-nums leading-none">{pct}%</span>
             </div>
-            <div aria-label={`${pct}% of enemies encountered`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={pct} className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]" role="progressbar">
-                <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
-            </div>
+            <Tooltip>
+                <TooltipTrigger
+                    render={(p) => (
+                        // The whole bar is the hover/focus target; exact figures live in the tooltip.
+                        <button {...p} type="button" aria-label={`${seen} of ${total} enemies encountered, ${pct}%`} className="relative block w-full cursor-help rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card">
+                            <div aria-hidden className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
+                                <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+                            </div>
+                            {avgPct != null && avgLabel != null && (
+                                // Community-average marker drawn on the same scale as the fill.
+                                <div className="pointer-events-none absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: `${avgPct}%` }}>
+                                    <div className="h-3.5 w-0.5 rounded-full bg-foreground/70 shadow-[0_0_0_1.5px_var(--card)]" />
+                                </div>
+                            )}
+                        </button>
+                    )}
+                />
+                <TooltipPopup className="px-3 py-2">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="font-semibold text-foreground text-sm tabular-nums">{pct}%</span>
+                            <span className="text-muted-foreground text-xs tabular-nums">
+                                {seen.toLocaleString()} / {total.toLocaleString()} encountered
+                            </span>
+                        </div>
+                        {avgLabel != null && (
+                            <span className="text-[11px] text-muted-foreground tabular-nums">
+                                Community average: {avgLabel}
+                                {avgPctLabel != null && ` (${avgPctLabel}%)`}
+                            </span>
+                        )}
+                    </div>
+                </TooltipPopup>
+            </Tooltip>
+            {avgPct != null && avgLabel != null && (
+                <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                    <span aria-hidden className="inline-block h-3 w-0.5 rounded-full bg-foreground/70" />
+                    <span>
+                        Community average: <span className="font-medium text-foreground tabular-nums">{avgLabel}</span> encountered
+                        {avgPctLabel != null && <span className="tabular-nums"> ({avgPctLabel}%)</span>}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
