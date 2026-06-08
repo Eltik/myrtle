@@ -74,6 +74,10 @@ pub fn router() -> Router<AppState> {
             get(enemies::get_encountered_enemies),
         )
         .route(
+            "/encountered-enemies/community-average",
+            get(enemies::get_community_average),
+        )
+        .route(
             "/user/improvements",
             get(improvements::get_user_improvements),
         )

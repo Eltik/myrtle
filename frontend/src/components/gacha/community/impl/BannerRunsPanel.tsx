@@ -197,9 +197,11 @@ const SORT_METRIC_LABEL: Record<Exclude<Sort, "timeline">, string> = {
 /** Small segmented pill group, shared by the filter and sort controls. */
 function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
     return (
-        <div className="inline-flex items-center gap-2">
+        // Mobile: label stacked above a full-width, equal-column control. ≥sm:
+        // compact inline row, as before.
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
             <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
-            <div className="inline-flex flex-wrap items-center gap-1.5 rounded-[9px] border border-border bg-muted p-0.75">
+            <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">
                 {options.map((o) => {
                     const isActive = value === o.key;
                     return (
@@ -208,7 +210,7 @@ function Segmented<T extends string>({ label, options, value, onChange }: { labe
                             type="button"
                             aria-pressed={isActive}
                             onClick={() => onChange(o.key)}
-                            className={`h-6.5 cursor-pointer rounded-md px-2.5 font-medium font-sans text-[11.5px] transition-colors ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
+                            className={`flex h-8 cursor-pointer touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 font-medium font-sans text-[11.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:h-6.5 sm:px-2.5 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
                         >
                             {o.label}
                         </button>
@@ -332,7 +334,7 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
                     </h2>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:items-end">
+                <div className="flex flex-col gap-3 sm:items-end sm:gap-2">
                     <Segmented
                         label="Sort"
                         options={SORTS}
