@@ -8,7 +8,6 @@ import type { ICalculatorOptions, OperatorSortMode } from "../types";
 interface ICalculatorOptionsPanelProps {
     options: Required<ICalculatorOptions>;
     onChangeIncludeRobots: (value: boolean) => void;
-    onChangePrioritizeFiveStar: (value: boolean) => void;
     onChangeSortMode: (value: OperatorSortMode) => void;
 }
 
@@ -17,11 +16,10 @@ const SORT_LABELS: Record<OperatorSortMode, string> = {
     "common-first": "Most common first",
 };
 
-export function CalculatorOptionsPanel({ options, onChangeIncludeRobots, onChangePrioritizeFiveStar, onChangeSortMode }: ICalculatorOptionsPanelProps): React.ReactElement {
+export function CalculatorOptionsPanel({ options, onChangeIncludeRobots, onChangeSortMode }: ICalculatorOptionsPanelProps): React.ReactElement {
     return (
         <div className="flex flex-col gap-3">
             <ToggleRow id="recruit-include-robots" label="Include robots" checked={options.includeRobots} onCheckedChange={onChangeIncludeRobots} />
-            <ToggleRow id="recruit-prioritize-five" label="Prioritize 5★ chance" hint="Surface tag combos that can yield a 5★ first" checked={options.prioritizeFiveStarChance} onCheckedChange={onChangePrioritizeFiveStar} />
             <div className="flex flex-col gap-1.5 border-border/60 border-t pt-3">
                 <label htmlFor="recruit-sort" className="font-medium text-foreground text-sm">
                     Sort operators
