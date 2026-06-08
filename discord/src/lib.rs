@@ -19,4 +19,5 @@ pub mod db;
 pub mod handler;
 pub mod hooks;
 pub mod types;
+pub mod utils;
 pub mod watcher;
