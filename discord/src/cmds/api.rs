@@ -1,9 +1,13 @@
+use ::serenity::builder::CreateEmbed;
+use ::serenity::builder::CreateEmbedAuthor;
+use ::serenity::model::Timestamp;
 use poise::CreateReply;
-use poise::serenity_prelude as serenity;
 
 use crate::api;
 use crate::config::EndpointsConfig;
 use crate::types::{Context, Error};
+use crate::utils::commafy;
+use crate::utils::pct;
 
 // Standard Discord brand hex colors; keep them in conventional `0xRRGGBB` form.
 #[allow(clippy::unreadable_literal)]
@@ -45,7 +49,12 @@ impl Target {
 /// Subcommands: `status`, `health`, `stats`, `leaderboard`. The `health`, `stats`, and
 /// `leaderboard` subcommands target a single backend (defaulting to the public one); pass
 /// `target: local` to hit the locally-configured backend instead.
-#[poise::command(slash_command, guild_only, subcommands("status"), subcommand_required)]
+#[poise::command(
+    slash_command,
+    guild_only,
+    subcommands("status", "stats"),
+    subcommand_required
+)]
 pub async fn api(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
@@ -70,7 +79,7 @@ pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
         _ => COLOR_WARN,
     };
 
-    let embed = serenity::CreateEmbed::new()
+    let embed = CreateEmbed::new()
         .title(format!("API status - {reachable}/{} up", endpoints.len()))
         .colour(color)
         .field(
@@ -93,7 +102,115 @@ pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
             format_endpoint(&result.public_frontend),
             false,
         )
-        .timestamp(serenity::Timestamp::now());
+        .timestamp(Timestamp::now());
+
+    ctx.send(CreateReply::default().embed(embed)).await?;
+    Ok(())
+}
+
+/// Shows the public website statistics.
+#[poise::command(slash_command, guild_only)]
+pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+    let data = ctx.data();
+    let target = Target::Local;
+    let base_url = target.backend(&data.config.endpoints);
+
+    let Ok(s) = api::stats::stats(&data.http_client, base_url).await else {
+        let embed = CreateEmbed::new()
+            .author(CreateEmbedAuthor::new("myrtle.moe").url("https://myrtle.moe"))
+            .title("Stats unavailable")
+            .description(format!(
+                "Couldn't reach the **{}** backend. Please try again shortly.",
+                target.label()
+            ))
+            .colour(COLOR_BAD)
+            .timestamp(Timestamp::now());
+        ctx.send(CreateReply::default().embed(embed)).await?;
+        return Ok(());
+    };
+
+    let by_server = {
+        let rows = [
+            ("EN", s.users.by_server.en as u64),
+            ("JP", s.users.by_server.jp as u64),
+            ("KR", s.users.by_server.kr as u64),
+            ("CN", s.users.by_server.cn as u64),
+            ("BILI", s.users.by_server.bili as u64),
+            ("TW", s.users.by_server.tw as u64),
+        ];
+        let mut t = format!("```\n{:<6}{:>11}\n", "Server", "Players");
+        for (name, count) in rows {
+            t.push_str(&format!("{name:<6}{:>11}\n", commafy(count)));
+        }
+        t.push_str("```");
+        t
+    };
+
+    let game_data = {
+        let g = &s.game_data;
+        let rows = [
+            ("Operators", g.operators as u64),
+            ("Skills", g.skills as u64),
+            ("Modules", g.modules as u64),
+            ("Skins", g.skins as u64),
+            ("Stages", g.stages as u64),
+            ("Zones", g.zones as u64),
+            ("Enemies", g.enemies as u64),
+        ];
+        let mut t = String::from("```\n");
+        for (name, count) in rows {
+            t.push_str(&format!("{name:<10}{:>9}\n", commafy(count)));
+        }
+        t.push_str("```");
+        t
+    };
+
+    let embed = CreateEmbed::new()
+        .author(CreateEmbedAuthor::new("myrtle.moe").url("https://myrtle.moe"))
+        .title("Statistics")
+        .colour(COLOR_OK)
+        .field(
+            "Users",
+            format!(
+                "**{}** total\n`{}` public profiles\n`+{}` this week\n`+{}` this month",
+                commafy(s.users.total as u64),
+                commafy(s.users.public_profiles as u64),
+                commafy(s.users.signups7d as u64),
+                commafy(s.users.signups30d as u64),
+            ),
+            true,
+        )
+        .field(
+            "Gacha",
+            format!(
+                "**{}** pulls · {} contributors\n★6: {} (`{}%`)\n★5: {} (`{}%`)\n★4: {} (`{}%`)",
+                commafy(s.gacha.total_pulls as u64),
+                commafy(s.gacha.contributing_users as u64),
+                commafy(s.gacha.six_star_count as u64),
+                pct(s.gacha.six_star_count as u64, s.gacha.total_pulls as u64),
+                commafy(s.gacha.five_star_count as u64),
+                pct(s.gacha.five_star_count as u64, s.gacha.total_pulls as u64),
+                commafy(s.gacha.four_star_count as u64),
+                pct(s.gacha.four_star_count as u64, s.gacha.total_pulls as u64),
+            ),
+            true,
+        )
+        .field(
+            "Tier Lists & Rosters",
+            format!(
+                "**{}** tier lists (`{}` active)\n`{}` versions · `{}` placements\n**{}** rosters",
+                commafy(s.tier_lists.total as u64),
+                commafy(s.tier_lists.active as u64),
+                commafy(s.tier_lists.total_versions as u64),
+                commafy(s.tier_lists.total_placements as u64),
+                commafy(s.rosters.total as u64),
+            ),
+            true,
+        )
+        .field("Registrations by server", by_server, false)
+        .field("Game database", game_data, false)
+        .timestamp(Timestamp::now());
 
     ctx.send(CreateReply::default().embed(embed)).await?;
     Ok(())

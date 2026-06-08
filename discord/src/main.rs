@@ -10,7 +10,7 @@ use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
-use serenity::{all::ClientBuilder, prelude::*};
+use serenity::{all::ClientBuilder, cache::Settings, prelude::*};
 use tokio::sync::{Mutex as TokioMutex, mpsc};
 
 // Bot bootstrap touches many subsystems (config, db, watcher, framework); splitting it
@@ -164,8 +164,12 @@ async fn main() {
         })
         .build();
 
+    let mut cache_settings = Settings::default();
+    cache_settings.max_messages = 1000;
+
     let mut client = ClientBuilder::new(token, intents)
         .framework(framework)
+        .cache_settings(cache_settings)
         .await
         .expect("Error creating client");
 
