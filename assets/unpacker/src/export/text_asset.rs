@@ -7,17 +7,18 @@ use std::{fs, io, path::Path};
 
 type Aes128CbcDec = Decryptor<Aes128>;
 
-/// Arknights AES-CBC mask (chat_mask v2)
+/// Arknights AES-CBC mask (`chat_mask` v2)
 const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
 
-/// Decode a TextAsset's `m_Script` into a JSON `Value`, mirroring the full
-/// pipeline used by `export_text_asset` (base64, AES-CBC, FlatBuffer with
+/// Decode a `TextAsset`'s `m_Script` into a JSON `Value`, mirroring the full
+/// pipeline used by `export_text_asset` (base64, AES-CBC, `FlatBuffer` with
 /// optional 128-byte RSA header). Returns `None` if no decode path yields
 /// structured data — e.g. plain text or invalid payloads.
 ///
 /// Used by callers that need the parsed JSON in-memory rather than written
 /// to disk — for example the mappreview pre-scan that reads each level's
 /// tile grid dimensions to compute its display aspect.
+#[must_use]
 pub fn parse_text_asset_json(obj: &Value) -> Option<Value> {
     let script = obj.get("m_Script")?.as_str()?;
     if script.is_empty() {
@@ -130,7 +131,7 @@ pub fn export_text_asset(
     Ok(())
 }
 
-/// Try FlatBuffer decode at various offsets (raw, skip 128-byte RSA header)
+/// Try `FlatBuffer` decode at various offsets (raw, skip 128-byte RSA header)
 fn try_flatbuffer_decode(data: &[u8], name: &str) -> Option<Value> {
     for &offset in &[128usize, 0] {
         if data.len() <= offset {

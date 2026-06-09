@@ -12,7 +12,7 @@ pub struct DecodedTexture {
     pub rgba: Vec<u8>,
 }
 
-/// Decode a Texture2D object into in-memory RGBA data without writing to disk.
+/// Decode a `Texture2D` object into in-memory RGBA data without writing to disk.
 pub fn decode_texture_object(
     obj: &Value,
     resources: &HashMap<String, Vec<u8>>,
@@ -27,11 +27,7 @@ pub fn decode_texture_object(
         return Ok(None);
     }
 
-    let image_bytes = if !image_data.is_empty() {
-        base64::engine::general_purpose::STANDARD
-            .decode(image_data)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
-    } else {
+    let image_bytes = if image_data.is_empty() {
         let stream = &obj["m_StreamData"];
         let offset = stream["offset"].as_u64().unwrap_or(0) as usize;
         let size = stream["size"].as_u64().unwrap_or(0) as usize;
@@ -53,6 +49,10 @@ pub fn decode_texture_object(
             return Ok(None);
         }
         res_data[offset..offset + size].to_vec()
+    } else {
+        base64::engine::general_purpose::STANDARD
+            .decode(image_data)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
     };
 
     let mut buf = vec![0u32; (width * height) as usize];
@@ -105,7 +105,7 @@ pub fn save_decoded_texture(tex: &DecodedTexture, output_dir: &Path) -> Result<(
     .map_err(io::Error::other)
 }
 
-/// Decode and save a Texture2D object as PNG (convenience wrapper).
+/// Decode and save a `Texture2D` object as PNG (convenience wrapper).
 pub fn export_texture(
     obj: &Value,
     output_dir: &Path,
@@ -131,7 +131,7 @@ pub fn decode_texture(
                 if i >= buf.len() {
                     break;
                 }
-                buf[i] = ((alpha as u32) << 24) | 0x00FFFFFF;
+                buf[i] = (u32::from(alpha) << 24) | 0x00FFFFFF;
             }
         }
         3 => {
@@ -140,9 +140,9 @@ pub fn decode_texture(
                 if i >= buf.len() {
                     break;
                 }
-                let r = chunk[0] as u32;
-                let g = chunk[1] as u32;
-                let b = chunk[2] as u32;
+                let r = u32::from(chunk[0]);
+                let g = u32::from(chunk[1]);
+                let b = u32::from(chunk[2]);
                 buf[i] = (255 << 24) | (r << 16) | (g << 8) | b;
             }
         }
@@ -152,10 +152,10 @@ pub fn decode_texture(
                 if i >= buf.len() {
                     break;
                 }
-                let r = chunk[0] as u32;
-                let g = chunk[1] as u32;
-                let b = chunk[2] as u32;
-                let a = chunk[3] as u32;
+                let r = u32::from(chunk[0]);
+                let g = u32::from(chunk[1]);
+                let b = u32::from(chunk[2]);
+                let a = u32::from(chunk[3]);
                 buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
         }
@@ -165,10 +165,10 @@ pub fn decode_texture(
                 if i >= buf.len() {
                     break;
                 }
-                let a = chunk[0] as u32;
-                let r = chunk[1] as u32;
-                let g = chunk[2] as u32;
-                let b = chunk[3] as u32;
+                let a = u32::from(chunk[0]);
+                let r = u32::from(chunk[1]);
+                let g = u32::from(chunk[2]);
+                let b = u32::from(chunk[3]);
                 buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
         }
@@ -182,9 +182,9 @@ pub fn decode_texture(
                 let r5 = (pixel >> 11) & 0x1F;
                 let g6 = (pixel >> 5) & 0x3F;
                 let b5 = pixel & 0x1F;
-                let r = ((r5 as u32) * 255 + 15) / 31;
-                let g = ((g6 as u32) * 255 + 31) / 63;
-                let b = ((b5 as u32) * 255 + 15) / 31;
+                let r = (u32::from(r5) * 255 + 15) / 31;
+                let g = (u32::from(g6) * 255 + 31) / 63;
+                let b = (u32::from(b5) * 255 + 15) / 31;
                 buf[i] = (255 << 24) | (r << 16) | (g << 8) | b;
             }
         }
@@ -199,10 +199,10 @@ pub fn decode_texture(
                 let g4 = (pixel >> 8) & 0xF;
                 let b4 = (pixel >> 4) & 0xF;
                 let a4 = pixel & 0xF;
-                let r = ((r4 as u32) * 255 + 7) / 15;
-                let g = ((g4 as u32) * 255 + 7) / 15;
-                let b = ((b4 as u32) * 255 + 7) / 15;
-                let a = ((a4 as u32) * 255 + 7) / 15;
+                let r = (u32::from(r4) * 255 + 7) / 15;
+                let g = (u32::from(g4) * 255 + 7) / 15;
+                let b = (u32::from(b4) * 255 + 7) / 15;
+                let a = (u32::from(a4) * 255 + 7) / 15;
                 buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
         }

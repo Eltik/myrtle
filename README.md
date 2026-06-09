@@ -38,7 +38,7 @@ The platform is built from three independent components: a Rust API server, a Ta
 - **Gacha Tracking** - synced pull history with rarity splits and pity counters, plus community-wide pull statistics.
 - **Scoring & Leaderboard** - composite account scores with grades, rankings, biggest movers, and score distribution.
 - **Tools** - recruitment tag calculator and a squad randomizer.
-- **Asset Pipeline** - download and extract textures, audio, Spine animations, and game-data tables across six server regions.
+- **Asset Pipeline** - download and extract textures, audio, Spine animations, and game-data tables across six server regions, with an operator-only download profile for lightweight cross-region (e.g. upcoming-CN) previews.
 - **Modern UI** - light / dark / auto theming with a customizable accent color, plus dynamically generated social cards.
 
 ## Architecture

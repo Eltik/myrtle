@@ -1,4 +1,4 @@
-use super::resource_manifest_generated::*;
+use super::resource_manifest_generated::root_as_clz_torappu_resource_resource_manifest_unchecked;
 use regex::Regex;
 use std::{collections::HashMap, io, path::Path};
 
@@ -58,10 +58,13 @@ impl ResourceManifest {
             }
         }
 
-        Ok(ResourceManifest { filename_to_path })
+        Ok(Self { filename_to_path })
     }
 
+    #[must_use]
     pub fn get_output_path(&self, filename: &str) -> Option<&str> {
-        self.filename_to_path.get(filename).map(|s| s.as_str())
+        self.filename_to_path
+            .get(filename)
+            .map(std::string::String::as_str)
     }
 }

@@ -41,7 +41,11 @@ async fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::Download { all, packages } => {
+        Commands::Download {
+            all,
+            packages,
+            profile,
+        } => {
             let groups =
                 hot_update::fetch_hot_update_list(&client, server.cdn_base_url(), &ver.res_version)
                     .await?;
@@ -63,6 +67,15 @@ async fn main() -> anyhow::Result<()> {
             std::fs::create_dir_all(&cli.savedir)?;
             let mut manifest = manifest::Manifest::load(&cli.savedir)?;
             let all_files: Vec<_> = selected.iter().flat_map(|g| &g.files).cloned().collect();
+
+            let all_files: Vec<_> = match profile.as_deref() {
+                Some("operators") => all_files
+                    .into_iter()
+                    .filter(|f| downloader::profile::keep_for_operators(&f.name))
+                    .collect(),
+                Some("full") | None => all_files,
+                Some(other) => anyhow::bail!("unknown profile: {other}"),
+            };
             let tasks: Vec<_> = manifest
                 .filter_needed(&all_files)
                 .into_iter()

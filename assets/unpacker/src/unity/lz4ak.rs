@@ -1,5 +1,6 @@
 /// Fix Arknights' modified LZ4 format before standard decompression.
 /// Swaps nibbles in sequence tokens and byte-swaps match offsets.
+#[must_use]
 pub fn fix_lz4ak(data: &[u8], uncompressed_size: usize) -> Vec<u8> {
     let mut fixed = data.to_vec();
     let mut ip = 0;

@@ -11,7 +11,7 @@ pub struct TypeTreeNode {
     pub level: u8,
     pub type_flags: u8,
     pub meta_flag: u32,
-    pub children: Vec<TypeTreeNode>,
+    pub children: Vec<Self>,
 }
 
 struct FlatNode {
@@ -87,13 +87,12 @@ fn resolve_string(offset: u32, string_buffer: &[u8]) -> String {
         let end = string_buffer[start..]
             .iter()
             .position(|&b| b == 0)
-            .map(|p| start + p)
-            .unwrap_or(string_buffer.len());
+            .map_or(string_buffer.len(), |p| start + p);
         String::from_utf8_lossy(&string_buffer[start..end]).into_owned()
     }
 }
 
-fn common_string(offset: u32) -> &'static str {
+const fn common_string(offset: u32) -> &'static str {
     match offset {
         0 => "AABB",
         5 => "AnimationClip",

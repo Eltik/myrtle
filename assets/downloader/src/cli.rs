@@ -34,6 +34,9 @@ pub enum Commands {
         /// Comma-separated pack names
         #[arg(short, long)]
         packages: Option<String>,
+        /// Content profile: "operators" (gamedata + operator assets) or "full"
+        #[arg(long)]
+        profile: Option<String>,
     },
     /// Check if server has updates
     CheckUpdate,

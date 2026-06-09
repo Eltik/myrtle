@@ -14,6 +14,7 @@ pub struct Downloader {
 }
 
 impl Downloader {
+    #[must_use]
     pub fn new(server: Server, version: String, max_concurrent: usize) -> Self {
         let client = Client::builder()
             .user_agent("BestHTTP")
@@ -27,6 +28,7 @@ impl Downloader {
         }
     }
 
+    #[must_use]
     pub fn build_url(&self, filename: &str) -> String {
         let dat_name = replace_last_ext(filename, "dat");
         let encoded = dat_name.replace('/', "_").replace('#', "__");
@@ -57,9 +59,10 @@ impl Downloader {
     }
 }
 
+#[must_use]
 pub fn replace_last_ext(name: &str, new_ext: &str) -> String {
     match name.rfind('.') {
         Some(pos) => format!("{}.{}", &name[..pos], new_ext),
-        None => format!("{}.{}", name, new_ext),
+        None => format!("{name}.{new_ext}"),
     }
 }

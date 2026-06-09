@@ -20,29 +20,30 @@ pub enum SpineCategory {
 impl fmt::Display for SpineCategory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SpineCategory::BattleFront => write!(f, "BattleFront"),
-            SpineCategory::BattleBack => write!(f, "BattleBack"),
-            SpineCategory::Building => write!(f, "Building"),
-            SpineCategory::DynIllust => write!(f, "DynIllust"),
+            Self::BattleFront => write!(f, "BattleFront"),
+            Self::BattleBack => write!(f, "BattleBack"),
+            Self::Building => write!(f, "Building"),
+            Self::DynIllust => write!(f, "DynIllust"),
         }
     }
 }
 
 /// A grouped spine asset with properly-paired skel + atlas + textures
 pub struct SpineAsset {
-    /// Base name (e.g., "char_002_amiya" or "build_char_002_amiya")
+    /// Base name (e.g., "`char_002_amiya`" or "`build_char_002_amiya`")
     pub name: String,
     /// Raw skel binary data (decoded from base64)
     pub skel_data: Vec<u8>,
     /// Atlas text content
     pub atlas_text: String,
-    /// Resolved texture objects (path_id → Value), keyed by texture name
+    /// Resolved texture objects (`path_id` → Value), keyed by texture name
     pub textures: Vec<(String, Value)>,
     /// Classification
     pub category: SpineCategory,
 }
 
 /// Check if a bundle path is eligible for spine extraction.
+#[must_use]
 pub fn detect_spine_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
     let full_path = input_dir.join(bundle_subdir);
     let path_str = full_path.to_string_lossy();
@@ -77,12 +78,12 @@ pub fn detect_spine_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
     false
 }
 
-/// Extract a path_id from a JSON reference like {"m_FileID": 0, "m_PathID": 12345}
+/// Extract a `path_id` from a JSON reference like {"`m_FileID"`: 0, "`m_PathID"`: 12345}
 fn get_path_id(val: &Value) -> Option<i64> {
-    val.get("m_PathID").and_then(|v| v.as_i64())
+    val.get("m_PathID").and_then(serde_json::Value::as_i64)
 }
 
-/// Collect spine assets using MonoBehaviour reference graph traversal.
+/// Collect spine assets using `MonoBehaviour` reference graph traversal.
 ///
 /// Reference chain:
 /// ```text
@@ -96,8 +97,8 @@ fn get_path_id(val: &Value) -> Option<i64> {
 ///         → _AlphaTex → Texture2D (optional)
 /// ```
 ///
-/// Returns (spine_assets, claimed_path_ids) where claimed_path_ids contains
-/// path_ids of all objects consumed by spine extraction.
+/// Returns (`spine_assets`, `claimed_path_ids`) where `claimed_path_ids` contains
+/// `path_ids` of all objects consumed by spine extraction.
 pub fn collect_spine_assets(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> (Vec<SpineAsset>, HashSet<i64>) {
@@ -261,9 +262,9 @@ pub fn collect_spine_assets(
 
 /// Classify a spine asset into a category.
 /// Matches the old Python logic:
-///   1. skel name starts with "dyn_" → DynIllust
+///   1. skel name starts with "dyn_" → `DynIllust`
 ///   2. _animationName == "Relax" OR skel name starts with "build_" → Building
-///   3. atlas front count (f_, c_) >= back count (b_) → BattleFront, else BattleBack
+///   3. atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
 fn classify_spine(
     skel_name: &str,
     anim_name: &str,
@@ -295,6 +296,7 @@ fn classify_spine(
 }
 
 /// Export organized spine assets. Returns count of exported files.
+#[must_use]
 pub fn export_spine_assets(
     spine_assets: &[SpineAsset],
     output_dir: &Path,
@@ -346,9 +348,10 @@ pub fn export_spine_assets(
 }
 
 /// Derive the character name from a bundle subdirectory path.
+#[must_use]
 pub fn char_name_from_bundle(bundle_subdir: &Path) -> String {
-    bundle_subdir
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "unknown".to_string())
+    bundle_subdir.file_name().map_or_else(
+        || "unknown".to_string(),
+        |n| n.to_string_lossy().to_string(),
+    )
 }
