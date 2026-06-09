@@ -327,20 +327,14 @@ function runDownload({
 	savedir,
 	threads = DEFAULT_THREADS,
 	onProgress,
+	profile
 }) {
+    const args = ["--server", serverKey, "-d", savedir, "-t", String(threads), "download", "--all"];
+    if (profile) args.push("--profile", profile);
 	return new Promise((resolve, reject) => {
 		const child = spawn(
 			DOWNLOADER_BIN,
-			[
-				"--server",
-				serverKey,
-				"-d",
-				savedir,
-				"-t",
-				String(threads),
-				"download",
-				"--all",
-			],
+			args,
 			{
 				cwd: __dirname,
 				stdio: ["ignore", "pipe", "pipe"],
@@ -792,7 +786,7 @@ async function runUpdate() {
 	}
 
 	// Prompt for configuration
-	const { serverKey, savedir, outputDir, threads } = await inquirer.prompt([
+	let { serverKey, savedir, outputDir, threads, profile } = await inquirer.prompt([
 		{
 			type: "list",
 			name: "serverKey",
@@ -821,7 +815,20 @@ async function runUpdate() {
 			message: "Concurrent threads (download & unpack):",
 			default: DEFAULT_THREADS,
 		},
+		{
+			type: "list",
+			name: "profile",
+			message: "Content profile:",
+			choices: [
+				{ name: "full — everything (default)", value: "full" },
+				{ name: "operators — gamedata + operator assets only", value: "operators" },
+			],
+			default: "full",
+		},
 	]);
+
+	savedir = join(savedir, serverKey);
+	outputDir = join(outputDir, serverKey);
 
 	// Check version
 	const versionSpinner = ora("Checking server version…").start();
@@ -929,6 +936,7 @@ async function runUpdate() {
 				serverKey,
 				savedir,
 				threads,
+				profile,
 				onProgress: ({ completed, total }) => dlBar.render(completed, total),
 			});
 			dlBar.succeed(
@@ -1007,6 +1015,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		savedir: cliArgs.savedir ?? process.env.WS_SAVEDIR ?? "./ArkAssets",
 		outputDir: cliArgs.output ?? process.env.WS_OUTPUT ?? "./output",
 		threads: Number(cliArgs.threads ?? process.env.WS_THREADS ?? DEFAULT_THREADS),
+		profile: cliArgs.profile ?? process.env.WS_PROFILE ?? "full",
 		port: Number(cliArgs.port ?? process.env.WS_PORT ?? 9160),
 		intervalMin: Number(cliArgs.interval ?? process.env.WS_INTERVAL ?? 30),
 	};
@@ -1027,6 +1036,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			{ type: "input", name: "savedir", message: "Asset download directory:", default: defaults.savedir },
 			{ type: "input", name: "outputDir", message: "Extraction output directory:", default: defaults.outputDir },
 			{ type: "number", name: "threads", message: "Concurrent threads (download & unpack):", default: defaults.threads },
+			{ type: "list", name: "profile", message: "Content profile:", choices: [{ name: "full — everything", value: "full" }, { name: "operators — gamedata + operator assets only", value: "operators" }], default: defaults.profile },
 			{ type: "number", name: "port", message: "WebSocket port:", default: defaults.port },
 			{ type: "number", name: "intervalMin", message: "Check interval (minutes):", default: defaults.intervalMin },
 		]);
@@ -1035,6 +1045,9 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		console.log(chalk.red(`\nUnknown server: ${config.serverKey}. Valid: ${Object.keys(SERVERS).join(", ")}\n`));
 		return;
 	}
+
+	config.savedir = join(config.savedir, config.serverKey);
+	config.outputDir = join(config.outputDir, config.serverKey);
 
 	const intervalMs = config.intervalMin * 60 * 1000;
 
@@ -1175,6 +1188,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				serverKey: config.serverKey,
 				savedir: config.savedir,
 				threads: config.threads,
+				profile: config.profile,
 				onProgress: (p) => broadcast({ type: "download_progress", ...p }),
 				onStatus: (msg) =>
 					broadcast({ type: "status", state: "downloading", message: msg }),
@@ -1354,6 +1368,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				"",
 				`${chalk.bold("Address:")}  ws://localhost:${config.port}`,
 				`${chalk.bold("Server:")}   ${config.serverKey} — ${SERVERS[config.serverKey].label}`,
+				`${chalk.bold("Profile:")}  ${config.profile}`,
 				`${chalk.bold("Savedir:")}  ${config.savedir}`,
 				`${chalk.bold("Output:")}   ${config.outputDir}`,
 				`${chalk.bold("Threads:")}  ${config.threads}`,

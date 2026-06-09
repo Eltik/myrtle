@@ -34,18 +34,21 @@ pub struct SpritePackerData {
 /// Matches operator-portrait bundles from the current hot-update manifest
 /// (`spritepack/char_portrait_*.ab`) as well as the legacy
 /// `arts/charportraits/portraits_hub.ab` bundle.
+#[must_use]
 pub fn detect_portrait_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
     let full_path = input_dir.join(bundle_subdir);
     let path_lower = full_path.to_string_lossy().to_lowercase();
     path_lower.contains("char_portrait") || path_lower.contains("charportraits")
 }
 
-/// Check if a MonoBehaviour JSON is a SpritePacker (has `_sprites` + `_atlas`).
+/// Check if a `MonoBehaviour` JSON is a `SpritePacker` (has `_sprites` + `_atlas`).
+#[must_use]
 pub fn is_sprite_packer(val: &Value) -> bool {
-    val.get("_sprites").is_some_and(|v| v.is_array()) && val.get("_atlas").is_some()
+    val.get("_sprites").is_some_and(serde_json::Value::is_array) && val.get("_atlas").is_some()
 }
 
-/// Parse a SpritePacker MonoBehaviour into structured data.
+/// Parse a `SpritePacker` `MonoBehaviour` into structured data.
+#[must_use]
 pub fn parse_sprite_packer(val: &Value) -> Option<SpritePackerData> {
     if !is_sprite_packer(val) {
         return None;
@@ -56,7 +59,7 @@ pub fn parse_sprite_packer(val: &Value) -> Option<SpritePackerData> {
     let alpha_pid = atlas
         .get("alpha")
         .and_then(|a| a.get("m_PathID"))
-        .and_then(|v| v.as_i64())
+        .and_then(serde_json::Value::as_i64)
         .unwrap_or(0);
     let atlas_size = atlas.get("size")?.as_u64()? as u32;
 
@@ -72,7 +75,10 @@ pub fn parse_sprite_packer(val: &Value) -> Option<SpritePackerData> {
             w: rect_val.get("w")?.as_i64()? as i32,
             h: rect_val.get("h")?.as_i64()? as i32,
         };
-        let rotate = s.get("rotate").and_then(|v| v.as_u64()).unwrap_or(0) as u8;
+        let rotate = s
+            .get("rotate")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0) as u8;
         sprites.push(AtlasSprite { name, rect, rotate });
     }
 
@@ -86,10 +92,11 @@ pub fn parse_sprite_packer(val: &Value) -> Option<SpritePackerData> {
 
 // ─── Extraction ──────────────────────────────────────────────────────────────
 
-/// Extract individual portraits from SpritePacker atlases.
+/// Extract individual portraits from `SpritePacker` atlases.
 ///
 /// Crops each sprite from the RGB atlas, merges the separate alpha atlas
-/// (looked up by path_id then by `{name}a` convention), and saves as RGBA PNG.
+/// (looked up by `path_id` then by `{name}a` convention), and saves as RGBA PNG.
+#[must_use]
 pub fn extract_portraits(
     packers: &[SpritePackerData],
     textures_by_pid: &HashMap<i64, DecodedTexture>,
@@ -153,7 +160,8 @@ pub struct SpriteInfo {
 /// Parse a Sprite (class 213) MonoBehaviour-like serialized object.
 ///
 /// Reads `m_RD.textureRect` (atlas pixel rect in Unity bottom-left origin),
-/// the RGB and alpha atlas PPtrs, and the rotation bits out of `settingsRaw`.
+/// the RGB and alpha atlas `PPtrs`, and the rotation bits out of `settingsRaw`.
+#[must_use]
 pub fn parse_sprite(val: &Value) -> Option<SpriteInfo> {
     let name = val.get("m_Name")?.as_str()?.to_string();
     let rd = val.get("m_RD")?;
@@ -170,7 +178,7 @@ pub fn parse_sprite(val: &Value) -> Option<SpriteInfo> {
     let alpha_pid = rd
         .get("alphaTexture")
         .and_then(|a| a.get("m_PathID"))
-        .and_then(|v| v.as_i64())
+        .and_then(serde_json::Value::as_i64)
         .unwrap_or(0);
 
     // settingsRaw bit layout (Unity Sprite):
@@ -178,7 +186,10 @@ pub fn parse_sprite(val: &Value) -> Option<SpriteInfo> {
     //   bits 1–2  : packingMode
     //   bits 3–6  : packingRotation  (4 = 90° CW)
     //   bit 7     : meshType
-    let settings_raw = rd.get("settingsRaw").and_then(|v| v.as_u64()).unwrap_or(0);
+    let settings_raw = rd
+        .get("settingsRaw")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0);
     let packing_rotation = ((settings_raw >> 3) & 0xF) as u8;
     let rotate = u8::from(packing_rotation == 4);
 
@@ -192,8 +203,9 @@ pub fn parse_sprite(val: &Value) -> Option<SpriteInfo> {
 }
 
 /// Extract Unity Sprite-based portraits. Each sprite references an RGB atlas
-/// (and optionally a separate alpha atlas) by path_id; we crop its rect,
+/// (and optionally a separate alpha atlas) by `path_id`; we crop its rect,
 /// merge alpha per-pixel, and save as `{name}.png` under `output_dir`.
+#[must_use]
 pub fn extract_sprites(
     sprites: &[SpriteInfo],
     textures_by_pid: &HashMap<i64, DecodedTexture>,

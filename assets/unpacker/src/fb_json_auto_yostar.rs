@@ -1,4 +1,4 @@
-//! Auto-generated FlatBufferToJson implementations
+//! Auto-generated `FlatBufferToJson` implementations
 //! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs
 
 #![allow(unused_imports, unused_variables)]

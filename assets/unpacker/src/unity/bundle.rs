@@ -94,7 +94,7 @@ impl BundleFile {
         let mut data_buf = Vec::with_capacity(total_uncompressed);
         for block in &blocks {
             let comp_data = r.read_bytes(block.compressed_size as usize)?;
-            let block_comp_type = (block.flags & 0x3F) as u32;
+            let block_comp_type = u32::from(block.flags & 0x3F);
             let decompressed = decompress(
                 &comp_data,
                 block.uncompressed_size as usize,
@@ -113,6 +113,6 @@ impl BundleFile {
             });
         }
 
-        Ok(BundleFile { files })
+        Ok(Self { files })
     }
 }

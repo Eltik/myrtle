@@ -50,6 +50,7 @@ Asset bundles (.ab, .dat, .bin files)
 | **Rust (rustc)** | 1.85.0+ | `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh` |
 | **Cargo** | 1.76+ | Installed with Rust |
 | **C Compiler** | Any | `xcode-select --install` (macOS) / `apt install build-essential` (Linux) / Visual Studio Build Tools (Windows) |
+| **flatc** | 25.12.19 | _Only_ needed to regenerate FlatBuffer schemas (`generate-fbs`), not for normal download/extract. `brew install flatbuffers` (macOS). Must match the `flatbuffers` crate version pinned in `unpacker/Cargo.toml`. |
 
 The pipeline requires Edition 2024 Rust for async/await and newer language features.
 
@@ -121,12 +122,18 @@ npm start
 ```
 
 **Workflow:**
-1. Prompt for server region, asset directory, output directory
+1. Prompt for server region, asset directory, output directory, content profile (`full` / `operators`)
 2. Fetch server version info (client + resource version)
 3. Compare with local `.version` file in asset directory
 4. If newer: download + extract + save new version
 
-**Version File:** `./ArkAssets/.version` (single-line resource version string)
+> **Region nesting:** the runner appends the region key to both directories, so a
+> `cn` run saves to `./ArkAssets/cn` and extracts to `./output/cn`. This lets
+> multiple regions coexist (e.g. full `en` alongside an `operators`-profile `cn`
+> preview). The raw `downloader`/`unpacker` binaries do **not** nest — pass
+> already-region-scoped paths to them directly.
+
+**Version File:** `./ArkAssets/<region>/.version` (single-line resource version string)
 
 **Output:**
 - Download progress: files/total, percentage
@@ -142,10 +149,14 @@ npm start
 
 **Configuration:**
 - Server region
-- Asset download directory
-- Extraction output directory
+- Asset download directory (nested per region — see Mode 2)
+- Extraction output directory (nested per region — see Mode 2)
+- Content profile (`full` / `operators`) — also via `--profile` / `WS_PROFILE`
 - WebSocket port (default 9160)
 - Check interval in minutes (default 30)
+
+> Run one instance per region (separate ports/dirs) to monitor several regions at
+> once — e.g. a full `en` server on 9160 and an `operators`-profile `cn` preview on 9161.
 
 **Behavior:**
 - Starts listening on `ws://localhost:<port>`
@@ -209,6 +220,7 @@ Download asset packs.
 |--------|------|---|
 | `--all` | bool | Download all packs (required unless `--packages` used) |
 | `--packages <list>` | string | Comma-separated pack names (e.g., `pack/chararts,pack/ui`) |
+| `--profile <name>` | string | Content profile applied on top of `--all`: `operators` (gamedata + operator-facing assets only) or `full` (everything). Omit for full. |
 
 **Examples:**
 
@@ -221,7 +233,25 @@ downloader --server en download --packages pack/chararts,pack/ui
 
 # 8 concurrent downloads to custom directory
 downloader --server cn --threads 8 -d /data/arknights download --all
+
+# Operator-only profile: gamedata + operator art/portraits/avatars/icons
+# (~2.5 GB for CN vs ~17 GB full). Used for the "upcoming operators" preview.
+downloader --server cn download --all --profile operators
 ```
+
+### Content Profiles
+
+The `operators` profile filters the hot-update file list (by `abInfo` name) down to
+only what's needed to display operators, keeping the download small when full-region
+storage is impractical:
+
+- **Kept:** `anon/` (all gamedata — ~80 MB, the `.idx` manifest lives here too),
+  `chararts/`, `skinpack/`, `spritepack/char_portrait_*`, `spritepack/ui_char_avatar_*`,
+  `spritepack/skill_icons_*`, `spritepack/ui_equip_*`, `arts/charportraits/`.
+- **Excluded:** `audio/`, `scenes/`, `avg/`, dynamic art, building, etc.
+
+Defined in `downloader/src/profile.rs`. The `.idx` is matched by extension so the
+gamedata manifest is always retained.
 
 ### Server Regions
 
@@ -286,13 +316,14 @@ Extract assets from bundles.
 | `--text` | | bool | Extract text assets only (TextAsset, class 49) |
 | `--audio` | | bool | Extract audio only (AudioClip, class 83) |
 | `--spine` | | bool | Extract Spine animations |
+| `--portrait` | | bool | Extract operator portraits (from `char_portrait` / `charportraits` atlases) |
 | `--gamedata` | | bool | Extract gamedata (requires `--idx`) |
 | `--idx` | | path | Path to `.idx` manifest file (for gamedata) |
 | `--jobs` | `-j` | number | Parallel threads (default: CPU count) |
 
 **Behavior:**
 
-- If **no type flags** are set: extract everything (image + text + audio + spine + gamedata)
+- If **no type flags** are set: extract everything (image + text + audio + spine + portrait + gamedata)
 - If **any type flag** is set: extract only those types
 - `--gamedata` with no `--idx`: auto-searches input dir and parent dir for `.idx` file; errors if none found and `--gamedata` explicitly requested
 - Multi-threaded: uses rayon to process files in parallel
@@ -1146,7 +1177,9 @@ See LICENSE file in repository.
 | Setup | `npm start` → Setup |
 | Check version | `downloader --server en check-update` |
 | Download all | `downloader --server en download --all` |
+| Download operators-only | `downloader --server cn download --all --profile operators` |
 | Download specific | `downloader --server en download --packages pack/chararts,pack/ui` |
+| Regenerate FBS schemas | `cd unpacker && cargo run --bin generate-fbs` (needs `flatc`) |
 | Extract all | `unpacker extract -i ./ArkAssets -o ./output` |
 | Extract spine | `unpacker extract -i ./ArkAssets -o ./output --spine` |
 | List bundle | `unpacker list -i ./ArkAssets/chararts/char_001.ab` |
@@ -1156,9 +1189,44 @@ See LICENSE file in repository.
 
 ---
 
+## Regenerating FlatBuffer Schemas
+
+CN gamedata is FlatBuffer-encoded; the decoder is generated from community schemas and
+committed under `unpacker/src/generated_fbs/` (CN) and `generated_fbs_yostar/` (global).
+Regenerate when a CN update breaks a table (symptom: a `gamedata/excel/*.json` file is
+invalid UTF-8 / unparseable):
+
+```bash
+cd unpacker
+cargo run --bin generate-fbs   # requires flatc (see Prerequisites)
+cargo build --release
+cp target/release/unpacker ../binaries/unpacker   # run.mjs uses ./binaries
+```
+
+`generate-fbs`:
+1. Clones/pulls CN schemas from [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) (`main` branch = CN; a separate `YoStar` branch exists for global) into `OpenArknightsFBS/FBS`, and Yostar schemas from [ArknightsAssets/ArknightsFlatbuffers](https://github.com/ArknightsAssets/ArknightsFlatbuffers).
+2. Applies `patch_schemas()` fixes — community schemas occasionally have field-order bugs that misalign FlatBuffers VTables. These pass upstream's JSON validation (JSON is unordered) but corrupt binary decoding.
+3. Runs `flatc` over every schema and regenerates `fb_json_auto.rs`, `fb_json_auto_yostar.rs`, and `flatbuffers_decode.rs`.
+
+> **Binary sync:** after any `cargo build`, copy the binary into `./binaries/` — `run.mjs`
+> and the documented commands invoke `./binaries/{downloader,unpacker}`, not
+> `target/release`. The `Setup` runner mode does this for you.
+
+> **Diagnosing a broken table:** dump the raw FlatBuffer (gamedata is `128-byte RSA
+> header + FlatBuffer`) and decode with `flatc -t --strict-json --raw-binary schema.fbs
+> -- table.fb`. flatc is the canonical oracle: if it also fails, the bug is in the
+> *schema* (field order/count), not the decoder. Compare the binary's real VTable field
+> count against the schema, then add/adjust a `patch_schemas()` entry. Note that a
+> previously-correct patch can go stale — e.g. removing a field that a later CN binary
+> starts shipping — so deletion is sometimes the fix.
+
+---
+
 ## TODO: Known FBS Extraction Issues
 
 Audit performed 2026-04-10 after fixing `battle_equip_table`, `skin_table`, `stage_table`, and five other tables affected by upstream commit `4975a03` ("Update 2.7.21", Apr 7 2026) in [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS). All backend-loaded tables are now clean; the items below are residual issues that don't currently block functionality but should be addressed.
+
+**Update 2026-06-09 (CN 2.7.41, upstream commit `6121fa9`):** regenerated all schemas against CN 2.7.41. `skin_table` had re-broken — the historical `patch_schemas()` entry that *removed* `spAvatarId`/`spPortraitId` from `clz_Torappu_CharSkinData` was correct at 2.7.21 (binary lacked them) but wrong at 2.7.41 (binary + upstream both ship them at slots 8/10). Deleting that patch restored a clean 20-field decode (verified end-to-end: `DisplaySkin.SkinName` etc. decode correctly). `shop_client_table` self-resolved (upstream caught up). `activity_table` and `open_server_table` remain broken (below) but are still not backend-loaded.
 
 ### Non-loaded tables with invalid UTF-8 output
 
@@ -1197,4 +1265,4 @@ These emit panic messages to stderr during extraction but produce syntactically 
 
 ---
 
-Last updated: 2026-04-10
+Last updated: 2026-06-09

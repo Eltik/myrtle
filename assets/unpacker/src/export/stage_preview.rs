@@ -4,7 +4,7 @@
 //! source renders are wider. The Sprite metadata reports `m_Rect = 512×512`
 //! and the game stretches them at runtime via UI layout we don't have. We
 //! approximate the original aspect from the level's tile grid (cols × rows
-//! in the `level_<stage_id>` TextAsset's `MapData.Map`), which matches the
+//! in the `level_<stage_id>` `TextAsset`'s `MapData.Map`), which matches the
 //! camera-space proportions closely enough that square tiles read as square.
 //!
 //! The aspect map is built once up front by a parallel pre-pass over the
@@ -24,7 +24,7 @@ use crate::unity::serialized_file::SerializedFile;
 use super::text_asset;
 use super::texture::DecodedTexture;
 
-/// stage_id (e.g. "a001_01") → (columns, rows) of the level's tile grid.
+/// `stage_id` (e.g. "`a001_01`") → (columns, rows) of the level's tile grid.
 pub type StageAspectMap = Arc<HashMap<String, (u32, u32)>>;
 
 /// Fallback aspect (width / height) when a stage isn't found in the map —
@@ -35,6 +35,7 @@ const MAPPREVIEW_PATH_MARKER: &str = "stage_mappreview_h2_";
 
 /// True if a bundle's relative path identifies it as a mappreview h2 bundle
 /// whose textures need unsquashing.
+#[must_use]
 pub fn detect_mappreview_bundle(bundle_subdir: &Path) -> bool {
     bundle_subdir
         .to_string_lossy()
@@ -43,16 +44,18 @@ pub fn detect_mappreview_bundle(bundle_subdir: &Path) -> bool {
 
 /// Fast check on a raw input path so we can skip the pre-pass when no
 /// mappreview bundles are present.
+#[must_use]
 pub fn input_has_mappreview_bundles(files: &[PathBuf]) -> bool {
     files
         .iter()
         .any(|p| p.to_string_lossy().contains(MAPPREVIEW_PATH_MARKER))
 }
 
-/// Pre-scan every input bundle for `level_<stage_id>` TextAssets and build
-/// the stage_id → (cols, rows) map. The scan parses each bundle's serialized
-/// files but only deserializes class 49 (TextAsset) objects, so non-text
+/// Pre-scan every input bundle for `level_<stage_id>` `TextAssets` and build
+/// the `stage_id` → (cols, rows) map. The scan parses each bundle's serialized
+/// files but only deserializes class 49 (`TextAsset`) objects, so non-text
 /// bundles cost only their `BundleFile::parse`.
+#[must_use]
 pub fn build_stage_aspect_map(files: &[PathBuf]) -> StageAspectMap {
     let entries: Vec<(String, (u32, u32))> = files
         .par_iter()
@@ -114,8 +117,8 @@ fn extract_grid_dims(text_obj: &Value) -> Option<(u32, u32)> {
 /// form to its natural aspect, derived from the level's tile grid. Falls
 /// back to a fixed 16:9 stretch when the stage isn't in the map.
 ///
-/// Texture name (e.g. "a001_01") is matched against the keys in `aspects`
-/// — this is the same identifier the level TextAsset uses as `level_a001_01`.
+/// Texture name (e.g. "`a001_01`") is matched against the keys in `aspects`
+/// — this is the same identifier the level `TextAsset` uses as `level_a001_01`.
 pub fn unsquash_mappreview_texture(tex: &mut DecodedTexture, aspects: &StageAspectMap) {
     let aspect = match aspects.get(&tex.name) {
         Some(&(cols, rows)) => (cols as f32) / (rows as f32),

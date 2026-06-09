@@ -29,7 +29,13 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
         .ok_or("no parent dir")?
         .join("OpenArknightsFBS/FBS");
 
-    if !fbs_dir.exists() {
+    if fbs_dir.exists() {
+        println!("Updating OpenArknightsFBS...");
+        let _ = Command::new("git")
+            .args(["pull", "--rebase"])
+            .current_dir(fbs_dir.parent().unwrap())
+            .status();
+    } else {
         // Try cloning it
         let parent = fbs_dir.parent().unwrap().parent().unwrap();
         println!("Cloning OpenArknightsFBS...");
@@ -46,12 +52,6 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
         if !status.success() {
             return Err("Failed to clone OpenArknightsFBS".into());
         }
-    } else {
-        println!("Updating OpenArknightsFBS...");
-        let _ = Command::new("git")
-            .args(["pull", "--rebase"])
-            .current_dir(fbs_dir.parent().unwrap())
-            .status();
     }
 
     if !fbs_dir.exists() {
@@ -66,9 +66,9 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
 
 /// Apply known fixes to upstream FBS schemas before running flatc.
 ///
-/// The OpenArknightsFBS repo is community-maintained and occasionally has
-/// field ordering issues that cause VTable misalignment. FlatBuffers assigns
-/// VTable slots by declaration order, so a field inserted in the middle
+/// The `OpenArknightsFBS` repo is community-maintained and occasionally has
+/// field ordering issues that cause `VTable` misalignment. `FlatBuffers` assigns
+/// `VTable` slots by declaration order, so a field inserted in the middle
 /// (rather than appended) breaks all subsequent offsets.
 ///
 /// Each patch is documented with the symptom and root cause.
@@ -91,34 +91,23 @@ fn patch_schemas(fbs_dir: &Path) {
              \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData];\n\
              }",
         ),
-        // skin_table.fbs: upstream commit 4975a03 "Update 2.7.21" (Apr 7 2026)
-        // inserted `spAvatarId` and `spPortraitId` into the middle of
-        // clz_Torappu_CharSkinData (between avatarId/portraitId and
-        // portraitId/dynPortraitId). The actual CN binary was serialized with
-        // the pre-4975a03 schema and does NOT contain these fields. The inserted
-        // fields shift all subsequent VTable slots by +4, so every CharSkin
-        // entry panics when the decoder follows garbage offsets, and the
-        // filter_map safety net drops all ~5669 skins → CharSkins: [].
+        // skin_table.fbs: NO patch needed as of CN 2.7.41 (upstream commit
+        // 6121fa9). Upstream correctly ships spAvatarId (after avatarId) and
+        // spPortraitId (after portraitId) in clz_Torappu_CharSkinData — 20
+        // vtable fields, matching the live binary.
         //
-        // Fix: remove the two inserted fields from the schema. The backend
-        // never reads `spAvatarId` / `spPortraitId` (see backend/src/core/
-        // gamedata/types/skin.rs Skin struct — only skin_id, char_id, avatar_id,
-        // portrait_id, battle_skin, display_skin are consumed), so this is a
-        // pure alignment fix with zero backend impact. When the binary later
-        // ships these fields, upstream's schema can be re-enabled.
-        (
-            "skin_table.fbs",
-            // old: spAvatarId and spPortraitId inserted mid-struct
-            "    avatarId: string; \n\
-             \x20   spAvatarId: string; \n\
-             \x20   portraitId: string; \n\
-             \x20   spPortraitId: string; \n\
-             \x20   dynPortraitId: string; ",
-            // new: inserted fields removed, original order restored
-            "    avatarId: string;\n\
-             \x20   portraitId: string;\n\
-             \x20   dynPortraitId: string; ",
-        ),
+        // A prior patch here REMOVED those two fields. That was correct at
+        // 2.7.21, when the binary lacked them but upstream's schema had them;
+        // it became WRONG once the binary started shipping them (as that patch's
+        // own comment predicted). Dropping to 18 fields shifted every slot from
+        // idx 14 on, so battleSkin / voiceId / displaySkin misread — a string
+        // field landed on table bytes → invalid UTF-8 → the whole
+        // skin_table.json was unparseable and the backend got nothing. Deleting
+        // the patch (letting pristine upstream through) fixes it. Verified by
+        // decoding the live 2.7.41 binary with flatc: char_355_ethan@epoque#7's
+        // DisplaySkin.SkinName decodes as 渗透 and BattleSkin resolves.
+        //
+        // If upstream ever drops the fields again, add a corrective patch here.
         // activity_table.fbs: commit 4975a03 inserted `defaultEnemyTag` into
         // the middle of clz_Torappu_ActivityEnemyDuelConstData, between
         // `defaultEmoticonPicId` and `modeOperationRoundNumber`. The binary
@@ -249,7 +238,13 @@ fn fetch_yostar_schemas() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let repo_dir = PathBuf::from("/tmp/ArknightsFlatbuffers");
     let fbs_dir = repo_dir.join("yostar");
 
-    if !repo_dir.exists() {
+    if repo_dir.exists() {
+        println!("Updating ArknightsFlatbuffers...");
+        let _ = Command::new("git")
+            .args(["pull", "--rebase"])
+            .current_dir(&repo_dir)
+            .status();
+    } else {
         println!("Cloning ArknightsFlatbuffers...");
         let status = Command::new("git")
             .args([
@@ -263,12 +258,6 @@ fn fetch_yostar_schemas() -> Result<PathBuf, Box<dyn std::error::Error>> {
         if !status.success() {
             return Err("Failed to clone ArknightsFlatbuffers".into());
         }
-    } else {
-        println!("Updating ArknightsFlatbuffers...");
-        let _ = Command::new("git")
-            .args(["pull", "--rebase"])
-            .current_dir(&repo_dir)
-            .status();
     }
 
     println!("Yostar schemas: {}", fbs_dir.display());
@@ -298,10 +287,10 @@ fn run_flatc(fbs_path: &Path, output_dir: &Path) -> Result<(), Box<dyn std::erro
 
 fn run_flatc_all(fbs_dir: &Path, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let mut entries: Vec<_> = fs::read_dir(fbs_dir)?
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.path().extension().is_some_and(|ext| ext == "fbs"))
         .collect();
-    entries.sort_by_key(|e| e.path());
+    entries.sort_by_key(std::fs::DirEntry::path);
 
     println!("Running flatc on {} schemas...", entries.len());
     for entry in &entries {
@@ -332,7 +321,19 @@ fn strip_serialize_impls(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
         for line in content.lines() {
             let trimmed = line.trim();
 
-            if !skip {
+            if skip {
+                // Inside a Serialize impl block — count braces
+                for ch in line.chars() {
+                    match ch {
+                        '{' => brace_depth += 1,
+                        '}' => brace_depth -= 1,
+                        _ => {}
+                    }
+                }
+                if brace_depth <= 0 {
+                    skip = false;
+                }
+            } else {
                 // Detect start of impl Serialize block
                 if trimmed.starts_with("impl Serialize for ")
                     || trimmed.starts_with("impl<'a> Serialize for ")
@@ -362,18 +363,6 @@ fn strip_serialize_impls(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
                 output.push_str(line);
                 output.push('\n');
-            } else {
-                // Inside a Serialize impl block — count braces
-                for ch in line.chars() {
-                    match ch {
-                        '{' => brace_depth += 1,
-                        '}' => brace_depth -= 1,
-                        _ => {}
-                    }
-                }
-                if brace_depth <= 0 {
-                    skip = false;
-                }
             }
         }
 
@@ -717,8 +706,8 @@ fn generate_fb_json_auto(
     }
 
     fs::write(output_path, &out)?;
-    let struct_count: usize = structs.values().map(|v| v.len()).sum();
-    let enum_count: usize = enums.values().map(|v| v.len()).sum();
+    let struct_count: usize = structs.values().map(std::vec::Vec::len).sum();
+    let enum_count: usize = enums.values().map(std::vec::Vec::len).sum();
     println!(
         "Generated {} ({struct_count} structs, {enum_count} enums)",
         output_path.display()
@@ -964,7 +953,7 @@ fn generate_decode_dispatch(
     out.push_str("use std::panic::{self, AssertUnwindSafe};\n\n");
 
     out.push_str(
-        r#"/// Check if data is likely a FlatBuffer
+        r"/// Check if data is likely a FlatBuffer
  pub fn is_flatbuffer(data: &[u8]) -> bool {
      if data.len() < 8 {
          return false;
@@ -988,7 +977,7 @@ fn generate_decode_dispatch(
      (4..1000).contains(&vtable_size) && vtable_pos + vtable_size <= data.len()
  }
 
- "#,
+ ",
     );
 
     // ---- guess_root_type ----
@@ -1158,10 +1147,7 @@ fn generate_decode_dispatch(
         .iter()
         .any(|(_, structs)| structs.iter().any(|s| s.root_fn_name.is_some()));
 
-    if !has_yostar_roots {
-        out.push_str("    let _ = data;\n");
-        out.push_str("    Err(format!(\"No Yostar schema for {}\", schema_type))\n");
-    } else {
+    if has_yostar_roots {
         out.push_str("    use crate::fb_json_macros::FlatBufferToJson;\n");
         out.push_str("    let data_clone = data.to_vec();\n");
         out.push_str("    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {\n");
@@ -1197,6 +1183,9 @@ fn generate_decode_dispatch(
         out.push_str("        Ok(Err(e)) => Err(e),\n");
         out.push_str("        Err(_) => Err(\"Yostar decode panic\".to_string()),\n");
         out.push_str("    }\n");
+    } else {
+        out.push_str("    let _ = data;\n");
+        out.push_str("    Err(format!(\"No Yostar schema for {}\", schema_type))\n");
     }
     out.push_str("}\n\n");
 

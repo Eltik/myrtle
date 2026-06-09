@@ -67,7 +67,7 @@ fn ogg_crc32(data: &[u8]) -> u32 {
     let table = &*OGG_CRC_TABLE;
     let mut crc = 0u32;
     for &byte in data {
-        crc = (crc << 8) ^ table[((crc >> 24) ^ byte as u32) as usize];
+        crc = (crc << 8) ^ table[((crc >> 24) ^ u32::from(byte)) as usize];
     }
     crc
 }
@@ -115,11 +115,11 @@ struct BitReader<'a> {
 }
 
 impl<'a> BitReader<'a> {
-    fn new(data: &'a [u8]) -> Self {
+    const fn new(data: &'a [u8]) -> Self {
         Self { data, bit_pos: 0 }
     }
 
-    fn seek(&mut self, bit_pos: usize) {
+    const fn seek(&mut self, bit_pos: usize) {
         self.bit_pos = bit_pos;
     }
 
@@ -136,7 +136,7 @@ impl<'a> BitReader<'a> {
     fn read_bits(&mut self, n: usize) -> u32 {
         let mut val = 0u32;
         for i in 0..n {
-            let bit = self.read_bit() as u32;
+            let bit = u32::from(self.read_bit());
             if i < 32 {
                 val |= bit << i;
             }
@@ -146,6 +146,7 @@ impl<'a> BitReader<'a> {
 }
 
 /// Extract mode block flags from a Vorbis setup header.
+#[must_use]
 pub fn extract_block_flags(header_bytes: &[u8], seek_bit: u32) -> Vec<bool> {
     let mut reader = BitReader::new(header_bytes);
     reader.seek(seek_bit as usize);
@@ -186,7 +187,7 @@ fn get_packet_blocksize(packet: &[u8], block_flags: &[bool]) -> u32 {
 }
 
 /// Number of bits needed to represent value
-fn ilog(value: u32) -> usize {
+const fn ilog(value: u32) -> usize {
     if value == 0 {
         return 0;
     }
@@ -434,7 +435,7 @@ fn rebuild_ogg(
         let packet_segments = packet_size / 255 + 1;
 
         if !page_packets.is_empty() && page_segments + packet_segments > 255 {
-            let refs: Vec<&[u8]> = page_packets.iter().map(|p| p.as_slice()).collect();
+            let refs: Vec<&[u8]> = page_packets.iter().map(std::vec::Vec::as_slice).collect();
             write_ogg_page(&mut out, 0x00, granule_pos, serial, page_seq, &refs);
             page_seq += 1;
             page_packets.clear();
@@ -443,7 +444,7 @@ fn rebuild_ogg(
 
         let blocksize = get_packet_blocksize(packet, &block_flags);
         if blocksize > 0 && prev_blocksize > 0 {
-            granule_pos += ((blocksize + prev_blocksize) / 4) as i64;
+            granule_pos += i64::from((blocksize + prev_blocksize) / 4);
         }
         if blocksize > 0 {
             prev_blocksize = blocksize;
@@ -455,7 +456,7 @@ fn rebuild_ogg(
 
     // Flush remaining as EOS page
     if !page_packets.is_empty() {
-        let refs: Vec<&[u8]> = page_packets.iter().map(|p| p.as_slice()).collect();
+        let refs: Vec<&[u8]> = page_packets.iter().map(std::vec::Vec::as_slice).collect();
         write_ogg_page(&mut out, 0x04, granule_pos, serial, page_seq, &refs);
     } else if page_seq >= 2 {
         write_ogg_page(&mut out, 0x04, granule_pos, serial, page_seq, &[]);
