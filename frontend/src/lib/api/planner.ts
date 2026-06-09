@@ -104,3 +104,19 @@ export function plansQueryOptions(activeIds?: string[]) {
         gcTime: 5 * 60 * 1000,
     });
 }
+
+export const deletePlanFn = createServerFn({ method: "POST" })
+    .inputValidator((operatorId: string) => operatorId)
+    .handler(async ({ data: operatorId }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch(`/plan/${encodeURIComponent(operatorId)}`, {
+            method: "DELETE",
+            bearerToken: token,
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to delete plan: ${res.status}`);
+        }
+        return { success: true };
+    });

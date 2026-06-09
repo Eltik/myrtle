@@ -1,15 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Lock, Plus } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight, Info, Lock, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
 import { eliteIcon, itemIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
+import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions } from "#/lib/api/planner";
+import { deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
@@ -57,6 +59,7 @@ interface PlannerRequirementRowProps {
 function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
     const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
     const isExpanded = expandedPaths[path];
+    const isMissingRequirements = !item.canCraft && item.craftReason.startsWith("Requirements not met");
 
     const handleClick = () => {
         if (hasRecipe) {
@@ -86,6 +89,19 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                 <td className="px-2 py-2.5 text-right text-xs tabular-nums">
                     {item.canCraft ? (
                         <span className="text-sky-400">{item.craftableCount.toLocaleString()}</span>
+                    ) : isMissingRequirements ? (
+                        <div className="flex justify-end">
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={(props) => (
+                                        <span {...props} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground">
+                                            <Info className="size-3.5" />
+                                        </span>
+                                    )}
+                                />
+                                <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
+                            </Tooltip>
+                        </div>
                     ) : (
                         <span className="text-muted-foreground/50" title={item.craftReason}>
                             —
@@ -107,11 +123,14 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
 /** Page wrapper for the operator planner tool. */
 export function OperatorPlanner(): React.ReactElement {
     const { isAuthenticated, user } = useAuth();
+    const queryClient = useQueryClient();
     const [open, setOpen] = React.useState(false);
     const [plansExpanded, setPlansExpanded] = React.useState(true);
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
     const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
+    const [reqSearchQuery, setReqSearchQuery] = React.useState("");
+    const [editOperatorId, setEditOperatorId] = React.useState<string | null>(null);
 
     const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
         ...plansQueryOptions(),
@@ -150,6 +169,68 @@ export function OperatorPlanner(): React.ReactElement {
 
     const plans = plannerData?.plans ?? initialPlannerData?.plans ?? [];
     const aggregatedRequirements = plannerData?.aggregatedRequirements ?? [];
+
+    const allSelected = plans.length > 0 && plans.every((p) => activePlans[p.operator_id] ?? true);
+    const selectedPlansCount = plans.filter((p) => activePlans[p.operator_id] ?? true).length;
+
+    const toggleSelectAll = () => {
+        if (allSelected) {
+            const next: Record<string, boolean> = {};
+            for (const p of plans) {
+                next[p.operator_id] = false;
+            }
+            setActivePlans(next);
+        } else {
+            const next: Record<string, boolean> = {};
+            for (const p of plans) {
+                next[p.operator_id] = true;
+            }
+            setActivePlans(next);
+        }
+    };
+
+    const handleDeletePlan = async (opId: string) => {
+        try {
+            await deletePlanFn({ data: opId });
+            setActivePlans((prev) => {
+                const next = { ...prev };
+                delete next[opId];
+                return next;
+            });
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        const selectedIds = plans.filter((p) => activePlans[p.operator_id] ?? true).map((p) => p.operator_id);
+        if (selectedIds.length === 0) return;
+        try {
+            await Promise.all(selectedIds.map((id) => deletePlanFn({ data: id })));
+            setActivePlans((prev) => {
+                const next = { ...prev };
+                for (const id of selectedIds) {
+                    delete next[id];
+                }
+                return next;
+            });
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleEditPlan = (opId: string) => {
+        setEditOperatorId(opId);
+        setOpen(true);
+    };
+
+    const filteredRequirements = React.useMemo(() => {
+        if (!reqSearchQuery.trim()) return aggregatedRequirements;
+        const query = reqSearchQuery.toLowerCase();
+        return aggregatedRequirements.filter((req) => req.name.toLowerCase().includes(query));
+    }, [aggregatedRequirements, reqSearchQuery]);
 
     const togglePlan = (opId: string) => {
         setActivePlans((prev) => ({
@@ -203,7 +284,16 @@ export function OperatorPlanner(): React.ReactElement {
                         </Button>
                     </div>
 
-                    <OperatorPlannerDialog open={open} onOpenChange={setOpen} />
+                    <OperatorPlannerDialog
+                        open={open}
+                        onOpenChange={(isOpen) => {
+                            setOpen(isOpen);
+                            if (!isOpen) {
+                                setEditOperatorId(null);
+                            }
+                        }}
+                        initialOperatorId={editOperatorId ?? undefined}
+                    />
                 </>
             ) : (
                 <>
@@ -237,7 +327,25 @@ export function OperatorPlanner(): React.ReactElement {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="flex max-h-[calc(100vh-16rem)] flex-col gap-4 overflow-y-auto pr-1">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-between border-border/40 border-b pb-3">
+                                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
+                                                <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
+                                                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                                                    <span>{allSelected ? "Unselect all" : "Select all"}</span>
+                                                </label>
+                                                {selectedPlansCount > 0 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="xs"
+                                                        className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                                        onClick={handleDeleteSelected}
+                                                    >
+                                                        <Trash className="mr-1 size-3.5" />
+                                                        Delete selected ({selectedPlansCount})
+                                                    </Button>
+                                                )}
+                                            </div>
                                             {plans.map((p: IOperatorPlanResponse) => {
                                                 const op = operators.find((o) => o.id === p.operator_id);
                                                 if (!op) return null;
@@ -267,6 +375,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                 type="button"
                                                                 onClick={(e) => {
                                                                     e.preventDefault();
+                                                                    e.stopPropagation();
                                                                     togglePlanExpanded(p.id);
                                                                 }}
                                                                 className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted"
@@ -370,6 +479,33 @@ export function OperatorPlanner(): React.ReactElement {
                                                                 )}
                                                             </div>
                                                         )}
+
+                                                        <div className="mt-auto flex items-center gap-2 border-border/40 border-t pt-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    handleEditPlan(p.operator_id);
+                                                                }}
+                                                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/40 py-1.5 font-medium font-sans text-foreground text-xs transition-all hover:border-border/80 hover:bg-muted"
+                                                            >
+                                                                <Pencil className="size-3.5" />
+                                                                <span>Edit</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    handleDeletePlan(p.operator_id);
+                                                                }}
+                                                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 py-1.5 font-medium font-sans text-red-600 text-xs transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
+                                                            >
+                                                                <Trash className="size-3.5" />
+                                                                <span>Delete</span>
+                                                            </button>
+                                                        </div>
                                                     </label>
                                                 );
                                             })}
@@ -380,7 +516,10 @@ export function OperatorPlanner(): React.ReactElement {
                         </div>
                         <div className="flex-1">
                             <div className="rounded-xl border border-border bg-card p-4">
-                                <h2 className="font-semibold text-foreground text-sm">Requirements</h2>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="font-semibold text-foreground text-sm">Requirements</h2>
+                                    {!isRequirementsLoading && aggregatedRequirements.length > 0 && <Input type="search" placeholder="Search requirements..." value={reqSearchQuery} onChange={(e) => setReqSearchQuery(e.target.value)} className="h-7 max-w-48 text-xs sm:h-7 sm:text-xs" />}
+                                </div>
                                 {isRequirementsLoading ? (
                                     <div className="mt-4 flex flex-col divide-y divide-border/40">
                                         {["sk-req-1", "sk-req-2", "sk-req-3", "sk-req-4", "sk-req-5", "sk-req-6", "sk-req-7", "sk-req-8"].map((key) => (
@@ -400,29 +539,42 @@ export function OperatorPlanner(): React.ReactElement {
                                     <p className="mt-6 text-center text-muted-foreground text-sm">No requirements for the selected plans.</p>
                                 ) : (
                                     <div className="mt-3 overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="border-border/40 border-b">
-                                                    <th className="pb-2 text-left font-medium text-muted-foreground text-xs">Item</th>
-                                                    <th className="pr-2 pb-2 text-right font-medium text-muted-foreground text-xs">Required</th>
-                                                    <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Have</th>
-                                                    <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Craftable</th>
-                                                    <th className="pb-2 pl-2 text-right font-medium text-muted-foreground text-xs">Missing</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border/30">
-                                                {aggregatedRequirements.map((req) => (
-                                                    <PlannerRequirementRow key={req.id} item={req} depth={0} path={req.id} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                        {filteredRequirements.length === 0 ? (
+                                            <p className="py-6 text-center text-muted-foreground text-sm">No matching requirements found.</p>
+                                        ) : (
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-border/40 border-b">
+                                                        <th className="pb-2 text-left font-medium text-muted-foreground text-xs">Item</th>
+                                                        <th className="pr-2 pb-2 text-right font-medium text-muted-foreground text-xs">Required</th>
+                                                        <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Have</th>
+                                                        <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Craftable</th>
+                                                        <th className="pb-2 pl-2 text-right font-medium text-muted-foreground text-xs">Missing</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-border/30">
+                                                    {filteredRequirements.map((req) => (
+                                                        <PlannerRequirementRow key={req.id} item={req} depth={0} path={req.id} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <OperatorPlannerDialog open={open} onOpenChange={setOpen} />
+                    <OperatorPlannerDialog
+                        open={open}
+                        onOpenChange={(isOpen) => {
+                            setOpen(isOpen);
+                            if (!isOpen) {
+                                setEditOperatorId(null);
+                            }
+                        }}
+                        initialOperatorId={editOperatorId ?? undefined}
+                    />
                 </>
             )}
         </div>

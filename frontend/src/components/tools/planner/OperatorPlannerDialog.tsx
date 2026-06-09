@@ -15,7 +15,7 @@ import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { upsertPlanFn } from "#/lib/api/planner";
+import { plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -83,10 +83,11 @@ function isModuleAllowed(operator: IOperatorListItem, uniEquipId: string, curren
 interface IOperatorPlannerDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    initialOperatorId?: string;
 }
 
 /** Modal dialog for customizing operator targets. */
-export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDialogProps): React.ReactElement {
+export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }: IOperatorPlannerDialogProps): React.ReactElement {
     const [selectedOperator, setSelectedOperator] = React.useState<IOperatorListItem | null>(null);
     const [elite, setElite] = React.useState<number>(0);
     const [level, setLevel] = React.useState<number>(1);
@@ -105,6 +106,15 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
     });
+
+    const { data: plannerData } = useQuery({
+        ...plansQueryOptions(),
+        enabled: !!user?.uid,
+    });
+    const plans = plannerData?.plans ?? [];
+
+    const existingPlan = plans.find((p) => p.operator_id === selectedOperator?.id);
+    const isEditMode = !!existingPlan;
 
     const lastInitializedStateRef = React.useRef<{
         operatorId: string;
@@ -159,6 +169,15 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
     }, [open]);
 
     React.useEffect(() => {
+        if (open && initialOperatorId && operators.length > 0) {
+            const op = operators.find((o) => o.id === initialOperatorId);
+            if (op) {
+                setSelectedOperator(op);
+            }
+        }
+    }, [open, initialOperatorId, operators]);
+
+    React.useEffect(() => {
         if (selectedOperator && hasRosterData) {
             const isInitialized = lastInitializedStateRef.current?.operatorId === selectedOperator.id;
             if (!isInitialized) {
@@ -171,7 +190,29 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
                 const initialSkills: Record<number, number> = {};
                 const initialModules: Record<string, number> = {};
 
-                if (rosterEntry) {
+                if (existingPlan) {
+                    initialElite = Math.min(existingPlan.target_elite, maxE);
+                    const maxLForElite = getMaxLevel(r, initialElite);
+                    initialLevel = Math.min(existingPlan.target_level, maxLForElite);
+
+                    selectedOperator.skills.forEach((_, idx) => {
+                        if (existingPlan.target_skill_level < 7) {
+                            initialSkills[idx] = existingPlan.target_skill_level;
+                        } else {
+                            const masteryEntry = existingPlan.target_skills?.find((s) => s.skill_index === idx);
+                            initialSkills[idx] = masteryEntry && masteryEntry.mastery_level > 0 ? 7 + masteryEntry.mastery_level : 7;
+                        }
+                    });
+
+                    selectedOperator.modules.forEach((m) => {
+                        if (m.typeName1 !== "ORIGINAL") {
+                            const targetMod = existingPlan.target_modules?.find((mod) => mod.module_id === m.uniEquipId);
+                            initialModules[m.uniEquipId] = targetMod ? targetMod.module_stage : 0;
+                        }
+                    });
+
+                    setDisplayOnProfile(existingPlan.display_on_profile);
+                } else if (rosterEntry) {
                     initialElite = Math.min(rosterEntry.elite, maxE);
                     const maxLForElite = getMaxLevel(r, initialElite);
                     initialLevel = Math.min(rosterEntry.level, maxLForElite);
@@ -191,6 +232,8 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
                             initialModules[m.uniEquipId] = modEntry && !modEntry.locked ? modEntry.level : 0;
                         }
                     });
+
+                    setDisplayOnProfile(false);
                 } else {
                     initialElite = 0;
                     initialLevel = 1;
@@ -204,6 +247,8 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
                             initialModules[m.uniEquipId] = 0;
                         }
                     });
+
+                    setDisplayOnProfile(false);
                 }
 
                 lastInitializedStateRef.current = {
@@ -219,7 +264,7 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
                 setModuleTargets(initialModules);
             }
         }
-    }, [selectedOperator, roster, hasRosterData]);
+    }, [selectedOperator, roster, hasRosterData, existingPlan]);
 
     const handleEliteChange = (newElite: number) => {
         setElite(newElite);
@@ -359,8 +404,8 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
-                    <DialogTitle>Create new plan</DialogTitle>
-                    <DialogDescription>Add a new operator target plan to your planner list.</DialogDescription>
+                    <DialogTitle>{isEditMode ? "Edit plan" : "Create new plan"}</DialogTitle>
+                    <DialogDescription>{isEditMode ? `Customize and update your target goals for ${selectedOperator?.name ?? "this operator"}.` : "Add a new operator target plan to your planner list."}</DialogDescription>
                 </DialogHeader>
 
                 <DialogPanel className="min-h-0 flex-1">
@@ -672,7 +717,7 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
                 <DialogFooter className="pb-8 sm:pb-8">
                     <DialogClose render={<Button variant="outline" className="w-full sm:w-auto" />}>Cancel</DialogClose>
                     <Button onClick={handleSave} disabled={isSaving || !selectedOperator || selectedOperator.id === "char_4195_radian"} className="w-full sm:w-auto">
-                        {isSaving ? "Saving..." : "Save"}
+                        {isSaving ? "Saving..." : isEditMode ? "Save changes" : "Create plan"}
                     </Button>
                 </DialogFooter>
             </DialogPopup>
