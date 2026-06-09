@@ -33,6 +33,20 @@ pub struct OperatorPlan {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct PlanRecipeCost {
+    pub count: i32,
+    pub item: PlanRequirementItem,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanRecipe {
+    pub count: i32,
+    pub costs: Vec<PlanRecipeCost>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlanRequirementItem {
     pub id: String,
     pub name: String,
@@ -48,11 +62,18 @@ pub struct PlanRequirementItem {
     pub missing_count: i32,
     pub can_craft: bool,
     pub craft_reason: String,
+    pub recipe: Option<PlanRecipe>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorPlanResponse {
     #[serde(flatten)]
     pub plan: OperatorPlan,
-    pub requirements: Vec<PlanRequirementItem>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlannerResponse {
+    pub plans: Vec<OperatorPlanResponse>,
+    pub aggregated_requirements: Vec<PlanRequirementItem>,
 }

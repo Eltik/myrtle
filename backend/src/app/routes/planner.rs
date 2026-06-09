@@ -1,13 +1,18 @@
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use serde::Deserialize;
 
 use crate::{
     app::{
         error::ApiError, extractors::auth::AuthUser, routes::ok_status, services, state::AppState,
     },
-    database::models::planner::OperatorPlanResponse,
+    database::models::planner::{OperatorPlanResponse, PlannerResponse},
 };
+
+#[derive(Deserialize)]
+pub struct ListPlansQuery {
+    pub active: Option<String>,
+}
 
 #[derive(Deserialize)]
 pub struct UpsertPlanRequest {
@@ -21,11 +26,22 @@ pub struct UpsertPlanRequest {
 
 pub async fn list(
     State(state): State<AppState>,
+    Query(query): Query<ListPlansQuery>,
     auth: AuthUser,
-) -> Result<Json<Vec<OperatorPlanResponse>>, ApiError> {
+) -> Result<Json<PlannerResponse>, ApiError> {
     let user_id = auth.user_uuid()?;
-    let plans = services::planner::list_plans(&state, user_id).await?;
-    Ok(Json(plans))
+    let active_ids: Vec<String> = query
+        .active
+        .as_ref()
+        .map(|s| {
+            s.split(',')
+                .map(|id| id.trim().to_owned())
+                .filter(|id| !id.is_empty())
+                .collect()
+        })
+        .unwrap_or_default();
+    let response = services::planner::list_plans(&state, user_id, active_ids).await?;
+    Ok(Json(response))
 }
 
 pub async fn upsert(

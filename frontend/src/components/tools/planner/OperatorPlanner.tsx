@@ -44,6 +44,66 @@ function getModuleStageLabel(stage: number): string {
     return stage === 0 ? "X" : String(stage);
 }
 
+/** Props for the recursive requirement row component. */
+interface PlannerRequirementRowProps {
+    item: IPlanRequirementItem;
+    depth: number;
+    path: string;
+    expandedPaths: Record<string, boolean>;
+    onToggleExpand: (path: string) => void;
+}
+
+/** Recursively renders requirement rows. */
+function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
+    const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
+    const isExpanded = expandedPaths[path];
+
+    const handleClick = () => {
+        if (hasRecipe) {
+            onToggleExpand(path);
+        }
+    };
+
+    return (
+        <>
+            <tr className={cn("group transition-colors hover:bg-muted/20", hasRecipe && "cursor-pointer")} onClick={handleClick}>
+                <td className="py-2.5 pr-4">
+                    <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                        {hasRecipe ? isExpanded ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" /> : <div className="size-3.5 shrink-0" />}
+                        <img
+                            src={itemIcon(item.id, item.iconId, item.image)}
+                            alt={item.name}
+                            className="size-8 shrink-0 rounded-md object-contain"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                        />
+                        <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>
+                    </div>
+                </td>
+                <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{item.requiredCount.toLocaleString()}</td>
+                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", item.inventoryCount >= item.requiredCount ? "text-emerald-400" : "text-muted-foreground")}>{item.inventoryCount.toLocaleString()}</td>
+                <td className="px-2 py-2.5 text-right text-xs tabular-nums">
+                    {item.canCraft ? (
+                        <span className="text-sky-400">{item.craftableCount.toLocaleString()}</span>
+                    ) : (
+                        <span className="text-muted-foreground/50" title={item.craftReason}>
+                            —
+                        </span>
+                    )}
+                </td>
+                <td className="py-2.5 pl-2 text-right text-xs tabular-nums">{item.missingCount > 0 ? <span className="font-semibold text-red-400 text-xs">{item.missingCount.toLocaleString()}</span> : <span className="font-semibold text-emerald-400">✓</span>}</td>
+            </tr>
+            {hasRecipe &&
+                isExpanded &&
+                item.recipe?.costs.map((cost) => {
+                    const childPath = `${path}/${cost.item.id}`;
+                    return <PlannerRequirementRow key={childPath} item={cost.item} depth={depth + 1} path={childPath} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />;
+                })}
+        </>
+    );
+}
+
 /** Page wrapper for the operator planner tool. */
 export function OperatorPlanner(): React.ReactElement {
     const { isAuthenticated, user } = useAuth();
@@ -51,18 +111,45 @@ export function OperatorPlanner(): React.ReactElement {
     const [plansExpanded, setPlansExpanded] = React.useState(true);
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
+    const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
 
-    const { data: plans = [], isLoading: plansLoading } = useQuery({
+    const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
         ...plansQueryOptions(),
         enabled: isAuthenticated,
     });
 
-    const { data: operators = [] } = useQuery(operatorsListQueryOptions());
+    const activeIds = React.useMemo(() => {
+        if (!initialPlannerData?.plans) return undefined;
+        const totalPlansCount = initialPlannerData.plans.length;
+        const activeList = initialPlannerData.plans.filter((p) => activePlans[p.operator_id] ?? true).map((p) => p.operator_id);
 
-    const { data: roster = [] } = useQuery({
+        if (activeList.length === totalPlansCount) {
+            return undefined;
+        }
+        if (totalPlansCount > 0 && activeList.length === 0) {
+            return ["none"];
+        }
+        return activeList;
+    }, [initialPlannerData?.plans, activePlans]);
+
+    const { data: operators = [], isLoading: operatorsLoading } = useQuery(operatorsListQueryOptions());
+
+    const { data: roster = [], isLoading: rosterLoading } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
     });
+
+    const isPlansListLoading = initialPlansLoading || operatorsLoading || rosterLoading;
+
+    const { data: plannerData, isLoading: requirementsLoading } = useQuery({
+        ...plansQueryOptions(activeIds),
+        enabled: isAuthenticated && !isPlansListLoading,
+    });
+
+    const isRequirementsLoading = requirementsLoading || isPlansListLoading;
+
+    const plans = plannerData?.plans ?? initialPlannerData?.plans ?? [];
+    const aggregatedRequirements = plannerData?.aggregatedRequirements ?? [];
 
     const togglePlan = (opId: string) => {
         setActivePlans((prev) => ({
@@ -78,23 +165,12 @@ export function OperatorPlanner(): React.ReactElement {
         }));
     };
 
-    const aggregatedRequirements = React.useMemo<IPlanRequirementItem[]>(() => {
-        const totals = new Map<string, IPlanRequirementItem>();
-        for (const p of plans) {
-            if (!(activePlans[p.operator_id] ?? true)) continue;
-            for (const req of p.requirements) {
-                const existing = totals.get(req.id);
-                if (existing) {
-                    existing.requiredCount += req.requiredCount;
-                    existing.inventoryCount = req.inventoryCount;
-                    existing.missingCount = Math.max(0, existing.requiredCount - existing.inventoryCount);
-                } else {
-                    totals.set(req.id, { ...req });
-                }
-            }
-        }
-        return Array.from(totals.values()).sort((a, b) => a.sortGroup - b.sortGroup || a.sortSubrank - b.sortSubrank || a.name.localeCompare(b.name));
-    }, [plans, activePlans]);
+    const handleToggleExpand = (path: string) => {
+        setExpandedPaths((prev) => ({
+            ...prev,
+            [path]: !prev[path],
+        }));
+    };
 
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
@@ -118,7 +194,7 @@ export function OperatorPlanner(): React.ReactElement {
 
             {!isAuthenticated ? (
                 <UnauthenticatedState />
-            ) : !plansLoading && plans.length === 0 ? (
+            ) : !isPlansListLoading && plans.length === 0 ? (
                 <>
                     <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
                         <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
@@ -147,11 +223,10 @@ export function OperatorPlanner(): React.ReactElement {
                                     <ChevronDown className={cn("size-4 transition-transform min-[720px]:hidden", plansExpanded && "rotate-180")} />
                                 </button>
                                 <div className={cn("mt-4 min-[720px]:block", plansExpanded ? "block" : "hidden")}>
-                                    {plansLoading ? (
+                                    {isPlansListLoading ? (
                                         <div className="flex flex-col gap-4">
-                                            {Array.from({ length: 3 }).map((_, i) => (
-                                                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-                                                <div key={i} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                            {["sk-1", "sk-2", "sk-3"].map((key) => (
+                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
                                                     <Skeleton className="size-4 rounded" />
                                                     <Skeleton className="size-10 rounded-xl" />
                                                     <div className="flex flex-1 flex-col gap-1.5">
@@ -306,11 +381,10 @@ export function OperatorPlanner(): React.ReactElement {
                         <div className="flex-1">
                             <div className="rounded-xl border border-border bg-card p-4">
                                 <h2 className="font-semibold text-foreground text-sm">Requirements</h2>
-                                {plansLoading ? (
+                                {isRequirementsLoading ? (
                                     <div className="mt-4 flex flex-col divide-y divide-border/40">
-                                        {Array.from({ length: 8 }).map((_, i) => (
-                                            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-                                            <div key={i} className="flex items-center gap-3 py-3 first:pt-1">
+                                        {["sk-req-1", "sk-req-2", "sk-req-3", "sk-req-4", "sk-req-5", "sk-req-6", "sk-req-7", "sk-req-8"].map((key) => (
+                                            <div key={key} className="flex items-center gap-3 py-3 first:pt-1">
                                                 <Skeleton className="size-9 shrink-0 rounded-lg" />
                                                 <Skeleton className="h-3.5 w-28 rounded" />
                                                 <div className="ml-auto flex gap-6">
@@ -338,33 +412,7 @@ export function OperatorPlanner(): React.ReactElement {
                                             </thead>
                                             <tbody className="divide-y divide-border/30">
                                                 {aggregatedRequirements.map((req) => (
-                                                    <tr key={req.id} className="group transition-colors hover:bg-muted/20">
-                                                        <td className="py-2.5 pr-4">
-                                                            <div className="flex items-center gap-2.5">
-                                                                <img
-                                                                    src={itemIcon(req.id, req.iconId, req.image)}
-                                                                    alt={req.name}
-                                                                    className="size-8 shrink-0 rounded-md object-contain"
-                                                                    onError={(e) => {
-                                                                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                                                                    }}
-                                                                />
-                                                                <span className="font-medium text-foreground text-xs leading-tight">{req.name}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{req.requiredCount.toLocaleString()}</td>
-                                                        <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", req.inventoryCount >= req.requiredCount ? "text-emerald-400" : "text-muted-foreground")}>{req.inventoryCount.toLocaleString()}</td>
-                                                        <td className="px-2 py-2.5 text-right text-xs tabular-nums">
-                                                            {req.canCraft ? (
-                                                                <span className="text-sky-400">{req.craftableCount.toLocaleString()}</span>
-                                                            ) : (
-                                                                <span className="text-muted-foreground/50" title={req.craftReason}>
-                                                                    —
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-2.5 pl-2 text-right text-xs tabular-nums">{req.missingCount > 0 ? <span className="font-semibold text-red-400 text-xs">{req.missingCount.toLocaleString()}</span> : <span className="font-semibold text-emerald-400">✓</span>}</td>
-                                                    </tr>
+                                                    <PlannerRequirementRow key={req.id} item={req} depth={0} path={req.id} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
                                                 ))}
                                             </tbody>
                                         </table>

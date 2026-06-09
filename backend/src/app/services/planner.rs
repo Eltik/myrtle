@@ -17,8 +17,8 @@ use crate::{
     database::{
         models::{
             planner::{
-                OperatorPlan, OperatorPlanResponse, PlanRequirementItem, TargetModulePlan,
-                TargetSkillPlan,
+                OperatorPlan, OperatorPlanResponse, PlanRecipe, PlanRecipeCost,
+                PlanRequirementItem, PlannerResponse, TargetModulePlan, TargetSkillPlan,
             },
             roster::RosterEntry,
         },
@@ -89,6 +89,7 @@ fn requirement_sort_key(id: &str, name: &str, rarity: i16) -> (i8, i8) {
     (5, -(rarity as i8))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn resolve_requirement_item(
     item_id: &str,
     required_count: i32,
@@ -96,6 +97,7 @@ fn resolve_requirement_item(
     craftable_count: i32,
     can_craft: bool,
     craft_reason: String,
+    recipe: Option<PlanRecipe>,
     state: &AppState,
 ) -> PlanRequirementItem {
     let gamedata = state.game_data.load();
@@ -126,7 +128,7 @@ fn resolve_requirement_item(
         };
     }
 
-    let missing_count = (required_count - inventory_count).max(0);
+    let missing_count = (required_count - inventory_count - craftable_count).max(0);
     let (sort_group, sort_subrank) = requirement_sort_key(item_id, &name, rarity);
 
     PlanRequirementItem {
@@ -144,6 +146,7 @@ fn resolve_requirement_item(
         sort_subrank,
         can_craft,
         craft_reason,
+        recipe,
     }
 }
 
@@ -211,15 +214,246 @@ fn calculate_leveling_costs(
     }
 }
 
-fn calculate_requirements(
+#[allow(clippy::too_many_arguments)]
+fn build_requirement_tree(
+    item_id: &str,
+    required_count: i32,
+    materials: &HashMap<String, i32>,
+    inventory_map: &HashMap<String, i32>,
+    user_building: &UserBuilding,
+    clears: &HashMap<String, StageClear>,
+    state: &AppState,
+    visited: &[&str],
+) -> PlanRequirementItem {
+    let inv_count = *inventory_map.get(item_id).unwrap_or(&0);
+    let deficit = (required_count - inv_count).max(0);
+
+    let gamedata = state.game_data.load();
+
+    let mut has_cycle = false;
+    if let Some(formula) = gamedata
+        .building
+        .workshop_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        has_cycle = formula
+            .costs
+            .iter()
+            .any(|c| visited.contains(&c.id.as_str()));
+    } else if let Some(formula) = gamedata
+        .building
+        .manufact_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        has_cycle = formula
+            .costs
+            .iter()
+            .any(|c| visited.contains(&c.id.as_str()));
+    }
+
+    if has_cycle {
+        return resolve_requirement_item(
+            item_id,
+            required_count,
+            inv_count,
+            0,
+            false,
+            "Recipe cycle detected".to_owned(),
+            None,
+            state,
+        );
+    }
+
+    let mut recipe = None;
+    let mut craftable_count = 0;
+    let mut can_craft = false;
+    let mut craft_reason = "No workshop or factory formula".to_owned();
+
+    if let Some(formula) = gamedata
+        .building
+        .workshop_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        let mut unmet_reqs = Vec::new();
+        for room_req in &formula.require_rooms {
+            let matching_count = user_building
+                .rooms
+                .iter()
+                .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
+                .count();
+            if matching_count < room_req.room_count as usize {
+                unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level));
+            }
+        }
+        for stage_req in &formula.require_stages {
+            let is_cleared = clears
+                .get(&stage_req.stage_id)
+                .is_some_and(|c| c.state >= 2 || c.complete_times > 0);
+            if !is_cleared {
+                let stage_code = gamedata
+                    .stages
+                    .get(&stage_req.stage_id)
+                    .map(|s| s.code.as_str())
+                    .unwrap_or(stage_req.stage_id.as_str());
+                unmet_reqs.push(format!("Stage {}", stage_code));
+            }
+        }
+
+        let mut costs = Vec::new();
+        let num_crafts_needed = if deficit > 0 {
+            (deficit + formula.count - 1) / formula.count
+        } else {
+            0
+        };
+
+        for cost in &formula.costs {
+            let cost_required = num_crafts_needed * cost.count;
+            let mut next_visited = visited.to_vec();
+            next_visited.push(item_id);
+            let cost_item = build_requirement_tree(
+                &cost.id,
+                cost_required,
+                materials,
+                inventory_map,
+                user_building,
+                clears,
+                state,
+                &next_visited,
+            );
+            costs.push(PlanRecipeCost {
+                count: cost.count,
+                item: cost_item,
+            });
+        }
+
+        if unmet_reqs.is_empty() {
+            can_craft = true;
+            craft_reason = "".to_owned();
+
+            let mut max_crafts = i32::MAX;
+            for cost in &formula.costs {
+                let ingredient_inv = *inventory_map.get(&cost.id).unwrap_or(&0);
+                let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
+                let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
+
+                let child_cost_item = costs.iter().find(|c| c.item.id == cost.id).unwrap();
+                let ingredient_avail_craft = child_cost_item.item.craftable_count;
+
+                let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
+                let craft_limit = ingredient_avail / cost.count;
+                max_crafts = max_crafts.min(craft_limit);
+            }
+
+            if max_crafts != i32::MAX && max_crafts > 0 {
+                craftable_count = max_crafts * formula.count;
+            }
+        } else {
+            can_craft = false;
+            craft_reason = format!("Requirements not met: {}", unmet_reqs.join(", "));
+        }
+
+        recipe = Some(PlanRecipe {
+            count: formula.count,
+            costs,
+        });
+    } else if let Some(formula) = gamedata
+        .building
+        .manufact_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        let mut unmet_reqs = Vec::new();
+        for room_req in &formula.require_rooms {
+            let matching_count = user_building
+                .rooms
+                .iter()
+                .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
+                .count();
+            if matching_count < room_req.room_count as usize {
+                unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level));
+            }
+        }
+
+        let mut costs = Vec::new();
+        let num_crafts_needed = if deficit > 0 {
+            (deficit + formula.count - 1) / formula.count
+        } else {
+            0
+        };
+
+        for cost in &formula.costs {
+            let cost_required = num_crafts_needed * cost.count;
+            let mut next_visited = visited.to_vec();
+            next_visited.push(item_id);
+            let cost_item = build_requirement_tree(
+                &cost.id,
+                cost_required,
+                materials,
+                inventory_map,
+                user_building,
+                clears,
+                state,
+                &next_visited,
+            );
+            costs.push(PlanRecipeCost {
+                count: cost.count,
+                item: cost_item,
+            });
+        }
+
+        if unmet_reqs.is_empty() {
+            can_craft = true;
+            craft_reason = "".to_owned();
+
+            let mut max_crafts = i32::MAX;
+            for cost in &formula.costs {
+                let ingredient_inv = *inventory_map.get(&cost.id).unwrap_or(&0);
+                let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
+                let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
+
+                let child_cost_item = costs.iter().find(|c| c.item.id == cost.id).unwrap();
+                let ingredient_avail_craft = child_cost_item.item.craftable_count;
+
+                let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
+                let craft_limit = ingredient_avail / cost.count;
+                max_crafts = max_crafts.min(craft_limit);
+            }
+
+            if max_crafts != i32::MAX && max_crafts > 0 {
+                craftable_count = max_crafts * formula.count;
+            }
+        } else {
+            can_craft = false;
+            craft_reason = format!("Requirements not met: {}", unmet_reqs.join(", "));
+        }
+
+        recipe = Some(PlanRecipe {
+            count: formula.count,
+            costs,
+        });
+    }
+
+    resolve_requirement_item(
+        item_id,
+        required_count,
+        inv_count,
+        craftable_count,
+        can_craft,
+        craft_reason,
+        recipe,
+        state,
+    )
+}
+
+fn get_plan_direct_materials(
     state: &AppState,
     plan: &OperatorPlan,
     operator: &Operator,
     roster_entry: Option<&RosterEntry>,
-    inventory_map: &HashMap<String, i32>,
-    user_building: &UserBuilding,
-    clears: &HashMap<String, StageClear>,
-) -> Result<Vec<PlanRequirementItem>, ApiError> {
+) -> Result<HashMap<String, i32>, ApiError> {
     let current_elite = roster_entry.map(|r| r.elite).unwrap_or(0);
     let current_level = roster_entry.map(|r| r.level).unwrap_or(1);
     let current_skill_level = roster_entry.map(|r| r.skill_level).unwrap_or(1);
@@ -314,79 +548,43 @@ fn calculate_requirements(
         }
     }
 
-    let gamedata = state.game_data.load();
-    let mut requirements: Vec<PlanRequirementItem> = Vec::with_capacity(materials.len());
+    Ok(materials)
+}
 
-    for (item_id, count) in materials.iter() {
-        let inv_count = *inventory_map.get(item_id).unwrap_or(&0);
-        let mut craftable_count = 0;
-        let mut can_craft = false;
-        let mut craft_reason = "No workshop formula".to_owned();
-
-        if let Some(formula) = gamedata
-            .building
-            .workshop_formulas
-            .values()
-            .find(|f| f.item_id == *item_id)
-        {
-            let mut unmet_reqs = Vec::new();
-
-            for room_req in &formula.require_rooms {
-                let matching_count = user_building
-                    .rooms
-                    .iter()
-                    .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
-                    .count();
-                if matching_count < room_req.room_count as usize {
-                    unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level))
-                }
-            }
-
-            for stage_req in &formula.require_stages {
-                let is_cleared = clears
-                    .get(&stage_req.stage_id)
-                    .is_some_and(|c| c.state >= 2 || c.complete_times > 0);
-                if !is_cleared {
-                    let stage_code = gamedata
-                        .stages
-                        .get(&stage_req.stage_id)
-                        .map(|s| s.code.as_str())
-                        .unwrap_or(stage_req.stage_id.as_str());
-                    unmet_reqs.push(format!("Stage {}", stage_code));
-                }
-            }
-
-            if unmet_reqs.is_empty() {
-                can_craft = true;
-                craft_reason = "".to_owned();
-
-                let mut max_crafts = i32::MAX;
-                for cost in &formula.costs {
-                    let ingredient_inv = *inventory_map.get(&cost.id).unwrap_or(&0);
-                    let ingredient_needed = *materials.get(&cost.id).unwrap_or(&0);
-                    let ingredient_avail = (ingredient_inv - ingredient_needed).max(0);
-                    let craft_limit = ingredient_avail / cost.count;
-                    max_crafts = max_crafts.min(craft_limit);
-                }
-
-                if max_crafts != i32::MAX && max_crafts > 0 {
-                    craftable_count = max_crafts * formula.count;
-                }
-            } else {
-                can_craft = false;
-                craft_reason = format!("Requirements not met: {}", unmet_reqs.join(", "));
-            }
+fn calculate_requirements(
+    state: &AppState,
+    plans_with_ops: &[(OperatorPlan, &Operator, Option<&RosterEntry>)],
+    active_ids: &[String],
+    inventory_map: &HashMap<String, i32>,
+    user_building: &UserBuilding,
+    clears: &HashMap<String, StageClear>,
+) -> Result<Vec<PlanRequirementItem>, ApiError> {
+    let mut combined_materials = HashMap::new();
+    for (plan, operator, roster_entry) in plans_with_ops {
+        let is_active = active_ids.is_empty() || active_ids.contains(&plan.operator_id);
+        if !is_active {
+            continue;
         }
+        let plan_materials = get_plan_direct_materials(state, plan, operator, *roster_entry)?;
+        for (item_id, count) in plan_materials {
+            *combined_materials.entry(item_id).or_insert(0) += count;
+        }
+    }
 
-        requirements.push(resolve_requirement_item(
+    let mut requirements: Vec<PlanRequirementItem> = Vec::with_capacity(combined_materials.len());
+
+    for (item_id, &count) in &combined_materials {
+        let req_item = build_requirement_tree(
             item_id,
-            *count,
-            inv_count,
-            craftable_count,
-            can_craft,
-            craft_reason,
+            count,
+            &combined_materials,
+            inventory_map,
+            user_building,
+            clears,
             state,
-        ));
+            &[],
+        );
+        requirements.push(req_item);
     }
 
     requirements.sort_by_key(|r| (r.sort_group, r.sort_subrank, r.name.to_lowercase()));
@@ -397,7 +595,8 @@ fn calculate_requirements(
 pub async fn list_plans(
     state: &AppState,
     user_id: Uuid,
-) -> Result<Vec<OperatorPlanResponse>, ApiError> {
+    active_ids: Vec<String>,
+) -> Result<PlannerResponse, ApiError> {
     let plans = queries::list_plans(&state.db, user_id).await?;
     let roster = roster_queries::get_roster(&state.db, user_id).await?;
 
@@ -410,11 +609,24 @@ pub async fn list_plans(
     let profile = users_queries::find_by_id(&state.db, user_id).await?;
     let current_lmd = profile.as_ref().and_then(|p| p.lmd).unwrap_or(0);
 
+    let gamedata = state.game_data.load();
+
     let mut inventory_map: HashMap<String, i32> = db_inv
         .into_iter()
         .map(|i| (i.item_id, i.quantity))
         .collect();
     inventory_map.insert("4001".to_owned(), current_lmd);
+
+    let total_exp: i32 = gamedata
+        .materials
+        .exp_items
+        .values()
+        .map(|exp_item| {
+            let qty = inventory_map.get(&exp_item.id).copied().unwrap_or(0);
+            qty * exp_item.gain_exp
+        })
+        .sum();
+    inventory_map.insert("5001".to_owned(), total_exp);
 
     let building_json = building_queries::get_building(&state.db, user_id).await?;
     let user_building = building_json
@@ -423,28 +635,30 @@ pub async fn list_plans(
 
     let clears_data = stages_queries::get_user_stage_clears(&state.db, user_id).await?;
     let clears = clears_data.clears;
-
-    let gamedata = state.game_data.load();
+    let mut plans_with_ops = Vec::new();
     let mut responses = Vec::with_capacity(plans.len());
 
     for plan in plans {
         if let Some(operator) = gamedata.operators.get(&plan.operator_id) {
             let roster_entry = roster_map.get(&plan.operator_id);
-            let requirements = calculate_requirements(
-                state,
-                &plan,
-                operator,
-                roster_entry,
-                &inventory_map,
-                &user_building,
-                &clears,
-            )?;
-
-            responses.push(OperatorPlanResponse { plan, requirements });
+            plans_with_ops.push((plan.clone(), operator, roster_entry));
+            responses.push(OperatorPlanResponse { plan });
         }
     }
 
-    Ok(responses)
+    let aggregated_requirements = calculate_requirements(
+        state,
+        &plans_with_ops,
+        &active_ids,
+        &inventory_map,
+        &user_building,
+        &clears,
+    )?;
+
+    Ok(PlannerResponse {
+        plans: responses,
+        aggregated_requirements,
+    })
 }
 
 pub async fn delete_plan(
@@ -625,34 +839,5 @@ pub async fn upsert_plan(
     )
     .await?;
 
-    let roster_entry = roster_queries::get_operator(&state.db, user_id, operator_id).await?;
-    let db_inv = items_queries::get_inventory(&state.db, user_id).await?;
-    let profile = users_queries::find_by_id(&state.db, user_id).await?;
-    let current_lmd = profile.as_ref().and_then(|u| u.lmd).unwrap_or(0);
-
-    let mut inventory_map: HashMap<String, i32> = db_inv
-        .into_iter()
-        .map(|item| (item.item_id, item.quantity))
-        .collect();
-    inventory_map.insert("4001".to_owned(), current_lmd);
-
-    let building_json = building_queries::get_building(&state.db, user_id).await?;
-    let user_building = building_json
-        .map(|json| UserBuilding::from_json(&json))
-        .unwrap_or_else(|| UserBuilding { rooms: Vec::new() });
-
-    let clears_data = stages_queries::get_user_stage_clears(&state.db, user_id).await?;
-    let clears = clears_data.clears;
-
-    let requirements = calculate_requirements(
-        state,
-        &plan,
-        operator,
-        roster_entry.as_ref(),
-        &inventory_map,
-        &user_building,
-        &clears,
-    )?;
-
-    Ok(OperatorPlanResponse { plan, requirements })
+    Ok(OperatorPlanResponse { plan })
 }
