@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
@@ -13,7 +13,10 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useAuth } from "#/hooks/use-auth";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { upsertPlanFn } from "#/lib/api/planner";
+import { userRosterQueryOptions } from "#/lib/api/user";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
@@ -92,8 +95,24 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
     const [displayOnProfile, setDisplayOnProfile] = React.useState<boolean>(false);
     const [skillsOpen, setSkillsOpen] = React.useState<boolean>(true);
     const [modulesSectionOpen, setModulesSectionOpen] = React.useState<boolean>(true);
+    const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
     const { data: operators = [], isLoading } = useQuery(operatorsListQueryOptions());
+
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    const { data: roster = [], isSuccess: isRosterLoaded } = useQuery({
+        ...userRosterQueryOptions(user?.uid ?? ""),
+        enabled: !!user?.uid,
+    });
+
+    const lastInitializedStateRef = React.useRef<{
+        operatorId: string;
+        elite: number;
+        level: number;
+        isFullyApplied: boolean;
+    } | null>(null);
+    const hasRosterData = !user?.uid || isRosterLoaded;
 
     const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -134,35 +153,73 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
             setSkillsOpen(true);
             setModulesSectionOpen(true);
             setSearchQuery("");
+            setIsSaving(false);
+            lastInitializedStateRef.current = null;
         }
     }, [open]);
 
     React.useEffect(() => {
-        if (selectedOperator) {
-            const r = rarityToNumber(selectedOperator.rarity);
-            const maxE = r <= 2 ? 0 : r === 3 ? 1 : 2;
-            setElite((prev) => {
-                const nextE = Math.min(prev, maxE);
-                const maxLForElite = getMaxLevel(r, nextE);
-                setLevel((l) => Math.min(l, maxLForElite));
-                return nextE;
-            });
+        if (selectedOperator && hasRosterData) {
+            const isInitialized = lastInitializedStateRef.current?.operatorId === selectedOperator.id;
+            if (!isInitialized) {
+                const r = rarityToNumber(selectedOperator.rarity);
+                const maxE = r <= 2 ? 0 : r === 3 ? 1 : 2;
+                const rosterEntry = roster?.find((re) => re.operator_id === selectedOperator.id);
 
-            const initialSkills: Record<number, number> = {};
-            selectedOperator.skills.forEach((_, idx) => {
-                initialSkills[idx] = 1;
-            });
-            setSkillTargets(initialSkills);
+                let initialElite = 0;
+                let initialLevel = 1;
+                const initialSkills: Record<number, number> = {};
+                const initialModules: Record<string, number> = {};
 
-            const initialModules: Record<string, number> = {};
-            selectedOperator.modules.forEach((m) => {
-                if (m.typeName1 !== "ORIGINAL") {
-                    initialModules[m.uniEquipId] = 0;
+                if (rosterEntry) {
+                    initialElite = Math.min(rosterEntry.elite, maxE);
+                    const maxLForElite = getMaxLevel(r, initialElite);
+                    initialLevel = Math.min(rosterEntry.level, maxLForElite);
+
+                    selectedOperator.skills.forEach((_, idx) => {
+                        if (rosterEntry.skill_level < 7) {
+                            initialSkills[idx] = rosterEntry.skill_level;
+                        } else {
+                            const masteryEntry = rosterEntry.masteries?.find((m) => m.index === idx);
+                            initialSkills[idx] = masteryEntry && masteryEntry.mastery > 0 ? 7 + masteryEntry.mastery : 7;
+                        }
+                    });
+
+                    selectedOperator.modules.forEach((m) => {
+                        if (m.typeName1 !== "ORIGINAL") {
+                            const modEntry = rosterEntry.modules?.find((mod) => mod.id === m.uniEquipId);
+                            initialModules[m.uniEquipId] = modEntry && !modEntry.locked ? modEntry.level : 0;
+                        }
+                    });
+                } else {
+                    initialElite = 0;
+                    initialLevel = 1;
+
+                    selectedOperator.skills.forEach((_, idx) => {
+                        initialSkills[idx] = 1;
+                    });
+
+                    selectedOperator.modules.forEach((m) => {
+                        if (m.typeName1 !== "ORIGINAL") {
+                            initialModules[m.uniEquipId] = 0;
+                        }
+                    });
                 }
-            });
-            setModuleTargets(initialModules);
+
+                lastInitializedStateRef.current = {
+                    operatorId: selectedOperator.id ?? "",
+                    elite: initialElite,
+                    level: initialLevel,
+                    isFullyApplied: false,
+                };
+
+                setElite(initialElite);
+                setLevel(initialLevel);
+                setSkillTargets(initialSkills);
+                setModuleTargets(initialModules);
+            }
         }
-    }, [selectedOperator]);
+    }, [selectedOperator, roster, hasRosterData]);
 
     const handleEliteChange = (newElite: number) => {
         setElite(newElite);
@@ -198,8 +255,57 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
         });
     };
 
+    const handleSave = async () => {
+        if (!selectedOperator) return;
+        setIsSaving(true);
+        try {
+            const targetSkillLevel = Object.values(skillTargets).length > 0 ? Math.min(7, Math.max(1, ...Object.values(skillTargets))) : 1;
+
+            const targetSkills = Object.entries(skillTargets).map(([idxStr, val]) => ({
+                skill_index: parseInt(idxStr, 10),
+                mastery_level: val > 7 ? val - 7 : 0,
+            }));
+
+            const targetModules = Object.entries(moduleTargets).map(([moduleId, val]) => ({
+                module_id: moduleId,
+                module_stage: val,
+            }));
+
+            await upsertPlanFn({
+                data: {
+                    operatorId: selectedOperator.id ?? "",
+                    targetElite: elite,
+                    targetLevel: level,
+                    targetSkillLevel,
+                    targetSkills,
+                    targetModules,
+                    displayOnProfile,
+                },
+            });
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+            onOpenChange(false);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     React.useEffect(() => {
         if (selectedOperator) {
+            const initializedState = lastInitializedStateRef.current;
+            if (!initializedState || initializedState.operatorId !== selectedOperator.id) {
+                return;
+            }
+
+            if (!initializedState.isFullyApplied) {
+                if (elite === initializedState.elite && level === initializedState.level) {
+                    initializedState.isFullyApplied = true;
+                } else {
+                    return;
+                }
+            }
+
             setSkillTargets((prev) => {
                 let changed = false;
                 const next = { ...prev };
@@ -565,8 +671,8 @@ export function OperatorPlannerDialog({ open, onOpenChange }: IOperatorPlannerDi
 
                 <DialogFooter className="pb-8 sm:pb-8">
                     <DialogClose render={<Button variant="outline" className="w-full sm:w-auto" />}>Cancel</DialogClose>
-                    <Button onClick={() => onOpenChange(false)} disabled={!selectedOperator || selectedOperator.id === "char_4195_radian"} className="w-full sm:w-auto">
-                        Save
+                    <Button onClick={handleSave} disabled={isSaving || !selectedOperator || selectedOperator.id === "char_4195_radian"} className="w-full sm:w-auto">
+                        {isSaving ? "Saving..." : "Save"}
                     </Button>
                 </DialogFooter>
             </DialogPopup>

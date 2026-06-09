@@ -7,7 +7,10 @@ use crate::{
     core::{
         gamedata::{
             enrich::resolve_item_icon,
-            types::operator::{Operator, OperatorPhase},
+            types::{
+                material::ItemRarity,
+                operator::{Operator, OperatorPhase},
+            },
         },
         grade::{base::types::UserBuilding, stages::types::StageClear},
     },
@@ -54,6 +57,38 @@ fn module_phase_to_int(phase: &str) -> i16 {
     }
 }
 
+fn requirement_sort_key(id: &str, name: &str, rarity: i16) -> (i8, i8) {
+    let name = name.to_lowercase();
+    if id == "5001" {
+        return (0, 0);
+    }
+    if id == "4001" {
+        return (1, 0);
+    }
+    if name.contains("skill summary") {
+        return (2, -(rarity as i8));
+    }
+    if name.contains("dualchip") {
+        return (3, 0);
+    }
+    if name.contains("chip pack") {
+        return (3, 1);
+    }
+    if name.contains("chip") {
+        return (3, 2);
+    }
+    if name.contains("data supplement instrument") {
+        return (4, 0);
+    }
+    if name.contains("data supplement stick") {
+        return (4, 1);
+    }
+    if name.contains("module data block") {
+        return (4, 2);
+    }
+    (5, -(rarity as i8))
+}
+
 fn resolve_requirement_item(
     item_id: &str,
     required_count: i32,
@@ -70,6 +105,7 @@ fn resolve_requirement_item(
 
     let mut name = item_id.to_owned();
     let mut item_type = "MATERIAL".to_owned();
+    let mut rarity: i16 = 0;
 
     if item_id == "4001" {
         name = "LMD".to_owned();
@@ -80,9 +116,18 @@ fn resolve_requirement_item(
     } else if let Some(item) = materials.items.get(item_id) {
         name = item.name.clone();
         item_type = format!("{:?}", item.item_type).to_uppercase();
+        rarity = match item.rarity {
+            ItemRarity::Tier1 => 1,
+            ItemRarity::Tier2 => 2,
+            ItemRarity::Tier3 => 3,
+            ItemRarity::Tier4 => 4,
+            ItemRarity::Tier5 => 5,
+            ItemRarity::Tier6 => 6,
+        };
     }
 
     let missing_count = (required_count - inventory_count).max(0);
+    let (sort_group, sort_subrank) = requirement_sort_key(item_id, &name, rarity);
 
     PlanRequirementItem {
         id: item_id.to_owned(),
@@ -94,6 +139,9 @@ fn resolve_requirement_item(
         icon_id,
         image,
         item_type,
+        rarity,
+        sort_group,
+        sort_subrank,
         can_craft,
         craft_reason,
     }
@@ -341,21 +389,7 @@ fn calculate_requirements(
         ));
     }
 
-    requirements.sort_by(|a, b| {
-        let a_prio = match a.id.as_str() {
-            "4001" => 0,
-            "5001" => 1,
-            _ => 2,
-        };
-        let b_prio = match b.id.as_str() {
-            "4001" => 0,
-            "5001" => 1,
-            _ => 2,
-        };
-        a_prio
-            .cmp(&b_prio)
-            .then_with(|| b.required_count.cmp(&a.required_count))
-    });
+    requirements.sort_by_key(|r| (r.sort_group, r.sort_subrank, r.name.to_lowercase()));
 
     Ok(requirements)
 }
