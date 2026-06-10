@@ -6,7 +6,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { voicesQueryOptions } from "#/lib/api/voices";
+import { operatorVoicesQueryOptions } from "#/lib/api/voices";
 import { cn } from "#/lib/utils";
 import type { AudioCategory, IOperatorAudio, IOperatorListItem } from "#/types/operators";
 import type { IVoice, LangType } from "#/types/voices";
@@ -321,7 +321,7 @@ interface IVoiceCategory {
 }
 
 function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; player: IPlayer }) {
-    const { data: voicesData, isLoading } = useQuery(voicesQueryOptions(operator.server));
+    const { data: voicesData, isLoading } = useQuery(operatorVoicesQueryOptions(operator.id ?? "", operator.server));
 
     const operatorVoices: IVoice[] = useMemo(() => {
         if (!voicesData) return [];

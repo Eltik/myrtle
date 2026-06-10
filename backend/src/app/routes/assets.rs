@@ -428,7 +428,7 @@ async fn serve_file(
             StatusCode::NOT_MODIFIED,
             [
                 (header::ETAG, etag),
-                (header::CACHE_CONTROL, "no-cache".into()),
+                (header::CACHE_CONTROL, "public, max-age=604800".into()),
             ],
         )
             .into_response());
@@ -471,7 +471,7 @@ async fn serve_file(
                 (header::ACCEPT_RANGES, "bytes".into()),
                 (header::CONTENT_RANGE, format!("bytes {start}-{end}/{size}")),
                 (header::ETAG, etag),
-                (header::CACHE_CONTROL, "no-cache".into()),
+                (header::CACHE_CONTROL, "public, max-age=604800".into()),
             ],
             body,
         )
@@ -487,7 +487,7 @@ async fn serve_file(
             (header::CONTENT_LENGTH, size.to_string()),
             (header::ACCEPT_RANGES, "bytes".into()),
             (header::ETAG, etag),
-            (header::CACHE_CONTROL, "no-cache".into()),
+            (header::CACHE_CONTROL, "public, max-age=604800".into()),
         ],
         body,
     )
