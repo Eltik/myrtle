@@ -619,7 +619,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             {operator.drones && operator.drones.length > 0 && (
                 <>
                     <Separator className="my-6" />
-                    <SummonsSection drones={operator.drones} parentPhaseIndex={phaseIndex} parentLevel={level} />
+                    <SummonsSection drones={operator.drones} parentPhaseIndex={phaseIndex} parentLevel={level} server={operator.server} />
                 </>
             )}
         </div>

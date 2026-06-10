@@ -82,6 +82,7 @@ jobs:
   test-downloader:
     name: Test Downloader
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -114,6 +115,7 @@ jobs:
   test-unpacker:
     name: Test Unpacker
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
