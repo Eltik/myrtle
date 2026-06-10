@@ -211,8 +211,71 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
     }
 }
 
-/// Decode `FlatBuffer` data to JSON using schema-based decoding
+/// Decode `FlatBuffer` data to JSON using schema-based decoding.
+///
+/// Runs the actual decode on a worker thread with a wall-clock budget. The
+/// `_unchecked` accessors trust offsets blindly, so a schema/data mismatch (a
+/// stale binary vs. freshly regenerated bindings) sends the recursive `to_json`
+/// chasing garbage offsets — each bad read caught by a per-field `catch_unwind`.
+/// That can be millions of caught panics: finite, but on Windows (slow SEH
+/// unwinding) it can run for hours. Bounding the time keeps one bad table from
+/// hanging CI; valid tables decode in well under a second. Override the default
+/// 30s budget with `UNPACKER_FB_DECODE_TIMEOUT_SECS`.
 pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
+    install_quiet_decode_hook();
+
+    let timeout_secs = std::env::var("UNPACKER_FB_DECODE_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(30);
+
+    // Owned, `Send` copies for the worker. The large stack mirrors what callers
+    // allocate for the deep recursion (the gamedata test / `RUST_MIN_STACK`).
+    let data_owned = data.to_vec();
+    let filename_owned = filename.to_string();
+    let (tx, rx) = std::sync::mpsc::channel();
+    let spawned = std::thread::Builder::new()
+        .name("fb-decode".to_string())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            let _ = tx.send(decode_flatbuffer_inner(&data_owned, &filename_owned));
+        });
+
+    match spawned {
+        Ok(_handle) => match rx.recv_timeout(std::time::Duration::from_secs(timeout_secs)) {
+            Ok(result) => result,
+            // Timed out (or the worker died/panicked). The detached worker is
+            // reaped at process exit. Returning `Err` lets callers fall back.
+            Err(_) => Err(format!(
+                "Decode for '{filename}' exceeded {timeout_secs}s budget (likely schema/data mismatch)"
+            )),
+        },
+        // Thread spawn failed (extremely rare): decode inline as a fallback.
+        Err(_) => decode_flatbuffer_inner(data, filename),
+    }
+}
+
+/// Silence the panics raised (and caught) while decoding on `fb-decode` worker
+/// threads. Decoding a stale buffer with the `_unchecked` accessors panics on
+/// nearly every field — millions of times — and the default hook prints each
+/// one, flooding stderr (gigabytes of logs) and slowing the run. We suppress
+/// only our own decode threads; panics from anywhere else still report normally.
+/// Installed once, lazily, so we don't clobber a hook a binary set up earlier.
+fn install_quiet_decode_hook() {
+    static HOOK: std::sync::Once = std::sync::Once::new();
+    HOOK.call_once(|| {
+        let default = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            if std::thread::current().name() == Some("fb-decode") {
+                return;
+            }
+            default(info);
+        }));
+    });
+}
+
+/// Inner decode body, run on a budgeted worker thread by `decode_flatbuffer`.
+fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
 
     if !is_flatbuffer(data) {

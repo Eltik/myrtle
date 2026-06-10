@@ -14,6 +14,7 @@ interface ISummonsSectionProps {
     drones: IDrone[];
     parentPhaseIndex: number;
     parentLevel: number;
+    server?: "en" | "cn";
 }
 
 const POSITION_LABEL: Record<string, string> = {
@@ -23,7 +24,7 @@ const POSITION_LABEL: Record<string, string> = {
     NONE: "-",
 };
 
-export function SummonsSection({ drones, parentPhaseIndex, parentLevel }: ISummonsSectionProps) {
+export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }: ISummonsSectionProps) {
     const [open, setOpen] = useState(true);
     const [activeId, setActiveId] = useState<string>(() => drones[0]?.id ?? "");
 
@@ -63,7 +64,7 @@ export function SummonsSection({ drones, parentPhaseIndex, parentLevel }: ISummo
                         </div>
                     )}
 
-                    <SummonCard drone={active} parentPhaseIndex={parentPhaseIndex} parentLevel={parentLevel} />
+                    <SummonCard drone={active} parentPhaseIndex={parentPhaseIndex} parentLevel={parentLevel} server={server} />
                 </div>
             </CollapsibleContent>
         </Collapsible>
@@ -74,9 +75,10 @@ interface ISummonCardProps {
     drone: IDrone;
     parentPhaseIndex: number;
     parentLevel: number;
+    server?: "en" | "cn";
 }
 
-function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) {
+function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCardProps) {
     const { data: ranges } = useQuery(rangesQueryOptions());
 
     const phaseIndex = clampDronePhase(drone, parentPhaseIndex);
@@ -86,7 +88,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) 
     const description = useMemo(() => descriptionToHtml(drone.description ?? "", blackboard), [drone.description, blackboard]);
 
     const range = phase?.rangeId ? ranges?.[phase.rangeId] : undefined;
-    const avatarSrc = drone.id ? getAvatarById(drone.id) : null;
+    const avatarSrc = drone.id ? getAvatarById(drone.id, server) : null;
     const positionLabel = POSITION_LABEL[drone.position] ?? drone.position;
 
     const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : "-");
