@@ -287,7 +287,7 @@ pub async fn refresh(
     .await?;
 
     if let Some(user) = find_by_uid(&state.db, user_id).await? {
-        let grade = calculate_user_grade(&state.db, user.id, &state.game_data.load()).await?;
+        let grade = calculate_user_grade(&state.db, user.id, &state.default_game_data()).await?;
 
         update_score(
             &state.db,

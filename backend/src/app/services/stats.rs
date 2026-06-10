@@ -88,7 +88,7 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
     )?;
 
     // Game data stats are free - just read from memory
-    let gd = state.game_data.load();
+    let gd = state.default_game_data();
     let game_data = GameDataStats {
         operators: gd.operators.len(),
         skills: gd.skills.len(),

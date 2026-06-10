@@ -2,11 +2,18 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
+use crate::core::hypergryph::constants::Server;
 use serde_json::Value;
 
-pub async fn get_resource(state: &AppState, resource: &str) -> Result<Value, ApiError> {
+pub async fn get_resource(
+    state: &AppState,
+    server: Server,
+    resource: &str,
+) -> Result<Value, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let key = CacheKey::StaticData {
         resource,
+        server: server.as_str(),
         fields_hash: 0,
         page: 0,
     };
@@ -14,7 +21,7 @@ pub async fn get_resource(state: &AppState, resource: &str) -> Result<Value, Api
         return Ok(cached);
     }
 
-    let gd = state.game_data.load();
+    let gd = server_data.game_data.load_full();
     let value = serialize_resource(&gd, resource)?;
     state.cache.set(&key, &value).await;
     Ok(value)

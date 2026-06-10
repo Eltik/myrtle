@@ -182,6 +182,7 @@ PostgreSQL     Normalized tables + JSONB game-state blobs
 |--------|------|------|-------------|
 | GET | `/static/{resource}` | No | Game data JSON (cached) |
 | GET | `/operators/index` | No | Lightweight operator index |
+| GET | `/upcoming` | No | Operators on CN not yet on the default (EN) server |
 
 `resource` is one of: `operators`, `skills`, `modules`, `skins`, `materials`, `stages`, `zones`, `enemies`, `gacha`, `voices`, `handbook`, `chibis`, `trust`, `ranges`.
 
@@ -197,6 +198,25 @@ PostgreSQL     Normalized tables + JSONB game-state blobs
 | GET | `/module-icon/{id}` · `/module-big/{id}` | Module icons |
 | GET | `/enemy-icon/{id}` · `/item-icon/{id}` · `/medal-icon/{id}` | Misc icons |
 | GET | `/assets/{*path}` | Raw asset passthrough |
+
+### Per-Server Data (multi-region)
+
+The Static Game Data, operator index, image asset, and `/upcoming` routes above
+also accept an optional `{server}` path prefix to select a server's data, e.g.
+`/cn/static/operators`, `/cn/portrait/{id}`, `/cn/operators/index`, `/cn/upcoming`.
+The bare (unprefixed) routes use the default server.
+
+| Token | Server |
+|-------|--------|
+| `en` | Global / EN (default) |
+| `cn`, `bili` | CN (Bilibili shares CN data) |
+| `jp`, `kr`, `tw` | Yostar / Gryphline |
+
+Servers are loaded per the `SERVERS` env var (e.g. `SERVERS=en,cn`). A request for a
+valid but unconfigured server (e.g. `/jp/...` when JP is not loaded) returns `404`;
+an unknown token returns `400`. A server downloaded with the operators-only asset
+profile (such as the CN preview) carries only operator-facing assets, so its
+`enemy-icon`, `item-icon`, `medal-icon`, and `skin-portrait` routes may `404`.
 
 ### DPS / HPS Calculator
 

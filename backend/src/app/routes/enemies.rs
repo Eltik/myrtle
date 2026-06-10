@@ -75,7 +75,7 @@ pub async fn get_encountered_enemies(
     let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
     let ids = get_user_encountered_enemies(&state.db, user_id).await?;
 
-    let game_data = state.game_data.load();
+    let game_data = state.default_game_data();
     let handbook = &game_data.enemies.enemy_data;
 
     let handbook_total = handbook.values().filter(|e| !e.hide_in_handbook).count();
@@ -133,7 +133,7 @@ pub async fn get_community_average(
     let (user_count, average_encountered) = get_community_average_encountered(&state.db).await?;
 
     let handbook_total = {
-        let game_data = state.game_data.load();
+        let game_data = state.default_game_data();
         game_data
             .enemies
             .enemy_data

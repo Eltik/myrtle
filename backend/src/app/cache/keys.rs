@@ -7,6 +7,7 @@ pub enum CacheKey<'a> {
     Stats,
     StaticData {
         resource: &'a str,
+        server: &'a str,
         fields_hash: u64,
         page: u32,
     },
@@ -61,10 +62,11 @@ impl CacheKey<'_> {
             CacheKey::Stats => "stats:global".to_owned(),
             CacheKey::StaticData {
                 resource,
+                server,
                 fields_hash,
                 page,
             } => {
-                format!("static:{resource}:{fields_hash}:{page}")
+                format!("static:{server}:{resource}:{fields_hash}:{page}")
             }
             CacheKey::Leaderboard {
                 sort,

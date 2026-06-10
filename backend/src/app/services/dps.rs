@@ -69,7 +69,7 @@ fn build_list_entries(
     state: &AppState,
     formulas: &HashMap<String, OperatorFormula>,
 ) -> Vec<OperatorListEntry> {
-    let gd = state.game_data.load();
+    let gd = state.default_game_data();
     formulas
         .iter()
         .map(|(id, formula)| {
@@ -224,7 +224,7 @@ fn build_params(req: CalculateRequest) -> OperatorParams {
 }
 
 pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
-    let gd = state.game_data.load();
+    let gd = state.default_game_data();
     let operator = gd
         .operators
         .get(&req.operator_id)
@@ -242,7 +242,7 @@ pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, A
 }
 
 pub fn calculate_hps(state: &AppState, req: CalculateRequest) -> Result<HpsResult, ApiError> {
-    let gd = state.game_data.load();
+    let gd = state.default_game_data();
     let operator = gd
         .operators
         .get(&req.operator_id)
