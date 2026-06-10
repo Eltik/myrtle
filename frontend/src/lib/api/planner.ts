@@ -43,11 +43,21 @@ export interface IOperatorPlanResponse {
     display_on_profile: boolean;
     created_at: string;
     updated_at: string;
+    groups: string[];
+}
+
+export interface IPlanGroup {
+    id: string;
+    user_id: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface IPlannerResponse {
     plans: IOperatorPlanResponse[];
     aggregatedRequirements: IPlanRequirementItem[];
+    groups: IPlanGroup[];
 }
 
 export interface IUpsertPlanInput {
@@ -58,6 +68,7 @@ export interface IUpsertPlanInput {
     targetSkills: { skill_index: number; mastery_level: number }[];
     targetModules: { module_id: string; module_stage: number }[];
     displayOnProfile: boolean;
+    groups?: string[];
 }
 
 export const upsertPlanFn = createServerFn({ method: "POST" })
@@ -72,6 +83,7 @@ export const upsertPlanFn = createServerFn({ method: "POST" })
             target_skills: data.targetSkills,
             target_modules: data.targetModules,
             display_on_profile: data.displayOnProfile,
+            groups: data.groups,
         };
         const res = await backendFetch(`/plan/${encodeURIComponent(data.operatorId)}`, {
             method: "POST",
@@ -117,6 +129,50 @@ export const deletePlanFn = createServerFn({ method: "POST" })
         if (!res.ok) {
             const text = await res.text().catch(() => "");
             throw new Error(text || `Failed to delete plan: ${res.status}`);
+        }
+        return { success: true };
+    });
+
+export interface IUpsertGroupInput {
+    oldName?: string;
+    name: string;
+}
+
+export const upsertGroupFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IUpsertGroupInput) => data)
+    .handler(async ({ data }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const url = data.oldName ? `/plan/group/${encodeURIComponent(data.oldName)}` : "/plan/group";
+        const method = data.oldName ? "PUT" : "POST";
+        const res = await backendFetch(url, {
+            method,
+            bearerToken: token,
+            body: JSON.stringify({ name: data.name }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to save group: ${res.status}`);
+        }
+        return (await res.json()) as IPlanGroup;
+    });
+
+export interface IDeleteGroupInput {
+    name: string;
+}
+
+export const deleteGroupFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IDeleteGroupInput) => data)
+    .handler(async ({ data }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch(`/plan/group/${encodeURIComponent(data.name)}`, {
+            method: "DELETE",
+            bearerToken: token,
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to delete group: ${res.status}`);
         }
         return { success: true };
     });

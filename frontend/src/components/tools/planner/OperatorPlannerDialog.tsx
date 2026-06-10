@@ -1,12 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
 import { eliteIcon, moduleIconURL, skillIconURL, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { getSkillTypeLabel, getSpTypeLabel } from "#/components/operators/detail/impl/helpers";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
-import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup } from "#/components/ui/combobox";
+import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -15,7 +15,7 @@ import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { deleteGroupFn, plansQueryOptions, upsertGroupFn, upsertPlanFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -97,6 +97,11 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     const [skillsOpen, setSkillsOpen] = React.useState<boolean>(true);
     const [modulesSectionOpen, setModulesSectionOpen] = React.useState<boolean>(true);
     const [isSaving, setIsSaving] = React.useState<boolean>(false);
+    const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
+    const [groupSearchQuery, setGroupSearchQuery] = React.useState<string>("");
+    const [comboboxOpen, setComboboxOpen] = React.useState<boolean>(false);
+    const [isCreatingGroup, setIsCreatingGroup] = React.useState<boolean>(false);
+    const [newGroupName, setNewGroupName] = React.useState<string>("");
 
     const { data: operators = [], isLoading } = useQuery(operatorsListQueryOptions());
 
@@ -112,6 +117,15 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
         enabled: !!user?.uid,
     });
     const plans = plannerData?.plans ?? [];
+
+    const allGroupNames = React.useMemo(() => {
+        return (plannerData?.groups ?? []).map((g) => g.name);
+    }, [plannerData?.groups]);
+
+    const filteredGroupNames = React.useMemo(() => {
+        if (!groupSearchQuery.trim()) return allGroupNames;
+        return allGroupNames.filter((name) => name.toLowerCase().includes(groupSearchQuery.toLowerCase()));
+    }, [allGroupNames, groupSearchQuery]);
 
     const existingPlan = plans.find((p) => p.operator_id === selectedOperator?.id);
     const isEditMode = !!existingPlan;
@@ -165,6 +179,11 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
             setSearchQuery("");
             setIsSaving(false);
             lastInitializedStateRef.current = null;
+            setSelectedGroups([]);
+            setGroupSearchQuery("");
+            setComboboxOpen(false);
+            setIsCreatingGroup(false);
+            setNewGroupName("");
         }
     }, [open]);
 
@@ -212,6 +231,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     });
 
                     setDisplayOnProfile(existingPlan.display_on_profile);
+                    setSelectedGroups(existingPlan.groups ?? []);
                 } else if (rosterEntry) {
                     initialElite = Math.min(rosterEntry.elite, maxE);
                     const maxLForElite = getMaxLevel(r, initialElite);
@@ -234,6 +254,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     });
 
                     setDisplayOnProfile(false);
+                    setSelectedGroups([]);
                 } else {
                     initialElite = 0;
                     initialLevel = 1;
@@ -249,6 +270,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     });
 
                     setDisplayOnProfile(false);
+                    setSelectedGroups([]);
                 }
 
                 lastInitializedStateRef.current = {
@@ -325,6 +347,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                     targetSkills,
                     targetModules,
                     displayOnProfile,
+                    groups: selectedGroups,
                 },
             });
             queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
@@ -333,6 +356,47 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
             console.error(err);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleCreateGroup = async () => {
+        if (!newGroupName.trim()) return;
+        try {
+            await upsertGroupFn({ data: { name: newGroupName.trim() } });
+            setSelectedGroups((prev) => {
+                if (prev.includes(newGroupName.trim())) return prev;
+                return [...prev, newGroupName.trim()];
+            });
+            setNewGroupName("");
+            setIsCreatingGroup(false);
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleRenameGroup = async (oldName: string) => {
+        const newName = window.prompt("Enter new group name:", oldName);
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (!trimmed || trimmed === oldName) return;
+        try {
+            await upsertGroupFn({ data: { oldName, name: trimmed } });
+            setSelectedGroups((prev) => prev.map((g) => (g === oldName ? trimmed : g)));
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteGroup = async (name: string) => {
+        if (!window.confirm(`Are you sure you want to delete group "${name}"?`)) return;
+        try {
+            await deleteGroupFn({ data: { name } });
+            setSelectedGroups((prev) => prev.filter((g) => g !== name));
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
         }
     };
 
@@ -695,6 +759,127 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                 </CollapsibleContent>
                                             </Collapsible>
                                         )}
+
+                                        <div className="space-y-2">
+                                            <label className="block font-medium text-[13px] text-muted-foreground leading-none" htmlFor="group-selector">
+                                                Groups
+                                            </label>
+                                            <Combobox<string, true>
+                                                multiple
+                                                items={filteredGroupNames}
+                                                value={selectedGroups}
+                                                onValueChange={setSelectedGroups}
+                                                filter={null}
+                                                open={comboboxOpen}
+                                                onOpenChange={(isOpen) => {
+                                                    setComboboxOpen(isOpen);
+                                                    if (!isOpen) {
+                                                        setGroupSearchQuery("");
+                                                        setIsCreatingGroup(false);
+                                                        setNewGroupName("");
+                                                    }
+                                                }}
+                                                inputValue={comboboxOpen ? groupSearchQuery : selectedGroups.join(", ")}
+                                                onInputValueChange={(val) => {
+                                                    if (comboboxOpen) {
+                                                        setGroupSearchQuery(val);
+                                                    }
+                                                }}
+                                                itemToStringLabel={(g) => g ?? ""}
+                                                itemToStringValue={(g) => g ?? ""}
+                                            >
+                                                <ComboboxInput id="group-selector" placeholder="Select plan groups..." className="truncate text-ellipsis" />
+                                                <ComboboxPopup className="max-w-100">
+                                                    {isCreatingGroup ? (
+                                                        <div className="flex items-center gap-2 border-border border-b p-2">
+                                                            <Input
+                                                                value={newGroupName}
+                                                                onChange={(e) => setNewGroupName(e.target.value)}
+                                                                placeholder="New group name..."
+                                                                className="h-8 flex-1 text-xs"
+                                                                autoFocus
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") {
+                                                                        e.preventDefault();
+                                                                        handleCreateGroup();
+                                                                    } else if (e.key === "Escape") {
+                                                                        e.preventDefault();
+                                                                        setIsCreatingGroup(false);
+                                                                        setNewGroupName("");
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Button size="sm" className="h-8 px-2 text-xs" onClick={handleCreateGroup}>
+                                                                Create
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-8 px-2 text-xs"
+                                                                onClick={() => {
+                                                                    setIsCreatingGroup(false);
+                                                                    setNewGroupName("");
+                                                                }}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="border-border border-b p-1">
+                                                            <button type="button" onClick={() => setIsCreatingGroup(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-primary">
+                                                                <Plus className="h-3.5 w-3.5" />
+                                                                Create new group
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    <ComboboxEmpty>No groups found.</ComboboxEmpty>
+                                                    <ComboboxList>
+                                                        {(name: string) => (
+                                                            <ComboboxPrimitive.Item
+                                                                key={name}
+                                                                value={name}
+                                                                className="flex min-h-8 cursor-default items-center justify-between gap-2 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-sm border border-input transition-colors sm:size-4", selectedGroups.includes(name) ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background")}>
+                                                                        {selectedGroups.includes(name) && (
+                                                                            <svg aria-hidden="true" className="size-3 sm:size-2.5" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                                                                                <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </span>
+                                                                    <span>{name}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            handleRenameGroup(name);
+                                                                        }}
+                                                                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                                    >
+                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            handleDeleteGroup(name);
+                                                                        }}
+                                                                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
+                                                                    >
+                                                                        <Trash className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            </ComboboxPrimitive.Item>
+                                                        )}
+                                                    </ComboboxList>
+                                                </ComboboxPopup>
+                                            </Combobox>
+                                        </div>
 
                                         <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 p-4">
                                             <div className="space-y-0.5">

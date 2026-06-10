@@ -8,10 +8,11 @@ import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions } from "#/lib/api/planner";
+import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
@@ -46,7 +47,6 @@ function getModuleStageLabel(stage: number): string {
     return stage === 0 ? "X" : String(stage);
 }
 
-/** Props for the recursive requirement row component. */
 interface PlannerRequirementRowProps {
     item: IPlanRequirementItem;
     depth: number;
@@ -55,7 +55,6 @@ interface PlannerRequirementRowProps {
     onToggleExpand: (path: string) => void;
 }
 
-/** Recursively renders requirement rows. */
 function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
     const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
     const isExpanded = expandedPaths[path];
@@ -120,12 +119,10 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
     );
 }
 
-/** Page wrapper for the operator planner tool. */
 export function OperatorPlanner(): React.ReactElement {
     const { isAuthenticated, user } = useAuth();
     const queryClient = useQueryClient();
     const [open, setOpen] = React.useState(false);
-    const [plansExpanded, setPlansExpanded] = React.useState(true);
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
     const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
@@ -226,6 +223,41 @@ export function OperatorPlanner(): React.ReactElement {
         setOpen(true);
     };
 
+    const toggleGroupPlansActive = (groupName: string) => {
+        const plansInGroup = plans.filter((p) => p.groups?.includes(groupName));
+        const allActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
+        setActivePlans((prev) => {
+            const next = { ...prev };
+            for (const p of plansInGroup) {
+                next[p.operator_id] = !allActive;
+            }
+            return next;
+        });
+    };
+
+    const handleRenameGroup = async (oldName: string) => {
+        const newName = window.prompt("Enter new group name:", oldName);
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (!trimmed || trimmed === oldName) return;
+        try {
+            await upsertGroupFn({ data: { oldName, name: trimmed } });
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteGroup = async (name: string) => {
+        if (!window.confirm(`Are you sure you want to delete group "${name}"?`)) return;
+        try {
+            await deleteGroupFn({ data: { name } });
+            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const filteredRequirements = React.useMemo(() => {
         if (!reqSearchQuery.trim()) return aggregatedRequirements;
         const query = reqSearchQuery.toLowerCase();
@@ -300,218 +332,460 @@ export function OperatorPlanner(): React.ReactElement {
                     <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
                         <div className="w-full shrink-0 min-[720px]:w-90">
                             <div className="rounded-xl border border-border bg-card p-4">
-                                <button
-                                    type="button"
-                                    className="flex w-full cursor-pointer items-center justify-between text-left font-semibold min-[720px]:cursor-default"
-                                    onClick={() => {
-                                        if (window.innerWidth < 720) {
-                                            setPlansExpanded((prev) => !prev);
-                                        }
-                                    }}
-                                >
-                                    <span className="font-semibold text-foreground text-sm">Your plans</span>
-                                    <ChevronDown className={cn("size-4 transition-transform min-[720px]:hidden", plansExpanded && "rotate-180")} />
-                                </button>
-                                <div className={cn("mt-4 min-[720px]:block", plansExpanded ? "block" : "hidden")}>
-                                    {isPlansListLoading ? (
-                                        <div className="flex flex-col gap-4">
-                                            {["sk-1", "sk-2", "sk-3"].map((key) => (
-                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
-                                                    <Skeleton className="size-4 rounded" />
-                                                    <Skeleton className="size-10 rounded-xl" />
-                                                    <div className="flex flex-1 flex-col gap-1.5">
-                                                        <Skeleton className="h-3.5 w-24 rounded" />
-                                                        <Skeleton className="h-3 w-16 rounded" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex items-center justify-between border-border/40 border-b pb-3">
-                                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
-                                                <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
-                                                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
-                                                    <span>{allSelected ? "Unselect all" : "Select all"}</span>
-                                                </label>
-                                                {selectedPlansCount > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="xs"
-                                                        className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                                                        onClick={handleDeleteSelected}
-                                                    >
-                                                        <Trash className="mr-1 size-3.5" />
-                                                        Delete selected ({selectedPlansCount})
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            {plans.map((p: IOperatorPlanResponse) => {
-                                                const op = operators.find((o) => o.id === p.operator_id);
-                                                if (!op) return null;
-                                                const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
-                                                const isActive = activePlans[p.operator_id] ?? true;
+                                <Tabs defaultValue="plans">
+                                    <TabsList className="w-full">
+                                        <TabsTrigger value="plans" className="flex-1">
+                                            Plans
+                                        </TabsTrigger>
+                                        <TabsTrigger value="groups" className="flex-1">
+                                            Groups
+                                        </TabsTrigger>
+                                    </TabsList>
 
-                                                const currElite = rosterEntry?.elite ?? 0;
-                                                const currLevel = rosterEntry?.level ?? 1;
-                                                const targetElite = p.target_elite;
-                                                const targetLevel = p.target_level;
-                                                const isLevelUpgraded = targetElite > currElite || (targetElite === currElite && targetLevel > currLevel);
-
-                                                return (
-                                                    <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
-                                                        <div className="flex items-start gap-3">
-                                                            <Checkbox checked={isActive} onCheckedChange={() => togglePlan(p.operator_id)} />
-                                                            <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                                                <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
-                                                            </span>
-                                                            <div className="min-w-0 flex-1">
-                                                                <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
-                                                                <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
-                                                                    {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
-                                                                </p>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    togglePlanExpanded(p.id);
-                                                                }}
-                                                                className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted"
-                                                            >
-                                                                <ChevronDown className={cn("size-4 transition-transform", expandedPlans[p.id] && "rotate-180")} />
-                                                            </button>
+                                    <TabsContent value="plans" className="mt-4">
+                                        {isPlansListLoading ? (
+                                            <div className="flex flex-col gap-4">
+                                                {["sk-1", "sk-2", "sk-3"].map((key) => (
+                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                        <Skeleton className="size-4 rounded" />
+                                                        <Skeleton className="size-10 rounded-xl" />
+                                                        <div className="flex flex-1 flex-col gap-1.5">
+                                                            <Skeleton className="h-3.5 w-24 rounded" />
+                                                            <Skeleton className="h-3 w-16 rounded" />
                                                         </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex items-center justify-between border-border/40 border-b pb-3">
+                                                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
+                                                    <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
+                                                        <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                                                        <span>{allSelected ? "Unselect all" : "Select all"}</span>
+                                                    </label>
+                                                    {selectedPlansCount > 0 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="xs"
+                                                            className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                                            onClick={handleDeleteSelected}
+                                                        >
+                                                            <Trash className="mr-1 size-3.5" />
+                                                            Delete selected ({selectedPlansCount})
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                {plans.map((p: IOperatorPlanResponse) => {
+                                                    const op = operators.find((o) => o.id === p.operator_id);
+                                                    if (!op) return null;
+                                                    const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                    const isActive = activePlans[p.operator_id] ?? true;
 
-                                                        {expandedPlans[p.id] && (
-                                                            <div className="fade-in slide-in-from-top-2 flex animate-in flex-col gap-3 border-border/40 border-t pt-3 text-xs duration-200">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="font-medium text-muted-foreground">Level</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="flex items-center gap-1 font-medium">
-                                                                            <img src={eliteIcon(currElite)} alt={`Elite ${currElite}`} className="icon-theme-aware size-5 object-contain" />
-                                                                            <span>Lv.{currLevel}</span>
-                                                                        </div>
-                                                                        <span className="text-muted-foreground/50">➔</span>
-                                                                        <div className={cn("flex items-center gap-1 font-bold", isLevelUpgraded ? "text-primary" : "text-muted-foreground")}>
-                                                                            <img src={eliteIcon(targetElite)} alt={`Elite ${targetElite}`} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
-                                                                            <span>Lv.{targetLevel}</span>
-                                                                        </div>
-                                                                    </div>
+                                                    const currElite = rosterEntry?.elite ?? 0;
+                                                    const currLevel = rosterEntry?.level ?? 1;
+                                                    const targetElite = p.target_elite;
+                                                    const targetLevel = p.target_level;
+                                                    const isLevelUpgraded = targetElite > currElite || (targetElite === currElite && targetLevel > currLevel);
+
+                                                    return (
+                                                        <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
+                                                            <div className="flex items-start gap-3">
+                                                                <Checkbox checked={isActive} onCheckedChange={() => togglePlan(p.operator_id)} />
+                                                                <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
+                                                                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                                                </span>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
+                                                                    <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
+                                                                        {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
+                                                                    </p>
                                                                 </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        togglePlanExpanded(p.id);
+                                                                    }}
+                                                                    className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted"
+                                                                >
+                                                                    <ChevronDown className={cn("size-4 transition-transform", expandedPlans[p.id] && "rotate-180")} />
+                                                                </button>
+                                                            </div>
 
-                                                                {op.skills.length > 0 && (
-                                                                    <div className="flex flex-col gap-2">
-                                                                        <span className="font-medium text-muted-foreground">Skills</span>
-                                                                        <div className="flex flex-col gap-1.5 pl-1">
-                                                                            {op.skills.map((skill, idx) => {
-                                                                                let currSkillVal = 1;
-                                                                                if (rosterEntry) {
-                                                                                    if (rosterEntry.skill_level < 7) {
-                                                                                        currSkillVal = rosterEntry.skill_level;
-                                                                                    } else {
-                                                                                        const masteryEntry = rosterEntry.masteries?.find((m) => m.index === idx);
-                                                                                        currSkillVal = masteryEntry && masteryEntry.mastery > 0 ? 7 + masteryEntry.mastery : 7;
-                                                                                    }
-                                                                                }
-
-                                                                                let targetSkillVal = 1;
-                                                                                if (p.target_skill_level < 7) {
-                                                                                    targetSkillVal = p.target_skill_level;
-                                                                                } else {
-                                                                                    const masteryEntry = p.target_skills?.find((s: { skill_index: number; mastery_level: number }) => s.skill_index === idx);
-                                                                                    targetSkillVal = masteryEntry && masteryEntry.mastery_level > 0 ? 7 + masteryEntry.mastery_level : 7;
-                                                                                }
-
-                                                                                const isSkillUpgraded = targetSkillVal > currSkillVal;
-
-                                                                                return (
-                                                                                    <div key={skill.skillId} className="flex items-center justify-between">
-                                                                                        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                            <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
-                                                                                            <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
-                                                                                        </div>
-                                                                                        <div className="ml-2 flex shrink-0 items-center gap-2">
-                                                                                            <span className="font-medium">{getSkillLevelLabel(currSkillVal)}</span>
-                                                                                            <span className="text-muted-foreground/50">➔</span>
-                                                                                            <span className={cn("font-bold", isSkillUpgraded ? "text-primary" : "text-muted-foreground")}>{getSkillLevelLabel(targetSkillVal)}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
+                                                            {expandedPlans[p.id] && (
+                                                                <div className="fade-in slide-in-from-top-2 flex animate-in flex-col gap-3 border-border/40 border-t pt-3 text-xs duration-200">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="font-medium text-muted-foreground">Level</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="flex items-center gap-1 font-medium">
+                                                                                <img src={eliteIcon(currElite)} alt={`Elite ${currElite}`} className="icon-theme-aware size-5 object-contain" />
+                                                                                <span>Lv.{currLevel}</span>
+                                                                            </div>
+                                                                            <span className="text-muted-foreground/50">➔</span>
+                                                                            <div className={cn("flex items-center gap-1 font-bold", isLevelUpgraded ? "text-primary" : "text-muted-foreground")}>
+                                                                                <img src={eliteIcon(targetElite)} alt={`Elite ${targetElite}`} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
+                                                                                <span>Lv.{targetLevel}</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                )}
 
-                                                                {op.modules.filter((m) => m.typeName1 !== "ORIGINAL").length > 0 && (
-                                                                    <div className="flex flex-col gap-2">
-                                                                        <span className="font-medium text-muted-foreground">Modules</span>
-                                                                        <div className="flex flex-col gap-1.5 pl-1">
-                                                                            {op.modules
-                                                                                .filter((m) => m.typeName1 !== "ORIGINAL")
-                                                                                .map((mod) => {
-                                                                                    let currModStage = 0;
+                                                                    {op.skills.length > 0 && (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <span className="font-medium text-muted-foreground">Skills</span>
+                                                                            <div className="flex flex-col gap-1.5 pl-1">
+                                                                                {op.skills.map((skill, idx) => {
+                                                                                    let currSkillVal = 1;
                                                                                     if (rosterEntry) {
-                                                                                        const modEntry = rosterEntry.modules?.find((rm) => rm.id === mod.uniEquipId);
-                                                                                        currModStage = modEntry && !modEntry.locked ? modEntry.level : 0;
+                                                                                        if (rosterEntry.skill_level < 7) {
+                                                                                            currSkillVal = rosterEntry.skill_level;
+                                                                                        } else {
+                                                                                            const masteryEntry = rosterEntry.masteries?.find((m) => m.index === idx);
+                                                                                            currSkillVal = masteryEntry && masteryEntry.mastery > 0 ? 7 + masteryEntry.mastery : 7;
+                                                                                        }
                                                                                     }
 
-                                                                                    const targetModStage = p.target_modules?.find((tm: { module_id: string; module_stage: number }) => tm.module_id === mod.uniEquipId)?.module_stage ?? 0;
-                                                                                    const isModUpgraded = targetModStage > currModStage;
+                                                                                    let targetSkillVal = 1;
+                                                                                    if (p.target_skill_level < 7) {
+                                                                                        targetSkillVal = p.target_skill_level;
+                                                                                    } else {
+                                                                                        const masteryEntry = p.target_skills?.find((s: { skill_index: number; mastery_level: number }) => s.skill_index === idx);
+                                                                                        targetSkillVal = masteryEntry && masteryEntry.mastery_level > 0 ? 7 + masteryEntry.mastery_level : 7;
+                                                                                    }
+
+                                                                                    const isSkillUpgraded = targetSkillVal > currSkillVal;
 
                                                                                     return (
-                                                                                        <div key={mod.uniEquipId} className="flex items-center justify-between">
+                                                                                        <div key={skill.skillId} className="flex items-center justify-between">
                                                                                             <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                                <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
-                                                                                                <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
+                                                                                                <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
+                                                                                                <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
                                                                                             </div>
                                                                                             <div className="ml-2 flex shrink-0 items-center gap-2">
-                                                                                                <span className="font-medium">{getModuleStageLabel(currModStage)}</span>
+                                                                                                <span className="font-medium">{getSkillLevelLabel(currSkillVal)}</span>
                                                                                                 <span className="text-muted-foreground/50">➔</span>
-                                                                                                <span className={cn("font-bold", isModUpgraded ? "text-primary" : "text-muted-foreground")}>{getModuleStageLabel(targetModStage)}</span>
+                                                                                                <span className={cn("font-bold", isSkillUpgraded ? "text-primary" : "text-muted-foreground")}>{getSkillLevelLabel(targetSkillVal)}</span>
                                                                                             </div>
                                                                                         </div>
                                                                                     );
                                                                                 })}
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
+                                                                    )}
+
+                                                                    {op.modules.filter((m) => m.typeName1 !== "ORIGINAL").length > 0 && (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <span className="font-medium text-muted-foreground">Modules</span>
+                                                                            <div className="flex flex-col gap-1.5 pl-1">
+                                                                                {op.modules
+                                                                                    .filter((m) => m.typeName1 !== "ORIGINAL")
+                                                                                    .map((mod) => {
+                                                                                        let currModStage = 0;
+                                                                                        if (rosterEntry) {
+                                                                                            const modEntry = rosterEntry.modules?.find((rm) => rm.id === mod.uniEquipId);
+                                                                                            currModStage = modEntry && !modEntry.locked ? modEntry.level : 0;
+                                                                                        }
+
+                                                                                        const targetModStage = p.target_modules?.find((tm: { module_id: string; module_stage: number }) => tm.module_id === mod.uniEquipId)?.module_stage ?? 0;
+                                                                                        const isModUpgraded = targetModStage > currModStage;
+
+                                                                                        return (
+                                                                                            <div key={mod.uniEquipId} className="flex items-center justify-between">
+                                                                                                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                                                                                    <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
+                                                                                                    <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
+                                                                                                </div>
+                                                                                                <div className="ml-2 flex shrink-0 items-center gap-2">
+                                                                                                    <span className="font-medium">{getModuleStageLabel(currModStage)}</span>
+                                                                                                    <span className="text-muted-foreground/50">➔</span>
+                                                                                                    <span className={cn("font-bold", isModUpgraded ? "text-primary" : "text-muted-foreground")}>{getModuleStageLabel(targetModStage)}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            <div className="mt-auto flex items-center gap-2 border-border/40 border-t pt-3">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        handleEditPlan(p.operator_id);
+                                                                    }}
+                                                                    className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/40 py-1.5 font-medium font-sans text-foreground text-xs transition-all hover:border-border/80 hover:bg-muted"
+                                                                >
+                                                                    <Pencil className="size-3.5" />
+                                                                    <span>Edit</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        handleDeletePlan(p.operator_id);
+                                                                    }}
+                                                                    className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 py-1.5 font-medium font-sans text-red-600 text-xs transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
+                                                                >
+                                                                    <Trash className="size-3.5" />
+                                                                    <span>Delete</span>
+                                                                </button>
+                                                            </div>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="groups" className="mt-4">
+                                        {isPlansListLoading ? (
+                                            <div className="flex flex-col gap-4">
+                                                {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
+                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                        <Skeleton className="size-4 rounded" />
+                                                        <div className="flex flex-1 flex-col gap-1.5">
+                                                            <Skeleton className="h-3.5 w-24 rounded" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
+                                            <p className="py-4 text-center text-muted-foreground text-xs">No groups created yet.</p>
+                                        ) : (
+                                            <div className="flex flex-col gap-6">
+                                                {plannerData.groups.map((g) => {
+                                                    const plansInGroup = plans.filter((p) => p.groups?.includes(g.name));
+                                                    const isGroupActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
+
+                                                    return (
+                                                        /* biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper */
+                                                        <div
+                                                            key={g.name}
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            onClick={(e) => {
+                                                                const target = e.target as HTMLElement;
+                                                                if (target.closest("button") || target.closest("input") || target.closest("[role='checkbox']") || target.closest(".group-plans-list")) {
+                                                                    return;
+                                                                }
+                                                                toggleGroupPlansActive(g.name);
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter" || e.key === " ") {
+                                                                    const target = e.target as HTMLElement;
+                                                                    if (target.closest("button") || target.closest("input") || target.closest("[role='checkbox']") || target.closest(".group-plans-list")) {
+                                                                        return;
+                                                                    }
+                                                                    e.preventDefault();
+                                                                    toggleGroupPlansActive(g.name);
+                                                                }
+                                                            }}
+                                                            className={cn(
+                                                                "relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
+                                                                isGroupActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-card opacity-60 hover:opacity-100",
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center justify-between border-border/40 border-b pb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Checkbox checked={isGroupActive} onCheckedChange={() => toggleGroupPlansActive(g.name)} />
+                                                                    <span className="font-semibold text-foreground text-sm">{g.name}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <button type="button" onClick={() => handleRenameGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted">
+                                                                        <Pencil className="size-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteGroup(g.name)}
+                                                                        className="flex size-7 items-center justify-center rounded-md border border-red-500/20 bg-red-500/5 text-red-600 transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
+                                                                    >
+                                                                        <Trash className="size-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="group-plans-list mt-3 divide-y divide-border/30">
+                                                                {plansInGroup.length === 0 ? (
+                                                                    <p className="py-4 text-center text-muted-foreground text-xs">No plans in this group.</p>
+                                                                ) : (
+                                                                    plansInGroup.map((p) => {
+                                                                        const op = operators.find((o) => o.id === p.operator_id);
+                                                                        if (!op) return null;
+                                                                        const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                                        const isActive = activePlans[p.operator_id] ?? true;
+
+                                                                        const currElite = rosterEntry?.elite ?? 0;
+                                                                        const currLevel = rosterEntry?.level ?? 1;
+                                                                        const targetElite = p.target_elite;
+                                                                        const targetLevel = p.target_level;
+                                                                        const isLevelUpgraded = targetElite > currElite || (targetElite === currElite && targetLevel > currLevel);
+
+                                                                        return (
+                                                                            <div key={p.id} className="flex flex-col gap-3 py-4 first:pt-1 last:pb-1">
+                                                                                <div className="flex items-start gap-3">
+                                                                                    <Checkbox checked={isActive} onCheckedChange={() => togglePlan(p.operator_id)} />
+                                                                                    <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
+                                                                                        <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                                                                    </span>
+                                                                                    <div className="min-w-0 flex-1">
+                                                                                        <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
+                                                                                        <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
+                                                                                            {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.stopPropagation();
+                                                                                            togglePlanExpanded(p.id);
+                                                                                        }}
+                                                                                        className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted"
+                                                                                    >
+                                                                                        <ChevronDown className={cn("size-4 transition-transform", expandedPlans[p.id] && "rotate-180")} />
+                                                                                    </button>
+                                                                                </div>
+
+                                                                                {expandedPlans[p.id] && (
+                                                                                    <div className="fade-in slide-in-from-top-2 flex animate-in flex-col gap-3 pl-7 text-xs duration-200">
+                                                                                        <div className="flex items-center justify-between">
+                                                                                            <span className="font-medium text-muted-foreground">Level</span>
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <div className="flex items-center gap-1 font-medium">
+                                                                                                    <img src={eliteIcon(currElite)} alt={`Elite ${currElite}`} className="icon-theme-aware size-5 object-contain" />
+                                                                                                    <span>Lv.{currLevel}</span>
+                                                                                                </div>
+                                                                                                <span className="text-muted-foreground/50">➔</span>
+                                                                                                <div className={cn("flex items-center gap-1 font-bold", isLevelUpgraded ? "text-primary" : "text-muted-foreground")}>
+                                                                                                    <img src={eliteIcon(targetElite)} alt={`Elite ${targetElite}`} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
+                                                                                                    <span>Lv.{targetLevel}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {op.skills.length > 0 && (
+                                                                                            <div className="flex flex-col gap-2">
+                                                                                                <span className="font-medium text-muted-foreground">Skills</span>
+                                                                                                <div className="flex flex-col gap-1.5 pl-1">
+                                                                                                    {op.skills.map((skill, idx) => {
+                                                                                                        let currSkillVal = 1;
+                                                                                                        if (rosterEntry) {
+                                                                                                            if (rosterEntry.skill_level < 7) {
+                                                                                                                currSkillVal = rosterEntry.skill_level;
+                                                                                                            } else {
+                                                                                                                const masteryEntry = rosterEntry.masteries?.find((m) => m.index === idx);
+                                                                                                                currSkillVal = masteryEntry && masteryEntry.mastery > 0 ? 7 + masteryEntry.mastery : 7;
+                                                                                                            }
+                                                                                                        }
+
+                                                                                                        let targetSkillVal = 1;
+                                                                                                        if (p.target_skill_level < 7) {
+                                                                                                            targetSkillVal = p.target_skill_level;
+                                                                                                        } else {
+                                                                                                            const masteryEntry = p.target_skills?.find((s: { skill_index: number; mastery_level: number }) => s.skill_index === idx);
+                                                                                                            targetSkillVal = masteryEntry && masteryEntry.mastery_level > 0 ? 7 + masteryEntry.mastery_level : 7;
+                                                                                                        }
+
+                                                                                                        const isSkillUpgraded = targetSkillVal > currSkillVal;
+
+                                                                                                        return (
+                                                                                                            <div key={skill.skillId} className="flex items-center justify-between">
+                                                                                                                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                                                                                                    <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
+                                                                                                                    <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
+                                                                                                                </div>
+                                                                                                                <div className="ml-2 flex shrink-0 items-center gap-2">
+                                                                                                                    <span className="font-medium">{getSkillLevelLabel(currSkillVal)}</span>
+                                                                                                                    <span className="text-muted-foreground/50">➔</span>
+                                                                                                                    <span className={cn("font-bold", isSkillUpgraded ? "text-primary" : "text-muted-foreground")}>{getSkillLevelLabel(targetSkillVal)}</span>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+
+                                                                                        {op.modules.filter((m) => m.typeName1 !== "ORIGINAL").length > 0 && (
+                                                                                            <div className="flex flex-col gap-2">
+                                                                                                <span className="font-medium text-muted-foreground">Modules</span>
+                                                                                                <div className="flex flex-col gap-1.5 pl-1">
+                                                                                                    {op.modules
+                                                                                                        .filter((m) => m.typeName1 !== "ORIGINAL")
+                                                                                                        .map((mod) => {
+                                                                                                            let currModStage = 0;
+                                                                                                            if (rosterEntry) {
+                                                                                                                const modEntry = rosterEntry.modules?.find((rm) => rm.id === mod.uniEquipId);
+                                                                                                                currModStage = modEntry && !modEntry.locked ? modEntry.level : 0;
+                                                                                                            }
+
+                                                                                                            const targetModStage = p.target_modules?.find((tm: { module_id: string; module_stage: number }) => tm.module_id === mod.uniEquipId)?.module_stage ?? 0;
+                                                                                                            const isModUpgraded = targetModStage > currModStage;
+
+                                                                                                            return (
+                                                                                                                <div key={mod.uniEquipId} className="flex items-center justify-between">
+                                                                                                                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                                                                                                        <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
+                                                                                                                        <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
+                                                                                                                    </div>
+                                                                                                                    <div className="ml-2 flex shrink-0 items-center gap-2">
+                                                                                                                        <span className="font-medium">{getModuleStageLabel(currModStage)}</span>
+                                                                                                                        <span className="text-muted-foreground/50">➔</span>
+                                                                                                                        <span className={cn("font-bold", isModUpgraded ? "text-primary" : "text-muted-foreground")}>{getModuleStageLabel(targetModStage)}</span>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            );
+                                                                                                        })}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+
+                                                                                <div className="flex items-center gap-2 pl-7">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.stopPropagation();
+                                                                                            handleEditPlan(p.operator_id);
+                                                                                        }}
+                                                                                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/40 py-1 font-medium font-sans text-foreground text-xs transition-all hover:border-border/80 hover:bg-muted"
+                                                                                    >
+                                                                                        <Pencil className="size-3.5" />
+                                                                                        <span>Edit</span>
+                                                                                    </button>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.stopPropagation();
+                                                                                            handleDeletePlan(p.operator_id);
+                                                                                        }}
+                                                                                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 py-1 font-medium font-sans text-red-600 text-xs transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
+                                                                                    >
+                                                                                        <Trash className="size-3.5" />
+                                                                                        <span>Delete</span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })
                                                                 )}
                                                             </div>
-                                                        )}
-
-                                                        <div className="mt-auto flex items-center gap-2 border-border/40 border-t pt-3">
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    handleEditPlan(p.operator_id);
-                                                                }}
-                                                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-muted/40 py-1.5 font-medium font-sans text-foreground text-xs transition-all hover:border-border/80 hover:bg-muted"
-                                                            >
-                                                                <Pencil className="size-3.5" />
-                                                                <span>Edit</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    handleDeletePlan(p.operator_id);
-                                                                }}
-                                                                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 py-1.5 font-medium font-sans text-red-600 text-xs transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
-                                                            >
-                                                                <Trash className="size-3.5" />
-                                                                <span>Delete</span>
-                                                            </button>
                                                         </div>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                </Tabs>
                             </div>
                         </div>
                         <div className="flex-1">
@@ -525,7 +799,7 @@ export function OperatorPlanner(): React.ReactElement {
                                         {["sk-req-1", "sk-req-2", "sk-req-3", "sk-req-4", "sk-req-5", "sk-req-6", "sk-req-7", "sk-req-8"].map((key) => (
                                             <div key={key} className="flex items-center gap-3 py-3 first:pt-1">
                                                 <Skeleton className="size-9 shrink-0 rounded-lg" />
-                                                <Skeleton className="h-3.5 w-28 rounded" />
+                                                <Skeleton className="h-3.5 w-24 rounded" />
                                                 <div className="ml-auto flex gap-6">
                                                     <Skeleton className="h-3 w-8 rounded" />
                                                     <Skeleton className="h-3 w-8 rounded" />
