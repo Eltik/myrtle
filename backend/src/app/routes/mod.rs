@@ -106,5 +106,10 @@ pub fn router() -> Router<AppState> {
             "/plan/{operator_id}",
             post(planner::upsert).delete(planner::delete),
         )
+        .route("/plan/group", post(planner::create_group))
+        .route(
+            "/plan/group/{group_name}",
+            put(planner::update_group).delete(planner::delete_group),
+        )
         .merge(tier_lists::router())
 }

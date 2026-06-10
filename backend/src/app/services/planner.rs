@@ -17,7 +17,7 @@ use crate::{
     database::{
         models::{
             planner::{
-                OperatorPlan, OperatorPlanResponse, PlanRecipe, PlanRecipeCost,
+                OperatorPlan, OperatorPlanResponse, PlanGroup, PlanRecipe, PlanRecipeCost,
                 PlanRequirementItem, PlannerResponse, TargetModulePlan, TargetSkillPlan,
             },
             roster::RosterEntry,
@@ -638,11 +638,22 @@ pub async fn list_plans(
     let mut plans_with_ops = Vec::new();
     let mut responses = Vec::with_capacity(plans.len());
 
+    let groups = queries::list_groups(&state.db, user_id).await?;
+    let mapping = queries::get_all_plan_groups(&state.db, user_id).await?;
+    let mut group_map: HashMap<Uuid, Vec<String>> = HashMap::new();
+    for (plan_id, group_name) in mapping {
+        group_map.entry(plan_id).or_default().push(group_name);
+    }
+
     for plan in plans {
         if let Some(operator) = gamedata.operators.get(&plan.operator_id) {
             let roster_entry = roster_map.get(&plan.operator_id);
             plans_with_ops.push((plan.clone(), operator, roster_entry));
-            responses.push(OperatorPlanResponse { plan });
+            let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
+            responses.push(OperatorPlanResponse {
+                plan,
+                groups: plan_groups,
+            });
         }
     }
 
@@ -658,6 +669,7 @@ pub async fn list_plans(
     Ok(PlannerResponse {
         plans: responses,
         aggregated_requirements,
+        groups,
     })
 }
 
@@ -682,6 +694,7 @@ pub async fn upsert_plan(
     target_skills: serde_json::Value,
     target_modules: serde_json::Value,
     display_on_profile: bool,
+    groups: Option<Vec<String>>,
 ) -> Result<OperatorPlanResponse, ApiError> {
     if operator_id == "char_4195_radian" {
         return Err(ApiError::BadRequest(
@@ -826,18 +839,115 @@ pub async fn upsert_plan(
         }
     }
 
-    let plan = queries::upsert_plan(
-        &state.db,
-        user_id,
-        operator_id,
-        target_elite,
-        target_level,
-        target_skill_level,
-        target_skills,
-        target_modules,
-        display_on_profile,
+    let mut tx = state.db.begin().await?;
+
+    let plan = sqlx::query_as::<_, OperatorPlan>(
+        r#"
+        INSERT INTO operator_plans (
+            user_id,
+            operator_id,
+            target_elite,
+            target_level,
+            target_skill_level,
+            target_skills,
+            target_modules,
+            display_on_profile
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (user_id, operator_id) DO UPDATE SET
+            target_elite = EXCLUDED.target_elite,
+            target_level = EXCLUDED.target_level,
+            target_skill_level = EXCLUDED.target_skill_level,
+            target_skills = EXCLUDED.target_skills,
+            target_modules = EXCLUDED.target_modules,
+            display_on_profile = EXCLUDED.display_on_profile,
+            updated_at = NOW()
+        RETURNING *
+        "#,
     )
+    .bind(user_id)
+    .bind(operator_id)
+    .bind(target_elite)
+    .bind(target_level)
+    .bind(target_skill_level)
+    .bind(target_skills)
+    .bind(target_modules)
+    .bind(display_on_profile)
+    .fetch_one(&mut *tx)
     .await?;
 
-    Ok(OperatorPlanResponse { plan })
+    if let Some(group_names) = &groups {
+        sqlx::query("DELETE FROM plan_group_members WHERE operator_plan_id = $1")
+            .bind(plan.id)
+            .execute(&mut *tx)
+            .await?;
+
+        for group_name in group_names {
+            let group_id: Uuid = sqlx::query_scalar(
+                r#"
+                INSERT INTO plan_groups (user_id, name)
+                VALUES ($1, $2)
+                ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
+                RETURNING id
+                "#,
+            )
+            .bind(user_id)
+            .bind(group_name)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            sqlx::query(
+                r#"
+                INSERT INTO plan_group_members (plan_group_id, operator_plan_id)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+                "#,
+            )
+            .bind(group_id)
+            .bind(plan.id)
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+
+    tx.commit().await?;
+
+    let plan_groups = if let Some(g) = groups {
+        g
+    } else {
+        sqlx::query_scalar(
+            r#"
+            SELECT pg.name
+            FROM plan_groups pg
+            JOIN plan_group_members pgm ON pgm.plan_group_id = pg.id
+            WHERE pgm.operator_plan_id = $1
+            ORDER BY pg.name ASC
+            "#,
+        )
+        .bind(plan.id)
+        .fetch_all(&state.db)
+        .await?
+    };
+
+    Ok(OperatorPlanResponse {
+        plan,
+        groups: plan_groups,
+    })
+}
+
+pub async fn upsert_group(
+    state: &AppState,
+    user_id: Uuid,
+    old_name: Option<&str>,
+    name: &str,
+) -> Result<PlanGroup, ApiError> {
+    queries::upsert_group(&state.db, user_id, old_name, name)
+        .await
+        .map_err(Into::into)
+}
+
+pub async fn delete_group(state: &AppState, user_id: Uuid, name: &str) -> Result<(), ApiError> {
+    queries::delete_group(&state.db, user_id, name)
+        .await
+        .map_err(Into::into)
 }

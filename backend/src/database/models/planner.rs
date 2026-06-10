@@ -65,10 +65,20 @@ pub struct PlanRequirementItem {
     pub recipe: Option<PlanRecipe>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PlanGroup {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorPlanResponse {
     #[serde(flatten)]
     pub plan: OperatorPlan,
+    pub groups: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -76,4 +86,5 @@ pub struct OperatorPlanResponse {
 pub struct PlannerResponse {
     pub plans: Vec<OperatorPlanResponse>,
     pub aggregated_requirements: Vec<PlanRequirementItem>,
+    pub groups: Vec<PlanGroup>,
 }
