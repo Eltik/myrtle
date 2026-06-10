@@ -33,14 +33,12 @@ pub fn export_audio(
         } else {
             return Ok(());
         }
+    } else if let Some(b64) = audio_data.strip_prefix("base64:") {
+        base64::engine::general_purpose::STANDARD
+            .decode(b64)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
     } else {
-        if let Some(b64) = audio_data.strip_prefix("base64:") {
-            base64::engine::general_purpose::STANDARD
-                .decode(b64)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
-        } else {
-            audio_data.as_bytes().to_vec()
-        }
+        audio_data.as_bytes().to_vec()
     };
 
     if bytes.is_empty() {

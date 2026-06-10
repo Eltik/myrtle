@@ -444,7 +444,7 @@ pub async fn get_improvements(
         .await?
         .ok_or(ApiError::NotFound)?;
     let user_id = user.id;
-    let game_data = state.game_data.load();
+    let game_data = state.default_game_data();
 
     let (roster, supports) = tokio::try_join!(
         get_roster(&state.db, user_id),

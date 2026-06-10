@@ -182,7 +182,7 @@ pub async fn fetch_and_store(
         });
     }
 
-    let gd = state.game_data.load();
+    let gd = state.default_game_data();
     let mut missing: std::collections::HashSet<String> = std::collections::HashSet::new();
     // Yostar returns every row in a 10-pull with the same `at` (batch
     // timestamp), so we assign a per-batch positional index to keep duplicates

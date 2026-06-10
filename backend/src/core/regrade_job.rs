@@ -157,7 +157,7 @@ async fn regrade_one(
 
 /// Runs one full pass over the users table. Returns (successes, failures).
 async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
-    let game_data = state.game_data.load_full();
+    let game_data = state.default_game_data();
     let pool = state.db.clone();
     let sem = Arc::new(Semaphore::new(cfg.concurrency));
     let successes = Arc::new(AtomicU64::new(0));

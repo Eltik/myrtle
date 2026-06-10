@@ -109,5 +109,26 @@ pub fn router() -> Router<AppState> {
         )
         .route("/friends", get(social::get_friends))
         .route("/players/search", get(social::search_players))
+        .route("/upcoming", get(operators::upcoming))
+        .route("/{server}/upcoming", get(operators::upcoming_srv))
+        .route("/{server}/operators/index", get(operators::index_srv))
+        .route(
+            "/{server}/static/{resource}",
+            get(static_data::get_static_srv),
+        )
+        .route("/{server}/avatar/{id}", get(assets::avatar_srv))
+        .route("/{server}/portrait/{id}", get(assets::portrait_srv))
+        .route("/{server}/skill-icon/{id}", get(assets::skill_icon_srv))
+        .route("/{server}/module-icon/{id}", get(assets::module_icon_srv))
+        .route("/{server}/module-big/{id}", get(assets::module_big_srv))
+        .route("/{server}/enemy-icon/{id}", get(assets::enemy_icon_srv))
+        .route("/{server}/item-icon/{id}", get(assets::item_icon_srv))
+        .route("/{server}/medal-icon/{id}", get(assets::medal_icon_srv))
+        .route("/{server}/charart/{id}", get(assets::charart_srv))
+        .route(
+            "/{server}/skin-portrait/{id}",
+            get(assets::skin_portrait_srv),
+        )
+        .route("/{server}/assets/{*path}", get(assets::generic_srv))
         .merge(tier_lists::router())
 }
