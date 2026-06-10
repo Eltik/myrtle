@@ -176,3 +176,20 @@ export const deleteGroupFn = createServerFn({ method: "POST" })
         }
         return { success: true };
     });
+
+export const getPublicPlansFn = createServerFn({ method: "GET" })
+    .inputValidator((uid: string) => uid)
+    .handler(async ({ data: uid }) => {
+        const res = await backendFetch(`/plans/public?uid=${encodeURIComponent(uid)}`);
+        if (!res.ok) throw new Error(`Failed to load public plans: ${res.status}`);
+        return (await res.json()) as IOperatorPlanResponse[];
+    });
+
+export function publicPlansQueryOptions(uid: string) {
+    return queryOptions({
+        queryKey: ["user", "public-plans", uid],
+        queryFn: () => getPublicPlansFn({ data: uid }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}

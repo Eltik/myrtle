@@ -102,6 +102,7 @@ pub fn router() -> Router<AppState> {
         .route("/friends", get(social::get_friends))
         .route("/players/search", get(social::search_players))
         .route("/plans", get(planner::list))
+        .route("/plans/public", get(planner::list_public))
         .route(
             "/plan/{operator_id}",
             post(planner::upsert).delete(planner::delete),

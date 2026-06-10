@@ -114,3 +114,30 @@ pub async fn delete_group(
     services::planner::delete_group(&state, user_id, &group_name).await?;
     Ok(ok_status())
 }
+
+#[derive(Deserialize)]
+pub struct PublicPlansQuery {
+    pub uid: String,
+}
+
+pub async fn list_public(
+    State(state): State<AppState>,
+    Query(query): Query<PublicPlansQuery>,
+) -> Result<Json<Vec<OperatorPlanResponse>>, ApiError> {
+    let profile = if let Some(p) = crate::database::queries::users::find_by_uid(&state.db, &query.uid).await? {
+        p
+    } else if let Ok(uuid) = uuid::Uuid::parse_str(&query.uid) {
+        crate::database::queries::users::find_by_id(&state.db, uuid)
+            .await?
+            .ok_or(ApiError::NotFound)?
+    } else {
+        return Err(ApiError::NotFound);
+    };
+
+    if profile.public_profile != Some(true) {
+        return Err(ApiError::Forbidden);
+    }
+
+    let response = services::planner::list_public_plans(&state, profile.id).await?;
+    Ok(Json(response))
+}

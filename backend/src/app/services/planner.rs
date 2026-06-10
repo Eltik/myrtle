@@ -951,3 +951,27 @@ pub async fn delete_group(state: &AppState, user_id: Uuid, name: &str) -> Result
         .await
         .map_err(Into::into)
 }
+
+pub async fn list_public_plans(
+    state: &AppState,
+    user_id: Uuid,
+) -> Result<Vec<OperatorPlanResponse>, ApiError> {
+    let plans = queries::list_plans(&state.db, user_id).await?;
+    let gamedata = state.game_data.load();
+    let mapping = queries::get_all_plan_groups(&state.db, user_id).await?;
+    let mut group_map: HashMap<Uuid, Vec<String>> = HashMap::new();
+    for (plan_id, group_name) in mapping {
+        group_map.entry(plan_id).or_default().push(group_name);
+    }
+    let mut responses = Vec::new();
+    for plan in plans {
+        if plan.display_on_profile && gamedata.operators.contains_key(&plan.operator_id) {
+            let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
+            responses.push(OperatorPlanResponse {
+                plan,
+                groups: plan_groups,
+            });
+        }
+    }
+    Ok(responses)
+}
