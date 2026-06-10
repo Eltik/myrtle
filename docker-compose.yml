@@ -98,6 +98,27 @@ services:
     profiles:
       - "true"
 
+  discord:
+    build:
+      context: ./discord
+      platforms:
+        - linux/amd64
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DATABASE_URL: ${DISCORD_DATABASE_URL:-sqlite:/data/discord.sqlite}
+      DISCORD_CONFIG_PATH: /app/config.json
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - ./discord/config.json:/app/config.json:ro
+      - myrtle_discorddata:/data
+    networks:
+      - myrtle
+    profiles:
+      - discord
+
   dps-tools:
     build:
       context: ./backend
@@ -137,9 +158,46 @@ services:
       - ./assets/output:/data/output
       - cargo_cache:/usr/local/cargo/registry
 
+  # Live per-server asset pipelines: poll AK, download/unpack into the shared
+  # /data volumes, and broadcast over WS so the backend hot-reloads and the
+  # discord bot announces. Heavy (CDN access + ~20 GB/region); enable with the
+  # `assets` profile, then point ASSET_WS_URLS at these services by name.
+  asset-ws-en:
+    build:
+      context: ./assets
+      platforms:
+        - linux/amd64
+    restart: unless-stopped
+    working_dir: /build
+    command: ["node", "run.mjs", "ws", "--server", "en", "--port", "9160", "--savedir", "/data/ArkAssets", "--output", "/data/output"]
+    volumes:
+      - ./assets/ArkAssets:/data/ArkAssets
+      - ./assets/output:/data/output
+    networks:
+      - myrtle
+    profiles:
+      - assets
+
+  asset-ws-cn:
+    build:
+      context: ./assets
+      platforms:
+        - linux/amd64
+    restart: unless-stopped
+    working_dir: /build
+    command: ["node", "run.mjs", "ws", "--server", "cn", "--profile", "operators", "--port", "9161", "--savedir", "/data/ArkAssets", "--output", "/data/output"]
+    volumes:
+      - ./assets/ArkAssets:/data/ArkAssets
+      - ./assets/output:/data/output
+    networks:
+      - myrtle
+    profiles:
+      - assets
+
 volumes:
   myrtle_pgdata:
   myrtle_redisdata:
+  myrtle_discorddata:
   cargo_cache:
   pip_cache:
 

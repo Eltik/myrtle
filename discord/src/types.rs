@@ -9,7 +9,7 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::config::Config;
 use crate::db::AntiSpamPolicy;
-use crate::watcher::AssetsState;
+use crate::watcher::AssetsStates;
 
 /// Per-`(guild, user)` rolling window of recent ping counts, keyed by send time.
 ///
@@ -34,7 +34,7 @@ pub struct Data {
     pub http_client: reqwest::Client,
     pub pool: SqlitePool,
     pub tracked_messages: Arc<RwLock<HashSet<MessageId>>>,
-    pub assets: Arc<AssetsState>,
+    pub assets: AssetsStates,
     pub ping_history: PingHistory,
     pub antispam_policies: AntiSpamPolicies,
     pub audit_log_channels: AuditLogChannels,

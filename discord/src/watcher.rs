@@ -5,6 +5,7 @@
 //! `AssetsState` so slash commands can read the last-known status or send commands back
 //! (`force_update`, `list_resources`).
 
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -16,7 +17,6 @@ use sqlx::SqlitePool;
 use tokio::sync::{Mutex, RwLock, mpsc, oneshot};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
-use crate::config::AssetsConfig;
 use crate::db;
 
 #[allow(clippy::unreadable_literal)]
@@ -41,6 +41,10 @@ pub struct AssetsState {
     pub pending_resource_list: Mutex<Option<oneshot::Sender<ResourceListPayload>>>,
     pub tx: mpsc::UnboundedSender<String>,
 }
+
+/// One [`AssetsState`] per watched server, keyed by label (e.g. "EN", "CN").
+/// Shared between the per-server watcher tasks and the slash-command handlers.
+pub type AssetsStates = Arc<HashMap<String, Arc<AssetsState>>>;
 
 #[derive(Debug, Clone, Default)]
 pub struct AssetStatus {
@@ -126,30 +130,30 @@ enum AssetEvent {
 pub async fn run(
     http: Arc<Http>,
     pool: SqlitePool,
-    cfg: AssetsConfig,
+    label: String,
+    ws_url: String,
+    reconnect_secs: u64,
     state: Arc<AssetsState>,
     mut rx: mpsc::UnboundedReceiver<String>,
 ) {
-    if cfg.ws_url.is_empty() {
-        tracing::info!("assets watcher: ws_url is empty, watcher disabled");
+    if ws_url.is_empty() {
+        tracing::info!("assets watcher [{label}]: ws_url is empty, watcher disabled");
         return;
     }
-    let reconnect = Duration::from_secs(cfg.reconnect_secs.max(1));
+    let reconnect = Duration::from_secs(reconnect_secs.max(1));
     loop {
-        match connect_async(&cfg.ws_url).await {
+        match connect_async(&ws_url).await {
             Ok((ws, _)) => {
-                tracing::info!("assets watcher: connected to {}", cfg.ws_url);
-                if let Err(e) = pump(ws, &http, &pool, &state, &mut rx).await {
-                    tracing::warn!("assets watcher: connection ended: {e}");
+                tracing::info!("assets watcher [{label}]: connected to {ws_url}");
+                if let Err(e) = pump(ws, &http, &pool, &state, &label, &mut rx).await {
+                    tracing::warn!("assets watcher [{label}]: connection ended: {e}");
                 } else {
-                    tracing::info!("assets watcher: peer closed connection");
+                    tracing::info!("assets watcher [{label}]: peer closed connection");
                 }
             }
             Err(e) => {
                 tracing::warn!(
-                    "assets watcher: connect to {} failed ({e}); retry in {:?}",
-                    cfg.ws_url,
-                    reconnect
+                    "assets watcher [{label}]: connect to {ws_url} failed ({e}); retry in {reconnect:?}"
                 );
             }
         }
@@ -165,6 +169,7 @@ async fn pump<S>(
     http: &Arc<Http>,
     pool: &SqlitePool,
     state: &Arc<AssetsState>,
+    label: &str,
     rx: &mut mpsc::UnboundedReceiver<String>,
 ) -> Result<(), tokio_tungstenite::tungstenite::Error>
 where
@@ -176,7 +181,7 @@ where
             frame = stream.next() => {
                 let Some(msg) = frame else { return Ok(()); };
                 match msg? {
-                    Message::Text(t) => handle_event(t.as_str(), http, pool, state).await,
+                    Message::Text(t) => handle_event(t.as_str(), http, pool, state, label).await,
                     Message::Ping(p) => { sink.send(Message::Pong(p)).await?; }
                     Message::Close(reason) => {
                         let echo = reason;
@@ -194,7 +199,13 @@ where
     }
 }
 
-async fn handle_event(text: &str, http: &Arc<Http>, pool: &SqlitePool, state: &Arc<AssetsState>) {
+async fn handle_event(
+    text: &str,
+    http: &Arc<Http>,
+    pool: &SqlitePool,
+    state: &Arc<AssetsState>,
+    label: &str,
+) {
     let event: AssetEvent = match serde_json::from_str(text) {
         Ok(e) => e,
         Err(e) => {
@@ -216,6 +227,9 @@ async fn handle_event(text: &str, http: &Arc<Http>, pool: &SqlitePool, state: &A
     let Some(embed) = build_embed(&event, pending_new.as_deref()) else {
         return;
     };
+    // Tag every announcement with the server it came from. The bot opens one WS
+    // per server; the pipeline events themselves carry no server identity.
+    let embed = embed.field("Server", label, true);
 
     let channels = match db::list_assets_channels(pool).await {
         Ok(c) => c,

@@ -6,7 +6,10 @@
     "public_frontend": "https://example.com"
   },
   "assets": {
-    "ws_url": "ws://localhost:9160",
+    "servers": [
+      { "label": "EN", "ws_url": "ws://localhost:9160" },
+      { "label": "CN", "ws_url": "ws://localhost:9161" }
+    ],
     "reconnect_secs": 5
   }
 }

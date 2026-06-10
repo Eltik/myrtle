@@ -1,5 +1,7 @@
 ArkAssets/
 output/
+node_modules/
+binaries/
 
 **/target/
 **/.cargo/
