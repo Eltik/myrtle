@@ -5,7 +5,7 @@ use axum::{
 
 use crate::app::services::operators::{
     OperatorIndexEntry, get_index, get_operator, get_operator_skins, get_operator_voices,
-    get_upcoming,
+    get_upcoming, resolve_operator,
 };
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::types::operator::Operator;
@@ -43,20 +43,38 @@ pub async fn upcoming_srv(
     Ok(Json(get_upcoming(&state, server).await?))
 }
 
-/// `GET /operators/{id}` - one enriched operator from the default (EN) server.
+/// `GET /operators/{id}` - one enriched operator. Resolves across loaded servers
+/// (default first, then CN/others) and tags the response with the `server` it was
+/// found on, so the client fetches once for both global and upcoming operators.
 pub async fn detail(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Json<Operator>, ApiError> {
-    Ok(Json(get_operator(&state, state.default_server, &id).await?))
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let (op, server) =
+        resolve_operator(&state, state.default_server, &id).ok_or(ApiError::NotFound)?;
+    with_server(&op, server)
 }
 
 /// `GET /{server}/operators/{id}` - one enriched operator from `{server}`.
 pub async fn detail_srv(
     State(state): State<AppState>,
     Path((server, id)): Path<(Server, String)>,
-) -> Result<Json<Operator>, ApiError> {
-    Ok(Json(get_operator(&state, server, &id).await?))
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let op = get_operator(&state, server, &id).await?;
+    with_server(&op, server)
+}
+
+/// Serialize an operator and tag it with the server it was resolved from, so the
+/// client can build region-correct asset URLs without a separate probe.
+fn with_server(op: &Operator, server: Server) -> Result<Json<serde_json::Value>, ApiError> {
+    let mut value = serde_json::to_value(op).map_err(|e| ApiError::Internal(e.into()))?;
+    if let serde_json::Value::Object(map) = &mut value {
+        map.insert(
+            "server".to_string(),
+            serde_json::Value::String(server.as_str().to_string()),
+        );
+    }
+    Ok(Json(value))
 }
 
 /// `GET /voices/{id}` - one operator's voice lines (default server).

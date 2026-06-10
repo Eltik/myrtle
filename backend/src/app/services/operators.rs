@@ -118,6 +118,33 @@ pub async fn get_operator(
     gd.operators.get(id).cloned().ok_or(ApiError::NotFound)
 }
 
+/// Find an operator across loaded servers, preferring `preferred` (the default).
+/// Returns the operator and the server it was found on, so a single request
+/// resolves both global and upcoming (CN-only) operators - no client-side retry.
+pub fn resolve_operator(
+    state: &AppState,
+    preferred: Server,
+    id: &str,
+) -> Option<(Operator, Server)> {
+    let mut order = vec![preferred];
+    order.extend(
+        state
+            .config
+            .servers
+            .iter()
+            .copied()
+            .filter(|s| *s != preferred),
+    );
+    for srv in order {
+        if let Some(sd) = state.try_server_data(srv)
+            && let Some(op) = sd.game_data.load_full().operators.get(id)
+        {
+            return Some((op.clone(), srv));
+        }
+    }
+    None
+}
+
 /// Just one operator's voice lines (+ its voice-lang entry), so the Audio tab
 /// fetches KB instead of the whole `/static/voices` table.
 pub async fn get_operator_voices(

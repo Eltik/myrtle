@@ -190,6 +190,8 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Therapist Medic";
         case "wandermedic":
             return "Wandering Medic";
+        case "watchman":
+            return "Watchman Medic";
 
         // Sniper
         case "aoesniper":
