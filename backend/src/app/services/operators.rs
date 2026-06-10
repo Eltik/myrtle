@@ -8,6 +8,8 @@ use crate::app::state::AppState;
 use crate::core::gamedata::types::operator::{
     Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
+use crate::core::gamedata::types::skin::SkinData;
+use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
 
 /// Compact operator record for client-side search palettes and autocompletes.
@@ -102,6 +104,70 @@ pub async fn get_upcoming(
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
+}
+
+/// One fully-enriched operator by id. Lets the detail page fetch a single
+/// operator instead of downloading the whole `/static/operators` table.
+pub async fn get_operator(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<Operator, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    gd.operators.get(id).cloned().ok_or(ApiError::NotFound)
+}
+
+/// Just one operator's voice lines (+ its voice-lang entry), so the Audio tab
+/// fetches KB instead of the whole `/static/voices` table.
+pub async fn get_operator_voices(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<Voices, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    Ok(Voices {
+        char_words: gd
+            .voices
+            .char_words
+            .iter()
+            .filter(|(_, v)| v.char_id.as_str() == id)
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect(),
+        voice_lang_dict: gd
+            .voices
+            .voice_lang_dict
+            .iter()
+            .filter(|(_, vl)| vl.char_id.as_str() == id)
+            .map(|(k, vl)| (k.clone(), vl.clone()))
+            .collect(),
+        ..Default::default()
+    })
+}
+
+/// Just one operator's skins, so the Skins tab fetches KB instead of the whole
+/// `/static/skins` table. Matches by `tmplId` (alternate forms) else `charId`.
+pub async fn get_operator_skins(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<SkinData, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    Ok(SkinData {
+        char_skins: gd
+            .skins
+            .char_skins
+            .iter()
+            .filter(|(_, s)| match &s.tmpl_id {
+                Some(t) => t.as_str() == id,
+                None => s.char_id.as_str() == id,
+            })
+            .map(|(k, s)| (k.clone(), s.clone()))
+            .collect(),
+        ..Default::default()
+    })
 }
 
 const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {

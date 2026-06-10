@@ -111,7 +111,13 @@ pub fn router() -> Router<AppState> {
         .route("/players/search", get(social::search_players))
         .route("/upcoming", get(operators::upcoming))
         .route("/{server}/upcoming", get(operators::upcoming_srv))
+        .route("/operators/{id}", get(operators::detail))
+        .route("/voices/{id}", get(operators::voices_detail))
+        .route("/{server}/voices/{id}", get(operators::voices_detail_srv))
+        .route("/skins/{id}", get(operators::skins_detail))
+        .route("/{server}/skins/{id}", get(operators::skins_detail_srv))
         .route("/{server}/operators/index", get(operators::index_srv))
+        .route("/{server}/operators/{id}", get(operators::detail_srv))
         .route(
             "/{server}/static/{resource}",
             get(static_data::get_static_srv),

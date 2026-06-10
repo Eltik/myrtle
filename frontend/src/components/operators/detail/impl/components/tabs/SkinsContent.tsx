@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { chibisQueryOptions, type IChibiCharacter } from "#/lib/api/chibis";
-import { type ISkin, skinsQueryOptions } from "#/lib/api/skins";
+import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
@@ -17,7 +17,7 @@ interface ISkinsContentProps {
 }
 
 export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsContentProps) {
-    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(skinsQueryOptions(operator.server));
+    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", operator.server));
     const { data: chibis } = useQuery(chibisQueryOptions(operator.server));
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
