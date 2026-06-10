@@ -6,7 +6,7 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
 import { CLASSES, GENDERS, HAS_NOTES_OPTIONS, PROFESSION_ORDER, RARITIES } from "../constants";
-import type { HasNotesFilter, IFilterOptions } from "../types";
+import type { AvailabilityFilter, HasNotesFilter, IFilterOptions } from "../types";
 import { FilterDropdown } from "./FilterDropdown";
 import { CampIcon, ClassIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import styles from "./OperatorFilters.module.css";
@@ -23,6 +23,7 @@ interface IOperatorFiltersProps {
     selectedArtists: string[];
     selectedVoiceActors: string[];
     selectedHasNotes: HasNotesFilter;
+    selectedAvailability: AvailabilityFilter;
     options: IFilterOptions;
     onClassesChange: (v: string[]) => void;
     onSubclassesChange: (v: string[]) => void;
@@ -35,6 +36,7 @@ interface IOperatorFiltersProps {
     onArtistsChange: (v: string[]) => void;
     onVoiceActorsChange: (v: string[]) => void;
     onHasNotesChange: (v: HasNotesFilter) => void;
+    onAvailabilityChange: (v: AvailabilityFilter) => void;
     onClearAll: () => void;
     hasActiveFilters: boolean;
     collapsed?: boolean;
@@ -45,6 +47,11 @@ interface IOperatorFiltersProps {
 function toggle<T>(list: T[], value: T): T[] {
     return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
+
+const AVAILABILITY_OPTIONS: { value: AvailabilityFilter; label: string }[] = [
+    { value: "global", label: "Global" },
+    { value: "upcoming", label: "Upcoming (CN)" },
+];
 
 function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onToggle" | "activeFilterCount">) {
     const [advancedOpen, setAdvancedOpen] = useState(true);
@@ -57,6 +64,20 @@ function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onTogg
                 <div className={styles.sectionHead}>
                     <span className={styles.lbl}>Basic</span>
                     <span className={styles.line} />
+                </div>
+
+                <div className={styles.field}>
+                    <div className={styles.fieldLabel}>Availability</div>
+                    <div className={styles.tagRow}>
+                        {AVAILABILITY_OPTIONS.map((opt) => {
+                            const on = props.selectedAvailability === opt.value;
+                            return (
+                                <button key={opt.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => props.onAvailabilityChange(opt.value)} aria-pressed={on}>
+                                    {opt.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className={styles.field}>

@@ -6,6 +6,7 @@ import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
 interface IChibiViewerProps {
     chibi: IChibiCharacter | null;
     skin: IChibiSkin | null;
+    server?: "en" | "cn";
 }
 
 const LazyChibiViewer = lazy(() => import("./ChibiViewer").then((m) => ({ default: m.ChibiViewer })));

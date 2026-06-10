@@ -12,9 +12,10 @@ import { useRecorder } from "./use-recorder";
 interface IChibiViewerProps {
     chibi: IChibiCharacter | null;
     skin: IChibiSkin | null;
+    server?: "en" | "cn";
 }
 
-export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
+export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -90,7 +91,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
                     spineRef.current = null;
                 }
 
-                const spine = await loadSpineWithEncodedURLs(skinData.skel, skinData.atlas);
+                const spine = await loadSpineWithEncodedURLs(skinData.skel, skinData.atlas, server);
 
                 if (currentLoadId !== loadIdRef.current || !mountedRef.current || !appRef.current) {
                     spine.destroy();
@@ -170,7 +171,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
             mountedRef.current = false;
             cleanup();
         };
-    }, [chibi, skin?.name, viewType, skin]);
+    }, [chibi, skin?.name, viewType, skin, server]);
 
     const handleAnimationChange = (value: string | null) => {
         setSelectedAnimation(value ?? selectedAnimation);

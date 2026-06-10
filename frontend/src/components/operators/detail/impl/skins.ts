@@ -25,13 +25,14 @@ interface IBuildArgs {
      *  Branches unlock at E2 and have no E0/E1 art, so the default placeholder
      *  is replaced with the E2 art and the "Evolved" entry is suppressed. */
     isBranchForm?: boolean;
+    server?: "en" | "cn";
 }
 
-export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm }: IBuildArgs): IUISkin[] {
+export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm, server }: IBuildArgs): IUISkin[] {
     const skins: IUISkin[] = [];
 
-    const e0 = operatorElite0(operatorId, operatorSkin, operatorPortrait);
-    const e2 = operatorElite2(operatorId, operatorSkin, operatorPortrait);
+    const e0 = operatorElite0(operatorId, operatorSkin, operatorPortrait, server);
+    const e2 = operatorElite2(operatorId, operatorSkin, operatorPortrait, server);
 
     if (isBranchForm) {
         skins.push({
@@ -73,7 +74,7 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
         if (!id || isDefault) continue;
 
         const display = skin.displaySkin;
-        const tex = skinTexture(operatorId, id);
+        const tex = skinTexture(operatorId, id, server);
         skins.push({
             id,
             name: display?.skinName ?? "Outfit",

@@ -212,11 +212,15 @@ The bare (unprefixed) routes use the default server.
 | `cn`, `bili` | CN (Bilibili shares CN data) |
 | `jp`, `kr`, `tw` | Yostar / Gryphline |
 
-Servers are loaded per the `SERVERS` env var (e.g. `SERVERS=en,cn`). A request for a
-valid but unconfigured server (e.g. `/jp/...` when JP is not loaded) returns `404`;
-an unknown token returns `400`. A server downloaded with the operators-only asset
-profile (such as the CN preview) carries only operator-facing assets, so its
-`enemy-icon`, `item-icon`, `medal-icon`, and `skin-portrait` routes may `404`.
+Servers are loaded per the `SERVERS` env var (e.g. `SERVERS=en,cn`). For **data**
+routes (static game data, operator index, `/upcoming`), a valid but unconfigured
+server (e.g. `/jp/...` when JP is not loaded) returns `404`, and an unknown token
+returns `400`. **Asset** routes instead fall back to the default (EN) server when
+the requested server has no entry for that asset. A server downloaded with the
+operators-only profile (such as the CN preview) carries only operator-facing
+assets, so anything it lacks - shared icons (elite/potential/item/camp/class), or
+assets for an unconfigured server - is served from the default server. An asset
+absent on both still returns `404`.
 
 ### DPS / HPS Calculator
 

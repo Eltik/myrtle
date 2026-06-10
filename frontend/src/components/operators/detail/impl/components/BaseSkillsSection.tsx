@@ -10,6 +10,7 @@ import { descriptionToHtml } from "../description";
 
 interface IBaseSkillsSectionProps {
     skills: IOperatorBaseSkill[];
+    server?: "en" | "cn";
 }
 
 const ROOM_LABEL: Record<string, string> = {
@@ -34,7 +35,7 @@ function formatTarget(target: string): string {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
-export function BaseSkillsSection({ skills }: IBaseSkillsSectionProps) {
+export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
     const [open, setOpen] = useState(true);
 
     if (!skills || skills.length === 0) return null;
@@ -58,7 +59,7 @@ export function BaseSkillsSection({ skills }: IBaseSkillsSectionProps) {
             <CollapsibleContent>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {sorted.map((skill) => {
-                        const iconUrl = skill.skillIcon ? baseSkillIcon(skill.skillIcon) : "";
+                        const iconUrl = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
                         const html = descriptionToHtml(skill.description, []);
                         const targets = skill.targets.map(formatTarget);
                         return (
@@ -70,7 +71,7 @@ export function BaseSkillsSection({ skills }: IBaseSkillsSectionProps) {
                                             <TooltipTrigger
                                                 render={(props) => (
                                                     <div {...props} className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background shadow-sm">
-                                                        <img alt={`Elite ${skill.unlockElite}`} className="icon-theme-aware h-3.5 w-3.5 object-contain" decoding="async" loading="lazy" src={eliteIcon(skill.unlockElite)} />
+                                                        <img alt={`Elite ${skill.unlockElite}`} className="icon-theme-aware h-3.5 w-3.5 object-contain" decoding="async" loading="lazy" src={eliteIcon(skill.unlockElite, server)} />
                                                     </div>
                                                 )}
                                             />

@@ -321,7 +321,7 @@ interface IVoiceCategory {
 }
 
 function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; player: IPlayer }) {
-    const { data: voicesData, isLoading } = useQuery(voicesQueryOptions());
+    const { data: voicesData, isLoading } = useQuery(voicesQueryOptions(operator.server));
 
     const operatorVoices: IVoice[] = useMemo(() => {
         if (!voicesData) return [];
@@ -398,14 +398,14 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
         if (!voice.id) return;
         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
         if (!url) return;
-        player.play(voice.id, audioURL(url));
+        player.play(voice.id, audioURL(url, operator.server));
     };
 
     const downloadVoice = (voice: IVoice) => {
         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
         if (!url || !voice.id) return;
         const langLabel = VOICE_LANGUAGE_LABELS[selectedLanguage] ?? selectedLanguage;
-        player.download(voice.id, audioURL(url), `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${fileExtension(url, "mp3")}`);
+        player.download(voice.id, audioURL(url, operator.server), `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${fileExtension(url, "mp3")}`);
     };
 
     if (isLoading) return <AudioSkeleton />;
@@ -446,7 +446,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                                     {c.lines.map((voice) => {
                                         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-                                        const fullURL = url ? audioURL(url) : null;
+                                        const fullURL = url ? audioURL(url, operator.server) : null;
                                         const isUnavailable = !url || (fullURL !== null && player.erroredURLs.has(fullURL));
                                         const categoryLabel = c.id === ALL_CATEGORY_ID ? (VOICE_CATEGORY_MAP[voice.placeType] ?? "Other") : null;
                                         return (
@@ -600,7 +600,7 @@ function buildSfxItems(operator: IOperatorListItem): ISfxItem[] {
     const voiceGroups = new Map<string, IVoiceAcc>();
 
     for (const entry of audio) {
-        const urls = entry.sounds.flatMap((s) => s.urls).map(audioURL);
+        const urls = entry.sounds.flatMap((s) => s.urls).map((u) => audioURL(u, operator.server));
         if (urls.length === 0) continue;
 
         if (entry.category === "voice" && entry.language) {

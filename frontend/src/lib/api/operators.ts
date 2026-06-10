@@ -62,12 +62,15 @@ export function operatorsListQueryOptions() {
 export const getOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((id: string) => id)
     .handler(async ({ data: id }) => {
-        const res = await backendFetch("/static/operators");
-        if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
-        const raw = (await res.json()) as IOperatorsStaticMap;
-        const normalized = deepCamelize(raw);
-        const operators = Object.values(normalized) as IOperatorListItem[];
-        return operators.find((op) => op.id === id);
+        const findOn = async (path: string, server: "en" | "cn") => {
+            const res = await backendFetch(path);
+            if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
+            const raw = (await res.json()) as IOperatorsStaticMap;
+            const operators = Object.values(deepCamelize(raw)) as IOperatorListItem[];
+            const op = operators.find((o) => o.id === id);
+            return op ? { ...op, server } : undefined;
+        };
+        return (await findOn("/static/operators", "en")) ?? (await findOn("/cn/static/operators", "cn"));
     });
 
 export function operatorQueryOptions(id: string) {

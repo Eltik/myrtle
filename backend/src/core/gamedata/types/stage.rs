@@ -72,7 +72,7 @@ pub struct UnlockCondition {
 // ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Stage {
     #[serde(alias = "StageId")]
     pub stage_id: String,
