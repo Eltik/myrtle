@@ -111,7 +111,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             onClick={() => handleSkillChange(idx)}
                             className={cn("flex items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                         >
-                            {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image)} />}
+                            {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, operator.server)} />}
                             {name}
                         </button>
                     );
@@ -195,7 +195,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 flex items-start gap-4">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-border bg-secondary/50">
-                                <img alt={skillData.name ?? "Skill"} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image)} />
+                                <img alt={skillData.name ?? "Skill"} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -272,7 +272,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="flex items-start gap-4 rounded-md border border-border bg-card/50 p-5 shadow-sm">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-border bg-secondary/50 shadow-sm">
-                                <img alt={operator.skills[selectedSkillIndex].static.levels[comparisonLevels[0] ?? 0]?.name ?? "Skill"} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image)} />
+                                <img alt={operator.skills[selectedSkillIndex].static.levels[comparisonLevels[0] ?? 0]?.name ?? "Skill"} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">

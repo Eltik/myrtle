@@ -163,7 +163,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     }}
                                     type="button"
                                 >
-                                    <img alt={`Elite ${idx}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx)} />
+                                    <img alt={`Elite ${idx}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx, operator.server)} />
                                 </button>
                             ))}
                         </div>
@@ -211,7 +211,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         onClick={() => setPotentialRank(idx)}
                                                         className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-colors", potentialRank === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
                                                     >
-                                                        <img alt={`Pot ${idx}`} className="h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx)} />
+                                                        <img alt={`Pot ${idx}`} className="h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
                                                     </button>
                                                 )}
                                             />
@@ -334,7 +334,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         <CollapsibleContent>
                             <div className="mt-3 rounded-lg border border-border/50 bg-card/30 p-4">
                                 <div className="mb-4 flex items-center gap-3">
-                                    {currentModule.image && <img alt={currentModule.uniEquipName} className="h-16 w-16 rounded-md object-contain" decoding="async" loading="lazy" src={asset(currentModule.image)} />}
+                                    {currentModule.image && <img alt={currentModule.uniEquipName} className="h-16 w-16 rounded-md object-contain" decoding="async" loading="lazy" src={asset(currentModule.image, operator.server)} />}
                                     <div>
                                         <h4 className="font-semibold text-foreground">{currentModule.uniEquipName}</h4>
                                         <div className="mt-1 flex gap-1">
@@ -574,7 +574,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                 <h4 className="font-medium text-foreground text-sm">{t.name ?? "Unnamed Talent"}</h4>
                                                 {t.requiredPotentialRank > 0 && (
                                                     <Tooltip>
-                                                        <TooltipTrigger render={(props) => <img alt={`Pot ${t.requiredPotentialRank}`} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(t.requiredPotentialRank)} {...props} />} />
+                                                        <TooltipTrigger render={(props) => <img alt={`Pot ${t.requiredPotentialRank}`} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(t.requiredPotentialRank, operator.server)} {...props} />} />
                                                         <TooltipPopup>Requires Potential {t.requiredPotentialRank}</TooltipPopup>
                                                     </Tooltip>
                                                 )}
@@ -612,7 +612,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             {operator.baseSkills && operator.baseSkills.length > 0 && (
                 <>
                     <Separator className="my-6" />
-                    <BaseSkillsSection skills={operator.baseSkills} />
+                    <BaseSkillsSection skills={operator.baseSkills} server={operator.server} />
                 </>
             )}
 

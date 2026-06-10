@@ -18,6 +18,7 @@ const initialState: IFilterState = {
     artists: [],
     voiceActors: [],
     hasNotes: "any",
+    availability: "global",
     sortBy: "rarity",
     sortOrder: "desc",
 };
@@ -170,6 +171,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             setArtists: (v: string[]) => set("artists", v),
             setVoiceActors: (v: string[]) => set("voiceActors", v),
             setHasNotes: (v: IFilterState["hasNotes"]) => set("hasNotes", v),
+            setAvailability: (v: IFilterState["availability"]) => set("availability", v),
             setSortBy: (v: IFilterState["sortBy"]) => setFilters((prev) => ({ ...prev, sortBy: v, sortOrder: v === "name" || v === "class" ? "asc" : "desc" })),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),

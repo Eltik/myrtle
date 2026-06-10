@@ -9,7 +9,7 @@ use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
 use crate::app::{error::ApiError, state::AppState};
-use crate::core::gamedata::assets::AssetKind;
+use crate::core::gamedata::assets::{AssetIndex, AssetKind};
 use crate::core::hypergryph::constants::Server;
 
 const ALLOWED_EXTENSIONS: &[&str] = &[
@@ -17,16 +17,45 @@ const ALLOWED_EXTENSIONS: &[&str] = &[
     "atlas", "json", "txt",
 ];
 
+/// Serve an asset from `server`, falling back to the default server when the
+/// requested server has no data for it (a missing index entry, or the server
+/// isn't loaded at all). `resolve` maps an asset index to a relative path and is
+/// run against each server's index in turn.
+async fn serve_resolved<F>(
+    state: &AppState,
+    server: Server,
+    headers: &HeaderMap,
+    resolve: F,
+) -> Result<Response, ApiError>
+where
+    F: Fn(&AssetIndex) -> Option<String>,
+{
+    if let Some(sd) = state.try_server_data(server)
+        && let Some(rel) = resolve(&sd.asset_index.load())
+        && let Ok(resp) = serve_file(&sd.assets_dir, &rel, headers).await
+    {
+        return Ok(resp);
+    }
+    if server != state.default_server
+        && let Some(sd) = state.try_server_data(state.default_server)
+        && let Some(rel) = resolve(&sd.asset_index.load())
+    {
+        return serve_file(&sd.assets_dir, &rel, headers).await;
+    }
+    Err(ApiError::NotFound)
+}
+
 async fn portrait_impl(
     state: &AppState,
     server: Server,
     char_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx.portrait_path(char_id).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.portrait_path(char_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn portrait(
@@ -51,17 +80,16 @@ async fn avatar_impl(
     avatar_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
     // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
     // ship only the `_2` avatar variant - no bare-id file exists. Fall back
     // to the E2 then E1 suffix so plain char-id lookups still resolve.
-    let rel_path = idx
-        .path(AssetKind::Avatar, avatar_id)
-        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
-        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::Avatar, avatar_id)
+            .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
+            .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn avatar(
@@ -86,10 +114,11 @@ async fn skill_icon_impl(
     skill_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx.skill_icon_path(skill_id).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.skill_icon_path(skill_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn skill_icon(
@@ -114,10 +143,11 @@ async fn module_icon_impl(
     equip_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx.module_icon_path(equip_id).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.module_icon_path(equip_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn module_icon(
@@ -142,10 +172,11 @@ async fn module_big_impl(
     equip_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx.module_big_path(equip_id).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.module_big_path(equip_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn module_big(
@@ -170,12 +201,11 @@ async fn enemy_icon_impl(
     enemy_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::EnemyIcon, enemy_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::EnemyIcon, enemy_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn enemy_icon(
@@ -200,12 +230,11 @@ async fn item_icon_impl(
     item_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::ItemIcon, item_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::ItemIcon, item_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn item_icon(
@@ -230,12 +259,11 @@ async fn medal_icon_impl(
     medal_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::MedalIcon, medal_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::MedalIcon, medal_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn medal_icon(
@@ -260,12 +288,11 @@ async fn skin_portrait_impl(
     skin_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::SkinPortrait, skin_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::SkinPortrait, skin_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn skin_portrait(
@@ -290,10 +317,7 @@ async fn charart_impl(
     char_id: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let idx = sd.asset_index.load();
-    let rel_path = idx.charart_path(char_id).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, &rel_path, headers).await
+    serve_resolved(state, server, headers, |idx| idx.charart_path(char_id)).await
 }
 
 pub async fn charart(
@@ -318,8 +342,17 @@ async fn generic_impl(
     asset_path: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    serve_file(&sd.assets_dir, asset_path, headers).await
+    if let Some(sd) = state.try_server_data(server)
+        && let Ok(resp) = serve_file(&sd.assets_dir, asset_path, headers).await
+    {
+        return Ok(resp);
+    }
+    if server != state.default_server
+        && let Some(sd) = state.try_server_data(state.default_server)
+    {
+        return serve_file(&sd.assets_dir, asset_path, headers).await;
+    }
+    Err(ApiError::NotFound)
 }
 
 pub async fn generic(

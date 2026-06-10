@@ -454,6 +454,8 @@ export interface IDrone {
 
 export interface IOperatorListItem {
     id: string | null;
+    /** Source server, set by the detail fetch so asset URLs target the right region. */
+    server?: "en" | "cn";
     name: string;
     description: string;
     canUseGeneralPotentialItem: boolean;

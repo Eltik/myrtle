@@ -4,6 +4,7 @@ export type ViewMode = "grid" | "compact" | "list";
 export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block";
 export type SortOrder = "asc" | "desc";
 export type HasNotesFilter = "any" | "yes" | "no";
+export type AvailabilityFilter = "global" | "upcoming";
 
 export interface IOperatorStats {
     hp: number;
@@ -41,6 +42,8 @@ export interface IFilterState {
     artists: string[];
     voiceActors: string[];
     hasNotes: HasNotesFilter;
+    /** "upcoming" swaps the grid to CN operators not yet on Global. */
+    availability: AvailabilityFilter;
     sortBy: SortOption;
     sortOrder: SortOrder;
 }
@@ -73,6 +76,7 @@ export interface IUseOperatorFiltersReturn {
     setArtists: (v: string[]) => void;
     setVoiceActors: (v: string[]) => void;
     setHasNotes: (v: HasNotesFilter) => void;
+    setAvailability: (v: AvailabilityFilter) => void;
     setSortBy: (v: SortOption) => void;
     setSortOrder: (v: SortOrder) => void;
     removeFrom: (key: ArrayFilterKey, value: string) => void;
