@@ -11,6 +11,7 @@ import { operatorsExportSchema } from "#/lib/export";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import type { OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
 import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
 import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
@@ -22,6 +23,8 @@ import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITE
 import { enrichOperators } from "./impl/enrich";
 import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
+
+const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
 
 export function OperatorsList() {
     const { data: operators = [] } = useQuery(operatorsListQueryOptions());
@@ -58,7 +61,7 @@ export function OperatorsList() {
         activeFilterCount,
     } = useOperatorFilters(enriched);
 
-    const { data: upcoming = [] } = useQuery(upcomingQueryOptions());
+    const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions());
     const isUpcoming = filters.availability === "upcoming";
 
     const upcomingFiltered = useMemo(() => {
@@ -362,7 +365,13 @@ export function OperatorsList() {
                         <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
                     </div>
 
-                    {totalCount === 0 ? (
+                    {isUpcoming && upcomingLoading ? (
+                        <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
+                            {UPCOMING_SKELETON_KEYS.map((k) => (
+                                <Skeleton key={k} className="aspect-2/3 w-full rounded-md" />
+                            ))}
+                        </div>
+                    ) : totalCount === 0 ? (
                         <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
                             <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? "No upcoming operators match your filters." : "No operators match your filters."}</p>
                             <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">

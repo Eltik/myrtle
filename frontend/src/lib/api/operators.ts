@@ -62,19 +62,10 @@ export function operatorsListQueryOptions() {
 export const getOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((id: string) => id)
     .handler(async ({ data: id }) => {
-        // Fetch a single operator (not the whole table). Try the default
-        // (EN/Global) server first; fall back to CN so upcoming CN-only operators
-        // resolve. Tagged with its server so the detail page builds region-correct
-        // asset URLs.
-        const findOn = async (path: string, server: "en" | "cn") => {
-            const res = await backendFetch(path);
-            if (res.status === 404) return undefined;
-            if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
-            const op = deepCamelize(await res.json()) as IOperatorListItem;
-            return { ...op, server };
-        };
-        const enc = encodeURIComponent(id);
-        return (await findOn(`/operators/${enc}`, "en")) ?? (await findOn(`/cn/operators/${enc}`, "cn"));
+        const res = await backendFetch(`/operators/${encodeURIComponent(id)}`);
+        if (res.status === 404) return undefined;
+        if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
+        return deepCamelize(await res.json()) as IOperatorListItem;
     });
 
 export function operatorQueryOptions(id: string) {
