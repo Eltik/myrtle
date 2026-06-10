@@ -24,6 +24,17 @@ RUN --mount=type=cache,target=/build/unpacker/target \
 RUN cp download.sh unpack.sh generate_fbs.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/download.sh /usr/local/bin/unpack.sh /usr/local/bin/generate_fbs.sh
 
+# Node.js for the run.mjs orchestrator + per-server `ws` watcher.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm install --omit=dev --no-audit --no-fund
+
+# run.mjs spawns ./binaries/{downloader,unpacker} relative to its own dir.
+RUN mkdir -p binaries \
+    && cp /usr/local/bin/downloader binaries/downloader \
+    && cp /usr/local/bin/unpacker binaries/unpacker
+
 RUN ldconfig
 
 RUN mkdir -p /data/ArkAssets /data/output

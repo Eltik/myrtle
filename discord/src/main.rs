@@ -6,7 +6,7 @@ use discord::{
     watcher::{self, AssetStatus, AssetsState},
 };
 use dotenvy::dotenv;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::sync::Arc;
 
@@ -38,12 +38,22 @@ async fn main() {
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
         .build()
         .expect("Failed to build HTTP client");
-    let (assets_tx, assets_rx) = mpsc::unbounded_channel::<String>();
-    let assets_state = Arc::new(AssetsState {
-        status: RwLock::new(AssetStatus::default()),
-        pending_resource_list: TokioMutex::new(None),
-        tx: assets_tx,
-    });
+    // One state + WS watcher per configured asset server (EN, CN, ...).
+    let mut assets_states: HashMap<String, Arc<AssetsState>> = HashMap::new();
+    let mut assets_watchers: Vec<(String, String, mpsc::UnboundedReceiver<String>)> = Vec::new();
+    for srv in config.assets.resolved_servers() {
+        let (tx, rx) = mpsc::unbounded_channel::<String>();
+        assets_states.insert(
+            srv.label.clone(),
+            Arc::new(AssetsState {
+                status: RwLock::new(AssetStatus::default()),
+                pending_resource_list: TokioMutex::new(None),
+                tx,
+            }),
+        );
+        assets_watchers.push((srv.label, srv.ws_url, rx));
+    }
+    let assets_states = Arc::new(assets_states);
 
     let intents = GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MEMBERS
@@ -69,14 +79,16 @@ async fn main() {
         ..Default::default()
     };
 
-    let setup_state = assets_state.clone();
-    let mut assets_rx_slot = Some(assets_rx);
+    let setup_states = assets_states.clone();
+    let mut assets_watchers_slot = Some(assets_watchers);
 
     let framework = poise::Framework::builder()
         .options(options)
         .setup(move |ctx, _ready, _framework| {
-            let assets_state = setup_state;
-            let assets_rx = assets_rx_slot.take().expect("framework setup runs once");
+            let assets_states = setup_states;
+            let assets_watchers = assets_watchers_slot
+                .take()
+                .expect("framework setup runs once");
             Box::pin(async move {
                 ctx.set_presence(
                     Some(serenity::all::ActivityData::playing("Arknights")),
@@ -108,20 +120,27 @@ async fn main() {
                     audit_log_channels.len()
                 );
 
-                let watcher_http = ctx.http.clone();
-                let watcher_pool = pool.clone();
-                let watcher_cfg = config.assets.clone();
-                let watcher_state = assets_state.clone();
-                tokio::spawn(async move {
-                    watcher::run(
-                        watcher_http,
-                        watcher_pool,
-                        watcher_cfg,
-                        watcher_state,
-                        assets_rx,
-                    )
-                    .await;
-                });
+                let reconnect_secs = config.assets.reconnect_secs;
+                for (label, ws_url, rx) in assets_watchers {
+                    let watcher_http = ctx.http.clone();
+                    let watcher_pool = pool.clone();
+                    let watcher_state = assets_states
+                        .get(&label)
+                        .cloned()
+                        .expect("state exists for each watcher label");
+                    tokio::spawn(async move {
+                        watcher::run(
+                            watcher_http,
+                            watcher_pool,
+                            label,
+                            ws_url,
+                            reconnect_secs,
+                            watcher_state,
+                            rx,
+                        )
+                        .await;
+                    });
+                }
 
                 let ping_history = Arc::new(RwLock::new(std::collections::HashMap::new()));
                 let antispam_policies = Arc::new(RwLock::new(antispam_policies));
@@ -138,7 +157,7 @@ async fn main() {
                     http_client,
                     pool,
                     tracked_messages: Arc::new(RwLock::new(tracked)),
-                    assets: assets_state,
+                    assets: assets_states,
                     ping_history,
                     antispam_policies,
                     audit_log_channels: Arc::new(RwLock::new(audit_log_channels)),

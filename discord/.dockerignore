@@ -1,0 +1,14 @@
+target/
+.cargo/
+
+.DS_Store
+Thumbs.db
+
+.git/
+.gitignore
+
+# Secrets + local state - provided at runtime via mount / volume / env
+config.json
+.env
+*.sqlite
+*.sqlite-*
