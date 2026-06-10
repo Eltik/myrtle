@@ -1,12 +1,16 @@
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::{
     app::{
         error::ApiError, extractors::auth::AuthUser, routes::ok_status, services, state::AppState,
     },
-    database::models::planner::{OperatorPlanResponse, PlanGroup, PlannerResponse},
+    database::{
+        models::planner::{OperatorPlanResponse, PlanGroup, PlannerResponse},
+        queries::users::{find_by_id, find_by_uid},
+    },
 };
 
 #[derive(Deserialize)]
@@ -124,10 +128,10 @@ pub async fn list_public(
     State(state): State<AppState>,
     Query(query): Query<PublicPlansQuery>,
 ) -> Result<Json<Vec<OperatorPlanResponse>>, ApiError> {
-    let profile = if let Some(p) = crate::database::queries::users::find_by_uid(&state.db, &query.uid).await? {
+    let profile = if let Some(p) = find_by_uid(&state.db, &query.uid).await? {
         p
-    } else if let Ok(uuid) = uuid::Uuid::parse_str(&query.uid) {
-        crate::database::queries::users::find_by_id(&state.db, uuid)
+    } else if let Ok(uuid) = Uuid::parse_str(&query.uid) {
+        find_by_id(&state.db, uuid)
             .await?
             .ok_or(ApiError::NotFound)?
     } else {
