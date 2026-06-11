@@ -79,6 +79,7 @@ pub struct OperatorPlanResponse {
     #[serde(flatten)]
     pub plan: OperatorPlan,
     pub groups: Vec<String>,
+    pub operator: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -19,10 +19,10 @@ function getModuleStageLabel(stage: number): string {
 interface IPlansTabProps {
     uid: string;
     roster: IRosterEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsStatic?: IOperatorListItem[];
 }
 
-export function PlansTab({ uid, roster, operatorsStatic }: IPlansTabProps) {
+export function PlansTab({ uid, roster }: IPlansTabProps) {
     const { data: plans = [], isLoading } = useQuery(publicPlansQueryOptions(uid));
 
     if (isLoading) {
@@ -49,7 +49,7 @@ export function PlansTab({ uid, roster, operatorsStatic }: IPlansTabProps) {
         <section aria-label="Operator plans" className="flex flex-col gap-4">
             <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4">
                 {plans.map((p) => {
-                    const op = operatorsStatic.find((o) => o.id === p.operator_id);
+                    const op = p.operator;
                     if (!op) return null;
 
                     const rosterEntry = roster.find((re) => re.operator_id === p.operator_id);
@@ -64,7 +64,7 @@ export function PlansTab({ uid, roster, operatorsStatic }: IPlansTabProps) {
                         <div key={p.id} className="relative flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md">
                             <div className="flex items-start gap-3">
                                 <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
@@ -118,7 +118,7 @@ export function PlansTab({ uid, roster, operatorsStatic }: IPlansTabProps) {
                                                 return (
                                                     <div key={skill.skillId} className="flex items-center justify-between">
                                                         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                            <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
+                                                            <img src={skillIconURL(skill, op.server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
                                                             <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
                                                         </div>
                                                         <div className="ml-2 flex shrink-0 items-center gap-2">
@@ -152,7 +152,7 @@ export function PlansTab({ uid, roster, operatorsStatic }: IPlansTabProps) {
                                                     return (
                                                         <div key={mod.uniEquipId} className="flex items-center justify-between">
                                                             <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
+                                                                <img src={moduleIconURL(mod, op.server)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
                                                                 <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
                                                             </div>
                                                             <div className="ml-2 flex shrink-0 items-center gap-2">

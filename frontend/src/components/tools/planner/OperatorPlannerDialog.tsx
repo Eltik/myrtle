@@ -14,13 +14,14 @@ import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { deleteGroupFn, plansQueryOptions, upsertGroupFn, upsertPlanFn } from "#/lib/api/planner";
+import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorListItem, OperatorProfession } from "#/types/operators";
 
 function getMaxLevel(rarity: number, elite: number): number {
     if (rarity <= 2) return 30;
@@ -87,8 +88,25 @@ interface IOperatorPlannerDialogProps {
 }
 
 /** Modal dialog for customizing operator targets. */
+interface IOperatorSelectionItem {
+    id: string;
+    name: string;
+    appellation: string;
+    rarity: number;
+    profession: OperatorProfession;
+    subProfessionId: string;
+    tagList?: string[];
+    nationId: string;
+    isUpcoming: boolean;
+}
+
+/** Modal dialog for customizing operator targets. */
 export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }: IOperatorPlannerDialogProps): React.ReactElement {
-    const [selectedOperator, setSelectedOperator] = React.useState<IOperatorListItem | null>(null);
+    const [selectedOperatorId, setSelectedOperatorId] = React.useState<string | null>(null);
+    const { data: selectedOperator = null, isLoading: isOperatorDetailLoading } = useQuery({
+        ...operatorQueryOptions(selectedOperatorId ?? ""),
+        enabled: !!selectedOperatorId,
+    });
     const [elite, setElite] = React.useState<number>(0);
     const [level, setLevel] = React.useState<number>(1);
     const [skillTargets, setSkillTargets] = React.useState<Record<number, number>>({});
@@ -103,7 +121,10 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     const [isCreatingGroup, setIsCreatingGroup] = React.useState<boolean>(false);
     const [newGroupName, setNewGroupName] = React.useState<string>("");
 
-    const { data: operators = [], isLoading } = useQuery(operatorsListQueryOptions());
+    const { data: operators = [], isLoading: isOperatorsLoading } = useQuery(operatorsListQueryOptions());
+    const { data: upcoming = [], isLoading: isUpcomingLoading } = useQuery(upcomingQueryOptions());
+
+    const isLoading = isOperatorsLoading || isUpcomingLoading;
 
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -141,15 +162,42 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const sortedOperators = React.useMemo(() => {
-        return [...operators]
+        const mappedUpcoming = upcoming
             .filter((op) => !op.isNotObtainable)
-            .sort((a, b) => {
-                const ra = rarityToNumber(a.rarity);
-                const rb = rarityToNumber(b.rarity);
-                if (rb !== ra) return rb - ra;
-                return a.name.localeCompare(b.name);
-            });
-    }, [operators]);
+            .map((op) => ({
+                id: op.id,
+                name: op.name,
+                appellation: op.appellation,
+                rarity: op.rarity,
+                profession: op.profession,
+                subProfessionId: op.subProfessionId,
+                tagList: op.tagList,
+                nationId: op.nationId,
+                isUpcoming: true,
+            }));
+
+        const mappedGlobal = operators
+            .filter((op) => !op.isNotObtainable)
+            .map((op) => ({
+                id: op.id ?? "",
+                name: op.name,
+                appellation: op.appellation,
+                rarity: rarityToNumber(op.rarity),
+                profession: op.profession,
+                subProfessionId: op.subProfessionId,
+                tagList: op.tagList,
+                nationId: op.nationId,
+                isUpcoming: false,
+            }));
+
+        return [...mappedUpcoming, ...mappedGlobal].sort((a, b) => {
+            if (a.isUpcoming !== b.isUpcoming) {
+                return a.isUpcoming ? -1 : 1;
+            }
+            if (b.rarity !== a.rarity) return b.rarity - a.rarity;
+            return a.name.localeCompare(b.name);
+        });
+    }, [operators, upcoming]);
 
     const filteredAndSortedOperators = React.useMemo(() => {
         if (!searchQuery.trim()) {
@@ -157,10 +205,15 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
         }
         const results = searchAndRank(searchQuery, sortedOperators, (op) => ({
             name: op.name,
-            extra: `${op.appellation} ${professionLabel(op.profession)} ${op.subProfessionId} ${rarityToNumber(op.rarity)}★ ${(op.tagList ?? []).join(" ")} ${op.nationId}`,
+            extra: `${op.appellation} ${professionLabel(op.profession)} ${op.subProfessionId} ${op.rarity}★ ${(op.tagList ?? []).join(" ")} ${op.nationId}`,
         }));
         return results.map((r) => r.item);
     }, [searchQuery, sortedOperators]);
+
+    const selectedItem = React.useMemo(() => {
+        if (!selectedOperatorId) return null;
+        return sortedOperators.find((item) => item.id === selectedOperatorId) || null;
+    }, [selectedOperatorId, sortedOperators]);
 
     const opRarity = selectedOperator ? rarityToNumber(selectedOperator.rarity) : 6;
     const maxElite = opRarity <= 2 ? 0 : opRarity === 3 ? 1 : 2;
@@ -168,7 +221,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
     React.useEffect(() => {
         if (!open) {
-            setSelectedOperator(null);
+            setSelectedOperatorId(null);
             setElite(0);
             setLevel(1);
             setSkillTargets({});
@@ -188,13 +241,10 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     }, [open]);
 
     React.useEffect(() => {
-        if (open && initialOperatorId && operators.length > 0) {
-            const op = operators.find((o) => o.id === initialOperatorId);
-            if (op) {
-                setSelectedOperator(op);
-            }
+        if (open && initialOperatorId) {
+            setSelectedOperatorId(initialOperatorId);
         }
-    }, [open, initialOperatorId, operators]);
+    }, [open, initialOperatorId]);
 
     React.useEffect(() => {
         if (selectedOperator && hasRosterData) {
@@ -478,18 +528,26 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                             <label className="block font-medium text-[13px] text-muted-foreground leading-none" htmlFor="operator-selector">
                                 Select Operator
                             </label>
-                            <Combobox<IOperatorListItem, false> items={filteredAndSortedOperators} value={selectedOperator} onValueChange={setSelectedOperator} filter={null} onInputValueChange={setSearchQuery} itemToStringLabel={(op) => op?.name ?? ""} itemToStringValue={(op) => op?.id ?? ""}>
+                            <Combobox<IOperatorSelectionItem, false>
+                                items={filteredAndSortedOperators}
+                                value={selectedItem}
+                                onValueChange={(item) => setSelectedOperatorId(item?.id ?? null)}
+                                filter={null}
+                                onInputValueChange={setSearchQuery}
+                                itemToStringLabel={(op) => op?.name ?? ""}
+                                itemToStringValue={(op) => op?.id ?? ""}
+                            >
                                 <ComboboxInput id="operator-selector" placeholder={isLoading ? "Loading operators..." : "Search operators by name, class, or tag..."} />
                                 <ComboboxPopup className="max-w-100">
                                     <ComboboxEmpty>No operators found.</ComboboxEmpty>
                                     <ComboboxList>
-                                        {(op: IOperatorListItem) => {
-                                            const rarity = rarityToNumber(op.rarity);
+                                        {(op: IOperatorSelectionItem) => {
+                                            const rarity = op.rarity;
                                             return (
                                                 <ComboboxItem key={op.id} value={op}>
                                                     <span className="flex w-full items-center gap-3">
                                                         <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
-                                                            <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                                            <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
                                                         </span>
                                                         <span className="flex-1 font-medium text-foreground text-sm">{op.name}</span>
                                                         <span className="font-normal text-muted-foreground text-xs">
@@ -504,12 +562,19 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                             </Combobox>
                         </div>
 
-                        {selectedOperator ? (
+                        {selectedOperatorId && isOperatorDetailLoading && (
+                            <div className="flex flex-col items-center justify-center gap-3 py-16">
+                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                <p className="text-muted-foreground text-xs">Loading operator details...</p>
+                            </div>
+                        )}
+
+                        {selectedOperator && !isOperatorDetailLoading ? (
                             <div className="space-y-6">
                                 <div className="rounded-xl border border-border bg-card p-4">
                                     <div className="flex items-center gap-4">
                                         <span aria-hidden="true" className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                            <OperatorAvatar charId={selectedOperator.id} name={selectedOperator.name} className="block h-full w-full object-cover" />
+                                            <OperatorAvatar charId={selectedOperator.id} name={selectedOperator.name} className="block h-full w-full object-cover" server={selectedOperator.server} />
                                         </span>
                                         <div>
                                             <h3 className="font-bold text-foreground text-lg">{selectedOperator.name}</h3>
@@ -580,7 +645,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                                                             return (
                                                                 <div key={skill.skillId} className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
-                                                                    <img src={skillIconURL(skill)} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
+                                                                    <img src={skillIconURL(skill, selectedOperator.server)} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
 
                                                                     <div className="col-start-2 row-start-1 flex items-center gap-2">
                                                                         <span className="font-bold text-base text-foreground leading-tight">{name}</span>
@@ -693,7 +758,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                                                                 return (
                                                                     <div key={mod.uniEquipId} className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
-                                                                        <img src={moduleIconURL(mod)} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
+                                                                        <img src={moduleIconURL(mod, selectedOperator.server)} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
 
                                                                         <div className="col-start-2 row-start-1 flex items-center gap-2">
                                                                             <span className="font-bold text-base text-foreground leading-tight">{name}</span>
@@ -893,9 +958,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                     </>
                                 )}
                             </div>
-                        ) : (
+                        ) : !selectedOperatorId ? (
                             <p className="text-muted-foreground text-sm italic">Please select an operator to customize targets.</p>
-                        )}
+                        ) : null}
                     </div>
                 </DialogPanel>
 

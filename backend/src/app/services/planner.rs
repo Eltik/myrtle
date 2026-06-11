@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{
-    app::{error::ApiError, state::AppState},
+    app::{
+        error::ApiError,
+        services::operators::resolve_operator,
+        state::AppState,
+    },
     core::{
         gamedata::{
             enrich::resolve_item_icon,
@@ -553,7 +557,7 @@ fn get_plan_direct_materials(
 
 fn calculate_requirements(
     state: &AppState,
-    plans_with_ops: &[(OperatorPlan, &Operator, Option<&RosterEntry>)],
+    plans_with_ops: &[(OperatorPlan, Operator, Option<&RosterEntry>)],
     active_ids: &[String],
     inventory_map: &HashMap<String, i32>,
     user_building: &UserBuilding,
@@ -646,13 +650,25 @@ pub async fn list_plans(
     }
 
     for plan in plans {
-        if let Some(operator) = gamedata.operators.get(&plan.operator_id) {
+        if let Some((operator, server)) = resolve_operator(
+            state,
+            state.default_server,
+            &plan.operator_id,
+        ) {
             let roster_entry = roster_map.get(&plan.operator_id);
-            plans_with_ops.push((plan.clone(), operator, roster_entry));
+            plans_with_ops.push((plan.clone(), operator.clone(), roster_entry));
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
+            let mut op_val = serde_json::to_value(&operator).unwrap();
+            if let serde_json::Value::Object(map) = &mut op_val {
+                map.insert(
+                    "server".to_string(),
+                    serde_json::Value::String(server.as_str().to_string()),
+                );
+            }
             responses.push(OperatorPlanResponse {
                 plan,
                 groups: plan_groups,
+                operator: op_val,
             });
         }
     }
@@ -702,11 +718,9 @@ pub async fn upsert_plan(
         ));
     }
 
-    let gamedata = state.default_game_data();
-    let operator = gamedata
-        .operators
-        .get(operator_id)
-        .ok_or(ApiError::NotFound)?;
+    let (operator, server) =
+        resolve_operator(state, state.default_server, operator_id)
+            .ok_or(ApiError::NotFound)?;
 
     if operator.is_not_obtainable {
         return Err(ApiError::BadRequest(format!(
@@ -929,9 +943,18 @@ pub async fn upsert_plan(
         .await?
     };
 
+    let mut op_val = serde_json::to_value(&operator).unwrap();
+    if let serde_json::Value::Object(map) = &mut op_val {
+        map.insert(
+            "server".to_string(),
+            serde_json::Value::String(server.as_str().to_string()),
+        );
+    }
+
     Ok(OperatorPlanResponse {
         plan,
         groups: plan_groups,
+        operator: op_val,
     })
 }
 
@@ -957,7 +980,6 @@ pub async fn list_public_plans(
     user_id: Uuid,
 ) -> Result<Vec<OperatorPlanResponse>, ApiError> {
     let plans = queries::list_plans(&state.db, user_id).await?;
-    let gamedata = state.default_game_data();
     let mapping = queries::get_all_plan_groups(&state.db, user_id).await?;
     let mut group_map: HashMap<Uuid, Vec<String>> = HashMap::new();
     for (plan_id, group_name) in mapping {
@@ -965,11 +987,25 @@ pub async fn list_public_plans(
     }
     let mut responses = Vec::new();
     for plan in plans {
-        if plan.display_on_profile && gamedata.operators.contains_key(&plan.operator_id) {
+        if plan.display_on_profile
+            && let Some((operator, server)) = resolve_operator(
+                state,
+                state.default_server,
+                &plan.operator_id,
+            )
+        {
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
+            let mut op_val = serde_json::to_value(&operator).unwrap();
+            if let serde_json::Value::Object(map) = &mut op_val {
+                map.insert(
+                    "server".to_string(),
+                    serde_json::Value::String(server.as_str().to_string()),
+                );
+            }
             responses.push(OperatorPlanResponse {
                 plan,
                 groups: plan_groups,
+                operator: op_val,
             });
         }
     }

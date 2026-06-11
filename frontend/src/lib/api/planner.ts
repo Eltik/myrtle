@@ -1,7 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
+import { deepCamelize } from "#/lib/api/operators";
 import { backendFetch } from "#/lib/fetch";
+import type { IOperatorListItem } from "#/types/operators";
 
 export interface IPlanRecipeCost {
     count: number;
@@ -44,6 +46,7 @@ export interface IOperatorPlanResponse {
     created_at: string;
     updated_at: string;
     groups: string[];
+    operator: IOperatorListItem;
 }
 
 export interface IPlanGroup {
@@ -94,7 +97,11 @@ export const upsertPlanFn = createServerFn({ method: "POST" })
             const text = await res.text().catch(() => "");
             throw new Error(text || `Failed to save plan: ${res.status}`);
         }
-        return (await res.json()) as IOperatorPlanResponse;
+        const plan = (await res.json()) as IOperatorPlanResponse;
+        if (plan.operator) {
+            plan.operator = deepCamelize(plan.operator);
+        }
+        return plan;
     });
 
 export const getPlansFn = createServerFn({ method: "GET" })
@@ -105,7 +112,15 @@ export const getPlansFn = createServerFn({ method: "GET" })
         const url = activeIds && activeIds.length > 0 ? `/plans?active=${encodeURIComponent(activeIds.join(","))}` : "/plans";
         const res = await backendFetch(url, { bearerToken: token });
         if (!res.ok) throw new Error(`Failed to load plans: ${res.status}`);
-        return (await res.json()) as IPlannerResponse;
+        const data = (await res.json()) as IPlannerResponse;
+        if (data.plans) {
+            for (const p of data.plans) {
+                if (p.operator) {
+                    p.operator = deepCamelize(p.operator);
+                }
+            }
+        }
+        return data;
     });
 
 export function plansQueryOptions(activeIds?: string[]) {
@@ -182,7 +197,13 @@ export const getPublicPlansFn = createServerFn({ method: "GET" })
     .handler(async ({ data: uid }) => {
         const res = await backendFetch(`/plans/public?uid=${encodeURIComponent(uid)}`);
         if (!res.ok) throw new Error(`Failed to load public plans: ${res.status}`);
-        return (await res.json()) as IOperatorPlanResponse[];
+        const data = (await res.json()) as IOperatorPlanResponse[];
+        for (const p of data) {
+            if (p.operator) {
+                p.operator = deepCamelize(p.operator);
+            }
+        }
+        return data;
     });
 
 export function publicPlansQueryOptions(uid: string) {

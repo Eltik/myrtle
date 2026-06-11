@@ -11,7 +11,6 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
@@ -149,14 +148,12 @@ export function OperatorPlanner(): React.ReactElement {
         return activeList;
     }, [initialPlannerData?.plans, activePlans]);
 
-    const { data: operators = [], isLoading: operatorsLoading } = useQuery(operatorsListQueryOptions());
-
     const { data: roster = [], isLoading: rosterLoading } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
     });
 
-    const isPlansListLoading = initialPlansLoading || operatorsLoading || rosterLoading;
+    const isPlansListLoading = initialPlansLoading || rosterLoading;
 
     const { data: plannerData, isLoading: requirementsLoading } = useQuery({
         ...plansQueryOptions(activeIds),
@@ -378,7 +375,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                     )}
                                                 </div>
                                                 {plans.map((p: IOperatorPlanResponse) => {
-                                                    const op = operators.find((o) => o.id === p.operator_id);
+                                                    const op = p.operator;
                                                     if (!op) return null;
                                                     const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
                                                     const isActive = activePlans[p.operator_id] ?? true;
@@ -394,7 +391,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                             <div className="flex items-start gap-3">
                                                                 <Checkbox checked={isActive} onCheckedChange={() => togglePlan(p.operator_id)} />
                                                                 <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                                                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                                                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
                                                                 </span>
                                                                 <div className="min-w-0 flex-1">
                                                                     <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
@@ -460,7 +457,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                                     return (
                                                                                         <div key={skill.skillId} className="flex items-center justify-between">
                                                                                             <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                                <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
+                                                                                                <img src={skillIconURL(skill, op.server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
                                                                                                 <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
                                                                                             </div>
                                                                                             <div className="ml-2 flex shrink-0 items-center gap-2">
@@ -494,7 +491,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                                         return (
                                                                                             <div key={mod.uniEquipId} className="flex items-center justify-between">
                                                                                                 <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                                    <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
+                                                                                                    <img src={moduleIconURL(mod, op.server)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
                                                                                                     <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
                                                                                                 </div>
                                                                                                 <div className="ml-2 flex shrink-0 items-center gap-2">
@@ -631,7 +628,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                         <p className="py-4 text-center text-muted-foreground text-xs">No plans in this group.</p>
                                                                     ) : (
                                                                         plansInGroup.map((p) => {
-                                                                            const op = operators.find((o) => o.id === p.operator_id);
+                                                                            const op = p.operator;
                                                                             if (!op) return null;
                                                                             const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
                                                                             const isActive = activePlans[p.operator_id] ?? true;
@@ -647,7 +644,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                                     <div className="flex items-start gap-3">
                                                                                         <Checkbox checked={isActive} onCheckedChange={() => togglePlan(p.operator_id)} />
                                                                                         <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                                                                            <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" />
+                                                                                            <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
                                                                                         </span>
                                                                                         <div className="min-w-0 flex-1">
                                                                                             <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
@@ -713,7 +710,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                                                             return (
                                                                                                                 <div key={skill.skillId} className="flex items-center justify-between">
                                                                                                                     <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                                                        <img src={skillIconURL(skill)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
+                                                                                                                        <img src={skillIconURL(skill, op.server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
                                                                                                                         <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
                                                                                                                     </div>
                                                                                                                     <div className="ml-2 flex shrink-0 items-center gap-2">
@@ -747,7 +744,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                                                                                 return (
                                                                                                                     <div key={mod.uniEquipId} className="flex items-center justify-between">
                                                                                                                         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                                                                                            <img src={moduleIconURL(mod)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
+                                                                                                                            <img src={moduleIconURL(mod, op.server)} alt={mod.uniEquipName} className="size-5 rounded object-contain" />
                                                                                                                             <span className="truncate font-medium text-foreground">{mod.uniEquipName}</span>
                                                                                                                         </div>
                                                                                                                         <div className="ml-2 flex shrink-0 items-center gap-2">
