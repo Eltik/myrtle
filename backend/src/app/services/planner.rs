@@ -626,7 +626,10 @@ pub async fn list_plans(
     inventory_map.insert("5001".to_owned(), total_exp);
 
     let building_json = building_queries::get_building(&state.db, user_id).await?;
-    let user_building = building_json.map_or_else(|| UserBuilding { rooms: Vec::new() }, |json| UserBuilding::from_json(&json));
+    let user_building = building_json.map_or_else(
+        || UserBuilding { rooms: Vec::new() },
+        |json| UserBuilding::from_json(&json),
+    );
 
     let clears_data = stages_queries::get_user_stage_clears(&state.db, user_id).await?;
     let clears = clears_data.clears;
