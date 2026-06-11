@@ -3,11 +3,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{
-    app::{
-        error::ApiError,
-        services::operators::resolve_operator,
-        state::AppState,
-    },
+    app::{error::ApiError, services::operators::resolve_operator, state::AppState},
     core::{
         gamedata::{
             enrich::resolve_item_icon,
@@ -650,11 +646,9 @@ pub async fn list_plans(
     }
 
     for plan in plans {
-        if let Some((operator, server)) = resolve_operator(
-            state,
-            state.default_server,
-            &plan.operator_id,
-        ) {
+        if let Some((operator, server)) =
+            resolve_operator(state, state.default_server, &plan.operator_id)
+        {
             let roster_entry = roster_map.get(&plan.operator_id);
             plans_with_ops.push((plan.clone(), operator.clone(), roster_entry));
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
@@ -719,8 +713,7 @@ pub async fn upsert_plan(
     }
 
     let (operator, server) =
-        resolve_operator(state, state.default_server, operator_id)
-            .ok_or(ApiError::NotFound)?;
+        resolve_operator(state, state.default_server, operator_id).ok_or(ApiError::NotFound)?;
 
     if operator.is_not_obtainable {
         return Err(ApiError::BadRequest(format!(
@@ -988,11 +981,8 @@ pub async fn list_public_plans(
     let mut responses = Vec::new();
     for plan in plans {
         if plan.display_on_profile
-            && let Some((operator, server)) = resolve_operator(
-                state,
-                state.default_server,
-                &plan.operator_id,
-            )
+            && let Some((operator, server)) =
+                resolve_operator(state, state.default_server, &plan.operator_id)
         {
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
             let mut op_val = serde_json::to_value(&operator).unwrap();

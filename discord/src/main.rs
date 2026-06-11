@@ -85,15 +85,10 @@ async fn main() {
     let framework = poise::Framework::builder()
         .options(options)
         .setup(move |ctx, _ready, _framework| {
-<<<<<<< HEAD
-            let assets_state = setup_state;
-            let assets_rx = assets_rx_slot.take().expect("framework setup runs once");
-=======
             let assets_states = setup_states;
             let assets_watchers = assets_watchers_slot
                 .take()
                 .expect("framework setup runs once");
->>>>>>> cd2129c4b7a3aca2bd562976429418454a68f529
             Box::pin(async move {
                 ctx.set_presence(
                     Some(serenity::all::ActivityData::playing("Arknights")),
