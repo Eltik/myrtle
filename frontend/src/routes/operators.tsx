@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { OperatorsList } from "#/components/operators/list/Operators";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/operators")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
-    loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(operatorsListQueryOptions()), context.queryClient.prefetchQuery(operatorNotesListQueryOptions())]),
+    loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(operatorsListQueryOptions()), context.queryClient.prefetchQuery(upcomingQueryOptions()), context.queryClient.prefetchQuery(operatorNotesListQueryOptions())]),
     head: () => {
         const { meta, links } = seo({
             title: "Operators",

@@ -1,7 +1,7 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::core::auth::jwt;
+use crate::core::auth::jwt::create_token;
 use crate::core::hypergryph::constants::Server;
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
@@ -83,7 +83,7 @@ pub async fn login(
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
 
-    let token = jwt::create_token(
+    let token = create_token(
         &state.config.jwt_secret,
         &user.id.to_string(),
         uid,

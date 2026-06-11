@@ -1,3 +1,4 @@
+use arc_swap::ArcSwap;
 use backend::app::server;
 use backend::core::hypergryph::{config, loaders};
 use backend::core::{
@@ -6,12 +7,17 @@ use backend::core::{
 use backend::{
     app::{
         cache::store::CacheStore,
-        state::{AppConfig, AppState},
+        state::{AppConfig, AppState, ServerData, derive_assets_dir, derive_game_data_dir},
     },
-    core::{gamedata::assets::AssetIndex, hypergryph::config::GlobalConfig},
+    core::{
+        gamedata::assets::AssetIndex,
+        hypergryph::{config::GlobalConfig, constants::Server},
+    },
 };
 use dotenv::dotenv;
+use std::collections::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 use tracing::{info, warn};
 
 #[cfg(not(target_env = "msvc"))]
@@ -35,21 +41,40 @@ async fn main() {
         )
         .init();
 
-    // Game data
-    let data_dir_str =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
-
-    info!("loading game data...");
-    let game_data = backend::core::gamedata::init_game_data(
-        Path::new(&data_dir_str),
-        Path::new(&assets_dir_str),
-    )
-    .expect("failed to load game data");
-    info!(operators = game_data.operators.len(), "game data loaded");
-
-    // Build asset index
-    let asset_index = AssetIndex::build(Path::new(&assets_dir_str));
+    // Game data (per-server). ASSETS_DIR is a base dir; each server loads from
+    // `{base}/{server}` (+ `/gamedata/excel`). SERVERS selects which to load.
+    let config = AppConfig::from_env();
+    let mut servers: HashMap<Server, Arc<ServerData>> = HashMap::new();
+    for &srv in &config.servers {
+        let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
+        let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
+        info!(server = srv.as_str(), "loading game data...");
+        let game_data = backend::core::gamedata::init_game_data(
+            Path::new(&game_data_dir),
+            Path::new(&assets_dir),
+        )
+        .unwrap_or_else(|e| panic!("failed to load game data for {}: {e}", srv.as_str()));
+        let asset_index = AssetIndex::build(Path::new(&assets_dir));
+        info!(
+            server = srv.as_str(),
+            operators = game_data.operators.len(),
+            "game data loaded"
+        );
+        servers.insert(
+            srv,
+            Arc::new(ServerData {
+                game_data: ArcSwap::from_pointee(game_data),
+                asset_index: ArcSwap::from_pointee(asset_index),
+                game_data_dir,
+                assets_dir,
+            }),
+        );
+    }
+    // Bilibili shares CN's Hypergryph data (same Arc cell, hot-reloads together).
+    if let Some(cn) = servers.get(&Server::CN).cloned() {
+        servers.entry(Server::Bilibili).or_insert(cn);
+    }
+    let default_server = config.default_server;
 
     // Database (pool + migrations + seeding)
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -89,8 +114,7 @@ async fn main() {
     loaders::init(&http_client).await;
 
     // Start server
-    let config = AppConfig::from_env();
-    let state = AppState::new(db, cache, game_data, asset_index, config, http_client);
+    let state = AppState::new(db, cache, servers, default_server, config, http_client);
 
     // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
     asset_watcher::spawn(state.clone());

@@ -114,7 +114,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             *recovery_per_hour
         }
 
-        BuffResolutionStrategy::CapacityOnly => 0.0,
+        BuffResolutionStrategy::CapacityOnly { .. } => 0.0,
 
         BuffResolutionStrategy::NonProduction { value } => *value,
 
@@ -143,6 +143,15 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             };
             *base_efficiency + bonus
         }
+        BuffResolutionStrategy::ConditionalOnBaseWide {
+            base_efficiency, ..
+        } => {
+            // The bonus depends on a named operator actively working a Work Area somewhere in the
+            // base. The optimizer resolves that to a flat efficiency up front (two-pass over the
+            // deployed roster) and scores against the resolved value, so here - where only the room
+            // is known - just the always-on base applies.
+            *base_efficiency
+        }
         BuffResolutionStrategy::ConditionalOnFaction {
             faction_token,
             base_efficiency,
@@ -160,16 +169,47 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             per_cap_threshold,
             bonus_per_threshold,
             cap_pct,
+            includes_self,
         } => {
-            let total_cap: i32 = ctx
+            let mut total_cap: i32 = ctx
                 .room_teammates
                 .iter()
                 .map(|t| t.order_limit_contribution)
                 .sum();
+            // A self-counting scaler (Vermeil) also converts its OWN capacity (her +8); a
+            // "from others" scaler (Jaye/Degenbrecher) does not.
+            if *includes_self {
+                total_cap += ctx.self_order_limit;
+            }
             // Only count positive CAP for threshold calculation
             let effective_cap = f64::from(total_cap.max(0));
             let thresholds_met = (effective_cap / per_cap_threshold).floor();
             (thresholds_met * bonus_per_threshold).min(*cap_pct)
+        }
+
+        // No direct productivity; its effect is folded into the facility counts the optimizer
+        // scores against (see the effective-count adjustment in the assignment).
+        BuffResolutionStrategy::FacilityCountModifier { .. } => 0.0,
+
+        BuffResolutionStrategy::CapacityTierScaling {
+            threshold,
+            low_pct,
+            high_pct,
+        } => {
+            // Each operator in the room (this one + teammates) earns the high tier when its own
+            // capacity bonus clears the threshold, else the low tier; the room gains the sum.
+            let tier = |cap: i32| {
+                if cap > *threshold {
+                    *high_pct
+                } else {
+                    *low_pct
+                }
+            };
+            let mut total = tier(ctx.self_order_limit);
+            for t in &ctx.room_teammates {
+                total += tier(t.order_limit_contribution);
+            }
+            total
         }
     }
 }

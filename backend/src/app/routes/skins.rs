@@ -9,8 +9,9 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
+use crate::database::queries::skins;
 use crate::database::queries::skins::OwnedSkin;
-use crate::database::queries::{skins, users};
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct SkinsParams {
@@ -23,7 +24,7 @@ async fn resolve_user_id(
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 

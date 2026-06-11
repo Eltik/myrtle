@@ -69,6 +69,20 @@ impl Server {
         }
     }
 
+    /// Parse a server code (as produced by [`Self::as_str`]) case-insensitively.
+    /// Accepts `bilibili` as an alias for `bili`. Returns `None` for unknown codes.
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.trim().to_lowercase().as_str() {
+            "en" => Some(Self::EN),
+            "jp" => Some(Self::JP),
+            "kr" => Some(Self::KR),
+            "cn" => Some(Self::CN),
+            "bili" | "bilibili" => Some(Self::Bilibili),
+            "tw" => Some(Self::TW),
+            _ => None,
+        }
+    }
+
     pub const fn yostar_domain(&self) -> Option<&'static str> {
         match self {
             Self::EN => Some("https://en-sdk-api.yostarplat.com"),
@@ -183,5 +197,31 @@ impl From<Server> for Pid {
             Server::KR => Self::KrArknights,
             _ => Self::UsArknights,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Server;
+
+    #[test]
+    fn parse_round_trips_canonical_codes() {
+        for &server in Server::all() {
+            assert_eq!(Server::parse(server.as_str()), Some(server));
+        }
+    }
+
+    #[test]
+    fn parse_is_case_insensitive_and_accepts_bilibili_alias() {
+        assert_eq!(Server::parse("CN"), Some(Server::CN));
+        assert_eq!(Server::parse(" En "), Some(Server::EN));
+        assert_eq!(Server::parse("bili"), Some(Server::Bilibili));
+        assert_eq!(Server::parse("bilibili"), Some(Server::Bilibili));
+    }
+
+    #[test]
+    fn parse_rejects_unknown_codes() {
+        assert_eq!(Server::parse("zz"), None);
+        assert_eq!(Server::parse(""), None);
     }
 }

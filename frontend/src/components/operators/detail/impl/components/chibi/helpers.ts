@@ -48,8 +48,9 @@ export function encodeAssetPath(path: string): string {
     return result;
 }
 
-function chibiAssetURL(path: string): string {
-    return `${env.VITE_BACKEND_URL}/api/assets${encodeAssetPath(path)}`;
+function chibiAssetURL(path: string, server?: "en" | "cn"): string {
+    const prefix = server && server !== "en" ? `${server}/` : "";
+    return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
 }
 
 /**
@@ -92,9 +93,9 @@ function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; de
     return pages;
 }
 
-export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string): Promise<Spine> {
-    const skelURL = chibiAssetURL(skelPath);
-    const atlasURL = chibiAssetURL(atlasPath);
+export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string, server?: "en" | "cn"): Promise<Spine> {
+    const skelURL = chibiAssetURL(skelPath, server);
+    const atlasURL = chibiAssetURL(atlasPath, server);
 
     const [{ Spine, TextureAtlas, AtlasAttachmentLoader, SkeletonBinary }, skelResponse, atlasResponse] = await Promise.all([loadSpineModules(), fetch(skelURL), fetch(atlasURL)]);
 

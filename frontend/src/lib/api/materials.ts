@@ -74,16 +74,18 @@ export interface IMaterials {
     charVoucherItems: Record<string, ICharVoucherItem>;
 }
 
-export const getMaterialsFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/materials");
-    if (!res.ok) throw new Error(`Failed to load materials: ${res.status}`);
-    return (await res.json()) as IMaterials;
-});
+export const getMaterialsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: "en" | "cn") => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(server === "cn" ? "/cn/static/materials" : "/static/materials");
+        if (!res.ok) throw new Error(`Failed to load materials: ${res.status}`);
+        return (await res.json()) as IMaterials;
+    });
 
-export function materialsQueryOptions() {
+export function materialsQueryOptions(server: "en" | "cn" = "en") {
     return queryOptions({
-        queryKey: ["materials"],
-        queryFn: () => getMaterialsFn(),
+        queryKey: ["materials", server],
+        queryFn: () => getMaterialsFn({ data: server }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

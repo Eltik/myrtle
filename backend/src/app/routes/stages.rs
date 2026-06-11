@@ -6,7 +6,8 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
-use crate::database::queries::{stages, users};
+use crate::database::queries::stages::get_user_stage_clears;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct StageClearsParams {
@@ -28,7 +29,7 @@ async fn resolve_user_id(
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
     if let Some(uid) = uid_param {
-        let profile = users::find_by_uid(&state.db, uid)
+        let profile = find_by_uid(&state.db, uid)
             .await?
             .ok_or(ApiError::NotFound)?;
 
@@ -55,7 +56,7 @@ pub async fn get_stage_clears(
     Query(params): Query<StageClearsParams>,
 ) -> Result<Json<std::collections::HashMap<String, StageClearDto>>, ApiError> {
     let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
-    let data = stages::get_user_stage_clears(&state.db, user_id).await?;
+    let data = get_user_stage_clears(&state.db, user_id).await?;
     let body = data
         .clears
         .into_iter()

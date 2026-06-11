@@ -31,8 +31,18 @@ export function toAvatarStem(id: string): string {
     return encodeURIComponent(stem);
 }
 
-export function getAvatarById(charId: string): string {
-    return `${avatarBase()}/api/avatar/${toAvatarStem(charId)}`;
+export function getAvatarById(charId: string, server?: string): string {
+    const prefix = server ? `/api/${server}` : "/api";
+    return `${avatarBase()}${prefix}/avatar/${toAvatarStem(charId)}`;
+}
+
+/**
+ * Operator portrait URL. Pass `server` (e.g. "cn") to read a non-default
+ * server's assets via `/api/{server}/portrait/...`.
+ */
+export function getPortraitById(charId: string, server?: string): string {
+    const prefix = server ? `/api/${server}` : "/api";
+    return `${avatarBase()}${prefix}/portrait/${toAvatarStem(charId)}`;
 }
 
 function resolveSecretarySkinId(user: User): string | null {
@@ -180,6 +190,8 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Therapist Medic";
         case "wandermedic":
             return "Wandering Medic";
+        case "watchman":
+            return "Watchman Medic";
 
         // Sniper
         case "aoesniper":

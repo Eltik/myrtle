@@ -5,20 +5,24 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
-use crate::app::services;
+use crate::app::services::tier_list::find_and_authorize;
+use crate::app::services::tier_list::get_by_slug;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierListVersion;
-use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::create_version;
+use crate::database::queries::tier_lists::find_by_slug;
+use crate::database::queries::tier_lists::get_versions;
+use crate::database::queries::tier_lists::latest_version;
 
 pub async fn list(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<Vec<TierListVersion>>, ApiError> {
-    let tier_list = queries::find_by_slug(&state.db, &slug)
+    let tier_list = find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let versions = queries::get_versions(&state.db, tier_list.id).await?;
+    let versions = get_versions(&state.db, tier_list.id).await?;
     Ok(Json(versions))
 }
 
@@ -34,25 +38,15 @@ pub async fn publish(
     Json(body): Json<PublishRequest>,
 ) -> Result<Json<TierListVersion>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = services::tier_list::find_and_authorize(
-        &state,
-        &slug,
-        user_id,
-        auth.role,
-        Permission::Publish,
-    )
-    .await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Publish).await?;
 
     // Build snapshot from current state
-    let detail = services::tier_list::get_by_slug(&state, &slug).await?;
+    let detail = get_by_slug(&state, &slug).await?;
     let snapshot = serde_json::to_value(&detail.tiers).map_err(|e| ApiError::Internal(e.into()))?;
 
-    let next_version = queries::latest_version(&state.db, list.id)
-        .await?
-        .unwrap_or(0)
-        + 1;
+    let next_version = latest_version(&state.db, list.id).await?.unwrap_or(0) + 1;
 
-    let version = queries::create_version(
+    let version = create_version(
         &state.db,
         list.id,
         next_version,

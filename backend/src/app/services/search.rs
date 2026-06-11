@@ -2,9 +2,11 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use serde::{Deserialize, Serialize};
 
+use crate::database::queries::users::count_by_nickname;
+use crate::database::queries::users::search_by_nickname;
 use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
-    database::{models::user::UserProfile, queries::users},
+    database::models::user::UserProfile,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -30,8 +32,8 @@ pub async fn search_users(
     }
 
     let (entries, total) = tokio::try_join!(
-        users::search_by_nickname(&state.db, query, i64::from(limit), i64::from(offset)),
-        users::count_by_nickname(&state.db, query),
+        search_by_nickname(&state.db, query, i64::from(limit), i64::from(offset)),
+        count_by_nickname(&state.db, query),
     )?;
 
     let page = SearchPage { entries, total };

@@ -4,6 +4,7 @@ pub mod extract;
 pub mod hot_update;
 pub mod manifest;
 pub mod pipeline;
+pub mod profile;
 pub mod progress;
 pub mod server;
 pub mod types;

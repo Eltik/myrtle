@@ -1,4 +1,5 @@
 pub mod building;
+pub mod enemies;
 pub mod gacha;
 pub mod items;
 pub mod medals;

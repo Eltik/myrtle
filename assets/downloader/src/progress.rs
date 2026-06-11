@@ -6,6 +6,7 @@ pub struct ProgressTracker {
 }
 
 impl ProgressTracker {
+    #[must_use]
     pub fn new(total_files: u64) -> Self {
         let multi = MultiProgress::new();
         let style =

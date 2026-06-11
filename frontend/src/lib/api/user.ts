@@ -135,6 +135,41 @@ export function userInventoryQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
+export interface IEncounteredEnemy {
+    enemyId: string;
+    name: string | null;
+    enemyIndex: string | null;
+    sortId: number | null;
+}
+
+export interface IEncounteredEnemies {
+    encounteredCount: number;
+    handbookTotal: number;
+    enemies: IEncounteredEnemy[];
+}
+
+export const getUserEncounteredEnemiesFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/encountered-enemies?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        if (!res.ok) {
+            // 403 = private profile, 404 = no such user - treat both as "unavailable".
+            if (res.status === 404 || res.status === 403) return null;
+            throw new Error(`Failed to load encountered enemies: ${res.status}`);
+        }
+        return (await res.json()) as IEncounteredEnemies;
+    });
+
+export function userEncounteredEnemiesQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "encountered-enemies", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserEncounteredEnemiesFn({ data: { uid, bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 export const getUserScoreFn = createServerFn({ method: "GET" })
     .inputValidator((uid: string) => uid)
     .handler(async ({ data: uid }) => {
@@ -214,11 +249,23 @@ export interface IRoguelikeThemeImprovement {
     challenges: IProgressPair;
 }
 
+export interface ISandboxPart {
+    label: string;
+    current: number;
+    max: number;
+}
+
+export interface ISandboxCategory {
+    key: string;
+    label: string;
+    weight: number;
+    score: number;
+    parts: ISandboxPart[];
+}
+
 export interface ISandboxImprovements {
-    achievements: IProgressPair;
-    nodes: IProgressPair;
-    tech: IProgressPair;
-    quests: IProgressPair;
+    total: number;
+    categories: ISandboxCategory[];
 }
 
 export interface IMedalOperatorLock {
@@ -379,6 +426,9 @@ export interface IShiftRoom {
     swap_out: IAssignedOperator[];
     /** True when the player's preset already matches the recommendation. */
     matches: boolean;
+    /** True when the player's CURRENT team differs but produces at least as much (an exact tie),
+     *  so no swap is suggested - e.g. a Dorothy-boosted Rhine operator matching Bryophyta. */
+    equivalent: boolean;
 }
 
 export interface IShift {
@@ -388,6 +438,35 @@ export interface IShift {
 
 export interface IShiftRotation {
     shifts: IShift[];
+    /** Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
+     *  shift instead of resting the middle one. Badged as "24/7 · Fiammetta". */
+    sustained: IAssignedOperator[];
+}
+
+/** A support operator to station outside production to feed the resource economy. */
+export interface IPerceptionSupport {
+    operator: IAssignedOperator;
+    room_type: string;
+}
+
+/** A production operator the resource economy powers, with the bonus it gains. */
+export interface IPerceptionConsumer {
+    operator: IAssignedOperator;
+    room_type: string;
+    /** Peak bonus (fresh-operator snapshot). */
+    bonus_pct: number;
+    /** Sustained 24/7 bonus (peak x working uptime). */
+    sustained_pct: number;
+}
+
+/** The base-wide resource economy plan (Rosmontis / Ebenholz "Perception Information"). */
+export interface IPerceptionPlan {
+    support: IPerceptionSupport[];
+    consumers: IPerceptionConsumer[];
+    /** The morale-swap operator (Fiammetta) sustaining the Ling/Dusk rotation, if owned. */
+    rotation_manager?: IAssignedOperator | null;
+    /** True when the plan uses Ling/Dusk but the roster has no morale-swap manager. */
+    needs_rotation_manager: boolean;
 }
 
 export interface IBaseImprovements {
@@ -400,6 +479,8 @@ export interface IBaseImprovements {
     layout: IRoomLayoutEntry[];
     /** Recommended 3-shift rotation paired with the player's saved presets. */
     shift_rotation?: IShiftRotation | null;
+    /** The base-wide resource economy plan, if a 243 roster can field it. */
+    perception?: IPerceptionPlan | null;
 }
 
 export interface IImprovementsResponse {

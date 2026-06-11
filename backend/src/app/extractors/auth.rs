@@ -5,7 +5,7 @@ use subtle::ConstantTimeEq;
 
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::core::auth::jwt;
+use crate::core::auth::jwt::verify_token;
 use crate::core::auth::permissions::GlobalRole;
 
 #[derive(Debug, Clone)]
@@ -49,7 +49,7 @@ impl FromRequestParts<AppState> for AuthUser {
 
         // Otherwise, require Bearer token
         let token = extract_bearer(&parts.headers)?;
-        let claims = jwt::verify_token(&state.config.jwt_secret, token)?;
+        let claims = verify_token(&state.config.jwt_secret, token)?;
 
         let role = parse_role(&claims.role);
 

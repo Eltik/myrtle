@@ -17,7 +17,7 @@ pub fn export_gamedata(
 
     for entry in WalkDir::new(bundle_dir)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path();

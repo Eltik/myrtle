@@ -28,16 +28,18 @@ export interface IChibiResponse {
     characters: IChibiCharacter[];
 }
 
-export const getChibisFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/chibis");
-    if (!res.ok) throw new Error(`Failed to load chibis: ${res.status}`);
-    return (await res.json()) as IChibiResponse;
-});
+export const getChibisFn = createServerFn({ method: "GET" })
+    .inputValidator((server: "en" | "cn") => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(server === "cn" ? "/cn/static/chibis" : "/static/chibis");
+        if (!res.ok) throw new Error(`Failed to load chibis: ${res.status}`);
+        return (await res.json()) as IChibiResponse;
+    });
 
-export function chibisQueryOptions() {
+export function chibisQueryOptions(server: "en" | "cn" = "en") {
     return queryOptions({
-        queryKey: ["chibis"],
-        queryFn: () => getChibisFn(),
+        queryKey: ["chibis", server],
+        queryFn: () => getChibisFn({ data: server }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

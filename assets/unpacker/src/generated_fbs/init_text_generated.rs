@@ -4,306 +4,349 @@ extern crate alloc;
 
 extern crate serde;
 
-
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__string<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-  type Inner = dict__string__string<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__string<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__string { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__stringArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__string<'bldr>> {
-    let mut builder = dict__string__stringBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__stringT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    dict__string__stringT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__string { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__stringArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__string<'bldr>> {
+        let mut builder = dict__string__stringBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::string::ToString::to_string(x));
+        dict__string__stringT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_KEY, None)
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_VALUE, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__string<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for dict__string__stringArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__stringArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__stringArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__stringArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
-
 
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__stringBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__stringBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_KEY, key);
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__string::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__stringBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(o, dict__string__string::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__string<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__string");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__string");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__stringT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::string::String>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::string::String>,
 }
 impl Default for dict__string__stringT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__stringT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__string<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    dict__string__string::create(_fbb, &dict__string__stringArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
 }
 pub enum clz_Torappu_LanguageDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_LanguageData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_LanguageData<'a> {
-  type Inner = clz_Torappu_LanguageData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_LanguageData<'a> {
-  pub const VT_STRINGS: ::flatbuffers::VOffsetT = 4;
+    pub const VT_STRINGS: ::flatbuffers::VOffsetT = 4;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_LanguageData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_LanguageDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'bldr>> {
-    let mut builder = clz_Torappu_LanguageDataBuilder::new(_fbb);
-    if let Some(x) = args.strings { builder.add_strings(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_LanguageDataT {
-    let strings = self.strings().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_LanguageDataT {
-      strings,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_LanguageData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_LanguageDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'bldr>> {
+        let mut builder = clz_Torappu_LanguageDataBuilder::new(_fbb);
+        if let Some(x) = args.strings {
+            builder.add_strings(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn strings(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>(clz_Torappu_LanguageData::VT_STRINGS, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_LanguageDataT {
+        let strings = self
+            .strings()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_LanguageDataT { strings }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn strings(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>(clz_Torappu_LanguageData::VT_STRINGS, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_LanguageData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("strings", Self::VT_STRINGS, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>("strings", Self::VT_STRINGS, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_LanguageDataArgs<'a> {
-    pub strings: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>>,
+    pub strings: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>,
+        >,
+    >,
 }
-impl<'a> Default for clz_Torappu_LanguageDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_LanguageDataArgs {
-      strings: None,
+impl Default for clz_Torappu_LanguageDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_LanguageDataArgs { strings: None }
     }
-  }
 }
-
 
 pub struct clz_Torappu_LanguageDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LanguageDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_strings(&mut self, strings: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_LanguageData::VT_STRINGS, strings);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_LanguageDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_LanguageDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_strings(
+        &mut self,
+        strings: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<dict__string__string<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_LanguageData::VT_STRINGS,
+            strings,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_LanguageDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_LanguageData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_LanguageData");
-      ds.field("strings", &self.strings());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_LanguageData");
+        ds.field("strings", &self.strings());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_LanguageDataT {
-  pub strings: Option<alloc::vec::Vec<dict__string__stringT>>,
+    pub strings: Option<alloc::vec::Vec<dict__string__stringT>>,
 }
 impl Default for clz_Torappu_LanguageDataT {
-  fn default() -> Self {
-    Self {
-      strings: None,
+    fn default() -> Self {
+        Self { strings: None }
     }
-  }
 }
 impl clz_Torappu_LanguageDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'b>> {
-    let strings = self.strings.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_LanguageData::create(_fbb, &clz_Torappu_LanguageDataArgs{
-      strings,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'b>> {
+        let strings = self.strings.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_LanguageData::create(_fbb, &clz_Torappu_LanguageDataArgs { strings })
+    }
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_LanguageData`
@@ -312,8 +355,10 @@ impl clz_Torappu_LanguageDataT {
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_language_data_unchecked`.
-pub fn root_as_clz_torappu_language_data(buf: &[u8]) -> Result<clz_Torappu_LanguageData<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root::<clz_Torappu_LanguageData>(buf)
+pub fn root_as_clz_torappu_language_data(
+    buf: &[u8],
+) -> Result<clz_Torappu_LanguageData<'_>, ::flatbuffers::InvalidFlatbuffer> {
+    ::flatbuffers::root::<clz_Torappu_LanguageData>(buf)
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a size prefixed
@@ -322,8 +367,10 @@ pub fn root_as_clz_torappu_language_data(buf: &[u8]) -> Result<clz_Torappu_Langu
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `size_prefixed_root_as_clz_torappu_language_data_unchecked`.
-pub fn size_prefixed_root_as_clz_torappu_language_data(buf: &[u8]) -> Result<clz_Torappu_LanguageData<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root::<clz_Torappu_LanguageData>(buf)
+pub fn size_prefixed_root_as_clz_torappu_language_data(
+    buf: &[u8],
+) -> Result<clz_Torappu_LanguageData<'_>, ::flatbuffers::InvalidFlatbuffer> {
+    ::flatbuffers::size_prefixed_root::<clz_Torappu_LanguageData>(buf)
 }
 #[inline]
 /// Verifies, with the given options, that a buffer of bytes
@@ -333,10 +380,10 @@ pub fn size_prefixed_root_as_clz_torappu_language_data(buf: &[u8]) -> Result<clz
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_language_data_unchecked`.
 pub fn root_as_clz_torappu_language_data_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
 ) -> Result<clz_Torappu_LanguageData<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root_with_opts::<clz_Torappu_LanguageData<'b>>(opts, buf)
+    ::flatbuffers::root_with_opts::<clz_Torappu_LanguageData<'b>>(opts, buf)
 }
 #[inline]
 /// Verifies, with the given verifier options, that a buffer of
@@ -346,33 +393,47 @@ pub fn root_as_clz_torappu_language_data_with_opts<'b, 'o>(
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_language_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_language_data_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
 ) -> Result<clz_Torappu_LanguageData<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_LanguageData<'b>>(opts, buf)
+    ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_LanguageData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_LanguageData and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_LanguageData` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_LanguageData`.
-pub unsafe fn root_as_clz_torappu_language_data_unchecked(buf: &[u8]) -> clz_Torappu_LanguageData<'_> {
-  unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_LanguageData>(buf) }
+#[must_use]
+pub unsafe fn root_as_clz_torappu_language_data_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_LanguageData<'_> {
+    unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_LanguageData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_LanguageData and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_LanguageData` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_LanguageData`.
-pub unsafe fn size_prefixed_root_as_clz_torappu_language_data_unchecked(buf: &[u8]) -> clz_Torappu_LanguageData<'_> {
-  unsafe { ::flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_LanguageData>(buf) }
+#[must_use]
+pub unsafe fn size_prefixed_root_as_clz_torappu_language_data_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_LanguageData<'_> {
+    unsafe { ::flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_LanguageData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_language_data_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(
     fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-    root: ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>>) {
-  fbb.finish(root, None);
+    root: ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>>,
+) {
+    fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_clz_torappu_language_data_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>, root: ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>>) {
-  fbb.finish_size_prefixed(root, None);
+pub fn finish_size_prefixed_clz_torappu_language_data_buffer<
+    'a,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+>(
+    fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    root: ::flatbuffers::WIPOffset<clz_Torappu_LanguageData<'a>>,
+) {
+    fbb.finish_size_prefixed(root, None);
 }

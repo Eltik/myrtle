@@ -9,21 +9,87 @@ use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
 use crate::app::{error::ApiError, state::AppState};
-use crate::core::gamedata::assets::AssetKind;
+use crate::core::gamedata::assets::{AssetIndex, AssetKind};
+use crate::core::hypergryph::constants::Server;
 
 const ALLOWED_EXTENSIONS: &[&str] = &[
     "png", "jpg", "jpeg", "webp", "svg", "mp3", "ogg", "wav", "m4a", "mp4", "webm", "skel",
     "atlas", "json", "txt",
 ];
 
+/// Serve an asset from `server`, falling back to the default server when the
+/// requested server has no data for it (a missing index entry, or the server
+/// isn't loaded at all). `resolve` maps an asset index to a relative path and is
+/// run against each server's index in turn.
+async fn serve_resolved<F>(
+    state: &AppState,
+    server: Server,
+    headers: &HeaderMap,
+    resolve: F,
+) -> Result<Response, ApiError>
+where
+    F: Fn(&AssetIndex) -> Option<String>,
+{
+    if let Some(sd) = state.try_server_data(server)
+        && let Some(rel) = resolve(&sd.asset_index.load())
+        && let Ok(resp) = serve_file(&sd.assets_dir, &rel, headers).await
+    {
+        return Ok(resp);
+    }
+    if server != state.default_server
+        && let Some(sd) = state.try_server_data(state.default_server)
+        && let Some(rel) = resolve(&sd.asset_index.load())
+    {
+        return serve_file(&sd.assets_dir, &rel, headers).await;
+    }
+    Err(ApiError::NotFound)
+}
+
+async fn portrait_impl(
+    state: &AppState,
+    server: Server,
+    char_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.portrait_path(char_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
+}
+
 pub async fn portrait(
     State(state): State<AppState>,
     headers: HeaderMap,
     AxumPath(char_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx.portrait_path(&char_id).ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    portrait_impl(&state, state.default_server, &char_id, &headers).await
+}
+
+pub async fn portrait_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, char_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    portrait_impl(&state, server, &char_id, &headers).await
+}
+
+async fn avatar_impl(
+    state: &AppState,
+    server: Server,
+    avatar_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
+    // ship only the `_2` avatar variant - no bare-id file exists. Fall back
+    // to the E2 then E1 suffix so plain char-id lookups still resolve.
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::Avatar, avatar_id)
+            .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
+            .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn avatar(
@@ -31,17 +97,28 @@ pub async fn avatar(
     headers: HeaderMap,
     AxumPath(avatar_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
-    // ship only the `_2` avatar variant - no bare-id file exists. Fall back
-    // to the E2 then E1 suffix so plain char-id lookups still resolve.
-    let rel_path = idx
-        .path(AssetKind::Avatar, &avatar_id)
-        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
-        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
-        .ok_or(ApiError::NotFound)?;
+    avatar_impl(&state, state.default_server, &avatar_id, &headers).await
+}
 
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+pub async fn avatar_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, avatar_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    avatar_impl(&state, server, &avatar_id, &headers).await
+}
+
+async fn skill_icon_impl(
+    state: &AppState,
+    server: Server,
+    skill_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.skill_icon_path(skill_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn skill_icon(
@@ -49,9 +126,28 @@ pub async fn skill_icon(
     headers: HeaderMap,
     AxumPath(skill_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx.skill_icon_path(&skill_id).ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    skill_icon_impl(&state, state.default_server, &skill_id, &headers).await
+}
+
+pub async fn skill_icon_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, skill_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    skill_icon_impl(&state, server, &skill_id, &headers).await
+}
+
+async fn module_icon_impl(
+    state: &AppState,
+    server: Server,
+    equip_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.module_icon_path(equip_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn module_icon(
@@ -59,9 +155,28 @@ pub async fn module_icon(
     headers: HeaderMap,
     AxumPath(equip_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx.module_icon_path(&equip_id).ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    module_icon_impl(&state, state.default_server, &equip_id, &headers).await
+}
+
+pub async fn module_icon_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, equip_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    module_icon_impl(&state, server, &equip_id, &headers).await
+}
+
+async fn module_big_impl(
+    state: &AppState,
+    server: Server,
+    equip_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.module_big_path(equip_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn module_big(
@@ -69,9 +184,28 @@ pub async fn module_big(
     headers: HeaderMap,
     AxumPath(equip_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx.module_big_path(&equip_id).ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    module_big_impl(&state, state.default_server, &equip_id, &headers).await
+}
+
+pub async fn module_big_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, equip_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    module_big_impl(&state, server, &equip_id, &headers).await
+}
+
+async fn enemy_icon_impl(
+    state: &AppState,
+    server: Server,
+    enemy_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::EnemyIcon, enemy_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn enemy_icon(
@@ -79,11 +213,28 @@ pub async fn enemy_icon(
     headers: HeaderMap,
     AxumPath(enemy_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::EnemyIcon, &enemy_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    enemy_icon_impl(&state, state.default_server, &enemy_id, &headers).await
+}
+
+pub async fn enemy_icon_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, enemy_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    enemy_icon_impl(&state, server, &enemy_id, &headers).await
+}
+
+async fn item_icon_impl(
+    state: &AppState,
+    server: Server,
+    item_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::ItemIcon, item_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn item_icon(
@@ -91,11 +242,28 @@ pub async fn item_icon(
     headers: HeaderMap,
     AxumPath(item_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::ItemIcon, &item_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    item_icon_impl(&state, state.default_server, &item_id, &headers).await
+}
+
+pub async fn item_icon_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, item_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    item_icon_impl(&state, server, &item_id, &headers).await
+}
+
+async fn medal_icon_impl(
+    state: &AppState,
+    server: Server,
+    medal_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::MedalIcon, medal_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn medal_icon(
@@ -103,11 +271,28 @@ pub async fn medal_icon(
     headers: HeaderMap,
     AxumPath(medal_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::MedalIcon, &medal_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    medal_icon_impl(&state, state.default_server, &medal_id, &headers).await
+}
+
+pub async fn medal_icon_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, medal_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    medal_icon_impl(&state, server, &medal_id, &headers).await
+}
+
+async fn skin_portrait_impl(
+    state: &AppState,
+    server: Server,
+    skin_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| {
+        idx.path(AssetKind::SkinPortrait, skin_id)
+            .map(std::borrow::ToOwned::to_owned)
+    })
+    .await
 }
 
 pub async fn skin_portrait(
@@ -115,11 +300,24 @@ pub async fn skin_portrait(
     headers: HeaderMap,
     AxumPath(skin_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx
-        .path(AssetKind::SkinPortrait, &skin_id)
-        .ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, rel_path, &headers).await
+    skin_portrait_impl(&state, state.default_server, &skin_id, &headers).await
+}
+
+pub async fn skin_portrait_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, skin_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    skin_portrait_impl(&state, server, &skin_id, &headers).await
+}
+
+async fn charart_impl(
+    state: &AppState,
+    server: Server,
+    char_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    serve_resolved(state, server, headers, |idx| idx.charart_path(char_id)).await
 }
 
 pub async fn charart(
@@ -127,9 +325,34 @@ pub async fn charart(
     headers: HeaderMap,
     AxumPath(char_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    let idx = state.asset_index.load();
-    let rel_path = idx.charart_path(&char_id).ok_or(ApiError::NotFound)?;
-    serve_file(&state.config.assets_dir, &rel_path, &headers).await
+    charart_impl(&state, state.default_server, &char_id, &headers).await
+}
+
+pub async fn charart_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, char_id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    charart_impl(&state, server, &char_id, &headers).await
+}
+
+async fn generic_impl(
+    state: &AppState,
+    server: Server,
+    asset_path: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    if let Some(sd) = state.try_server_data(server)
+        && let Ok(resp) = serve_file(&sd.assets_dir, asset_path, headers).await
+    {
+        return Ok(resp);
+    }
+    if server != state.default_server
+        && let Some(sd) = state.try_server_data(state.default_server)
+    {
+        return serve_file(&sd.assets_dir, asset_path, headers).await;
+    }
+    Err(ApiError::NotFound)
 }
 
 pub async fn generic(
@@ -137,7 +360,15 @@ pub async fn generic(
     headers: HeaderMap,
     AxumPath(asset_path): AxumPath<String>,
 ) -> Result<Response, ApiError> {
-    serve_file(&state.config.assets_dir, &asset_path, &headers).await
+    generic_impl(&state, state.default_server, &asset_path, &headers).await
+}
+
+pub async fn generic_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, asset_path)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    generic_impl(&state, server, &asset_path, &headers).await
 }
 
 fn validate_asset_path(base_dir: &Path, requested: &str) -> Result<PathBuf, ApiError> {
@@ -197,7 +428,7 @@ async fn serve_file(
             StatusCode::NOT_MODIFIED,
             [
                 (header::ETAG, etag),
-                (header::CACHE_CONTROL, "no-cache".into()),
+                (header::CACHE_CONTROL, "public, max-age=604800".into()),
             ],
         )
             .into_response());
@@ -240,7 +471,7 @@ async fn serve_file(
                 (header::ACCEPT_RANGES, "bytes".into()),
                 (header::CONTENT_RANGE, format!("bytes {start}-{end}/{size}")),
                 (header::ETAG, etag),
-                (header::CACHE_CONTROL, "no-cache".into()),
+                (header::CACHE_CONTROL, "public, max-age=604800".into()),
             ],
             body,
         )
@@ -256,7 +487,7 @@ async fn serve_file(
             (header::CONTENT_LENGTH, size.to_string()),
             (header::ACCEPT_RANGES, "bytes".into()),
             (header::ETAG, etag),
-            (header::CACHE_CONTROL, "no-cache".into()),
+            (header::CACHE_CONTROL, "public, max-age=604800".into()),
         ],
         body,
     )

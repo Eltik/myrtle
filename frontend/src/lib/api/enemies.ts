@@ -141,6 +141,31 @@ export function enemiesListQueryOptions() {
     });
 }
 
+export interface IEnemyCommunityAverage {
+    /** Mean number of distinct enemies encountered across every synced user. */
+    averageEncountered: number;
+    /** Number of users in the average's denominator. */
+    userCount: number;
+    /** Visible handbook size, matching the per-user response's denominator. */
+    handbookTotal: number;
+    computedAt: string;
+}
+
+export const getEnemyCommunityAverageFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/encountered-enemies/community-average");
+    if (!res.ok) throw new Error(`Failed to load enemy community average: ${res.status}`);
+    return (await res.json()) as IEnemyCommunityAverage;
+});
+
+export function enemyCommunityAverageQueryOptions() {
+    return queryOptions({
+        queryKey: ["enemies", "community-average"],
+        queryFn: () => getEnemyCommunityAverageFn(),
+        staleTime: 30 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
+}
+
 export const getEnemyFn = createServerFn({ method: "GET" })
     .inputValidator((id: string) => id)
     .handler(async ({ data: id }) => {

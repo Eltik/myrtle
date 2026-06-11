@@ -4,157 +4,228 @@ extern crate alloc;
 
 extern crate serde;
 
-
 pub enum clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_HandbookTeamData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_HandbookTeamData<'a> {
-  type Inner = clz_Torappu_HandbookTeamData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_HandbookTeamData<'a> {
-  pub const VT_POWERID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_ORDERNUM: ::flatbuffers::VOffsetT = 6;
-  pub const VT_POWERLEVEL: ::flatbuffers::VOffsetT = 8;
-  pub const VT_POWERNAME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_POWERCODE: ::flatbuffers::VOffsetT = 12;
-  pub const VT_COLOR: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ISLIMITED: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ISRAW: ::flatbuffers::VOffsetT = 18;
+    pub const VT_POWERID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ORDERNUM: ::flatbuffers::VOffsetT = 6;
+    pub const VT_POWERLEVEL: ::flatbuffers::VOffsetT = 8;
+    pub const VT_POWERNAME: ::flatbuffers::VOffsetT = 10;
+    pub const VT_POWERCODE: ::flatbuffers::VOffsetT = 12;
+    pub const VT_COLOR: ::flatbuffers::VOffsetT = 14;
+    pub const VT_ISLIMITED: ::flatbuffers::VOffsetT = 16;
+    pub const VT_ISRAW: ::flatbuffers::VOffsetT = 18;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_HandbookTeamData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_HandbookTeamDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'bldr>> {
-    let mut builder = clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
-    if let Some(x) = args.color { builder.add_color(x); }
-    if let Some(x) = args.powerCode { builder.add_powerCode(x); }
-    if let Some(x) = args.powerName { builder.add_powerName(x); }
-    builder.add_powerLevel(args.powerLevel);
-    builder.add_orderNum(args.orderNum);
-    if let Some(x) = args.powerId { builder.add_powerId(x); }
-    builder.add_isRaw(args.isRaw);
-    builder.add_isLimited(args.isLimited);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_HandbookTeamDataT {
-    let powerId = self.powerId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let orderNum = self.orderNum();
-    let powerLevel = self.powerLevel();
-    let powerName = self.powerName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let powerCode = self.powerCode().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let color = self.color().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let isLimited = self.isLimited();
-    let isRaw = self.isRaw();
-    clz_Torappu_HandbookTeamDataT {
-      powerId,
-      orderNum,
-      powerLevel,
-      powerName,
-      powerCode,
-      color,
-      isLimited,
-      isRaw,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_HandbookTeamData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_HandbookTeamDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'bldr>> {
+        let mut builder = clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
+        if let Some(x) = args.color {
+            builder.add_color(x);
+        }
+        if let Some(x) = args.powerCode {
+            builder.add_powerCode(x);
+        }
+        if let Some(x) = args.powerName {
+            builder.add_powerName(x);
+        }
+        builder.add_powerLevel(args.powerLevel);
+        builder.add_orderNum(args.orderNum);
+        if let Some(x) = args.powerId {
+            builder.add_powerId(x);
+        }
+        builder.add_isRaw(args.isRaw);
+        builder.add_isLimited(args.isLimited);
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn powerId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_HandbookTeamData::VT_POWERID, None)}
-  }
-  #[inline]
-  pub fn orderNum(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_HandbookTeamData::VT_ORDERNUM, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn powerLevel(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_HandbookTeamData::VT_POWERLEVEL, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn powerName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_HandbookTeamData::VT_POWERNAME, None)}
-  }
-  #[inline]
-  pub fn powerCode(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_HandbookTeamData::VT_POWERCODE, None)}
-  }
-  #[inline]
-  pub fn color(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_HandbookTeamData::VT_COLOR, None)}
-  }
-  #[inline]
-  pub fn isLimited(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_HandbookTeamData::VT_ISLIMITED, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn isRaw(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_HandbookTeamData::VT_ISRAW, Some(false)).unwrap()}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_HandbookTeamDataT {
+        let powerId = self
+            .powerId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let orderNum = self.orderNum();
+        let powerLevel = self.powerLevel();
+        let powerName = self
+            .powerName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let powerCode = self
+            .powerCode()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let color = self.color().map(|x| alloc::string::ToString::to_string(x));
+        let isLimited = self.isLimited();
+        let isRaw = self.isRaw();
+        clz_Torappu_HandbookTeamDataT {
+            powerId,
+            orderNum,
+            powerLevel,
+            powerName,
+            powerCode,
+            color,
+            isLimited,
+            isRaw,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn powerId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_HandbookTeamData::VT_POWERID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn orderNum(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_HandbookTeamData::VT_ORDERNUM, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn powerLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_HandbookTeamData::VT_POWERLEVEL, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn powerName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_HandbookTeamData::VT_POWERNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn powerCode(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_HandbookTeamData::VT_POWERCODE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn color(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_HandbookTeamData::VT_COLOR,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn isLimited(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_HandbookTeamData::VT_ISLIMITED, Some(false))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn isRaw(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_HandbookTeamData::VT_ISRAW, Some(false))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_HandbookTeamData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("powerId", Self::VT_POWERID, false)?
-     .visit_field::<i32>("orderNum", Self::VT_ORDERNUM, false)?
-     .visit_field::<i32>("powerLevel", Self::VT_POWERLEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("powerName", Self::VT_POWERNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("powerCode", Self::VT_POWERCODE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("color", Self::VT_COLOR, false)?
-     .visit_field::<bool>("isLimited", Self::VT_ISLIMITED, false)?
-     .visit_field::<bool>("isRaw", Self::VT_ISRAW, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "powerId",
+                Self::VT_POWERID,
+                false,
+            )?
+            .visit_field::<i32>("orderNum", Self::VT_ORDERNUM, false)?
+            .visit_field::<i32>("powerLevel", Self::VT_POWERLEVEL, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "powerName",
+                Self::VT_POWERNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "powerCode",
+                Self::VT_POWERCODE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("color", Self::VT_COLOR, false)?
+            .visit_field::<bool>("isLimited", Self::VT_ISLIMITED, false)?
+            .visit_field::<bool>("isRaw", Self::VT_ISRAW, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_HandbookTeamDataArgs<'a> {
     pub powerId: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -166,447 +237,564 @@ pub struct clz_Torappu_HandbookTeamDataArgs<'a> {
     pub isLimited: bool,
     pub isRaw: bool,
 }
-impl<'a> Default for clz_Torappu_HandbookTeamDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_HandbookTeamDataArgs {
-      powerId: None,
-      orderNum: 0,
-      powerLevel: 0,
-      powerName: None,
-      powerCode: None,
-      color: None,
-      isLimited: false,
-      isRaw: false,
+impl Default for clz_Torappu_HandbookTeamDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_HandbookTeamDataArgs {
+            powerId: None,
+            orderNum: 0,
+            powerLevel: 0,
+            powerName: None,
+            powerCode: None,
+            color: None,
+            isLimited: false,
+            isRaw: false,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_HandbookTeamDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_powerId(&mut self, powerId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_HandbookTeamData::VT_POWERID, powerId);
-  }
-  #[inline]
-  pub fn add_orderNum(&mut self, orderNum: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_HandbookTeamData::VT_ORDERNUM, orderNum, 0);
-  }
-  #[inline]
-  pub fn add_powerLevel(&mut self, powerLevel: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_HandbookTeamData::VT_POWERLEVEL, powerLevel, 0);
-  }
-  #[inline]
-  pub fn add_powerName(&mut self, powerName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_HandbookTeamData::VT_POWERNAME, powerName);
-  }
-  #[inline]
-  pub fn add_powerCode(&mut self, powerCode: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_HandbookTeamData::VT_POWERCODE, powerCode);
-  }
-  #[inline]
-  pub fn add_color(&mut self, color: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_HandbookTeamData::VT_COLOR, color);
-  }
-  #[inline]
-  pub fn add_isLimited(&mut self, isLimited: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_HandbookTeamData::VT_ISLIMITED, isLimited, false);
-  }
-  #[inline]
-  pub fn add_isRaw(&mut self, isRaw: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_HandbookTeamData::VT_ISRAW, isRaw, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_HandbookTeamDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_powerId(&mut self, powerId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_HandbookTeamData::VT_POWERID,
+            powerId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_orderNum(&mut self, orderNum: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_HandbookTeamData::VT_ORDERNUM, orderNum, 0);
+    }
+    #[inline]
+    pub fn add_powerLevel(&mut self, powerLevel: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_HandbookTeamData::VT_POWERLEVEL, powerLevel, 0);
+    }
+    #[inline]
+    pub fn add_powerName(&mut self, powerName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_HandbookTeamData::VT_POWERNAME,
+            powerName,
+        );
+    }
+    #[inline]
+    pub fn add_powerCode(&mut self, powerCode: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_HandbookTeamData::VT_POWERCODE,
+            powerCode,
+        );
+    }
+    #[inline]
+    pub fn add_color(&mut self, color: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_HandbookTeamData::VT_COLOR,
+            color,
+        );
+    }
+    #[inline]
+    pub fn add_isLimited(&mut self, isLimited: bool) {
+        self.fbb_
+            .push_slot::<bool>(clz_Torappu_HandbookTeamData::VT_ISLIMITED, isLimited, false);
+    }
+    #[inline]
+    pub fn add_isRaw(&mut self, isRaw: bool) {
+        self.fbb_
+            .push_slot::<bool>(clz_Torappu_HandbookTeamData::VT_ISRAW, isRaw, false);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_HandbookTeamDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_HandbookTeamData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_HandbookTeamData");
-      ds.field("powerId", &self.powerId());
-      ds.field("orderNum", &self.orderNum());
-      ds.field("powerLevel", &self.powerLevel());
-      ds.field("powerName", &self.powerName());
-      ds.field("powerCode", &self.powerCode());
-      ds.field("color", &self.color());
-      ds.field("isLimited", &self.isLimited());
-      ds.field("isRaw", &self.isRaw());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_HandbookTeamData");
+        ds.field("powerId", &self.powerId());
+        ds.field("orderNum", &self.orderNum());
+        ds.field("powerLevel", &self.powerLevel());
+        ds.field("powerName", &self.powerName());
+        ds.field("powerCode", &self.powerCode());
+        ds.field("color", &self.color());
+        ds.field("isLimited", &self.isLimited());
+        ds.field("isRaw", &self.isRaw());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_HandbookTeamDataT {
-  pub powerId: Option<alloc::string::String>,
-  pub orderNum: i32,
-  pub powerLevel: i32,
-  pub powerName: Option<alloc::string::String>,
-  pub powerCode: Option<alloc::string::String>,
-  pub color: Option<alloc::string::String>,
-  pub isLimited: bool,
-  pub isRaw: bool,
+    pub powerId: Option<alloc::string::String>,
+    pub orderNum: i32,
+    pub powerLevel: i32,
+    pub powerName: Option<alloc::string::String>,
+    pub powerCode: Option<alloc::string::String>,
+    pub color: Option<alloc::string::String>,
+    pub isLimited: bool,
+    pub isRaw: bool,
 }
 impl Default for clz_Torappu_HandbookTeamDataT {
-  fn default() -> Self {
-    Self {
-      powerId: None,
-      orderNum: 0,
-      powerLevel: 0,
-      powerName: None,
-      powerCode: None,
-      color: None,
-      isLimited: false,
-      isRaw: false,
+    fn default() -> Self {
+        Self {
+            powerId: None,
+            orderNum: 0,
+            powerLevel: 0,
+            powerName: None,
+            powerCode: None,
+            color: None,
+            isLimited: false,
+            isRaw: false,
+        }
     }
-  }
 }
 impl clz_Torappu_HandbookTeamDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'b>> {
-    let powerId = self.powerId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let orderNum = self.orderNum;
-    let powerLevel = self.powerLevel;
-    let powerName = self.powerName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let powerCode = self.powerCode.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let color = self.color.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let isLimited = self.isLimited;
-    let isRaw = self.isRaw;
-    clz_Torappu_HandbookTeamData::create(_fbb, &clz_Torappu_HandbookTeamDataArgs{
-      powerId,
-      orderNum,
-      powerLevel,
-      powerName,
-      powerCode,
-      color,
-      isLimited,
-      isRaw,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'b>> {
+        let powerId = self.powerId.as_ref().map(|x| _fbb.create_string(x));
+        let orderNum = self.orderNum;
+        let powerLevel = self.powerLevel;
+        let powerName = self.powerName.as_ref().map(|x| _fbb.create_string(x));
+        let powerCode = self.powerCode.as_ref().map(|x| _fbb.create_string(x));
+        let color = self.color.as_ref().map(|x| _fbb.create_string(x));
+        let isLimited = self.isLimited;
+        let isRaw = self.isRaw;
+        clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &clz_Torappu_HandbookTeamDataArgs {
+                powerId,
+                orderNum,
+                powerLevel,
+                powerName,
+                powerCode,
+                color,
+                isLimited,
+                isRaw,
+            },
+        )
+    }
 }
 pub enum dict__string__clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__clz_Torappu_HandbookTeamData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_HandbookTeamData<'a> {
-  type Inner = dict__string__clz_Torappu_HandbookTeamData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_HandbookTeamData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_HandbookTeamDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_HandbookTeamDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_HandbookTeamDataT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_HandbookTeamData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_HandbookTeamDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_HandbookTeamData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_HandbookTeamData) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__clz_Torappu_HandbookTeamDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_HandbookTeamDataT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_HandbookTeamData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_HandbookTeamData>>(dict__string__clz_Torappu_HandbookTeamData::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_HandbookTeamData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_HandbookTeamData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<clz_Torappu_HandbookTeamData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_HandbookTeamData>>(
+                    dict__string__clz_Torappu_HandbookTeamData::VT_VALUE,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_HandbookTeamData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_HandbookTeamData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_HandbookTeamData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'a>>>,
 }
-impl<'a> Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_HandbookTeamDataArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_HandbookTeamDataArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__clz_Torappu_HandbookTeamDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__clz_Torappu_HandbookTeamDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_HandbookTeamData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData>>(dict__string__clz_Torappu_HandbookTeamData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_HandbookTeamDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_HandbookTeamData::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_HandbookTeamData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData>>(
+                dict__string__clz_Torappu_HandbookTeamData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_HandbookTeamDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_HandbookTeamData::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__clz_Torappu_HandbookTeamData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_HandbookTeamData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_HandbookTeamData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__clz_Torappu_HandbookTeamDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_HandbookTeamDataT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_HandbookTeamDataT>>,
 }
 impl Default for dict__string__clz_Torappu_HandbookTeamDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__clz_Torappu_HandbookTeamDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_HandbookTeamData::create(_fbb, &dict__string__clz_Torappu_HandbookTeamDataArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &dict__string__clz_Torappu_HandbookTeamDataArgs { key, value },
+        )
+    }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
-  type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
-  pub const VT_HANDBOOK_TEAMS: ::flatbuffers::VOffsetT = 4;
+    pub const VT_HANDBOOK_TEAMS: ::flatbuffers::VOffsetT = 4;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'bldr>> {
-    let mut builder = clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
-    if let Some(x) = args.handbook_teams { builder.add_handbook_teams(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
-    let handbook_teams = self.handbook_teams().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
-      handbook_teams,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'bldr>>
+    {
+        let mut builder = clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder::new(_fbb);
+        if let Some(x) = args.handbook_teams {
+            builder.add_handbook_teams(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn handbook_teams(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData>>>>(clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::VT_HANDBOOK_TEAMS, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
+        let handbook_teams = self
+            .handbook_teams()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT { handbook_teams }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn handbook_teams(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData>,
+                >,
+            >>(
+                clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::VT_HANDBOOK_TEAMS,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData>>>>("handbook_teams", Self::VT_HANDBOOK_TEAMS, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData>,
+                >,
+            >>("handbook_teams", Self::VT_HANDBOOK_TEAMS, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'a> {
-    pub handbook_teams: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'a>>>>>,
+    pub handbook_teams: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'a>>,
+            >,
+        >,
+    >,
 }
-impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs {
-      handbook_teams: None,
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs {
+            handbook_teams: None,
+        }
     }
-  }
 }
 
-
-pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_handbook_teams(&mut self, handbook_teams: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::VT_HANDBOOK_TEAMS, handbook_teams);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_handbook_teams(
+        &mut self,
+        handbook_teams: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_HandbookTeamData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::VT_HANDBOOK_TEAMS,
+            handbook_teams,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData");
-      ds.field("handbook_teams", &self.handbook_teams());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData");
+        ds.field("handbook_teams", &self.handbook_teams());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
-  pub handbook_teams: Option<alloc::vec::Vec<dict__string__clz_Torappu_HandbookTeamDataT>>,
+    pub handbook_teams: Option<alloc::vec::Vec<dict__string__clz_Torappu_HandbookTeamDataT>>,
 }
 impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
-  fn default() -> Self {
-    Self {
-      handbook_teams: None,
+    fn default() -> Self {
+        Self {
+            handbook_teams: None,
+        }
     }
-  }
 }
 impl clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>> {
-    let handbook_teams = self.handbook_teams.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::create(_fbb, &clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs{
-      handbook_teams,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>> {
+        let handbook_teams = self.handbook_teams.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs { handbook_teams },
+        )
+    }
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData`
@@ -615,8 +803,13 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked`.
-pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data(buf: &[u8]) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
+pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data(
+    buf: &[u8],
+) -> Result<
+    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_>,
+    ::flatbuffers::InvalidFlatbuffer,
+> {
+    ::flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a size prefixed
@@ -625,8 +818,13 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data(buf: &[
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked`.
-pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data(buf: &[u8]) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
+pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data(
+    buf: &[u8],
+) -> Result<
+    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_>,
+    ::flatbuffers::InvalidFlatbuffer,
+> {
+    ::flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
 }
 #[inline]
 /// Verifies, with the given options, that a buffer of bytes
@@ -636,10 +834,15 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_tea
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked`.
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root_with_opts::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>>(opts, buf)
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
+) -> Result<
+    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>,
+    ::flatbuffers::InvalidFlatbuffer,
+> {
+    ::flatbuffers::root_with_opts::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>>(
+        opts, buf,
+    )
 }
 #[inline]
 /// Verifies, with the given verifier options, that a buffer of
@@ -648,34 +851,66 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_with_op
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked`.
-pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>>(opts, buf)
+pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_with_opts<
+    'b,
+    'o,
+>(
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
+) -> Result<
+    clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>,
+    ::flatbuffers::InvalidFlatbuffer,
+> {
+    ::flatbuffers::size_prefixed_root_with_opts::<
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>,
+    >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData`.
-pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(buf: &[u8]) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
-  unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf) }
+#[must_use]
+pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
+    unsafe {
+        ::flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
+    }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData`.
-pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(buf: &[u8]) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
-  unsafe { ::flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf) }
+#[must_use]
+pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
+    unsafe {
+        ::flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData,
+        >(buf)
+    }
 }
 #[inline]
-pub fn finish_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(
+pub fn finish_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_buffer<
+    'a,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+>(
     fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-    root: ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>>) {
-  fbb.finish(root, None);
+    root: ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>>,
+) {
+    fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>, root: ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>>) {
-  fbb.finish_size_prefixed(root, None);
+pub fn finish_size_prefixed_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_buffer<
+    'a,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+>(
+    fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    root: ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>>,
+) {
+    fbb.finish_size_prefixed(root, None);
 }

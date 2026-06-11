@@ -2,6 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::roster::RosterEntry;
+use crate::database::models::roster::SupportUnit;
 
 /// Get full roster for a user
 pub async fn get_roster(pool: &PgPool, user_id: Uuid) -> Result<Vec<RosterEntry>, sqlx::Error> {
@@ -52,9 +53,10 @@ pub async fn sync_user_data(
     checkin: &[i16],
     supports: &serde_json::Value,
     nick_number: Option<&str>,
+    enemies: &serde_json::Value,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)"
+        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)"
     )
     .bind(uid)
     .bind(server_id)
@@ -78,17 +80,15 @@ pub async fn sync_user_data(
     .bind(checkin)
     .bind(supports)
     .bind(nick_number)
+    .bind(enemies)
     .execute(pool)
     .await?;
     Ok(())
 }
 
 /// Get support units for a user (joined with operator state).
-pub async fn get_supports(
-    pool: &PgPool,
-    user_id: Uuid,
-) -> Result<Vec<crate::database::models::roster::SupportUnit>, sqlx::Error> {
-    sqlx::query_as::<_, crate::database::models::roster::SupportUnit>(
+pub async fn get_supports(pool: &PgPool, user_id: Uuid) -> Result<Vec<SupportUnit>, sqlx::Error> {
+    sqlx::query_as::<_, SupportUnit>(
         r"
         SELECT
             su.slot,

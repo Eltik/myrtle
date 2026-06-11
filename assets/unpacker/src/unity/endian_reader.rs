@@ -7,7 +7,8 @@ pub struct EndianReader<'a> {
 }
 
 impl<'a> EndianReader<'a> {
-    pub fn new(data: &'a [u8], big_endian: bool) -> Self {
+    #[must_use]
+    pub const fn new(data: &'a [u8], big_endian: bool) -> Self {
         Self {
             data,
             pos: 0,
@@ -15,20 +16,22 @@ impl<'a> EndianReader<'a> {
         }
     }
 
-    pub fn set_big_endian(&mut self, big_endian: bool) {
+    pub const fn set_big_endian(&mut self, big_endian: bool) {
         self.big_endian = big_endian;
     }
 
-    pub fn position(&self) -> usize {
+    #[must_use]
+    pub const fn position(&self) -> usize {
         self.pos
     }
 
-    pub fn set_position(&mut self, pos: usize) {
+    pub const fn set_position(&mut self, pos: usize) {
         self.pos = pos;
     }
 
     #[allow(dead_code)]
-    pub fn remaining(&self) -> usize {
+    #[must_use]
+    pub const fn remaining(&self) -> usize {
         self.data.len().saturating_sub(self.pos)
     }
 
@@ -167,7 +170,7 @@ impl<'a> EndianReader<'a> {
         Ok(val)
     }
 
-    pub fn align(&mut self, n: usize) {
+    pub const fn align(&mut self, n: usize) {
         let remainder = self.pos % n;
         if remainder != 0 {
             self.pos += n - remainder;

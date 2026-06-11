@@ -38,9 +38,9 @@ function formatItemCount(count: number): string {
     return count.toLocaleString();
 }
 
-function ItemTile({ item, materials }: { item: ILevelUpCostItem; materials: IMaterials | undefined }) {
+function ItemTile({ item, materials, server }: { item: ILevelUpCostItem; materials: IMaterials | undefined; server?: "en" | "cn" }) {
     const name = materials?.items[item.id]?.name ?? item.id;
-    const src = itemIcon(item.id, item.iconId, item.image);
+    const src = itemIcon(item.id, item.iconId, item.image, server);
     return (
         <Tooltip>
             <TooltipTrigger
@@ -74,7 +74,7 @@ function ItemTile({ item, materials }: { item: ILevelUpCostItem; materials: IMat
     );
 }
 
-function CostRow({ label, hint, items, materials }: { label: string; hint?: string; items: ILevelUpCostItem[]; materials: IMaterials | undefined }) {
+function CostRow({ label, hint, items, materials, server }: { label: string; hint?: string; items: ILevelUpCostItem[]; materials: IMaterials | undefined; server?: "en" | "cn" }) {
     if (!items.length) return null;
     return (
         <div className="flex flex-col gap-2 border-border/60 border-b px-5 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-5">
@@ -84,7 +84,7 @@ function CostRow({ label, hint, items, materials }: { label: string; hint?: stri
             </div>
             <div className="flex flex-wrap gap-2.5">
                 {items.map((it) => (
-                    <ItemTile item={it} key={it.id} materials={materials} />
+                    <ItemTile item={it} key={it.id} materials={materials} server={server} />
                 ))}
             </div>
         </div>
@@ -110,7 +110,7 @@ function Section({ icon, title, subtitle, children, className }: { icon: React.R
 
 export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelUpContentProps) {
     const [activeSkill, setActiveSkill] = useState(0);
-    const { data: materials } = useQuery(materialsQueryOptions());
+    const { data: materials } = useQuery(materialsQueryOptions(operator.server));
 
     const elitePromotions = useMemo(() => operator.phases.map((p, idx) => ({ to: idx, cost: p.evolveCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
     const levelingRows = useMemo(() => operator.phases.map((p, idx) => ({ phase: idx, maxLevel: p.maxLevel, cost: p.levelUpCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
@@ -169,7 +169,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 {elitePromotions.length > 0 && (
                     <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle="Materials required to advance promotion stages" title="Elite Promotion">
                         {elitePromotions.map((r) => (
-                            <CostRow hint={`Promote to E${r.to}`} items={r.cost} key={r.to} label={`Elite ${r.to}`} materials={materials} />
+                            <CostRow hint={`Promote to E${r.to}`} items={r.cost} key={r.to} label={`Elite ${r.to}`} materials={materials} server={operator.server} />
                         ))}
                     </Section>
                 )}
@@ -177,7 +177,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 {allSkillRows.length > 0 && (
                     <Section icon={<ArrowUpRight className="h-4 w-4" />} subtitle="Cost to raise all skill levels (Rank 1 → 7)" title="Skill Levels">
                         {allSkillRows.map((r, i) => (
-                            <CostRow hint={`${PHASE_LABEL[r.unlockCond.phase]} · Lv. ${r.unlockCond.level}`} items={r.lvlUpCost} key={`${r.unlockCond.phase}-${r.unlockCond.level}`} label={`Lv. ${i + 1} → ${i + 2}`} materials={materials} />
+                            <CostRow hint={`${PHASE_LABEL[r.unlockCond.phase]} · Lv. ${r.unlockCond.level}`} items={r.lvlUpCost} key={`${r.unlockCond.phase}-${r.unlockCond.level}`} label={`Lv. ${i + 1} → ${i + 2}`} materials={materials} server={operator.server} />
                         ))}
                     </Section>
                 )}
@@ -201,7 +201,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                         )}
                         <div className="px-5 pt-3 pb-1 text-muted-foreground text-xs uppercase tracking-wider">{activeMasteryName}</div>
                         {activeMastery.levelUpCostCond.map((c, i) => (
-                            <CostRow hint={`${PHASE_LABEL[c.unlockCond.phase]} · Lv. ${c.unlockCond.level}`} items={c.levelUpCost} key={`${c.unlockCond.phase}-${c.unlockCond.level}`} label={`Mastery ${i + 1}`} materials={materials} />
+                            <CostRow hint={`${PHASE_LABEL[c.unlockCond.phase]} · Lv. ${c.unlockCond.level}`} items={c.levelUpCost} key={`${c.unlockCond.phase}-${c.unlockCond.level}`} label={`Mastery ${i + 1}`} materials={materials} server={operator.server} />
                         ))}
                     </Section>
                 )}
@@ -213,7 +213,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                 <div className="px-5 py-4" key={m.uniEquipId}>
                                     <div className="mb-3 flex items-center gap-3">
                                         <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted/40">
-                                            {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
+                                            {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, operator.server)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="truncate font-semibold text-foreground text-sm">{m.uniEquipName}</div>
@@ -227,7 +227,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                         {Object.entries(m.itemCost ?? {})
                                             .sort(([a], [b]) => Number(a) - Number(b))
                                             .map(([stage, items]) => (
-                                                <CostRow items={items} key={stage} label={`Stage ${stage}`} materials={materials} />
+                                                <CostRow items={items} key={stage} label={`Stage ${stage}`} materials={materials} server={operator.server} />
                                             ))}
                                     </div>
                                 </div>
@@ -240,7 +240,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                     <div className="px-5 py-4">
                         <div className="flex flex-wrap gap-2.5">
                             {grandTotal.map((it) => (
-                                <ItemTile item={it} key={it.id} materials={materials} />
+                                <ItemTile item={it} key={it.id} materials={materials} server={operator.server} />
                             ))}
                         </div>
                     </div>

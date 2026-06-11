@@ -4,12 +4,15 @@ use axum::{
 };
 use serde::Deserialize;
 
+use crate::app::services::leaderboard::get_distribution;
+use crate::app::services::leaderboard::get_leaderboard;
+use crate::app::services::leaderboard::get_standing;
+use crate::app::services::leaderboard::get_top_movers;
+use crate::app::validation::is_valid_interval;
 use crate::{
     app::{
-        error::ApiError,
-        extractors::pagination::Pagination,
-        services::{self, leaderboard::LeaderboardPage},
-        state::AppState,
+        error::ApiError, extractors::pagination::Pagination,
+        services::leaderboard::LeaderboardPage, state::AppState,
     },
     database::models::score::{LeaderboardMover, PlayerStanding, ServerShare},
 };
@@ -38,7 +41,7 @@ pub async fn leaderboard(
     let sort = params.sort.as_deref().unwrap_or("total_score");
     let movement_interval = params.movement_interval.as_deref();
     if let Some(interval) = movement_interval {
-        if !crate::app::validation::is_valid_interval(interval) {
+        if !is_valid_interval(interval) {
             return Err(ApiError::BadRequest(
                 "movement_interval must be '1 day', '7 days', or '30 days'".into(),
             ));
@@ -49,7 +52,7 @@ pub async fn leaderboard(
         ));
     }
     let q = params.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
-    let page = services::leaderboard::get_leaderboard(
+    let page = get_leaderboard(
         &state,
         sort,
         params.server.as_deref(),
@@ -82,18 +85,12 @@ pub async fn top_movers(
         ));
     }
     let interval = params.interval.as_deref().unwrap_or("7 days");
-    if !crate::app::validation::is_valid_interval(interval) {
+    if !is_valid_interval(interval) {
         return Err(ApiError::BadRequest("invalid interval".into()));
     }
     let limit = params.limit.unwrap_or(50).min(100);
-    let movers = services::leaderboard::get_top_movers(
-        &state,
-        direction,
-        interval,
-        params.server.as_deref(),
-        limit,
-    )
-    .await?;
+    let movers =
+        get_top_movers(&state, direction, interval, params.server.as_deref(), limit).await?;
     Ok(Json(movers))
 }
 
@@ -107,7 +104,7 @@ pub async fn distribution(
     Query(params): Query<DistributionParams>,
 ) -> Result<Json<Vec<ServerShare>>, ApiError> {
     let top_n = params.top.unwrap_or(250).min(10_000);
-    let dist = services::leaderboard::get_distribution(&state, top_n).await?;
+    let dist = get_distribution(&state, top_n).await?;
     Ok(Json(dist))
 }
 
@@ -125,13 +122,11 @@ pub async fn standing(
 ) -> Result<Json<PlayerStanding>, ApiError> {
     let window = params.window.unwrap_or(5).min(50);
     let interval = params.interval.as_deref().unwrap_or("7 days");
-    if !crate::app::validation::is_valid_interval(interval) {
+    if !is_valid_interval(interval) {
         return Err(ApiError::BadRequest(
             "interval must be '1 day', '7 days', or '30 days'".into(),
         ));
     }
-    let standing =
-        services::leaderboard::get_standing(&state, &params.uid, &params.server, window, interval)
-            .await?;
+    let standing = get_standing(&state, &params.uid, &params.server, window, interval).await?;
     Ok(Json(standing))
 }

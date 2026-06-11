@@ -10,7 +10,7 @@ use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
-use serenity::{all::ClientBuilder, prelude::*};
+use serenity::{all::ClientBuilder, cache::Settings, prelude::*};
 use tokio::sync::{Mutex as TokioMutex, mpsc};
 
 // Bot bootstrap touches many subsystems (config, db, watcher, framework); splitting it
@@ -45,9 +45,6 @@ async fn main() {
         tx: assets_tx,
     });
 
-    // GUILDS gates channel/role/guild structural events; GUILD_MEMBERS gates member add/update/
-    // remove (privileged — toggle in Developer Portal); GUILD_MODERATION gates ban add/remove and
-    // GuildAuditLogEntryCreate, which is the canonical source of "who did what" for moderation.
     let intents = GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MEMBERS
         | GatewayIntents::GUILD_MODERATION
@@ -77,32 +74,14 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(options)
-        .setup(move |ctx, _ready, framework| {
+        .setup(move |ctx, _ready, _framework| {
             let assets_state = setup_state;
             let assets_rx = assets_rx_slot.take().expect("framework setup runs once");
             Box::pin(async move {
-                let commands = &framework.options().commands;
-
-                // "Playing Arknights"
                 ctx.set_presence(
                     Some(serenity::all::ActivityData::playing("Arknights")),
                     serenity::all::OnlineStatus::Online,
                 );
-
-                if config.registration.use_guild_commands {
-                    let guild_id = config
-                        .registration
-                        .guild_id
-                        .expect("guild_id validated at config load");
-                    poise::builtins::register_in_guild(ctx, commands, guild_id).await?;
-                    tracing::info!(
-                        "Registered {} command(s) in guild {guild_id}",
-                        commands.len()
-                    );
-                } else {
-                    poise::builtins::register_globally(ctx, commands).await?;
-                    tracing::info!("Registered {} command(s) globally", commands.len());
-                }
 
                 let tracked: HashSet<_> = db::list_tracked_message_ids(&pool)
                     .await?
@@ -168,8 +147,12 @@ async fn main() {
         })
         .build();
 
+    let mut cache_settings = Settings::default();
+    cache_settings.max_messages = 1000;
+
     let mut client = ClientBuilder::new(token, intents)
         .framework(framework)
+        .cache_settings(cache_settings)
         .await
         .expect("Error creating client");
 

@@ -64,7 +64,13 @@ fn cmd_extract(args: &cli::ExtractArgs) {
                 Err(e) => eprintln!("error: {e}"),
             }
         }
-        if !args.extract_all() && !args.image && !args.text && !args.audio && !args.spine {
+        if !args.extract_all()
+            && !args.image
+            && !args.text
+            && !args.audio
+            && !args.spine
+            && !args.portrait
+        {
             return;
         }
     }
@@ -80,9 +86,9 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     // Collect all files from input directory
     let files: Vec<_> = WalkDir::new(&args.input)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
-        .map(|e| e.into_path())
+        .map(walkdir::DirEntry::into_path)
         .collect();
 
     let pb = ProgressBar::new(files.len() as u64);
@@ -165,12 +171,12 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
     None
 }
 
-/// Class IDs needed for spine MonoBehaviour reference chain:
+/// Class IDs needed for spine `MonoBehaviour` reference chain:
 /// 114=MonoBehaviour, 49=TextAsset, 21=Material, 28=Texture2D
 const SPINE_CLASS_IDS: &[i32] = &[114, 49, 21, 28];
 
-/// Map local (`m_FileID == 0`) object path_ids to their intended output directory,
-/// taken from the bundle's AssetBundle (class 142) `m_Container`.
+/// Map local (`m_FileID == 0`) object `path_ids` to their intended output directory,
+/// taken from the bundle's `AssetBundle` (class 142) `m_Container`.
 ///
 /// Some bundles co-pack many assets that share the same `m_Name` — e.g. the
 /// seasonal voice packs `voice/extra_*.ab` hold a dozen operators' `CN_038`/
@@ -607,7 +613,7 @@ fn cmd_list(args: &cli::ListArgs) {
     }
 }
 
-fn class_id_name(id: i32) -> &'static str {
+const fn class_id_name(id: i32) -> &'static str {
     match id {
         1 => "GameObject",
         4 => "Transform",

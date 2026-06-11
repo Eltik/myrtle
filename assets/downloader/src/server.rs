@@ -20,7 +20,8 @@ pub enum Server {
 
 impl Server {
     /// URL to fetch version info
-    pub fn version_url(&self) -> &'static str {
+    #[must_use]
+    pub const fn version_url(&self) -> &'static str {
         match self {
             Self::Official => "https://ak-conf.hypergryph.com/config/prod/official/Android/version",
             Self::Bilibili => "https://ak-conf.hypergryph.com/config/prod/b/Android/version",
@@ -40,7 +41,8 @@ impl Server {
     }
 
     /// Base URL for asset downloads (append version + filename)
-    pub fn cdn_base_url(&self) -> &'static str {
+    #[must_use]
+    pub const fn cdn_base_url(&self) -> &'static str {
         match self {
             Self::Official => "https://ak.hycdn.cn/assetbundle/official/Android/assets",
             Self::Bilibili => "https://ak.hycdn.cn/assetbundle/bilibili/Android/assets",

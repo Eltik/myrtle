@@ -19,7 +19,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
     const rarityGlow = RARITY_GLOW[operator.rarity] ?? RARITY_GLOW.TIER_1;
 
-    const img = operatorHero(operator.id ?? "", operator.skin, operator.portrait);
+    const img = operatorHero(operator.id ?? "", operator.skin, operator.portrait, operator.server);
 
     const factionId = operator.nationId?.length ? operator.nationId : operator.teamId?.length ? operator.teamId : operator.groupId?.length ? operator.groupId : null;
 
@@ -126,7 +126,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                             {factionId && (
                                 <div className="flex items-center gap-4">
                                     <div className="h-14 w-14 lg:h-16 lg:w-16">
-                                        <img alt={factionId} className="h-full w-full object-contain opacity-80" decoding="async" loading="lazy" src={campLogo(factionId)} />
+                                        <img alt={factionId} className="h-full w-full object-contain opacity-80" decoding="async" loading="lazy" src={campLogo(factionId, operator.server)} />
                                     </div>
                                 </div>
                             )}

@@ -18,6 +18,7 @@ impl Manifest {
         Ok(Self { path, entries })
     }
 
+    #[must_use]
     pub fn filter_needed(&self, files: &[HotFile]) -> Vec<HotFile> {
         files
             .iter()

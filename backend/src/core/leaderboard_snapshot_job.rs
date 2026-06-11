@@ -1,12 +1,13 @@
 use crate::app::state::AppState;
-use crate::database::queries::score as queries;
+use crate::database::queries::score::latest_leaderboard_snapshot_at;
+use crate::database::queries::score::take_leaderboard_snapshot;
 use chrono::Utc;
 use std::time::Duration;
 
 const DAY: Duration = Duration::from_hours(24);
 
 async fn delay_until_due(state: &AppState) -> Duration {
-    match queries::latest_leaderboard_snapshot_at(&state.db).await {
+    match latest_leaderboard_snapshot_at(&state.db).await {
         Ok(Some(last)) => {
             let elapsed = Utc::now().signed_duration_since(last);
             let elapsed = elapsed.to_std().unwrap_or(Duration::ZERO);
@@ -26,7 +27,7 @@ async fn run_loop(state: AppState) {
         let wait = delay_until_due(&state).await;
         tracing::debug!(wait_secs = wait.as_secs(), "sleeping until next snapshot");
         tokio::time::sleep(wait).await;
-        match queries::take_leaderboard_snapshot(&state.db).await {
+        match take_leaderboard_snapshot(&state.db).await {
             Ok(id) => tracing::info!(snapshot_id = id, "leaderboard snapshot taken"),
             Err(e) => {
                 tracing::warn!(error = %e, "leaderboard snapshot failed; retrying in 1h");

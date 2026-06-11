@@ -7,6 +7,7 @@ pub enum CacheKey<'a> {
     Stats,
     StaticData {
         resource: &'a str,
+        server: &'a str,
         fields_hash: u64,
         page: u32,
     },
@@ -51,6 +52,7 @@ pub enum CacheKey<'a> {
         window: u32,
     },
     SkinPopularity,
+    CommunityEnemyAverage,
 }
 
 impl CacheKey<'_> {
@@ -60,10 +62,11 @@ impl CacheKey<'_> {
             CacheKey::Stats => "stats:global".to_owned(),
             CacheKey::StaticData {
                 resource,
+                server,
                 fields_hash,
                 page,
             } => {
-                format!("static:{resource}:{fields_hash}:{page}")
+                format!("static:{server}:{resource}:{fields_hash}:{page}")
             }
             CacheKey::Leaderboard {
                 sort,
@@ -111,6 +114,7 @@ impl CacheKey<'_> {
                 format!("leaderboard:standing:{server}:{uid}:{window}")
             }
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
+            CacheKey::CommunityEnemyAverage => "enemies:community_average".to_owned(),
         }
     }
 
@@ -131,6 +135,7 @@ impl CacheKey<'_> {
             CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10), // 10 min
             CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1), // 1 min
             CacheKey::SkinPopularity => Duration::from_hours(1), // 1 hour
+            CacheKey::CommunityEnemyAverage => Duration::from_mins(30), // 30 min
         }
     }
 }

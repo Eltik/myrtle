@@ -5,19 +5,26 @@ import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
+import { compactForSearch } from "#/lib/search/fuzzy";
+import type { OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
 import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
 import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
+import { OperatorCardUpcoming } from "./impl/components/OperatorCardUpcoming";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
 import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
+
+const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
 
 export function OperatorsList() {
     const { data: operators = [] } = useQuery(operatorsListQueryOptions());
@@ -29,8 +36,51 @@ export function OperatorsList() {
     }, [notes]);
     const enriched = useMemo(() => enrichOperators(operators, voices, notedIds), [operators, voices, notedIds]);
 
-    const { filters, filterOptions, filteredOperators, setSearchQuery, setClasses, setSubclasses, setRarities, setGenders, setNations, setFactions, setRaces, setBirthPlaces, setArtists, setVoiceActors, setHasNotes, setSortBy, setSortOrder, removeFrom, clearFilters, hasActiveFilters, activeFilterCount } =
-        useOperatorFilters(enriched);
+    const {
+        filters,
+        filterOptions,
+        filteredOperators,
+        setSearchQuery,
+        setClasses,
+        setSubclasses,
+        setRarities,
+        setGenders,
+        setNations,
+        setFactions,
+        setRaces,
+        setBirthPlaces,
+        setArtists,
+        setVoiceActors,
+        setHasNotes,
+        setAvailability,
+        setSortBy,
+        setSortOrder,
+        removeFrom,
+        clearFilters,
+        hasActiveFilters,
+        activeFilterCount,
+    } = useOperatorFilters(enriched);
+
+    const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions());
+    const isUpcoming = filters.availability === "upcoming";
+
+    const upcomingFiltered = useMemo(() => {
+        const query = compactForSearch(filters.searchQuery.trim());
+        const classes = new Set(filters.classes);
+        const subclasses = new Set(filters.subclasses);
+        const rarities = new Set(filters.rarities);
+        const nations = new Set(filters.nations);
+        return upcoming
+            .filter((op) => {
+                if (query && !compactForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`).includes(query)) return false;
+                if (classes.size && !classes.has(op.profession)) return false;
+                if (subclasses.size && !subclasses.has(op.subProfessionId)) return false;
+                if (rarities.size && !rarities.has(`TIER_${op.rarity}` as OperatorRarityTier)) return false;
+                if (nations.size && !nations.has(op.nationId)) return false;
+                return true;
+            })
+            .sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name));
+    }, [upcoming, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.nations]);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -57,18 +107,20 @@ export function OperatorsList() {
 
     const [exportOpen, setExportOpen] = useState(false);
 
-    const totalPages = Math.max(1, Math.ceil(filteredOperators.length / itemsPerPage));
+    const totalCount = isUpcoming ? upcomingFiltered.length : filteredOperators.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
     const page = Math.min(currentPage, totalPages);
 
-    const { paginated, fromIndex, toIndex } = useMemo(() => {
+    const { paginated, upcomingPaginated, fromIndex, toIndex } = useMemo(() => {
         const start = (page - 1) * itemsPerPage;
         const end = page * itemsPerPage;
         return {
             paginated: filteredOperators.slice(start, end),
-            fromIndex: filteredOperators.length === 0 ? 0 : start + 1,
-            toIndex: Math.min(end, filteredOperators.length),
+            upcomingPaginated: upcomingFiltered.slice(start, end),
+            fromIndex: totalCount === 0 ? 0 : start + 1,
+            toIndex: Math.min(end, totalCount),
         };
-    }, [filteredOperators, page, itemsPerPage]);
+    }, [filteredOperators, upcomingFiltered, page, itemsPerPage, totalCount]);
 
     const activeChips = useMemo(() => {
         const chips = CHIP_CONFIG.flatMap(({ key, prefix, label }) =>
@@ -114,6 +166,7 @@ export function OperatorsList() {
                     selectedArtists={filters.artists}
                     selectedVoiceActors={filters.voiceActors}
                     selectedHasNotes={filters.hasNotes}
+                    selectedAvailability={filters.availability}
                     options={filterOptions}
                     onClassesChange={setClasses}
                     onSubclassesChange={setSubclasses}
@@ -126,6 +179,10 @@ export function OperatorsList() {
                     onArtistsChange={setArtists}
                     onVoiceActorsChange={setVoiceActors}
                     onHasNotesChange={setHasNotes}
+                    onAvailabilityChange={(v) => {
+                        setAvailability(v);
+                        setCurrentPage(1);
+                    }}
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
                     collapsed={!filtersVisible}
@@ -303,17 +360,29 @@ export function OperatorsList() {
 
                     <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                         <span>
-                            Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{filteredOperators.length}</strong> operators
+                            Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{totalCount}</strong> operators
                         </span>
                         <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
                     </div>
 
-                    {filteredOperators.length === 0 ? (
+                    {isUpcoming && upcomingLoading ? (
+                        <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
+                            {UPCOMING_SKELETON_KEYS.map((k) => (
+                                <Skeleton key={k} className="aspect-2/3 w-full rounded-md" />
+                            ))}
+                        </div>
+                    ) : totalCount === 0 ? (
                         <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
-                            <p className="font-sans text-muted-foreground text-sm">No operators match your filters.</p>
+                            <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? "No upcoming operators match your filters." : "No operators match your filters."}</p>
                             <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
                                 Clear all filters
                             </button>
+                        </div>
+                    ) : isUpcoming ? (
+                        <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
+                            {upcomingPaginated.map((op) => (
+                                <OperatorCardUpcoming key={op.id} operator={op} />
+                            ))}
                         </div>
                     ) : viewMode === "grid" ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">

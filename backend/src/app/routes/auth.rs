@@ -4,7 +4,9 @@ use serde::Deserialize;
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
+use crate::app::routes::ok_status;
 use crate::app::services;
+use crate::app::services::auth::parse_server;
 use crate::app::state::AppState;
 
 #[derive(Deserialize)]
@@ -17,9 +19,9 @@ pub async fn send_code(
     State(state): State<AppState>,
     Json(body): Json<SendCodeRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let server = services::auth::parse_server(&body.server)?;
+    let server = parse_server(&body.server)?;
     services::auth::send_code(&state, &body.email, server).await?;
-    Ok(crate::app::routes::ok_status())
+    Ok(ok_status())
 }
 
 #[derive(Deserialize)]
@@ -33,7 +35,7 @@ pub async fn login(
     State(state): State<AppState>,
     Json(body): Json<LoginRequest>,
 ) -> Result<Json<services::auth::LoginResponse>, ApiError> {
-    let server = services::auth::parse_server(&body.server)?;
+    let server = parse_server(&body.server)?;
     let result = services::auth::login(&state, &body.email, &body.code, server).await?;
     Ok(Json(result))
 }
@@ -93,14 +95,14 @@ pub async fn update_settings(
         .cache
         .invalidate(&CacheKey::User { uid: &auth.uid })
         .await;
-    Ok(crate::app::routes::ok_status())
+    Ok(ok_status())
 }
 
 pub async fn refresh(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let server = services::auth::parse_server(&auth.server)?;
+    let server = parse_server(&auth.server)?;
     let data = services::roster::refresh(&state, &auth.uid, server).await?;
     Ok(Json(data))
 }

@@ -1,22 +1,24 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { cn, formatNumber, getAvatarById } from "#/lib/utils";
-import { DEFAULT_AVATAR_ID } from "../constants";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { cn, getAvatarById } from "#/lib/utils";
+import { DEFAULT_AVATAR_ID, formatPct, LEADERBOARD_SORTS, type LeaderboardSort, toPct } from "../constants";
 import type { LeaderboardEntry } from "../types";
 import { GradeBadge } from "./GradeBadge";
 import { ServerTag } from "./ServerTag";
 
 interface ILeaderboardTableProps {
     entries: LeaderboardEntry[];
-    referenceScore: number | null;
+    sort: LeaderboardSort;
+    onSort: (next: LeaderboardSort) => void;
     isLoading?: boolean;
     intervalLabel?: string;
 }
 
 const DESKTOP_GRID = "grid-cols-[80px_minmax(0,1fr)_100px_90px_180px_60px]";
 
-export function LeaderboardTable({ entries, referenceScore, isLoading, intervalLabel = "since yesterday" }: ILeaderboardTableProps) {
+export function LeaderboardTable({ entries, sort, onSort, isLoading, intervalLabel = "since yesterday" }: ILeaderboardTableProps) {
     if (!isLoading && entries.length === 0) {
         return <div className="px-6 py-12 text-center font-sans text-muted-foreground text-sm">No Doctors match these filters.</div>;
     }
@@ -29,27 +31,50 @@ export function LeaderboardTable({ entries, referenceScore, isLoading, intervalL
                     <Th>Doctor</Th>
                     <Th>Server</Th>
                     <Th>Grade</Th>
-                    <Th align="right" sorted>
-                        Score <span className="ml-1 text-[10px] text-primary">▼</span>
-                    </Th>
+                    <span className="flex justify-end">
+                        <SortHeader sort={sort} onSort={onSort} />
+                    </span>
                     <Th align="right">Lv</Th>
                 </div>
                 <ul className="contents">
                     {entries.map((entry) => (
                         <li key={entry.id} className="contents">
-                            <DesktopRow entry={entry} referenceScore={referenceScore} intervalLabel={intervalLabel} />
+                            <DesktopRow entry={entry} sort={sort} intervalLabel={intervalLabel} />
                         </li>
                     ))}
                 </ul>
             </div>
             <div className="block p-3 md:hidden">
+                <div className="flex items-center justify-between px-1 pb-2">
+                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">Sort</span>
+                    <SortHeader sort={sort} onSort={onSort} />
+                </div>
                 <div className="flex flex-col gap-2">
                     {entries.map((entry) => (
-                        <MobileRow key={entry.id} entry={entry} intervalLabel={intervalLabel} />
+                        <MobileRow key={entry.id} entry={entry} sort={sort} intervalLabel={intervalLabel} />
                     ))}
                 </div>
             </div>
         </>
+    );
+}
+
+function SortHeader({ sort, onSort }: { sort: LeaderboardSort; onSort: (next: LeaderboardSort) => void }) {
+    const activeLabel = LEADERBOARD_SORTS.find((s) => s.value === sort)?.label ?? "Total";
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary" aria-label="Change sort category">
+                {activeLabel}
+                <ChevronDown className="size-3 opacity-70" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+                {LEADERBOARD_SORTS.map((opt) => (
+                    <DropdownMenuItem key={opt.value} onClick={() => onSort(opt.value)} className={cn("cursor-pointer", sort === opt.value && "font-semibold text-primary")}>
+                        {opt.label}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
@@ -77,12 +102,12 @@ function Th({ children, align, sorted }: { children: React.ReactNode; align?: "r
     return <span className={cn("whitespace-nowrap font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]", align === "right" ? "text-right" : "text-left", sorted && "text-foreground")}>{children}</span>;
 }
 
-function DesktopRow({ entry, referenceScore, intervalLabel }: { entry: LeaderboardEntry; referenceScore: number | null; intervalLabel?: string }) {
+function DesktopRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalLabel?: string }) {
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
-    const score = entry.total_score;
-    const ratio = score == null || referenceScore == null || referenceScore <= 0 ? 0 : Math.max(0, Math.min(100, (score / referenceScore) * 100));
+    const score = entry[sort];
+    const ratio = toPct(score);
 
     const rowBg = entry.isSelf ? "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "hover:bg-[color-mix(in_srgb,var(--accent)_50%,transparent)]";
 
@@ -110,7 +135,7 @@ function DesktopRow({ entry, referenceScore, intervalLabel }: { entry: Leaderboa
             </span>
             <span className="text-right">
                 <span className="ml-auto inline-flex min-w-24 flex-col items-end gap-1.5">
-                    <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{score == null ? "-" : formatNumber(score)}</span>
+                    <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{score == null ? "-" : formatPct(score)}</span>
                     <span className="relative block h-0.75 w-full overflow-hidden rounded-full bg-muted">
                         <span className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-primary/70 to-primary" style={{ width: `${ratio}%` }} />
                     </span>
@@ -121,7 +146,7 @@ function DesktopRow({ entry, referenceScore, intervalLabel }: { entry: Leaderboa
     );
 }
 
-function MobileRow({ entry, intervalLabel }: { entry: LeaderboardEntry; intervalLabel?: string }) {
+function MobileRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalLabel?: string }) {
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
@@ -147,7 +172,7 @@ function MobileRow({ entry, intervalLabel }: { entry: LeaderboardEntry; interval
             </div>
             <div className="flex flex-col items-end gap-1.5">
                 <GradeBadge grade={entry.grade} />
-                <span className="font-bold font-mono text-foreground text-sm tabular-nums leading-none tracking-tight">{entry.total_score == null ? "-" : formatNumber(entry.total_score)}</span>
+                <span className="font-bold font-mono text-foreground text-sm tabular-nums leading-none tracking-tight">{entry[sort] == null ? "-" : formatPct(entry[sort])}</span>
             </div>
         </Link>
     );

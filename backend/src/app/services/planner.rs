@@ -100,9 +100,9 @@ fn resolve_requirement_item(
     recipe: Option<PlanRecipe>,
     state: &AppState,
 ) -> PlanRequirementItem {
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
     let materials = &gamedata.materials;
-    let asset_index = state.asset_index.load();
+    let asset_index = state.default_asset_index();
     let (icon_id, image) = resolve_item_icon(item_id, materials, &asset_index);
 
     let mut name = item_id.to_owned();
@@ -159,7 +159,7 @@ fn calculate_leveling_costs(
     target_level: i16,
     materials: &mut HashMap<String, i32>,
 ) {
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
     let consts = &gamedata.consts;
     let mut exp_needed = 0;
     let mut lmd_needed = 0;
@@ -228,7 +228,7 @@ fn build_requirement_tree(
     let inv_count = *inventory_map.get(item_id).unwrap_or(&0);
     let deficit = (required_count - inv_count).max(0);
 
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
 
     let mut has_cycle = false;
     if let Some(formula) = gamedata
@@ -609,7 +609,7 @@ pub async fn list_plans(
     let profile = users_queries::find_by_id(&state.db, user_id).await?;
     let current_lmd = profile.as_ref().and_then(|p| p.lmd).unwrap_or(0);
 
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
 
     let mut inventory_map: HashMap<String, i32> = db_inv
         .into_iter()
@@ -702,7 +702,7 @@ pub async fn upsert_plan(
         ));
     }
 
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
     let operator = gamedata
         .operators
         .get(operator_id)
@@ -957,7 +957,7 @@ pub async fn list_public_plans(
     user_id: Uuid,
 ) -> Result<Vec<OperatorPlanResponse>, ApiError> {
     let plans = queries::list_plans(&state.db, user_id).await?;
-    let gamedata = state.game_data.load();
+    let gamedata = state.default_game_data();
     let mapping = queries::get_all_plan_groups(&state.db, user_id).await?;
     let mut group_map: HashMap<Uuid, Vec<String>> = HashMap::new();
     for (plan_id, group_name) in mapping {

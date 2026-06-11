@@ -29,12 +29,25 @@ impl SandboxUniverse {
                 .map_or(0, std::vec::Vec::len)
         };
 
+        let zone_count = sandbox_data
+            .get("ZoneData")
+            .and_then(|v| v.as_array())
+            .map_or(0, |arr| {
+                arr.iter()
+                    .filter(|e| {
+                        e.get("key")
+                            .and_then(serde_json::Value::as_str)
+                            .is_none_or(|k| !k.contains("tutorial"))
+                    })
+                    .count()
+            });
+
         Self {
             max_achievements: count("AchievementData"),
             max_nodes: Self::count_map_nodes(sandbox_data),
-            max_zones: count("ZoneData"),
+            max_zones: zone_count,
             max_tech_nodes: count("DevelopmentData"),
-            max_quests: count("QuestData"),
+            max_quests: count("ArchiveQuestData"),
             max_stages: count("StageData"),
             max_recipes: count("FoodData"),
             max_music: count("ArchiveMusicUnlockData"),
@@ -123,5 +136,25 @@ impl SandboxUniverse {
             }
             _ => key.to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SandboxUniverse;
+    use serde_json::json;
+
+    #[test]
+    fn max_zones_excludes_the_tutorial_zone() {
+        let raw = json!({ "Detail": { "SANDBOX_V2": [ { "value": {
+            "ZoneData": [
+                { "key": "z_1_0" }, { "key": "z_1_1" }, { "key": "z_1_tutorial" }, { "key": "z_1_2" },
+            ],
+        } } ] } });
+        let u = SandboxUniverse::build(&raw);
+        assert_eq!(
+            u.max_zones, 3,
+            "the tutorial zone is excluded from the zone total"
+        );
     }
 }

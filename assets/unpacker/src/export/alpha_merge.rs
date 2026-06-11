@@ -13,6 +13,7 @@ const ALPHA_SUFFIX: &str = "[alpha]";
 ///   - Saves the alpha texture as `foo[alpha].png`
 ///
 /// Textures without a pair are saved as-is.
+#[must_use]
 pub fn merge_and_export(textures: HashMap<String, DecodedTexture>, output_dir: &Path) -> usize {
     let mut exported = 0;
 
@@ -72,6 +73,7 @@ pub fn merge_and_export(textures: HashMap<String, DecodedTexture>, output_dir: &
 /// resized to match the base using bilinear interpolation.
 ///
 /// Pixels with alpha == 0 are set to `[0,0,0,0]` to prevent color bleeding.
+#[must_use]
 pub fn combine_with_alpha(rgb: &DecodedTexture, alpha: &DecodedTexture) -> DecodedTexture {
     let (w, h) = (rgb.width, rgb.height);
 

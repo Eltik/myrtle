@@ -5,12 +5,18 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
-use crate::app::services;
+use crate::app::routes::ok_status;
+use crate::app::services::tier_list::find_and_authorize;
 use crate::app::state::AppState;
 use crate::app::validation::{PLACEMENT_DESCRIPTION_MAX, validate_opt_length};
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierPlacement;
-use crate::database::queries::tier_lists as queries;
+use crate::database::queries::tier_lists::add_placement;
+use crate::database::queries::tier_lists::get_placements;
+use crate::database::queries::tier_lists::get_tiers;
+use crate::database::queries::tier_lists::move_placement;
+use crate::database::queries::tier_lists::remove_placement;
+use crate::database::queries::tier_lists::set_placement_description;
 
 #[derive(Deserialize)]
 pub struct AddPlacementRequest {
@@ -32,10 +38,9 @@ pub async fn add(
         PLACEMENT_DESCRIPTION_MAX,
     )?;
     let user_id: Uuid = auth.user_uuid()?;
-    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit)
-        .await?;
+    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    let placement = queries::add_placement(
+    let placement = add_placement(
         &state.db,
         body.tier_id,
         &body.operator_id,
@@ -63,16 +68,9 @@ pub async fn update_description(
         PLACEMENT_DESCRIPTION_MAX,
     )?;
     let user_id: Uuid = auth.user_uuid()?;
-    let list = services::tier_list::find_and_authorize(
-        &state,
-        &slug,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    let placement = queries::set_placement_description(
+    let placement = set_placement_description(
         &state.db,
         list.id,
         &operator_id,
@@ -89,27 +87,20 @@ pub async fn remove(
     Path((slug, operator_id)): Path<(String, String)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = services::tier_list::find_and_authorize(
-        &state,
-        &slug,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
     // Find which tier this operator is in, then remove. Idempotent: if the
     // placement is already gone (e.g. cascade-deleted by a prior tier delete in
     // the same save batch), report success rather than NotFound.
-    let tiers = queries::get_tiers(&state.db, list.id).await?;
+    let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
-        let placements = queries::get_placements(&state.db, tier.id).await?;
+        let placements = get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
-            queries::remove_placement(&state.db, tier.id, &operator_id).await?;
+            remove_placement(&state.db, tier.id, &operator_id).await?;
             break;
         }
     }
-    Ok(crate::app::routes::ok_status())
+    Ok(ok_status())
 }
 
 #[derive(Deserialize)]
@@ -125,21 +116,14 @@ pub async fn move_to(
     Json(body): Json<MovePlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = services::tier_list::find_and_authorize(
-        &state,
-        &slug,
-        user_id,
-        auth.role,
-        Permission::Edit,
-    )
-    .await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
     // Find current tier
-    let tiers = queries::get_tiers(&state.db, list.id).await?;
+    let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
-        let placements = queries::get_placements(&state.db, tier.id).await?;
+        let placements = get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
-            let result = queries::move_placement(
+            let result = move_placement(
                 &state.db,
                 tier.id,
                 body.new_tier_id,

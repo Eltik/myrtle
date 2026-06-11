@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { chibisQueryOptions, type IChibiCharacter } from "#/lib/api/chibis";
-import { type ISkin, skinsQueryOptions } from "#/lib/api/skins";
+import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
@@ -17,8 +17,8 @@ interface ISkinsContentProps {
 }
 
 export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsContentProps) {
-    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(skinsQueryOptions());
-    const { data: chibis } = useQuery(chibisQueryOptions());
+    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", operator.server));
+    const { data: chibis } = useQuery(chibisQueryOptions(operator.server));
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
     const skins: IUISkin[] = useMemo(() => {
@@ -35,8 +35,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             phasesLength: operator.phases.length,
             artistFallback: operator.artists?.[0],
             isBranchForm,
+            server: operator.server,
         });
-    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm]);
+    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
@@ -183,7 +184,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                         </div>
                     );
                 })()}
-            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} />}
+            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} server={operator.server} />}
         </div>
     );
 });

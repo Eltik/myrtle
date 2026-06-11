@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::gamedata::types::building::BuildingDataFile;
 use crate::{core::gamedata::types::building::BuildingChar, database::models::roster::RosterEntry};
 
 pub struct UserBuilding {
@@ -169,6 +170,10 @@ pub struct OperatorBaseProfile {
     /// leading word of each of this operator's skill names (e.g. "rhine",
     /// "standardization"). Computed once here rather than in the hot inner loop.
     pub match_tags: Vec<String>,
+    /// Star rarity (1-6). Drives the Reception Room ambience bonus (6★ > 5★ > 4★).
+    pub rarity: i16,
+    /// Elite/promotion phase (0/1/2). Drives the Reception Room elite bonus (E2 > E1 > E0).
+    pub elite: i16,
 }
 
 impl OperatorBaseProfile {
@@ -176,7 +181,8 @@ impl OperatorBaseProfile {
         roster: &RosterEntry,
         building_char: &BuildingChar,
         faction_tags: Vec<String>,
-        building_data: &crate::core::gamedata::types::building::BuildingDataFile,
+        rarity: i16,
+        building_data: &BuildingDataFile,
     ) -> Self {
         let mut available_buffs = Vec::new();
 
@@ -200,6 +206,8 @@ impl OperatorBaseProfile {
             available_buffs,
             faction_tags,
             match_tags,
+            rarity,
+            elite: roster.elite,
         }
     }
 }
@@ -209,7 +217,7 @@ impl OperatorBaseProfile {
 pub fn compute_match_tags(
     faction_tags: &[String],
     available_buffs: &[String],
-    building_data: &crate::core::gamedata::types::building::BuildingDataFile,
+    building_data: &BuildingDataFile,
 ) -> Vec<String> {
     let mut tags = faction_tags.to_vec();
     for buff_id in available_buffs {
@@ -245,6 +253,9 @@ pub struct EvalContext<'a> {
     pub total_dorm_levels: i32,
     /// Other operators in the same room (borrowed to avoid per-evaluation clones).
     pub room_teammates: Vec<&'a TeammateInfo>,
+    /// The evaluating operator's OWN order/capacity-limit contribution, so a self-counting
+    /// scaler (Vermeil) can include it on top of `room_teammates`'.
+    pub self_order_limit: i32,
 }
 
 #[derive(Clone)]

@@ -15,25 +15,37 @@ use crate::core::gamedata::types::operator::{
 };
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
-    compute_current_assignment, compute_optimal_assignment, compute_sustained_assignment,
-    morale_recovery, sustained_efficiency_of,
+    compute_current_assignment, compute_optimal_assignment_with_pins, compute_sustained_assignment,
+    morale_recovery, morale_sustained_beneficiaries, sustained_efficiency_of,
 };
 use crate::core::grade::base::buff_registry::{
-    build_name_to_char, build_registry, faction_tags_of,
+    BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
 };
+use crate::core::grade::base::perception;
+use crate::core::grade::base::perception::evaluate;
+use crate::core::grade::base::shift_rotation::ShiftRotation;
 use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, RotationAssignment, UserBuilding,
 };
+use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_operators::{
     UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
 };
-use crate::core::grade::stages::SYNC_GRACE_SECONDS;
-use crate::database::models::roster::RosterEntry;
-use crate::database::queries::{
-    building as building_queries, medals as medal_queries, roguelike as roguelike_queries,
-    roster as roster_queries, sandbox as sandbox_queries, stages as stage_queries, users,
+use crate::core::grade::sandbox::grade_sandbox_detail;
+use crate::core::grade::sandbox::score::{
+    ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
 };
+use crate::core::grade::stages::event_is_gradeable;
+use crate::database::models::roster::RosterEntry;
+use crate::database::queries::building::get_building;
+use crate::database::queries::medals::get_user_medals;
+use crate::database::queries::roguelike::get_roguelike_progress;
+use crate::database::queries::roster::get_roster;
+use crate::database::queries::roster::get_supports;
+use crate::database::queries::stages::get_known_stage_ids_for_server;
+use crate::database::queries::stages::get_user_stage_clears;
+use crate::database::queries::users::find_by_uid;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ImprovementsResponse {
@@ -120,10 +132,32 @@ pub struct RoguelikeCollectibles {
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
-    pub achievements: ProgressPair,
-    pub nodes: ProgressPair,
-    pub tech: ProgressPair,
-    pub quests: ProgressPair,
+    /// Overall RA score (0..1) - the weighted sum of every category below. This
+    /// is the same value the headline percentage is computed from.
+    pub total: f64,
+    /// One entry per scored category, in grade-weight order. Each carries its
+    /// weight, its own completion, and the concrete counts behind it - so the
+    /// breakdown fully accounts for the headline percentage.
+    pub categories: Vec<SandboxCategory>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SandboxCategory {
+    pub key: &'static str,
+    pub label: &'static str,
+    /// Fraction of the total RA grade this category contributes (0..1).
+    pub weight: f64,
+    /// This category's own completion (0..1) - what its bar fills to.
+    pub score: f64,
+    /// The concrete progress counts that make up this category's score.
+    pub parts: Vec<SandboxPart>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SandboxPart {
+    pub label: &'static str,
+    pub current: usize,
+    pub max: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -228,6 +262,42 @@ pub struct BaseImprovements {
     /// Recommended 3-shift rotation paired with the player's saved presets, for the
     /// preset-vs-recommended comparison. `None` when the base has no production rooms.
     pub shift_rotation: Option<ShiftRotationDto>,
+    /// The base-wide resource economy plan (Rosmontis / Ebenholz / Mr. Nothing "Perception
+    /// Information" system): support operators to station outside production, and the
+    /// production operators it powers. `None` unless a 243 roster can field the economy.
+    pub perception: Option<PerceptionPlanDto>,
+}
+
+/// The base-wide resource economy plan: which support operators to station (and where) to
+/// feed the shared resource pool, and which production operators the economy boosts.
+#[derive(Debug, Clone, Serialize)]
+pub struct PerceptionPlanDto {
+    /// Support generators to station outside production (e.g. Mulberry in the HR Office).
+    pub support: Vec<PerceptionSupportDto>,
+    /// Production operators the economy powers, with the productivity bonus they gain.
+    pub consumers: Vec<PerceptionConsumerDto>,
+    /// The morale-swap operator (Fiammetta) that sustains the Ling/Dusk morale rotation, when
+    /// the plan uses morale-conditional operators and the roster has one.
+    pub rotation_manager: Option<AssignedOperator>,
+    /// True when the plan needs a morale-swap manager (it uses Ling/Dusk) but the roster has
+    /// none - a "you also need a Fiammetta-type operator" flag.
+    pub needs_rotation_manager: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PerceptionSupportDto {
+    pub operator: AssignedOperator,
+    pub room_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PerceptionConsumerDto {
+    pub operator: AssignedOperator,
+    pub room_type: String,
+    /// Peak bonus (fresh-operator snapshot).
+    pub bonus_pct: f64,
+    /// Sustained 24/7 bonus (peak x the operator's working uptime).
+    pub sustained_pct: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -324,6 +394,9 @@ pub struct AssignedOperator {
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRotationDto {
     pub shifts: Vec<ShiftDto>,
+    /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
+    /// shift instead of resting the middle one. The frontend badges these as "24/7 - Fiammetta".
+    pub sustained: Vec<AssignedOperator>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -350,6 +423,10 @@ pub struct ShiftRoomDto {
     pub swap_out: Vec<AssignedOperator>,
     /// True when the player's preset already matches the recommendation.
     pub matches: bool,
+    /// True when the player's CURRENT team isn't the recommended set but produces at least as
+    /// much (an exact tie on the room's objective), so swapping wouldn't help - e.g. a Rhine
+    /// operator boosted by Dorothy matching Bryophyta's flat bonus. No swap is suggested.
+    pub equivalent: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -363,15 +440,15 @@ pub async fn get_improvements(
     state: &AppState,
     uid: &str,
 ) -> Result<ImprovementsResponse, ApiError> {
-    let user = users::find_by_uid(&state.db, uid)
+    let user = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
     let user_id = user.id;
-    let game_data = state.game_data.load();
+    let game_data = state.default_game_data();
 
     let (roster, supports) = tokio::try_join!(
-        roster_queries::get_roster(&state.db, user_id),
-        roster_queries::get_supports(&state.db, user_id),
+        get_roster(&state.db, user_id),
+        get_supports(&state.db, user_id),
     )?;
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
     let owned_operators: HashSet<&str> = roster.iter().map(|e| e.operator_id.as_str()).collect();
@@ -400,8 +477,8 @@ async fn build_stage_improvements(
     game_data: &GameData,
 ) -> Result<StageImprovements, ApiError> {
     let (data, known) = tokio::try_join!(
-        stage_queries::get_user_stage_clears(pool, user_id),
-        stage_queries::get_known_stage_ids_for_server(pool, user_id),
+        get_user_stage_clears(pool, user_id),
+        get_known_stage_ids_for_server(pool, user_id),
     )?;
     let clears = &data.clears;
     let last_synced_ts = data.last_synced_ts;
@@ -422,15 +499,8 @@ async fn build_stage_improvements(
         })
     };
 
-    let event_in_window = |e: &EventEntry| -> bool {
-        if !known.contains(&e.stage_id) {
-            return false;
-        }
-        match (e.start_time, last_synced_ts) {
-            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
-            _ => true,
-        }
-    };
+    let event_in_window =
+        |e: &EventEntry| -> bool { event_is_gradeable(e, now, last_synced_ts, Some(&known)) };
 
     let mut permanent = StagePoolImprovements::default();
     for entry in &universe.permanent {
@@ -519,7 +589,7 @@ async fn build_roguelike_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<Vec<RoguelikeThemeImprovement>, ApiError> {
-    let progress_rows = roguelike_queries::get_roguelike_progress(pool, user_id).await?;
+    let progress_rows = get_roguelike_progress(pool, user_id).await?;
     let progress_by_theme: HashMap<String, &serde_json::Value> = progress_rows
         .iter()
         .map(|(theme_id, json)| (theme_id.clone(), json))
@@ -641,87 +711,76 @@ async fn build_sandbox_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<SandboxImprovements, ApiError> {
-    let progress = sandbox_queries::get_user_sandbox_progress(pool, user_id).await?;
-    let universe = &game_data.sandbox_universe;
+    let d = grade_sandbox_detail(pool, user_id, game_data).await?;
 
-    let Some(sandbox) = progress.as_ref().and_then(|p| {
-        p.get("template")
-            .and_then(|t| t.get("SANDBOX_V2"))
-            .and_then(|t| t.get("sandbox_1"))
-    }) else {
-        return Ok(SandboxImprovements {
-            achievements: ProgressPair {
-                current: 0,
-                max: universe.max_achievements,
-            },
-            nodes: ProgressPair {
-                current: 0,
-                max: universe.max_nodes,
-            },
-            tech: ProgressPair {
-                current: 0,
-                max: universe.max_tech_nodes,
-            },
-            quests: ProgressPair {
-                current: 0,
-                max: universe.max_quests,
-            },
-        });
+    let part = |label: &'static str, current: usize, max: usize| SandboxPart {
+        label,
+        current,
+        max,
     };
 
-    let achievements = sandbox
-        .get("collect")
-        .and_then(|c| c.get("complete"))
-        .and_then(|c| c.get("achievement"))
-        .and_then(|a| a.as_array())
-        .map_or(0, std::vec::Vec::len);
-
-    let nodes_explored = sandbox
-        .get("main")
-        .and_then(|m| m.get("map"))
-        .and_then(|m| m.get("node"))
-        .and_then(|n| n.as_object())
-        .map_or(0, |obj| {
-            obj.values()
-                .filter(|v| {
-                    v.get("state")
-                        .and_then(serde_json::Value::as_i64)
-                        .unwrap_or(0)
-                        >= 1
-                })
-                .count()
-        });
-
-    let tech_unlocked = sandbox
-        .get("tech")
-        .and_then(|t| t.get("unlock"))
-        .and_then(|u| u.as_array())
-        .map_or(0, std::vec::Vec::len);
-
-    let quests_completed = sandbox
-        .get("collect")
-        .and_then(|c| c.get("complete"))
-        .and_then(|c| c.get("quest"))
-        .and_then(|q| q.as_array())
-        .map_or(0, std::vec::Vec::len);
+    let categories = vec![
+        SandboxCategory {
+            key: "achievements",
+            label: "Achievements",
+            weight: ACHIEVEMENT_WEIGHT,
+            score: d.achievements,
+            parts: vec![part(
+                "Completed",
+                d.achievements_completed,
+                d.achievements_total,
+            )],
+        },
+        SandboxCategory {
+            key: "exploration",
+            label: "Exploration",
+            weight: EXPLORATION_WEIGHT,
+            score: d.exploration,
+            parts: vec![
+                part("Map nodes", d.nodes_explored, d.nodes_total),
+                part("Zones", d.zones_unlocked, d.zones_total),
+            ],
+        },
+        SandboxCategory {
+            key: "tech",
+            label: "Tech unlocks",
+            weight: TECH_WEIGHT,
+            score: d.tech_tree,
+            parts: vec![part("Unlocked", d.tech_unlocked, d.tech_total)],
+        },
+        SandboxCategory {
+            key: "quests",
+            label: "Story acts",
+            weight: QUEST_WEIGHT,
+            score: d.quests,
+            parts: vec![part("Completed", d.quests_completed, d.quests_total)],
+        },
+        SandboxCategory {
+            key: "base",
+            label: "Base building",
+            weight: BASE_WEIGHT,
+            score: d.base_building,
+            parts: vec![
+                part("Base level", d.base_level, d.base_level_max),
+                part("Blueprints", d.blueprints, d.blueprints_total),
+            ],
+        },
+        SandboxCategory {
+            key: "content",
+            label: "Content depth",
+            weight: CONTENT_WEIGHT,
+            score: d.content_depth,
+            parts: vec![
+                part("Recipes", d.recipes, d.recipes_total),
+                part("Music", d.music, d.music_total),
+                part("Rifts cleared", d.rift_levels, d.rift_levels_max),
+            ],
+        },
+    ];
 
     Ok(SandboxImprovements {
-        achievements: ProgressPair {
-            current: achievements,
-            max: universe.max_achievements,
-        },
-        nodes: ProgressPair {
-            current: nodes_explored,
-            max: universe.max_nodes,
-        },
-        tech: ProgressPair {
-            current: tech_unlocked,
-            max: universe.max_tech_nodes,
-        },
-        quests: ProgressPair {
-            current: quests_completed,
-            max: universe.max_quests,
-        },
+        total: d.total,
+        categories,
     })
 }
 
@@ -731,7 +790,7 @@ async fn build_medal_improvements(
     game_data: &GameData,
     owned_operators: &HashSet<&str>,
 ) -> Result<MedalImprovements, ApiError> {
-    let rows = medal_queries::get_user_medals(pool, user_id).await?;
+    let rows = get_user_medals(pool, user_id).await?;
     let earned: HashSet<String> = rows
         .iter()
         .filter(|(_, val, fts, rts)| {
@@ -1057,7 +1116,7 @@ async fn build_base_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
 ) -> Result<BaseImprovements, ApiError> {
-    let building_json = building_queries::get_building(pool, user_id).await?;
+    let building_json = get_building(pool, user_id).await?;
     let Some(building_json) = building_json else {
         return Ok(BaseImprovements::default());
     };
@@ -1073,15 +1132,14 @@ async fn build_base_improvements(
         .iter()
         .filter_map(|entry| {
             let bc = game_data.building.chars.get(&entry.operator_id)?;
-            let faction_tags = game_data
-                .operators
-                .get(&entry.operator_id)
-                .map(faction_tags_of)
-                .unwrap_or_default();
+            let static_op = game_data.operators.get(&entry.operator_id);
+            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
                 entry,
                 bc,
                 faction_tags,
+                rarity,
                 &game_data.building,
             ))
         })
@@ -1089,6 +1147,54 @@ async fn build_base_improvements(
 
     let name_to_char = build_name_to_char(&game_data.operators);
     let (registry, morale_drains) = build_registry(&game_data.building.buffs, &name_to_char);
+
+    // For a 243 base, evaluate the base-wide resource economy (Rosmontis / Ebenholz /
+    // Mr. Nothing "Perception Information" system, and anything shaped like it) ONCE: its
+    // consumer overrides feed the OPTIMAL peak registry (each consumer's base-wide pool
+    // bonus becomes a direct productivity buff, so the optimizer values and places them),
+    // and its support plan + consumer payoffs are surfaced below. It's a peak/snapshot
+    // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
+    // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
+    let perception = is_243_layout(&user_building).then(|| {
+        evaluate(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &morale_drains,
+            &registry,
+        )
+    });
+
+    // The economy boosts its CONSUMERS (a direct productivity buff the optimizer values and
+    // places) and reserves its SUPPORT operators in the rooms that feed the pool, so the optimal
+    // plan is computed around the full comp - the generators, the Ling/Dusk Control-Center pair,
+    // and a Fiammetta-type morale-swap manager (when owned) - rather than treating the boost as
+    // free. Both are gated to a 243 economy; an empty perception leaves the plain optimum.
+    let mut optimal_registry = registry.clone();
+    let mut optimal_pins: Vec<(String, String)> = Vec::new();
+    if let Some(p) = &perception {
+        for (buff_id, pct) in &p.overrides {
+            optimal_registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::DirectEfficiency { value: *pct },
+            );
+        }
+        // Global Control-Center consumers (Sakiko's Passion -> all Factories) fold in as a
+        // whole-room buff, so the optimizer values stationing them in the Control Center.
+        for (buff_id, (target_room, pct)) in &p.global_overrides {
+            optimal_registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::GlobalEffect {
+                    target_room: target_room.clone(),
+                    bonus_pct: *pct,
+                },
+            );
+        }
+        optimal_pins.extend(p.support.iter().cloned());
+        if let Some(manager) = &p.rotation_manager {
+            optimal_pins.push((manager.clone(), "DORMITORY".to_string()));
+        }
+    }
 
     let current = compute_current_assignment(
         &profiles,
@@ -1098,12 +1204,13 @@ async fn build_base_improvements(
         &morale_drains,
         None,
     );
-    let optimal = compute_optimal_assignment(
+    let optimal = compute_optimal_assignment_with_pins(
         &profiles,
         &user_building,
         &game_data.building,
-        &registry,
+        &optimal_registry,
         &morale_drains,
+        &optimal_pins,
     );
     let sustained = compute_sustained_assignment(
         &profiles,
@@ -1114,12 +1221,24 @@ async fn build_base_improvements(
     );
 
     // The player's current base as a rotation main, so the comparison can show
-    // their sustained output against the optimizer's.
+    // their sustained output against the optimizer's. A morale-swap manager (Fiammetta) the player
+    // owns holds one operator (e.g. a 24/7 Proviso) at full morale, so credit it here too.
+    let cur_recovery = morale_recovery(&user_building);
+    let cur_sustained_set = morale_sustained_beneficiaries(
+        &current,
+        &profiles,
+        &morale_drains,
+        cur_recovery,
+        &game_data.building,
+    );
     let current_sustained = sustained_efficiency_of(
         &current,
         &profiles,
         &morale_drains,
-        morale_recovery(&user_building),
+        cur_recovery,
+        &registry,
+        &game_data.building,
+        &cur_sustained_set,
     );
     let current_rotation = Some(rotation_to_dto(
         &RotationAssignment {
@@ -1147,10 +1266,21 @@ async fn build_base_improvements(
             &registry,
             &morale_drains,
         );
-        Some(shift_rotation_to_dto(&rotation, game_data))
+        Some(shift_rotation_to_dto(
+            &rotation,
+            game_data,
+            &profiles,
+            &user_building,
+            &registry,
+            &morale_drains,
+        ))
     } else {
         None
     };
+
+    let perception = perception
+        .as_ref()
+        .and_then(|p| perception_to_dto(p, game_data));
 
     Ok(BaseImprovements {
         current: Some(current_dto),
@@ -1159,6 +1289,51 @@ async fn build_base_improvements(
         rotation: Some(rotation_dto),
         layout,
         shift_rotation,
+        perception,
+    })
+}
+
+/// Build the resource-economy plan DTO, or `None` when the roster powers no economy on this
+/// base. Surfaces both the support generators to station and the production operators the
+/// economy boosts (with their bonus).
+fn perception_to_dto(
+    result: &perception::PerceptionResult,
+    game_data: &GameData,
+) -> Option<PerceptionPlanDto> {
+    if result.consumers.is_empty() {
+        return None;
+    }
+    let mut consumers: Vec<PerceptionConsumerDto> = result
+        .consumers
+        .iter()
+        .map(|c| PerceptionConsumerDto {
+            operator: assigned_operator(&c.char_id, game_data),
+            room_type: c.room_type.clone(),
+            bonus_pct: c.bonus_pct,
+            sustained_pct: c.sustained_pct,
+        })
+        .collect();
+    // Strongest bonus first - a stable, meaningful order for the UI.
+    consumers.sort_by(|a, b| {
+        b.bonus_pct
+            .partial_cmp(&a.bonus_pct)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    Some(PerceptionPlanDto {
+        support: result
+            .support
+            .iter()
+            .map(|(id, room)| PerceptionSupportDto {
+                operator: assigned_operator(id, game_data),
+                room_type: room.clone(),
+            })
+            .collect(),
+        consumers,
+        rotation_manager: result
+            .rotation_manager
+            .as_ref()
+            .map(|id| assigned_operator(id, game_data)),
+        needs_rotation_manager: result.needs_rotation_manager,
     })
 }
 
@@ -1175,59 +1350,256 @@ fn is_243_layout(building: &UserBuilding) -> bool {
     count("TRADING") == 2 && count("MANUFACTURE") == 4 && count("POWER") == 3
 }
 
+/// For each rotation cell, find the player's CURRENT preset team - across every room of the
+/// SAME building type, in any slot or shift - that best matches the recommended team, and pair
+/// them so the total number of operator swaps is minimised. This makes the comparison
+/// order-independent: as long as the player runs the right team combos somewhere in that
+/// building type, it counts as a match regardless of which physical post or shift order they
+/// sit in (e.g. teams 1/2/3 across both Trading Posts in any arrangement), while a team combo
+/// itself still matters (it is compared as a whole set). Returns `(shift_index, slot_id) ->
+/// matched current team`; a recommended cell with no preset left to pair against maps to an
+/// empty team (a full swap-in).
+fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec<String>> {
+    struct Cell {
+        key: (usize, String),
+        set: HashSet<String>,
+        ops: Vec<String>,
+    }
+    // Group by (shift, what the room PRODUCES) - shift index + room type + factory formula. Matching
+    // stays order-independent across the SLOTS of one shift (teams 1/2/3 in either Trading Post, in
+    // any order), but NOT across shifts: the player's shift-1 preset is compared to the shift-1
+    // recommendation, never shuffled into another shift. Grouping by formula also stops a Gold
+    // factory's recommendation being matched against an EXP preset (and vice versa).
+    type Group = (usize, String, Option<String>);
+    let mut rec_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
+    let mut cur_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
+    for shift in &rotation.shifts {
+        for room in &shift.rooms {
+            let key = (shift.index, room.slot_id.clone());
+            let group = (
+                shift.index,
+                room.room_type.clone(),
+                room.formula_type.clone(),
+            );
+            rec_by_type.entry(group.clone()).or_default().push(Cell {
+                key: key.clone(),
+                set: room.recommended.iter().cloned().collect(),
+                ops: room.recommended.clone(),
+            });
+            if !room.current.is_empty() {
+                cur_by_type.entry(group).or_default().push(Cell {
+                    key,
+                    set: room.current.iter().cloned().collect(),
+                    ops: room.current.clone(),
+                });
+            }
+        }
+    }
+
+    let mut out: HashMap<(usize, String), Vec<String>> = HashMap::new();
+    for (group, rec_cells) in &rec_by_type {
+        let empty: Vec<Cell> = Vec::new();
+        let cur_cells = cur_by_type.get(group).unwrap_or(&empty);
+        // Rank every (recommended, current) pairing by how few swaps it costs (the symmetric
+        // difference of the two teams), then greedily lock in the cheapest pairings - each
+        // recommended cell and each preset used at most once. Cost-0 (exact) pairings win
+        // first, so a player who already runs the right combos matches no matter the order.
+        let mut pairs: Vec<(usize, usize, usize)> = Vec::new();
+        for (i, r) in rec_cells.iter().enumerate() {
+            for (j, c) in cur_cells.iter().enumerate() {
+                let inter = r.set.intersection(&c.set).count();
+                let cost = r.set.len() + c.set.len() - 2 * inter;
+                pairs.push((cost, i, j));
+            }
+        }
+        pairs.sort_by_key(|p| p.0);
+        let mut rec_used = vec![false; rec_cells.len()];
+        let mut cur_used = vec![false; cur_cells.len()];
+        for (_, i, j) in pairs {
+            if rec_used[i] || cur_used[j] {
+                continue;
+            }
+            rec_used[i] = true;
+            cur_used[j] = true;
+            out.insert(rec_cells[i].key.clone(), cur_cells[j].ops.clone());
+        }
+        for (i, used) in rec_used.iter().enumerate() {
+            if !used {
+                out.insert(rec_cells[i].key.clone(), Vec::new());
+            }
+        }
+    }
+    out
+}
+
 /// Convert a recommended rotation into its DTO, computing the per-room diff between
-/// the player's saved preset and the recommendation.
-fn shift_rotation_to_dto(
-    rotation: &crate::core::grade::base::shift_rotation::ShiftRotation,
+/// the player's saved preset and the recommendation. A production room whose CURRENT team
+/// isn't the recommended set but scores at least as high (an exact tie on the room's objective)
+/// is flagged `equivalent` and suggests no swap - the player's team is already as good.
+#[allow(clippy::too_many_arguments)]
+#[doc(hidden)]
+pub fn shift_rotation_to_dto(
+    rotation: &ShiftRotation,
     game_data: &GameData,
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    registry: &std::collections::HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &std::collections::HashMap<String, f64>,
 ) -> ShiftRotationDto {
+    use crate::core::grade::base::assignment::team_value;
     let ops = |ids: &[String]| -> Vec<AssignedOperator> {
         ids.iter()
             .map(|id| assigned_operator(id, game_data))
             .collect()
     };
-    ShiftRotationDto {
-        shifts: rotation
-            .shifts
+    // Order-independent pairing of each recommended cell to the player's closest current team.
+    let matched = match_current_teams(rotation);
+    // The shifts each operator is RECOMMENDED to work (their "home" shifts). A main-team operator
+    // works shifts 1 & 3 and rests the middle one; the order-independent overlay can match the
+    // player's preset (which keeps running them) into that rest shift and mark it "≈ yours", showing
+    // them working a shift the rotation deliberately rests them on - the reported "24/7" operator.
+    // So a cell may only KEEP a team containing such an operator on a shift that actually recommends
+    // them.
+    let mut rec_shifts: HashMap<&str, HashSet<usize>> = HashMap::new();
+    for shift in &rotation.shifts {
+        for room in shift.rooms.iter().filter(|r| r.active) {
+            for id in &room.recommended {
+                rec_shifts
+                    .entry(id.as_str())
+                    .or_default()
+                    .insert(shift.index);
+            }
+        }
+    }
+    let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
+    for shift in &rotation.shifts {
+        // An operator can physically be in only ONE room per shift. The recommended teams are
+        // already a conflict-free partition, but the order-independent `equivalent` overlay can
+        // surface the player's team (matched from a DIFFERENT slot) for one cell while another
+        // cell recommends the same operator - so the same face would show twice in one shift.
+        // Each operator is authoritative in the cell that RECOMMENDS it; a cell may only KEEP its
+        // current team (mark `equivalent`) when none of that team's operators are recommended
+        // elsewhere this shift, nor already kept by an earlier cell. Otherwise it falls back to the
+        // real recommendation + swap.
+        let rec_owner: HashMap<&str, &str> = shift
+            .rooms
             .iter()
-            .map(|shift| ShiftDto {
-                index: shift.index,
-                rooms: shift
-                    .rooms
+            .filter(|r| r.active)
+            .flat_map(|r| {
+                r.recommended
                     .iter()
-                    .map(|room| {
-                        let rec: HashSet<&str> =
-                            room.recommended.iter().map(String::as_str).collect();
-                        let cur: HashSet<&str> = room.current.iter().map(String::as_str).collect();
-                        let swap_in: Vec<String> = room
-                            .recommended
-                            .iter()
-                            .filter(|id| !cur.contains(id.as_str()))
-                            .cloned()
-                            .collect();
-                        let swap_out: Vec<String> = room
-                            .current
-                            .iter()
-                            .filter(|id| !rec.contains(id.as_str()))
-                            .cloned()
-                            .collect();
-                        ShiftRoomDto {
-                            slot_id: room.slot_id.clone(),
-                            room_type: room.room_type.clone(),
-                            formula_type: room.formula_type.clone(),
-                            active: room.active,
-                            recommended: ops(&room.recommended),
-                            current: ops(&room.current),
-                            matches: !room.current.is_empty()
-                                && swap_in.is_empty()
-                                && swap_out.is_empty(),
-                            swap_in: ops(&swap_in),
-                            swap_out: ops(&swap_out),
-                        }
-                    })
-                    .collect(),
+                    .map(move |id| (id.as_str(), r.slot_id.as_str()))
             })
-            .collect(),
+            .collect();
+        let mut kept: HashSet<String> = HashSet::new();
+
+        let mut room_dtos = Vec::with_capacity(shift.rooms.len());
+        for room in &shift.rooms {
+            let current = matched
+                .get(&(shift.index, room.slot_id.clone()))
+                .cloned()
+                .unwrap_or_default();
+            let rec: HashSet<&str> = room.recommended.iter().map(String::as_str).collect();
+            let cur: HashSet<&str> = current.iter().map(String::as_str).collect();
+            let mut swap_in: Vec<String> = room
+                .recommended
+                .iter()
+                .filter(|id| !cur.contains(id.as_str()))
+                .cloned()
+                .collect();
+            let mut swap_out: Vec<String> = current
+                .iter()
+                .filter(|id| !rec.contains(id.as_str()))
+                // An operator recommended to WORK in another room this shift isn't being removed -
+                // they're relocating to their recommended slot (shown as an add there). Flagging them
+                // OUT here too made an operator look like they both work and leave the same shift.
+                .filter(|id| !matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id))
+                .cloned()
+                .collect();
+            let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
+
+            // A team the player ALREADY runs that ties the recommendation's output needs no swap -
+            // a factory/trading team (Bryophyta vs a Dorothy-boosted Rhine operator), or a Power
+            // Plant specialist with the same drone-recovery % (Pudding vs Indigo, both +15%). Only
+            // checked when there's a difference to suppress, and only for rooms whose output
+            // `team_value` can score (production + power).
+            let mut equivalent = false;
+            if !matches
+                && !current.is_empty()
+                && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING" | "POWER")
+            {
+                let f = room.formula_type.as_deref();
+                let rec_v = team_value(
+                    &room.recommended,
+                    &room.room_type,
+                    f,
+                    profiles,
+                    building,
+                    &game_data.building,
+                    registry,
+                    morale_drains,
+                );
+                let cur_v = team_value(
+                    &current,
+                    &room.room_type,
+                    f,
+                    profiles,
+                    building,
+                    &game_data.building,
+                    registry,
+                    morale_drains,
+                );
+                // Keeping this team is only valid if it doesn't double-book an operator the shift
+                // needs in another room (recommended there, or already kept here), and doesn't keep
+                // an operator working a shift the rotation rests them on (recommended on another
+                // shift but not this one) - that's what made a main-team operator look 24/7.
+                let conflicts = current.iter().any(|id| {
+                    matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id)
+                        || kept.contains(id)
+                        || rec_shifts
+                            .get(id.as_str())
+                            .is_some_and(|shifts| !shifts.contains(&shift.index))
+                });
+                if cur_v + 1e-4 >= rec_v && !conflicts {
+                    equivalent = true;
+                    matches = true;
+                    swap_in.clear();
+                    swap_out.clear();
+                }
+            }
+
+            // Record the operators this cell tells the player to actually run, so a later cell
+            // can't keep a team that reuses one of them.
+            if room.active {
+                let running = if equivalent || matches {
+                    &current
+                } else {
+                    &room.recommended
+                };
+                kept.extend(running.iter().cloned());
+            }
+
+            room_dtos.push(ShiftRoomDto {
+                slot_id: room.slot_id.clone(),
+                room_type: room.room_type.clone(),
+                formula_type: room.formula_type.clone(),
+                active: room.active,
+                recommended: ops(&room.recommended),
+                current: ops(&current),
+                matches,
+                equivalent,
+                swap_in: ops(&swap_in),
+                swap_out: ops(&swap_out),
+            });
+        }
+        shift_dtos.push(ShiftDto {
+            index: shift.index,
+            rooms: room_dtos,
+        });
+    }
+    ShiftRotationDto {
+        shifts: shift_dtos,
+        sustained: ops(&rotation.sustained),
     }
 }
 
@@ -1326,7 +1698,7 @@ fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDt
 }
 
 fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAssignmentDto {
-    let y = crate::core::grade::base::yield_model::room_yield(
+    let y = room_yield(
         &room.room_type,
         room.formula_type.as_deref(),
         room.level,
@@ -1372,4 +1744,75 @@ fn build_layout_summary(building: &UserBuilding) -> Vec<RoomLayoutEntry> {
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod shift_match_tests {
+    use super::match_current_teams;
+    use crate::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+
+    fn room(slot: &str, rec: &[&str], cur: &[&str]) -> ShiftRoom {
+        ShiftRoom {
+            slot_id: slot.into(),
+            room_type: "TRADING".into(),
+            formula_type: None,
+            recommended: rec.iter().map(|s| (*s).to_string()).collect(),
+            current: cur.iter().map(|s| (*s).to_string()).collect(),
+            active: true,
+        }
+    }
+    fn sorted(v: &[String]) -> Vec<String> {
+        let mut v = v.to_vec();
+        v.sort();
+        v
+    }
+
+    #[test]
+    fn matching_is_order_independent_across_same_type_rooms() {
+        // The same two teams, but the player keeps them in the OPPOSITE posts. Order of the
+        // physical building must not matter - both posts should read as a perfect match.
+        let rotation = ShiftRotation {
+            shifts: vec![Shift {
+                index: 1,
+                rooms: vec![
+                    room("a", &["A", "B", "C"], &["D", "E", "F"]),
+                    room("b", &["D", "E", "F"], &["A", "B", "C"]),
+                ],
+            }],
+            sustained: vec![],
+        };
+        let m = match_current_teams(&rotation);
+        assert_eq!(
+            sorted(&m[&(1, "a".to_string())]),
+            vec!["A", "B", "C"],
+            "post a pairs with the A/B/C team wherever the player keeps it"
+        );
+        assert_eq!(
+            sorted(&m[&(1, "b".to_string())]),
+            vec!["D", "E", "F"],
+            "post b pairs with the D/E/F team"
+        );
+    }
+
+    #[test]
+    fn matching_picks_the_closest_team_to_minimise_swaps() {
+        // rec [X,Y,Z] should accommodate the player's near-matching [X,Y,Q] (1 swap), not the
+        // unrelated [P,Q,R] (3 swaps), even though [P,Q,R] sits in the same physical slot.
+        let rotation = ShiftRotation {
+            shifts: vec![Shift {
+                index: 1,
+                rooms: vec![
+                    room("a", &["X", "Y", "Z"], &["P", "Q", "R"]),
+                    room("b", &["M", "N", "O"], &["X", "Y", "Q"]),
+                ],
+            }],
+            sustained: vec![],
+        };
+        let m = match_current_teams(&rotation);
+        let a = &m[&(1, "a".to_string())];
+        assert!(
+            a.contains(&"X".to_string()) && a.contains(&"Y".to_string()),
+            "post a should pair with the player's near-matching X/Y team, got {a:?}"
+        );
+    }
 }

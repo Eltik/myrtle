@@ -13,6 +13,7 @@ pub fn ok_status() -> Json<serde_json::Value> {
 pub mod assets;
 pub mod auth;
 pub mod dps;
+pub mod enemies;
 pub mod gacha;
 pub mod health;
 pub mod improvements;
@@ -70,6 +71,14 @@ pub fn router() -> Router<AppState> {
         .route("/roster/{operator_id}", get(roster::get_operator))
         .route("/stage-clears", get(stages::get_stage_clears))
         .route(
+            "/encountered-enemies",
+            get(enemies::get_encountered_enemies),
+        )
+        .route(
+            "/encountered-enemies/community-average",
+            get(enemies::get_community_average),
+        )
+        .route(
             "/user/improvements",
             get(improvements::get_user_improvements),
         )
@@ -112,5 +121,32 @@ pub fn router() -> Router<AppState> {
             "/plan/group/{group_name}",
             put(planner::update_group).delete(planner::delete_group),
         )
+        .route("/upcoming", get(operators::upcoming))
+        .route("/{server}/upcoming", get(operators::upcoming_srv))
+        .route("/operators/{id}", get(operators::detail))
+        .route("/voices/{id}", get(operators::voices_detail))
+        .route("/{server}/voices/{id}", get(operators::voices_detail_srv))
+        .route("/skins/{id}", get(operators::skins_detail))
+        .route("/{server}/skins/{id}", get(operators::skins_detail_srv))
+        .route("/{server}/operators/index", get(operators::index_srv))
+        .route("/{server}/operators/{id}", get(operators::detail_srv))
+        .route(
+            "/{server}/static/{resource}",
+            get(static_data::get_static_srv),
+        )
+        .route("/{server}/avatar/{id}", get(assets::avatar_srv))
+        .route("/{server}/portrait/{id}", get(assets::portrait_srv))
+        .route("/{server}/skill-icon/{id}", get(assets::skill_icon_srv))
+        .route("/{server}/module-icon/{id}", get(assets::module_icon_srv))
+        .route("/{server}/module-big/{id}", get(assets::module_big_srv))
+        .route("/{server}/enemy-icon/{id}", get(assets::enemy_icon_srv))
+        .route("/{server}/item-icon/{id}", get(assets::item_icon_srv))
+        .route("/{server}/medal-icon/{id}", get(assets::medal_icon_srv))
+        .route("/{server}/charart/{id}", get(assets::charart_srv))
+        .route(
+            "/{server}/skin-portrait/{id}",
+            get(assets::skin_portrait_srv),
+        )
+        .route("/{server}/assets/{*path}", get(assets::generic_srv))
         .merge(tier_lists::router())
 }

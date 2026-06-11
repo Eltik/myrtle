@@ -1,11 +1,16 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::operator::{
-    OperatorPosition, OperatorProfession, OperatorRarity,
+    Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
+use crate::core::gamedata::types::skin::SkinData;
+use crate::core::gamedata::types::voice::Voices;
+use crate::core::hypergryph::constants::Server;
 
 /// Compact operator record for client-side search palettes and autocompletes.
 /// Order of fields matches the JSON contract - keep stable.
@@ -25,9 +30,29 @@ pub struct OperatorIndexEntry {
     pub is_not_obtainable: bool,
 }
 
-pub async fn get_index(state: &AppState) -> Result<Vec<OperatorIndexEntry>, ApiError> {
+fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
+    OperatorIndexEntry {
+        id: op.id.clone().unwrap_or_else(|| id.to_string()),
+        name: op.name.clone(),
+        appellation: op.appellation.clone(),
+        rarity: rarity_to_stars(&op.rarity),
+        profession: op.profession.clone(),
+        sub_profession_id: op.sub_profession_id.clone(),
+        position: op.position.clone(),
+        tag_list: op.tag_list.clone(),
+        nation_id: op.nation_id.clone(),
+        is_not_obtainable: op.is_not_obtainable,
+    }
+}
+
+pub async fn get_index(
+    state: &AppState,
+    server: Server,
+) -> Result<Vec<OperatorIndexEntry>, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let key = CacheKey::StaticData {
         resource: "operators_index",
+        server: server.as_str(),
         fields_hash: 0,
         page: 0,
     };
@@ -35,30 +60,141 @@ pub async fn get_index(state: &AppState) -> Result<Vec<OperatorIndexEntry>, ApiE
         return Ok(cached);
     }
 
-    let gd = state.game_data.load();
+    let gd = server_data.game_data.load_full();
     let mut entries: Vec<OperatorIndexEntry> = gd
         .operators
         .iter()
-        .map(|(id, op)| {
-            let operator_id = op.id.clone().unwrap_or_else(|| id.clone());
-            OperatorIndexEntry {
-                id: operator_id,
-                name: op.name.clone(),
-                appellation: op.appellation.clone(),
-                rarity: rarity_to_stars(&op.rarity),
-                profession: op.profession.clone(),
-                sub_profession_id: op.sub_profession_id.clone(),
-                position: op.position.clone(),
-                tag_list: op.tag_list.clone(),
-                nation_id: op.nation_id.clone(),
-                is_not_obtainable: op.is_not_obtainable,
-            }
-        })
+        .map(|(id, op)| to_index_entry(id, op))
         .collect();
     entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
+}
+
+/// Operators present on `source` but absent from the default (global/EN) server:
+/// the "upcoming operators" preview. Returns 404 when `source` is not a loaded
+/// server.
+pub async fn get_upcoming(
+    state: &AppState,
+    source: Server,
+) -> Result<Vec<OperatorIndexEntry>, ApiError> {
+    let source_data = state.try_server_data(source).ok_or(ApiError::NotFound)?;
+    let key = CacheKey::StaticData {
+        resource: "upcoming",
+        server: source.as_str(),
+        fields_hash: 0,
+        page: 0,
+    };
+    if let Some(cached) = state.cache.get::<Vec<OperatorIndexEntry>>(&key).await {
+        return Ok(cached);
+    }
+
+    let base = state.default_game_data();
+    let src = source_data.game_data.load_full();
+    let base_ids: HashSet<&str> = base.operators.keys().map(String::as_str).collect();
+
+    let mut entries: Vec<OperatorIndexEntry> = src
+        .operators
+        .iter()
+        .filter(|(id, _)| !base_ids.contains(id.as_str()))
+        .map(|(id, op)| to_index_entry(id, op))
+        .collect();
+    entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
+
+    state.cache.set(&key, &entries).await;
+    Ok(entries)
+}
+
+/// One fully-enriched operator by id. Lets the detail page fetch a single
+/// operator instead of downloading the whole `/static/operators` table.
+pub async fn get_operator(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<Operator, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    gd.operators.get(id).cloned().ok_or(ApiError::NotFound)
+}
+
+/// Find an operator across loaded servers, preferring `preferred` (the default).
+/// Returns the operator and the server it was found on, so a single request
+/// resolves both global and upcoming (CN-only) operators - no client-side retry.
+pub fn resolve_operator(
+    state: &AppState,
+    preferred: Server,
+    id: &str,
+) -> Option<(Operator, Server)> {
+    let mut order = vec![preferred];
+    order.extend(
+        state
+            .config
+            .servers
+            .iter()
+            .copied()
+            .filter(|s| *s != preferred),
+    );
+    for srv in order {
+        if let Some(sd) = state.try_server_data(srv)
+            && let Some(op) = sd.game_data.load_full().operators.get(id)
+        {
+            return Some((op.clone(), srv));
+        }
+    }
+    None
+}
+
+/// Just one operator's voice lines (+ its voice-lang entry), so the Audio tab
+/// fetches KB instead of the whole `/static/voices` table.
+pub async fn get_operator_voices(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<Voices, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    Ok(Voices {
+        char_words: gd
+            .voices
+            .char_words
+            .iter()
+            .filter(|(_, v)| v.char_id.as_str() == id)
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect(),
+        voice_lang_dict: gd
+            .voices
+            .voice_lang_dict
+            .iter()
+            .filter(|(_, vl)| vl.char_id.as_str() == id)
+            .map(|(k, vl)| (k.clone(), vl.clone()))
+            .collect(),
+        ..Default::default()
+    })
+}
+
+/// Just one operator's skins, so the Skins tab fetches KB instead of the whole
+/// `/static/skins` table. Matches by `tmplId` (alternate forms) else `charId`.
+pub async fn get_operator_skins(
+    state: &AppState,
+    server: Server,
+    id: &str,
+) -> Result<SkinData, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let gd = server_data.game_data.load_full();
+    Ok(SkinData {
+        char_skins: gd
+            .skins
+            .char_skins
+            .iter()
+            .filter(|(_, s)| match &s.tmpl_id {
+                Some(t) => t.as_str() == id,
+                None => s.char_id.as_str() == id,
+            })
+            .map(|(k, s)| (k.clone(), s.clone()))
+            .collect(),
+        ..Default::default()
+    })
 }
 
 const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {

@@ -2,7 +2,7 @@
 //!
 //! Different test binaries use different subsets of these helpers, so unused
 //! ones are expected per-crate.
-#![allow(dead_code)]
+#![allow(dead_code, clippy::cast_sign_loss)]
 
 use backend::core::gamedata::types::GameData;
 use backend::core::gamedata::{self};

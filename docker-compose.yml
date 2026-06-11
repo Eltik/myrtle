@@ -1,165 +1,183 @@
 services:
-  postgres:
-    image: postgres:18-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - myrtle_pgdata:/var/lib/postgresql
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U myrtle -d myrtle" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - myrtle
-    profiles:
-      - "${ENABLE_DB:-true}"
+    postgres:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            - myrtle_pgdata:/var/lib/postgresql
+        ports:
+            - "5432:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U myrtle -d myrtle"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - myrtle
+        profiles:
+            - "${ENABLE_DB:-true}"
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --save 60 1 --loglevel warning
-    volumes:
-      - myrtle_redisdata:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - myrtle
-    profiles:
-      - "${ENABLE_CACHE:-true}"
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        command: redis-server --save 60 1 --loglevel warning
+        volumes:
+            - myrtle_redisdata:/data
+        ports:
+            - "6379:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - myrtle
+        profiles:
+            - "${ENABLE_CACHE:-true}"
 
-  backend:
-    build:
-      context: ./backend
-      platforms:
-        - linux/amd64
-      dockerfile: ${DOCKERFILE:-Dockerfile}
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
-      redis:
-        condition: service_healthy
-        required: false
-      asset-watcher:
-        condition: service_healthy
-        required: false
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-      GAME_DATA_DIR: ${GAME_DATA_DIR}
-      ASSETS_DIR: ${ASSETS_DIR}
-      JWT_SECRET: ${JWT_SECRET}
-      SERVICE_KEY: ${SERVICE_KEY}
-      ASSET_WS_URL: ${ASSET_WS_URL}
-      RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
-      DPS_POLL_INTERVAL: ${DPS_POLL_INTERVAL:-1800}
-      DPS_AUTO_RESTART: ${DPS_AUTO_RESTART:-true}
-      GITHUB_TOKEN: ${GITHUB_TOKEN}
-      RUST_LOG: ${RUST_LOG:-info}
-    volumes:
-      - ./backend:/src
-      - ./assets/output:/data/output:ro
-    ports:
-      - "3060:3060"
-    networks:
-      - myrtle
-    profiles:
-      - "true"
+    backend:
+        build:
+            context: ./backend
+            platforms:
+                - linux/amd64
+            dockerfile: ${DOCKERFILE:-Dockerfile}
+        restart: unless-stopped
+        depends_on:
+            postgres:
+                condition: service_healthy
+                required: false
+            redis:
+                condition: service_healthy
+                required: false
+        environment:
+            DATABASE_URL: ${DATABASE_URL}
+            REDIS_URL: ${REDIS_URL}
+            ASSETS_DIR: ${ASSETS_DIR}
+            SERVERS: ${SERVERS:-en}
+            JWT_SECRET: ${JWT_SECRET}
+            SERVICE_KEY: ${SERVICE_KEY}
+            ASSET_WS_URLS: ${ASSET_WS_URLS}
+            RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
+            DPS_POLL_INTERVAL: ${DPS_POLL_INTERVAL:-1800}
+            DPS_AUTO_RESTART: ${DPS_AUTO_RESTART:-true}
+            GITHUB_TOKEN: ${GITHUB_TOKEN}
+            RUST_LOG: ${RUST_LOG:-info}
+        volumes:
+            - ./backend:/src
+            - ./assets/output:/data/output:ro
+        ports:
+            - "3060:3060"
+        networks:
+            - myrtle
+        profiles:
+            - "true"
 
-  frontend:
-    build:
-      context: ./frontend
-      platforms:
-        - linux/amd64
-      dockerfile: ${DOCKERFILE:-Dockerfile}
-    restart: unless-stopped
-    depends_on:
-      - backend
-    environment:
-      BACKEND_URL: ${BACKEND_URL}
-      VITE_BACKEND_URL: ${VITE_BACKEND_URL}
-      INTERNAL_SERVICE_KEY: ${SERVICE_KEY}
-    volumes:
-      - ./frontend:/src
-      - /src/node_modules
-    ports:
-      - "3000:3000"
-    networks:
-      - myrtle
-    profiles:
-      - "true"
+    frontend:
+        build:
+            context: ./frontend
+            platforms:
+                - linux/amd64
+            dockerfile: ${DOCKERFILE:-Dockerfile}
+        restart: unless-stopped
+        depends_on:
+            - backend
+        environment:
+            BACKEND_URL: ${BACKEND_URL}
+            VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+            INTERNAL_SERVICE_KEY: ${SERVICE_KEY}
+        volumes:
+            - ./frontend:/src
+            - /src/node_modules
+        ports:
+            - "3000:3000"
+        networks:
+            - myrtle
+        profiles:
+            - "true"
 
-  asset-watcher:
-    build:
-      context: ./assets
-      platforms:
-        - linux/amd64
-    restart: unless-stopped
-    volumes:
-      - ./assets:/app
-      - /app/node_modules
-      - /app/binaries
-      - ./assets/ArkAssets:/data/ArkAssets
-      - ./assets/output:/data/output
-    working_dir: /app
-    command: bun run.mjs ws --non-interactive --port 9160
-    ports:
-      - "9160:9160"
-    networks:
-      - myrtle
-    profiles:
-      - "true"
+    asset-watcher-en:
+        build:
+            context: ./assets
+            platforms:
+                - linux/amd64
+        restart: unless-stopped
+        volumes:
+            - ./assets:/app
+            - /app/node_modules
+            - /app/binaries
+            - ./assets/ArkAssets:/data/ArkAssets
+            - ./assets/output:/data/output
+        working_dir: /app
+        command: bun run.mjs ws --non-interactive --server en --port 9160
+        ports:
+            - "9160:9160"
+        networks:
+            - myrtle
+        profiles:
+            - "true"
 
-  dps-tools:
-    build:
-      context: ./backend
-      platforms:
-        - linux/amd64
-      dockerfile: Dockerfile.dev
-    profiles:
-      - tools
-    volumes:
-      - ./backend:/src
-      - ./assets/output:/data/output:ro
-      - cargo_cache:/usr/local/cargo/registry
-      - pip_cache:/root/.cache/pip
-    environment:
-      GAME_DATA_DIR: ${GAME_DATA_DIR}
-      ASSETS_DIR: ${ASSETS_DIR}
-      CARGO_TARGET_DIR: /tmp/cargo_target
-    command: sh ./scripts/run-dps-tools.sh
+    asset-watcher-cn:
+        build:
+            context: ./assets
+            platforms:
+                - linux/amd64
+        restart: unless-stopped
+        volumes:
+            - ./assets:/app
+            - /app/node_modules
+            - /app/binaries
+            - ./assets/ArkAssets:/data/ArkAssets
+            - ./assets/output:/data/output
+        working_dir: /app
+        command: bun run.mjs ws --non-interactive --server cn --port 9161
+        ports:
+            - "9161:9161"
+        networks:
+            - myrtle
+        profiles:
+            - "true"
 
-  asset-tools:
-    build:
-      context: ./assets
-      platforms:
-        - linux/amd64
-    profiles:
-      - tools
-    volumes:
-      - ./assets:/src
-      - ./assets/ArkAssets:/data/ArkAssets
-      - ./assets/output:/data/output
-      - cargo_cache:/usr/local/cargo/registry
+    dps-tools:
+        build:
+            context: ./backend
+            platforms:
+                - linux/amd64
+            dockerfile: Dockerfile.dev
+        profiles:
+            - tools
+        volumes:
+            - ./backend:/src
+            - ./assets/output:/data/output:ro
+            - cargo_cache:/usr/local/cargo/registry
+            - pip_cache:/root/.cache/pip
+        environment:
+            GAME_DATA_DIR: ${GAME_DATA_DIR}
+            ASSETS_DIR: /data/output/en
+            CARGO_TARGET_DIR: /tmp/cargo_target
+        command: sh ./scripts/run-dps-tools.sh
+
+    asset-tools:
+        build:
+            context: ./assets
+            platforms:
+                - linux/amd64
+        profiles:
+            - tools
+        volumes:
+            - ./assets:/src
+            - ./assets/ArkAssets:/data/ArkAssets
+            - ./assets/output:/data/output
+            - cargo_cache:/usr/local/cargo/registry
 
 volumes:
-  myrtle_pgdata:
-  myrtle_redisdata:
-  cargo_cache:
-  pip_cache:
+    myrtle_pgdata:
+    myrtle_redisdata:
+    cargo_cache:
+    pip_cache:
 
 networks:
-  myrtle:
-    driver: bridge
+    myrtle:
+        driver: bridge

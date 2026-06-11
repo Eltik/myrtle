@@ -4,7 +4,9 @@ use crate::core::gamedata::{
     assets::AssetIndex,
     types::{
         material::Materials,
-        module::{BattleEquip, Module, ModuleItemCost, Modules, RawModule, RawModules},
+        module::{
+            BattleEquip, Module, ModuleItemCost, Modules, RawModule, RawModuleItemCost, RawModules,
+        },
         operator::OperatorModule,
     },
 };
@@ -94,7 +96,7 @@ fn enrich_module(raw: &RawModule, materials: &Materials, assets: &AssetIndex) ->
 }
 
 fn convert_item_costs(
-    raw: &Option<HashMap<i32, Vec<crate::core::gamedata::types::module::RawModuleItemCost>>>,
+    raw: &Option<HashMap<i32, Vec<RawModuleItemCost>>>,
     materials: &Materials,
     assets: &AssetIndex,
 ) -> Option<HashMap<String, Vec<ModuleItemCost>>> {

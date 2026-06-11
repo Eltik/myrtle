@@ -1,0 +1,181 @@
+name: Discord CI
+
+on:
+  push:
+    branches: [main, v3]
+    paths:
+      - "discord/**"
+      - ".github/workflows/discord-ci.yml"
+  pull_request:
+    branches: [main, v3]
+    paths:
+      - "discord/**"
+      - ".github/workflows/discord-ci.yml"
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+  # All sqlx queries are runtime (sqlx::query(), no query!/query_as! macros),
+  # so no database connection or .sqlx/ cache is needed at compile time.
+  SQLX_OFFLINE: "true"
+  # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Formatting check
+  # ──────────────────────────────────────────────────────────────────────────────
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check discord formatting
+        working-directory: discord
+        run: cargo fmt --check
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Linting
+  # ──────────────────────────────────────────────────────────────────────────────
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: discord -> target
+          key: clippy
+          cache-on-failure: true
+
+      - name: Lint discord
+        working-directory: discord
+        run: cargo clippy --all -- -W clippy::all -W clippy::pedantic -W clippy::nursery
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Compilation check
+  # ──────────────────────────────────────────────────────────────────────────────
+  check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: discord -> target
+          key: check
+          cache-on-failure: true
+
+      - name: Check discord compilation
+        working-directory: discord
+        run: cargo check --all-targets
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Release build (bot + command deployer)
+  # ──────────────────────────────────────────────────────────────────────────────
+  build-release:
+    name: Release Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: discord -> target
+          key: release
+          cache-on-failure: true
+
+      - name: Build discord bot (release)
+        working-directory: discord
+        run: cargo build --release --bin discord
+
+      - name: Build command deployer (release)
+        working-directory: discord
+        run: cargo build --release --bin commands
+
+      - name: Verify binaries exist
+        run: |
+          test -f "discord/target/release/discord"
+          test -f "discord/target/release/commands"
+          echo "Both binaries built successfully"
+
+      - name: Upload binaries
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
+        uses: actions/upload-artifact@v5
+        with:
+          name: discord-release-binaries
+          path: |
+            discord/target/release/discord
+            discord/target/release/commands
+            !discord/target/release/.fingerprint/**
+            !discord/target/release/build/**
+            !discord/target/release/deps/**
+            !discord/target/release/examples/**
+            !discord/target/release/incremental/**
+            !discord/target/release/*.d
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Security audit
+  # ──────────────────────────────────────────────────────────────────────────────
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Audit discord
+        working-directory: discord
+        run: cargo audit || echo "::warning::Discord audit found vulnerabilities"
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Final status
+  # ──────────────────────────────────────────────────────────────────────────────
+  ci-pass:
+    name: CI Pass
+    if: always()
+    needs: [fmt, clippy, check, build-release, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs
+        run: |
+          results=(
+            "${{ needs.fmt.result }}"
+            "${{ needs.clippy.result }}"
+            "${{ needs.check.result }}"
+            "${{ needs.build-release.result }}"
+            "${{ needs.audit.result }}"
+          )
+          for result in "${results[@]}"; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "::error::Job failed with result: $result"
+              exit 1
+            fi
+          done
+          echo "All jobs passed!"

@@ -38,7 +38,7 @@ impl SerializedFile {
         let _file_size = r.read_u32()?;
         let version = r.read_u32()?;
 
-        let mut data_offset = r.read_u32()? as u64;
+        let mut data_offset = u64::from(r.read_u32()?);
         let endian = r.read_u8()?;
         let _ = r.read_bytes(3)?;
 
@@ -100,7 +100,7 @@ impl SerializedFile {
             let mut byte_start = if version >= 22 {
                 r.read_u64()?
             } else {
-                r.read_u32()? as u64
+                u64::from(r.read_u32()?)
             };
             byte_start += data_offset; // absolute offset into data
             let byte_size = r.read_u32()?;
@@ -116,7 +116,7 @@ impl SerializedFile {
             });
         }
 
-        Ok(SerializedFile {
+        Ok(Self {
             objects,
             types,
             unity_version,

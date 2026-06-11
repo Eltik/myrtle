@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::gamedata::types::enemy::MaybeValue;
 use crate::core::gamedata::{
     assets::{AssetIndex, AssetKind},
     types::enemy::{
@@ -24,27 +25,21 @@ fn merge_level_entry(
     let attrs = &data.attributes;
     let base_attrs = base.map(|l| &l.attributes);
 
-    let pick_i32 = |mv: &crate::core::gamedata::types::enemy::MaybeValue<i32>,
-                    pick_base: fn(&EnemyAttributes) -> i32|
-     -> i32 {
+    let pick_i32 = |mv: &MaybeValue<i32>, pick_base: fn(&EnemyAttributes) -> i32| -> i32 {
         if mv.defined {
             mv.value
         } else {
             base_attrs.map_or(0, pick_base)
         }
     };
-    let pick_f64 = |mv: &crate::core::gamedata::types::enemy::MaybeValue<f64>,
-                    pick_base: fn(&EnemyAttributes) -> f64|
-     -> f64 {
+    let pick_f64 = |mv: &MaybeValue<f64>, pick_base: fn(&EnemyAttributes) -> f64| -> f64 {
         if mv.defined {
             mv.value
         } else {
             base_attrs.map_or(0.0, pick_base)
         }
     };
-    let pick_bool = |mv: &crate::core::gamedata::types::enemy::MaybeValue<bool>,
-                     pick_base: fn(&EnemyAttributes) -> bool|
-     -> bool {
+    let pick_bool = |mv: &MaybeValue<bool>, pick_base: fn(&EnemyAttributes) -> bool| -> bool {
         if mv.defined {
             mv.value
         } else {

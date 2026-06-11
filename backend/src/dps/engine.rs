@@ -6,7 +6,9 @@ use crate::core::gamedata::types::operator::Operator;
 use crate::dps::operator_data::OperatorData;
 use crate::dps::operator_unit::OperatorParams;
 
-use super::formulas;
+use super::custom::dispatch;
+use super::custom::dispatch_hps;
+use super::formulas::apply_shreds;
 use super::operator_unit::{EnemyStats, OperatorUnit};
 
 const FORMULAS_JSON: &str = include_str!("config/operator_formulas.json");
@@ -108,7 +110,7 @@ pub fn calculate_skill_dps(
     _formula: &SkillFormula,
     enemy: &EnemyStats,
 ) -> f64 {
-    super::custom::dispatch(unit, enemy).unwrap_or(0.0)
+    dispatch(unit, enemy).unwrap_or(0.0)
 }
 
 static FORMULAS: LazyLock<HashMap<String, OperatorFormula>> = LazyLock::new(load_formulas);
@@ -157,7 +159,7 @@ pub fn calculate_dps(
         return None;
     }
 
-    let shredded = formulas::apply_shreds(enemy, &unit.shreds);
+    let shredded = apply_shreds(enemy, &unit.shreds);
 
     // Get the skill formula for current skill index
     let skill_key = unit.skill_index.to_string();
@@ -223,7 +225,7 @@ pub fn calculate_hps(operator: &Operator, params: OperatorParams) -> Option<HpsR
 
     apply_init_fixups(&mut unit, op_id);
 
-    super::custom::dispatch_hps(&unit)
+    dispatch_hps(&unit)
 }
 
 /// Per-operator init side effects that the transpiler can't derive from the

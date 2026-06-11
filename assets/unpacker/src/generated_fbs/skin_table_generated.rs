@@ -4,17 +4,25 @@ extern crate alloc;
 
 extern crate serde;
 
-
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 pub const ENUM_MIN_ENUM__TORAPPU_SKIN_VOICE_TYPE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 pub const ENUM_MAX_ENUM__TORAPPU_SKIN_VOICE_TYPE: i32 = 2;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_SKIN_VOICE_TYPE: [enum__Torappu_SkinVoiceType; 3] = [
-  enum__Torappu_SkinVoiceType::NONE,
-  enum__Torappu_SkinVoiceType::ILLUST,
-  enum__Torappu_SkinVoiceType::ALL,
+    enum__Torappu_SkinVoiceType::NONE,
+    enum__Torappu_SkinVoiceType::ILLUST,
+    enum__Torappu_SkinVoiceType::ALL,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -22,35 +30,32 @@ pub const ENUM_VALUES_ENUM__TORAPPU_SKIN_VOICE_TYPE: [enum__Torappu_SkinVoiceTyp
 pub struct enum__Torappu_SkinVoiceType(pub i32);
 #[allow(non_upper_case_globals)]
 impl enum__Torappu_SkinVoiceType {
-  pub const NONE: Self = Self(0);
-  pub const ILLUST: Self = Self(1);
-  pub const ALL: Self = Self(2);
+    pub const NONE: Self = Self(0);
+    pub const ILLUST: Self = Self(1);
+    pub const ALL: Self = Self(2);
 
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
-    Self::ILLUST,
-    Self::ALL,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::NONE => Some("NONE"),
-      Self::ILLUST => Some("ILLUST"),
-      Self::ALL => Some("ALL"),
-      _ => None,
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 2;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::ILLUST, Self::ALL];
+    /// Returns the variant's name or "" if unknown.
+    #[must_use]
+    pub const fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::ILLUST => Some("ILLUST"),
+            Self::ALL => Some("ALL"),
+            _ => None,
+        }
     }
-  }
 }
 impl ::core::fmt::Debug for enum__Torappu_SkinVoiceType {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
     }
-  }
 }
 
 impl<'de> serde::Deserialize<'de> for enum__Torappu_SkinVoiceType {
@@ -59,7 +64,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_SkinVoiceType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in enum__Torappu_SkinVoiceType::ENUM_VALUES {
+        for item in Self::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -73,16 +78,16 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_SkinVoiceType {
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_SkinVoiceType {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
 }
 
 impl ::flatbuffers::Push for enum__Torappu_SkinVoiceType {
-    type Output = enum__Torappu_SkinVoiceType;
+    type Output = Self;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -90,649 +95,950 @@ impl ::flatbuffers::Push for enum__Torappu_SkinVoiceType {
 }
 
 impl ::flatbuffers::EndianScalar for enum__Torappu_SkinVoiceType {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
 }
 
 impl<'a> ::flatbuffers::Verifiable for enum__Torappu_SkinVoiceType {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        i32::run_verifier(v, pos)
+    }
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_SkinVoiceType {}
 pub enum clz_Torappu_CharSkinData_TokenSkinInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
-  type Inner = clz_Torappu_CharSkinData_TokenSkinInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
-  pub const VT_TOKENID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_TOKENSKINID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_TOKENID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_TOKENSKINID: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinData_TokenSkinInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinData_TokenSkinInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinData_TokenSkinInfoBuilder::new(_fbb);
-    if let Some(x) = args.tokenSkinId { builder.add_tokenSkinId(x); }
-    if let Some(x) = args.tokenId { builder.add_tokenId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinData_TokenSkinInfoT {
-    let tokenId = self.tokenId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let tokenSkinId = self.tokenSkinId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_CharSkinData_TokenSkinInfoT {
-      tokenId,
-      tokenSkinId,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinData_TokenSkinInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinData_TokenSkinInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinData_TokenSkinInfoBuilder::new(_fbb);
+        if let Some(x) = args.tokenSkinId {
+            builder.add_tokenSkinId(x);
+        }
+        if let Some(x) = args.tokenId {
+            builder.add_tokenId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn tokenId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENID, None)}
-  }
-  #[inline]
-  pub fn tokenSkinId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENSKINID, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinData_TokenSkinInfoT {
+        let tokenId = self
+            .tokenId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let tokenSkinId = self
+            .tokenSkinId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_CharSkinData_TokenSkinInfoT {
+            tokenId,
+            tokenSkinId,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn tokenId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn tokenSkinId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENSKINID,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinData_TokenSkinInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tokenId", Self::VT_TOKENID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tokenSkinId", Self::VT_TOKENSKINID, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "tokenId",
+                Self::VT_TOKENID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "tokenSkinId",
+                Self::VT_TOKENSKINID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinData_TokenSkinInfoArgs<'a> {
     pub tokenId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tokenSkinId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for clz_Torappu_CharSkinData_TokenSkinInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinData_TokenSkinInfoArgs {
-      tokenId: None,
-      tokenSkinId: None,
+impl Default for clz_Torappu_CharSkinData_TokenSkinInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinData_TokenSkinInfoArgs {
+            tokenId: None,
+            tokenSkinId: None,
+        }
     }
-  }
 }
 
-
-pub struct clz_Torappu_CharSkinData_TokenSkinInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct clz_Torappu_CharSkinData_TokenSkinInfoBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinData_TokenSkinInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_tokenId(&mut self, tokenId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENID, tokenId);
-  }
-  #[inline]
-  pub fn add_tokenSkinId(&mut self, tokenSkinId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENSKINID, tokenSkinId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinData_TokenSkinInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinData_TokenSkinInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_CharSkinData_TokenSkinInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_tokenId(&mut self, tokenId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENID,
+            tokenId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_tokenSkinId(&mut self, tokenSkinId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_TokenSkinInfo::VT_TOKENSKINID,
+            tokenSkinId,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinData_TokenSkinInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinData_TokenSkinInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinData_TokenSkinInfo");
-      ds.field("tokenId", &self.tokenId());
-      ds.field("tokenSkinId", &self.tokenSkinId());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinData_TokenSkinInfo");
+        ds.field("tokenId", &self.tokenId());
+        ds.field("tokenSkinId", &self.tokenSkinId());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinData_TokenSkinInfoT {
-  pub tokenId: Option<alloc::string::String>,
-  pub tokenSkinId: Option<alloc::string::String>,
+    pub tokenId: Option<alloc::string::String>,
+    pub tokenSkinId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_CharSkinData_TokenSkinInfoT {
-  fn default() -> Self {
-    Self {
-      tokenId: None,
-      tokenSkinId: None,
+    fn default() -> Self {
+        Self {
+            tokenId: None,
+            tokenSkinId: None,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinData_TokenSkinInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'b>> {
-    let tokenId = self.tokenId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let tokenSkinId = self.tokenSkinId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_CharSkinData_TokenSkinInfo::create(_fbb, &clz_Torappu_CharSkinData_TokenSkinInfoArgs{
-      tokenId,
-      tokenSkinId,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'b>> {
+        let tokenId = self.tokenId.as_ref().map(|x| _fbb.create_string(x));
+        let tokenSkinId = self.tokenSkinId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CharSkinData_TokenSkinInfo::create(
+            _fbb,
+            &clz_Torappu_CharSkinData_TokenSkinInfoArgs {
+                tokenId,
+                tokenSkinId,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinData_BattleSkinOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinData_BattleSkin<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_BattleSkin<'a> {
-  type Inner = clz_Torappu_CharSkinData_BattleSkin<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinData_BattleSkin<'a> {
-  pub const VT_OVERWRITEPREFAB: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SKINORPREFABID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_OVERWRITEPREFAB: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SKINORPREFABID: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinData_BattleSkin { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinData_BattleSkinArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinData_BattleSkinBuilder::new(_fbb);
-    if let Some(x) = args.skinOrPrefabId { builder.add_skinOrPrefabId(x); }
-    builder.add_overwritePrefab(args.overwritePrefab);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinData_BattleSkinT {
-    let overwritePrefab = self.overwritePrefab();
-    let skinOrPrefabId = self.skinOrPrefabId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_CharSkinData_BattleSkinT {
-      overwritePrefab,
-      skinOrPrefabId,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinData_BattleSkin { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinData_BattleSkinArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinData_BattleSkinBuilder::new(_fbb);
+        if let Some(x) = args.skinOrPrefabId {
+            builder.add_skinOrPrefabId(x);
+        }
+        builder.add_overwritePrefab(args.overwritePrefab);
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn overwritePrefab(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_CharSkinData_BattleSkin::VT_OVERWRITEPREFAB, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn skinOrPrefabId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_BattleSkin::VT_SKINORPREFABID, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinData_BattleSkinT {
+        let overwritePrefab = self.overwritePrefab();
+        let skinOrPrefabId = self
+            .skinOrPrefabId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_CharSkinData_BattleSkinT {
+            overwritePrefab,
+            skinOrPrefabId,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn overwritePrefab(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_CharSkinData_BattleSkin::VT_OVERWRITEPREFAB,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn skinOrPrefabId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_BattleSkin::VT_SKINORPREFABID,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinData_BattleSkin<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<bool>("overwritePrefab", Self::VT_OVERWRITEPREFAB, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinOrPrefabId", Self::VT_SKINORPREFABID, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<bool>("overwritePrefab", Self::VT_OVERWRITEPREFAB, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "skinOrPrefabId",
+                Self::VT_SKINORPREFABID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinData_BattleSkinArgs<'a> {
     pub overwritePrefab: bool,
     pub skinOrPrefabId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for clz_Torappu_CharSkinData_BattleSkinArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinData_BattleSkinArgs {
-      overwritePrefab: false,
-      skinOrPrefabId: None,
+impl Default for clz_Torappu_CharSkinData_BattleSkinArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinData_BattleSkinArgs {
+            overwritePrefab: false,
+            skinOrPrefabId: None,
+        }
     }
-  }
 }
 
-
-pub struct clz_Torappu_CharSkinData_BattleSkinBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct clz_Torappu_CharSkinData_BattleSkinBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinData_BattleSkinBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_overwritePrefab(&mut self, overwritePrefab: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_CharSkinData_BattleSkin::VT_OVERWRITEPREFAB, overwritePrefab, false);
-  }
-  #[inline]
-  pub fn add_skinOrPrefabId(&mut self, skinOrPrefabId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_BattleSkin::VT_SKINORPREFABID, skinOrPrefabId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinData_BattleSkinBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinData_BattleSkinBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_CharSkinData_BattleSkinBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_overwritePrefab(&mut self, overwritePrefab: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_CharSkinData_BattleSkin::VT_OVERWRITEPREFAB,
+            overwritePrefab,
+            false,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_skinOrPrefabId(&mut self, skinOrPrefabId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_BattleSkin::VT_SKINORPREFABID,
+            skinOrPrefabId,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinData_BattleSkinBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinData_BattleSkin<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinData_BattleSkin");
-      ds.field("overwritePrefab", &self.overwritePrefab());
-      ds.field("skinOrPrefabId", &self.skinOrPrefabId());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinData_BattleSkin");
+        ds.field("overwritePrefab", &self.overwritePrefab());
+        ds.field("skinOrPrefabId", &self.skinOrPrefabId());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinData_BattleSkinT {
-  pub overwritePrefab: bool,
-  pub skinOrPrefabId: Option<alloc::string::String>,
+    pub overwritePrefab: bool,
+    pub skinOrPrefabId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_CharSkinData_BattleSkinT {
-  fn default() -> Self {
-    Self {
-      overwritePrefab: false,
-      skinOrPrefabId: None,
+    fn default() -> Self {
+        Self {
+            overwritePrefab: false,
+            skinOrPrefabId: None,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinData_BattleSkinT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'b>> {
-    let overwritePrefab = self.overwritePrefab;
-    let skinOrPrefabId = self.skinOrPrefabId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_CharSkinData_BattleSkin::create(_fbb, &clz_Torappu_CharSkinData_BattleSkinArgs{
-      overwritePrefab,
-      skinOrPrefabId,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'b>> {
+        let overwritePrefab = self.overwritePrefab;
+        let skinOrPrefabId = self.skinOrPrefabId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CharSkinData_BattleSkin::create(
+            _fbb,
+            &clz_Torappu_CharSkinData_BattleSkinArgs {
+                overwritePrefab,
+                skinOrPrefabId,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinData_DisplaySkinOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinData_DisplaySkin<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_DisplaySkin<'a> {
-  type Inner = clz_Torappu_CharSkinData_DisplaySkin<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
-  pub const VT_SKINNAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_COLORLIST: ::flatbuffers::VOffsetT = 6;
-  pub const VT_TITLELIST: ::flatbuffers::VOffsetT = 8;
-  pub const VT_MODELNAME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_DRAWERLIST: ::flatbuffers::VOffsetT = 12;
-  pub const VT_DESIGNERLIST: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SKINGROUPID: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SKINGROUPNAME: ::flatbuffers::VOffsetT = 18;
-  pub const VT_SKINGROUPSORTINDEX: ::flatbuffers::VOffsetT = 20;
-  pub const VT_CONTENT: ::flatbuffers::VOffsetT = 22;
-  pub const VT_DIALOG: ::flatbuffers::VOffsetT = 24;
-  pub const VT_USAGE: ::flatbuffers::VOffsetT = 26;
-  pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 28;
-  pub const VT_OBTAINAPPROACH: ::flatbuffers::VOffsetT = 30;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 32;
-  pub const VT_DISPLAYTAGID: ::flatbuffers::VOffsetT = 34;
-  pub const VT_GETTIME: ::flatbuffers::VOffsetT = 36;
-  pub const VT_ONYEAR: ::flatbuffers::VOffsetT = 38;
-  pub const VT_ONPERIOD: ::flatbuffers::VOffsetT = 40;
+    pub const VT_SKINNAME: ::flatbuffers::VOffsetT = 4;
+    pub const VT_COLORLIST: ::flatbuffers::VOffsetT = 6;
+    pub const VT_TITLELIST: ::flatbuffers::VOffsetT = 8;
+    pub const VT_MODELNAME: ::flatbuffers::VOffsetT = 10;
+    pub const VT_DRAWERLIST: ::flatbuffers::VOffsetT = 12;
+    pub const VT_DESIGNERLIST: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SKINGROUPID: ::flatbuffers::VOffsetT = 16;
+    pub const VT_SKINGROUPNAME: ::flatbuffers::VOffsetT = 18;
+    pub const VT_SKINGROUPSORTINDEX: ::flatbuffers::VOffsetT = 20;
+    pub const VT_CONTENT: ::flatbuffers::VOffsetT = 22;
+    pub const VT_DIALOG: ::flatbuffers::VOffsetT = 24;
+    pub const VT_USAGE: ::flatbuffers::VOffsetT = 26;
+    pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 28;
+    pub const VT_OBTAINAPPROACH: ::flatbuffers::VOffsetT = 30;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 32;
+    pub const VT_DISPLAYTAGID: ::flatbuffers::VOffsetT = 34;
+    pub const VT_GETTIME: ::flatbuffers::VOffsetT = 36;
+    pub const VT_ONYEAR: ::flatbuffers::VOffsetT = 38;
+    pub const VT_ONPERIOD: ::flatbuffers::VOffsetT = 40;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinData_DisplaySkin { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinData_DisplaySkinArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinData_DisplaySkinBuilder::new(_fbb);
-    builder.add_getTime(args.getTime);
-    builder.add_onPeriod(args.onPeriod);
-    builder.add_onYear(args.onYear);
-    if let Some(x) = args.displayTagId { builder.add_displayTagId(x); }
-    builder.add_sortId(args.sortId);
-    if let Some(x) = args.obtainApproach { builder.add_obtainApproach(x); }
-    if let Some(x) = args.description { builder.add_description(x); }
-    if let Some(x) = args.usage { builder.add_usage(x); }
-    if let Some(x) = args.dialog { builder.add_dialog(x); }
-    if let Some(x) = args.content { builder.add_content(x); }
-    builder.add_skinGroupSortIndex(args.skinGroupSortIndex);
-    if let Some(x) = args.skinGroupName { builder.add_skinGroupName(x); }
-    if let Some(x) = args.skinGroupId { builder.add_skinGroupId(x); }
-    if let Some(x) = args.designerList { builder.add_designerList(x); }
-    if let Some(x) = args.drawerList { builder.add_drawerList(x); }
-    if let Some(x) = args.modelName { builder.add_modelName(x); }
-    if let Some(x) = args.titleList { builder.add_titleList(x); }
-    if let Some(x) = args.colorList { builder.add_colorList(x); }
-    if let Some(x) = args.skinName { builder.add_skinName(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinData_DisplaySkinT {
-    let skinName = self.skinName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let colorList = self.colorList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let titleList = self.titleList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let modelName = self.modelName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let drawerList = self.drawerList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let designerList = self.designerList().map(|x| {
-      x.iter().map(|s| alloc::string::ToString::to_string(s)).collect()
-    });
-    let skinGroupId = self.skinGroupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let skinGroupName = self.skinGroupName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let skinGroupSortIndex = self.skinGroupSortIndex();
-    let content = self.content().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let dialog = self.dialog().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let usage = self.usage().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let description = self.description().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let obtainApproach = self.obtainApproach().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let sortId = self.sortId();
-    let displayTagId = self.displayTagId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let getTime = self.getTime();
-    let onYear = self.onYear();
-    let onPeriod = self.onPeriod();
-    clz_Torappu_CharSkinData_DisplaySkinT {
-      skinName,
-      colorList,
-      titleList,
-      modelName,
-      drawerList,
-      designerList,
-      skinGroupId,
-      skinGroupName,
-      skinGroupSortIndex,
-      content,
-      dialog,
-      usage,
-      description,
-      obtainApproach,
-      sortId,
-      displayTagId,
-      getTime,
-      onYear,
-      onPeriod,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinData_DisplaySkin { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinData_DisplaySkinArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinData_DisplaySkinBuilder::new(_fbb);
+        builder.add_getTime(args.getTime);
+        builder.add_onPeriod(args.onPeriod);
+        builder.add_onYear(args.onYear);
+        if let Some(x) = args.displayTagId {
+            builder.add_displayTagId(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.obtainApproach {
+            builder.add_obtainApproach(x);
+        }
+        if let Some(x) = args.description {
+            builder.add_description(x);
+        }
+        if let Some(x) = args.usage {
+            builder.add_usage(x);
+        }
+        if let Some(x) = args.dialog {
+            builder.add_dialog(x);
+        }
+        if let Some(x) = args.content {
+            builder.add_content(x);
+        }
+        builder.add_skinGroupSortIndex(args.skinGroupSortIndex);
+        if let Some(x) = args.skinGroupName {
+            builder.add_skinGroupName(x);
+        }
+        if let Some(x) = args.skinGroupId {
+            builder.add_skinGroupId(x);
+        }
+        if let Some(x) = args.designerList {
+            builder.add_designerList(x);
+        }
+        if let Some(x) = args.drawerList {
+            builder.add_drawerList(x);
+        }
+        if let Some(x) = args.modelName {
+            builder.add_modelName(x);
+        }
+        if let Some(x) = args.titleList {
+            builder.add_titleList(x);
+        }
+        if let Some(x) = args.colorList {
+            builder.add_colorList(x);
+        }
+        if let Some(x) = args.skinName {
+            builder.add_skinName(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn skinName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINNAME, None)}
-  }
-  #[inline]
-  pub fn colorList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_CharSkinData_DisplaySkin::VT_COLORLIST, None)}
-  }
-  #[inline]
-  pub fn titleList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_CharSkinData_DisplaySkin::VT_TITLELIST, None)}
-  }
-  #[inline]
-  pub fn modelName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_MODELNAME, None)}
-  }
-  #[inline]
-  pub fn drawerList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DRAWERLIST, None)}
-  }
-  #[inline]
-  pub fn designerList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DESIGNERLIST, None)}
-  }
-  #[inline]
-  pub fn skinGroupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPID, None)}
-  }
-  #[inline]
-  pub fn skinGroupName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPNAME, None)}
-  }
-  #[inline]
-  pub fn skinGroupSortIndex(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPSORTINDEX, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn content(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_CONTENT, None)}
-  }
-  #[inline]
-  pub fn dialog(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DIALOG, None)}
-  }
-  #[inline]
-  pub fn usage(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_USAGE, None)}
-  }
-  #[inline]
-  pub fn description(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DESCRIPTION, None)}
-  }
-  #[inline]
-  pub fn obtainApproach(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_OBTAINAPPROACH, None)}
-  }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SORTID, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn displayTagId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DISPLAYTAGID, None)}
-  }
-  #[inline]
-  pub fn getTime(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_CharSkinData_DisplaySkin::VT_GETTIME, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn onYear(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONYEAR, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn onPeriod(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONPERIOD, Some(0)).unwrap()}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinData_DisplaySkinT {
+        let skinName = self
+            .skinName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let colorList = self.colorList().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let titleList = self.titleList().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let modelName = self
+            .modelName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let drawerList = self.drawerList().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let designerList = self.designerList().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let skinGroupId = self
+            .skinGroupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let skinGroupName = self
+            .skinGroupName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let skinGroupSortIndex = self.skinGroupSortIndex();
+        let content = self
+            .content()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let dialog = self.dialog().map(|x| alloc::string::ToString::to_string(x));
+        let usage = self.usage().map(|x| alloc::string::ToString::to_string(x));
+        let description = self
+            .description()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let obtainApproach = self
+            .obtainApproach()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let displayTagId = self
+            .displayTagId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let getTime = self.getTime();
+        let onYear = self.onYear();
+        let onPeriod = self.onPeriod();
+        clz_Torappu_CharSkinData_DisplaySkinT {
+            skinName,
+            colorList,
+            titleList,
+            modelName,
+            drawerList,
+            designerList,
+            skinGroupId,
+            skinGroupName,
+            skinGroupSortIndex,
+            content,
+            dialog,
+            usage,
+            description,
+            obtainApproach,
+            sortId,
+            displayTagId,
+            getTime,
+            onYear,
+            onPeriod,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn skinName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_SKINNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn colorList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_CharSkinData_DisplaySkin::VT_COLORLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn titleList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_CharSkinData_DisplaySkin::VT_TITLELIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn modelName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_MODELNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn drawerList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_CharSkinData_DisplaySkin::VT_DRAWERLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn designerList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_CharSkinData_DisplaySkin::VT_DESIGNERLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn skinGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn skinGroupName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn skinGroupSortIndex(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPSORTINDEX,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn content(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_CONTENT,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn dialog(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_DIALOG,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn usage(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_USAGE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn description(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_DESCRIPTION,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn obtainApproach(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_OBTAINAPPROACH,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn displayTagId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData_DisplaySkin::VT_DISPLAYTAGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn getTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_CharSkinData_DisplaySkin::VT_GETTIME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn onYear(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONYEAR, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn onPeriod(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONPERIOD, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinData_DisplaySkin<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinName", Self::VT_SKINNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("colorList", Self::VT_COLORLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("titleList", Self::VT_TITLELIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("modelName", Self::VT_MODELNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("drawerList", Self::VT_DRAWERLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("designerList", Self::VT_DESIGNERLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinGroupId", Self::VT_SKINGROUPID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinGroupName", Self::VT_SKINGROUPNAME, false)?
-     .visit_field::<i32>("skinGroupSortIndex", Self::VT_SKINGROUPSORTINDEX, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("content", Self::VT_CONTENT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dialog", Self::VT_DIALOG, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("usage", Self::VT_USAGE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("description", Self::VT_DESCRIPTION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("obtainApproach", Self::VT_OBTAINAPPROACH, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("displayTagId", Self::VT_DISPLAYTAGID, false)?
-     .visit_field::<i64>("getTime", Self::VT_GETTIME, false)?
-     .visit_field::<i32>("onYear", Self::VT_ONYEAR, false)?
-     .visit_field::<i32>("onPeriod", Self::VT_ONPERIOD, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "skinName",
+                Self::VT_SKINNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("colorList", Self::VT_COLORLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("titleList", Self::VT_TITLELIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "modelName",
+                Self::VT_MODELNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("drawerList", Self::VT_DRAWERLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("designerList", Self::VT_DESIGNERLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "skinGroupId",
+                Self::VT_SKINGROUPID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "skinGroupName",
+                Self::VT_SKINGROUPNAME,
+                false,
+            )?
+            .visit_field::<i32>("skinGroupSortIndex", Self::VT_SKINGROUPSORTINDEX, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "content",
+                Self::VT_CONTENT,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dialog", Self::VT_DIALOG, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("usage", Self::VT_USAGE, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "description",
+                Self::VT_DESCRIPTION,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "obtainApproach",
+                Self::VT_OBTAINAPPROACH,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "displayTagId",
+                Self::VT_DISPLAYTAGID,
+                false,
+            )?
+            .visit_field::<i64>("getTime", Self::VT_GETTIME, false)?
+            .visit_field::<i32>("onYear", Self::VT_ONYEAR, false)?
+            .visit_field::<i32>("onPeriod", Self::VT_ONPERIOD, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
     pub skinName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub colorList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub titleList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
+    pub colorList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub titleList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
     pub modelName: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub drawerList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub designerList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
+    pub drawerList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub designerList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
     pub skinGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub skinGroupName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub skinGroupSortIndex: i32,
@@ -747,583 +1053,916 @@ pub struct clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
     pub onYear: i32,
     pub onPeriod: i32,
 }
-impl<'a> Default for clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinData_DisplaySkinArgs {
-      skinName: None,
-      colorList: None,
-      titleList: None,
-      modelName: None,
-      drawerList: None,
-      designerList: None,
-      skinGroupId: None,
-      skinGroupName: None,
-      skinGroupSortIndex: 0,
-      content: None,
-      dialog: None,
-      usage: None,
-      description: None,
-      obtainApproach: None,
-      sortId: 0,
-      displayTagId: None,
-      getTime: 0,
-      onYear: 0,
-      onPeriod: 0,
+impl Default for clz_Torappu_CharSkinData_DisplaySkinArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinData_DisplaySkinArgs {
+            skinName: None,
+            colorList: None,
+            titleList: None,
+            modelName: None,
+            drawerList: None,
+            designerList: None,
+            skinGroupId: None,
+            skinGroupName: None,
+            skinGroupSortIndex: 0,
+            content: None,
+            dialog: None,
+            usage: None,
+            description: None,
+            obtainApproach: None,
+            sortId: 0,
+            displayTagId: None,
+            getTime: 0,
+            onYear: 0,
+            onPeriod: 0,
+        }
     }
-  }
 }
 
-
-pub struct clz_Torappu_CharSkinData_DisplaySkinBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct clz_Torappu_CharSkinData_DisplaySkinBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinData_DisplaySkinBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skinName(&mut self, skinName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINNAME, skinName);
-  }
-  #[inline]
-  pub fn add_colorList(&mut self, colorList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_COLORLIST, colorList);
-  }
-  #[inline]
-  pub fn add_titleList(&mut self, titleList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_TITLELIST, titleList);
-  }
-  #[inline]
-  pub fn add_modelName(&mut self, modelName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_MODELNAME, modelName);
-  }
-  #[inline]
-  pub fn add_drawerList(&mut self, drawerList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DRAWERLIST, drawerList);
-  }
-  #[inline]
-  pub fn add_designerList(&mut self, designerList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DESIGNERLIST, designerList);
-  }
-  #[inline]
-  pub fn add_skinGroupId(&mut self, skinGroupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPID, skinGroupId);
-  }
-  #[inline]
-  pub fn add_skinGroupName(&mut self, skinGroupName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPNAME, skinGroupName);
-  }
-  #[inline]
-  pub fn add_skinGroupSortIndex(&mut self, skinGroupSortIndex: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPSORTINDEX, skinGroupSortIndex, 0);
-  }
-  #[inline]
-  pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_CONTENT, content);
-  }
-  #[inline]
-  pub fn add_dialog(&mut self, dialog: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DIALOG, dialog);
-  }
-  #[inline]
-  pub fn add_usage(&mut self, usage: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_USAGE, usage);
-  }
-  #[inline]
-  pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DESCRIPTION, description);
-  }
-  #[inline]
-  pub fn add_obtainApproach(&mut self, obtainApproach: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_OBTAINAPPROACH, obtainApproach);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SORTID, sortId, 0);
-  }
-  #[inline]
-  pub fn add_displayTagId(&mut self, displayTagId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData_DisplaySkin::VT_DISPLAYTAGID, displayTagId);
-  }
-  #[inline]
-  pub fn add_getTime(&mut self, getTime: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_CharSkinData_DisplaySkin::VT_GETTIME, getTime, 0);
-  }
-  #[inline]
-  pub fn add_onYear(&mut self, onYear: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONYEAR, onYear, 0);
-  }
-  #[inline]
-  pub fn add_onPeriod(&mut self, onPeriod: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONPERIOD, onPeriod, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinData_DisplaySkinBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinData_DisplaySkinBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_CharSkinData_DisplaySkinBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_skinName(&mut self, skinName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_SKINNAME,
+            skinName,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_colorList(
+        &mut self,
+        colorList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_COLORLIST,
+            colorList,
+        );
+    }
+    #[inline]
+    pub fn add_titleList(
+        &mut self,
+        titleList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_TITLELIST,
+            titleList,
+        );
+    }
+    #[inline]
+    pub fn add_modelName(&mut self, modelName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_MODELNAME,
+            modelName,
+        );
+    }
+    #[inline]
+    pub fn add_drawerList(
+        &mut self,
+        drawerList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_DRAWERLIST,
+            drawerList,
+        );
+    }
+    #[inline]
+    pub fn add_designerList(
+        &mut self,
+        designerList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_DESIGNERLIST,
+            designerList,
+        );
+    }
+    #[inline]
+    pub fn add_skinGroupId(&mut self, skinGroupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPID,
+            skinGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_skinGroupName(&mut self, skinGroupName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPNAME,
+            skinGroupName,
+        );
+    }
+    #[inline]
+    pub fn add_skinGroupSortIndex(&mut self, skinGroupSortIndex: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_SKINGROUPSORTINDEX,
+            skinGroupSortIndex,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_CONTENT,
+            content,
+        );
+    }
+    #[inline]
+    pub fn add_dialog(&mut self, dialog: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_DIALOG,
+            dialog,
+        );
+    }
+    #[inline]
+    pub fn add_usage(&mut self, usage: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_USAGE,
+            usage,
+        );
+    }
+    #[inline]
+    pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_DESCRIPTION,
+            description,
+        );
+    }
+    #[inline]
+    pub fn add_obtainApproach(&mut self, obtainApproach: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_OBTAINAPPROACH,
+            obtainApproach,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_displayTagId(&mut self, displayTagId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_DISPLAYTAGID,
+            displayTagId,
+        );
+    }
+    #[inline]
+    pub fn add_getTime(&mut self, getTime: i64) {
+        self.fbb_
+            .push_slot::<i64>(clz_Torappu_CharSkinData_DisplaySkin::VT_GETTIME, getTime, 0);
+    }
+    #[inline]
+    pub fn add_onYear(&mut self, onYear: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CharSkinData_DisplaySkin::VT_ONYEAR, onYear, 0);
+    }
+    #[inline]
+    pub fn add_onPeriod(&mut self, onPeriod: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_CharSkinData_DisplaySkin::VT_ONPERIOD,
+            onPeriod,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinData_DisplaySkinBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinData_DisplaySkin<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinData_DisplaySkin");
-      ds.field("skinName", &self.skinName());
-      ds.field("colorList", &self.colorList());
-      ds.field("titleList", &self.titleList());
-      ds.field("modelName", &self.modelName());
-      ds.field("drawerList", &self.drawerList());
-      ds.field("designerList", &self.designerList());
-      ds.field("skinGroupId", &self.skinGroupId());
-      ds.field("skinGroupName", &self.skinGroupName());
-      ds.field("skinGroupSortIndex", &self.skinGroupSortIndex());
-      ds.field("content", &self.content());
-      ds.field("dialog", &self.dialog());
-      ds.field("usage", &self.usage());
-      ds.field("description", &self.description());
-      ds.field("obtainApproach", &self.obtainApproach());
-      ds.field("sortId", &self.sortId());
-      ds.field("displayTagId", &self.displayTagId());
-      ds.field("getTime", &self.getTime());
-      ds.field("onYear", &self.onYear());
-      ds.field("onPeriod", &self.onPeriod());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinData_DisplaySkin");
+        ds.field("skinName", &self.skinName());
+        ds.field("colorList", &self.colorList());
+        ds.field("titleList", &self.titleList());
+        ds.field("modelName", &self.modelName());
+        ds.field("drawerList", &self.drawerList());
+        ds.field("designerList", &self.designerList());
+        ds.field("skinGroupId", &self.skinGroupId());
+        ds.field("skinGroupName", &self.skinGroupName());
+        ds.field("skinGroupSortIndex", &self.skinGroupSortIndex());
+        ds.field("content", &self.content());
+        ds.field("dialog", &self.dialog());
+        ds.field("usage", &self.usage());
+        ds.field("description", &self.description());
+        ds.field("obtainApproach", &self.obtainApproach());
+        ds.field("sortId", &self.sortId());
+        ds.field("displayTagId", &self.displayTagId());
+        ds.field("getTime", &self.getTime());
+        ds.field("onYear", &self.onYear());
+        ds.field("onPeriod", &self.onPeriod());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinData_DisplaySkinT {
-  pub skinName: Option<alloc::string::String>,
-  pub colorList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub titleList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub modelName: Option<alloc::string::String>,
-  pub drawerList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub designerList: Option<alloc::vec::Vec<alloc::string::String>>,
-  pub skinGroupId: Option<alloc::string::String>,
-  pub skinGroupName: Option<alloc::string::String>,
-  pub skinGroupSortIndex: i32,
-  pub content: Option<alloc::string::String>,
-  pub dialog: Option<alloc::string::String>,
-  pub usage: Option<alloc::string::String>,
-  pub description: Option<alloc::string::String>,
-  pub obtainApproach: Option<alloc::string::String>,
-  pub sortId: i32,
-  pub displayTagId: Option<alloc::string::String>,
-  pub getTime: i64,
-  pub onYear: i32,
-  pub onPeriod: i32,
+    pub skinName: Option<alloc::string::String>,
+    pub colorList: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub titleList: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub modelName: Option<alloc::string::String>,
+    pub drawerList: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub designerList: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub skinGroupId: Option<alloc::string::String>,
+    pub skinGroupName: Option<alloc::string::String>,
+    pub skinGroupSortIndex: i32,
+    pub content: Option<alloc::string::String>,
+    pub dialog: Option<alloc::string::String>,
+    pub usage: Option<alloc::string::String>,
+    pub description: Option<alloc::string::String>,
+    pub obtainApproach: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub displayTagId: Option<alloc::string::String>,
+    pub getTime: i64,
+    pub onYear: i32,
+    pub onPeriod: i32,
 }
 impl Default for clz_Torappu_CharSkinData_DisplaySkinT {
-  fn default() -> Self {
-    Self {
-      skinName: None,
-      colorList: None,
-      titleList: None,
-      modelName: None,
-      drawerList: None,
-      designerList: None,
-      skinGroupId: None,
-      skinGroupName: None,
-      skinGroupSortIndex: 0,
-      content: None,
-      dialog: None,
-      usage: None,
-      description: None,
-      obtainApproach: None,
-      sortId: 0,
-      displayTagId: None,
-      getTime: 0,
-      onYear: 0,
-      onPeriod: 0,
+    fn default() -> Self {
+        Self {
+            skinName: None,
+            colorList: None,
+            titleList: None,
+            modelName: None,
+            drawerList: None,
+            designerList: None,
+            skinGroupId: None,
+            skinGroupName: None,
+            skinGroupSortIndex: 0,
+            content: None,
+            dialog: None,
+            usage: None,
+            description: None,
+            obtainApproach: None,
+            sortId: 0,
+            displayTagId: None,
+            getTime: 0,
+            onYear: 0,
+            onPeriod: 0,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinData_DisplaySkinT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'b>> {
-    let skinName = self.skinName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let colorList = self.colorList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let titleList = self.titleList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let modelName = self.modelName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let drawerList = self.drawerList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let designerList = self.designerList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();_fbb.create_vector(&w)
-    });
-    let skinGroupId = self.skinGroupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let skinGroupName = self.skinGroupName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let skinGroupSortIndex = self.skinGroupSortIndex;
-    let content = self.content.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let dialog = self.dialog.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let usage = self.usage.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let description = self.description.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let obtainApproach = self.obtainApproach.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let sortId = self.sortId;
-    let displayTagId = self.displayTagId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let getTime = self.getTime;
-    let onYear = self.onYear;
-    let onPeriod = self.onPeriod;
-    clz_Torappu_CharSkinData_DisplaySkin::create(_fbb, &clz_Torappu_CharSkinData_DisplaySkinArgs{
-      skinName,
-      colorList,
-      titleList,
-      modelName,
-      drawerList,
-      designerList,
-      skinGroupId,
-      skinGroupName,
-      skinGroupSortIndex,
-      content,
-      dialog,
-      usage,
-      description,
-      obtainApproach,
-      sortId,
-      displayTagId,
-      getTime,
-      onYear,
-      onPeriod,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'b>> {
+        let skinName = self.skinName.as_ref().map(|x| _fbb.create_string(x));
+        let colorList = self.colorList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let titleList = self.titleList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let modelName = self.modelName.as_ref().map(|x| _fbb.create_string(x));
+        let drawerList = self.drawerList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let designerList = self.designerList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let skinGroupId = self.skinGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let skinGroupName = self.skinGroupName.as_ref().map(|x| _fbb.create_string(x));
+        let skinGroupSortIndex = self.skinGroupSortIndex;
+        let content = self.content.as_ref().map(|x| _fbb.create_string(x));
+        let dialog = self.dialog.as_ref().map(|x| _fbb.create_string(x));
+        let usage = self.usage.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let obtainApproach = self.obtainApproach.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let displayTagId = self.displayTagId.as_ref().map(|x| _fbb.create_string(x));
+        let getTime = self.getTime;
+        let onYear = self.onYear;
+        let onPeriod = self.onPeriod;
+        clz_Torappu_CharSkinData_DisplaySkin::create(
+            _fbb,
+            &clz_Torappu_CharSkinData_DisplaySkinArgs {
+                skinName,
+                colorList,
+                titleList,
+                modelName,
+                drawerList,
+                designerList,
+                skinGroupId,
+                skinGroupName,
+                skinGroupSortIndex,
+                content,
+                dialog,
+                usage,
+                description,
+                obtainApproach,
+                sortId,
+                displayTagId,
+                getTime,
+                onYear,
+                onPeriod,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData<'a> {
-  type Inner = clz_Torappu_CharSkinData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinData<'a> {
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_CHARID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_TOKENSKINMAP: ::flatbuffers::VOffsetT = 8;
-  pub const VT_ILLUSTID: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 12;
-  pub const VT_DYNILLUSTID: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SPDYNILLUSTID: ::flatbuffers::VOffsetT = 16;
-  pub const VT_AVATARID: ::flatbuffers::VOffsetT = 18;
-  pub const VT_PORTRAITID: ::flatbuffers::VOffsetT = 20;
-  pub const VT_DYNPORTRAITID: ::flatbuffers::VOffsetT = 22;
-  pub const VT_DYNENTRANCEID: ::flatbuffers::VOffsetT = 24;
-  pub const VT_BUILDINGID: ::flatbuffers::VOffsetT = 26;
-  pub const VT_BATTLESKIN: ::flatbuffers::VOffsetT = 28;
-  pub const VT_ISBUYSKIN: ::flatbuffers::VOffsetT = 30;
-  pub const VT_TMPLID: ::flatbuffers::VOffsetT = 32;
-  pub const VT_VOICEID: ::flatbuffers::VOffsetT = 34;
-  pub const VT_VOICETYPE: ::flatbuffers::VOffsetT = 36;
-  pub const VT_DISPLAYSKIN: ::flatbuffers::VOffsetT = 38;
+    pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_CHARID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_TOKENSKINMAP: ::flatbuffers::VOffsetT = 8;
+    pub const VT_ILLUSTID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 12;
+    pub const VT_DYNILLUSTID: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SPDYNILLUSTID: ::flatbuffers::VOffsetT = 16;
+    pub const VT_AVATARID: ::flatbuffers::VOffsetT = 18;
+    pub const VT_SPAVATARID: ::flatbuffers::VOffsetT = 20;
+    pub const VT_PORTRAITID: ::flatbuffers::VOffsetT = 22;
+    pub const VT_SPPORTRAITID: ::flatbuffers::VOffsetT = 24;
+    pub const VT_DYNPORTRAITID: ::flatbuffers::VOffsetT = 26;
+    pub const VT_DYNENTRANCEID: ::flatbuffers::VOffsetT = 28;
+    pub const VT_BUILDINGID: ::flatbuffers::VOffsetT = 30;
+    pub const VT_BATTLESKIN: ::flatbuffers::VOffsetT = 32;
+    pub const VT_ISBUYSKIN: ::flatbuffers::VOffsetT = 34;
+    pub const VT_TMPLID: ::flatbuffers::VOffsetT = 36;
+    pub const VT_VOICEID: ::flatbuffers::VOffsetT = 38;
+    pub const VT_VOICETYPE: ::flatbuffers::VOffsetT = 40;
+    pub const VT_DISPLAYSKIN: ::flatbuffers::VOffsetT = 42;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinDataBuilder::new(_fbb);
-    if let Some(x) = args.displaySkin { builder.add_displaySkin(x); }
-    builder.add_voiceType(args.voiceType);
-    if let Some(x) = args.voiceId { builder.add_voiceId(x); }
-    if let Some(x) = args.tmplId { builder.add_tmplId(x); }
-    if let Some(x) = args.battleSkin { builder.add_battleSkin(x); }
-    if let Some(x) = args.buildingId { builder.add_buildingId(x); }
-    if let Some(x) = args.dynEntranceId { builder.add_dynEntranceId(x); }
-    if let Some(x) = args.dynPortraitId { builder.add_dynPortraitId(x); }
-    if let Some(x) = args.portraitId { builder.add_portraitId(x); }
-    if let Some(x) = args.avatarId { builder.add_avatarId(x); }
-    if let Some(x) = args.spDynIllustId { builder.add_spDynIllustId(x); }
-    if let Some(x) = args.dynIllustId { builder.add_dynIllustId(x); }
-    if let Some(x) = args.spIllustId { builder.add_spIllustId(x); }
-    if let Some(x) = args.illustId { builder.add_illustId(x); }
-    if let Some(x) = args.tokenSkinMap { builder.add_tokenSkinMap(x); }
-    if let Some(x) = args.charId { builder.add_charId(x); }
-    if let Some(x) = args.skinId { builder.add_skinId(x); }
-    builder.add_isBuySkin(args.isBuySkin);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinDataT {
-    let skinId = self.skinId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let charId = self.charId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let tokenSkinMap = self.tokenSkinMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let illustId = self.illustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spIllustId = self.spIllustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let dynIllustId = self.dynIllustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spDynIllustId = self.spDynIllustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let avatarId = self.avatarId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let portraitId = self.portraitId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let dynPortraitId = self.dynPortraitId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let dynEntranceId = self.dynEntranceId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let buildingId = self.buildingId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let battleSkin = self.battleSkin().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    let isBuySkin = self.isBuySkin();
-    let tmplId = self.tmplId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let voiceId = self.voiceId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let voiceType = self.voiceType();
-    let displaySkin = self.displaySkin().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    clz_Torappu_CharSkinDataT {
-      skinId,
-      charId,
-      tokenSkinMap,
-      illustId,
-      spIllustId,
-      dynIllustId,
-      spDynIllustId,
-      avatarId,
-      portraitId,
-      dynPortraitId,
-      dynEntranceId,
-      buildingId,
-      battleSkin,
-      isBuySkin,
-      tmplId,
-      voiceId,
-      voiceType,
-      displaySkin,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinDataBuilder::new(_fbb);
+        if let Some(x) = args.displaySkin {
+            builder.add_displaySkin(x);
+        }
+        builder.add_voiceType(args.voiceType);
+        if let Some(x) = args.voiceId {
+            builder.add_voiceId(x);
+        }
+        if let Some(x) = args.tmplId {
+            builder.add_tmplId(x);
+        }
+        if let Some(x) = args.battleSkin {
+            builder.add_battleSkin(x);
+        }
+        if let Some(x) = args.buildingId {
+            builder.add_buildingId(x);
+        }
+        if let Some(x) = args.dynEntranceId {
+            builder.add_dynEntranceId(x);
+        }
+        if let Some(x) = args.dynPortraitId {
+            builder.add_dynPortraitId(x);
+        }
+        if let Some(x) = args.spPortraitId {
+            builder.add_spPortraitId(x);
+        }
+        if let Some(x) = args.portraitId {
+            builder.add_portraitId(x);
+        }
+        if let Some(x) = args.spAvatarId {
+            builder.add_spAvatarId(x);
+        }
+        if let Some(x) = args.avatarId {
+            builder.add_avatarId(x);
+        }
+        if let Some(x) = args.spDynIllustId {
+            builder.add_spDynIllustId(x);
+        }
+        if let Some(x) = args.dynIllustId {
+            builder.add_dynIllustId(x);
+        }
+        if let Some(x) = args.spIllustId {
+            builder.add_spIllustId(x);
+        }
+        if let Some(x) = args.illustId {
+            builder.add_illustId(x);
+        }
+        if let Some(x) = args.tokenSkinMap {
+            builder.add_tokenSkinMap(x);
+        }
+        if let Some(x) = args.charId {
+            builder.add_charId(x);
+        }
+        if let Some(x) = args.skinId {
+            builder.add_skinId(x);
+        }
+        builder.add_isBuySkin(args.isBuySkin);
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn skinId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_SKINID, None)}
-  }
-  #[inline]
-  pub fn charId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_CHARID, None)}
-  }
-  #[inline]
-  pub fn tokenSkinMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo>>>>(clz_Torappu_CharSkinData::VT_TOKENSKINMAP, None)}
-  }
-  #[inline]
-  pub fn illustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_ILLUSTID, None)}
-  }
-  #[inline]
-  pub fn spIllustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_SPILLUSTID, None)}
-  }
-  #[inline]
-  pub fn dynIllustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_DYNILLUSTID, None)}
-  }
-  #[inline]
-  pub fn spDynIllustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_SPDYNILLUSTID, None)}
-  }
-  #[inline]
-  pub fn avatarId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_AVATARID, None)}
-  }
-  #[inline]
-  pub fn portraitId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_PORTRAITID, None)}
-  }
-  #[inline]
-  pub fn dynPortraitId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_DYNPORTRAITID, None)}
-  }
-  #[inline]
-  pub fn dynEntranceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_DYNENTRANCEID, None)}
-  }
-  #[inline]
-  pub fn buildingId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_BUILDINGID, None)}
-  }
-  #[inline]
-  pub fn battleSkin(&self) -> Option<clz_Torappu_CharSkinData_BattleSkin<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_BattleSkin>>(clz_Torappu_CharSkinData::VT_BATTLESKIN, None)}
-  }
-  #[inline]
-  pub fn isBuySkin(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(clz_Torappu_CharSkinData::VT_ISBUYSKIN, Some(false)).unwrap()}
-  }
-  #[inline]
-  pub fn tmplId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_TMPLID, None)}
-  }
-  #[inline]
-  pub fn voiceId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinData::VT_VOICEID, None)}
-  }
-  #[inline]
-  pub fn voiceType(&self) -> enum__Torappu_SkinVoiceType {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<enum__Torappu_SkinVoiceType>(clz_Torappu_CharSkinData::VT_VOICETYPE, Some(enum__Torappu_SkinVoiceType::NONE)).unwrap()}
-  }
-  #[inline]
-  pub fn displaySkin(&self) -> Option<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_DisplaySkin>>(clz_Torappu_CharSkinData::VT_DISPLAYSKIN, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinDataT {
+        let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
+        let charId = self.charId().map(|x| alloc::string::ToString::to_string(x));
+        let tokenSkinMap = self
+            .tokenSkinMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let illustId = self
+            .illustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spIllustId = self
+            .spIllustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let dynIllustId = self
+            .dynIllustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spDynIllustId = self
+            .spDynIllustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let avatarId = self
+            .avatarId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spAvatarId = self
+            .spAvatarId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let portraitId = self
+            .portraitId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spPortraitId = self
+            .spPortraitId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let dynPortraitId = self
+            .dynPortraitId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let dynEntranceId = self
+            .dynEntranceId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let buildingId = self
+            .buildingId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let battleSkin = self
+            .battleSkin()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let isBuySkin = self.isBuySkin();
+        let tmplId = self.tmplId().map(|x| alloc::string::ToString::to_string(x));
+        let voiceId = self
+            .voiceId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let voiceType = self.voiceType();
+        let displaySkin = self
+            .displaySkin()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
+        clz_Torappu_CharSkinDataT {
+            skinId,
+            charId,
+            tokenSkinMap,
+            illustId,
+            spIllustId,
+            dynIllustId,
+            spDynIllustId,
+            avatarId,
+            spAvatarId,
+            portraitId,
+            spPortraitId,
+            dynPortraitId,
+            dynEntranceId,
+            buildingId,
+            battleSkin,
+            isBuySkin,
+            tmplId,
+            voiceId,
+            voiceType,
+            displaySkin,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn skinId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_SKINID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn charId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_CHARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn tokenSkinMap(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo>,
+                >,
+            >>(clz_Torappu_CharSkinData::VT_TOKENSKINMAP, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn illustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_ILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spIllustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_SPILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn dynIllustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_DYNILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spDynIllustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_SPDYNILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn avatarId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_AVATARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spAvatarId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_SPAVATARID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn portraitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_PORTRAITID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spPortraitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_SPPORTRAITID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn dynPortraitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_DYNPORTRAITID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn dynEntranceId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_DYNENTRANCEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn buildingId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_BUILDINGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn battleSkin(&self) -> Option<clz_Torappu_CharSkinData_BattleSkin<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_BattleSkin>>(
+                    clz_Torappu_CharSkinData::VT_BATTLESKIN,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn isBuySkin(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_CharSkinData::VT_ISBUYSKIN, Some(false))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn tmplId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_TMPLID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn voiceId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinData::VT_VOICEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn voiceType(&self) -> enum__Torappu_SkinVoiceType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_SkinVoiceType>(
+                    clz_Torappu_CharSkinData::VT_VOICETYPE,
+                    Some(enum__Torappu_SkinVoiceType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn displaySkin(&self) -> Option<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_DisplaySkin>>(
+                    clz_Torappu_CharSkinData::VT_DISPLAYSKIN,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo>>>>("tokenSkinMap", Self::VT_TOKENSKINMAP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("illustId", Self::VT_ILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spIllustId", Self::VT_SPILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dynIllustId", Self::VT_DYNILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spDynIllustId", Self::VT_SPDYNILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("avatarId", Self::VT_AVATARID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("portraitId", Self::VT_PORTRAITID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dynPortraitId", Self::VT_DYNPORTRAITID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("dynEntranceId", Self::VT_DYNENTRANCEID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("buildingId", Self::VT_BUILDINGID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_BattleSkin>>("battleSkin", Self::VT_BATTLESKIN, false)?
-     .visit_field::<bool>("isBuySkin", Self::VT_ISBUYSKIN, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tmplId", Self::VT_TMPLID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("voiceId", Self::VT_VOICEID, false)?
-     .visit_field::<enum__Torappu_SkinVoiceType>("voiceType", Self::VT_VOICETYPE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_DisplaySkin>>("displaySkin", Self::VT_DISPLAYSKIN, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("charId", Self::VT_CHARID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo>,
+                >,
+            >>("tokenSkinMap", Self::VT_TOKENSKINMAP, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "illustId",
+                Self::VT_ILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spIllustId",
+                Self::VT_SPILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "dynIllustId",
+                Self::VT_DYNILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spDynIllustId",
+                Self::VT_SPDYNILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "avatarId",
+                Self::VT_AVATARID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spAvatarId",
+                Self::VT_SPAVATARID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "portraitId",
+                Self::VT_PORTRAITID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spPortraitId",
+                Self::VT_SPPORTRAITID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "dynPortraitId",
+                Self::VT_DYNPORTRAITID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "dynEntranceId",
+                Self::VT_DYNENTRANCEID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "buildingId",
+                Self::VT_BUILDINGID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_BattleSkin>>(
+                "battleSkin",
+                Self::VT_BATTLESKIN,
+                false,
+            )?
+            .visit_field::<bool>("isBuySkin", Self::VT_ISBUYSKIN, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("tmplId", Self::VT_TMPLID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "voiceId",
+                Self::VT_VOICEID,
+                false,
+            )?
+            .visit_field::<enum__Torappu_SkinVoiceType>("voiceType", Self::VT_VOICETYPE, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_DisplaySkin>>(
+                "displaySkin",
+                Self::VT_DISPLAYSKIN,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinDataArgs<'a> {
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub tokenSkinMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>>>>>,
+    pub tokenSkinMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>>,
+            >,
+        >,
+    >,
     pub illustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub dynIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub avatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub spAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub portraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub spPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub dynPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub dynEntranceId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub buildingId: Option<::flatbuffers::WIPOffset<&'a str>>,
@@ -1334,2754 +1973,3794 @@ pub struct clz_Torappu_CharSkinDataArgs<'a> {
     pub voiceType: enum__Torappu_SkinVoiceType,
     pub displaySkin: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'a>>>,
 }
-impl<'a> Default for clz_Torappu_CharSkinDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinDataArgs {
-      skinId: None,
-      charId: None,
-      tokenSkinMap: None,
-      illustId: None,
-      spIllustId: None,
-      dynIllustId: None,
-      spDynIllustId: None,
-      avatarId: None,
-      portraitId: None,
-      dynPortraitId: None,
-      dynEntranceId: None,
-      buildingId: None,
-      battleSkin: None,
-      isBuySkin: false,
-      tmplId: None,
-      voiceId: None,
-      voiceType: enum__Torappu_SkinVoiceType::NONE,
-      displaySkin: None,
+impl Default for clz_Torappu_CharSkinDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinDataArgs {
+            skinId: None,
+            charId: None,
+            tokenSkinMap: None,
+            illustId: None,
+            spIllustId: None,
+            dynIllustId: None,
+            spDynIllustId: None,
+            avatarId: None,
+            spAvatarId: None,
+            portraitId: None,
+            spPortraitId: None,
+            dynPortraitId: None,
+            dynEntranceId: None,
+            buildingId: None,
+            battleSkin: None,
+            isBuySkin: false,
+            tmplId: None,
+            voiceId: None,
+            voiceType: enum__Torappu_SkinVoiceType::NONE,
+            displaySkin: None,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_CharSkinDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_SKINID, skinId);
-  }
-  #[inline]
-  pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_CHARID, charId);
-  }
-  #[inline]
-  pub fn add_tokenSkinMap(&mut self, tokenSkinMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_TOKENSKINMAP, tokenSkinMap);
-  }
-  #[inline]
-  pub fn add_illustId(&mut self, illustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_ILLUSTID, illustId);
-  }
-  #[inline]
-  pub fn add_spIllustId(&mut self, spIllustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_SPILLUSTID, spIllustId);
-  }
-  #[inline]
-  pub fn add_dynIllustId(&mut self, dynIllustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_DYNILLUSTID, dynIllustId);
-  }
-  #[inline]
-  pub fn add_spDynIllustId(&mut self, spDynIllustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_SPDYNILLUSTID, spDynIllustId);
-  }
-  #[inline]
-  pub fn add_avatarId(&mut self, avatarId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_AVATARID, avatarId);
-  }
-  #[inline]
-  pub fn add_portraitId(&mut self, portraitId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_PORTRAITID, portraitId);
-  }
-  #[inline]
-  pub fn add_dynPortraitId(&mut self, dynPortraitId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_DYNPORTRAITID, dynPortraitId);
-  }
-  #[inline]
-  pub fn add_dynEntranceId(&mut self, dynEntranceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_DYNENTRANCEID, dynEntranceId);
-  }
-  #[inline]
-  pub fn add_buildingId(&mut self, buildingId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_BUILDINGID, buildingId);
-  }
-  #[inline]
-  pub fn add_battleSkin(&mut self, battleSkin: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin>>(clz_Torappu_CharSkinData::VT_BATTLESKIN, battleSkin);
-  }
-  #[inline]
-  pub fn add_isBuySkin(&mut self, isBuySkin: bool) {
-    self.fbb_.push_slot::<bool>(clz_Torappu_CharSkinData::VT_ISBUYSKIN, isBuySkin, false);
-  }
-  #[inline]
-  pub fn add_tmplId(&mut self, tmplId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_TMPLID, tmplId);
-  }
-  #[inline]
-  pub fn add_voiceId(&mut self, voiceId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinData::VT_VOICEID, voiceId);
-  }
-  #[inline]
-  pub fn add_voiceType(&mut self, voiceType: enum__Torappu_SkinVoiceType) {
-    self.fbb_.push_slot::<enum__Torappu_SkinVoiceType>(clz_Torappu_CharSkinData::VT_VOICETYPE, voiceType, enum__Torappu_SkinVoiceType::NONE);
-  }
-  #[inline]
-  pub fn add_displaySkin(&mut self, displaySkin: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin>>(clz_Torappu_CharSkinData::VT_DISPLAYSKIN, displaySkin);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_SKINID,
+            skinId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_charId(&mut self, charId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_CHARID,
+            charId,
+        );
+    }
+    #[inline]
+    pub fn add_tokenSkinMap(
+        &mut self,
+        tokenSkinMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_TOKENSKINMAP,
+            tokenSkinMap,
+        );
+    }
+    #[inline]
+    pub fn add_illustId(&mut self, illustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_ILLUSTID,
+            illustId,
+        );
+    }
+    #[inline]
+    pub fn add_spIllustId(&mut self, spIllustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_SPILLUSTID,
+            spIllustId,
+        );
+    }
+    #[inline]
+    pub fn add_dynIllustId(&mut self, dynIllustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_DYNILLUSTID,
+            dynIllustId,
+        );
+    }
+    #[inline]
+    pub fn add_spDynIllustId(&mut self, spDynIllustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_SPDYNILLUSTID,
+            spDynIllustId,
+        );
+    }
+    #[inline]
+    pub fn add_avatarId(&mut self, avatarId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_AVATARID,
+            avatarId,
+        );
+    }
+    #[inline]
+    pub fn add_spAvatarId(&mut self, spAvatarId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_SPAVATARID,
+            spAvatarId,
+        );
+    }
+    #[inline]
+    pub fn add_portraitId(&mut self, portraitId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_PORTRAITID,
+            portraitId,
+        );
+    }
+    #[inline]
+    pub fn add_spPortraitId(&mut self, spPortraitId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_SPPORTRAITID,
+            spPortraitId,
+        );
+    }
+    #[inline]
+    pub fn add_dynPortraitId(&mut self, dynPortraitId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_DYNPORTRAITID,
+            dynPortraitId,
+        );
+    }
+    #[inline]
+    pub fn add_dynEntranceId(&mut self, dynEntranceId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_DYNENTRANCEID,
+            dynEntranceId,
+        );
+    }
+    #[inline]
+    pub fn add_buildingId(&mut self, buildingId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_BUILDINGID,
+            buildingId,
+        );
+    }
+    #[inline]
+    pub fn add_battleSkin(
+        &mut self,
+        battleSkin: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin>>(
+                clz_Torappu_CharSkinData::VT_BATTLESKIN,
+                battleSkin,
+            );
+    }
+    #[inline]
+    pub fn add_isBuySkin(&mut self, isBuySkin: bool) {
+        self.fbb_
+            .push_slot::<bool>(clz_Torappu_CharSkinData::VT_ISBUYSKIN, isBuySkin, false);
+    }
+    #[inline]
+    pub fn add_tmplId(&mut self, tmplId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_TMPLID,
+            tmplId,
+        );
+    }
+    #[inline]
+    pub fn add_voiceId(&mut self, voiceId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinData::VT_VOICEID,
+            voiceId,
+        );
+    }
+    #[inline]
+    pub fn add_voiceType(&mut self, voiceType: enum__Torappu_SkinVoiceType) {
+        self.fbb_.push_slot::<enum__Torappu_SkinVoiceType>(
+            clz_Torappu_CharSkinData::VT_VOICETYPE,
+            voiceType,
+            enum__Torappu_SkinVoiceType::NONE,
+        );
+    }
+    #[inline]
+    pub fn add_displaySkin(
+        &mut self,
+        displaySkin: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin>>(
+                clz_Torappu_CharSkinData::VT_DISPLAYSKIN,
+                displaySkin,
+            );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinData");
-      ds.field("skinId", &self.skinId());
-      ds.field("charId", &self.charId());
-      ds.field("tokenSkinMap", &self.tokenSkinMap());
-      ds.field("illustId", &self.illustId());
-      ds.field("spIllustId", &self.spIllustId());
-      ds.field("dynIllustId", &self.dynIllustId());
-      ds.field("spDynIllustId", &self.spDynIllustId());
-      ds.field("avatarId", &self.avatarId());
-      ds.field("portraitId", &self.portraitId());
-      ds.field("dynPortraitId", &self.dynPortraitId());
-      ds.field("dynEntranceId", &self.dynEntranceId());
-      ds.field("buildingId", &self.buildingId());
-      ds.field("battleSkin", &self.battleSkin());
-      ds.field("isBuySkin", &self.isBuySkin());
-      ds.field("tmplId", &self.tmplId());
-      ds.field("voiceId", &self.voiceId());
-      ds.field("voiceType", &self.voiceType());
-      ds.field("displaySkin", &self.displaySkin());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinData");
+        ds.field("skinId", &self.skinId());
+        ds.field("charId", &self.charId());
+        ds.field("tokenSkinMap", &self.tokenSkinMap());
+        ds.field("illustId", &self.illustId());
+        ds.field("spIllustId", &self.spIllustId());
+        ds.field("dynIllustId", &self.dynIllustId());
+        ds.field("spDynIllustId", &self.spDynIllustId());
+        ds.field("avatarId", &self.avatarId());
+        ds.field("spAvatarId", &self.spAvatarId());
+        ds.field("portraitId", &self.portraitId());
+        ds.field("spPortraitId", &self.spPortraitId());
+        ds.field("dynPortraitId", &self.dynPortraitId());
+        ds.field("dynEntranceId", &self.dynEntranceId());
+        ds.field("buildingId", &self.buildingId());
+        ds.field("battleSkin", &self.battleSkin());
+        ds.field("isBuySkin", &self.isBuySkin());
+        ds.field("tmplId", &self.tmplId());
+        ds.field("voiceId", &self.voiceId());
+        ds.field("voiceType", &self.voiceType());
+        ds.field("displaySkin", &self.displaySkin());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinDataT {
-  pub skinId: Option<alloc::string::String>,
-  pub charId: Option<alloc::string::String>,
-  pub tokenSkinMap: Option<alloc::vec::Vec<clz_Torappu_CharSkinData_TokenSkinInfoT>>,
-  pub illustId: Option<alloc::string::String>,
-  pub spIllustId: Option<alloc::string::String>,
-  pub dynIllustId: Option<alloc::string::String>,
-  pub spDynIllustId: Option<alloc::string::String>,
-  pub avatarId: Option<alloc::string::String>,
-  pub portraitId: Option<alloc::string::String>,
-  pub dynPortraitId: Option<alloc::string::String>,
-  pub dynEntranceId: Option<alloc::string::String>,
-  pub buildingId: Option<alloc::string::String>,
-  pub battleSkin: Option<alloc::boxed::Box<clz_Torappu_CharSkinData_BattleSkinT>>,
-  pub isBuySkin: bool,
-  pub tmplId: Option<alloc::string::String>,
-  pub voiceId: Option<alloc::string::String>,
-  pub voiceType: enum__Torappu_SkinVoiceType,
-  pub displaySkin: Option<alloc::boxed::Box<clz_Torappu_CharSkinData_DisplaySkinT>>,
+    pub skinId: Option<alloc::string::String>,
+    pub charId: Option<alloc::string::String>,
+    pub tokenSkinMap: Option<alloc::vec::Vec<clz_Torappu_CharSkinData_TokenSkinInfoT>>,
+    pub illustId: Option<alloc::string::String>,
+    pub spIllustId: Option<alloc::string::String>,
+    pub dynIllustId: Option<alloc::string::String>,
+    pub spDynIllustId: Option<alloc::string::String>,
+    pub avatarId: Option<alloc::string::String>,
+    pub spAvatarId: Option<alloc::string::String>,
+    pub portraitId: Option<alloc::string::String>,
+    pub spPortraitId: Option<alloc::string::String>,
+    pub dynPortraitId: Option<alloc::string::String>,
+    pub dynEntranceId: Option<alloc::string::String>,
+    pub buildingId: Option<alloc::string::String>,
+    pub battleSkin: Option<alloc::boxed::Box<clz_Torappu_CharSkinData_BattleSkinT>>,
+    pub isBuySkin: bool,
+    pub tmplId: Option<alloc::string::String>,
+    pub voiceId: Option<alloc::string::String>,
+    pub voiceType: enum__Torappu_SkinVoiceType,
+    pub displaySkin: Option<alloc::boxed::Box<clz_Torappu_CharSkinData_DisplaySkinT>>,
 }
 impl Default for clz_Torappu_CharSkinDataT {
-  fn default() -> Self {
-    Self {
-      skinId: None,
-      charId: None,
-      tokenSkinMap: None,
-      illustId: None,
-      spIllustId: None,
-      dynIllustId: None,
-      spDynIllustId: None,
-      avatarId: None,
-      portraitId: None,
-      dynPortraitId: None,
-      dynEntranceId: None,
-      buildingId: None,
-      battleSkin: None,
-      isBuySkin: false,
-      tmplId: None,
-      voiceId: None,
-      voiceType: enum__Torappu_SkinVoiceType::NONE,
-      displaySkin: None,
+    fn default() -> Self {
+        Self {
+            skinId: None,
+            charId: None,
+            tokenSkinMap: None,
+            illustId: None,
+            spIllustId: None,
+            dynIllustId: None,
+            spDynIllustId: None,
+            avatarId: None,
+            spAvatarId: None,
+            portraitId: None,
+            spPortraitId: None,
+            dynPortraitId: None,
+            dynEntranceId: None,
+            buildingId: None,
+            battleSkin: None,
+            isBuySkin: false,
+            tmplId: None,
+            voiceId: None,
+            voiceType: enum__Torappu_SkinVoiceType::NONE,
+            displaySkin: None,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'b>> {
-    let skinId = self.skinId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let charId = self.charId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let tokenSkinMap = self.tokenSkinMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let illustId = self.illustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spIllustId = self.spIllustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let dynIllustId = self.dynIllustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spDynIllustId = self.spDynIllustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let avatarId = self.avatarId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let portraitId = self.portraitId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let dynPortraitId = self.dynPortraitId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let dynEntranceId = self.dynEntranceId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let buildingId = self.buildingId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let battleSkin = self.battleSkin.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    let isBuySkin = self.isBuySkin;
-    let tmplId = self.tmplId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let voiceId = self.voiceId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let voiceType = self.voiceType;
-    let displaySkin = self.displaySkin.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    clz_Torappu_CharSkinData::create(_fbb, &clz_Torappu_CharSkinDataArgs{
-      skinId,
-      charId,
-      tokenSkinMap,
-      illustId,
-      spIllustId,
-      dynIllustId,
-      spDynIllustId,
-      avatarId,
-      portraitId,
-      dynPortraitId,
-      dynEntranceId,
-      buildingId,
-      battleSkin,
-      isBuySkin,
-      tmplId,
-      voiceId,
-      voiceType,
-      displaySkin,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'b>> {
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let tokenSkinMap = self.tokenSkinMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let illustId = self.illustId.as_ref().map(|x| _fbb.create_string(x));
+        let spIllustId = self.spIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let dynIllustId = self.dynIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let spDynIllustId = self.spDynIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let avatarId = self.avatarId.as_ref().map(|x| _fbb.create_string(x));
+        let spAvatarId = self.spAvatarId.as_ref().map(|x| _fbb.create_string(x));
+        let portraitId = self.portraitId.as_ref().map(|x| _fbb.create_string(x));
+        let spPortraitId = self.spPortraitId.as_ref().map(|x| _fbb.create_string(x));
+        let dynPortraitId = self.dynPortraitId.as_ref().map(|x| _fbb.create_string(x));
+        let dynEntranceId = self.dynEntranceId.as_ref().map(|x| _fbb.create_string(x));
+        let buildingId = self.buildingId.as_ref().map(|x| _fbb.create_string(x));
+        let battleSkin = self.battleSkin.as_ref().map(|x| x.pack(_fbb));
+        let isBuySkin = self.isBuySkin;
+        let tmplId = self.tmplId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceId = self.voiceId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceType = self.voiceType;
+        let displaySkin = self.displaySkin.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_CharSkinData::create(
+            _fbb,
+            &clz_Torappu_CharSkinDataArgs {
+                skinId,
+                charId,
+                tokenSkinMap,
+                illustId,
+                spIllustId,
+                dynIllustId,
+                spDynIllustId,
+                avatarId,
+                spAvatarId,
+                portraitId,
+                spPortraitId,
+                dynPortraitId,
+                dynEntranceId,
+                buildingId,
+                battleSkin,
+                isBuySkin,
+                tmplId,
+                voiceId,
+                voiceType,
+                displaySkin,
+            },
+        )
+    }
 }
 pub enum dict__string__clz_Torappu_CharSkinDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__clz_Torappu_CharSkinData<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharSkinData<'a> {
-  type Inner = dict__string__clz_Torappu_CharSkinData<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__clz_Torappu_CharSkinData<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_CharSkinData { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_CharSkinDataArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_CharSkinDataBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinDataT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_CharSkinDataT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CharSkinData { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CharSkinDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CharSkinDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_CharSkinData::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinData) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_CharSkinDataT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_CharSkinData<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData>>(dict__string__clz_Torappu_CharSkinData::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CharSkinData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<clz_Torappu_CharSkinData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData>>(
+                    dict__string__clz_Torappu_CharSkinData::VT_VALUE,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_CharSkinData<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__clz_Torappu_CharSkinDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'a>>>,
 }
-impl<'a> Default for dict__string__clz_Torappu_CharSkinDataArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_CharSkinDataArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__clz_Torappu_CharSkinDataArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CharSkinDataArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__clz_Torappu_CharSkinDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__clz_Torappu_CharSkinDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_CharSkinData::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData>>(dict__string__clz_Torappu_CharSkinData::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_CharSkinDataBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CharSkinDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CharSkinData::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_CharSkinData::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData>>(
+                dict__string__clz_Torappu_CharSkinData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CharSkinDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_CharSkinData::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__clz_Torappu_CharSkinData<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_CharSkinData");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CharSkinData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__clz_Torappu_CharSkinDataT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_CharSkinDataT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_CharSkinDataT>>,
 }
 impl Default for dict__string__clz_Torappu_CharSkinDataT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__clz_Torappu_CharSkinDataT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_CharSkinData::create(_fbb, &dict__string__clz_Torappu_CharSkinDataArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CharSkinData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CharSkinDataArgs { key, value },
+        )
+    }
 }
 pub enum dict__int__stringOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__int__string<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__string<'a> {
-  type Inner = dict__int__string<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__int__string<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__int__string { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__int__stringArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__int__string<'bldr>> {
-    let mut builder = dict__int__stringBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    builder.add_key(args.key);
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__int__stringT {
-    let key = self.key();
-    let value = self.value().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    dict__int__stringT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__int__string { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__int__stringArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__int__string<'bldr>> {
+        let mut builder = dict__int__stringBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        builder.add_key(args.key);
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(dict__int__string::VT_KEY, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__int__string) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__int__stringT {
+        let key = self.key();
+        let value = self.value().map(|x| alloc::string::ToString::to_string(x));
+        dict__int__stringT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(&val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__int__string::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(dict__int__string::VT_KEY, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__int__string) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(&val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(dict__int__string::VT_VALUE, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__int__string<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("key", Self::VT_KEY, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("key", Self::VT_KEY, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__int__stringArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for dict__int__stringArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__int__stringArgs {
-      key: 0,
-      value: None,
+impl Default for dict__int__stringArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__int__stringArgs {
+            key: 0,
+            value: None,
+        }
     }
-  }
 }
-
 
 pub struct dict__int__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__stringBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: i32) {
-    self.fbb_.push_slot::<i32>(dict__int__string::VT_KEY, key, 0);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__int__string::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__int__stringBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__int__stringBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_key(&mut self, key: i32) {
+        self.fbb_
+            .push_slot::<i32>(dict__int__string::VT_KEY, key, 0);
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__string<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__int__string::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__int__stringBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__string<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__int__string<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__int__string");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__int__string");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__int__stringT {
-  pub key: i32,
-  pub value: Option<alloc::string::String>,
+    pub key: i32,
+    pub value: Option<alloc::string::String>,
 }
 impl Default for dict__int__stringT {
-  fn default() -> Self {
-    Self {
-      key: 0,
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
     }
-  }
 }
 impl dict__int__stringT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__int__string<'b>> {
-    let key = self.key;
-    let value = self.value.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    dict__int__string::create(_fbb, &dict__int__stringArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__int__string<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__int__string::create(_fbb, &dict__int__stringArgs { key, value })
+    }
 }
 pub enum dict__string__list_dict__int__stringOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__list_dict__int__string<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_dict__int__string<'a> {
-  type Inner = dict__string__list_dict__int__string<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__list_dict__int__string<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__list_dict__int__string { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__list_dict__int__stringArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'bldr>> {
-    let mut builder = dict__string__list_dict__int__stringBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__list_dict__int__stringT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    dict__string__list_dict__int__stringT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__list_dict__int__string { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__list_dict__int__stringArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'bldr>> {
+        let mut builder = dict__string__list_dict__int__stringBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__list_dict__int__string::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__list_dict__int__string) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__list_dict__int__stringT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__int__stringT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string>>>>(dict__string__list_dict__int__string::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__list_dict__int__string::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__list_dict__int__string) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string>>,
+            >>(dict__string__list_dict__int__string::VT_VALUE, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__list_dict__int__string<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__int__string>>>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__int__string>>,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__list_dict__int__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string<'a>>>>>,
+    pub value: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string<'a>>>,
+        >,
+    >,
 }
-impl<'a> Default for dict__string__list_dict__int__stringArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__list_dict__int__stringArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__list_dict__int__stringArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__list_dict__int__stringArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__list_dict__int__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__list_dict__int__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__list_dict__int__stringBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__list_dict__int__string::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__int__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__list_dict__int__string::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__list_dict__int__stringBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__list_dict__int__stringBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__list_dict__int__stringBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__int__string::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__list_dict__int__string::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<dict__int__string<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__int__string::VT_VALUE,
+            value,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__list_dict__int__stringBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__list_dict__int__string::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__list_dict__int__string<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__list_dict__int__string");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__list_dict__int__string");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__list_dict__int__stringT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::vec::Vec<dict__int__stringT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::vec::Vec<dict__int__stringT>>,
 }
 impl Default for dict__string__list_dict__int__stringT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__list_dict__int__stringT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    dict__string__list_dict__int__string::create(_fbb, &dict__string__list_dict__int__stringArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__int__string::create(
+            _fbb,
+            &dict__string__list_dict__int__stringArgs { key, value },
+        )
+    }
 }
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__string<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-  type Inner = dict__string__string<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__string<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__string { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__stringArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__string<'bldr>> {
-    let mut builder = dict__string__stringBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__stringT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    dict__string__stringT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__string { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__stringArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__string<'bldr>> {
+        let mut builder = dict__string__stringBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::string::ToString::to_string(x));
+        dict__string__stringT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_KEY, None)
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__string::VT_VALUE, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__string<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for dict__string__stringArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__stringArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__stringArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__stringArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
-
 
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__stringBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__stringBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_KEY, key);
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__string::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__stringBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(o, dict__string__string::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__string<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__string");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__string");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__stringT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::string::String>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::string::String>,
 }
 impl Default for dict__string__stringT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__stringT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__string<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    dict__string__string::create(_fbb, &dict__string__stringArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
 }
 pub enum dict__string__list_dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__list_dict__string__string<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_dict__string__string<'a> {
-  type Inner = dict__string__list_dict__string__string<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__list_dict__string__string<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__list_dict__string__string { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__list_dict__string__stringArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'bldr>> {
-    let mut builder = dict__string__list_dict__string__stringBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__list_dict__string__stringT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    dict__string__list_dict__string__stringT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__list_dict__string__string { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__list_dict__string__stringArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'bldr>> {
+        let mut builder = dict__string__list_dict__string__stringBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__list_dict__string__string::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__list_dict__string__string) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__list_dict__string__stringT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__string__stringT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>(dict__string__list_dict__string__string::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__list_dict__string__string::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__list_dict__string__string) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>(dict__string__list_dict__string__string::VT_VALUE, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__list_dict__string__string<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__list_dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>>,
+    pub value: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>,
+        >,
+    >,
 }
-impl<'a> Default for dict__string__list_dict__string__stringArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__list_dict__string__stringArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__list_dict__string__stringArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__list_dict__string__stringArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__list_dict__string__stringBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__list_dict__string__stringBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__list_dict__string__stringBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__list_dict__string__string::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__list_dict__string__string::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__list_dict__string__stringBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__list_dict__string__stringBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__list_dict__string__stringBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__string__string::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__list_dict__string__string::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<dict__string__string<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__string__string::VT_VALUE,
+            value,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__list_dict__string__stringBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__list_dict__string__string::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__list_dict__string__string<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__list_dict__string__string");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__list_dict__string__string");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__list_dict__string__stringT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::vec::Vec<dict__string__stringT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::vec::Vec<dict__string__stringT>>,
 }
 impl Default for dict__string__list_dict__string__stringT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__list_dict__string__stringT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    dict__string__list_dict__string__string::create(_fbb, &dict__string__list_dict__string__stringArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__string__string::create(
+            _fbb,
+            &dict__string__list_dict__string__stringArgs { key, value },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinGroupInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinGroupInfo<'a> {
-  type Inner = clz_Torappu_CharSkinGroupInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinGroupInfo<'a> {
-  pub const VT_SKINGROUPID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_PUBLISHTIME: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SKINGROUPID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_PUBLISHTIME: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinGroupInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinGroupInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinGroupInfoBuilder::new(_fbb);
-    builder.add_publishTime(args.publishTime);
-    if let Some(x) = args.skinGroupId { builder.add_skinGroupId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinGroupInfoT {
-    let skinGroupId = self.skinGroupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let publishTime = self.publishTime();
-    clz_Torappu_CharSkinGroupInfoT {
-      skinGroupId,
-      publishTime,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinGroupInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinGroupInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinGroupInfoBuilder::new(_fbb);
+        builder.add_publishTime(args.publishTime);
+        if let Some(x) = args.skinGroupId {
+            builder.add_skinGroupId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn skinGroupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinGroupInfo::VT_SKINGROUPID, None)}
-  }
-  #[inline]
-  pub fn publishTime(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_CharSkinGroupInfo::VT_PUBLISHTIME, Some(0)).unwrap()}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinGroupInfoT {
+        let skinGroupId = self
+            .skinGroupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let publishTime = self.publishTime();
+        clz_Torappu_CharSkinGroupInfoT {
+            skinGroupId,
+            publishTime,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn skinGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinGroupInfo::VT_SKINGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn publishTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_CharSkinGroupInfo::VT_PUBLISHTIME, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinGroupInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinGroupId", Self::VT_SKINGROUPID, false)?
-     .visit_field::<i64>("publishTime", Self::VT_PUBLISHTIME, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "skinGroupId",
+                Self::VT_SKINGROUPID,
+                false,
+            )?
+            .visit_field::<i64>("publishTime", Self::VT_PUBLISHTIME, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinGroupInfoArgs<'a> {
     pub skinGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub publishTime: i64,
 }
-impl<'a> Default for clz_Torappu_CharSkinGroupInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinGroupInfoArgs {
-      skinGroupId: None,
-      publishTime: 0,
+impl Default for clz_Torappu_CharSkinGroupInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinGroupInfoArgs {
+            skinGroupId: None,
+            publishTime: 0,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_CharSkinGroupInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinGroupInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skinGroupId(&mut self, skinGroupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinGroupInfo::VT_SKINGROUPID, skinGroupId);
-  }
-  #[inline]
-  pub fn add_publishTime(&mut self, publishTime: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_CharSkinGroupInfo::VT_PUBLISHTIME, publishTime, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinGroupInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinGroupInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_skinGroupId(&mut self, skinGroupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinGroupInfo::VT_SKINGROUPID,
+            skinGroupId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_publishTime(&mut self, publishTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_CharSkinGroupInfo::VT_PUBLISHTIME,
+            publishTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinGroupInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinGroupInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinGroupInfo");
-      ds.field("skinGroupId", &self.skinGroupId());
-      ds.field("publishTime", &self.publishTime());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinGroupInfo");
+        ds.field("skinGroupId", &self.skinGroupId());
+        ds.field("publishTime", &self.publishTime());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinGroupInfoT {
-  pub skinGroupId: Option<alloc::string::String>,
-  pub publishTime: i64,
+    pub skinGroupId: Option<alloc::string::String>,
+    pub publishTime: i64,
 }
 impl Default for clz_Torappu_CharSkinGroupInfoT {
-  fn default() -> Self {
-    Self {
-      skinGroupId: None,
-      publishTime: 0,
+    fn default() -> Self {
+        Self {
+            skinGroupId: None,
+            publishTime: 0,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinGroupInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'b>> {
-    let skinGroupId = self.skinGroupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let publishTime = self.publishTime;
-    clz_Torappu_CharSkinGroupInfo::create(_fbb, &clz_Torappu_CharSkinGroupInfoArgs{
-      skinGroupId,
-      publishTime,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'b>> {
+        let skinGroupId = self.skinGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let publishTime = self.publishTime;
+        clz_Torappu_CharSkinGroupInfo::create(
+            _fbb,
+            &clz_Torappu_CharSkinGroupInfoArgs {
+                skinGroupId,
+                publishTime,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinKvImgInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinKvImgInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinKvImgInfo<'a> {
-  type Inner = clz_Torappu_CharSkinKvImgInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinKvImgInfo<'a> {
-  pub const VT_KVIMGID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_LINKEDSKINGROUPID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KVIMGID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_LINKEDSKINGROUPID: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinKvImgInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinKvImgInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinKvImgInfoBuilder::new(_fbb);
-    if let Some(x) = args.linkedSkinGroupId { builder.add_linkedSkinGroupId(x); }
-    if let Some(x) = args.kvImgId { builder.add_kvImgId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinKvImgInfoT {
-    let kvImgId = self.kvImgId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let linkedSkinGroupId = self.linkedSkinGroupId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_CharSkinKvImgInfoT {
-      kvImgId,
-      linkedSkinGroupId,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinKvImgInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinKvImgInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinKvImgInfoBuilder::new(_fbb);
+        if let Some(x) = args.linkedSkinGroupId {
+            builder.add_linkedSkinGroupId(x);
+        }
+        if let Some(x) = args.kvImgId {
+            builder.add_kvImgId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn kvImgId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinKvImgInfo::VT_KVIMGID, None)}
-  }
-  #[inline]
-  pub fn linkedSkinGroupId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinKvImgInfo::VT_LINKEDSKINGROUPID, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinKvImgInfoT {
+        let kvImgId = self
+            .kvImgId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let linkedSkinGroupId = self
+            .linkedSkinGroupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_CharSkinKvImgInfoT {
+            kvImgId,
+            linkedSkinGroupId,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn kvImgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinKvImgInfo::VT_KVIMGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn linkedSkinGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinKvImgInfo::VT_LINKEDSKINGROUPID,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinKvImgInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("kvImgId", Self::VT_KVIMGID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("linkedSkinGroupId", Self::VT_LINKEDSKINGROUPID, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "kvImgId",
+                Self::VT_KVIMGID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "linkedSkinGroupId",
+                Self::VT_LINKEDSKINGROUPID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinKvImgInfoArgs<'a> {
     pub kvImgId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub linkedSkinGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for clz_Torappu_CharSkinKvImgInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinKvImgInfoArgs {
-      kvImgId: None,
-      linkedSkinGroupId: None,
+impl Default for clz_Torappu_CharSkinKvImgInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinKvImgInfoArgs {
+            kvImgId: None,
+            linkedSkinGroupId: None,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_CharSkinKvImgInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinKvImgInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_kvImgId(&mut self, kvImgId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinKvImgInfo::VT_KVIMGID, kvImgId);
-  }
-  #[inline]
-  pub fn add_linkedSkinGroupId(&mut self, linkedSkinGroupId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinKvImgInfo::VT_LINKEDSKINGROUPID, linkedSkinGroupId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinKvImgInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinKvImgInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_kvImgId(&mut self, kvImgId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinKvImgInfo::VT_KVIMGID,
+            kvImgId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_linkedSkinGroupId(&mut self, linkedSkinGroupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinKvImgInfo::VT_LINKEDSKINGROUPID,
+            linkedSkinGroupId,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinKvImgInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinKvImgInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinKvImgInfo");
-      ds.field("kvImgId", &self.kvImgId());
-      ds.field("linkedSkinGroupId", &self.linkedSkinGroupId());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinKvImgInfo");
+        ds.field("kvImgId", &self.kvImgId());
+        ds.field("linkedSkinGroupId", &self.linkedSkinGroupId());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinKvImgInfoT {
-  pub kvImgId: Option<alloc::string::String>,
-  pub linkedSkinGroupId: Option<alloc::string::String>,
+    pub kvImgId: Option<alloc::string::String>,
+    pub linkedSkinGroupId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_CharSkinKvImgInfoT {
-  fn default() -> Self {
-    Self {
-      kvImgId: None,
-      linkedSkinGroupId: None,
+    fn default() -> Self {
+        Self {
+            kvImgId: None,
+            linkedSkinGroupId: None,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinKvImgInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'b>> {
-    let kvImgId = self.kvImgId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let linkedSkinGroupId = self.linkedSkinGroupId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_CharSkinKvImgInfo::create(_fbb, &clz_Torappu_CharSkinKvImgInfoArgs{
-      kvImgId,
-      linkedSkinGroupId,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'b>> {
+        let kvImgId = self.kvImgId.as_ref().map(|x| _fbb.create_string(x));
+        let linkedSkinGroupId = self
+            .linkedSkinGroupId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_CharSkinKvImgInfo::create(
+            _fbb,
+            &clz_Torappu_CharSkinKvImgInfoArgs {
+                kvImgId,
+                linkedSkinGroupId,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_CharSkinBrandInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_CharSkinBrandInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinBrandInfo<'a> {
-  type Inner = clz_Torappu_CharSkinBrandInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
-  pub const VT_BRANDID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_GROUPLIST: ::flatbuffers::VOffsetT = 6;
-  pub const VT_KVIMGIDLIST: ::flatbuffers::VOffsetT = 8;
-  pub const VT_BRANDNAME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_BRANDCAPITALNAME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 14;
-  pub const VT_PUBLISHTIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SORTID: ::flatbuffers::VOffsetT = 18;
+    pub const VT_BRANDID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_GROUPLIST: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KVIMGIDLIST: ::flatbuffers::VOffsetT = 8;
+    pub const VT_BRANDNAME: ::flatbuffers::VOffsetT = 10;
+    pub const VT_BRANDCAPITALNAME: ::flatbuffers::VOffsetT = 12;
+    pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 14;
+    pub const VT_PUBLISHTIME: ::flatbuffers::VOffsetT = 16;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 18;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_CharSkinBrandInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_CharSkinBrandInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'bldr>> {
-    let mut builder = clz_Torappu_CharSkinBrandInfoBuilder::new(_fbb);
-    builder.add_publishTime(args.publishTime);
-    builder.add_sortId(args.sortId);
-    if let Some(x) = args.description { builder.add_description(x); }
-    if let Some(x) = args.brandCapitalName { builder.add_brandCapitalName(x); }
-    if let Some(x) = args.brandName { builder.add_brandName(x); }
-    if let Some(x) = args.kvImgIdList { builder.add_kvImgIdList(x); }
-    if let Some(x) = args.groupList { builder.add_groupList(x); }
-    if let Some(x) = args.brandId { builder.add_brandId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_CharSkinBrandInfoT {
-    let brandId = self.brandId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let groupList = self.groupList().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let kvImgIdList = self.kvImgIdList().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let brandName = self.brandName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let brandCapitalName = self.brandCapitalName().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let description = self.description().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let publishTime = self.publishTime();
-    let sortId = self.sortId();
-    clz_Torappu_CharSkinBrandInfoT {
-      brandId,
-      groupList,
-      kvImgIdList,
-      brandName,
-      brandCapitalName,
-      description,
-      publishTime,
-      sortId,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CharSkinBrandInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CharSkinBrandInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'bldr>> {
+        let mut builder = clz_Torappu_CharSkinBrandInfoBuilder::new(_fbb);
+        builder.add_publishTime(args.publishTime);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.description {
+            builder.add_description(x);
+        }
+        if let Some(x) = args.brandCapitalName {
+            builder.add_brandCapitalName(x);
+        }
+        if let Some(x) = args.brandName {
+            builder.add_brandName(x);
+        }
+        if let Some(x) = args.kvImgIdList {
+            builder.add_kvImgIdList(x);
+        }
+        if let Some(x) = args.groupList {
+            builder.add_groupList(x);
+        }
+        if let Some(x) = args.brandId {
+            builder.add_brandId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn brandId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDID, None)}
-  }
-  #[inline]
-  pub fn groupList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo>>>>(clz_Torappu_CharSkinBrandInfo::VT_GROUPLIST, None)}
-  }
-  #[inline]
-  pub fn kvImgIdList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo>>>>(clz_Torappu_CharSkinBrandInfo::VT_KVIMGIDLIST, None)}
-  }
-  #[inline]
-  pub fn brandName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDNAME, None)}
-  }
-  #[inline]
-  pub fn brandCapitalName(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDCAPITALNAME, None)}
-  }
-  #[inline]
-  pub fn description(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_CharSkinBrandInfo::VT_DESCRIPTION, None)}
-  }
-  #[inline]
-  pub fn publishTime(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_CharSkinBrandInfo::VT_PUBLISHTIME, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn sortId(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(clz_Torappu_CharSkinBrandInfo::VT_SORTID, Some(0)).unwrap()}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_CharSkinBrandInfoT {
+        let brandId = self
+            .brandId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let groupList = self
+            .groupList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let kvImgIdList = self
+            .kvImgIdList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let brandName = self
+            .brandName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let brandCapitalName = self
+            .brandCapitalName()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let description = self
+            .description()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let publishTime = self.publishTime();
+        let sortId = self.sortId();
+        clz_Torappu_CharSkinBrandInfoT {
+            brandId,
+            groupList,
+            kvImgIdList,
+            brandName,
+            brandCapitalName,
+            description,
+            publishTime,
+            sortId,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn brandId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinBrandInfo::VT_BRANDID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn groupList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo>,
+                >,
+            >>(clz_Torappu_CharSkinBrandInfo::VT_GROUPLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn kvImgIdList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo>,
+                >,
+            >>(clz_Torappu_CharSkinBrandInfo::VT_KVIMGIDLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn brandName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinBrandInfo::VT_BRANDNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn brandCapitalName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinBrandInfo::VT_BRANDCAPITALNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn description(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharSkinBrandInfo::VT_DESCRIPTION,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn publishTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_CharSkinBrandInfo::VT_PUBLISHTIME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CharSkinBrandInfo::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_CharSkinBrandInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("brandId", Self::VT_BRANDID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo>>>>("groupList", Self::VT_GROUPLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo>>>>("kvImgIdList", Self::VT_KVIMGIDLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("brandName", Self::VT_BRANDNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("brandCapitalName", Self::VT_BRANDCAPITALNAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("description", Self::VT_DESCRIPTION, false)?
-     .visit_field::<i64>("publishTime", Self::VT_PUBLISHTIME, false)?
-     .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "brandId",
+                Self::VT_BRANDID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo>,
+                >,
+            >>("groupList", Self::VT_GROUPLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo>,
+                >,
+            >>("kvImgIdList", Self::VT_KVIMGIDLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "brandName",
+                Self::VT_BRANDNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "brandCapitalName",
+                Self::VT_BRANDCAPITALNAME,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "description",
+                Self::VT_DESCRIPTION,
+                false,
+            )?
+            .visit_field::<i64>("publishTime", Self::VT_PUBLISHTIME, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_CharSkinBrandInfoArgs<'a> {
     pub brandId: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub groupList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'a>>>>>,
-    pub kvImgIdList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'a>>>>>,
+    pub groupList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'a>>,
+            >,
+        >,
+    >,
+    pub kvImgIdList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'a>>,
+            >,
+        >,
+    >,
     pub brandName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub brandCapitalName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub description: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub publishTime: i64,
     pub sortId: i32,
 }
-impl<'a> Default for clz_Torappu_CharSkinBrandInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_CharSkinBrandInfoArgs {
-      brandId: None,
-      groupList: None,
-      kvImgIdList: None,
-      brandName: None,
-      brandCapitalName: None,
-      description: None,
-      publishTime: 0,
-      sortId: 0,
+impl Default for clz_Torappu_CharSkinBrandInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CharSkinBrandInfoArgs {
+            brandId: None,
+            groupList: None,
+            kvImgIdList: None,
+            brandName: None,
+            brandCapitalName: None,
+            description: None,
+            publishTime: 0,
+            sortId: 0,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_CharSkinBrandInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_brandId(&mut self, brandId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDID, brandId);
-  }
-  #[inline]
-  pub fn add_groupList(&mut self, groupList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_GROUPLIST, groupList);
-  }
-  #[inline]
-  pub fn add_kvImgIdList(&mut self, kvImgIdList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_KVIMGIDLIST, kvImgIdList);
-  }
-  #[inline]
-  pub fn add_brandName(&mut self, brandName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDNAME, brandName);
-  }
-  #[inline]
-  pub fn add_brandCapitalName(&mut self, brandCapitalName: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_BRANDCAPITALNAME, brandCapitalName);
-  }
-  #[inline]
-  pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_CharSkinBrandInfo::VT_DESCRIPTION, description);
-  }
-  #[inline]
-  pub fn add_publishTime(&mut self, publishTime: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_CharSkinBrandInfo::VT_PUBLISHTIME, publishTime, 0);
-  }
-  #[inline]
-  pub fn add_sortId(&mut self, sortId: i32) {
-    self.fbb_.push_slot::<i32>(clz_Torappu_CharSkinBrandInfo::VT_SORTID, sortId, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_CharSkinBrandInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_brandId(&mut self, brandId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_BRANDID,
+            brandId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_groupList(
+        &mut self,
+        groupList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinGroupInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_GROUPLIST,
+            groupList,
+        );
+    }
+    #[inline]
+    pub fn add_kvImgIdList(
+        &mut self,
+        kvImgIdList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinKvImgInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_KVIMGIDLIST,
+            kvImgIdList,
+        );
+    }
+    #[inline]
+    pub fn add_brandName(&mut self, brandName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_BRANDNAME,
+            brandName,
+        );
+    }
+    #[inline]
+    pub fn add_brandCapitalName(&mut self, brandCapitalName: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_BRANDCAPITALNAME,
+            brandCapitalName,
+        );
+    }
+    #[inline]
+    pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharSkinBrandInfo::VT_DESCRIPTION,
+            description,
+        );
+    }
+    #[inline]
+    pub fn add_publishTime(&mut self, publishTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_CharSkinBrandInfo::VT_PUBLISHTIME,
+            publishTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CharSkinBrandInfo::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_CharSkinBrandInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_CharSkinBrandInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_CharSkinBrandInfo");
-      ds.field("brandId", &self.brandId());
-      ds.field("groupList", &self.groupList());
-      ds.field("kvImgIdList", &self.kvImgIdList());
-      ds.field("brandName", &self.brandName());
-      ds.field("brandCapitalName", &self.brandCapitalName());
-      ds.field("description", &self.description());
-      ds.field("publishTime", &self.publishTime());
-      ds.field("sortId", &self.sortId());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CharSkinBrandInfo");
+        ds.field("brandId", &self.brandId());
+        ds.field("groupList", &self.groupList());
+        ds.field("kvImgIdList", &self.kvImgIdList());
+        ds.field("brandName", &self.brandName());
+        ds.field("brandCapitalName", &self.brandCapitalName());
+        ds.field("description", &self.description());
+        ds.field("publishTime", &self.publishTime());
+        ds.field("sortId", &self.sortId());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_CharSkinBrandInfoT {
-  pub brandId: Option<alloc::string::String>,
-  pub groupList: Option<alloc::vec::Vec<clz_Torappu_CharSkinGroupInfoT>>,
-  pub kvImgIdList: Option<alloc::vec::Vec<clz_Torappu_CharSkinKvImgInfoT>>,
-  pub brandName: Option<alloc::string::String>,
-  pub brandCapitalName: Option<alloc::string::String>,
-  pub description: Option<alloc::string::String>,
-  pub publishTime: i64,
-  pub sortId: i32,
+    pub brandId: Option<alloc::string::String>,
+    pub groupList: Option<alloc::vec::Vec<clz_Torappu_CharSkinGroupInfoT>>,
+    pub kvImgIdList: Option<alloc::vec::Vec<clz_Torappu_CharSkinKvImgInfoT>>,
+    pub brandName: Option<alloc::string::String>,
+    pub brandCapitalName: Option<alloc::string::String>,
+    pub description: Option<alloc::string::String>,
+    pub publishTime: i64,
+    pub sortId: i32,
 }
 impl Default for clz_Torappu_CharSkinBrandInfoT {
-  fn default() -> Self {
-    Self {
-      brandId: None,
-      groupList: None,
-      kvImgIdList: None,
-      brandName: None,
-      brandCapitalName: None,
-      description: None,
-      publishTime: 0,
-      sortId: 0,
+    fn default() -> Self {
+        Self {
+            brandId: None,
+            groupList: None,
+            kvImgIdList: None,
+            brandName: None,
+            brandCapitalName: None,
+            description: None,
+            publishTime: 0,
+            sortId: 0,
+        }
     }
-  }
 }
 impl clz_Torappu_CharSkinBrandInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'b>> {
-    let brandId = self.brandId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let groupList = self.groupList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let kvImgIdList = self.kvImgIdList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let brandName = self.brandName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let brandCapitalName = self.brandCapitalName.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let description = self.description.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let publishTime = self.publishTime;
-    let sortId = self.sortId;
-    clz_Torappu_CharSkinBrandInfo::create(_fbb, &clz_Torappu_CharSkinBrandInfoArgs{
-      brandId,
-      groupList,
-      kvImgIdList,
-      brandName,
-      brandCapitalName,
-      description,
-      publishTime,
-      sortId,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'b>> {
+        let brandId = self.brandId.as_ref().map(|x| _fbb.create_string(x));
+        let groupList = self.groupList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let kvImgIdList = self.kvImgIdList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let brandName = self.brandName.as_ref().map(|x| _fbb.create_string(x));
+        let brandCapitalName = self
+            .brandCapitalName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let publishTime = self.publishTime;
+        let sortId = self.sortId;
+        clz_Torappu_CharSkinBrandInfo::create(
+            _fbb,
+            &clz_Torappu_CharSkinBrandInfoArgs {
+                brandId,
+                groupList,
+                kvImgIdList,
+                brandName,
+                brandCapitalName,
+                description,
+                publishTime,
+                sortId,
+            },
+        )
+    }
 }
 pub enum dict__string__clz_Torappu_CharSkinBrandInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
-  type Inner = dict__string__clz_Torappu_CharSkinBrandInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_CharSkinBrandInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_CharSkinBrandInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_CharSkinBrandInfoBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinBrandInfoT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_CharSkinBrandInfoT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CharSkinBrandInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CharSkinBrandInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CharSkinBrandInfoBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinBrandInfo) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinBrandInfoT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_CharSkinBrandInfoT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_CharSkinBrandInfo<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinBrandInfo>>(dict__string__clz_Torappu_CharSkinBrandInfo::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinBrandInfo) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<clz_Torappu_CharSkinBrandInfo<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinBrandInfo>>(
+                    dict__string__clz_Torappu_CharSkinBrandInfo::VT_VALUE,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_CharSkinBrandInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinBrandInfo>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_CharSkinBrandInfo>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__clz_Torappu_CharSkinBrandInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'a>>>,
 }
-impl<'a> Default for dict__string__clz_Torappu_CharSkinBrandInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_CharSkinBrandInfoArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__clz_Torappu_CharSkinBrandInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CharSkinBrandInfoArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__clz_Torappu_CharSkinBrandInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__clz_Torappu_CharSkinBrandInfoBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo>>(dict__string__clz_Torappu_CharSkinBrandInfo::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_CharSkinBrandInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo>>(
+                dict__string__clz_Torappu_CharSkinBrandInfo::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CharSkinBrandInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_CharSkinBrandInfo::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__clz_Torappu_CharSkinBrandInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_CharSkinBrandInfo");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CharSkinBrandInfo");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__clz_Torappu_CharSkinBrandInfoT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_CharSkinBrandInfoT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_CharSkinBrandInfoT>>,
 }
 impl Default for dict__string__clz_Torappu_CharSkinBrandInfoT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__clz_Torappu_CharSkinBrandInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_CharSkinBrandInfo::create(_fbb, &dict__string__clz_Torappu_CharSkinBrandInfoArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CharSkinBrandInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_CharSkinBrandInfoArgs { key, value },
+        )
+    }
 }
 pub enum clz_Torappu_SpecialSkinInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_SpecialSkinInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpecialSkinInfo<'a> {
-  type Inner = clz_Torappu_SpecialSkinInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_STARTTIME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 8;
+    pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_STARTTIME: ::flatbuffers::VOffsetT = 6;
+    pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 8;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_SpecialSkinInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_SpecialSkinInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'bldr>> {
-    let mut builder = clz_Torappu_SpecialSkinInfoBuilder::new(_fbb);
-    builder.add_endTime(args.endTime);
-    builder.add_startTime(args.startTime);
-    if let Some(x) = args.skinId { builder.add_skinId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_SpecialSkinInfoT {
-    let skinId = self.skinId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let startTime = self.startTime();
-    let endTime = self.endTime();
-    clz_Torappu_SpecialSkinInfoT {
-      skinId,
-      startTime,
-      endTime,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_SpecialSkinInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_SpecialSkinInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'bldr>> {
+        let mut builder = clz_Torappu_SpecialSkinInfoBuilder::new(_fbb);
+        builder.add_endTime(args.endTime);
+        builder.add_startTime(args.startTime);
+        if let Some(x) = args.skinId {
+            builder.add_skinId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn skinId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpecialSkinInfo::VT_SKINID, None)}
-  }
-  #[inline]
-  pub fn startTime(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_SpecialSkinInfo::VT_STARTTIME, Some(0)).unwrap()}
-  }
-  #[inline]
-  pub fn endTime(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(clz_Torappu_SpecialSkinInfo::VT_ENDTIME, Some(0)).unwrap()}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_SpecialSkinInfoT {
+        let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        clz_Torappu_SpecialSkinInfoT {
+            skinId,
+            startTime,
+            endTime,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn skinId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpecialSkinInfo::VT_SKINID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn startTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_SpecialSkinInfo::VT_STARTTIME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn endTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_SpecialSkinInfo::VT_ENDTIME, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SpecialSkinInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
-     .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-     .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
+            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
+            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_SpecialSkinInfoArgs<'a> {
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub startTime: i64,
     pub endTime: i64,
 }
-impl<'a> Default for clz_Torappu_SpecialSkinInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_SpecialSkinInfoArgs {
-      skinId: None,
-      startTime: 0,
-      endTime: 0,
+impl Default for clz_Torappu_SpecialSkinInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_SpecialSkinInfoArgs {
+            skinId: None,
+            startTime: 0,
+            endTime: 0,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_SpecialSkinInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpecialSkinInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpecialSkinInfo::VT_SKINID, skinId);
-  }
-  #[inline]
-  pub fn add_startTime(&mut self, startTime: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_SpecialSkinInfo::VT_STARTTIME, startTime, 0);
-  }
-  #[inline]
-  pub fn add_endTime(&mut self, endTime: i64) {
-    self.fbb_.push_slot::<i64>(clz_Torappu_SpecialSkinInfo::VT_ENDTIME, endTime, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SpecialSkinInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_SpecialSkinInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpecialSkinInfo::VT_SKINID,
+            skinId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_startTime(&mut self, startTime: i64) {
+        self.fbb_
+            .push_slot::<i64>(clz_Torappu_SpecialSkinInfo::VT_STARTTIME, startTime, 0);
+    }
+    #[inline]
+    pub fn add_endTime(&mut self, endTime: i64) {
+        self.fbb_
+            .push_slot::<i64>(clz_Torappu_SpecialSkinInfo::VT_ENDTIME, endTime, 0);
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_SpecialSkinInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_SpecialSkinInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_SpecialSkinInfo");
-      ds.field("skinId", &self.skinId());
-      ds.field("startTime", &self.startTime());
-      ds.field("endTime", &self.endTime());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_SpecialSkinInfo");
+        ds.field("skinId", &self.skinId());
+        ds.field("startTime", &self.startTime());
+        ds.field("endTime", &self.endTime());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_SpecialSkinInfoT {
-  pub skinId: Option<alloc::string::String>,
-  pub startTime: i64,
-  pub endTime: i64,
+    pub skinId: Option<alloc::string::String>,
+    pub startTime: i64,
+    pub endTime: i64,
 }
 impl Default for clz_Torappu_SpecialSkinInfoT {
-  fn default() -> Self {
-    Self {
-      skinId: None,
-      startTime: 0,
-      endTime: 0,
+    fn default() -> Self {
+        Self {
+            skinId: None,
+            startTime: 0,
+            endTime: 0,
+        }
     }
-  }
 }
 impl clz_Torappu_SpecialSkinInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'b>> {
-    let skinId = self.skinId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let startTime = self.startTime;
-    let endTime = self.endTime;
-    clz_Torappu_SpecialSkinInfo::create(_fbb, &clz_Torappu_SpecialSkinInfoArgs{
-      skinId,
-      startTime,
-      endTime,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'b>> {
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        clz_Torappu_SpecialSkinInfo::create(
+            _fbb,
+            &clz_Torappu_SpecialSkinInfoArgs {
+                skinId,
+                startTime,
+                endTime,
+            },
+        )
+    }
 }
 pub enum clz_Torappu_SpDynIllustInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_SpDynIllustInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpDynIllustInfo<'a> {
-  type Inner = clz_Torappu_SpDynIllustInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
-  pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SPDYNILLUSTID: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SPDYNILLUSTSKINTAG: ::flatbuffers::VOffsetT = 8;
-  pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SKINID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SPDYNILLUSTID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SPDYNILLUSTSKINTAG: ::flatbuffers::VOffsetT = 8;
+    pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SPPORTRAITID: ::flatbuffers::VOffsetT = 12;
+    pub const VT_SPAVATARID: ::flatbuffers::VOffsetT = 14;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_SpDynIllustInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_SpDynIllustInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'bldr>> {
-    let mut builder = clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
-    if let Some(x) = args.spIllustId { builder.add_spIllustId(x); }
-    if let Some(x) = args.spDynIllustSkinTag { builder.add_spDynIllustSkinTag(x); }
-    if let Some(x) = args.spDynIllustId { builder.add_spDynIllustId(x); }
-    if let Some(x) = args.skinId { builder.add_skinId(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_SpDynIllustInfoT {
-    let skinId = self.skinId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spDynIllustId = self.spDynIllustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spDynIllustSkinTag = self.spDynIllustSkinTag().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    let spIllustId = self.spIllustId().map(|x| {
-      alloc::string::ToString::to_string(x)
-    });
-    clz_Torappu_SpDynIllustInfoT {
-      skinId,
-      spDynIllustId,
-      spDynIllustSkinTag,
-      spIllustId,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_SpDynIllustInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_SpDynIllustInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'bldr>> {
+        let mut builder = clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
+        if let Some(x) = args.spAvatarId {
+            builder.add_spAvatarId(x);
+        }
+        if let Some(x) = args.spPortraitId {
+            builder.add_spPortraitId(x);
+        }
+        if let Some(x) = args.spIllustId {
+            builder.add_spIllustId(x);
+        }
+        if let Some(x) = args.spDynIllustSkinTag {
+            builder.add_spDynIllustSkinTag(x);
+        }
+        if let Some(x) = args.spDynIllustId {
+            builder.add_spDynIllustId(x);
+        }
+        if let Some(x) = args.skinId {
+            builder.add_skinId(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn skinId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SKINID, None)}
-  }
-  #[inline]
-  pub fn spDynIllustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTID, None)}
-  }
-  #[inline]
-  pub fn spDynIllustSkinTag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTSKINTAG, None)}
-  }
-  #[inline]
-  pub fn spIllustId(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_SpDynIllustInfoT {
+        let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
+        let spDynIllustId = self
+            .spDynIllustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spDynIllustSkinTag = self
+            .spDynIllustSkinTag()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spIllustId = self
+            .spIllustId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spPortraitId = self
+            .spPortraitId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let spAvatarId = self
+            .spAvatarId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_SpDynIllustInfoT {
+            skinId,
+            spDynIllustId,
+            spDynIllustSkinTag,
+            spIllustId,
+            spPortraitId,
+            spAvatarId,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn skinId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SKINID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spDynIllustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spDynIllustSkinTag(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTSKINTAG,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spIllustId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spPortraitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spAvatarId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPAVATARID,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spDynIllustId", Self::VT_SPDYNILLUSTID, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spDynIllustSkinTag", Self::VT_SPDYNILLUSTSKINTAG, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("spIllustId", Self::VT_SPILLUSTID, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("skinId", Self::VT_SKINID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spDynIllustId",
+                Self::VT_SPDYNILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spDynIllustSkinTag",
+                Self::VT_SPDYNILLUSTSKINTAG,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spIllustId",
+                Self::VT_SPILLUSTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spPortraitId",
+                Self::VT_SPPORTRAITID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spAvatarId",
+                Self::VT_SPAVATARID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustSkinTag: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub spPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub spAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_SpDynIllustInfoArgs {
-      skinId: None,
-      spDynIllustId: None,
-      spDynIllustSkinTag: None,
-      spIllustId: None,
+impl Default for clz_Torappu_SpDynIllustInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_SpDynIllustInfoArgs {
+            skinId: None,
+            spDynIllustId: None,
+            spDynIllustSkinTag: None,
+            spIllustId: None,
+            spPortraitId: None,
+            spAvatarId: None,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_SpDynIllustInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SKINID, skinId);
-  }
-  #[inline]
-  pub fn add_spDynIllustId(&mut self, spDynIllustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTID, spDynIllustId);
-  }
-  #[inline]
-  pub fn add_spDynIllustSkinTag(&mut self, spDynIllustSkinTag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTSKINTAG, spDynIllustSkinTag);
-  }
-  #[inline]
-  pub fn add_spIllustId(&mut self, spIllustId: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID, spIllustId);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_SpDynIllustInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_skinId(&mut self, skinId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SKINID,
+            skinId,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_spDynIllustId(&mut self, spDynIllustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTID,
+            spDynIllustId,
+        );
+    }
+    #[inline]
+    pub fn add_spDynIllustSkinTag(
+        &mut self,
+        spDynIllustSkinTag: ::flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPDYNILLUSTSKINTAG,
+            spDynIllustSkinTag,
+        );
+    }
+    #[inline]
+    pub fn add_spIllustId(&mut self, spIllustId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPILLUSTID,
+            spIllustId,
+        );
+    }
+    #[inline]
+    pub fn add_spPortraitId(&mut self, spPortraitId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID,
+            spPortraitId,
+        );
+    }
+    #[inline]
+    pub fn add_spAvatarId(&mut self, spAvatarId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPAVATARID,
+            spAvatarId,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_SpDynIllustInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_SpDynIllustInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_SpDynIllustInfo");
-      ds.field("skinId", &self.skinId());
-      ds.field("spDynIllustId", &self.spDynIllustId());
-      ds.field("spDynIllustSkinTag", &self.spDynIllustSkinTag());
-      ds.field("spIllustId", &self.spIllustId());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_SpDynIllustInfo");
+        ds.field("skinId", &self.skinId());
+        ds.field("spDynIllustId", &self.spDynIllustId());
+        ds.field("spDynIllustSkinTag", &self.spDynIllustSkinTag());
+        ds.field("spIllustId", &self.spIllustId());
+        ds.field("spPortraitId", &self.spPortraitId());
+        ds.field("spAvatarId", &self.spAvatarId());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_SpDynIllustInfoT {
-  pub skinId: Option<alloc::string::String>,
-  pub spDynIllustId: Option<alloc::string::String>,
-  pub spDynIllustSkinTag: Option<alloc::string::String>,
-  pub spIllustId: Option<alloc::string::String>,
+    pub skinId: Option<alloc::string::String>,
+    pub spDynIllustId: Option<alloc::string::String>,
+    pub spDynIllustSkinTag: Option<alloc::string::String>,
+    pub spIllustId: Option<alloc::string::String>,
+    pub spPortraitId: Option<alloc::string::String>,
+    pub spAvatarId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_SpDynIllustInfoT {
-  fn default() -> Self {
-    Self {
-      skinId: None,
-      spDynIllustId: None,
-      spDynIllustSkinTag: None,
-      spIllustId: None,
+    fn default() -> Self {
+        Self {
+            skinId: None,
+            spDynIllustId: None,
+            spDynIllustSkinTag: None,
+            spIllustId: None,
+            spPortraitId: None,
+            spAvatarId: None,
+        }
     }
-  }
 }
 impl clz_Torappu_SpDynIllustInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'b>> {
-    let skinId = self.skinId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spDynIllustId = self.spDynIllustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spDynIllustSkinTag = self.spDynIllustSkinTag.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    let spIllustId = self.spIllustId.as_ref().map(|x|{
-      _fbb.create_string(x)
-    });
-    clz_Torappu_SpDynIllustInfo::create(_fbb, &clz_Torappu_SpDynIllustInfoArgs{
-      skinId,
-      spDynIllustId,
-      spDynIllustSkinTag,
-      spIllustId,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'b>> {
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        let spDynIllustId = self.spDynIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let spDynIllustSkinTag = self
+            .spDynIllustSkinTag
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let spIllustId = self.spIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let spPortraitId = self.spPortraitId.as_ref().map(|x| _fbb.create_string(x));
+        let spAvatarId = self.spAvatarId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SpDynIllustInfo::create(
+            _fbb,
+            &clz_Torappu_SpDynIllustInfoArgs {
+                skinId,
+                spDynIllustId,
+                spDynIllustSkinTag,
+                spIllustId,
+                spPortraitId,
+                spAvatarId,
+            },
+        )
+    }
 }
 pub enum dict__string__clz_Torappu_SpDynIllustInfoOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct dict__string__clz_Torappu_SpDynIllustInfo<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpDynIllustInfo<'a> {
-  type Inner = dict__string__clz_Torappu_SpDynIllustInfo<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> dict__string__clz_Torappu_SpDynIllustInfo<'a> {
-  pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
-  pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    dict__string__clz_Torappu_SpDynIllustInfo { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args dict__string__clz_Torappu_SpDynIllustInfoArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'bldr>> {
-    let mut builder = dict__string__clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
-    if let Some(x) = args.value { builder.add_value(x); }
-    if let Some(x) = args.key { builder.add_key(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> dict__string__clz_Torappu_SpDynIllustInfoT {
-    let key = {
-      let x = self.key();
-      alloc::string::ToString::to_string(x)
-    };
-    let value = self.value().map(|x| {
-      alloc::boxed::Box::new(x.unpack())
-    });
-    dict__string__clz_Torappu_SpDynIllustInfoT {
-      key,
-      value,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_SpDynIllustInfo { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_SpDynIllustInfoArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn key(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY, None).unwrap()}
-  }
-  #[inline]
-  pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_SpDynIllustInfo) -> bool {
-    self.key() < o.key()
-  }
+    #[must_use]
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpDynIllustInfoT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpDynIllustInfoT { key, value }
+    }
 
-  #[inline]
-  pub fn key_compare_with_value(&self, val: & str) -> ::core::cmp::Ordering {
-    let key = self.key();
-    key.cmp(val)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<clz_Torappu_SpDynIllustInfo<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<clz_Torappu_SpDynIllustInfo>>(dict__string__clz_Torappu_SpDynIllustInfo::VT_VALUE, None)}
-  }
+    #[inline]
+    #[must_use]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_SpDynIllustInfo) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    #[must_use]
+    pub fn value(&self) -> Option<clz_Torappu_SpDynIllustInfo<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_SpDynIllustInfo>>(
+                    dict__string__clz_Torappu_SpDynIllustInfo::VT_VALUE,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_SpDynIllustInfo<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_SpDynIllustInfo>>("value", Self::VT_VALUE, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_SpDynIllustInfo>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct dict__string__clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'a>>>,
 }
-impl<'a> Default for dict__string__clz_Torappu_SpDynIllustInfoArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    dict__string__clz_Torappu_SpDynIllustInfoArgs {
-      key: None, // required field
-      value: None,
+impl Default for dict__string__clz_Torappu_SpDynIllustInfoArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_SpDynIllustInfoArgs {
+            key: None, // required field
+            value: None,
+        }
     }
-  }
 }
 
-
-pub struct dict__string__clz_Torappu_SpDynIllustInfoBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+pub struct dict__string__clz_Torappu_SpDynIllustInfoBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo>>(dict__string__clz_Torappu_SpDynIllustInfo::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> dict__string__clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    dict__string__clz_Torappu_SpDynIllustInfoBuilder {
-      fbb_: _fbb,
-      start_: start,
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY,
+            key,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY,"key");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_value(&mut self, value: ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo>>(
+                dict__string__clz_Torappu_SpDynIllustInfo::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_SpDynIllustInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_SpDynIllustInfo::VT_KEY, "key");
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for dict__string__clz_Torappu_SpDynIllustInfo<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("dict__string__clz_Torappu_SpDynIllustInfo");
-      ds.field("key", &self.key());
-      ds.field("value", &self.value());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_SpDynIllustInfo");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct dict__string__clz_Torappu_SpDynIllustInfoT {
-  pub key: alloc::string::String,
-  pub value: Option<alloc::boxed::Box<clz_Torappu_SpDynIllustInfoT>>,
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_SpDynIllustInfoT>>,
 }
 impl Default for dict__string__clz_Torappu_SpDynIllustInfoT {
-  fn default() -> Self {
-    Self {
-      key: alloc::string::ToString::to_string(""),
-      value: None,
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
     }
-  }
 }
 impl dict__string__clz_Torappu_SpDynIllustInfoT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'b>> {
-    let key = Some({
-      let x = &self.key;
-      _fbb.create_string(x)
-    });
-    let value = self.value.as_ref().map(|x|{
-      x.pack(_fbb)
-    });
-    dict__string__clz_Torappu_SpDynIllustInfo::create(_fbb, &dict__string__clz_Torappu_SpDynIllustInfoArgs{
-      key,
-      value,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpDynIllustInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpDynIllustInfoArgs { key, value },
+        )
+    }
 }
 pub enum clz_Torappu_SkinTableOffset {}
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 
 pub struct clz_Torappu_SkinTable<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
+    pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SkinTable<'a> {
-  type Inner = clz_Torappu_SkinTable<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
 }
 
 impl<'a> clz_Torappu_SkinTable<'a> {
-  pub const VT_CHARSKINS: ::flatbuffers::VOffsetT = 4;
-  pub const VT_BUILDINEVOLVEMAP: ::flatbuffers::VOffsetT = 6;
-  pub const VT_BUILDINPATCHMAP: ::flatbuffers::VOffsetT = 8;
-  pub const VT_BRANDLIST: ::flatbuffers::VOffsetT = 10;
-  pub const VT_SPECIALSKININFOLIST: ::flatbuffers::VOffsetT = 12;
-  pub const VT_SPDYNSKINS: ::flatbuffers::VOffsetT = 14;
-  pub const VT_SPDYNILLUSTSKINTAGSMAP: ::flatbuffers::VOffsetT = 16;
+    pub const VT_CHARSKINS: ::flatbuffers::VOffsetT = 4;
+    pub const VT_BUILDINEVOLVEMAP: ::flatbuffers::VOffsetT = 6;
+    pub const VT_BUILDINPATCHMAP: ::flatbuffers::VOffsetT = 8;
+    pub const VT_BRANDLIST: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SPECIALSKININFOLIST: ::flatbuffers::VOffsetT = 12;
+    pub const VT_SPDYNSKINS: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SPDYNILLUSTSKINTAGSMAP: ::flatbuffers::VOffsetT = 16;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    clz_Torappu_SkinTable { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args clz_Torappu_SkinTableArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'bldr>> {
-    let mut builder = clz_Torappu_SkinTableBuilder::new(_fbb);
-    if let Some(x) = args.spDynIllustSkinTagsMap { builder.add_spDynIllustSkinTagsMap(x); }
-    if let Some(x) = args.spDynSkins { builder.add_spDynSkins(x); }
-    if let Some(x) = args.specialSkinInfoList { builder.add_specialSkinInfoList(x); }
-    if let Some(x) = args.brandList { builder.add_brandList(x); }
-    if let Some(x) = args.buildinPatchMap { builder.add_buildinPatchMap(x); }
-    if let Some(x) = args.buildinEvolveMap { builder.add_buildinEvolveMap(x); }
-    if let Some(x) = args.charSkins { builder.add_charSkins(x); }
-    builder.finish()
-  }
-
-  pub fn unpack(&self) -> clz_Torappu_SkinTableT {
-    let charSkins = self.charSkins().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let buildinEvolveMap = self.buildinEvolveMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let buildinPatchMap = self.buildinPatchMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let brandList = self.brandList().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let specialSkinInfoList = self.specialSkinInfoList().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let spDynSkins = self.spDynSkins().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    let spDynIllustSkinTagsMap = self.spDynIllustSkinTagsMap().map(|x| {
-      x.iter().map(|t| t.unpack()).collect()
-    });
-    clz_Torappu_SkinTableT {
-      charSkins,
-      buildinEvolveMap,
-      buildinPatchMap,
-      brandList,
-      specialSkinInfoList,
-      spDynSkins,
-      spDynIllustSkinTagsMap,
+    #[inline]
+    #[must_use]
+    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_SkinTable { _tab: table }
     }
-  }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_SkinTableArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'bldr>> {
+        let mut builder = clz_Torappu_SkinTableBuilder::new(_fbb);
+        if let Some(x) = args.spDynIllustSkinTagsMap {
+            builder.add_spDynIllustSkinTagsMap(x);
+        }
+        if let Some(x) = args.spDynSkins {
+            builder.add_spDynSkins(x);
+        }
+        if let Some(x) = args.specialSkinInfoList {
+            builder.add_specialSkinInfoList(x);
+        }
+        if let Some(x) = args.brandList {
+            builder.add_brandList(x);
+        }
+        if let Some(x) = args.buildinPatchMap {
+            builder.add_buildinPatchMap(x);
+        }
+        if let Some(x) = args.buildinEvolveMap {
+            builder.add_buildinEvolveMap(x);
+        }
+        if let Some(x) = args.charSkins {
+            builder.add_charSkins(x);
+        }
+        builder.finish()
+    }
 
-  #[inline]
-  pub fn charSkins(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData>>>>(clz_Torappu_SkinTable::VT_CHARSKINS, None)}
-  }
-  #[inline]
-  pub fn buildinEvolveMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string>>>>(clz_Torappu_SkinTable::VT_BUILDINEVOLVEMAP, None)}
-  }
-  #[inline]
-  pub fn buildinPatchMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string>>>>(clz_Torappu_SkinTable::VT_BUILDINPATCHMAP, None)}
-  }
-  #[inline]
-  pub fn brandList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo>>>>(clz_Torappu_SkinTable::VT_BRANDLIST, None)}
-  }
-  #[inline]
-  pub fn specialSkinInfoList(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo>>>>(clz_Torappu_SkinTable::VT_SPECIALSKININFOLIST, None)}
-  }
-  #[inline]
-  pub fn spDynSkins(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo>>>>(clz_Torappu_SkinTable::VT_SPDYNSKINS, None)}
-  }
-  #[inline]
-  pub fn spDynIllustSkinTagsMap(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>(clz_Torappu_SkinTable::VT_SPDYNILLUSTSKINTAGSMAP, None)}
-  }
+    #[must_use]
+    pub fn unpack(&self) -> clz_Torappu_SkinTableT {
+        let charSkins = self
+            .charSkins()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let buildinEvolveMap = self
+            .buildinEvolveMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let buildinPatchMap = self
+            .buildinPatchMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let brandList = self
+            .brandList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let specialSkinInfoList = self
+            .specialSkinInfoList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let spDynSkins = self
+            .spDynSkins()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let spDynIllustSkinTagsMap = self
+            .spDynIllustSkinTagsMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SkinTableT {
+            charSkins,
+            buildinEvolveMap,
+            buildinPatchMap,
+            brandList,
+            specialSkinInfoList,
+            spDynSkins,
+            spDynIllustSkinTagsMap,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn charSkins(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_CHARSKINS, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn buildinEvolveMap(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_BUILDINEVOLVEMAP, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn buildinPatchMap(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_BUILDINPATCHMAP, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn brandList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_BRANDLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn specialSkinInfoList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'a>>>,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_SPECIALSKININFOLIST, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spDynSkins(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo>,
+                >,
+            >>(clz_Torappu_SkinTable::VT_SPDYNSKINS, None)
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn spDynIllustSkinTagsMap(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>(clz_Torappu_SkinTable::VT_SPDYNILLUSTSKINTAGSMAP, None)
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SkinTable<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData>>>>("charSkins", Self::VT_CHARSKINS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string>>>>("buildinEvolveMap", Self::VT_BUILDINEVOLVEMAP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string>>>>("buildinPatchMap", Self::VT_BUILDINPATCHMAP, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo>>>>("brandList", Self::VT_BRANDLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo>>>>("specialSkinInfoList", Self::VT_SPECIALSKININFOLIST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo>>>>("spDynSkins", Self::VT_SPDYNSKINS, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("spDynIllustSkinTagsMap", Self::VT_SPDYNILLUSTSKINTAGSMAP, false)?
-     .finish();
-    Ok(())
-  }
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData>,
+                >,
+            >>("charSkins", Self::VT_CHARSKINS, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string>,
+                >,
+            >>("buildinEvolveMap", Self::VT_BUILDINEVOLVEMAP, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string>,
+                >,
+            >>("buildinPatchMap", Self::VT_BUILDINPATCHMAP, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo>,
+                >,
+            >>("brandList", Self::VT_BRANDLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo>,
+                >,
+            >>("specialSkinInfoList", Self::VT_SPECIALSKININFOLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo>,
+                >,
+            >>("spDynSkins", Self::VT_SPDYNSKINS, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>,
+            >>(
+                "spDynIllustSkinTagsMap",
+                Self::VT_SPDYNILLUSTSKINTAGSMAP,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
 }
 pub struct clz_Torappu_SkinTableArgs<'a> {
-    pub charSkins: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'a>>>>>,
-    pub buildinEvolveMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'a>>>>>,
-    pub buildinPatchMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'a>>>>>,
-    pub brandList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>>>>>,
-    pub specialSkinInfoList: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'a>>>>>,
-    pub spDynSkins: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>>>>>,
-    pub spDynIllustSkinTagsMap: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>>,
+    pub charSkins: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'a>>,
+            >,
+        >,
+    >,
+    pub buildinEvolveMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'a>>,
+            >,
+        >,
+    >,
+    pub buildinPatchMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'a>>,
+            >,
+        >,
+    >,
+    pub brandList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>>,
+            >,
+        >,
+    >,
+    pub specialSkinInfoList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'a>>,
+            >,
+        >,
+    >,
+    pub spDynSkins: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>>,
+            >,
+        >,
+    >,
+    pub spDynIllustSkinTagsMap: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>,
+        >,
+    >,
 }
-impl<'a> Default for clz_Torappu_SkinTableArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    clz_Torappu_SkinTableArgs {
-      charSkins: None,
-      buildinEvolveMap: None,
-      buildinPatchMap: None,
-      brandList: None,
-      specialSkinInfoList: None,
-      spDynSkins: None,
-      spDynIllustSkinTagsMap: None,
+impl Default for clz_Torappu_SkinTableArgs<'_> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_SkinTableArgs {
+            charSkins: None,
+            buildinEvolveMap: None,
+            buildinPatchMap: None,
+            brandList: None,
+            specialSkinInfoList: None,
+            spDynSkins: None,
+            spDynIllustSkinTagsMap: None,
+        }
     }
-  }
 }
-
 
 pub struct clz_Torappu_SkinTableBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SkinTableBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_charSkins(&mut self, charSkins: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_CHARSKINS, charSkins);
-  }
-  #[inline]
-  pub fn add_buildinEvolveMap(&mut self, buildinEvolveMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_BUILDINEVOLVEMAP, buildinEvolveMap);
-  }
-  #[inline]
-  pub fn add_buildinPatchMap(&mut self, buildinPatchMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_BUILDINPATCHMAP, buildinPatchMap);
-  }
-  #[inline]
-  pub fn add_brandList(&mut self, brandList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_BRANDLIST, brandList);
-  }
-  #[inline]
-  pub fn add_specialSkinInfoList(&mut self, specialSkinInfoList: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_SPECIALSKININFOLIST, specialSkinInfoList);
-  }
-  #[inline]
-  pub fn add_spDynSkins(&mut self, spDynSkins: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_SPDYNSKINS, spDynSkins);
-  }
-  #[inline]
-  pub fn add_spDynIllustSkinTagsMap(&mut self, spDynIllustSkinTagsMap: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<dict__string__string<'b >>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SkinTable::VT_SPDYNILLUSTSKINTAGSMAP, spDynIllustSkinTagsMap);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_SkinTableBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    clz_Torappu_SkinTableBuilder {
-      fbb_: _fbb,
-      start_: start,
+    #[inline]
+    pub fn add_charSkins(
+        &mut self,
+        charSkins: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_CHARSKINS,
+            charSkins,
+        );
     }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
+    #[inline]
+    pub fn add_buildinEvolveMap(
+        &mut self,
+        buildinEvolveMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__list_dict__int__string<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_BUILDINEVOLVEMAP,
+            buildinEvolveMap,
+        );
+    }
+    #[inline]
+    pub fn add_buildinPatchMap(
+        &mut self,
+        buildinPatchMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__list_dict__string__string<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_BUILDINPATCHMAP,
+            buildinPatchMap,
+        );
+    }
+    #[inline]
+    pub fn add_brandList(
+        &mut self,
+        brandList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_BRANDLIST,
+            brandList,
+        );
+    }
+    #[inline]
+    pub fn add_specialSkinInfoList(
+        &mut self,
+        specialSkinInfoList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_SpecialSkinInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_SPECIALSKININFOLIST,
+            specialSkinInfoList,
+        );
+    }
+    #[inline]
+    pub fn add_spDynSkins(
+        &mut self,
+        spDynSkins: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SpDynIllustInfo<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_SPDYNSKINS,
+            spDynSkins,
+        );
+    }
+    #[inline]
+    pub fn add_spDynIllustSkinTagsMap(
+        &mut self,
+        spDynIllustSkinTagsMap: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<dict__string__string<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SkinTable::VT_SPDYNILLUSTSKINTAGSMAP,
+            spDynIllustSkinTagsMap,
+        );
+    }
+    #[inline]
+    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+        let start = _fbb.start_table();
+        clz_Torappu_SkinTableBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
 }
 
 impl ::core::fmt::Debug for clz_Torappu_SkinTable<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("clz_Torappu_SkinTable");
-      ds.field("charSkins", &self.charSkins());
-      ds.field("buildinEvolveMap", &self.buildinEvolveMap());
-      ds.field("buildinPatchMap", &self.buildinPatchMap());
-      ds.field("brandList", &self.brandList());
-      ds.field("specialSkinInfoList", &self.specialSkinInfoList());
-      ds.field("spDynSkins", &self.spDynSkins());
-      ds.field("spDynIllustSkinTagsMap", &self.spDynIllustSkinTagsMap());
-      ds.finish()
-  }
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_SkinTable");
+        ds.field("charSkins", &self.charSkins());
+        ds.field("buildinEvolveMap", &self.buildinEvolveMap());
+        ds.field("buildinPatchMap", &self.buildinPatchMap());
+        ds.field("brandList", &self.brandList());
+        ds.field("specialSkinInfoList", &self.specialSkinInfoList());
+        ds.field("spDynSkins", &self.spDynSkins());
+        ds.field("spDynIllustSkinTagsMap", &self.spDynIllustSkinTagsMap());
+        ds.finish()
+    }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_SkinTableT {
-  pub charSkins: Option<alloc::vec::Vec<dict__string__clz_Torappu_CharSkinDataT>>,
-  pub buildinEvolveMap: Option<alloc::vec::Vec<dict__string__list_dict__int__stringT>>,
-  pub buildinPatchMap: Option<alloc::vec::Vec<dict__string__list_dict__string__stringT>>,
-  pub brandList: Option<alloc::vec::Vec<dict__string__clz_Torappu_CharSkinBrandInfoT>>,
-  pub specialSkinInfoList: Option<alloc::vec::Vec<clz_Torappu_SpecialSkinInfoT>>,
-  pub spDynSkins: Option<alloc::vec::Vec<dict__string__clz_Torappu_SpDynIllustInfoT>>,
-  pub spDynIllustSkinTagsMap: Option<alloc::vec::Vec<dict__string__stringT>>,
+    pub charSkins: Option<alloc::vec::Vec<dict__string__clz_Torappu_CharSkinDataT>>,
+    pub buildinEvolveMap: Option<alloc::vec::Vec<dict__string__list_dict__int__stringT>>,
+    pub buildinPatchMap: Option<alloc::vec::Vec<dict__string__list_dict__string__stringT>>,
+    pub brandList: Option<alloc::vec::Vec<dict__string__clz_Torappu_CharSkinBrandInfoT>>,
+    pub specialSkinInfoList: Option<alloc::vec::Vec<clz_Torappu_SpecialSkinInfoT>>,
+    pub spDynSkins: Option<alloc::vec::Vec<dict__string__clz_Torappu_SpDynIllustInfoT>>,
+    pub spDynIllustSkinTagsMap: Option<alloc::vec::Vec<dict__string__stringT>>,
 }
 impl Default for clz_Torappu_SkinTableT {
-  fn default() -> Self {
-    Self {
-      charSkins: None,
-      buildinEvolveMap: None,
-      buildinPatchMap: None,
-      brandList: None,
-      specialSkinInfoList: None,
-      spDynSkins: None,
-      spDynIllustSkinTagsMap: None,
+    fn default() -> Self {
+        Self {
+            charSkins: None,
+            buildinEvolveMap: None,
+            buildinPatchMap: None,
+            brandList: None,
+            specialSkinInfoList: None,
+            spDynSkins: None,
+            spDynIllustSkinTagsMap: None,
+        }
     }
-  }
 }
 impl clz_Torappu_SkinTableT {
-  pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
-    &self,
-    _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>
-  ) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'b>> {
-    let charSkins = self.charSkins.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let buildinEvolveMap = self.buildinEvolveMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let buildinPatchMap = self.buildinPatchMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let brandList = self.brandList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let specialSkinInfoList = self.specialSkinInfoList.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let spDynSkins = self.spDynSkins.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    let spDynIllustSkinTagsMap = self.spDynIllustSkinTagsMap.as_ref().map(|x|{
-      let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
-    });
-    clz_Torappu_SkinTable::create(_fbb, &clz_Torappu_SkinTableArgs{
-      charSkins,
-      buildinEvolveMap,
-      buildinPatchMap,
-      brandList,
-      specialSkinInfoList,
-      spDynSkins,
-      spDynIllustSkinTagsMap,
-    })
-  }
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'b>> {
+        let charSkins = self.charSkins.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let buildinEvolveMap = self.buildinEvolveMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let buildinPatchMap = self.buildinPatchMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let brandList = self.brandList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let specialSkinInfoList = self.specialSkinInfoList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let spDynSkins = self.spDynSkins.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let spDynIllustSkinTagsMap = self.spDynIllustSkinTagsMap.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SkinTable::create(
+            _fbb,
+            &clz_Torappu_SkinTableArgs {
+                charSkins,
+                buildinEvolveMap,
+                buildinPatchMap,
+                brandList,
+                specialSkinInfoList,
+                spDynSkins,
+                spDynIllustSkinTagsMap,
+            },
+        )
+    }
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_SkinTable`
@@ -4090,8 +5769,10 @@ impl clz_Torappu_SkinTableT {
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_skin_table_unchecked`.
-pub fn root_as_clz_torappu_skin_table(buf: &[u8]) -> Result<clz_Torappu_SkinTable<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root::<clz_Torappu_SkinTable>(buf)
+pub fn root_as_clz_torappu_skin_table(
+    buf: &[u8],
+) -> Result<clz_Torappu_SkinTable<'_>, ::flatbuffers::InvalidFlatbuffer> {
+    ::flatbuffers::root::<clz_Torappu_SkinTable>(buf)
 }
 #[inline]
 /// Verifies that a buffer of bytes contains a size prefixed
@@ -4100,8 +5781,10 @@ pub fn root_as_clz_torappu_skin_table(buf: &[u8]) -> Result<clz_Torappu_SkinTabl
 /// catch every error, or be maximally performant. For the
 /// previous, unchecked, behavior use
 /// `size_prefixed_root_as_clz_torappu_skin_table_unchecked`.
-pub fn size_prefixed_root_as_clz_torappu_skin_table(buf: &[u8]) -> Result<clz_Torappu_SkinTable<'_>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root::<clz_Torappu_SkinTable>(buf)
+pub fn size_prefixed_root_as_clz_torappu_skin_table(
+    buf: &[u8],
+) -> Result<clz_Torappu_SkinTable<'_>, ::flatbuffers::InvalidFlatbuffer> {
+    ::flatbuffers::size_prefixed_root::<clz_Torappu_SkinTable>(buf)
 }
 #[inline]
 /// Verifies, with the given options, that a buffer of bytes
@@ -4111,10 +5794,10 @@ pub fn size_prefixed_root_as_clz_torappu_skin_table(buf: &[u8]) -> Result<clz_To
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_skin_table_unchecked`.
 pub fn root_as_clz_torappu_skin_table_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
 ) -> Result<clz_Torappu_SkinTable<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::root_with_opts::<clz_Torappu_SkinTable<'b>>(opts, buf)
+    ::flatbuffers::root_with_opts::<clz_Torappu_SkinTable<'b>>(opts, buf)
 }
 #[inline]
 /// Verifies, with the given verifier options, that a buffer of
@@ -4124,33 +5807,45 @@ pub fn root_as_clz_torappu_skin_table_with_opts<'b, 'o>(
 /// previous, unchecked, behavior use
 /// `root_as_clz_torappu_skin_table_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_skin_table_with_opts<'b, 'o>(
-  opts: &'o ::flatbuffers::VerifierOptions,
-  buf: &'b [u8],
+    opts: &'o ::flatbuffers::VerifierOptions,
+    buf: &'b [u8],
 ) -> Result<clz_Torappu_SkinTable<'b>, ::flatbuffers::InvalidFlatbuffer> {
-  ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_SkinTable<'b>>(opts, buf)
+    ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_SkinTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SkinTable and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SkinTable` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SkinTable`.
+#[must_use]
 pub unsafe fn root_as_clz_torappu_skin_table_unchecked(buf: &[u8]) -> clz_Torappu_SkinTable<'_> {
-  unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_SkinTable>(buf) }
+    unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_SkinTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SkinTable and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SkinTable` and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SkinTable`.
-pub unsafe fn size_prefixed_root_as_clz_torappu_skin_table_unchecked(buf: &[u8]) -> clz_Torappu_SkinTable<'_> {
-  unsafe { ::flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SkinTable>(buf) }
+#[must_use]
+pub unsafe fn size_prefixed_root_as_clz_torappu_skin_table_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_SkinTable<'_> {
+    unsafe { ::flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SkinTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_skin_table_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(
     fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-    root: ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>>) {
-  fbb.finish(root, None);
+    root: ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>>,
+) {
+    fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_clz_torappu_skin_table_buffer<'a, 'b, A: ::flatbuffers::Allocator + 'a>(fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>, root: ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>>) {
-  fbb.finish_size_prefixed(root, None);
+pub fn finish_size_prefixed_clz_torappu_skin_table_buffer<
+    'a,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+>(
+    fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    root: ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>>,
+) {
+    fbb.finish_size_prefixed(root, None);
 }

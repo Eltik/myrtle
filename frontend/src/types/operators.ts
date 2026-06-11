@@ -455,6 +455,7 @@ export interface IDrone {
 
 export interface IOperatorListItem {
     id: string | null;
+    server?: "en" | "cn";
     name: string;
     description: string;
     canUseGeneralPotentialItem: boolean;

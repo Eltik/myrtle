@@ -45,16 +45,37 @@ export interface ISkinDataResponse {
     charSkins: Record<string, ISkin>;
 }
 
-export const getSkinsFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/skins");
-    if (!res.ok) throw new Error(`Failed to load skins: ${res.status}`);
-    return (await res.json()) as ISkinDataResponse;
-});
+export const getSkinsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: "en" | "cn") => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(server === "cn" ? "/cn/static/skins" : "/static/skins");
+        if (!res.ok) throw new Error(`Failed to load skins: ${res.status}`);
+        return (await res.json()) as ISkinDataResponse;
+    });
 
-export function skinsQueryOptions() {
+export function skinsQueryOptions(server: "en" | "cn" = "en") {
     return queryOptions({
-        queryKey: ["skins"],
-        queryFn: () => getSkinsFn(),
+        queryKey: ["skins", server],
+        queryFn: () => getSkinsFn({ data: server }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/// One operator's skins (KB) instead of the whole skins table.
+export const getOperatorSkinsFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { id: string; server: "en" | "cn" }) => data)
+    .handler(async ({ data: { id, server } }) => {
+        const prefix = server === "cn" ? "/cn" : "";
+        const res = await backendFetch(`${prefix}/skins/${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error(`Failed to load operator skins: ${res.status}`);
+        return (await res.json()) as ISkinDataResponse;
+    });
+
+export function operatorSkinsQueryOptions(id: string, server: "en" | "cn" = "en") {
+    return queryOptions({
+        queryKey: ["skins", "operator", server, id],
+        queryFn: () => getOperatorSkinsFn({ data: { id, server } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

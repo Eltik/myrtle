@@ -104,7 +104,7 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     );
 }
 
-function BannerCard({ entry, operatorsById, stat }: { entry: IBannerWithStatus; operatorsById: Map<string, IOperatorIndexEntry>; stat: IBannerPullStat | undefined }) {
+function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IBannerWithStatus; operatorsById: Map<string, IOperatorIndexEntry>; stat: IBannerPullStat | undefined; rank: number | null; rankTitle: string }) {
     const { banner, group, status } = entry;
     const typeColor = TYPE_COLORS[group];
 
@@ -117,9 +117,12 @@ function BannerCard({ entry, operatorsById, stat }: { entry: IBannerWithStatus; 
                         style={{ borderColor: status === "active" ? `color-mix(in oklch, ${typeColor} 50%, var(--border))` : "var(--border)" }}
                     >
                         <div className="flex items-start justify-between gap-2">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
-                                {TYPE_LABELS[group]}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                {rank !== null ? <RankChip rank={rank} title={rankTitle} /> : null}
+                                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
+                                    {TYPE_LABELS[group]}
+                                </span>
+                            </div>
                             <StatusPill status={status} />
                         </div>
                         <div className="min-w-0">
@@ -177,6 +180,65 @@ const FILTERS = [
 ];
 type Filter = (typeof FILTERS)[number]["key"];
 
+const SORTS = [
+    // Default: status-grouped chronological order (active → upcoming → recently ended).
+    { key: "timeline" as const, label: "Timeline" },
+    // Metric sorts rank by shared community data, highest first.
+    { key: "pulls" as const, label: "Pulls" },
+    { key: "popularity" as const, label: "Popularity" },
+];
+type Sort = (typeof SORTS)[number]["key"];
+
+const SORT_METRIC_LABEL: Record<Exclude<Sort, "timeline">, string> = {
+    pulls: "community pulls",
+    popularity: "contributing doctors",
+};
+
+/** Small segmented pill group, shared by the filter and sort controls. */
+function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
+    return (
+        // Mobile: label stacked above a full-width, equal-column control. ≥sm:
+        // compact inline row, as before.
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+            <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
+            <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">
+                {options.map((o) => {
+                    const isActive = value === o.key;
+                    return (
+                        <button
+                            key={o.key}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => onChange(o.key)}
+                            className={`flex h-8 cursor-pointer touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 font-medium font-sans text-[11.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:h-6.5 sm:px-2.5 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
+                        >
+                            {o.label}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+/** Rank badge shown on cards while a metric sort is active. Top 3 get an accent. */
+function RankChip({ rank, title }: { rank: number; title: string }) {
+    const top = rank <= 3;
+    return (
+        <span
+            className="inline-flex h-4.5 min-w-5.5 items-center justify-center rounded-md px-1 font-mono font-semibold text-[10px] tabular-nums leading-none"
+            title={title}
+            style={{
+                color: top ? "var(--primary)" : "var(--muted-foreground)",
+                background: top ? "color-mix(in oklch, var(--primary) 14%, transparent)" : "var(--muted)",
+                boxShadow: top ? "inset 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent)" : "inset 0 0 0 1px var(--border)",
+            }}
+        >
+            #{rank}
+        </span>
+    );
+}
+
 const PAGE_SIZE = 12;
 // Banner runs panel only displays banners from the past N seconds and into the
 // future. Older entries are dropped - they crowd the panel and the community
@@ -185,6 +247,7 @@ const PAST_WINDOW_SECS = 180 * 86_400; // 180 days
 
 export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }: IBannerRunsPanelProps) {
     const [filter, setFilter] = useState<Filter>("active");
+    const [sort, setSort] = useState<Sort>("timeline");
     const [showAll, setShowAll] = useState(false);
 
     const nowSec = useMemo(() => Math.floor(Date.now() / 1000), []);
@@ -210,7 +273,31 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
         return entries.filter((e) => e.group === filter);
     }, [entries, filter]);
 
-    const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE);
+    // Apply the active sort and attach a 1-based rank for metric sorts. `entries`
+    // is already timeline-ordered, so "timeline" needs no re-sort and carries no
+    // rank. Metric sorts rank by shared community data, highest first; banners
+    // with no community pulls fall to the bottom and stay unranked.
+    const ranked = useMemo<Array<{ entry: IBannerWithStatus; rank: number | null }>>(() => {
+        if (sort === "timeline") return filtered.map((entry) => ({ entry, rank: null }));
+
+        const metricOf = (e: IBannerWithStatus): number => {
+            const s = statsById.get(e.banner.gachaPoolId);
+            if (!s) return 0;
+            return sort === "popularity" ? s.userCount : s.pullCount;
+        };
+
+        const arr = [...filtered].sort((a, b) => {
+            const diff = metricOf(b) - metricOf(a);
+            if (diff !== 0) return diff;
+            // Tie-break by recency so equal-metric banners stay in a stable, sensible order.
+            return b.banner.endTime - a.banner.endTime;
+        });
+
+        let nextRank = 0;
+        return arr.map((entry) => ({ entry, rank: metricOf(entry) > 0 ? ++nextRank : null }));
+    }, [filtered, sort, statsById]);
+
+    const visible = showAll ? ranked : ranked.slice(0, PAGE_SIZE);
     const activeCount = entries.filter((e) => e.status === "active").length;
 
     if (isLoading) {
@@ -247,23 +334,25 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
                     </h2>
                 </div>
 
-                <div className="inline-flex flex-wrap items-center gap-1.5 rounded-[9px] border border-border bg-muted p-0.75">
-                    {FILTERS.map((f) => {
-                        const isActive = filter === f.key;
-                        return (
-                            <button
-                                key={f.key}
-                                type="button"
-                                onClick={() => {
-                                    setFilter(f.key);
-                                    setShowAll(false);
-                                }}
-                                className={`h-6.5 cursor-pointer rounded-md px-2.5 font-medium font-sans text-[11.5px] transition-colors ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
-                            >
-                                {f.label}
-                            </button>
-                        );
-                    })}
+                <div className="flex flex-col gap-3 sm:items-end sm:gap-2">
+                    <Segmented
+                        label="Sort"
+                        options={SORTS}
+                        value={sort}
+                        onChange={(key) => {
+                            setSort(key);
+                            setShowAll(false);
+                        }}
+                    />
+                    <Segmented
+                        label="Filter"
+                        options={FILTERS}
+                        value={filter}
+                        onChange={(key) => {
+                            setFilter(key);
+                            setShowAll(false);
+                        }}
+                    />
                 </div>
             </header>
 
@@ -272,8 +361,8 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
             ) : (
                 <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {visible.map((entry) => (
-                            <BannerCard key={entry.banner.gachaPoolId} entry={entry} operatorsById={operatorsById} stat={statsById.get(entry.banner.gachaPoolId)} />
+                        {visible.map(({ entry, rank }) => (
+                            <BannerCard key={entry.banner.gachaPoolId} entry={entry} operatorsById={operatorsById} stat={statsById.get(entry.banner.gachaPoolId)} rank={rank} rankTitle={rank !== null && sort !== "timeline" ? `Ranked #${rank} by ${SORT_METRIC_LABEL[sort]}` : ""} />
                         ))}
                     </div>
 

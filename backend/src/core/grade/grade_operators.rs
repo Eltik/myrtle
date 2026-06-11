@@ -171,8 +171,7 @@ fn build_dimensions(
 
     // Potential
     if potential_matters(static_op) {
-        let pot_score = f64::from(roster.potential - 1) / 5.0;
-        dimensions.push((WEIGHT_POTENTIAL, pot_score));
+        dimensions.push((WEIGHT_POTENTIAL, potential_score(roster.potential)));
     }
 
     // Trust - only meaningful once the favor table is loaded.
@@ -389,6 +388,12 @@ const fn potential_matters(static_op: &Operator) -> bool {
     !static_op.can_use_general_potential_item || static_op.is_sp_char
 }
 
+/// Potential dimension score (0.0-1.0). `potential` is 0-indexed (P1 = 0 …
+/// P6 = 5), so a fully-potential'd operator maps to 1.0.
+fn potential_score(potential: i16) -> f64 {
+    (f64::from(potential) / 5.0).clamp(0.0, 1.0)
+}
+
 /// Returns true if the player has invested beyond the initial pull state (E0 L1).
 pub const fn has_investment(roster: &RosterEntry) -> bool {
     roster.elite > 0 || roster.level > 1
@@ -513,7 +518,7 @@ fn simulate_score_for_tag(
         ))
     };
     let mut pot_dim: Option<Dimension> = if potential_matters(static_op) {
-        Some((WEIGHT_POTENTIAL, f64::from(roster.potential - 1) / 5.0))
+        Some((WEIGHT_POTENTIAL, potential_score(roster.potential)))
     } else {
         None
     };

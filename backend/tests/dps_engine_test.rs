@@ -1,3 +1,13 @@
+// Parity test against a Python reference: exact `!= 1.0` sentinel checks, integer/float casts on
+// fixture data, and a long table-driven case are intentional - allow the pedantic/nursery noise.
+#![allow(
+    clippy::float_cmp,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::too_many_lines,
+    clippy::items_after_statements
+)]
+
 use backend::core::gamedata;
 use backend::dps::engine;
 use backend::dps::operator_unit::{EnemyStats, OperatorBuffs, OperatorParams, OperatorShred};
@@ -24,10 +34,7 @@ fn make_test_key(
     res_shred_mult: f64,
     res_shred_flat: f64,
 ) -> String {
-    let base = format!(
-        "{}_s{}_m{}_{:.0}_{:.0}",
-        operator_name, skill, module, defense, res
-    );
+    let base = format!("{operator_name}_s{skill}_m{module}_{defense:.0}_{res:.0}");
     if fragile != 0.0
         || def_shred_mult != 1.0
         || res_shred_mult != 1.0
@@ -106,8 +113,7 @@ fn test_engine_vs_python_expected() {
             let formula_type = formula
                 .skills
                 .get(&skill.to_string())
-                .map(|sf| sf.formula_type.as_str())
-                .unwrap_or("unknown");
+                .map_or("unknown", |sf| sf.formula_type.as_str());
 
             // Skip operators with no skill data in game files (e.g. CN-only operators)
             // Skip operators with no skill data (CN-only) or clone-dependent (Muelsyse)
@@ -179,10 +185,10 @@ fn test_engine_vs_python_expected() {
                                 skill_index: Some(skill),
                                 module_index: Some(module),
                                 buffs: OperatorBuffs {
-                                    fragile: if fragile != 0.0 {
-                                        Some(fragile as f32)
-                                    } else {
+                                    fragile: if fragile == 0.0 {
                                         None
+                                    } else {
+                                        Some(fragile as f32)
                                     },
                                     ..Default::default()
                                 },

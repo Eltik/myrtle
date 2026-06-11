@@ -87,7 +87,7 @@ export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 }
 
 export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperatorWithTags[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
-    const { includeRobots = true, prioritizeFiveStarChance = true, operatorSortMode = "rarity-desc" } = options;
+    const { includeRobots = true, operatorSortMode = "rarity-desc" } = options;
 
     if (selectedTags.length === 0) return [];
 
@@ -148,12 +148,6 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         const aGuaranteedHigh = a.guaranteedRarity >= 5 ? a.guaranteedRarity : 0;
         const bGuaranteedHigh = b.guaranteedRarity >= 5 ? b.guaranteedRarity : 0;
         if (aGuaranteedHigh !== bGuaranteedHigh) return bGuaranteedHigh - aGuaranteedHigh;
-
-        if (prioritizeFiveStarChance) {
-            const aFiveChance = a.maxRarity === 5 && a.guaranteedRarity < 5 ? 1 : 0;
-            const bFiveChance = b.maxRarity === 5 && b.guaranteedRarity < 5 ? 1 : 0;
-            if (aFiveChance !== bFiveChance) return bFiveChance - aFiveChance;
-        }
 
         const aRobot = isRobotValuable(a) ? 1 : 0;
         const bRobot = isRobotValuable(b) ? 1 : 0;

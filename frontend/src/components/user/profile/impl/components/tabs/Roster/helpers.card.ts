@@ -101,6 +101,239 @@ export function getTrustPercent(rawFavorPoint: number): number {
     return Math.min(200, Math.round((rawFavorPoint / MAX_FAVOR_POINT) * 200));
 }
 
+// Operator completeness, client-side port of the backend grader
+// (`backend/src/core/grade/grade_operators.rs`).
+
+const WEIGHT_ELITE = 25;
+const WEIGHT_MASTERY = 30;
+const WEIGHT_MODULE = 25;
+const WEIGHT_POTENTIAL = 10;
+const WEIGHT_SKILL_LEVEL = 20;
+const WEIGHT_TRUST = 5;
+
+const PARTIAL_CAP = 0.3;
+const PARTIAL_BONUS = 0.1;
+const TRUST_MILESTONE_PCT = 100;
+
+function clamp01(n: number): number {
+    return Math.max(0, Math.min(1, n));
+}
+
+/**
+ * Level-dimension weight, inverted by rarity (`level_weight`): low-rarity ops
+ * have fewer investment axes, so leveling dominates their score.
+ */
+function levelWeight(rarity: number): number {
+    switch (rarity) {
+        case 6:
+            return 15;
+        case 5:
+            return 18;
+        case 4:
+            return 20;
+        default:
+            return 40;
+    }
+}
+
+/** ln(1+t)/ln(2) - log compression of a 0..1 ratio (`log_curve_ratio`). */
+function logCurveRatio(t: number): number {
+    return Math.log(1 + t) / Math.LN2;
+}
+
+/** Cumulative level progress across all elite phases, log-compressed. */
+function cumulativeLevelProgress(entry: IRosterEntry, op: IOperatorListItem): number {
+    let progress = 0;
+    let total = 0;
+    (op.phases ?? []).forEach((phase, i) => {
+        const maxLvl = phase.maxLevel;
+        total += maxLvl;
+        if (i < entry.elite) progress += maxLvl;
+        else if (i === entry.elite) progress += entry.level;
+    });
+    if (total === 0) return 1;
+    return logCurveRatio(progress / total);
+}
+
+/** Milestone-based mastery score (`mastery_milestone_from_levels`). */
+function masteryMilestoneScore(levels: number[], numSkills: number): number {
+    const m3 = levels.filter((m) => m >= 3).length;
+    if (m3 === 0) {
+        const total = levels.reduce((s, m) => s + m, 0);
+        const max = numSkills * 3;
+        return max > 0 ? (total / max) * PARTIAL_CAP : 0;
+    }
+    const base = m3 === 1 ? 0.5 : m3 === 2 ? 0.75 : 1.0;
+    const remaining = numSkills - m3;
+    if (remaining <= 0) return base;
+    const nonM3 = levels.filter((m) => m < 3).reduce((s, m) => s + m, 0);
+    return Math.min(base + (nonM3 / (remaining * 3)) * PARTIAL_BONUS, 1);
+}
+
+/** Milestone-based module score (`module_milestone_from_levels`). */
+function moduleMilestoneScore(levels: number[], numAvailable: number): number {
+    if (numAvailable === 0) return 0;
+    const mod3 = levels.filter((l) => l >= 3).length;
+    if (mod3 === 0) {
+        const total = levels.reduce((s, l) => s + l, 0);
+        return (total / (numAvailable * 3)) * PARTIAL_CAP;
+    }
+    const milestone = Math.max(mod3 / numAvailable, 0.5);
+    const nonMax = levels.filter((l) => l < 3).reduce((s, l) => s + l, 0);
+    const remainingMax = (numAvailable - mod3) * 3;
+    const partial = remainingMax > 0 ? (nonMax / remainingMax) * PARTIAL_BONUS : 0;
+    return Math.min(milestone + partial, 1);
+}
+
+/**
+ * Highest potential value (0-indexed) the operator can reach - P6 == 5.
+ *
+ * Unlike the backend grader, which only scores potential for operators that
+ * can't use the general potential token (`potential_matters`), we count it for
+ * *every* operator: a P1 operator genuinely isn't "complete", and gating it off
+ * made a fully-built P6 alter read below 100% while a P5 standard op read 100%.
+ */
+function maxPotential(op: IOperatorListItem): number {
+    return op.potentialRanks?.length ?? 0;
+}
+
+/** Advanced (non-default) modules - the only ones that count (`advanced_modules`). */
+function advancedModules(op: IOperatorListItem) {
+    return (op.modules ?? []).filter((m) => m.type === "ADVANCED");
+}
+
+type Dimension = [weight: number, score: number];
+
+/**
+ * Build the applicable (weight, score) dimensions for an operator - closely
+ * follows the backend `build_dimensions`.
+ *
+ * Differences vs. the server: potential is counted for every operator (see
+ * {@link maxPotential}); `is_support` isn't known client-side, so trust always
+ * uses the ordinary 100% target; and trust % comes from the linear
+ * {@link getTrustPercent} approximation rather than the favor table.
+ */
+function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: number): Dimension[] {
+    const phases = op.phases ?? [];
+    const maxElite = phases.length - 1;
+    const numSkills = op.skills?.length ?? 0;
+    const canMaster = numSkills > 0 && phases.length >= 3;
+    const advanced = advancedModules(op);
+
+    const dims: Dimension[] = [];
+
+    if (maxElite > 0) dims.push([WEIGHT_ELITE, entry.elite / maxElite]);
+
+    dims.push([levelWeight(rarity), cumulativeLevelProgress(entry, op)]);
+
+    if (!canMaster && numSkills > 0) {
+        dims.push([WEIGHT_SKILL_LEVEL, (entry.skill_level - 1) / 6]); // SL1=0 … SL7=1
+    }
+
+    if (canMaster) {
+        dims.push([
+            WEIGHT_MASTERY,
+            masteryMilestoneScore(
+                entry.masteries.map((m) => m.mastery),
+                numSkills,
+            ),
+        ]);
+    }
+
+    if (advanced.length > 0) {
+        const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
+        const levels = entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
+        dims.push([WEIGHT_MODULE, moduleMilestoneScore(levels, advanced.length)]);
+    }
+
+    const maxPot = maxPotential(op);
+    if (maxPot > 0) {
+        dims.push([WEIGHT_POTENTIAL, clamp01(entry.potential / maxPot)]); // P1=0 … P6=1
+    }
+
+    dims.push([WEIGHT_TRUST, clamp01(getTrustPercent(entry.favor_point) / TRUST_MILESTONE_PCT)]);
+
+    return dims;
+}
+
+/**
+ * How "complete" an owned operator is, as a 0..1 fraction - the weight-normalized
+ * average of its applicable investment dimensions. Closely follows the backend's
+ * `grade_operator` (same weights, milestone curves, and log-compressed leveling),
+ * with one deliberate difference: potential is counted for every operator (see
+ * {@link maxPotential}). Dimensions that don't apply are skipped (a 3★ has no
+ * E2/mastery/module), so a fully-built low-rarity op still reaches 1.0.
+ */
+export function operatorCompleteness(entry: IRosterEntry, op: IOperatorListItem, rarity: number): number {
+    const dims = operatorDimensions(entry, op, rarity);
+    const totalWeight = dims.reduce((s, [w]) => s + w, 0);
+    if (totalWeight <= 0) return 0;
+    return dims.reduce((s, [w, v]) => s + w * v, 0) / totalWeight;
+}
+
+export interface IOperatorGap {
+    /** Stable tag (`ELITE`, `MAX_LEVEL`, `M3`, `SL7`, `MOD3`, `POT6`, `TRUST`). */
+    tag: string;
+    /** Brief human-readable label for the popover. */
+    label: string;
+}
+
+/**
+ * Everything still standing between this operator and 100% completeness - the
+ * exact complement of {@link operatorCompleteness}, so an empty list ⟺ a full
+ * score. Unlike the backend's milestone "improvements" list (which only surfaces
+ * the *next* step), this reports every remaining sub-goal: e.g. how many skills
+ * still need M3, not just "M3" once one skill is mastered.
+ */
+export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem): IOperatorGap[] {
+    const phases = op.phases ?? [];
+    const maxElite = Math.max(0, phases.length - 1);
+    const maxLevelAtCurrentElite = phases[entry.elite]?.maxLevel ?? 0;
+    const numSkills = op.skills?.length ?? 0;
+    const canMaster = numSkills > 0 && phases.length >= 3;
+    const advanced = advancedModules(op);
+
+    const masteryLevels = entry.masteries.map((m) => m.mastery);
+    const skillsToM3 = canMaster ? numSkills - masteryLevels.filter((m) => m >= 3).length : 0;
+
+    const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
+    const moduleLevels = entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
+    const modulesToL3 = advanced.length - moduleLevels.filter((l) => l >= 3).length;
+
+    const maxPot = maxPotential(op);
+    const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+    const missing: IOperatorGap[] = [];
+    if (entry.elite < maxElite) missing.push({ tag: "ELITE", label: `Promote to E${maxElite}` });
+    if (maxLevelAtCurrentElite > 0 && entry.level < maxLevelAtCurrentElite) missing.push({ tag: "MAX_LEVEL", label: `Level to ${maxLevelAtCurrentElite}` });
+    if (canMaster) {
+        if (skillsToM3 > 0) missing.push({ tag: "M3", label: `${plural(skillsToM3, "skill")} to M3` });
+    } else if (numSkills > 0 && entry.skill_level < 7) {
+        missing.push({ tag: "SL7", label: "Skill rank to 7" });
+    }
+    if (modulesToL3 > 0) missing.push({ tag: "MOD3", label: `${plural(modulesToL3, "module")} to Lv 3` });
+    if (maxPot > 0 && entry.potential < maxPot) missing.push({ tag: "POT6", label: "Max potential (P6)" });
+    if (getTrustPercent(entry.favor_point) < TRUST_MILESTONE_PCT) missing.push({ tag: "TRUST", label: "Reach 100% trust" });
+
+    return missing;
+}
+
+/**
+ * How expensive an operator is to fully build, by rarity. Mirrors the backend's
+ * `rarity_to_weight` (grade_operators.rs): a maxed 6★ represents far more
+ * invested EXP/LMD/materials than a maxed 3★, so it weighs ~6.7× as much and a
+ * 1★ only 0.05×. Used to rank "most invested", since completeness alone treats a
+ * finished 3★ the same as a finished 6★.
+ */
+export const RARITY_WEIGHT: Record<number, number> = {
+    6: 1.0,
+    5: 0.7,
+    4: 0.4,
+    3: 0.15,
+    2: 0.1,
+    1: 0.05,
+};
+
 export interface IDerivedStats {
     maxHp: number;
     atk: number;

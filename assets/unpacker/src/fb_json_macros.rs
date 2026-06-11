@@ -1,17 +1,18 @@
-//! Macros for FlatBuffer to JSON serialization
+//! Macros for `FlatBuffer` to JSON serialization
 //!
-//! This module provides declarative macros to convert FlatBuffer types to clean JSON,
-//! matching the Python FBOHandler._to_json_dict() output format.
+//! This module provides declarative macros to convert `FlatBuffer` types to clean JSON,
+//! matching the Python `FBOHandler`._`to_json_dict()` output format.
 
 use serde_json::Value;
 
-/// Maximum number of elements we'll attempt to decode from a FlatBuffer vector.
+/// Maximum number of elements we'll attempt to decode from a `FlatBuffer` vector.
+///
 /// Anything larger is almost certainly a corrupted/misaligned offset read by `_unchecked`.
 /// Panicking here (rather than attempting allocation) lets `catch_unwind` handle it
 /// gracefully — `handle_alloc_error` aborts the process and cannot be caught.
 pub const MAX_FB_VECTOR_LEN: usize = 10_000_000;
 
-/// Panics if a FlatBuffer vector length exceeds the sanity limit.
+/// Panics if a `FlatBuffer` vector length exceeds the sanity limit.
 #[inline]
 pub fn check_vector_len(len: usize, field_name: &str) {
     assert!(
@@ -20,13 +21,14 @@ pub fn check_vector_len(len: usize, field_name: &str) {
     );
 }
 
-/// Trait for FlatBuffer types that can be serialized to JSON
+/// Trait for `FlatBuffer` types that can be serialized to JSON
 pub trait FlatBufferToJson {
     fn to_json(&self) -> Value;
 }
 
-/// Convert field name to PascalCase for JSON output
+/// Convert field name to `PascalCase` for JSON output
 /// Handles special cases like `def_` -> `Def_`, `trait_` -> `Trait_`
+#[must_use]
 pub fn to_pascal_case(s: &str) -> String {
     // Handle trailing underscore (Rust keyword escape like `def_`, `trait_`)
     let (base, suffix) = if s.ends_with('_') && !s.ends_with("__") {
@@ -53,12 +55,12 @@ pub fn to_pascal_case(s: &str) -> String {
     result
 }
 
-/// Helper trait for enum types that have variant_name()
+/// Helper trait for enum types that have `variant_name()`
 pub trait EnumToJson {
     fn to_json_value(&self) -> Value;
 }
 
-/// Macro to implement EnumToJson for FlatBuffer enum types
+/// Macro to implement `EnumToJson` for `FlatBuffer` enum types
 #[macro_export]
 macro_rules! impl_enum_to_json {
     ($type:ty) => {
@@ -74,7 +76,7 @@ macro_rules! impl_enum_to_json {
 }
 
 /// Macro to add a single field to a JSON map
-/// Supports different field types: string, scalar, enum, nested, vec_string, vec_nested, vec_scalar
+/// Supports different field types: string, scalar, enum, nested, `vec_string`, `vec_nested`, `vec_scalar`
 #[macro_export]
 macro_rules! fb_field {
     // Optional string field: Option<&str>
@@ -207,7 +209,7 @@ macro_rules! fb_field {
     };
 }
 
-/// Macro to implement FlatBufferToJson for a struct type
+/// Macro to implement `FlatBufferToJson` for a struct type
 ///
 /// Usage:
 /// ```ignore
@@ -233,7 +235,7 @@ macro_rules! impl_fb_to_json {
     };
 }
 
-/// Macro to implement FlatBufferToJson for a dict type with key/value
+/// Macro to implement `FlatBufferToJson` for a dict type with key/value
 #[macro_export]
 macro_rules! impl_dict_to_json {
     ($type:ty) => {

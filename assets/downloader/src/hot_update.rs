@@ -28,12 +28,12 @@ pub async fn fetch_hot_update_list(
     cdn_base_url: &str,
     res_version: &str,
 ) -> anyhow::Result<Vec<HotGroup>> {
-    let url = format!("{}/{}/hot_update_list.json", cdn_base_url, res_version);
+    let url = format!("{cdn_base_url}/{res_version}/hot_update_list.json");
     let resp: HotUpdateResponse = client.get(&url).send().await?.json().await?;
 
     let mut groups: HashMap<String, HotGroup> = HashMap::new();
     for pack in &resp.pack_infos {
-        let key = pack.name.replace("_", "/");
+        let key = pack.name.replace('_', "/");
         groups.insert(
             key.clone(),
             HotGroup {
@@ -60,7 +60,7 @@ pub async fn fetch_hot_update_list(
         let target = ab
             .pid
             .as_deref()
-            .map(|pid| pid.replace("_", "/"))
+            .map(|pid| pid.replace('_', "/"))
             .and_then(|pid| groups.get_mut(&pid))
             .unwrap_or(&mut other);
 

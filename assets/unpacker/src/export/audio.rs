@@ -12,15 +12,7 @@ pub fn export_audio(
 
     // Try m_AudioData first (inline base64)
     let audio_data = obj["m_AudioData"].as_str().unwrap_or("");
-    let bytes = if !audio_data.is_empty() {
-        if let Some(b64) = audio_data.strip_prefix("base64:") {
-            base64::engine::general_purpose::STANDARD
-                .decode(b64)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
-        } else {
-            audio_data.as_bytes().to_vec()
-        }
-    } else {
+    let bytes = if audio_data.is_empty() {
         // Try m_Resource for external .resS data
         let res = &obj["m_Resource"];
         let source_raw = res["m_Source"].as_str().unwrap_or("");
@@ -41,6 +33,12 @@ pub fn export_audio(
         } else {
             return Ok(());
         }
+    } else if let Some(b64) = audio_data.strip_prefix("base64:") {
+        base64::engine::general_purpose::STANDARD
+            .decode(b64)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
+    } else {
+        audio_data.as_bytes().to_vec()
     };
 
     if bytes.is_empty() {
@@ -59,18 +57,15 @@ pub fn export_audio(
         std::fs::write(&path, &bytes)?;
     } else if bytes.len() >= 4 && &bytes[0..4] == b"FSB5" {
         // Decode FSB5 Vorbis to OGG
-        match super::fsb5::fsb5_to_ogg(&bytes) {
-            Ok(samples) => {
-                for (_, ogg_data) in samples {
-                    let path = output_dir.join(format!("{name}.ogg"));
-                    std::fs::write(&path, &ogg_data)?;
-                }
+        if let Ok(samples) = super::fsb5::fsb5_to_ogg(&bytes) {
+            for (_, ogg_data) in samples {
+                let path = output_dir.join(format!("{name}.ogg"));
+                std::fs::write(&path, &ogg_data)?;
             }
-            Err(_) => {
-                // Fallback: save raw FSB5
-                let path = output_dir.join(format!("{name}.fsb"));
-                std::fs::write(&path, &bytes)?;
-            }
+        } else {
+            // Fallback: save raw FSB5
+            let path = output_dir.join(format!("{name}.fsb"));
+            std::fs::write(&path, &bytes)?;
         }
     } else {
         let path = output_dir.join(format!("{name}.bytes"));
