@@ -1,4 +1,5 @@
 use std::fmt::Write as _;
+use std::sync::Arc;
 use std::time::Duration;
 
 use poise::CreateReply;
@@ -8,6 +9,27 @@ use tokio::sync::oneshot;
 
 use crate::db;
 use crate::types::{Context, Error};
+use crate::watcher::AssetsState;
+
+/// Resolve a server label (case-insensitive) to its `AssetsState`, or error with
+/// the list of configured servers.
+fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>, Error> {
+    let states = &ctx.data().assets;
+    if let Some(s) = states.get(server) {
+        return Ok(s.clone());
+    }
+    if let Some((_, s)) = states.iter().find(|(k, _)| k.eq_ignore_ascii_case(server)) {
+        return Ok(s.clone());
+    }
+    let mut labels: Vec<&str> = states.keys().map(String::as_str).collect();
+    labels.sort_unstable();
+    let list = if labels.is_empty() {
+        "(none configured)".to_string()
+    } else {
+        labels.join(", ")
+    };
+    Err(format!("Unknown server `{server}`. Configured: {list}").into())
+}
 
 /// Manage the Arknights asset-pipeline integration.
 ///
@@ -117,18 +139,51 @@ pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Show the last-known state of the asset pipeline (mirrored from the most recent WS event).
+/// Show the last-known state of the asset pipeline(s), mirrored from WS events.
 #[poise::command(slash_command, guild_only, rename = "status")]
-pub async fn assets_status(ctx: Context<'_>) -> Result<(), Error> {
-    let snapshot = ctx.data().assets.status.read().await.clone();
-    let state = snapshot.state.as_deref().unwrap_or("disconnected");
-    let version = snapshot.current_version.as_deref().unwrap_or("(unknown)");
-    ctx.send(
-        CreateReply::default()
-            .content(format!("State: `{state}`\nVersion: `{version}`"))
-            .ephemeral(true),
-    )
-    .await?;
+pub async fn assets_status(
+    ctx: Context<'_>,
+    #[description = "Server label (e.g. EN, CN). Omit for all."] server: Option<String>,
+) -> Result<(), Error> {
+    let states = &ctx.data().assets;
+    if states.is_empty() {
+        ctx.send(
+            CreateReply::default()
+                .content("No asset pipelines are configured.")
+                .ephemeral(true),
+        )
+        .await?;
+        return Ok(());
+    }
+
+    let mut labels: Vec<&String> = states.keys().collect();
+    labels.sort();
+
+    let mut body = String::new();
+    for label in labels {
+        if let Some(ref want) = server
+            && !label.eq_ignore_ascii_case(want)
+        {
+            continue;
+        }
+        let snapshot = states
+            .get(label)
+            .expect("label came from keys()")
+            .status
+            .read()
+            .await
+            .clone();
+        let state = snapshot.state.as_deref().unwrap_or("disconnected");
+        let version = snapshot.current_version.as_deref().unwrap_or("(unknown)");
+        let _ = writeln!(body, "**{label}** — state `{state}`, version `{version}`");
+    }
+
+    if body.is_empty() {
+        return Err(format!("Unknown server `{}`.", server.unwrap_or_default()).into());
+    }
+
+    ctx.send(CreateReply::default().content(body).ephemeral(true))
+        .await?;
     Ok(())
 }
 
@@ -139,16 +194,19 @@ pub async fn assets_status(ctx: Context<'_>) -> Result<(), Error> {
     rename = "refresh",
     check = "crate::checks::owner_check"
 )]
-pub async fn assets_refresh(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn assets_refresh(
+    ctx: Context<'_>,
+    #[description = "Server label (e.g. EN, CN)"] server: String,
+) -> Result<(), Error> {
+    let state = assets_state_for(&ctx, &server)?;
     let cmd = serde_json::to_string(&json!({ "type": "force_update" }))?;
-    ctx.data()
-        .assets
+    state
         .tx
         .send(cmd)
         .map_err(|_| "Asset watcher channel is closed.")?;
     ctx.send(
         CreateReply::default()
-            .content("Queued `force_update` for the asset pipeline.")
+            .content(format!("Queued `force_update` for `{server}`."))
             .ephemeral(true),
     )
     .await?;
@@ -162,15 +220,18 @@ pub async fn assets_refresh(ctx: Context<'_>) -> Result<(), Error> {
     rename = "resources",
     check = "crate::checks::owner_check"
 )]
-pub async fn assets_resources(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn assets_resources(
+    ctx: Context<'_>,
+    #[description = "Server label (e.g. EN, CN)"] server: String,
+) -> Result<(), Error> {
     ctx.defer_ephemeral().await?;
+    let state = assets_state_for(&ctx, &server)?;
 
     let (tx, rx) = oneshot::channel();
-    *ctx.data().assets.pending_resource_list.lock().await = Some(tx);
+    *state.pending_resource_list.lock().await = Some(tx);
 
     let req = serde_json::to_string(&json!({ "type": "list_resources" }))?;
-    ctx.data()
-        .assets
+    state
         .tx
         .send(req)
         .map_err(|_| "Asset watcher channel is closed.")?;
@@ -179,7 +240,7 @@ pub async fn assets_resources(ctx: Context<'_>) -> Result<(), Error> {
         Ok(Ok(p)) => p,
         Ok(Err(_)) => return Err("Resource-list listener was cancelled.".into()),
         Err(_) => {
-            ctx.data().assets.pending_resource_list.lock().await.take();
+            state.pending_resource_list.lock().await.take();
             return Err("Timed out waiting for the asset pipeline to respond.".into());
         }
     };

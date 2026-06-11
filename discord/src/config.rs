@@ -33,14 +33,26 @@ pub struct EndpointsConfig {
     pub public_frontend: String,
 }
 
-/// Connection settings for the Arknights asset pipeline WebSocket (`run.mjs ws`).
+/// One Arknights asset-pipeline server the bot watches. The bot opens a WS per
+/// server and labels every announcement with `label` (e.g. "EN", "CN").
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AssetServerConfig {
+    pub label: String,
+    pub ws_url: String,
+}
+
+/// Connection settings for the Arknights asset pipeline `WebSockets` (`run.mjs ws`).
 ///
-/// An empty `ws_url` disables the watcher entirely so the bot can run without the pipeline.
+/// Prefer `servers` (one entry per region). The legacy single `ws_url` is still
+/// honored as one server labeled "EN". With neither set, the watcher is disabled.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AssetsConfig {
     #[serde(default)]
     pub ws_url: String,
+    #[serde(default)]
+    pub servers: Vec<AssetServerConfig>,
     #[serde(default = "default_reconnect_secs")]
     pub reconnect_secs: u64,
 }
@@ -49,7 +61,26 @@ impl Default for AssetsConfig {
     fn default() -> Self {
         Self {
             ws_url: String::new(),
+            servers: Vec::new(),
             reconnect_secs: default_reconnect_secs(),
+        }
+    }
+}
+
+impl AssetsConfig {
+    /// The servers to watch: `servers` if non-empty, else the legacy `ws_url` as a
+    /// single "EN" server, else empty (watcher disabled).
+    #[must_use]
+    pub fn resolved_servers(&self) -> Vec<AssetServerConfig> {
+        if !self.servers.is_empty() {
+            self.servers.clone()
+        } else if self.ws_url.is_empty() {
+            Vec::new()
+        } else {
+            vec![AssetServerConfig {
+                label: "EN".to_string(),
+                ws_url: self.ws_url.clone(),
+            }]
         }
     }
 }

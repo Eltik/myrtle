@@ -57,12 +57,12 @@ export function UserProfile() {
                 label: "Roster",
                 count: data?.operator_count ?? roster?.length ?? undefined,
             },
+            { id: "plans" as TabId, label: "Plans", count: publicPlans?.length },
             {
                 id: "inventory" as TabId,
                 label: "Inventory",
                 count: data?.item_count ?? inventory?.length ?? undefined,
             },
-            { id: "plans" as TabId, label: "Plans", count: publicPlans?.length },
             {
                 id: "enemies" as TabId,
                 label: "Enemies",
