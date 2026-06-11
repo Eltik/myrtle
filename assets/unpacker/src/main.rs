@@ -1,3 +1,32 @@
+// Clippy: pedantic/nursery noise intentional for this asset-pipeline tool
+// (byte/bit casts, long parser functions, single-char math vars, indicatif
+// template strings, internal-only docs). See lib.rs for the rationale.
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::too_long_first_doc_paragraph,
+    clippy::implicit_hasher,
+    clippy::option_if_let_else,
+    clippy::manual_let_else,
+    clippy::match_same_arms,
+    clippy::items_after_statements,
+    clippy::needless_pass_by_value,
+    clippy::branches_sharing_code,
+    clippy::or_fun_call,
+    clippy::similar_names,
+    clippy::too_many_lines,
+    clippy::struct_excessive_bools,
+    clippy::fn_params_excessive_bools,
+    clippy::many_single_char_names,
+    clippy::unreadable_literal,
+    clippy::format_push_string,
+    clippy::literal_string_with_formatting_args
+)]
+
 mod cli;
 
 use unpacker::export;

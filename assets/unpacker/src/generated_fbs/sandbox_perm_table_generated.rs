@@ -24826,7 +24826,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_SandboxV2
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())

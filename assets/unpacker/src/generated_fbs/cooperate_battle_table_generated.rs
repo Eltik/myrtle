@@ -452,7 +452,7 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Co
   pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
     dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo { _tab: table }
   }
@@ -467,7 +467,7 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Co
     builder.finish()
   }
 
-  #[must_use] 
+  #[must_use]
   pub fn unpack(&self) -> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
     let key = self.key();
     let value = self.value().map(|x| {
@@ -480,7 +480,7 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Co
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key(&self) -> enum__Torappu_Battle_Cooperate_EndTileType {
     // Safety:
     // Created from valid Table for this object
@@ -488,19 +488,19 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Co
     unsafe { self._tab.get::<enum__Torappu_Battle_Cooperate_EndTileType>(dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo::VT_KEY, Some(enum__Torappu_Battle_Cooperate_EndTileType::NONE)).unwrap()}
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_less_than(&self, o: &dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo) -> bool {
     self.key() < o.key()
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_with_value(&self, val: enum__Torappu_Battle_Cooperate_EndTileType) -> ::core::cmp::Ordering {
     let key = self.key();
     key.cmp(&val)
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn value(&self) -> Option<clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'a>> {
     // Safety:
     // Created from valid Table for this object
@@ -564,7 +564,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_Battle_Co
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())

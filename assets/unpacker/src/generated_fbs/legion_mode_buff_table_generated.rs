@@ -367,7 +367,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Battle_Legion_Leg
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
