@@ -38,7 +38,7 @@ pub async fn upsert_plan(
     display_on_profile: bool,
 ) -> Result<OperatorPlan, sqlx::Error> {
     sqlx::query_as::<_, OperatorPlan>(
-        r#"
+        r"
         INSERT INTO operator_plans (
             user_id,
             operator_id,
@@ -59,7 +59,7 @@ pub async fn upsert_plan(
             display_on_profile = EXCLUDED.display_on_profile,
             updated_at = NOW()
         RETURNING *
-        "#,
+        ",
     )
     .bind(user_id)
     .bind(operator_id)
@@ -101,12 +101,12 @@ pub async fn upsert_group(
 ) -> Result<PlanGroup, sqlx::Error> {
     if let Some(old_n) = old_name {
         sqlx::query_as::<_, PlanGroup>(
-            r#"
+            r"
             UPDATE plan_groups
             SET name = $1, updated_at = NOW()
             WHERE user_id = $2 AND name = $3
             RETURNING *
-            "#,
+            ",
         )
         .bind(name)
         .bind(user_id)
@@ -115,12 +115,12 @@ pub async fn upsert_group(
         .await
     } else {
         sqlx::query_as::<_, PlanGroup>(
-            r#"
+            r"
             INSERT INTO plan_groups (user_id, name)
             VALUES ($1, $2)
             ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
             RETURNING *
-            "#,
+            ",
         )
         .bind(user_id)
         .bind(name)
@@ -143,12 +143,12 @@ pub async fn get_all_plan_groups(
     user_id: Uuid,
 ) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
     sqlx::query_as::<_, (Uuid, String)>(
-        r#"
+        r"
         SELECT pgm.operator_plan_id, pg.name 
         FROM plan_groups pg
         JOIN plan_group_members pgm ON pgm.plan_group_id = pg.id
         WHERE pg.user_id = $1
-        "#,
+        ",
     )
     .bind(user_id)
     .fetch_all(pool)

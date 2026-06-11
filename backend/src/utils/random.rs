@@ -220,7 +220,7 @@ mod platform {
         unsafe extern "system" {
             fn BCryptGenRandom(algo: *mut u8, buf: *mut u8, size: u32, flags: u32) -> u32;
         }
-        const USE_SYSTEM_RNG: u32 = 0x00000002;
+        const USE_SYSTEM_RNG: u32 = 0x0000_0002;
         // BCryptGenRandom with USE_SYSTEM_RNG ignores the algorithm handle
         // SAFETY: a null algorithm handle is valid with USE_SYSTEM_RNG; (buf, len)
         // describe a writable region and `len` fits in u32 for realistic sizes.

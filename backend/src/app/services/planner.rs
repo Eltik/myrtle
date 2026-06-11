@@ -41,7 +41,7 @@ struct RosterModule {
     level: i16,
 }
 
-fn phase_to_int(phase: &OperatorPhase) -> i16 {
+const fn phase_to_int(phase: &OperatorPhase) -> i16 {
     match phase {
         OperatorPhase::Elite0 => 0,
         OperatorPhase::Elite1 => 1,
@@ -296,9 +296,8 @@ fn build_requirement_tree(
                 let stage_code = gamedata
                     .stages
                     .get(&stage_req.stage_id)
-                    .map(|s| s.code.as_str())
-                    .unwrap_or(stage_req.stage_id.as_str());
-                unmet_reqs.push(format!("Stage {}", stage_code));
+                    .map_or(stage_req.stage_id.as_str(), |s| s.code.as_str());
+                unmet_reqs.push(format!("Stage {stage_code}"));
             }
         }
 
@@ -331,7 +330,7 @@ fn build_requirement_tree(
 
         if unmet_reqs.is_empty() {
             can_craft = true;
-            craft_reason = "".to_owned();
+            craft_reason = String::new();
 
             let mut max_crafts = i32::MAX;
             for cost in &formula.costs {
@@ -406,7 +405,7 @@ fn build_requirement_tree(
 
         if unmet_reqs.is_empty() {
             can_craft = true;
-            craft_reason = "".to_owned();
+            craft_reason = String::new();
 
             let mut max_crafts = i32::MAX;
             for cost in &formula.costs {
@@ -454,9 +453,9 @@ fn get_plan_direct_materials(
     operator: &Operator,
     roster_entry: Option<&RosterEntry>,
 ) -> Result<HashMap<String, i32>, ApiError> {
-    let current_elite = roster_entry.map(|r| r.elite).unwrap_or(0);
-    let current_level = roster_entry.map(|r| r.level).unwrap_or(1);
-    let current_skill_level = roster_entry.map(|r| r.skill_level).unwrap_or(1);
+    let current_elite = roster_entry.map_or(0, |r| r.elite);
+    let current_level = roster_entry.map_or(1, |r| r.level);
+    let current_skill_level = roster_entry.map_or(1, |r| r.skill_level);
 
     let current_masteries: Vec<RosterMastery> = roster_entry
         .map(|r| serde_json::from_value(r.masteries.clone()).unwrap_or_default())
@@ -509,8 +508,7 @@ fn get_plan_direct_materials(
         let current_mast = current_masteries
             .iter()
             .find(|m| m.index == idx)
-            .map(|m| m.mastery)
-            .unwrap_or(0);
+            .map_or(0, |m| m.mastery);
 
         if target_skill.mastery_level > current_mast
             && let Some(skill_entry) = operator.skills.get(idx as usize)
@@ -529,8 +527,7 @@ fn get_plan_direct_materials(
         let current_level = current_modules
             .iter()
             .find(|m| m.id == target_module.module_id)
-            .map(|m| m.level)
-            .unwrap_or(0);
+            .map_or(0, |m| m.level);
         if target_module.module_stage > current_level
             && let Some(op_mod) = operator
                 .modules
@@ -629,9 +626,7 @@ pub async fn list_plans(
     inventory_map.insert("5001".to_owned(), total_exp);
 
     let building_json = building_queries::get_building(&state.db, user_id).await?;
-    let user_building = building_json
-        .map(|json| UserBuilding::from_json(&json))
-        .unwrap_or_else(|| UserBuilding { rooms: Vec::new() });
+    let user_building = building_json.map_or_else(|| UserBuilding { rooms: Vec::new() }, |json| UserBuilding::from_json(&json));
 
     let clears_data = stages_queries::get_user_stage_clears(&state.db, user_id).await?;
     let clears = clears_data.clears;
@@ -753,15 +748,13 @@ pub async fn upsert_plan(
                 let required_phase = phase_to_int(&lvl_up.unlock_cond.phase);
                 if required_phase > target_elite {
                     return Err(ApiError::BadRequest(format!(
-                        "Target skill level {} requires Elite {} or higher",
-                        idx, required_phase
+                        "Target skill level {idx} requires Elite {required_phase} or higher"
                     )));
                 }
                 let required_level = lvl_up.unlock_cond.level as i16;
                 if required_phase == target_elite && required_level > target_level {
                     return Err(ApiError::BadRequest(format!(
-                        "Target skill level {} requires Level {} at Elite {}",
-                        idx, required_level, required_phase
+                        "Target skill level {idx} requires Level {required_level} at Elite {required_phase}"
                     )));
                 }
             }
@@ -839,8 +832,7 @@ pub async fn upsert_plan(
                 || (required_phase == target_elite && required_level > target_level)
             {
                 return Err(ApiError::BadRequest(format!(
-                    "Module unlock/upgrades require Elite {} level {}.",
-                    required_phase, required_level
+                    "Module unlock/upgrades require Elite {required_phase} level {required_level}."
                 )));
             }
         }
@@ -849,7 +841,7 @@ pub async fn upsert_plan(
     let mut tx = state.db.begin().await?;
 
     let plan = sqlx::query_as::<_, OperatorPlan>(
-        r#"
+        r"
         INSERT INTO operator_plans (
             user_id,
             operator_id,
@@ -870,7 +862,7 @@ pub async fn upsert_plan(
             display_on_profile = EXCLUDED.display_on_profile,
             updated_at = NOW()
         RETURNING *
-        "#,
+        ",
     )
     .bind(user_id)
     .bind(operator_id)
@@ -891,12 +883,12 @@ pub async fn upsert_plan(
 
         for group_name in group_names {
             let group_id: Uuid = sqlx::query_scalar(
-                r#"
+                r"
                 INSERT INTO plan_groups (user_id, name)
                 VALUES ($1, $2)
                 ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
                 RETURNING id
-                "#,
+                ",
             )
             .bind(user_id)
             .bind(group_name)
@@ -904,11 +896,11 @@ pub async fn upsert_plan(
             .await?;
 
             sqlx::query(
-                r#"
+                r"
                 INSERT INTO plan_group_members (plan_group_id, operator_plan_id)
                 VALUES ($1, $2)
                 ON CONFLICT DO NOTHING
-                "#,
+                ",
             )
             .bind(group_id)
             .bind(plan.id)
@@ -923,13 +915,13 @@ pub async fn upsert_plan(
         g
     } else {
         sqlx::query_scalar(
-            r#"
+            r"
             SELECT pg.name
             FROM plan_groups pg
             JOIN plan_group_members pgm ON pgm.plan_group_id = pg.id
             WHERE pgm.operator_plan_id = $1
             ORDER BY pg.name ASC
-            "#,
+            ",
         )
         .bind(plan.id)
         .fetch_all(&state.db)
