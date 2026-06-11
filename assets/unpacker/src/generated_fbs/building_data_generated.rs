@@ -18669,7 +18669,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingDat
   pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
     dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeData { _tab: table }
   }
@@ -18684,7 +18684,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingDat
     builder.finish()
   }
 
-  #[must_use] 
+  #[must_use]
   pub fn unpack(&self) -> dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeDataT {
     let key = self.key();
     let value = self.value().map(|x| {
@@ -18697,7 +18697,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingDat
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key(&self) -> enum__Torappu_BuildingData_FurnitureType {
     // Safety:
     // Created from valid Table for this object
@@ -18705,19 +18705,19 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingDat
     unsafe { self._tab.get::<enum__Torappu_BuildingData_FurnitureType>(dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeData::VT_KEY, Some(enum__Torappu_BuildingData_FurnitureType::FLOOR)).unwrap()}
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_less_than(&self, o: &dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeData) -> bool {
     self.key() < o.key()
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_with_value(&self, val: enum__Torappu_BuildingData_FurnitureType) -> ::core::cmp::Ordering {
     let key = self.key();
     key.cmp(&val)
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn value(&self) -> Option<clz_Torappu_BuildingData_CustomData_FurnitureTypeData<'a>> {
     // Safety:
     // Created from valid Table for this object
@@ -18781,7 +18781,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_BuildingD
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeData<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
@@ -19198,7 +19198,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_Building
   pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
     dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData { _tab: table }
   }
@@ -19213,7 +19213,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_Building
     builder.finish()
   }
 
-  #[must_use] 
+  #[must_use]
   pub fn unpack(&self) -> dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeDataT {
     let key = self.key();
     let value = self.value().map(|x| {
@@ -19226,7 +19226,7 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_Building
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key(&self) -> enum__Torappu_BuildingData_FurnitureSubType {
     // Safety:
     // Created from valid Table for this object
@@ -19234,19 +19234,19 @@ impl<'a> dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_Building
     unsafe { self._tab.get::<enum__Torappu_BuildingData_FurnitureSubType>(dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData::VT_KEY, Some(enum__Torappu_BuildingData_FurnitureSubType::NONE)).unwrap()}
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_less_than(&self, o: &dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData) -> bool {
     self.key() < o.key()
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_with_value(&self, val: enum__Torappu_BuildingData_FurnitureSubType) -> ::core::cmp::Ordering {
     let key = self.key();
     key.cmp(&val)
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn value(&self) -> Option<clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData<'a>> {
     // Safety:
     // Created from valid Table for this object
@@ -19311,7 +19311,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_BuildingD
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
@@ -21212,7 +21212,7 @@ impl<'a> dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_To
   pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
     dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData { _tab: table }
   }
@@ -21227,7 +21227,7 @@ impl<'a> dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_To
     builder.finish()
   }
 
-  #[must_use] 
+  #[must_use]
   pub fn unpack(&self) -> dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListDataT {
     let key = self.key();
     let value = self.value().map(|x| {
@@ -21240,7 +21240,7 @@ impl<'a> dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_To
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key(&self) -> enum__Torappu_BuildingData_DiySortType {
     // Safety:
     // Created from valid Table for this object
@@ -21248,19 +21248,19 @@ impl<'a> dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_To
     unsafe { self._tab.get::<enum__Torappu_BuildingData_DiySortType>(dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData::VT_KEY, Some(enum__Torappu_BuildingData_DiySortType::NONE)).unwrap()}
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_less_than(&self, o: &dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData) -> bool {
     self.key() < o.key()
   }
 
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn key_compare_with_value(&self, val: enum__Torappu_BuildingData_DiySortType) -> ::core::cmp::Ordering {
     let key = self.key();
     key.cmp(&val)
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn value(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData<'a>>>> {
     // Safety:
     // Created from valid Table for this object
@@ -21332,7 +21332,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_BuildingD
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())

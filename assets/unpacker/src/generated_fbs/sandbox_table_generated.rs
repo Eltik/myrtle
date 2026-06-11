@@ -19390,7 +19390,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_SandboxDa
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_SandboxDailyDescTemplateType__clz_Torappu_SandboxDailyDescTemplateData<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
@@ -20203,7 +20203,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__enum__Torappu_SandboxEn
     }
   }
   #[inline]
-  #[must_use] 
+  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_SandboxEnemyRushType__list_clz_Torappu_Battle_Sandbox_RushEnemyGroupConfig<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
