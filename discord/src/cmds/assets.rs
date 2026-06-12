@@ -33,19 +33,14 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
 
 /// Manage the Arknights asset-pipeline integration.
 ///
-/// Subcommands: `channel`, `status`, `refresh`, `resources`. The `channel` group binds
+/// Subcommands: `channel`, `status`, `resources`. The `channel` group binds
 /// announcements to a specific channel; the pipeline daemon (`assets/run.mjs ws`) emits
 /// version/error events which the bot forwards as embeds.
 #[poise::command(
     slash_command,
     guild_only,
     default_member_permissions = "MANAGE_GUILD",
-    subcommands(
-        "assets_channel",
-        "assets_status",
-        "assets_refresh",
-        "assets_resources"
-    ),
+    subcommands("assets_channel", "assets_status", "assets_resources"),
     subcommand_required
 )]
 pub async fn assets(_ctx: Context<'_>) -> Result<(), Error> {
@@ -184,32 +179,6 @@ pub async fn assets_status(
 
     ctx.send(CreateReply::default().content(body).ephemeral(true))
         .await?;
-    Ok(())
-}
-
-/// Ask the asset pipeline to run a check/download/unpack cycle now.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "refresh",
-    check = "crate::checks::owner_check"
-)]
-pub async fn assets_refresh(
-    ctx: Context<'_>,
-    #[description = "Server label (e.g. EN, CN)"] server: String,
-) -> Result<(), Error> {
-    let state = assets_state_for(&ctx, &server)?;
-    let cmd = serde_json::to_string(&json!({ "type": "force_update" }))?;
-    state
-        .tx
-        .send(cmd)
-        .map_err(|_| "Asset watcher channel is closed.")?;
-    ctx.send(
-        CreateReply::default()
-            .content(format!("Queued `force_update` for `{server}`."))
-            .ephemeral(true),
-    )
-    .await?;
     Ok(())
 }
 
