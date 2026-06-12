@@ -3,7 +3,7 @@
 //! Connects to the pipeline's WS endpoint, fans selected events out as embeds to every guild that
 //! has bound an announcement channel via `/assets channel set`, and exposes a shared
 //! `AssetsState` so slash commands can read the last-known status or send commands back
-//! (`force_update`, `list_resources`).
+//! (`list_resources`).
 
 use std::collections::HashMap;
 use std::sync::Arc;

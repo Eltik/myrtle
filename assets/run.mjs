@@ -251,6 +251,40 @@ function formatBytes(bytes) {
 	return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
+/**
+ * Recursively walk a directory, summing the byte size and count of every nested
+ * file. Unreadable subdirectories are skipped rather than aborting the walk.
+ * @param {string} dir - Absolute directory path
+ * @returns {Promise<{ size: number, fileCount: number }>}
+ */
+async function dirStats(dir) {
+	let size = 0;
+	let fileCount = 0;
+	let entries;
+	try {
+		entries = await readdir(dir, { withFileTypes: true });
+	} catch {
+		return { size, fileCount };
+	}
+	for (const entry of entries) {
+		const fullPath = join(dir, entry.name);
+		if (entry.isDirectory()) {
+			const sub = await dirStats(fullPath);
+			size += sub.size;
+			fileCount += sub.fileCount;
+		} else if (entry.isFile()) {
+			try {
+				const st = await stat(fullPath);
+				size += st.size;
+				fileCount++;
+			} catch {
+				// skip unreadable file
+			}
+		}
+	}
+	return { size, fileCount };
+}
+
 // ─── Progress Bar ───────────────────────────────────────────────────────────
 
 function createProgressBar(label, { width = 30 } = {}) {
@@ -1120,21 +1154,8 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				const st = await stat(fullPath);
 
 				if (entry.isDirectory()) {
-					// Summarize directory: count files and total size one level deep
-					let dirSize = 0;
-					let fileCount = 0;
-					try {
-						const subEntries = await readdir(fullPath, { withFileTypes: true });
-						for (const sub of subEntries) {
-							if (sub.isFile()) {
-								const subSt = await stat(join(fullPath, sub.name));
-								dirSize += subSt.size;
-								fileCount++;
-							}
-						}
-					} catch {
-						// skip unreadable subdirs
-					}
+					// Summarize directory: recursively count every nested file and its bytes.
+					const { size: dirSize, fileCount } = await dirStats(fullPath);
 					files.push({
 						name: entry.name,
 						path: entry.name,
