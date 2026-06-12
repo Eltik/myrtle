@@ -23,6 +23,7 @@
 
 use anyhow::{Context, Result};
 use backend::{
+    app::state::{default_bin_server_from_env, derive_assets_dir, derive_game_data_dir},
     core::{
         gamedata::init_game_data, grade::calculate::calculate_user_grade,
         hypergryph::constants::Server,
@@ -148,10 +149,14 @@ async fn main() -> Result<()> {
 
     let args = parse_args()?;
 
-    // Game data (expensive - load once, share).
-    let data_dir =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    // Game data (expensive - load once, share). ASSETS_DIR is a base dir; the
+    // server's data loads from `{base}/{server}` (+ `/gamedata/excel`). The
+    // `--server` flag only filters which users to regrade; the game-data server
+    // is selected by BIN_SERVER/SERVERS (see `default_bin_server_from_env`).
+    let base = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let server = default_bin_server_from_env();
+    let data_dir = derive_game_data_dir(&base, server);
+    let assets_dir = derive_assets_dir(&base, server);
 
     tracing::info!("loading game data...");
     let t0 = Instant::now();

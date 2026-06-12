@@ -12,6 +12,7 @@
 use std::{path::Path, time::Instant};
 
 use anyhow::{Context, Result};
+use backend::app::state::{default_bin_server_from_env, derive_assets_dir, derive_game_data_dir};
 use backend::core::{gacha_resync::reconcile_rarities, gamedata::init_game_data};
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
@@ -56,9 +57,12 @@ async fn main() -> Result<()> {
 
     let args = parse_args();
 
-    let data_dir =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    // ASSETS_DIR is a base dir; the server's data loads from `{base}/{server}`
+    // (+ `/gamedata/excel`). The game-data server is BIN_SERVER/SERVERS-driven.
+    let base = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let server = default_bin_server_from_env();
+    let data_dir = derive_game_data_dir(&base, server);
+    let assets_dir = derive_assets_dir(&base, server);
 
     tracing::info!("loading game data...");
     let t0 = Instant::now();

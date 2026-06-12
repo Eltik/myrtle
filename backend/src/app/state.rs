@@ -198,6 +198,29 @@ pub fn derive_game_data_dir(base: &str, server: Server) -> String {
     format!("{base}/{}/gamedata/excel", server.as_str())
 }
 
+/// The server a standalone bin should load game data for.
+///
+/// Standalone bins (e.g. `regrade-users`, `resync-gacha`, `generate-dps`) load
+/// a single server's game data rather than the full per-server map the app
+/// holds. They resolve the base dir from `ASSETS_DIR` and the server from this:
+/// `BIN_SERVER` if set, else the first entry of `SERVERS` (mirroring
+/// [`AppConfig::from_env`]'s default-server selection), else EN.
+pub fn default_bin_server_from_env() -> Server {
+    resolve_bin_server(
+        std::env::var("BIN_SERVER").ok().as_deref(),
+        std::env::var("SERVERS").ok().as_deref(),
+    )
+}
+
+/// Pure core of [`default_bin_server_from_env`]: `bin_server` if it parses, else
+/// the first parseable entry of the comma-separated `servers`, else EN.
+fn resolve_bin_server(bin_server: Option<&str>, servers: Option<&str>) -> Server {
+    bin_server
+        .and_then(Server::parse)
+        .or_else(|| servers.and_then(|v| v.split(',').find_map(Server::parse)))
+        .unwrap_or(Server::EN)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{derive_assets_dir, derive_game_data_dir, parse_ws_url_spec};
@@ -213,6 +236,18 @@ mod tests {
             derive_game_data_dir("../assets/output", Server::EN),
             "../assets/output/en/gamedata/excel"
         );
+    }
+
+    #[test]
+    fn bin_server_falls_back_to_first_of_servers_then_en() {
+        use super::resolve_bin_server;
+        // BIN_SERVER takes precedence.
+        assert_eq!(resolve_bin_server(Some("cn"), Some("en,kr")), Server::CN);
+        // Else the first parseable SERVERS entry (unknown codes skipped).
+        assert_eq!(resolve_bin_server(None, Some("zz,kr,en")), Server::KR);
+        // Else EN.
+        assert_eq!(resolve_bin_server(None, None), Server::EN);
+        assert_eq!(resolve_bin_server(Some("zz"), Some("nope")), Server::EN);
     }
 
     #[test]
