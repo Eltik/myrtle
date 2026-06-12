@@ -1,7 +1,8 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
-import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type IExportSettings } from "./constants";
+import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_PADDING, type IExportSettings } from "./constants";
+import { computeExportLayout, gifFrameDelayMs, measureAnimationBounds } from "./helpers";
 
 export type ExportFormat = "gif" | "mp4";
 
@@ -67,6 +68,7 @@ function checkAborted(signal?: AbortSignal): void {
  */
 interface ISpineSnapshot {
     timeScale: number;
+    autoUpdate: boolean;
     x: number;
     y: number;
     scaleX: number;
@@ -77,6 +79,7 @@ interface ISpineSnapshot {
 function snapshotSpine(spine: Spine): ISpineSnapshot {
     return {
         timeScale: spine.state.timeScale,
+        autoUpdate: spine.autoUpdate,
         x: spine.x,
         y: spine.y,
         scaleX: spine.scale.x,
@@ -94,6 +97,7 @@ function restoreSpine(spine: Spine, snapshot: ISpineSnapshot, liveApp: PIXI.Appl
     target?.addChild(spine);
 
     spine.state.timeScale = snapshot.timeScale;
+    spine.autoUpdate = snapshot.autoUpdate;
     spine.x = snapshot.x;
     spine.y = snapshot.y;
     spine.scale.set(snapshot.scaleX, snapshot.scaleY);
@@ -112,9 +116,12 @@ interface IRenderContext {
     cleanup: () => void;
 }
 
-function createRenderContext(spine: Spine, settings: IExportSettings, transparent: boolean): IRenderContext {
-    const width = Math.round(EXPORT_WIDTH * settings.scale);
-    const height = Math.round(EXPORT_HEIGHT * settings.scale);
+function createRenderContext(spine: Spine, animationName: string, settings: IExportSettings, transparent: boolean): IRenderContext {
+    spine.autoUpdate = false;
+    spine.state.timeScale = 1;
+
+    const bounds = measureAnimationBounds(spine, animationName);
+    const { width, height, chibiScale } = computeExportLayout(bounds, settings.scale);
 
     const app = new PIXI.Application({
         width,
@@ -127,11 +134,14 @@ function createRenderContext(spine: Spine, settings: IExportSettings, transparen
         autoDensity: false,
     });
 
-    spine.state.timeScale = 1;
-    spine.x = width * CHIBI_OFFSET_X;
-    spine.y = height * CHIBI_OFFSET_Y;
-    const scale = Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * 0.75;
-    spine.scale.set(scale);
+    spine.scale.set(chibiScale);
+    if (bounds) {
+        spine.x = width / 2 - (bounds.x + bounds.width / 2) * chibiScale;
+        spine.y = height - EXPORT_PADDING - (bounds.y + bounds.height) * chibiScale;
+    } else {
+        spine.x = width * CHIBI_OFFSET_X;
+        spine.y = height * CHIBI_OFFSET_Y;
+    }
 
     if (spine.parent) {
         spine.parent.removeChild(spine);
@@ -155,14 +165,8 @@ function primeAnimation(spine: Spine, animationName: string): void {
     spine.skeleton.updateWorldTransform();
 }
 
-/** Advance the animation by `dt` seconds and re-render the offscreen stage. */
 function advanceAndRender(app: PIXI.Application, spine: Spine, dt: number): void {
-    if (dt > 0) {
-        spine.state.update(dt);
-        spine.state.apply(spine.skeleton);
-        spine.skeleton.updateWorldTransform();
-    }
-    spine.updateTransform();
+    spine.update(dt);
     app.renderer.render(app.stage);
 }
 
@@ -194,13 +198,14 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
     const settings: IExportSettings = { ...DEFAULT_EXPORT_SETTINGS, ...options.settings };
 
     // GIF delays are quantized to 10ms (min 20ms for browser compatibility).
-    // frameDelta MUST equal frameDelayMs / 1000 - otherwise the captured spine
+    // frameDelta MUST match frameDelayMs - otherwise the captured spine
     // state and the GIF playback timeline drift apart.
-    const frameDelayMs = Math.max(20, Math.round(1000 / settings.fps / 10) * 10);
+    const frameDelayMs = gifFrameDelayMs(settings.fps);
     const frameDelta = frameDelayMs / 1000;
 
     const loopDuration = getAnimationDuration(spine, animationName);
     const totalFrames = Math.max(1, Math.round(loopDuration / frameDelta));
+    const stepDelta = totalFrames > 0 ? loopDuration / totalFrames : 0;
 
     const snapshot = snapshotSpine(spine);
     let ctx: IRenderContext | null = null;
@@ -212,7 +217,7 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
 
         const [{ default: GIF }] = await Promise.all([import("gif.js") as Promise<{ default: IGIFConstructor }>]);
 
-        ctx = createRenderContext(spine, settings, settings.transparentBg);
+        ctx = createRenderContext(spine, animationName, settings, settings.transparentBg);
         primeAnimation(spine, animationName);
 
         gif = new GIF({
@@ -235,7 +240,7 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
         const canvas = ctx.app.view as HTMLCanvasElement;
         for (let frame = 0; frame < totalFrames; frame++) {
             checkAborted(signal);
-            advanceAndRender(ctx.app, spine, frame === 0 ? 0 : frameDelta);
+            advanceAndRender(ctx.app, spine, frame === 0 ? 0 : stepDelta);
 
             gif.addFrame(canvas, {
                 delay: frameDelayMs,
@@ -299,8 +304,9 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
     const settings: IExportSettings = { ...DEFAULT_EXPORT_SETTINGS, ...options.settings };
 
     const loopDuration = getAnimationDuration(spine, animationName);
-    const totalFrames = Math.ceil(loopDuration * settings.loopCount * settings.fps);
-    const frameDelta = 1 / settings.fps;
+    const framesPerLoop = Math.max(1, Math.round(loopDuration * settings.fps));
+    const totalFrames = framesPerLoop * settings.loopCount;
+    const frameDelta = loopDuration > 0 ? loopDuration / framesPerLoop : 0;
     const microsecondsPerFrame = 1_000_000 / settings.fps;
     const KEYFRAME_INTERVAL = 30;
 
@@ -312,7 +318,7 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
 
     try {
         checkAborted(signal);
-        ctx = createRenderContext(spine, settings, false);
+        ctx = createRenderContext(spine, animationName, settings, false);
         primeAnimation(spine, animationName);
 
         muxer = new Muxer({

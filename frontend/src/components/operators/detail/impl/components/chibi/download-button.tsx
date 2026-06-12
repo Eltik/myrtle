@@ -8,17 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { Separator } from "#/components/ui/separator";
 import { Switch } from "#/components/ui/switch";
 import { DEFAULT_EXPORT_SETTINGS, EXPORT_FPS_OPTIONS, EXPORT_LOOP_OPTIONS, EXPORT_SCALE_OPTIONS, type IExportSettings } from "./constants";
+import { computeExportLayout, effectiveGifFps, type IAnimationBounds } from "./helpers";
 import type { ExportFormat } from "./recorder";
 
 interface IDownloadButtonProps {
     isRecording: boolean;
     progress: number;
     disabled: boolean;
+    animationBounds: IAnimationBounds | null;
     onDownload: (format: ExportFormat, settings?: Partial<IExportSettings>) => void;
     onCancel: () => void;
 }
 
-export function DownloadButton({ isRecording, progress, disabled, onDownload, onCancel }: IDownloadButtonProps) {
+export function DownloadButton({ isRecording, progress, disabled, animationBounds, onDownload, onCancel }: IDownloadButtonProps) {
     const [settings, setSettings] = useState<IExportSettings>(DEFAULT_EXPORT_SETTINGS);
     const [open, setOpen] = useState(false);
 
@@ -27,7 +29,12 @@ export function DownloadButton({ isRecording, progress, disabled, onDownload, on
         onDownload(format, settings);
     };
 
-    const currentResolution = EXPORT_SCALE_OPTIONS.find((o) => o.value === settings.scale)?.label ?? "600x400";
+    const resolutionLabel = (scale: number) => {
+        const { width, height } = computeExportLayout(animationBounds, scale);
+        return `${width}x${height}`;
+    };
+
+    const gifFps = Math.round(effectiveGifFps(settings.fps) * 10) / 10;
 
     if (isRecording) {
         return (
@@ -67,12 +74,12 @@ export function DownloadButton({ isRecording, progress, disabled, onDownload, on
                             </Label>
                             <Select onValueChange={(v) => setSettings((s) => ({ ...s, scale: Number.parseFloat(v ?? "") }))} value={String(settings.scale)}>
                                 <SelectTrigger className="h-8 text-xs" id="resolution">
-                                    <SelectValue>{currentResolution}</SelectValue>
+                                    <SelectValue>{resolutionLabel(settings.scale)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {EXPORT_SCALE_OPTIONS.map((opt) => (
                                         <SelectItem key={opt.value} value={String(opt.value)}>
-                                            {opt.label}
+                                            {resolutionLabel(opt.value)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -95,6 +102,11 @@ export function DownloadButton({ isRecording, progress, disabled, onDownload, on
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {gifFps !== settings.fps && (
+                                <p className="text-[11px] text-muted-foreground leading-snug">
+                                    GIFs play at {gifFps} FPS (format limit); MP4 uses the full {settings.fps} FPS.
+                                </p>
+                            )}
                         </div>
 
                         <Separator />

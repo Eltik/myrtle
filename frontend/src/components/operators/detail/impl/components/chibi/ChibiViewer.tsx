@@ -4,9 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { Spinner } from "#/components/ui/spinner";
 import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
 import { capitalize } from "#/lib/utils";
-import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, EXPORT_HEIGHT, EXPORT_WIDTH, type ViewType } from "./constants";
+import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, type ViewType } from "./constants";
 import { DownloadButton } from "./download-button";
-import { getAvailableViewTypes, getChibiSkinData, loadSpineWithEncodedURLs } from "./helpers";
+import { chibiMaxScale, getAvailableViewTypes, getChibiSkinData, type IAnimationBounds, loadSpineWithEncodedURLs, measureAnimationBounds } from "./helpers";
 import { useRecorder } from "./use-recorder";
 
 interface IChibiViewerProps {
@@ -25,6 +25,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
+    const [animationBounds, setAnimationBounds] = useState<IAnimationBounds | null>(null);
     const [viewType, setViewType] = useState<ViewType>("front");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -99,6 +100,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 }
 
                 spineRef.current = spine;
+                spine.autoUpdate = false;
                 spine.state.timeScale = ANIMATION_SPEED;
 
                 const animations = spine.spineData.animations.map((a: { name: string }) => a.name);
@@ -107,10 +109,11 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 const { width, height } = appRef.current.screen;
                 spine.x = width * CHIBI_OFFSET_X;
                 spine.y = height * CHIBI_OFFSET_Y;
-                spine.scale.set(Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * CHIBI_SCALE);
+                spine.scale.set(chibiMaxScale(width, height));
 
                 const initialAnim = viewType === "dorm" ? (animations.includes("Relax") ? "Relax" : animations.includes("Idle") ? "Idle" : (animations[0] ?? "Idle")) : animations.includes("Start") ? "Idle" : animations.includes("Idle") ? "Idle" : (animations[0] ?? "Idle");
 
+                setAnimationBounds(measureAnimationBounds(spine, initialAnim));
                 spine.state.setAnimation(0, initialAnim, true);
                 setSelectedAnimation(initialAnim);
 
@@ -152,10 +155,13 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             appRef.current = app;
             container.appendChild(app.view as HTMLCanvasElement);
 
-            const tick = () => {
+            let lastTick = performance.now();
+            const tick = (now: number) => {
                 if (!mountedRef.current) return;
+                const dt = Math.min((now - lastTick) / 1000, 0.1);
+                lastTick = now;
                 if (!recordingRef.current) {
-                    if (spineRef.current) spineRef.current.update(0.016);
+                    if (spineRef.current) spineRef.current.update(dt);
                     if (appRef.current?.renderer) appRef.current.renderer.render(appRef.current.stage);
                 }
                 animationFrameId = requestAnimationFrame(tick);
@@ -176,6 +182,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
     const handleAnimationChange = (value: string | null) => {
         setSelectedAnimation(value ?? selectedAnimation);
         if (spineRef.current && value) {
+            setAnimationBounds(measureAnimationBounds(spineRef.current, value));
             spineRef.current.state.setAnimation(0, value, true);
             spineRef.current.state.timeScale = ANIMATION_SPEED;
         }
@@ -218,7 +225,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                     </SelectContent>
                 </Select>
 
-                <DownloadButton disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
+                <DownloadButton animationBounds={animationBounds} disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
             </div>
             <div className="relative h-45 w-full overflow-hidden rounded-md bg-muted">
                 <div className="h-full w-full" ref={canvasContainerRef} />
