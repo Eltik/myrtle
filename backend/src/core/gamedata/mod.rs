@@ -4,7 +4,7 @@ use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
         audio::build_operator_audio,
-        chibi::init_chibi_data,
+        chibi::{init_chibi_data, init_enemy_chibi_data},
         gacha::enrich_banners,
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
@@ -213,6 +213,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         voices,
         gacha,
         chibis: init_chibi_data(assets_dir),
+        enemy_chibis: init_enemy_chibi_data(assets_dir, &enemies),
         zones,
         stages,
         activities: activity_file.basic_info,

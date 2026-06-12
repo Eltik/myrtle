@@ -64,6 +64,7 @@ pub struct GameData {
     pub voices: Voices,
     pub gacha: GachaData,
     pub chibis: ChibiData,
+    pub enemy_chibis: ChibiData,
     pub zones: HashMap<String, Zone>,
     pub stages: HashMap<String, Stage>,
     pub activities: HashMap<String, ActivityBasicInfo>,
