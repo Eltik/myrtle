@@ -8,6 +8,7 @@ import { APPLY_WAY_DISPLAY } from "../constants";
 import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
 import type { IEnemyView } from "../types";
 import { LevelBadge } from "./atoms";
+import { EnemyChibiTab } from "./EnemyChibi";
 import { EnemyPlaceholder } from "./EnemyPlaceholder";
 
 interface IEnemyDialogProps {
@@ -95,6 +96,9 @@ function DialogBody({ enemy }: { enemy: IEnemyView }) {
                     <TabsTab value="skills" className="h-8 text-[13px]">
                         Skills
                     </TabsTab>
+                    <TabsTab value="chibi" className="h-8 text-[13px]">
+                        Chibi
+                    </TabsTab>
                 </TabsList>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -106,6 +110,9 @@ function DialogBody({ enemy }: { enemy: IEnemyView }) {
                 </TabsPanel>
                 <TabsPanel value="skills">
                     <SkillsTab enemy={enemy} phases={phases} />
+                </TabsPanel>
+                <TabsPanel value="chibi">
+                    <EnemyChibiTab key={enemy.enemyId} enemyId={enemy.enemyId} />
                 </TabsPanel>
             </div>
         </Tabs>

@@ -291,7 +291,10 @@ fn process_bundle(
     }
 
     let mut exported = 0;
-    let is_spine_bundle = extract_spine && spine::detect_spine_bundle(&bundle_subdir, input_dir);
+    let is_enemy_spine_bundle =
+        extract_spine && spine::detect_enemy_spine_bundle(&bundle_subdir, input_dir);
+    let is_spine_bundle = (extract_spine && spine::detect_spine_bundle(&bundle_subdir, input_dir))
+        || is_enemy_spine_bundle;
     let is_portrait_bundle =
         extract_portrait && portrait::detect_portrait_bundle(&bundle_subdir, input_dir);
     let needs_phase2 = extract_image || extract_text || extract_audio;
@@ -321,11 +324,22 @@ fn process_bundle(
             }
         }
 
-        let (spine_assets, claimed) = spine::collect_spine_assets(&spine_objects);
+        let (spine_assets, claimed) = if is_enemy_spine_bundle {
+            spine::collect_enemy_spine_assets(&spine_objects)
+        } else {
+            spine::collect_spine_assets(&spine_objects)
+        };
         if !spine_assets.is_empty() {
-            let char_name = spine::char_name_from_bundle(&bundle_subdir);
-            let count =
-                spine::export_spine_assets(&spine_assets, output_dir, &char_name, &resources);
+            // Enemy pack bundles hold many enemies; each asset derives its own
+            // directory from its skel name instead of the bundle name.
+            let char_name =
+                (!is_enemy_spine_bundle).then(|| spine::char_name_from_bundle(&bundle_subdir));
+            let count = spine::export_spine_assets(
+                &spine_assets,
+                output_dir,
+                char_name.as_deref(),
+                &resources,
+            );
             exported += count;
         }
         // Drop spine_objects before Phase 2 to free memory

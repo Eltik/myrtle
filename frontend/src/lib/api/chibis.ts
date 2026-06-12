@@ -44,3 +44,20 @@ export function chibisQueryOptions(server: "en" | "cn" = "en") {
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
+
+// Enemy chibis reuse the same response shape; `operatorCode` carries the
+// enemy id (e.g. "enemy_1000_gopro") and skins are alternate in-fight forms.
+export const getEnemyChibisFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/enemy-chibis");
+    if (!res.ok) throw new Error(`Failed to load enemy chibis: ${res.status}`);
+    return (await res.json()) as IChibiResponse;
+});
+
+export function enemyChibisQueryOptions() {
+    return queryOptions({
+        queryKey: ["enemy-chibis"],
+        queryFn: () => getEnemyChibisFn(),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}

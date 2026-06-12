@@ -1,6 +1,7 @@
 use std::{collections::HashMap, path::Path, sync::Arc};
 
 use crate::core::gamedata::types::chibi::{ChibiCharacter, ChibiData, ChibiSkin, SpineFiles};
+use crate::core::gamedata::types::enemy::EnemyHandbook;
 
 const ANIM_DIRS: &[(&str, &str)] = &[
     ("BattleFront", "front"),
@@ -64,6 +65,68 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
                 skin.animation_types.insert(anim_key.to_owned(), spine);
                 skin.has_spine_data = true;
             }
+        }
+    }
+
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
+        .iter()
+        .map(|c| (c.operator_code.clone(), Arc::clone(c)))
+        .collect();
+
+    ChibiData {
+        raw_items: Vec::new(),
+        characters: characters_arc,
+        by_operator,
+    }
+}
+
+/// Build chibi data for enemies from `spine/Enemy/`.
+///
+/// Every spine set is its own enemy: `_N`-suffixed stems like
+/// `enemy_1000_gopro_2` are distinct handbook entries ("Hound Pro"), not
+/// alternate forms of the base enemy. The unpacker groups related ids into
+/// one directory purely for storage, so walk the sets (not the directories)
+/// and key each character by its full file stem, joining display names from
+/// the enemy handbook. Enemies only have a battle-facing pose, so each
+/// character gets a single "default" skin with a "front" animation type.
+pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> ChibiData {
+    let enemy_dir = assets_dir.join("spine").join("Enemy");
+    let mut characters: HashMap<String, ChibiCharacter> = HashMap::new();
+
+    let entries = std::fs::read_dir(&enemy_dir);
+    for entry in entries.into_iter().flatten().flatten() {
+        if !entry.file_type().is_ok_and(|t| t.is_dir()) {
+            continue;
+        }
+        let Some(dir_name) = entry.file_name().to_str().map(String::from) else {
+            continue;
+        };
+
+        let base_url = format!("/spine/Enemy/{dir_name}");
+        for (stem, spine) in collect_all_spine_sets(&entry.path(), &base_url) {
+            let name = enemies
+                .enemy_data
+                .get(&stem)
+                .map_or_else(|| stem.clone(), |e| e.name.clone());
+
+            let mut animation_types = HashMap::new();
+            animation_types.insert("front".to_owned(), spine);
+
+            characters.insert(
+                stem.clone(),
+                ChibiCharacter {
+                    operator_code: stem.clone(),
+                    name,
+                    path: stem,
+                    skins: vec![ChibiSkin {
+                        name: "default".to_owned(),
+                        path: base_url.clone(),
+                        has_spine_data: true,
+                        animation_types,
+                    }],
+                },
+            );
         }
     }
 

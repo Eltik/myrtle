@@ -44,6 +44,7 @@ fn serialize_resource(data: &GameData, resource: &str) -> Result<Value, ApiError
         "voices" => serde_json::to_value(&data.voices),
         "handbook" => serde_json::to_value(&data.handbook),
         "chibis" => serde_json::to_value(&data.chibis),
+        "enemy-chibis" => serde_json::to_value(&data.enemy_chibis),
         "trust" => serde_json::to_value(&data.favor),
         "ranges" => serde_json::to_value(&data.ranges),
         _ => return Err(ApiError::NotFound),
