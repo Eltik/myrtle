@@ -80,11 +80,11 @@ Each component has its own README with detailed documentation.
 
 ## Tech Stack
 
-| Component | Stack |
-|-----------|-------|
-| Backend | Rust (Edition 2024), Axum 0.8, Tokio, SQLx + PostgreSQL, Redis, JWT |
-| Frontend | TanStack Start (SSR), React 19, TypeScript 5.7, Tailwind CSS v4, Vite 7, Bun, Biome |
-| Assets | Rust (Edition 2024) downloader + unpacker, Node.js interactive runner |
+| Component | Stack                                                                               |
+| --------- | ----------------------------------------------------------------------------------- |
+| Backend   | Rust (Edition 2024), Axum 0.8, Tokio, SQLx + PostgreSQL, Redis, JWT                 |
+| Frontend  | TanStack Start (SSR), React 19, TypeScript 5.7, Tailwind CSS v4, Vite 7, Bun, Biome |
+| Assets    | Rust (Edition 2024) downloader + unpacker, Node.js interactive runner               |
 
 ## Quick Start
 
@@ -132,14 +132,14 @@ For manual (non-Docker) setup, see [BUILD.md](BUILD.md) and the per-component RE
 
 ## Documentation
 
-| Component | Documentation |
-|-----------|---------------|
-| Backend API | [backend/README.md](backend/README.md) |
-| Frontend | [frontend/README.md](frontend/README.md) |
-| Asset Pipeline | [assets/README.md](assets/README.md) |
-| Developer Setup | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Manual Build | [BUILD.md](BUILD.md) |
-| DPS Calculator | [backend/DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) |
+| Component       | Documentation                                          |
+| --------------- | ------------------------------------------------------ |
+| Backend API     | [backend/README.md](backend/README.md)                 |
+| Frontend        | [frontend/README.md](frontend/README.md)               |
+| Asset Pipeline  | [assets/README.md](assets/README.md)                   |
+| Developer Setup | [CONTRIBUTING.md](CONTRIBUTING.md)                     |
+| Manual Build    | [BUILD.md](BUILD.md)                                   |
+| DPS Calculator  | [backend/DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) |
 
 ## Contributing
 

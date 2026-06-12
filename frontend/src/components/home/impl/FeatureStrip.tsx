@@ -18,7 +18,7 @@ const FEATURES = [
         t: "Your account, mirrored",
         d: "Link a Yostar account and see your live box, E2 progress, base layout in real time.",
         accent: "mint",
-        href: "/players/leaderboard",
+        href: "/user/leaderboard",
     },
     {
         icon: "bolt",
@@ -26,7 +26,7 @@ const FEATURES = [
         t: "DPS, recruit, randomizer",
         d: "Interactive calculators and community-maintained tier lists for every stage meta.",
         accent: "amber",
-        href: "/tools/recruit",
+        href: "/tools/recruitment",
     },
 ];
 

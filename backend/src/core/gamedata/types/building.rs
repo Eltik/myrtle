@@ -73,6 +73,10 @@ pub struct BuildingDataFile {
     /// Morale cost adjustments by operator count in trading posts.
     #[serde(default)]
     pub trading_manpower_cost_by_num: Vec<i32>,
+
+    /// Workshop recipes/formulas.
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub workshop_formulas: HashMap<String, WorkshopFormula>,
 }
 
 // ─── Buffs ───────────────────────────────────────────────────────────────────
@@ -430,4 +434,29 @@ pub struct WorkshopData {
 pub struct WorkshopPhase {
     /// Labor efficiency multiplier.
     pub manpower_factor: f64,
+}
+
+/// A workshop recipe definition
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WorkshopFormula {
+    pub formula_id: String,
+    pub item_id: String,
+    pub count: i32,
+    pub rarity: i32,
+    pub gold_cost: i64,
+    pub ap_cost: i64,
+    #[serde(default)]
+    pub costs: Vec<FormulaCost>,
+    #[serde(default)]
+    pub require_rooms: Vec<FormulaRoomReq>,
+    #[serde(default)]
+    pub require_stages: Vec<WorkshopFormulaUnlockStage>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WorkshopFormulaUnlockStage {
+    pub stage_id: String,
+    pub rank: i32,
 }

@@ -1,6 +1,7 @@
 pub mod audit;
 pub mod gacha;
 pub mod operator_notes;
+pub mod planner;
 pub mod roster;
 pub mod score;
 pub mod tier_list;

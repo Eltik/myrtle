@@ -114,6 +114,7 @@ export interface IOperatorPhase {
     maxLevel: number;
     attributesKeyFrames: IAttributeKeyFrame[];
     evolveCost: IEvolveCost[] | null;
+    levelUpCost: ILevelUpCostItem[] | null;
 }
 
 export interface ILevelUpCostItem {
@@ -454,7 +455,6 @@ export interface IDrone {
 
 export interface IOperatorListItem {
     id: string | null;
-    /** Source server, set by the detail fetch so asset URLs target the right region. */
     server?: "en" | "cn";
     name: string;
     description: string;

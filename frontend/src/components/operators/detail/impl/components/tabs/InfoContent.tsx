@@ -51,21 +51,67 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     const descriptionBlackboard = useMemo(() => combinedDescriptionBlackboard(operator), [operator]);
     const description = useMemo(() => descriptionToHtml(operator.description ?? "", descriptionBlackboard), [operator.description, descriptionBlackboard]);
 
-    const stats = useMemo(() => getOperatorAttributeStats(operator, { phaseIndex, favorPoint: trustLevel, potentialRank, moduleId, moduleLevel }, level), [operator, phaseIndex, level, trustLevel, potentialRank, moduleId, moduleLevel]);
+    const stats = useMemo(
+        () =>
+            getOperatorAttributeStats(
+                operator,
+                {
+                    phaseIndex,
+                    favorPoint: trustLevel,
+                    potentialRank,
+                    moduleId,
+                    moduleLevel,
+                },
+                level,
+            ),
+        [operator, phaseIndex, level, trustLevel, potentialRank, moduleId, moduleLevel],
+    );
 
     const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : (n ?? "-"));
 
     const leftStats: Stat[] = [
-        { iconURL: "/stat-icons/HP.png", label: "Health", value: fmt(stats?.maxHp) },
-        { iconURL: "/stat-icons/DEF.png", label: "Defense", value: fmt(stats?.def) },
-        { iconURL: "/stat-icons/RES.png", label: "Arts Resistance", value: fmt(stats?.magicResistance) },
-        { iconURL: "/stat-icons/RDP.png", label: "Redeploy Time", value: `${stats?.respawnTime ?? 0} sec` },
+        {
+            iconURL: "/stat-icons/HP.png",
+            label: "Health",
+            value: fmt(stats?.maxHp),
+        },
+        {
+            iconURL: "/stat-icons/DEF.png",
+            label: "Defense",
+            value: fmt(stats?.def),
+        },
+        {
+            iconURL: "/stat-icons/RES.png",
+            label: "Arts Resistance",
+            value: fmt(stats?.magicResistance),
+        },
+        {
+            iconURL: "/stat-icons/RDP.png",
+            label: "Redeploy Time",
+            value: `${stats?.respawnTime ?? 0} sec`,
+        },
     ];
     const rightStats: Stat[] = [
-        { iconURL: "/stat-icons/ATK.png", label: "Attack Power", value: fmt(stats?.atk) },
-        { iconURL: "/stat-icons/ASPD.png", label: "Attack Interval", value: `${stats?.attackSpeed?.toFixed(2) ?? "0.00"} sec` },
-        { iconURL: "/stat-icons/BLOCK.png", label: "Block", value: fmt(stats?.blockCnt) },
-        { iconURL: "/stat-icons/COST.png", label: "DP Cost", value: fmt(stats?.cost) },
+        {
+            iconURL: "/stat-icons/ATK.png",
+            label: "Attack Power",
+            value: fmt(stats?.atk),
+        },
+        {
+            iconURL: "/stat-icons/ASPD.png",
+            label: "Attack Interval",
+            value: `${stats?.attackSpeed?.toFixed(2) ?? "0.00"} sec`,
+        },
+        {
+            iconURL: "/stat-icons/BLOCK.png",
+            label: "Block",
+            value: fmt(stats?.blockCnt),
+        },
+        {
+            iconURL: "/stat-icons/COST.png",
+            label: "DP Cost",
+            value: fmt(stats?.cost),
+        },
     ];
 
     return (
@@ -198,7 +244,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 </Tooltip>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
-                                {Array.from({ length: (operator.potentialRanks?.length ?? 0) + 1 }).map((_, idx) => {
+                                {Array.from({
+                                    length: (operator.potentialRanks?.length ?? 0) + 1,
+                                }).map((_, idx) => {
                                     const rank = idx === 0 ? null : operator.potentialRanks?.[idx - 1];
                                     return (
                                         // biome-ignore lint/suspicious/noArrayIndexKey: potential rank is positionally stable
@@ -461,7 +509,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                                         <span
                                                                             className="text-muted-foreground text-xs"
                                                                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
-                                                                            dangerouslySetInnerHTML={{ __html: baseHtml }}
+                                                                            dangerouslySetInnerHTML={{
+                                                                                __html: baseHtml,
+                                                                            }}
                                                                         />
                                                                     </div>
                                                                 )}
@@ -499,10 +549,18 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             key: string;
                             name: string | null;
                             description: string;
-                            blackboard: { key: string; value: number; valueStr?: string | null }[];
+                            blackboard: {
+                                key: string;
+                                value: number;
+                                valueStr?: string | null;
+                            }[];
                             requiredPotentialRank: number;
                             baseDescription: string | null;
-                            baseBlackboard: { key: string; value: number; valueStr?: string | null }[];
+                            baseBlackboard: {
+                                key: string;
+                                value: number;
+                                valueStr?: string | null;
+                            }[];
                             modifiedByModule: boolean;
                         };
 

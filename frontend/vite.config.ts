@@ -38,6 +38,12 @@ const config = defineConfig({
             },
         ],
     },
+    server: {
+        watch: {
+            usePolling: true,
+            interval: 100,
+        },
+    },
     plugins: [externalizeResvg(), devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
     optimizeDeps: { exclude: ["@resvg/resvg-js"] },
 });

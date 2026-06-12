@@ -6,6 +6,7 @@ pub mod building;
 pub mod campaign;
 pub mod chibi;
 pub mod climb_tower;
+pub mod consts;
 pub mod enemy;
 pub mod gacha;
 pub mod handbook;
@@ -30,6 +31,7 @@ use activity::ActivityBasicInfo;
 use building::BuildingDataFile;
 use campaign::CampaignRotations;
 use chibi::ChibiData;
+use consts::GameDataConst;
 use enemy::EnemyHandbook;
 use gacha::GachaData;
 use handbook::Handbook;
@@ -73,6 +75,7 @@ pub struct GameData {
     pub stage_universe: StageUniverse,
     pub sandbox_universe: SandboxUniverse,
     pub campaign_rotations: CampaignRotations,
+    pub consts: GameDataConst,
 }
 
 impl GameData {

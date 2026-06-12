@@ -17,6 +17,16 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M8 7h8M8 12h2M14 12h2M8 17h2M14 17h2" />
                 </svg>
             );
+        case "list-todo":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M13 5h8" />
+                    <path d="M13 12h8" />
+                    <path d="M13 19h8" />
+                    <path d="m3 17 2 2 4-4" />
+                    <rect x="3" y="4" width="6" height="6" rx="1" />
+                </svg>
+            );
         case "chart":
             return (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
