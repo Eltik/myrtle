@@ -201,8 +201,9 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
 }
 
 /// Class IDs needed for spine `MonoBehaviour` reference chain:
-/// 114=MonoBehaviour, 49=TextAsset, 21=Material, 28=Texture2D
-const SPINE_CLASS_IDS: &[i32] = &[114, 49, 21, 28];
+/// 1=GameObject (front/back classification), 114=MonoBehaviour, 49=TextAsset,
+/// 21=Material, 28=Texture2D
+const SPINE_CLASS_IDS: &[i32] = &[1, 114, 49, 21, 28];
 
 /// Map local (`m_FileID == 0`) object `path_ids` to their intended output directory,
 /// taken from the bundle's `AssetBundle` (class 142) `m_Container`.

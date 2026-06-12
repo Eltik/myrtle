@@ -119,6 +119,18 @@ pub fn collect_spine_assets(
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
+        // Get the owning GameObject's name ("Front"/"Back" for battle spines).
+        // Front and back skeletons can share one atlas, so the GameObject name
+        // is the only reliable front/back discriminator.
+        let game_object_name = mecanim_val
+            .get("m_GameObject")
+            .and_then(get_path_id)
+            .and_then(|pid| all_objects.get(&pid))
+            .and_then(|(class_id, go_val)| (*class_id == 1).then_some(go_val))
+            .and_then(|go_val| go_val.get("m_Name"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
         // Follow skeletonDataAsset → SkeletonData MonoBehaviour
         let skel_data_pid = match mecanim_val.get("skeletonDataAsset").and_then(get_path_id) {
             Some(pid) if pid != 0 => pid,
@@ -236,7 +248,7 @@ pub fn collect_spine_assets(
 
         // Classify the spine asset
         let base_name = skel_name.strip_suffix(".skel").unwrap_or(skel_name);
-        let category = classify_spine(base_name, anim_name, &skel_bytes, &atlas_text);
+        let category = classify_spine(base_name, anim_name, game_object_name, &atlas_text);
 
         // Claim all path_ids in this spine instance
         claimed.insert(*mecanim_pid);
@@ -261,14 +273,18 @@ pub fn collect_spine_assets(
 }
 
 /// Classify a spine asset into a category.
-/// Matches the old Python logic:
 ///   1. skel name starts with "dyn_" → `DynIllust`
 ///   2. _animationName == "Relax" OR skel name starts with "build_" → Building
-///   3. atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
+///   3. owning `GameObject` named "Front"/"Back" → `BattleFront`/`BattleBack`
+///   4. fallback: atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
+///
+/// Step 3 is required for correctness: front and back battle skeletons often
+/// share a single atlas (e.g. `char_1048_orchd2`), so the atlas heuristic
+/// classifies both the same way and one overwrites the other on export.
 fn classify_spine(
     skel_name: &str,
     anim_name: &str,
-    _skel_data: &[u8],
+    game_object_name: &str,
     atlas_text: &str,
 ) -> SpineCategory {
     let name_lower = skel_name.to_lowercase();
@@ -283,7 +299,15 @@ fn classify_spine(
         return SpineCategory::Building;
     }
 
-    // 3. Front vs back based on atlas region prefixes
+    // 3. Battle spines hang off GameObjects literally named "Front"/"Back"
+    if game_object_name.eq_ignore_ascii_case("front") {
+        return SpineCategory::BattleFront;
+    }
+    if game_object_name.eq_ignore_ascii_case("back") {
+        return SpineCategory::BattleBack;
+    }
+
+    // 4. Fallback: front vs back based on atlas region prefixes
     let atlas_lower = atlas_text.to_lowercase();
     let front_count = atlas_lower.matches("\nf_").count() + atlas_lower.matches("\nc_").count();
     let back_count = atlas_lower.matches("\nb_").count();
