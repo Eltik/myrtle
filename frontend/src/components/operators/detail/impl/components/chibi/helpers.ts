@@ -3,7 +3,7 @@ import type { Spine } from "pixi-spine";
 import { env } from "#/env";
 import type { IChibiCharacter, IChibiSkin, IChibiSpineFiles } from "#/lib/api/chibis";
 import { loadImage } from "#/lib/utils";
-import type { ViewType } from "./constants";
+import { CHIBI_SCALE, EXPORT_HEIGHT, EXPORT_PADDING, EXPORT_WIDTH, type ViewType } from "./constants";
 
 let spineModulesPromise: Promise<{
     Spine: typeof import("pixi-spine").Spine;
@@ -171,6 +171,85 @@ export function getChibiSkinData(chibi: IChibiCharacter, skinName: string, viewT
     }
 
     return null;
+}
+
+export interface IAnimationBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+const BOUNDS_SAMPLES = 40;
+
+export function measureAnimationBounds(spine: Spine, animationName: string, samples = BOUNDS_SAMPLES): IAnimationBounds | null {
+    const animation = spine.spineData.findAnimation(animationName);
+    if (!animation) return null;
+
+    const prevTimeScale = spine.state.timeScale;
+    spine.state.timeScale = 1;
+    spine.state.clearTracks();
+    spine.skeleton.setToSetupPose();
+    spine.state.setAnimation(0, animationName, true);
+
+    const step = animation.duration > 0 ? animation.duration / samples : 0;
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (let i = 0; i <= samples; i++) {
+        spine.update(i === 0 ? 0 : step);
+        const b = spine.getLocalBounds();
+        if (b.width > 0 && b.height > 0) {
+            minX = Math.min(minX, b.x);
+            minY = Math.min(minY, b.y);
+            maxX = Math.max(maxX, b.x + b.width);
+            maxY = Math.max(maxY, b.y + b.height);
+        }
+        if (step === 0) break;
+    }
+
+    spine.state.timeScale = prevTimeScale;
+
+    if (maxX - minX <= 0 || maxY - minY <= 0) return null;
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+export function chibiMaxScale(canvasWidth: number, canvasHeight: number): number {
+    return Math.min(canvasWidth / EXPORT_WIDTH, canvasHeight / EXPORT_HEIGHT) * CHIBI_SCALE;
+}
+
+export interface IExportLayout {
+    width: number;
+    height: number;
+    chibiScale: number;
+}
+
+export function computeExportLayout(bounds: IAnimationBounds | null, scaleSetting: number): IExportLayout {
+    const baseWidth = Math.round(EXPORT_WIDTH * scaleSetting);
+    const baseHeight = Math.round(EXPORT_HEIGHT * scaleSetting);
+    const chibiScale = chibiMaxScale(baseWidth, baseHeight);
+
+    let width = baseWidth;
+    let height = baseHeight;
+    if (bounds) {
+        width = Math.max(baseWidth, Math.ceil(bounds.width * chibiScale) + EXPORT_PADDING * 2);
+        height = Math.max(baseHeight, Math.ceil(bounds.height * chibiScale) + EXPORT_PADDING * 2);
+    }
+    // H.264 encoders require even dimensions.
+    width += width % 2;
+    height += height % 2;
+
+    return { width, height, chibiScale };
+}
+
+export function gifFrameDelayMs(fps: number): number {
+    return Math.max(20, Math.round(1000 / fps / 10) * 10);
+}
+
+export function effectiveGifFps(fps: number): number {
+    return 1000 / gifFrameDelayMs(fps);
 }
 
 export function getAvailableViewTypes(chibi: IChibiCharacter | null, skinName: string | null): ViewType[] {
