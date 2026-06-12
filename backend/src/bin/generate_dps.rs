@@ -38,6 +38,7 @@
     clippy::branches_sharing_code
 )]
 
+use backend::app::state::{default_bin_server_from_env, derive_game_data_dir};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -561,9 +562,11 @@ fn module_exists_in_game_data(
 fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFormula>) {
     println!("\n=== Generating expected_dps.json ===");
 
-    // Load existing module IDs from game data to filter out non-existent modules
-    let game_data_dir =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
+    // Load existing module IDs from game data to filter out non-existent
+    // modules. ASSETS_DIR is a base dir; data loads from `{base}/{server}/
+    // gamedata/excel`, with the server selected by BIN_SERVER/SERVERS.
+    let base = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let game_data_dir = derive_game_data_dir(&base, default_bin_server_from_env());
     let equip_keys = load_equip_keys(&format!("{game_data_dir}/battle_equip_table.json"));
     println!("Loaded {} module IDs from game data", equip_keys.len());
 
