@@ -3,12 +3,14 @@ import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { Hero } from "./impl/components/Hero";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
 import { EnemiesTab } from "./impl/components/tabs/Enemies/EnemiesTab";
 import { ItemsTab } from "./impl/components/tabs/Items/ItemsTab";
+import { PlansTab } from "./impl/components/tabs/Plans/PlansTab";
 import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
 import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
@@ -35,6 +37,7 @@ export function UserProfile() {
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
     const { data: score, isLoading: isScoreLoading } = useQuery(userScoreQueryOptions(id));
+    const { data: publicPlans } = useQuery(publicPlansQueryOptions(id));
     // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
@@ -49,11 +52,24 @@ export function UserProfile() {
         () => [
             { id: "stats" as TabId, label: "Stats" },
             { id: "score" as TabId, label: "Score" },
-            { id: "roster" as TabId, label: "Roster", count: data?.operator_count ?? roster?.length ?? undefined },
-            { id: "inventory" as TabId, label: "Inventory", count: data?.item_count ?? inventory?.length ?? undefined },
-            { id: "enemies" as TabId, label: "Enemies", count: encounteredEnemies?.encounteredCount ?? undefined },
+            {
+                id: "roster" as TabId,
+                label: "Roster",
+                count: data?.operator_count ?? roster?.length ?? undefined,
+            },
+            { id: "plans" as TabId, label: "Plans", count: publicPlans?.length },
+            {
+                id: "inventory" as TabId,
+                label: "Inventory",
+                count: data?.item_count ?? inventory?.length ?? undefined,
+            },
+            {
+                id: "enemies" as TabId,
+                label: "Enemies",
+                count: encounteredEnemies?.encounteredCount ?? undefined,
+            },
         ],
-        [data, roster, inventory, encounteredEnemies],
+        [data, roster, inventory, encounteredEnemies, publicPlans],
     );
 
     if (isLoading) {
@@ -142,6 +158,7 @@ export function UserProfile() {
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
+            {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
             {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} uid={id} />}
             {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}

@@ -29,6 +29,9 @@ export const env = createEnv({
     runtimeEnv: {
         ...import.meta.env,
         BACKEND_URL: process.env.BACKEND_URL,
+        VITE_BACKEND_URL: process.env.VITE_BACKEND_URL ?? import.meta.env.VITE_BACKEND_URL,
+        VITE_SITE_URL: process.env.VITE_SITE_URL ?? import.meta.env.VITE_SITE_URL,
+        VITE_APP_TITLE: process.env.VITE_APP_TITLE ?? import.meta.env.VITE_APP_TITLE,
         NODE_ENV: process.env.NODE_ENV,
         GITHUB_REPO: process.env.GITHUB_REPO,
         GITHUB_TOKEN: process.env.GITHUB_TOKEN,

@@ -21,6 +21,7 @@ pub mod inventory;
 pub mod leaderboard;
 pub mod operator_notes;
 pub mod operators;
+pub mod planner;
 pub mod roster;
 pub mod search;
 pub mod skins;
@@ -109,6 +110,17 @@ pub fn router() -> Router<AppState> {
         )
         .route("/friends", get(social::get_friends))
         .route("/players/search", get(social::search_players))
+        .route("/plans", get(planner::list))
+        .route("/plans/public", get(planner::list_public))
+        .route(
+            "/plan/{operator_id}",
+            post(planner::upsert).delete(planner::delete),
+        )
+        .route("/plan/group", post(planner::create_group))
+        .route(
+            "/plan/group/{group_name}",
+            put(planner::update_group).delete(planner::delete_group),
+        )
         .route("/upcoming", get(operators::upcoming))
         .route("/{server}/upcoming", get(operators::upcoming_srv))
         .route("/operators/{id}", get(operators::detail))

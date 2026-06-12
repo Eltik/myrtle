@@ -2,7 +2,7 @@
 set -e
 
 REGION=${1:-en}
-THREADS=${1:-4}
+THREADS=${2:-4}
 
 echo "Extracting $REGION assets with $THREADS threads..."
 unpacker extract \
