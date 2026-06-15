@@ -23,6 +23,8 @@ const TABS: { key: ClientGachaGroup; label: string }[] = [
     { key: "special", label: "Kernel" },
 ];
 
+const RARITY_FILTERS = [6, 5, 4, 3] as const;
+
 const PAGE_SIZE = 50;
 
 function fmtDateTime(ts: number): string {
@@ -36,14 +38,14 @@ function fmtDateTime(ts: number): string {
     });
 }
 
-function PullTable({ items, operatorsById, bannersById, total }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number }) {
+function PullTable({ items, operatorsById, bannersById, total, emptyMessage }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number; emptyMessage?: string }) {
     const [page, setPage] = useState(0);
     const sorted = useMemo(() => [...items].sort((a, b) => b.at - a.at), [items]);
     const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
     const pageItems = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     if (sorted.length === 0) {
-        return <div className="py-10 text-center font-sans text-muted-foreground text-sm">No pulls recorded for this banner type.</div>;
+        return <div className="py-10 text-center font-sans text-muted-foreground text-sm">{emptyMessage ?? "No pulls recorded for this banner type."}</div>;
     }
 
     return (
@@ -131,6 +133,29 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
 
 export function BannerHistory({ records, operatorsById, bannersById, isLoading }: IBannerHistoryProps) {
     const [activeTab, setActiveTab] = useState<ClientGachaGroup>("limited");
+    const [activeRarities, setActiveRarities] = useState<Set<number>>(() => new Set(RARITY_FILTERS));
+
+    const activeRecords = records ? records[activeTab].records : [];
+
+    const rarityCounts = useMemo(() => {
+        const counts = new Map<number, number>();
+        for (const item of activeRecords) {
+            const star = Number(item.star);
+            counts.set(star, (counts.get(star) ?? 0) + 1);
+        }
+        return counts;
+    }, [activeRecords]);
+
+    const filteredRecords = useMemo(() => activeRecords.filter((item) => activeRarities.has(Number(item.star))), [activeRecords, activeRarities]);
+
+    const toggleRarity = (rarity: number) => {
+        setActiveRarities((prev) => {
+            const next = new Set(prev);
+            if (next.has(rarity)) next.delete(rarity);
+            else next.add(rarity);
+            return next;
+        });
+    };
 
     if (isLoading) {
         return (
@@ -187,7 +212,41 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 })}
             </div>
 
-            <PullTable key={activeTab} items={records[activeTab].records} operatorsById={operatorsById} bannersById={bannersById} total={records[activeTab].total} />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">Rarity</span>
+                <div className="inline-flex gap-0.75 rounded-[9px] border border-border bg-muted p-0.75">
+                    {RARITY_FILTERS.map((rarity) => {
+                        const isActive = activeRarities.has(rarity);
+                        const count = rarityCounts.get(rarity) ?? 0;
+                        const isDisabled = count === 0;
+                        return (
+                            <button
+                                key={rarity}
+                                type="button"
+                                aria-pressed={isActive}
+                                aria-label={`${rarity} star (${count} pulls)`}
+                                disabled={isDisabled}
+                                onClick={() => toggleRarity(rarity)}
+                                className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:enabled:text-foreground"}`}
+                            >
+                                <span className="tabular-nums" style={isActive ? { color: rarityStarColor(rarity) } : undefined}>
+                                    {rarity}★
+                                </span>
+                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>{formatNumber(count)}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <PullTable
+                key={`${activeTab}-${RARITY_FILTERS.filter((r) => activeRarities.has(r)).join("")}`}
+                items={filteredRecords}
+                operatorsById={operatorsById}
+                bannersById={bannersById}
+                total={filteredRecords.length}
+                emptyMessage={activeRarities.size === 0 ? "Select at least one rarity to display pulls." : activeRarities.size === RARITY_FILTERS.length ? "No pulls recorded for this banner type." : "No pulls match the selected rarity filter."}
+            />
         </section>
     );
 }

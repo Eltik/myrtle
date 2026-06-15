@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { env } from "#/env";
 import { APPLY_WAY_DISPLAY, LIST_GRID_COLS } from "../constants";
@@ -9,10 +10,9 @@ import { EnemyPlaceholder } from "./EnemyPlaceholder";
 interface IEnemyCardListProps {
     enemy: IEnemyView;
     statMax: IEnemyStatMaxByLevel;
-    onOpen: (enemy: IEnemyView) => void;
 }
 
-export function EnemyCardList({ enemy, statMax, onOpen }: IEnemyCardListProps) {
+export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
@@ -22,9 +22,9 @@ export function EnemyCardList({ enemy, statMax, onOpen }: IEnemyCardListProps) {
     const hpPct = tierMaxHp > 0 ? Math.min(100, (enemy.flatStats.maxHp / tierMaxHp) * 100) : 0;
 
     return (
-        <button
-            type="button"
-            onClick={() => onOpen(enemy)}
+        <Link
+            to="/enemies/$id"
+            params={{ id: enemy.enemyId }}
             className="enemy-row group relative grid w-full cursor-pointer items-center gap-3.5 rounded-lg border border-transparent bg-card/50 px-3.5 py-2.5 text-left transition-colors hover:border-border hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-[900px]:grid-cols-[48px_1fr_auto]! max-[900px]:[&>:nth-child(4)]:hidden max-[900px]:[&>:nth-child(5)]:hidden"
             style={{ gridTemplateColumns: LIST_GRID_COLS }}
             aria-label={`${enemy.name} (${enemy.enemyIndex})`}
@@ -69,6 +69,6 @@ export function EnemyCardList({ enemy, statMax, onOpen }: IEnemyCardListProps) {
                     <div className="h-full" style={{ width: `${hpPct}%`, background: tok.accent }} />
                 </div>
             </div>
-        </button>
+        </Link>
     );
 }

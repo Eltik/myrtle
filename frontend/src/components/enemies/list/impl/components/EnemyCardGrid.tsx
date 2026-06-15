@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { env } from "#/env";
 import { cn } from "#/lib/utils";
@@ -10,10 +11,9 @@ import { EnemyPlaceholder } from "./EnemyPlaceholder";
 interface IEnemyCardGridProps {
     enemy: IEnemyView;
     statMax: IEnemyStatMaxByLevel;
-    onOpen: (enemy: IEnemyView) => void;
 }
 
-export function EnemyCardGrid({ enemy, statMax, onOpen }: IEnemyCardGridProps) {
+export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
@@ -21,9 +21,9 @@ export function EnemyCardGrid({ enemy, statMax, onOpen }: IEnemyCardGridProps) {
     const tierMax = statMax[enemy.enemyLevel];
 
     return (
-        <button
-            type="button"
-            onClick={() => onOpen(enemy)}
+        <Link
+            to="/enemies/$id"
+            params={{ id: enemy.enemyId }}
             className={cn(
                 "enemy-card group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-md border bg-card p-0 text-left hover:rounded-lg hover:border-[color-mix(in_oklch,var(--primary)_45%,var(--border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 styles["card-hover-transition"],
@@ -59,6 +59,6 @@ export function EnemyCardGrid({ enemy, statMax, onOpen }: IEnemyCardGridProps) {
                     <StatBar label="DEF" value={enemy.flatStats.def} max={tierMax.def} color="color-mix(in oklch, var(--foreground) 30%, transparent)" />
                 </div>
             </div>
-        </button>
+        </Link>
     );
 }

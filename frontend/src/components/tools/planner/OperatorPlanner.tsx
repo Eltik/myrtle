@@ -102,7 +102,7 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                         </div>
                     ) : (
                         <span className="text-muted-foreground/50" title={item.craftReason}>
-                            —
+                            -
                         </span>
                     )}
                 </td>

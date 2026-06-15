@@ -1,36 +1,18 @@
 import type React from "react";
 import { useMemo, useState } from "react";
-import { Dialog, DialogPopup } from "#/components/ui/dialog";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import { env } from "#/env";
 import type { IEnemyAttributes, IEnemyLevelStats, IEnemySkill } from "#/lib/api/enemies";
-import { APPLY_WAY_DISPLAY } from "../constants";
-import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
-import type { IEnemyView } from "../types";
-import { LevelBadge } from "./atoms";
-import { EnemyChibiTab } from "./EnemyChibi";
-import { EnemyPlaceholder } from "./EnemyPlaceholder";
+import { LevelBadge } from "../../list/impl/components/atoms";
+import { EnemyPlaceholder } from "../../list/impl/components/EnemyPlaceholder";
+import { APPLY_WAY_DISPLAY } from "../../list/impl/constants";
+import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../../list/impl/tokens";
+import type { IEnemyView } from "../../list/impl/types";
 
-interface IEnemyDialogProps {
-    enemy: IEnemyView | null;
-    onClose: () => void;
-}
+// ============================================================================
+// Hero
+// ============================================================================
 
-export function EnemyDialog({ enemy, onClose }: IEnemyDialogProps) {
-    const open = enemy !== null;
-    return (
-        <Dialog open={open} onOpenChange={(o) => (!o ? onClose() : undefined)}>
-            {enemy ? (
-                <DialogPopup className="flex h-[min(700px,90vh)] w-full max-w-190 flex-col overflow-hidden rounded-[14px] border border-border bg-card p-0">
-                    <DialogHeader enemy={enemy} />
-                    <DialogBody enemy={enemy} />
-                </DialogPopup>
-            ) : null}
-        </Dialog>
-    );
-}
-
-function DialogHeader({ enemy }: { enemy: IEnemyView }) {
+export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
@@ -38,32 +20,27 @@ function DialogHeader({ enemy }: { enemy: IEnemyView }) {
     const meta = [enemy.enemyIndex, enemy.race, enemy.applyWay ? APPLY_WAY_DISPLAY[enemy.applyWay] : null].filter(Boolean).join(" · ");
 
     return (
-        <div className="flex shrink-0 gap-3 border-border border-b px-4 py-3.5 sm:gap-4.5 sm:px-5 sm:py-4.5">
-            <div
-                className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[10px] border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-24 sm:w-24"
-                style={{
-                    borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder,
-                }}
-            >
-                {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={enemy.name} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain" /> : <EnemyPlaceholder className="absolute inset-0 h-full w-full p-2" />}
-                {enemy.enemyLevel !== "NORMAL" && <span aria-hidden="true" className="absolute right-0 bottom-0 left-0 h-0.5 sm:h-0.75" style={{ background: tok.accent }} />}
+        <div className="flex gap-4 rounded-[14px] border border-border bg-card p-4 sm:gap-5 sm:p-5">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
+                {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={enemy.name} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain" /> : <EnemyPlaceholder className="absolute inset-0 h-full w-full p-2.5" />}
+                {enemy.enemyLevel !== "NORMAL" && <span aria-hidden="true" className="absolute right-0 bottom-0 left-0 h-0.75" style={{ background: tok.accent }} />}
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-9 sm:gap-1.5 sm:pr-8">
-                <div className="flex items-center gap-2">
-                    <h2 className="m-0 truncate font-bold font-sans text-[17px] text-foreground leading-[1.15] tracking-tight sm:text-[22px] sm:leading-[1.1]">{enemy.name}</h2>
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="m-0 font-bold font-sans text-[20px] text-foreground leading-[1.1] tracking-tight sm:text-[26px]">{enemy.name}</h1>
                     <LevelBadge level={enemy.enemyLevel} />
                 </div>
-                {meta && <div className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:text-[11px] sm:tracking-[0.14em]">{meta}</div>}
+                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em] sm:text-[11px]">{meta}</div>}
 
                 {enemy.damageType.length > 0 && (
-                    <div className="mt-0.5 flex flex-wrap gap-1.5 sm:mt-1">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
                         {enemy.damageType.map((t) => {
                             const tk = DAMAGE_TOKENS[t];
                             return (
                                 <span
                                     key={t}
-                                    className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium font-sans text-[10.5px] text-foreground leading-none sm:px-2.25 sm:py-0.75 sm:text-[11px]"
+                                    className="inline-flex items-center gap-1.5 rounded-full border px-2.25 py-0.75 font-medium font-sans text-[11px] text-foreground leading-none"
                                     style={{
                                         borderColor: `color-mix(in oklch, ${tk.color} 40%, transparent)`,
                                         background: `color-mix(in oklch, ${tk.color} 12%, transparent)`,
@@ -81,49 +58,15 @@ function DialogHeader({ enemy }: { enemy: IEnemyView }) {
     );
 }
 
-function DialogBody({ enemy }: { enemy: IEnemyView }) {
-    const phases = enemy.stats?.levels ?? [];
-    return (
-        <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col gap-0">
-            <div className="shrink-0 border-border border-b px-4 pt-3 sm:px-5">
-                <TabsList className="mb-3">
-                    <TabsTab value="overview" className="h-8 text-[13px]">
-                        Overview
-                    </TabsTab>
-                    <TabsTab value="stats" className="h-8 text-[13px]">
-                        Stats
-                    </TabsTab>
-                    <TabsTab value="skills" className="h-8 text-[13px]">
-                        Skills
-                    </TabsTab>
-                    <TabsTab value="chibi" className="h-8 text-[13px]">
-                        Chibi
-                    </TabsTab>
-                </TabsList>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-                <TabsPanel value="overview">
-                    <OverviewTab enemy={enemy} />
-                </TabsPanel>
-                <TabsPanel value="stats">
-                    <StatsTab enemy={enemy} phases={phases} />
-                </TabsPanel>
-                <TabsPanel value="skills">
-                    <SkillsTab enemy={enemy} phases={phases} />
-                </TabsPanel>
-                <TabsPanel value="chibi">
-                    <EnemyChibiTab key={enemy.enemyId} enemyId={enemy.enemyId} />
-                </TabsPanel>
-            </div>
-        </Tabs>
-    );
-}
+// ============================================================================
+// Shared primitives
+// ============================================================================
 
 function Kicker({ children }: { children: React.ReactNode }) {
     return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
 }
 
-function SectionHead({ children }: { children: React.ReactNode }) {
+export function SectionHead({ children }: { children: React.ReactNode }) {
     return (
         <div className="mb-3 flex items-center gap-2.5">
             <Kicker>{children}</Kicker>
@@ -136,12 +79,25 @@ function descToHtml(text: string): string {
     return text.replace(/<@ba\.[a-z.]+>(.*?)<\/>/g, (_m, inner: string) => `<strong style="color: var(--foreground)">${inner}</strong>`);
 }
 
+function Meta({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
+            <div className="mb-1.25 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</div>
+            <div className="break-all font-medium font-sans text-[12.5px] text-foreground leading-[1.2]">{value}</div>
+        </div>
+    );
+}
+
+// ============================================================================
+// Overview
+// ============================================================================
+
 interface IAbilityGroup {
     title: string | null;
     items: { text: string; textFormat: string }[];
 }
 
-function OverviewTab({ enemy }: { enemy: IEnemyView }) {
+export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
     const groups = useMemo<IAbilityGroup[]>(() => {
         const out: IAbilityGroup[] = [];
         let cur: IAbilityGroup = { title: null, items: [] };
@@ -158,7 +114,7 @@ function OverviewTab({ enemy }: { enemy: IEnemyView }) {
     }, [enemy.abilityList]);
 
     return (
-        <div className="flex flex-col gap-5 p-4 sm:gap-5.5 sm:p-5">
+        <div className="flex flex-col gap-5 sm:gap-5.5">
             {enemy.description && (
                 <section>
                     <SectionHead>Description</SectionHead>
@@ -216,14 +172,9 @@ function OverviewTab({ enemy }: { enemy: IEnemyView }) {
     );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
-            <div className="mb-1.25 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</div>
-            <div className="break-all font-medium font-sans text-[12.5px] text-foreground leading-[1.2]">{value}</div>
-        </div>
-    );
-}
+// ============================================================================
+// Stats
+// ============================================================================
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
@@ -392,7 +343,8 @@ function NarrativeFormsNote({ narrativeFormCount, levelCount }: { narrativeFormC
     );
 }
 
-function StatsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelStats[] }) {
+export function StatsTab({ enemy }: { enemy: IEnemyView }) {
+    const phases = enemy.stats?.levels ?? [];
     if (phases.length === 0) {
         return (
             <div className="p-10 text-center">
@@ -406,7 +358,7 @@ function StatsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelSta
     const showNarrativeNote = meta.narrativeFormCount > phases.length;
     const gridClass = multi ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3";
     return (
-        <div className="flex flex-col gap-5 p-4 sm:gap-5.5 sm:p-5">
+        <div className="flex flex-col gap-5 sm:gap-5.5">
             <section>
                 <SectionHead>{sectionLabel}</SectionHead>
                 <div className={gridClass}>
@@ -423,6 +375,10 @@ function StatsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelSta
         </div>
     );
 }
+
+// ============================================================================
+// Skills
+// ============================================================================
 
 function skillsAreEqual(a: IEnemySkill[], b: IEnemySkill[]): boolean {
     if (a.length !== b.length) return false;
@@ -450,7 +406,8 @@ function SkillCard({ skill }: { skill: IEnemySkill }) {
     );
 }
 
-function SkillsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelStats[] }) {
+export function SkillsTab({ enemy }: { enemy: IEnemyView }) {
+    const phases = enemy.stats?.levels ?? [];
     if (phases.length === 0 || phases.every((p) => p.skills.length === 0)) {
         return (
             <div className="p-10 text-center">
@@ -461,12 +418,11 @@ function SkillsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelSt
 
     const base = phases[0].skills;
     const allSame = phases.every((p) => skillsAreEqual(p.skills, base));
-
     const meta = getPhaseMeta(enemy, phases);
 
     if (allSame) {
         return (
-            <div className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:gap-4">
                 {phases.length > 1 && (
                     <p className="m-0 font-sans text-[12px] text-muted-foreground leading-normal">
                         Skill kit is identical across all <strong className="text-foreground">{phases.length}</strong> {meta.fromNarrative ? "forms" : "levels"}.
@@ -480,7 +436,7 @@ function SkillsTab({ enemy, phases }: { enemy: IEnemyView; phases: IEnemyLevelSt
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
+        <div className="flex flex-col gap-4 sm:gap-5">
             {meta.orderedPhases.map((phase, i) => (
                 <section key={`skills-phase-${phase.level}-${phase.attributes.maxHp}-${phase.attributes.atk}`} className="flex flex-col gap-2.5 sm:gap-3">
                     <PhaseHeader phase={phase} label={meta.labels[i]} />

@@ -141,6 +141,38 @@ export function enemiesListQueryOptions() {
     });
 }
 
+/** A single appearance of an enemy in a stage. */
+export interface IEnemyStageRef {
+    stageId: string;
+    /** Human-readable code, e.g. "0-1", "WD-8". */
+    code: string;
+    zoneId: string;
+    stageName: string | null;
+    /** True for hard-mode / Adverse variants. */
+    isHard: boolean;
+    /** Total spawned across all waves; 0 = declared but summon-only/conditional. */
+    count: number;
+}
+
+/** `enemyId -> stages it appears in`. */
+export type IEnemyStageIndex = Record<string, IEnemyStageRef[]>;
+
+export const getEnemyStagesFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/enemy-stages");
+    if (!res.ok) throw new Error(`Failed to load enemy stages: ${res.status}`);
+    return (await res.json()) as IEnemyStageIndex;
+});
+
+/** Full enemy -> stages index. Fetch once and look up by enemy id client-side. */
+export function enemyStagesQueryOptions() {
+    return queryOptions({
+        queryKey: ["enemies", "stages"],
+        queryFn: () => getEnemyStagesFn(),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
 export interface IEnemyCommunityAverage {
     /** Mean number of distinct enemies encountered across every synced user. */
     averageEncountered: number;

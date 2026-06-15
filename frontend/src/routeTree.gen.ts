@@ -32,6 +32,7 @@ import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
+import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/index'
@@ -162,6 +163,11 @@ const GachaCommunityRoute = GachaCommunityRouteImport.update({
   path: '/gacha/community',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnemiesIdRoute = EnemiesIdRouteImport.update({
+  id: '/enemies_/$id',
+  path: '/enemies/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
+  '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
+  '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/enemies_/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/tier-lists'
     | '/admin'
     | '/settings'
+    | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tier-lists'
     | '/settings'
+    | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/tier-lists'
     | '/_authed/admin'
     | '/_authed/settings'
+    | '/enemies_/$id'
     | '/gacha/community'
     | '/gacha/history'
     | '/operators_/$id'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   StatsRoute: typeof StatsRoute
   TermsRoute: typeof TermsRoute
   TierListsRoute: typeof TierListsRoute
+  EnemiesIdRoute: typeof EnemiesIdRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
@@ -670,6 +683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GachaCommunityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/enemies_/$id': {
+      id: '/enemies_/$id'
+      path: '/enemies/$id'
+      fullPath: '/enemies/$id'
+      preLoaderRoute: typeof EnemiesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/settings': {
       id: '/_authed/settings'
       path: '/settings'
@@ -832,6 +852,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatsRoute: StatsRoute,
   TermsRoute: TermsRoute,
   TierListsRoute: TierListsRoute,
+  EnemiesIdRoute: EnemiesIdRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,

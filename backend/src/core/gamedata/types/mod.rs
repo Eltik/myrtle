@@ -8,6 +8,7 @@ pub mod chibi;
 pub mod climb_tower;
 pub mod consts;
 pub mod enemy;
+pub mod enemy_stages;
 pub mod gacha;
 pub mod handbook;
 pub mod material;
@@ -33,6 +34,7 @@ use campaign::CampaignRotations;
 use chibi::ChibiData;
 use consts::GameDataConst;
 use enemy::EnemyHandbook;
+use enemy_stages::EnemyStageIndex;
 use gacha::GachaData;
 use handbook::Handbook;
 use material::Materials;
@@ -72,6 +74,7 @@ pub struct GameData {
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
+    pub enemy_stage_index: EnemyStageIndex,
     pub building: BuildingDataFile,
     pub stage_universe: StageUniverse,
     pub sandbox_universe: SandboxUniverse,

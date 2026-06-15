@@ -5,6 +5,7 @@ use crate::core::gamedata::{
     enrich::{
         audio::build_operator_audio,
         chibi::{init_chibi_data, init_enemy_chibi_data},
+        enemy_stages::build_enemy_stage_index,
         gacha::enrich_banners,
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
@@ -197,6 +198,9 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     // own ExpireTimes, which are empty/placeholder for this content.
     medals.link_content_windows(&climb_tower_file.tower_windows(), &activity_file.basic_info);
 
+    // Inverted enemy -> stages index, parsed from per-stage level files.
+    let enemy_stage_index = build_enemy_stage_index(&assets_dir.join("gamedata/levels"), &stages);
+
     for w in &warnings {
         eprintln!("warning: {w}");
     }
@@ -221,6 +225,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         medals,
         roguelike,
         enemies,
+        enemy_stage_index,
         building: building_file,
         stage_universe,
         sandbox_universe,

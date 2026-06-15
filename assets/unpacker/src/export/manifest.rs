@@ -1,6 +1,10 @@
 use super::resource_manifest_generated::root_as_clz_torappu_resource_resource_manifest_unchecked;
 use regex::Regex;
-use std::{collections::HashMap, io, path::Path};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    io,
+    path::Path,
+};
 
 pub struct ResourceManifest {
     pub filename_to_path: HashMap<String, String>,
@@ -54,7 +58,32 @@ impl ResourceManifest {
                     hash_re.replace(clean, "").to_string()
                 };
 
-                filename_to_path.insert(name.to_string(), result);
+                // The only consumer (export_gamedata) extracts gamedata files.
+                // Many assets share an asset `name` across domains — e.g. a
+                // stage's `gamedata/levels/.../level_main_xx.bytes` and its Unity
+                // `scenes/.../level_main_xx.unity`. A plain insert is
+                // last-write-wins, so whenever the non-gamedata sibling happened
+                // to come later in the manifest it clobbered the real level path
+                // and the level was silently dropped (this is why only an
+                // arbitrary subset of levels — those without a colliding sibling
+                // ordered after them — ever extracted). Skip non-gamedata paths
+                // entirely, and on a gamedata-vs-gamedata collision prefer
+                // `gamedata/levels/` so level data is never lost.
+                if !result.starts_with("gamedata/") {
+                    continue;
+                }
+                match filename_to_path.entry(name.to_string()) {
+                    Entry::Vacant(e) => {
+                        e.insert(result);
+                    }
+                    Entry::Occupied(mut e) => {
+                        if result.starts_with("gamedata/levels/")
+                            && !e.get().starts_with("gamedata/levels/")
+                        {
+                            e.insert(result);
+                        }
+                    }
+                }
             }
         }
 

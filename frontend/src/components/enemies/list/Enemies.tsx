@@ -10,7 +10,6 @@ import { enemiesExportSchema } from "#/lib/export";
 import { Pagination } from "../../operators/list/impl/components/Pagination";
 import { EnemyCardGrid } from "./impl/components/EnemyCardGrid";
 import { EnemyCardList } from "./impl/components/EnemyCardList";
-import { EnemyDialog } from "./impl/components/EnemyDialog";
 import { EnemyFilterChips } from "./impl/components/EnemyFilterChips";
 import { ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { computeStatMaxByLevel, enrichEnemies } from "./impl/enrich";
@@ -80,7 +79,6 @@ export function EnemiesList() {
         };
     }, [filteredEnemies, page, itemsPerPage]);
 
-    const [openEnemy, setOpenEnemy] = useState<IEnemyView | null>(null);
     const [exportOpen, setExportOpen] = useState(false);
 
     return (
@@ -227,7 +225,7 @@ export function EnemiesList() {
                             </>
                         )}
                     </span>
-                    <span className="hidden font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:inline">Click a card to inspect</span>
+                    <span className="hidden font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:inline">Click a card for details</span>
                 </div>
 
                 {filteredEnemies.length === 0 ? (
@@ -235,7 +233,7 @@ export function EnemiesList() {
                 ) : viewMode === "grid" ? (
                     <div className="grid grid-cols-2 gap-2.5 min-[1100px]:grid-cols-6 min-[420px]:grid-cols-3 min-[640px]:grid-cols-4 min-[860px]:grid-cols-5 min-[1280px]:gap-4">
                         {paginated.map((e) => (
-                            <EnemyCardGrid key={e.enemyId} enemy={e} statMax={statMax} onOpen={setOpenEnemy} />
+                            <EnemyCardGrid key={e.enemyId} enemy={e} statMax={statMax} />
                         ))}
                     </div>
                 ) : (
@@ -248,15 +246,13 @@ export function EnemiesList() {
                             <span className="text-right">HP</span>
                         </div>
                         {paginated.map((e) => (
-                            <EnemyCardList key={e.enemyId} enemy={e} statMax={statMax} onOpen={setOpenEnemy} />
+                            <EnemyCardList key={e.enemyId} enemy={e} statMax={statMax} />
                         ))}
                     </div>
                 )}
 
                 <Pagination currentPage={page} totalPages={totalPages} onPageChange={setCurrentPage} />
             </main>
-
-            <EnemyDialog enemy={openEnemy} onClose={() => setOpenEnemy(null)} />
 
             <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title="Enemies" />
         </div>
