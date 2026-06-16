@@ -47,8 +47,21 @@ export interface IFilterState {
     damageTypes: IEnemyDamageType[];
     attackTypes: ApplyWay[];
     races: string[];
+    /** Location filter: zone ids ("rogue_4") and/or stage ids
+     *  ("level_main_10-06") an enemy must appear in (OR semantics). */
+    appearsIn: string[];
     sortBy: SortOption;
     sortOrder: SortOrder;
+}
+
+/** Membership maps for the "Appears In" filter, built from the stage index.
+ *  A selected token (zone id or stage id) matches an enemy when it's in either
+ *  set, so the filter supports both whole-zone and single-stage selections. */
+export interface IEnemyLocationIndex {
+    /** enemyId -> set of zone ids it appears in. */
+    zonesByEnemy: Map<string, Set<string>>;
+    /** enemyId -> set of stage ids it appears in. */
+    stagesByEnemy: Map<string, Set<string>>;
 }
 
 export interface IUseEnemyFiltersReturn {
@@ -59,6 +72,7 @@ export interface IUseEnemyFiltersReturn {
     setDamageTypes: (v: IEnemyDamageType[]) => void;
     setAttackTypes: (v: ApplyWay[]) => void;
     setRaces: (v: string[]) => void;
+    setAppearsIn: (v: string[]) => void;
     setSortBy: (v: SortOption) => void;
     setSortOrder: (v: SortOrder) => void;
     clearFilters: () => void;

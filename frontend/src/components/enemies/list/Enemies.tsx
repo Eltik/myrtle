@@ -5,15 +5,17 @@ import { ExportDialog } from "#/components/export/ExportDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { enemiesQueryOptions } from "#/lib/api/enemies";
+import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
 import { enemiesExportSchema } from "#/lib/export";
+import type { StageGroupKey } from "#/lib/registry/stage-groups";
 import { Pagination } from "../../operators/list/impl/components/Pagination";
 import { EnemyCardGrid } from "./impl/components/EnemyCardGrid";
 import { EnemyCardList } from "./impl/components/EnemyCardList";
 import { EnemyFilterChips } from "./impl/components/EnemyFilterChips";
+import { buildLocationTree, EnemyLocationFilter, type IRawStage, type IRawZone } from "./impl/components/EnemyLocationFilter";
 import { ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { computeStatMaxByLevel, enrichEnemies } from "./impl/enrich";
-import type { IEnemyView, SortOption, SortOrder, ViewMode } from "./impl/types";
+import type { IEnemyLocationIndex, IEnemyView, SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useEnemyFilters } from "./impl/useEnemyFilters";
 
 export function EnemiesList() {
@@ -41,7 +43,33 @@ export function EnemiesList() {
             .map((r) => ({ id: r.id, label: r.raceName }));
     }, [handbook, enriched]);
 
-    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched);
+    // Location index ("Appears In" filter), derived from the enemy-stage data.
+    const { data: stageIndex } = useQuery(enemyStagesQueryOptions());
+    const { locationIndex, locationTree } = useMemo(() => {
+        const zonesByEnemy = new Map<string, Set<string>>();
+        const stagesByEnemy = new Map<string, Set<string>>();
+        const zoneTmp = new Map<string, { name: string; group: StageGroupKey; stages: Map<string, IRawStage> }>();
+        for (const [enemyId, refs] of Object.entries(stageIndex ?? {})) {
+            const zones = new Set<string>();
+            const stages = new Set<string>();
+            for (const r of refs) {
+                zones.add(r.zoneId);
+                stages.add(r.stageId);
+                let z = zoneTmp.get(r.zoneId);
+                if (!z) {
+                    z = { name: r.zoneName ?? r.zoneId, group: r.group, stages: new Map() };
+                    zoneTmp.set(r.zoneId, z);
+                }
+                if (!z.stages.has(r.stageId)) z.stages.set(r.stageId, { stageId: r.stageId, code: r.code, stageName: r.stageName, isHard: r.isHard });
+            }
+            zonesByEnemy.set(enemyId, zones);
+            stagesByEnemy.set(enemyId, stages);
+        }
+        const rawZones: IRawZone[] = [...zoneTmp].map(([zoneId, z]) => ({ zoneId, name: z.name, group: z.group, stages: [...z.stages.values()] }));
+        return { locationIndex: { zonesByEnemy, stagesByEnemy } satisfies IEnemyLocationIndex, locationTree: buildLocationTree(rawZones) };
+    }, [stageIndex]);
+
+    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -97,6 +125,8 @@ export function EnemiesList() {
 
             <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label="Enemy results">
                 <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} races={availableRaces} />
+
+                {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="relative flex h-9.5 min-w-55 max-w-100 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] px-3.5 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">

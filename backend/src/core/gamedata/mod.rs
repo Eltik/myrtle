@@ -199,7 +199,13 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     medals.link_content_windows(&climb_tower_file.tower_windows(), &activity_file.basic_info);
 
     // Inverted enemy -> stages index, parsed from per-stage level files.
-    let enemy_stage_index = build_enemy_stage_index(&assets_dir.join("gamedata/levels"), &stages);
+    let enemy_stage_index = build_enemy_stage_index(
+        &assets_dir.join("gamedata/levels"),
+        data_dir,
+        &stages,
+        &zones,
+        &activity_file.basic_info,
+    );
 
     for w in &warnings {
         eprintln!("warning: {w}");

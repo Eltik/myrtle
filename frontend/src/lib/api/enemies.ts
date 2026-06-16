@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+import type { StageGroupKey } from "#/lib/registry/stage-groups";
 
 export type IEnemyLevel = "NORMAL" | "ELITE" | "BOSS";
 
@@ -147,6 +148,12 @@ export interface IEnemyStageRef {
     /** Human-readable code, e.g. "0-1", "WD-8". */
     code: string;
     zoneId: string;
+    /** Resolved zone/event display name; falls back to zoneId when null. */
+    zoneName: string | null;
+    /** Coarse UI bucket: "stages" (main story), "events", or "modes". */
+    category: "stages" | "events" | "modes";
+    /** Fine group key (see `StageGroupKey`) for grouped UIs; resolved by the backend. */
+    group: StageGroupKey;
     stageName: string | null;
     /** True for hard-mode / Adverse variants. */
     isHard: boolean;

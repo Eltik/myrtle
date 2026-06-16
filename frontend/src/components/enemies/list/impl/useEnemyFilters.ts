@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { FILTERS_KEY, LEVEL_ORDER } from "./constants";
-import type { IEnemyView, IFilterState, IUseEnemyFiltersReturn } from "./types";
+import type { IEnemyLocationIndex, IEnemyView, IFilterState, IUseEnemyFiltersReturn } from "./types";
 
 const initialState: IFilterState = {
     q: "",
@@ -9,11 +9,14 @@ const initialState: IFilterState = {
     damageTypes: [],
     attackTypes: [],
     races: [],
+    appearsIn: [],
     sortBy: "index",
     sortOrder: "asc",
 };
 
-export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
+const EMPTY_LOCATIONS: IEnemyLocationIndex = { zonesByEnemy: new Map(), stagesByEnemy: new Map() };
+
+export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationIndex = EMPTY_LOCATIONS): IUseEnemyFiltersReturn {
     const [filters, setFilters] = useLocalStorageState<IFilterState>(FILTERS_KEY, initialState, {
         parse: (raw) => {
             try {
@@ -33,6 +36,10 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
         const damageTypes = new Set(filters.damageTypes);
         const attackTypes = new Set(filters.attackTypes);
         const races = new Set(filters.races);
+        // Location tokens are zone ids or stage ids; an enemy matches if any
+        // selected token is in its zone set or stage set.
+        const wantLocations = filters.appearsIn;
+        const hasLocationFilter = wantLocations.length > 0;
 
         return data.filter((e) => {
             if (e.hideInHandbook) return false;
@@ -45,13 +52,19 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
                 const tags = e.enemyTags;
                 if (!tags || !tags.some((t) => races.has(t))) return false;
             }
+            if (hasLocationFilter) {
+                const zones = locations.zonesByEnemy.get(e.enemyId);
+                const stages = locations.stagesByEnemy.get(e.enemyId);
+                const hit = wantLocations.some((t) => zones?.has(t) || stages?.has(t));
+                if (!hit) return false;
+            }
             if (query) {
                 const haystack = `${e.name} ${e.enemyIndex} ${e.race ?? ""} ${e.description ?? ""}`.toLowerCase();
                 if (!haystack.includes(query)) return false;
             }
             return true;
         });
-    }, [data, filters.q, filters.levels, filters.damageTypes, filters.attackTypes, filters.races]);
+    }, [data, locations, filters.q, filters.levels, filters.damageTypes, filters.attackTypes, filters.races, filters.appearsIn]);
 
     const { sortBy, sortOrder } = filters;
     const filteredEnemies = useMemo(() => {
@@ -79,9 +92,9 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
         return [...filtered].sort((a, b) => cmp(a, b) * dir);
     }, [filtered, sortBy, sortOrder]);
 
-    const clearFilters = useCallback(() => setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], q: "" })), [setFilters]);
+    const clearFilters = useCallback(() => setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], appearsIn: [], q: "" })), [setFilters]);
 
-    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + (filters.q ? 1 : 0);
+    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + filters.appearsIn.length + (filters.q ? 1 : 0);
 
     const setters = useMemo(
         () => ({
@@ -90,6 +103,7 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
             setDamageTypes: (v: IFilterState["damageTypes"]) => set("damageTypes", v),
             setAttackTypes: (v: IFilterState["attackTypes"]) => set("attackTypes", v),
             setRaces: (v: IFilterState["races"]) => set("races", v),
+            setAppearsIn: (v: IFilterState["appearsIn"]) => set("appearsIn", v),
             setSortBy: (v: IFilterState["sortBy"]) => set("sortBy", v),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),

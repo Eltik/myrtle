@@ -1,29 +1,22 @@
-//! Build the enemy -> stages inverted index from per-stage level files.
+//! Build the enemy -> stages inverted index.
 //!
-//! Each stage in `stage_table` carries a `LevelId` (e.g.
-//! `Obt/Main/level_main_00-01`) that points to a level file on disk under
-//! `gamedata/levels/` (lowercased, `.json`). Those files list the enemies a
-//! stage uses in two places:
-//!   - `EnemyDbRefs[].Id` - every db enemy declared for the stage.
-//!   - `Waves[].Fragments[].Actions[]` - the actual spawn timeline; `SPAWN`
-//!     actions name an enemy via `Key` and how many via `Count`.
-//!
-//! We seed each stage's tally from `EnemyDbRefs` (count 0) so conditionally
-//! summoned enemies still register as "appears here", then add `SPAWN` counts.
-//! The result is inverted into `enemy_id -> Vec<EnemyStageRef>`.
-//!
-//! Not every stage has an extracted level file (the dump is a subset); missing
-//! files are skipped silently, so the index naturally covers whatever is
-//! present and grows as more levels are extracted.
+//! This walks every level file under `gamedata/levels/`, tallies the enemies it
+//! references (`EnemyDbRefs[].Id` plus `Waves[].Fragments[].Actions[]` SPAWN
+//! keys/counts), classifies the level via [`StageClassifier`], and inverts the
+//! result into `enemy_id -> Vec<EnemyStageRef>`. It also folds in boss-only
+//! declarations from `activity_table` (some bosses never appear in a level
+//! file). All stage taxonomy/labelling lives in [`stage_class`].
 
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
+use super::stage_class::{StageClassifier, StageInfo};
+use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::core::gamedata::types::enemy_stages::{EnemyStageIndex, EnemyStageRef};
-use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
+use crate::core::gamedata::types::stage::Stage;
+use crate::core::gamedata::types::zone::Zone;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -65,20 +58,13 @@ struct Action {
     count: i64,
 }
 
-/// Resolve a stage's `LevelId` to its on-disk level file path. Paths are
-/// stored lowercase under `levels_dir` with a `.json` extension.
-fn level_path(levels_dir: &Path, level_id: &str) -> std::path::PathBuf {
-    levels_dir.join(format!("{}.json", level_id.to_lowercase()))
-}
-
-/// Parse one level file into `enemy_id -> spawn count`. Returns `None` if the
-/// file is absent or unparseable (both expected for the partial dump).
-fn tally_stage(path: &Path) -> Option<HashMap<String, u32>> {
+/// Parse one level file into `enemy_id -> spawn count`. `EnemyDbRefs` seeds a
+/// count of 0 (declared but maybe summon-only); `SPAWN` actions add their count.
+fn tally_level(path: &Path) -> Option<HashMap<String, u32>> {
     let bytes = std::fs::read(path).ok()?;
     let level: LevelFile = serde_json::from_slice(&bytes).ok()?;
 
     let mut counts: HashMap<String, u32> = HashMap::new();
-    // Seed every declared db enemy at 0 so summon-only enemies still count.
     for r in &level.enemy_db_refs {
         counts.entry(r.id.clone()).or_insert(0);
     }
@@ -91,8 +77,6 @@ fn tally_stage(path: &Path) -> Option<HashMap<String, u32>> {
                 let Some(key) = action.key.as_deref() else {
                     continue;
                 };
-                // Restrict to handbook-shaped ids; inline non-db actors use
-                // other key namespaces we don't want in this index.
                 if !key.starts_with("enemy_") {
                     continue;
                 }
@@ -104,79 +88,103 @@ fn tally_stage(path: &Path) -> Option<HashMap<String, u32>> {
     Some(counts)
 }
 
-/// True for hard-mode / Adverse variants: `level_tough_*` / `.../hard/...`
-/// files and any non-Normal stage difficulty.
-fn is_hard(stage: &Stage) -> bool {
-    let path_hard = stage.level_id.as_deref().is_some_and(|l| {
-        let l = l.to_lowercase();
-        l.contains("tough") || l.contains("/hard/") || l.contains("hard_")
-    });
-    path_hard || !matches!(stage.difficulty, StageDifficulty::Normal)
-}
-
-/// Rank a stage as a representative for its level file: lower is better.
-/// Prefer non-Challenge-Mode ids (CM stages carry a `#` and reuse their base
-/// stage's level), then Normal difficulty, so a normal stage always wins over
-/// its `#f#` CM twin that points at the same file.
-fn canonical_rank(stage: &Stage) -> (u8, u8) {
-    let cm = u8::from(stage.stage_id.contains('#'));
-    let non_normal = u8::from(!matches!(stage.difficulty, StageDifficulty::Normal));
-    (cm, non_normal)
-}
-
-/// Build the `enemy_id -> stages` index by walking every stage's level file.
-pub fn build_enemy_stage_index(
-    levels_dir: &Path,
-    stages: &HashMap<String, Stage>,
-) -> EnemyStageIndex {
-    // Collapse stages that reuse the same level file to one representative.
-    // Challenge Mode (`main_xx-yy#f#`) and similar variants share their base
-    // stage's level, so without this every normal stage would appear twice.
-    // Adverse (`level_tough_*`) stages have their own file and are kept.
-    let mut by_level: HashMap<String, &Stage> = HashMap::new();
-    for stage in stages.values() {
-        let Some(level_id) = stage.level_id.as_deref() else {
-            continue;
-        };
-        match by_level.entry(level_id.to_lowercase()) {
-            Entry::Vacant(e) => {
-                e.insert(stage);
+/// Recursively collect every `*.json` level file, skipping the `enemydata/`
+/// stats directory and `levelreplacers/` (IS layout variants that duplicate a
+/// base node).
+fn collect_level_files(dir: &Path, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let name = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
+            if name == "enemydata" || name == "levelreplacers" {
+                continue;
             }
-            Entry::Occupied(mut e) => {
-                let better = canonical_rank(stage) < canonical_rank(e.get())
-                    || (canonical_rank(stage) == canonical_rank(e.get())
-                        && stage.stage_id < e.get().stage_id);
-                if better {
-                    e.insert(stage);
-                }
-            }
+            collect_level_files(&path, out);
+        } else if path.extension().and_then(|e| e.to_str()) == Some("json") {
+            out.push(path);
         }
     }
+}
+
+/// The relative level id of a file under `levels_dir`: lowercased, forward
+/// slashes, no extension (matches the keys [`StageClassifier`] expects).
+fn relative_level_id(levels_dir: &Path, path: &Path) -> Option<String> {
+    let rel = path.strip_prefix(levels_dir).ok()?;
+    Some(
+        rel.with_extension("")
+            .to_string_lossy()
+            .to_lowercase()
+            .replace('\\', "/"),
+    )
+}
+
+fn push_ref(
+    index: &mut EnemyStageIndex,
+    enemy_id: String,
+    stage_id: String,
+    info: &StageInfo,
+    count: u32,
+) {
+    index.entry(enemy_id).or_default().push(EnemyStageRef {
+        stage_id,
+        code: info.code.clone(),
+        zone_id: info.zone_id.clone(),
+        zone_name: info.zone_name.clone(),
+        category: info.category.to_owned(),
+        group: info.group.to_owned(),
+        stage_name: info.stage_name.clone(),
+        is_hard: info.is_hard,
+        count,
+    });
+}
+
+/// Build the `enemy_id -> stages` index from the level files plus boss-only
+/// declarations.
+pub fn build_enemy_stage_index(
+    levels_dir: &Path,
+    data_dir: &Path,
+    stages: &HashMap<String, Stage>,
+    zones: &HashMap<String, Zone>,
+    activities: &HashMap<String, ActivityBasicInfo>,
+) -> EnemyStageIndex {
+    let classifier = StageClassifier::new(data_dir, stages, zones, activities);
+
+    let mut files = Vec::new();
+    collect_level_files(levels_dir, &mut files);
 
     let mut index: EnemyStageIndex = HashMap::new();
 
-    for stage in by_level.into_values() {
-        let Some(level_id) = stage.level_id.as_deref() else {
+    for path in &files {
+        let Some(rel) = relative_level_id(levels_dir, path) else {
             continue;
         };
-        let Some(counts) = tally_stage(&level_path(levels_dir, level_id)) else {
+        let Some(counts) = tally_level(path) else {
             continue;
         };
-
-        let hard = is_hard(stage);
+        let info = classifier.classify_level(&rel);
+        let stage_id = rel.rsplit('/').next().unwrap_or(&rel).to_owned();
         for (enemy_id, count) in counts {
-            index.entry(enemy_id).or_default().push(EnemyStageRef {
-                stage_id: stage.stage_id.clone(),
-                code: stage.code.clone(),
-                zone_id: stage.zone_id.clone(),
-                stage_name: stage.name.clone(),
-                is_hard: hard,
-                count,
-            });
+            push_ref(&mut index, enemy_id, stage_id.clone(), &info, count);
         }
     }
 
-    // Stable ordering: by code, then stage id, with hard variants after normal.
+    // Boss declarations that never appear in a level file.
+    for (enemy_id, info) in classifier.boss_appearances(data_dir) {
+        let already = index.get(&enemy_id).is_some_and(|refs| {
+            refs.iter()
+                .any(|r| r.zone_id == info.zone_id && r.code == info.code)
+        });
+        if already {
+            continue;
+        }
+        // No level file, so key the row by zone+code.
+        let stage_id = format!("{}/{}", info.zone_id, info.code);
+        push_ref(&mut index, enemy_id, stage_id, &info, 0);
+    }
+
     for refs in index.values_mut() {
         refs.sort_by(|a, b| {
             a.is_hard

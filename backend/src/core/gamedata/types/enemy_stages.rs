@@ -17,6 +17,16 @@ pub struct EnemyStageRef {
     /// Human-readable code, e.g. "0-1", "WD-8".
     pub code: String,
     pub zone_id: String,
+    /// Resolved display name for the zone/event (e.g. "Stronghold Protocol:
+    /// Alliance", "Annihilation"). `None` falls back to `zone_id` in the UI.
+    pub zone_name: Option<String>,
+    /// Coarse UI bucket: `"stages"` (main story), `"events"` (side stories /
+    /// activities), or `"modes"` (permanent game modes - IS, RA, S.S.S., CC,
+    /// Annihilation).
+    pub category: String,
+    /// Fine group key (`story` / `events` / `annihilation` / `is` / `ra` /
+    /// `sss` / `paradox` / `cc` / `supplies` / `other`) for grouped UIs.
+    pub group: String,
     pub stage_name: Option<String>,
     /// True for hard-mode / Adverse variants (tough levels, 4★/6★ difficulty).
     pub is_hard: bool,

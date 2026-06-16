@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EnemiesList } from "#/components/enemies/list/Enemies";
-import { enemiesQueryOptions } from "#/lib/api/enemies";
+import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/enemies")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
-    loader: ({ context }) => context.queryClient.ensureQueryData(enemiesQueryOptions()),
+    loader: async ({ context }) => {
+        await Promise.all([
+            context.queryClient.ensureQueryData(enemiesQueryOptions()),
+            // Powers the "Appears In" location filter.
+            context.queryClient.ensureQueryData(enemyStagesQueryOptions()),
+        ]);
+    },
     head: () => {
         const { meta, links } = seo({
             title: "Enemies",

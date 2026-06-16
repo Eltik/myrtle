@@ -21,7 +21,7 @@ export const Route = createFileRoute("/enemies_/$id")({
     head: ({ loaderData, params }) => {
         const enemy = loaderData;
         if (!enemy) return seo({ title: "Enemy", path: `/enemies/${params.id}` });
-        const desc = [enemy.enemyIndex, enemy.description].filter(Boolean).join(" — ") || `Enemy ${enemy.enemyIndex}`;
+        const desc = [enemy.enemyIndex, enemy.description].filter(Boolean).join(" - ") || `Enemy ${enemy.enemyIndex}`;
         const { meta, links } = seo({
             title: enemy.name,
             description: desc,
