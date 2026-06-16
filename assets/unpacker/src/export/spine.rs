@@ -82,9 +82,9 @@ pub fn detect_spine_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
 
 /// Check if a bundle path is an enemy spine art bundle.
 ///
-/// Enemy spine data (SkeletonData + .skel/.atlas TextAssets + textures) lives
+/// Enemy spine data (`SkeletonData` + .skel/.atlas `TextAssets` + textures) lives
 /// in `refs/arts/enm_art_*.ab` pack bundles, ~60 enemies per bundle. The
-/// `battle/enm_pfb_*.ab` prefab bundles only hold GameObject wiring with
+/// `battle/enm_pfb_*.ab` prefab bundles only hold `GameObject` wiring with
 /// external references into these art bundles, so they are not needed here.
 #[must_use]
 pub fn detect_enemy_spine_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
@@ -185,8 +185,9 @@ pub fn collect_spine_assets(
 /// Unlike operator bundles, enemy art bundles carry no `SkeletonMecanim`
 /// components (those live in the `battle/enm_pfb_*` prefab bundles and point
 /// here via external references), so traversal starts directly at each
-/// `SkeletonData` MonoBehaviour (class 114 with `skeletonJSON` + `atlasAssets`).
+/// `SkeletonData` `MonoBehaviour` (class 114 with `skeletonJSON` + `atlasAssets`).
 /// All assets are categorized as [`SpineCategory::Enemy`].
+#[must_use]
 pub fn collect_enemy_spine_assets(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> (Vec<SpineAsset>, HashSet<i64>) {
@@ -196,7 +197,9 @@ pub fn collect_enemy_spine_assets(
     let mut skel_data_pids: Vec<i64> = all_objects
         .iter()
         .filter(|(_, (class_id, val))| {
-            *class_id == 114 && val.get("skeletonJSON").is_some() && val.get("atlasAssets").is_some()
+            *class_id == 114
+                && val.get("skeletonJSON").is_some()
+                && val.get("atlasAssets").is_some()
         })
         .map(|(pid, _)| *pid)
         .collect();
@@ -227,7 +230,7 @@ pub fn collect_enemy_spine_assets(
     (assets, claimed)
 }
 
-/// Everything resolved by following a `SkeletonData` MonoBehaviour's references.
+/// Everything resolved by following a `SkeletonData` `MonoBehaviour`'s references.
 struct SkeletonDataChain {
     skel_name: String,
     skel_bytes: Vec<u8>,
@@ -237,7 +240,7 @@ struct SkeletonDataChain {
     claimed: Vec<i64>,
 }
 
-/// Follow a `SkeletonData` MonoBehaviour's reference chain:
+/// Follow a `SkeletonData` `MonoBehaviour`'s reference chain:
 /// ```text
 /// SkeletonData (skeletonJSON + atlasAssets)
 ///   → skel: TextAsset (.skel binary, base64)
@@ -429,8 +432,10 @@ pub fn export_spine_assets(
     let mut count = 0;
 
     for asset in spine_assets {
-        let dir_name =
-            char_name.map_or_else(|| enemy_dir_name(&asset.name), std::string::ToString::to_string);
+        let dir_name = char_name.map_or_else(
+            || enemy_dir_name(&asset.name),
+            std::string::ToString::to_string,
+        );
         let spine_dir = output_dir
             .join("spine")
             .join(asset.category.to_string())

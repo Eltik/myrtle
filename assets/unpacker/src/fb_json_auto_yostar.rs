@@ -1,4 +1,4 @@
-//! Auto-generated `FlatBufferToJson` implementations
+//! Auto-generated FlatBufferToJson implementations
 //! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs
 
 #![allow(unused_imports, unused_variables)]
@@ -10,6 +10,7 @@ use std::panic::{self, AssertUnwindSafe};
 use crate::generated_fbs_yostar::battle_equip_table_generated;
 use crate::generated_fbs_yostar::character_table_generated;
 use crate::generated_fbs_yostar::ep_breakbuff_table_generated;
+use crate::generated_fbs_yostar::skin_table_generated;
 use crate::generated_fbs_yostar::token_table_generated;
 
 // ============ Enum Implementations ============
@@ -125,6 +126,16 @@ impl EnumToJson for character_table_generated::enum__Torappu_AttributeType {
 }
 
 impl EnumToJson for character_table_generated::enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+// From skin_table_generated
+impl EnumToJson for skin_table_generated::enum__Torappu_SkinVoiceType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -2426,6 +2437,820 @@ impl FlatBufferToJson
                     })
                     .collect();
                 return Some(("Ep_breakbuffs".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+// From skin_table_generated
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData_TokenSkinInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.tokenId() {
+                return Some(("TokenId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.tokenSkinId() {
+                return Some(("TokenSkinId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData_BattleSkin<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("OverwritePrefab".to_string(), json!(self.overwritePrefab())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinOrPrefabId() {
+                return Some(("SkinOrPrefabId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData_DisplaySkin<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinName() {
+                return Some(("SkinName".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.colorList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
+                return Some(("ColorList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.titleList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
+                return Some(("TitleList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.modelName() {
+                return Some(("ModelName".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.drawerList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
+                return Some(("DrawerList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.designerList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
+                return Some(("DesignerList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinGroupId() {
+                return Some(("SkinGroupId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinGroupName() {
+                return Some(("SkinGroupName".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "SkinGroupSortIndex".to_string(),
+                json!(self.skinGroupSortIndex()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.content() {
+                return Some(("Content".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dialog() {
+                return Some(("Dialog".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.usage() {
+                return Some(("Usage".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.description() {
+                return Some(("Description".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.obtainApproach() {
+                return Some(("ObtainApproach".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayTagId() {
+                return Some(("DisplayTagId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("GetTime".to_string(), json!(self.getTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("OnYear".to_string(), json!(self.onYear())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("OnPeriod".to_string(), json!(self.onPeriod())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinId() {
+                return Some(("SkinId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.charId() {
+                return Some(("CharId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.tokenSkinMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TokenSkinMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.illustId() {
+                return Some(("IllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spIllustId() {
+                return Some(("SpIllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dynIllustId() {
+                return Some(("DynIllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spDynIllustId() {
+                return Some(("SpDynIllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.avatarId() {
+                return Some(("AvatarId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.portraitId() {
+                return Some(("PortraitId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dynPortraitId() {
+                return Some(("DynPortraitId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dynEntranceId() {
+                return Some(("DynEntranceId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.buildingId() {
+                return Some(("BuildingId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.battleSkin() {
+                return Some(("BattleSkin".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsBuySkin".to_string(), json!(self.isBuySkin())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.tmplId() {
+                return Some(("TmplId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.voiceId() {
+                return Some(("VoiceId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("VoiceType".to_string(), self.voiceType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.displaySkin() {
+                return Some(("DisplaySkin".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_CharSkinData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__int__string<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), json!(v));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__list_dict__int__string<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__string<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), json!(v));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__list_dict__string__string<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinGroupInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinGroupId() {
+                return Some(("SkinGroupId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PublishTime".to_string(), json!(self.publishTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinKvImgInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.kvImgId() {
+                return Some(("KvImgId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.linkedSkinGroupId() {
+                return Some(("LinkedSkinGroupId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinBrandInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.brandId() {
+                return Some(("BrandId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.groupList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("GroupList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.kvImgIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("KvImgIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.brandName() {
+                return Some(("BrandName".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.brandCapitalName() {
+                return Some(("BrandCapitalName".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.description() {
+                return Some(("Description".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PublishTime".to_string(), json!(self.publishTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_CharSkinBrandInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_SpecialSkinInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinId() {
+                return Some(("SkinId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("StartTime".to_string(), json!(self.startTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EndTime".to_string(), json!(self.endTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_SpDynIllustInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinId() {
+                return Some(("SkinId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spDynIllustId() {
+                return Some(("SpDynIllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spDynIllustSkinTag() {
+                return Some(("SpDynIllustSkinTag".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spIllustId() {
+                return Some(("SpIllustId".to_string(), json!(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_SpDynIllustInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charSkins() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CharSkins".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.buildinEvolveMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BuildinEvolveMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.buildinPatchMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BuildinPatchMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.brandList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BrandList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.specialSkinInfoList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SpecialSkinInfoList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.spDynSkins() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SpDynSkins".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.spDynIllustSkinTagsMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SpDynIllustSkinTagsMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None

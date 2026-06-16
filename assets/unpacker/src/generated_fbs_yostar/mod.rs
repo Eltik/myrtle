@@ -12,4 +12,5 @@
 pub mod battle_equip_table_generated;
 pub mod character_table_generated;
 pub mod ep_breakbuff_table_generated;
+pub mod skin_table_generated;
 pub mod token_table_generated;

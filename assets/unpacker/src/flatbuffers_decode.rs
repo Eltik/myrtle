@@ -156,7 +156,11 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "battle_equip_table" | "ep_breakbuff_table" | "character_table" | "token_table"
+        "battle_equip_table"
+            | "ep_breakbuff_table"
+            | "character_table"
+            | "token_table"
+            | "skin_table"
     )
 }
 
@@ -193,6 +197,11 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
+                Ok(root.to_json())
+            }
+            "skin_table" => {
+                use crate::generated_fbs_yostar::skin_table_generated::root_as_clz_torappu_skin_table_unchecked;
+                let root = unsafe { root_as_clz_torappu_skin_table_unchecked(data) };
                 Ok(root.to_json())
             }
             _ => Err(format!("No Yostar schema for {schema_type}")),
@@ -626,6 +635,24 @@ fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String>
                     .get("Equips")
                     .and_then(|v| v.as_array())
                     .is_some_and(std::vec::Vec::is_empty),
+                // The EN (Yostar) skin_table binary decodes "successfully" under the
+                // CN schema but every entry's DisplaySkin reads as null (vtable shift:
+                // CN has spAvatarId/spPortraitId, EN doesn't). The top object isn't
+                // empty (CharSkins is populated), so detect the partial decode
+                // directly: CharSkins non-empty yet not a single entry carries a
+                // populated DisplaySkin. A real CN binary has ~1300, so never fires.
+                "skin_table" => value
+                    .get("CharSkins")
+                    .and_then(|v| v.as_array())
+                    .is_some_and(|a| {
+                        !a.is_empty()
+                            && !a.iter().any(|e| {
+                                e.get("value")
+                                    .and_then(|v| v.get("DisplaySkin"))
+                                    .and_then(|d| d.as_object())
+                                    .is_some_and(|o| !o.is_empty())
+                            })
+                    }),
                 _ => false,
             };
             if value.as_object().is_some_and(serde_json::Map::is_empty) || is_content_empty {

@@ -1272,6 +1272,25 @@ fn generate_decode_dispatch(
                                  .get("Equips")
                                  .and_then(|v| v.as_array())
                                  .map_or(false, |a| a.is_empty()),
+                             // The EN (Yostar) skin_table binary decodes "successfully"
+                             // under the CN schema but every entry's DisplaySkin reads
+                             // as null (vtable shift — see the yostar_schemas note). The
+                             // top object isn't empty (CharSkins is populated), so detect
+                             // the partial decode directly: CharSkins non-empty yet not a
+                             // single entry carries a populated DisplaySkin. On a real CN
+                             // binary, ~1300 skins have a DisplaySkin, so this never fires.
+                             "skin_table" => value
+                                 .get("CharSkins")
+                                 .and_then(|v| v.as_array())
+                                 .map_or(false, |a| {
+                                     !a.is_empty()
+                                         && !a.iter().any(|e| {
+                                             e.get("value")
+                                                 .and_then(|v| v.get("DisplaySkin"))
+                                                 .and_then(|d| d.as_object())
+                                                 .map_or(false, |o| !o.is_empty())
+                                         })
+                                 }),
                              _ => false,
                          };
                          if value.as_object().map_or(false, |o| o.is_empty()) || is_content_empty {
@@ -1415,6 +1434,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "battle_equip_table",
         "token_table",
         "ep_breakbuff_table",
+        // skin_table: the Global/EN (Yostar) gamedata binary lags CN and omits
+        // the `spAvatarId`/`spPortraitId` fields CN added (18 vtable fields vs
+        // CN's 20). Decoding the EN binary with the CN schema shifts every slot
+        // after `avatarId` by 2, pushing `displaySkin` past the vtable end so it
+        // (and `drawerList`, the artist names) reads as null for every skin —
+        // emptying the operators page artists filter. The Yostar schema matches
+        // the EN layout. See the `is_content_empty` skin_table arm below for the
+        // CN→Yostar fallback trigger.
+        "skin_table",
     ];
     for name in &yostar_schemas {
         let fbs = yostar_fbs_dir.join(format!("{name}.fbs"));
