@@ -2,7 +2,8 @@ use arc_swap::ArcSwap;
 use backend::app::server;
 use backend::core::hypergryph::{config, loaders};
 use backend::core::{
-    asset_watcher, dps_watcher, leaderboard_snapshot_job, regrade_job, trending_job,
+    asset_watcher, dps_watcher, leaderboard_snapshot_job, operator_ownership_job, regrade_job,
+    trending_job,
 };
 use backend::{
     app::{
@@ -125,6 +126,7 @@ async fn main() {
     // Spawn cron jobs
     trending_job::spawn(state.clone());
     leaderboard_snapshot_job::spawn(state.clone());
+    operator_ownership_job::spawn(state.clone());
     regrade_job::spawn(state.clone());
 
     server::run(state).await.expect("server error");

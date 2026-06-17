@@ -31,6 +31,7 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: "res", label: "RES" },
     { value: "cost", label: "Cost" },
     { value: "block", label: "Block" },
+    { value: "ownership", label: "Most owned" },
 ];
 
 export const CLASS_SORT_ORDER: Record<string, number> = {
@@ -53,7 +54,7 @@ export const ITEMS_PER_PAGE = 30;
 export const ITEMS_PER_PAGE_OPTIONS = [12, 24, 30, 48, 60, 100] as const;
 export type ItemsPerPage = (typeof ITEMS_PER_PAGE_OPTIONS)[number];
 
-export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 32px";
+export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 88px 32px";
 
 export const VIEW_MODES: ReadonlySet<ViewMode> = new Set(["grid", "compact", "list"]);
 

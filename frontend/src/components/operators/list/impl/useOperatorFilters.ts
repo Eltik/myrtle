@@ -134,6 +134,8 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                     return ((a.stats?.cost ?? 0) - (b.stats?.cost ?? 0)) * dir || nameTiebreak(a, b);
                 case "block":
                     return ((a.stats?.block ?? 0) - (b.stats?.block ?? 0)) * dir || nameTiebreak(a, b);
+                case "ownership":
+                    return ((a.ownership?.pct ?? 0) - (b.ownership?.pct ?? 0)) * dir || nameTiebreak(a, b);
                 default:
                     return (rarityToNumber(a.rarity) - rarityToNumber(b.rarity)) * dir || (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99) || nameTiebreak(a, b);
             }

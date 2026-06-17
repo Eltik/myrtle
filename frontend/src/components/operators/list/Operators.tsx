@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorOwnershipQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
@@ -21,7 +21,7 @@ import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
 import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
-import type { SortOption, SortOrder, ViewMode } from "./impl/types";
+import type { IOperatorOwnershipInfo, SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
 
 const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
@@ -30,11 +30,19 @@ export function OperatorsList() {
     const { data: operators = [] } = useQuery(operatorsListQueryOptions());
     const { data: voices } = useQuery(voicesQueryOptions());
     const { data: notes } = useQuery(operatorNotesListQueryOptions());
+    const { data: ownership } = useQuery(operatorOwnershipQueryOptions());
     const notedIds = useMemo(() => {
         if (!notes) return undefined;
         return new Set(notes.filter(noteHasContent).map((n) => n.operator_id));
     }, [notes]);
-    const enriched = useMemo(() => enrichOperators(operators, voices, notedIds), [operators, voices, notedIds]);
+    const ownershipMap = useMemo(() => {
+        if (!ownership || ownership.totalUsers <= 0) return undefined;
+        const total = ownership.totalUsers;
+        const map = new Map<string, IOperatorOwnershipInfo>();
+        for (const [id, owners] of Object.entries(ownership.counts)) map.set(id, { owners, pct: owners / total });
+        return map;
+    }, [ownership]);
+    const enriched = useMemo(() => enrichOperators(operators, voices, notedIds, ownershipMap), [operators, voices, notedIds, ownershipMap]);
 
     const {
         filters,
@@ -404,6 +412,7 @@ export function OperatorsList() {
                                 <span className="text-center">Rarity</span>
                                 <span className="text-center">Class</span>
                                 <span className="text-center">Archetype</span>
+                                <span className="text-center">Owned</span>
                                 <span />
                             </div>
                             <div className="flex flex-col gap-1">

@@ -2,14 +2,15 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { env } from "#/env";
 import { cn, rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
 import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
+import type { IOperatorView } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
 import styles from "./OperatorCardGrid.module.css";
 import { OperatorPreview } from "./OperatorPreview";
+import { OwnershipBadge } from "./OwnershipBadge";
 
 interface IOperatorCardGridProps {
-    operator: IOperatorListItem;
+    operator: IOperatorView;
 }
 
 export function OperatorCardGrid({ operator }: IOperatorCardGridProps) {
@@ -20,6 +21,7 @@ export function OperatorCardGrid({ operator }: IOperatorCardGridProps) {
             <HoverCardTrigger
                 render={
                     <Link to="/operators/$id" params={{ id: operator.id ?? "" }} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
+                        {operator.ownership && <OwnershipBadge info={operator.ownership} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
                         <div className="absolute -translate-x-8 -translate-y-4">
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>

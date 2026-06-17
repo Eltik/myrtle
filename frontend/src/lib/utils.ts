@@ -83,6 +83,16 @@ export function formatNumberCompact(n: number | null | undefined): string {
     return formatNumber(v);
 }
 
+/** Format a fraction in [0, 1] as a percentage, using more decimals for smaller
+ *  shares so tiny values stay legible without over-reporting larger ones. */
+export function formatSharePct(fraction: number): string {
+    const p = fraction * 100;
+    if (p >= 10) return `${p.toFixed(0)}%`;
+    if (p >= 1) return `${p.toFixed(1)}%`;
+    if (p > 0) return `${p.toFixed(2)}%`;
+    return "0%";
+}
+
 export const formatProfession = (profession: string): string => {
     if (!profession) return "Guard";
     switch (profession.toLowerCase()) {

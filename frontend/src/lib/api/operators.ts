@@ -59,6 +59,29 @@ export function operatorsListQueryOptions() {
     });
 }
 
+/** Population-level ownership: how many sharing players own each operator. A
+ *  missing id in `counts` means zero owners. `totalUsers` is the denominator. */
+export interface IOperatorOwnership {
+    totalUsers: number;
+    counts: Record<string, number>;
+    computedAt: string;
+}
+
+export const getOperatorOwnershipFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/operators/ownership");
+    if (!res.ok) throw new Error(`Failed to load operator ownership: ${res.status}`);
+    return (await res.json()) as IOperatorOwnership;
+});
+
+export function operatorOwnershipQueryOptions() {
+    return queryOptions({
+        queryKey: ["operators", "ownership"],
+        queryFn: () => getOperatorOwnershipFn(),
+        staleTime: 30 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
+}
+
 export const getOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((id: string) => id)
     .handler(async ({ data: id }) => {

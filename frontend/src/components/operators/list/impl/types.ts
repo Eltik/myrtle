@@ -1,7 +1,7 @@
 import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 
 export type ViewMode = "grid" | "compact" | "list";
-export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block";
+export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership";
 export type SortOrder = "asc" | "desc";
 export type HasNotesFilter = "any" | "yes" | "no";
 export type AvailabilityFilter = "global" | "upcoming";
@@ -13,6 +13,13 @@ export interface IOperatorStats {
     res: number;
     cost: number;
     block: number;
+}
+
+/** Share of sharing players that own an operator. `pct` is a fraction in
+ *  [0, 1]; `null` only when the population denominator is unknown. */
+export interface IOperatorOwnershipInfo {
+    pct: number | null;
+    owners: number;
 }
 
 /**
@@ -27,6 +34,9 @@ export interface IOperatorView extends IOperatorListItem {
     voiceActors: string[];
     stats: IOperatorStats | null;
     hasNotes: boolean;
+    /** Population-level ownership, or `null` when ownership data is unavailable
+     *  (still loading) or the operator has no recorded owners. */
+    ownership: IOperatorOwnershipInfo | null;
 }
 
 export interface IFilterState {

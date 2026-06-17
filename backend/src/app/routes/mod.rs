@@ -93,6 +93,7 @@ pub fn router() -> Router<AppState> {
         .route("/stats", get(stats::stats))
         .route("/admin/stats", get(stats::admin_stats))
         .route("/operators/index", get(operators::index))
+        .route("/operators/ownership", get(operators::ownership))
         .route("/dps/operators", get(dps::operators))
         .route("/dps/calculate", post(dps::calculate))
         .route("/hps/operators", get(dps::healers))
@@ -129,6 +130,10 @@ pub fn router() -> Router<AppState> {
         .route("/skins/{id}", get(operators::skins_detail))
         .route("/{server}/skins/{id}", get(operators::skins_detail_srv))
         .route("/{server}/operators/index", get(operators::index_srv))
+        .route(
+            "/{server}/operators/ownership",
+            get(operators::ownership_srv),
+        )
         .route("/{server}/operators/{id}", get(operators::detail_srv))
         .route(
             "/{server}/static/{resource}",

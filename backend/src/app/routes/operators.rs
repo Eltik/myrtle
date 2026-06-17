@@ -4,8 +4,8 @@ use axum::{
 };
 
 use crate::app::services::operators::{
-    OperatorIndexEntry, get_index, get_operator, get_operator_skins, get_operator_voices,
-    get_upcoming, resolve_operator,
+    OperatorIndexEntry, OperatorOwnershipResponse, get_index, get_operator, get_operator_skins,
+    get_operator_voices, get_ownership, get_upcoming, resolve_operator,
 };
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::types::operator::Operator;
@@ -26,6 +26,21 @@ pub async fn index_srv(
     Path(server): Path<Server>,
 ) -> Result<Json<Vec<OperatorIndexEntry>>, ApiError> {
     Ok(Json(get_index(&state, server).await?))
+}
+
+/// `GET /operators/ownership` - default-server operator ownership rates.
+pub async fn ownership(
+    State(state): State<AppState>,
+) -> Result<Json<OperatorOwnershipResponse>, ApiError> {
+    Ok(Json(get_ownership(&state, state.default_server).await?))
+}
+
+/// `GET /{server}/operators/ownership` - per-server operator ownership rates.
+pub async fn ownership_srv(
+    State(state): State<AppState>,
+    Path(server): Path<Server>,
+) -> Result<Json<OperatorOwnershipResponse>, ApiError> {
+    Ok(Json(get_ownership(&state, server).await?))
 }
 
 /// `GET /upcoming` - operators on CN not yet on the default (EN) server.

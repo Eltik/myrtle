@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +11,7 @@ use crate::core::gamedata::types::operator::{
 use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
+use crate::database::queries::operator_ownership;
 
 /// Compact operator record for client-side search palettes and autocompletes.
 /// Order of fields matches the JSON contract - keep stable.
@@ -70,6 +71,51 @@ pub async fn get_index(
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
+}
+
+/// Population-level ownership: how many sharing players own each operator, plus
+/// the denominator. Only operators with at least one owner are listed; a missing
+/// id implies zero owners. `totalUsers` is the eligible population on this
+/// server (players who imported a roster and opted into stat sharing).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorOwnershipResponse {
+    pub total_users: i64,
+    pub counts: HashMap<String, i64>,
+    pub computed_at: String,
+}
+
+/// Served from the precomputed aggregate via a short-lived cache, so a request
+/// never scans the roster. Returns 404 for a server that is not loaded.
+pub async fn get_ownership(
+    state: &AppState,
+    server: Server,
+) -> Result<OperatorOwnershipResponse, ApiError> {
+    state.try_server_data(server).ok_or(ApiError::NotFound)?;
+
+    let key = CacheKey::OperatorOwnership {
+        server: server.as_str(),
+    };
+    if let Some(cached) = state.cache.get::<OperatorOwnershipResponse>(&key).await {
+        return Ok(cached);
+    }
+
+    let server_id = server.index() as i16;
+    let (total_users, rows) =
+        operator_ownership::get_operator_ownership(&state.db, server_id).await?;
+    let counts: HashMap<String, i64> = rows
+        .into_iter()
+        .map(|r| (r.operator_id, r.owners))
+        .collect();
+
+    let response = OperatorOwnershipResponse {
+        total_users,
+        counts,
+        computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+    };
+
+    state.cache.set(&key, &response).await;
+    Ok(response)
 }
 
 /// Operators present on `source` but absent from the default (global/EN) server:

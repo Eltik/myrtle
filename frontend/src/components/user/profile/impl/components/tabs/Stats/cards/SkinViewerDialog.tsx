@@ -7,7 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "#/components/ui
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { type ISkin, skinPopularityQueryOptions } from "#/lib/api/skins";
-import { cn, getAvatarById } from "#/lib/utils";
+import { cn, formatSharePct, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 
 type OwnershipFilter = "all" | "missing" | "owned";
@@ -382,21 +382,13 @@ const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSele
 
 const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISkinPopularityInfo; color: string }) {
     const pct = info.pct ?? 0;
-    const label = formatPopularityPct(pct);
+    const label = formatSharePct(pct);
     return (
         <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={`${info.owners.toLocaleString()} owners (${(pct * 100).toFixed(2)}% of imported users)`}>
             {label}
         </span>
     );
 });
-
-function formatPopularityPct(pct: number): string {
-    const p = pct * 100;
-    if (p >= 10) return `${p.toFixed(0)}%`;
-    if (p >= 1) return `${p.toFixed(1)}%`;
-    if (p > 0) return `${p.toFixed(2)}%`;
-    return "0%";
-}
 
 const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
     const isFree = price.kind === "free";
@@ -609,7 +601,7 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
                             {popularity && popularity.pct !== null && (
                                 <DetailRow label="Popularity">
                                     <span className="font-semibold" style={{ color }}>
-                                        {formatPopularityPct(popularity.pct)}
+                                        {formatSharePct(popularity.pct)}
                                     </span>
                                     <span className="ml-2 text-muted-foreground text-xs">of users own this · {popularity.owners.toLocaleString()} owners</span>
                                 </DetailRow>
