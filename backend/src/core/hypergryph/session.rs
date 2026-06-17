@@ -216,6 +216,8 @@ pub async fn login(
         secret: secret.into(),
         seqnum: 1,
         token: u8_data.token.into(),
+        yostar_uid: token_data.uid.into(),
+        yostar_token: token_data.token.into(),
     };
 
     Ok(LoginResult {
@@ -223,4 +225,33 @@ pub async fn login(
         yostar_email: email.to_owned(),
         portal_session,
     })
+}
+
+/// Re-mint a fresh game `secret` from the durable Yostar token carried on the
+/// session, updating `uid`/`token`/`secret` in place and resetting `seqnum`.
+///
+/// Only one `secret` is active per account at a time, so re-running the u8 and
+/// `account/login` steps re-establishes a valid session and resets the sequence
+/// counter to its post-login baseline.
+///
+/// Returns [`FetchError::NotLoggedIn`] when the durable token is absent; callers
+/// should surface a re-login.
+pub async fn refresh_secret(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+) -> Result<(), FetchError> {
+    if session.yostar_uid.is_empty() || session.yostar_token.is_empty() {
+        return Err(FetchError::NotLoggedIn);
+    }
+
+    let u8_data = get_u8_token(client, &session.yostar_uid, &session.yostar_token, server).await?;
+    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
+
+    session.uid = u8_data.uid.into();
+    session.token = u8_data.token.into();
+    session.secret = secret.into();
+    session.seqnum = 1;
+
+    Ok(())
 }

@@ -1,32 +1,7 @@
 use crate::{
-    app::{cache::keys::CacheKey, error::ApiError, state::AppState},
-    core::hypergryph::{
-        constants::{AuthSession, Server},
-        fetch::auth_request,
-    },
+    app::{error::ApiError, services::game_session, state::AppState},
+    core::hypergryph::{constants::Server, fetch::auth_request},
 };
-
-async fn load_session(state: &AppState, user_id: &str) -> Result<AuthSession, ApiError> {
-    let session_json: Option<String> = state
-        .cache
-        .get(&CacheKey::GameSession { uid: user_id })
-        .await;
-
-    let session_json =
-        session_json.ok_or(ApiError::BadRequest("no game session - login again".into()))?;
-
-    serde_json::from_str(&session_json)
-        .map_err(|_| ApiError::BadRequest("invalid game session".into()))
-}
-
-async fn save_session(state: &AppState, user_id: &str, session: &AuthSession) {
-    if let Ok(json) = serde_json::to_string(session) {
-        let () = state
-            .cache
-            .set(&CacheKey::GameSession { uid: user_id }, &json)
-            .await;
-    }
-}
 
 async fn social_sort_list(
     state: &AppState,
@@ -36,7 +11,7 @@ async fn social_sort_list(
     sort_keys: &[&str],
     param: serde_json::Value,
 ) -> Result<Vec<String>, ApiError> {
-    let mut session = load_session(state, user_id).await?;
+    let mut session = game_session::load(state, user_id).await?;
 
     let body = serde_json::json!({
         "type": list_type,
@@ -58,7 +33,7 @@ async fn social_sort_list(
         .await
         .map_err(|e| ApiError::Internal(e.into()))?;
 
-    save_session(state, user_id, &session).await;
+    game_session::save(state, user_id, &session).await;
 
     let arr = raw
         .get("result")
@@ -93,7 +68,7 @@ pub async fn get_raw_friend_info(
     ids: &[String],
     server: Server,
 ) -> Result<serde_json::Value, ApiError> {
-    let mut session = load_session(state, user_id).await?;
+    let mut session = game_session::load(state, user_id).await?;
 
     let body = serde_json::json!({ "idList": ids });
 
@@ -111,7 +86,7 @@ pub async fn get_raw_friend_info(
         .await
         .map_err(|e| ApiError::Internal(e.into()))?;
 
-    save_session(state, user_id, &session).await;
+    game_session::save(state, user_id, &session).await;
 
     Ok(raw)
 }
@@ -122,6 +97,8 @@ pub async fn get_friends(
     server: Server,
     limit: Option<usize>,
 ) -> Result<serde_json::Value, ApiError> {
+    game_session::ensure_fresh(state, user_id, server).await?;
+
     let mut ids = get_raw_friend_ids(state, user_id, server).await?;
 
     if let Some(n) = limit {
@@ -142,6 +119,8 @@ pub async fn search_players(
     server: Server,
     limit: Option<usize>,
 ) -> Result<serde_json::Value, ApiError> {
+    game_session::ensure_fresh(state, user_id, server).await?;
+
     let (nick, num) = match query.split_once('#') {
         Some((n, t)) => (n, t),
         None => (query, ""),

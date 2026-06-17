@@ -5,13 +5,10 @@ use crate::database::queries::roster::sync_user_data;
 use crate::database::queries::score::update_score;
 use crate::database::queries::users::find_by_uid;
 use crate::{
-    app::{cache::keys::CacheKey, error::ApiError, state::AppState},
+    app::{error::ApiError, services::game_session, state::AppState},
     core::{
         grade::calculate::calculate_user_grade,
-        hypergryph::{
-            constants::{AuthSession, Server},
-            yostar::sync_data_raw,
-        },
+        hypergryph::{constants::Server, yostar::sync_data_raw},
     },
     database::models::score::UserScore,
 };
@@ -184,16 +181,7 @@ pub async fn refresh(
     user_id: &str,
     server: Server,
 ) -> Result<serde_json::Value, ApiError> {
-    let session_json: Option<String> = state
-        .cache
-        .get(&CacheKey::GameSession { uid: user_id })
-        .await;
-
-    let session_json =
-        session_json.ok_or(ApiError::BadRequest("no game session - login again".into()))?;
-
-    let mut session: AuthSession = serde_json::from_str(&session_json)
-        .map_err(|_| ApiError::BadRequest("invalid game session".into()))?;
+    let mut session = game_session::ensure_fresh(state, user_id, server).await?;
 
     let text = match sync_data_raw(&state.http_client, &mut session, server).await {
         Ok(t) => t,
@@ -202,11 +190,13 @@ pub async fn refresh(
                 uid = %user_id,
                 server = server.as_str(),
                 error = ?e,
-                "yostar refresh (account/syncData) failed"
+                "account/syncData failed"
             );
             return Err(e.into());
         }
     };
+
+    game_session::save(state, user_id, &session).await;
 
     let data: SyncDataResponse =
         serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;

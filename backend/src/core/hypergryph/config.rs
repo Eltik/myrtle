@@ -19,7 +19,7 @@ pub fn init_config(cfg: GlobalConfig) {
     GLOBAL_CONFIG.set(Arc::new(RwLock::new(cfg))).ok();
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DeviceIds {
     pub device_id: String,  // UUID (no dashes)
     pub device_id2: String, // "86" + 13 random digits
@@ -27,6 +27,12 @@ pub struct DeviceIds {
 }
 
 impl DeviceIds {
+    /// True only when all three ids are populated. Used to reject a partially
+    /// written or corrupt persisted file before adopting it.
+    pub const fn is_complete(&self) -> bool {
+        !self.device_id.is_empty() && !self.device_id2.is_empty() && !self.device_id3.is_empty()
+    }
+
     pub fn generate() -> Self {
         Self {
             device_id: Self::uuid_v4(),

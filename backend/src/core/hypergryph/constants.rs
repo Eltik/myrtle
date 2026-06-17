@@ -160,7 +160,15 @@ pub struct AuthSession {
     pub uid: Box<str>,
     pub secret: Box<str>,
     pub seqnum: u32,
+    /// Short-lived u8 token (from `user/v1/getToken`) used to mint the `secret`.
     pub token: Box<str>,
+    /// Durable Yostar account id (from `user/login`). With [`Self::yostar_token`]
+    /// it re-derives a fresh `secret` without a full re-login.
+    #[serde(default)]
+    pub yostar_uid: Box<str>,
+    /// Durable Yostar access token (from `user/login`). See [`Self::yostar_uid`].
+    #[serde(default)]
+    pub yostar_token: Box<str>,
 }
 
 impl AuthSession {
@@ -175,6 +183,7 @@ impl AuthSession {
             secret: secret.unwrap_or_default().into(),
             seqnum: seqnum.unwrap_or(1),
             token: token.unwrap_or_default().into(),
+            ..Default::default()
         }
     }
 }

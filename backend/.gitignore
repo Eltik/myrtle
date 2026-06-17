@@ -6,5 +6,7 @@ deep_sea_dump.json
 sandbox_perm_dump.json
 regrade_state.json
 regrade_state.json.tmp
+device_ids.json
+device_ids.json.tmp
 .session.json
 backup
