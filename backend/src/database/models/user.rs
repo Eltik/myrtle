@@ -38,6 +38,7 @@ pub struct UserProfile {
     pub last_online_ts: Option<i64>,
     pub resume: Option<String>,
     pub friend_num_limit: Option<i16>,
+    pub cumulative_signin: Option<i32>,
     // Counts
     pub operator_count: Option<i64>,
     pub item_count: Option<i64>,

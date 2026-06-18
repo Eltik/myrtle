@@ -333,7 +333,7 @@ pub struct RawModules {
     pub mission_list: HashMap<String, Mission>,
     pub sub_prof_dict: HashMap<String, SubProfession>,
     pub char_equip: HashMap<String, Vec<String>>,
-    // equip_track_dict has complex nested structure, stored as raw JSON for now
+    // equip_track_dict has a complex nested structure; kept as raw JSON.
     pub equip_track_dict: Vec<serde_json::Value>,
 }
 

@@ -338,8 +338,10 @@ fn build_requirement_tree(
                 let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
                 let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
 
-                let child_cost_item = costs.iter().find(|c| c.item.id == cost.id).unwrap();
-                let ingredient_avail_craft = child_cost_item.item.craftable_count;
+                let ingredient_avail_craft = costs
+                    .iter()
+                    .find(|c| c.item.id == cost.id)
+                    .map_or(0, |c| c.item.craftable_count);
 
                 let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
                 let craft_limit = ingredient_avail / cost.count;
@@ -413,8 +415,10 @@ fn build_requirement_tree(
                 let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
                 let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
 
-                let child_cost_item = costs.iter().find(|c| c.item.id == cost.id).unwrap();
-                let ingredient_avail_craft = child_cost_item.item.craftable_count;
+                let ingredient_avail_craft = costs
+                    .iter()
+                    .find(|c| c.item.id == cost.id)
+                    .map_or(0, |c| c.item.craftable_count);
 
                 let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
                 let craft_limit = ingredient_avail / cost.count;
@@ -650,7 +654,8 @@ pub async fn list_plans(
             let roster_entry = roster_map.get(&plan.operator_id);
             plans_with_ops.push((plan.clone(), operator.clone(), roster_entry));
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
-            let mut op_val = serde_json::to_value(&operator).unwrap();
+            let mut op_val =
+                serde_json::to_value(&operator).map_err(|e| ApiError::Internal(e.into()))?;
             if let serde_json::Value::Object(map) = &mut op_val {
                 map.insert(
                     "server".to_string(),
@@ -931,7 +936,7 @@ pub async fn upsert_plan(
         .await?
     };
 
-    let mut op_val = serde_json::to_value(&operator).unwrap();
+    let mut op_val = serde_json::to_value(&operator).map_err(|e| ApiError::Internal(e.into()))?;
     if let serde_json::Value::Object(map) = &mut op_val {
         map.insert(
             "server".to_string(),
@@ -980,7 +985,8 @@ pub async fn list_public_plans(
                 resolve_operator(state, state.default_server, &plan.operator_id)
         {
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
-            let mut op_val = serde_json::to_value(&operator).unwrap();
+            let mut op_val =
+                serde_json::to_value(&operator).map_err(|e| ApiError::Internal(e.into()))?;
             if let serde_json::Value::Object(map) = &mut op_val {
                 map.insert(
                     "server".to_string(),

@@ -50,7 +50,7 @@ pub async fn sync_user_data(
     sandbox: &serde_json::Value,
     medals: &serde_json::Value,
     building: &serde_json::Value,
-    checkin: &[i16],
+    checkin: &serde_json::Value,
     supports: &serde_json::Value,
     nick_number: Option<&str>,
     enemies: &serde_json::Value,

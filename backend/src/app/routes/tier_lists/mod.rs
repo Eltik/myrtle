@@ -1,8 +1,19 @@
+use crate::app::error::ApiError;
 use crate::app::state::AppState;
+use crate::database::models::tier_list::TierList;
+use crate::database::queries::tier_lists::find_by_slug;
 use axum::{
     Router,
     routing::{delete, get, patch, post, put},
 };
+
+/// Load an active tier list by slug or return `404`. Shared by the tier-list
+/// route handlers, which all resolve the `{slug}` path param the same way.
+pub(crate) async fn load_tier_list(state: &AppState, slug: &str) -> Result<TierList, ApiError> {
+    find_by_slug(&state.db, slug)
+        .await?
+        .ok_or(ApiError::NotFound)
+}
 
 pub mod crud;
 pub mod permissions;

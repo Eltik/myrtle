@@ -18,7 +18,6 @@ use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierList;
 use crate::database::queries::tier_lists::delete_list;
 use crate::database::queries::tier_lists::find_all_active;
-use crate::database::queries::tier_lists::find_by_slug;
 use crate::database::queries::tier_lists::find_by_user;
 use crate::database::queries::tier_lists::find_favorited_by_user;
 
@@ -91,9 +90,7 @@ pub async fn delete(
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    let list = find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    let list = super::load_tier_list(&state, &slug).await?;
     // Owner check is inside check_permission; Admin level covers delete.
     check_permission(&state, &list, user_id, auth.role, Permission::Admin).await?;
     delete_list(&state.db, list.id).await?;

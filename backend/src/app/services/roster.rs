@@ -173,7 +173,24 @@ pub struct MedalStore {
 
 #[derive(Deserialize)]
 pub struct CheckIn {
+    /// Current month's daily sign-in calendar (0/1 per day). The raw key is
+    /// `checkInHistory`; the bare `history` key does not exist on this object.
+    #[serde(rename = "checkInHistory")]
     pub history: Option<Vec<i16>>,
+    /// Lifetime cumulative sign-in days — the "X / 1000 total days of sign-ins"
+    /// counter shown on the daily sign-in carousel's milestone page. Distinct
+    /// from `history`, which is only the current month's calendar.
+    #[serde(rename = "showCount")]
+    pub show_count: Option<i64>,
+    /// Identifier of the active monthly sign-in series (e.g. `signin<N>`).
+    #[serde(rename = "checkInGroupId")]
+    pub group_id: Option<String>,
+    /// Days already claimed in the current month's calendar.
+    #[serde(rename = "checkInRewardIndex")]
+    pub reward_index: Option<i64>,
+    /// Whether a daily sign-in is claimable right now (0/1, as of this sync).
+    #[serde(rename = "canCheckIn")]
+    pub can_check_in: Option<i64>,
 }
 
 pub async fn refresh(
@@ -242,7 +259,7 @@ pub async fn refresh(
     let sandbox = user.sandbox_perm.unwrap_or_default();
     let medals = extract_medals(&user.medal);
     let building = user.building.unwrap_or_default();
-    let checkin: Vec<i16> = user.checkin.and_then(|c| c.history).unwrap_or_default();
+    let checkin = extract_checkin(&user.checkin);
     let enemies = raw
         .pointer("/user/dexNav/enemy/enemies")
         .cloned()
@@ -284,7 +301,7 @@ pub async fn refresh(
             &UserScore {
                 user_id: user.id,
                 operator_score: grade.operator_grade,
-                total_score: grade.total_score, // for now, just operator
+                total_score: grade.total_score, // operator grade only
                 grade: Some(grade.overall),
                 stage_score: grade.stage_grade,
                 roguelike_score: grade.roguelike_grade,
@@ -557,6 +574,23 @@ fn extract_status(status: Option<&PlayerStatus>) -> serde_json::Value {
         "main_stage_progress": s.main_stage_progress.as_deref().unwrap_or(""),
         "resume": s.resume.as_deref().unwrap_or(""),
         "friend_num_limit": s.friend_num_limit.unwrap_or(0),
+    })
+}
+
+/// Flatten the `checkIn` section into the JSONB payload `sp_sync_user_data`
+/// stores in `user_checkin`: the current month's calendar plus the lifetime
+/// sign-in counter and the active monthly series' progress.
+fn extract_checkin(checkin: &Option<CheckIn>) -> serde_json::Value {
+    let Some(c) = checkin else {
+        return serde_json::json!({ "history": [] });
+    };
+
+    serde_json::json!({
+        "history": c.history.clone().unwrap_or_default(),
+        "cumulative_signin": c.show_count.unwrap_or(0),
+        "group_id": c.group_id,
+        "reward_index": c.reward_index.unwrap_or(0),
+        "can_check_in": c.can_check_in.is_some_and(|v| v != 0),
     })
 }
 

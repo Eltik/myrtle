@@ -48,11 +48,11 @@ struct ModuleEntry {
 }
 
 fn parse_masteries(roster: &RosterEntry) -> Vec<MasteryEntry> {
-    serde_json::from_value(roster.masteries.clone()).unwrap_or_default()
+    Vec::<MasteryEntry>::deserialize(&roster.masteries).unwrap_or_default()
 }
 
 fn parse_modules(roster: &RosterEntry) -> Vec<ModuleEntry> {
-    serde_json::from_value(roster.modules.clone()).unwrap_or_default()
+    Vec::<ModuleEntry>::deserialize(&roster.modules).unwrap_or_default()
 }
 
 /// Index a roster by operator id for O(1) lookups.

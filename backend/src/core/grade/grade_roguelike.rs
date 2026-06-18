@@ -103,8 +103,7 @@ pub fn grade_roguelike(
             continue;
         };
 
-        let progress: ThemeProgress =
-            serde_json::from_value(progress_json.clone()).unwrap_or_default();
+        let progress = ThemeProgress::deserialize(progress_json).unwrap_or_default();
 
         let score = grade_theme(&progress, theme_data);
         let w = theme_weight(theme_id);

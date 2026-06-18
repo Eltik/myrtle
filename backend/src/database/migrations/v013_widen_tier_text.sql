@@ -1,2 +1,0 @@
-ALTER TABLE tiers
-    ALTER COLUMN name TYPE VARCHAR(40);

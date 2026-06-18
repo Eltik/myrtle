@@ -1,5 +1,14 @@
 use sqlx::PgPool;
 
+/// Ordered list of migrations.
+///
+/// `v001_initial`..`v005_indexes` are the squashed baseline schema, generated
+/// from `pg_dump` of the original v001..v022 migrations and split by object
+/// type (tables, views, triggers, procedures, indexes). They reuse the original
+/// migration names on purpose: any database that applied the original
+/// migrations already has those names in `_migrations`, so the runner skips them
+/// (their bodies only ever run against a fresh database). New changes are added
+/// as their own migrations after the baseline (`v006_cumulative_signin`, ...).
 const MIGRATIONS: &[(&str, &str)] = &[
     ("v001_initial", include_str!("v001_initial.sql")),
     ("v002_views", include_str!("v002_views.sql")),
@@ -7,60 +16,8 @@ const MIGRATIONS: &[(&str, &str)] = &[
     ("v004_procedures", include_str!("v004_procedures.sql")),
     ("v005_indexes", include_str!("v005_indexes.sql")),
     (
-        "v006_operator_notes",
-        include_str!("v006_operator_notes.sql"),
-    ),
-    (
-        "v007_tier_list_stats",
-        include_str!("v007_tier_list_stats.sql"),
-    ),
-    ("v008_support_units", include_str!("v008_support_units.sql")),
-    ("v009_nick_number", include_str!("v009_nick_number.sql")),
-    (
-        "v010_leaderboard_snapshots",
-        include_str!("v010_leaderboard_snapshots.sql"),
-    ),
-    (
-        "v011_tier_list_visibility",
-        include_str!("v011_tier_list_visibility.sql"),
-    ),
-    (
-        "v012_skin_count_split",
-        include_str!("v012_skin_count_split.sql"),
-    ),
-    (
-        "v013_widen_tier_text",
-        include_str!("v013_widen_tier_text.sql"),
-    ),
-    (
-        "v014_propagate_tier_list_updated_at",
-        include_str!("v014_propagate_tier_list_updated_at.sql"),
-    ),
-    (
-        "v015_repair_tier_list_updated_at",
-        include_str!("v015_repair_tier_list_updated_at.sql"),
-    ),
-    (
-        "v016_gacha_batch_index",
-        include_str!("v016_gacha_batch_index.sql"),
-    ),
-    (
-        "v017_placement_description",
-        include_str!("v017_placement_description.sql"),
-    ),
-    (
-        "v018_consolidate_placement_notes",
-        include_str!("v018_consolidate_placement_notes.sql"),
-    ),
-    (
-        "v019_user_enemy_progress",
-        include_str!("v019_user_enemy_progress.sql"),
-    ),
-    ("v020_planner", include_str!("v020_planner.sql")),
-    ("v021_plan_groups", include_str!("v021_plan_groups.sql")),
-    (
-        "v022_operator_ownership",
-        include_str!("v022_operator_ownership.sql"),
+        "v006_cumulative_signin",
+        include_str!("v006_cumulative_signin.sql"),
     ),
 ];
 
@@ -76,14 +33,16 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    for (name, sql) in MIGRATIONS {
-        let applied: bool =
-            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM _migrations WHERE name = $1)")
-                .bind(name)
-                .fetch_one(pool)
-                .await?;
+    // Fetch the set of applied migrations once rather than querying per file.
+    let applied: std::collections::HashSet<String> =
+        sqlx::query_scalar("SELECT name FROM _migrations")
+            .fetch_all(pool)
+            .await?
+            .into_iter()
+            .collect();
 
-        if !applied {
+    for (name, sql) in MIGRATIONS {
+        if !applied.contains(*name) {
             let mut tx = pool.begin().await?;
             sqlx::raw_sql(sql).execute(&mut *tx).await?;
             sqlx::query("INSERT INTO _migrations (name) VALUES ($1)")

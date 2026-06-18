@@ -11,7 +11,6 @@ use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierListVersion;
 use crate::database::queries::tier_lists::create_version;
-use crate::database::queries::tier_lists::find_by_slug;
 use crate::database::queries::tier_lists::get_versions;
 use crate::database::queries::tier_lists::latest_version;
 
@@ -19,9 +18,7 @@ pub async fn list(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<Vec<TierListVersion>>, ApiError> {
-    let tier_list = find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    let tier_list = super::load_tier_list(&state, &slug).await?;
     let versions = get_versions(&state.db, tier_list.id).await?;
     Ok(Json(versions))
 }

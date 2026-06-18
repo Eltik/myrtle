@@ -28,7 +28,7 @@
 //! "per resting operator" generation (dorm capacity is known); the deeper cascade
 //! (Dreamland / Measure / Memory Fragment intermediates) has no upstream source in the
 //! static building data, so those converters contribute 0 here rather than a guess.
-//! Callers gate this to 243 layouts; 252 is intentionally left unmodeled for now.
+//! Callers gate this to 243 layouts; 252 is intentionally left unmodeled.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;

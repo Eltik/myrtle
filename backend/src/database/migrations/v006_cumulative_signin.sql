@@ -1,16 +1,22 @@
--- ═══════════════════════════════════════════════════════════════
--- NICK NUMBER
---
--- Arknights identifies each Doctor by `nickName` plus a numeric
--- discriminator (`nickNumber`) - e.g. `Amiya#1234`. The syncData
--- payload exposes it as `status.nickNumber` (string of digits, may
--- have leading zeros so we store as VARCHAR).
--- ═══════════════════════════════════════════════════════════════
+-- Enrich the daily sign-in table. Previously `user_checkin` held only the
+-- (mis-keyed, always-empty) monthly history. Now it captures the full check-in
+-- picture sourced from syncData `user.checkIn`:
+--   * history           - current month's calendar (0/1 per day)
+--   * cumulative_signin - lifetime "X / 1000 total days of sign-ins" counter
+--                         (checkIn.showCount)
+--   * checkin_group_id  - active monthly sign-in series (checkIn.checkInGroupId)
+--   * reward_index      - days claimed this month (checkIn.checkInRewardIndex)
+--   * can_check_in      - whether a claim is available as of last sync
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS nick_number VARCHAR(10);
+ALTER TABLE user_checkin
+    ADD COLUMN IF NOT EXISTS cumulative_signin INT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS checkin_group_id   VARCHAR(32),
+    ADD COLUMN IF NOT EXISTS reward_index       SMALLINT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS can_check_in       BOOLEAN NOT NULL DEFAULT false;
 
--- Append nick_number to the user-profile view. CREATE OR REPLACE
--- VIEW only allows additions at the end of the column list.
+-- Surface the lifetime counter on the profile view (the headline stat). The
+-- per-month detail columns stay in user_checkin for a dedicated endpoint.
+-- CREATE OR REPLACE only allows appending columns, so cumulative_signin is last.
 CREATE OR REPLACE VIEW v_user_profile AS
 SELECT
     u.id, u.uid, u.nickname, u.level, u.avatar_id, u.secretary,
@@ -24,37 +30,31 @@ SELECT
     (SELECT COUNT(*) FROM user_operators uo WHERE uo.user_id = u.id) AS operator_count,
     (SELECT COUNT(*) FROM user_items ui WHERE ui.user_id = u.id) AS item_count,
     (SELECT COUNT(*) FROM user_skins sk WHERE sk.user_id = u.id) AS skin_count,
-    u.nick_number
+    u.nick_number,
+    (SELECT COUNT(*) FROM user_skins sk
+       WHERE sk.user_id = u.id AND sk.skin_id LIKE '%@%') AS non_default_skin_count,
+    ck.cumulative_signin
 FROM users u
 JOIN servers s ON u.server_id = s.id
 LEFT JOIN user_scores sc ON u.id = sc.user_id
 LEFT JOIN user_settings us ON us.user_id = u.id
-LEFT JOIN user_status st ON st.user_id = u.id;
+LEFT JOIN user_status st ON st.user_id = u.id
+LEFT JOIN user_checkin ck ON ck.user_id = u.id;
 
--- Append nick_number to the leaderboard view.
-CREATE OR REPLACE VIEW v_leaderboard AS
-SELECT
-    u.id, u.uid, u.nickname, u.level, u.avatar_id, u.secretary, u.secretary_skin_id,
-    s.code AS server,
-    sc.total_score, sc.grade,
-    sc.operator_score, sc.stage_score, sc.roguelike_score,
-    sc.sandbox_score, sc.medal_score, sc.base_score, sc.skin_score,
-    RANK() OVER (ORDER BY sc.total_score DESC) AS rank_global,
-    RANK() OVER (PARTITION BY u.server_id ORDER BY sc.total_score DESC) AS rank_server,
-    u.nick_number
-FROM users u
-JOIN servers s ON u.server_id = s.id
-LEFT JOIN user_scores sc ON u.id = sc.user_id
-WHERE EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id = u.id AND us.public_profile = true);
-
--- Extend the sync procedure to accept p_nick_number and persist it
--- alongside the rest of the user record. Adding a parameter changes
--- the procedure signature, so drop the old 21-arg version first to
--- avoid an unwanted overload.
+-- p_checkin changes from SMALLINT[] (history only) to JSONB (full check-in
+-- payload), so the old signature must be dropped before re-creating.
 DROP PROCEDURE IF EXISTS sp_sync_user_data(
     VARCHAR, SMALLINT, VARCHAR, SMALLINT, VARCHAR, VARCHAR, VARCHAR, VARCHAR,
     JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB,
-    SMALLINT[], JSONB
+    SMALLINT[], JSONB, VARCHAR, JSONB
+);
+
+-- Also drop a stale 20-arg overload left behind by pre-v008 migrations (it
+-- predates the supports/nick_number/enemies params and is never called).
+DROP PROCEDURE IF EXISTS sp_sync_user_data(
+    VARCHAR, SMALLINT, VARCHAR, SMALLINT, VARCHAR, VARCHAR, VARCHAR, VARCHAR,
+    JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB,
+    SMALLINT[]
 );
 
 CREATE OR REPLACE PROCEDURE sp_sync_user_data(
@@ -77,9 +77,10 @@ CREATE OR REPLACE PROCEDURE sp_sync_user_data(
     p_sandbox JSONB,
     p_medals JSONB,
     p_building JSONB,
-    p_checkin SMALLINT[],
+    p_checkin JSONB,
     p_supports JSONB,
-    p_nick_number VARCHAR
+    p_nick_number VARCHAR,
+    p_enemies JSONB
 )
 LANGUAGE plpgsql AS $$
 DECLARE
@@ -172,8 +173,19 @@ BEGIN
     INSERT INTO user_building (user_id, data) VALUES (v_user_id, p_building)
     ON CONFLICT (user_id) DO UPDATE SET data = EXCLUDED.data;
 
-    INSERT INTO user_checkin (user_id, history) VALUES (v_user_id, p_checkin)
-    ON CONFLICT (user_id) DO UPDATE SET history = EXCLUDED.history;
+    INSERT INTO user_checkin (user_id, history, cumulative_signin, checkin_group_id, reward_index, can_check_in)
+    VALUES (v_user_id,
+        ARRAY(SELECT jsonb_array_elements_text(p_checkin->'history')::SMALLINT),
+        COALESCE((p_checkin->>'cumulative_signin')::INT, 0),
+        p_checkin->>'group_id',
+        COALESCE((p_checkin->>'reward_index')::SMALLINT, 0),
+        COALESCE((p_checkin->>'can_check_in')::BOOLEAN, false))
+    ON CONFLICT (user_id) DO UPDATE SET
+        history = EXCLUDED.history,
+        cumulative_signin = EXCLUDED.cumulative_signin,
+        checkin_group_id = EXCLUDED.checkin_group_id,
+        reward_index = EXCLUDED.reward_index,
+        can_check_in = EXCLUDED.can_check_in;
 
     DELETE FROM user_support_units WHERE user_id = v_user_id;
     INSERT INTO user_support_units (user_id, slot, operator_id, skin_id, skill_index, current_equip)
@@ -185,5 +197,8 @@ BEGIN
            s->>'current_equip'
     FROM jsonb_array_elements(p_supports) AS s
     WHERE s->>'operator_id' IS NOT NULL;
+
+    INSERT INTO user_enemy_progress (user_id, enemies) VALUES (v_user_id, p_enemies)
+    ON CONFLICT (user_id) DO UPDATE SET enemies = EXCLUDED.enemies;
 END;
 $$;
