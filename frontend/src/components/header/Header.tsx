@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Heart } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
@@ -91,6 +92,17 @@ export default function Header() {
                         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
                         <ThemeToggle />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hidden sm:inline-flex"
+                            render={
+                                <Link to="/donate" target="_blank" aria-label="Support myrtle.moe">
+                                    <Heart className="h-4 w-4" aria-hidden="true" />
+                                    <span className="sr-only">Support myrtle.moe</span>
+                                </Link>
+                            }
+                        />
                         <Button
                             variant="ghost"
                             size="icon"

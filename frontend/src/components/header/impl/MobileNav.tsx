@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -84,6 +84,11 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     </a>
                                 }
                             />
+                            <DrawerMenuItem render={<DrawerClose render={<Link to="/donate" target="_blank" />} />}>
+                                Donate
+                                <Heart className="mr-2 h-4 w-4" />
+                                <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
+                            </DrawerMenuItem>
                         </DrawerMenuGroup>
 
                         <DrawerMenuSeparator />

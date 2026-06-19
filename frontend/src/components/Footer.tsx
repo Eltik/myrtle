@@ -11,7 +11,7 @@ export default function Footer() {
                             myrtle.moe <span className="font-normal text-muted-foreground">· v3</span>
                         </span>
                     </div>
-                    <nav aria-label="Legal" className="inline-flex items-center gap-4">
+                    <nav aria-label="Site links" className="inline-flex items-center gap-4">
                         <Link to="/changelog" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
                             Changelog
                         </Link>
@@ -23,6 +23,9 @@ export default function Footer() {
                         </Link>
                         <Link to="/discord" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
                             Discord
+                        </Link>
+                        <Link to="/donate" target="_blank" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
+                            Donate
                         </Link>
                     </nav>
                 </div>
