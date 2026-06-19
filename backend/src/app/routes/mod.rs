@@ -37,6 +37,7 @@ pub fn router() -> Router<AppState> {
         .route("/health", get(health::health))
         .route("/get-user", get(user::get_user))
         .route("/get-user-score", get(user::get_user_score))
+        .route("/get-user-checkin", get(user::get_user_checkin))
         .route("/leaderboard", get(leaderboard::leaderboard))
         .route("/leaderboard/movers", get(leaderboard::top_movers))
         .route("/leaderboard/distribution", get(leaderboard::distribution))

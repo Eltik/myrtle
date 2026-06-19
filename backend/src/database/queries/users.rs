@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::user::{User, UserProfile};
+use crate::database::models::user::{User, UserCheckin, UserProfile};
 
 /// Create minimal user
 pub async fn create_user(pool: &PgPool, uid: &str, server_id: i16) -> Result<User, sqlx::Error> {
@@ -18,6 +18,28 @@ pub async fn find_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserProfile>
         .bind(uid)
         .fetch_optional(pool)
         .await
+}
+
+/// Fetch the daily sign-in row for one user by Arknights UID.
+/// Returns `None` if the user has never been synced.
+pub async fn get_checkin_by_uid(
+    pool: &PgPool,
+    uid: &str,
+) -> Result<Option<UserCheckin>, sqlx::Error> {
+    sqlx::query_as::<_, UserCheckin>(
+        r"
+        SELECT ck.history, ck.cumulative_signin, ck.checkin_group_id,
+               ck.reward_index, ck.can_check_in,
+               st.register_ts, st.last_online_ts, u.updated_at
+        FROM user_checkin ck
+        JOIN users u ON u.id = ck.user_id
+        LEFT JOIN user_status st ON st.user_id = ck.user_id
+        WHERE u.uid = $1
+        ",
+    )
+    .bind(uid)
+    .fetch_optional(pool)
+    .await
 }
 
 /// Find user profile by internal UUID

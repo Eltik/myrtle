@@ -125,18 +125,32 @@ export function Hero({ profile }: IHeroProps) {
                     </h1>
                     {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
                     {levelProgress && <LevelProgressBar progress={levelProgress} />}
-                    <div className="mt-1.5 inline-flex items-center gap-2 font-medium font-sans text-muted-foreground text-xs leading-none">
-                        <span className={shared.dotPulse} aria-hidden="true" />
-                        <span>
-                            Registered ·{" "}
-                            <b>
-                                {new Date((profile.register_ts ?? 0) * 1000).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                })}
-                            </b>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
+                        <span className="inline-flex items-center gap-2">
+                            <span className={shared.dotPulse} aria-hidden="true" />
+                            <span>
+                                Registered ·{" "}
+                                <b>
+                                    {new Date((profile.register_ts ?? 0) * 1000).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                    })}
+                                </b>
+                            </span>
                         </span>
+                        {typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0 && (
+                            <span className="inline-flex items-center gap-2">
+                                <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />
+                                <span>
+                                    Signed in ·{" "}
+                                    <b className="text-foreground tabular-nums">
+                                        {profile.cumulative_signin.toLocaleString()}/{profile.register_ts && profile.last_online_ts ? Math.floor((profile.last_online_ts * 1000 - profile.register_ts * 1000) / 86400000).toLocaleString() : "0"}
+                                    </b>{" "}
+                                    days
+                                </span>
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

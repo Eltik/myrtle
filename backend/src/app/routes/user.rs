@@ -5,8 +5,9 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app::{error::ApiError, services, state::AppState};
-use crate::database::models::user::UserProfile;
+use crate::database::models::user::{UserCheckin, UserProfile};
 use crate::database::queries::score::get_score_by_uid;
+use crate::database::queries::users::get_checkin_by_uid;
 
 #[derive(Deserialize)]
 pub struct GetUserParams {
@@ -33,4 +34,14 @@ pub async fn get_user_score(
         None => serde_json::Value::Null,
     };
     Ok(Json(body))
+}
+
+pub async fn get_user_checkin(
+    State(state): State<AppState>,
+    Query(params): Query<GetUserParams>,
+) -> Result<Json<Option<UserCheckin>>, ApiError> {
+    // Daily sign-in state: current month's calendar, lifetime total, and the
+    // active monthly series' progress. `null` when the user has never synced.
+    let checkin = get_checkin_by_uid(&state.db, &params.uid).await?;
+    Ok(Json(checkin))
 }

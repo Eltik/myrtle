@@ -73,3 +73,27 @@ pub struct UserSettings {
     pub share_stats: bool,
     pub updated_at: DateTime<Utc>,
 }
+
+/// `user_checkin` table — daily sign-in state from the game's `checkIn` section,
+/// joined with the timestamps needed to render it as a calendar.
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserCheckin {
+    /// Current month's calendar: one entry per day, `1` = claimed, `0` = not.
+    pub history: Vec<i16>,
+    /// Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
+    pub cumulative_signin: i32,
+    /// Active monthly sign-in series id (e.g. `signin<N>`).
+    pub checkin_group_id: Option<String>,
+    /// Days already claimed in the current month's calendar.
+    pub reward_index: i16,
+    /// Whether a daily sign-in is claimable right now (as of the last sync).
+    pub can_check_in: bool,
+    /// Account creation time (Unix seconds) — for "days since joining".
+    pub register_ts: Option<i64>,
+    /// Player's last in-game online time (Unix seconds) — distinct from the DB
+    /// sync time below.
+    pub last_online_ts: Option<i64>,
+    /// When this row was last synced to our DB. The `history` is a snapshot as
+    /// of this moment, which may be days/weeks before "now".
+    pub updated_at: DateTime<Utc>,
+}

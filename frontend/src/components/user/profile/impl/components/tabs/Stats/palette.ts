@@ -2,6 +2,7 @@ export const PALETTE = {
     collection: "var(--primary)",
     elite: "oklch(0.74 0.17 75)",
     top: "var(--primary)",
+    signin: "oklch(0.70 0.15 162)",
 
     classes: {
         PIONEER: "oklch(0.70 0.14 200)",

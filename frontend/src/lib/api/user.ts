@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
-import type { IUserProfile } from "#/types/user";
+import type { IUserCheckin, IUserProfile } from "#/types/user";
 import { optionalSiteToken } from "./_shared.server";
 
 export interface IRosterMastery {
@@ -185,6 +185,26 @@ export function userScoreQueryOptions(uid: string) {
     return queryOptions({
         queryKey: ["user", "score", uid],
         queryFn: () => getUserScoreFn({ data: uid }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export const getUserCheckinFn = createServerFn({ method: "GET" })
+    .inputValidator((uid: string) => uid)
+    .handler(async ({ data: uid }) => {
+        const res = await backendFetch(`/get-user-checkin?uid=${encodeURIComponent(uid)}`);
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            throw new Error(`Failed to load user check-in: ${res.status}`);
+        }
+        return (await res.json()) as IUserCheckin | null;
+    });
+
+export function userCheckinQueryOptions(uid: string) {
+    return queryOptions({
+        queryKey: ["user", "checkin", uid],
+        queryFn: () => getUserCheckinFn({ data: uid }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

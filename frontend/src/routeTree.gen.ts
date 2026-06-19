@@ -15,6 +15,7 @@ import { Route as StatsRouteImport } from './routes/stats'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as EnemiesRouteImport } from './routes/enemies'
+import { Route as DonateRouteImport } from './routes/donate'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as AuthedRouteImport } from './routes/_authed'
@@ -77,6 +78,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
 const EnemiesRoute = EnemiesRouteImport.update({
   id: '/enemies',
   path: '/enemies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonateRoute = DonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscordRoute = DiscordRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/donate': typeof DonateRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/donate': typeof DonateRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/donate': typeof DonateRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/'
     | '/changelog'
     | '/discord'
+    | '/donate'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/'
     | '/changelog'
     | '/discord'
+    | '/donate'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/changelog'
     | '/discord'
+    | '/donate'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   ChangelogRoute: typeof ChangelogRoute
   DiscordRoute: typeof DiscordRoute
+  DonateRoute: typeof DonateRoute
   EnemiesRoute: typeof EnemiesRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -562,6 +575,13 @@ declare module '@tanstack/react-router' {
       path: '/enemies'
       fullPath: '/enemies'
       preLoaderRoute: typeof EnemiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discord': {
@@ -846,6 +866,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   ChangelogRoute: ChangelogRoute,
   DiscordRoute: DiscordRoute,
+  DonateRoute: DonateRoute,
   EnemiesRoute: EnemiesRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,

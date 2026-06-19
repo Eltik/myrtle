@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { skinsQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
-import type { IRosterEntry } from "#/lib/api/user";
+import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
 import { ElitePromotionCard } from "./cards/ElitePromotionCard";
 import { MasteryCard } from "./cards/MasteryCard";
 import { ModulesSkinsCard } from "./cards/ModulesSkinsCard";
+import { SignInCalendarCard, SignInOverviewCard } from "./cards/SignInCard";
 import { TopOperatorsCard } from "./cards/TopOperatorsCard";
 import { computeUserStats } from "./helpers";
 import { StatsTabSkeleton } from "./StatsTabSkeleton";
@@ -24,6 +25,7 @@ const EMPTY_OWNED_SKINS = new Set<string>();
 export function StatsTab({ uid, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: skinData } = useQuery(skinsQueryOptions());
     const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
+    const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
     const charSkins = skinData?.charSkins;
 
     const stats = useMemo(() => computeUserStats(roster, operatorsStatic, charSkins, nonDefaultSkinCount), [roster, operatorsStatic, charSkins, nonDefaultSkinCount]);
@@ -40,6 +42,8 @@ export function StatsTab({ uid, roster, operatorsStatic, nonDefaultSkinCount }: 
             <MasteryCard masteries={stats.masteries} />
             <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsStatic={operatorsStatic} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
             <TopOperatorsCard operatorsStatic={operatorsStatic} roster={roster} />
+            <SignInOverviewCard checkin={checkin} />
+            <SignInCalendarCard checkin={checkin} />
         </div>
     );
 }
