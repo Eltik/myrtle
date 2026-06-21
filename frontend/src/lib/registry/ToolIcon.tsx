@@ -113,6 +113,33 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M12 7v5l3 2" />
                 </svg>
             );
+        case "user":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            );
+        case "shield":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M12 3 4 6v6c0 4.5 3.4 8.5 8 9 4.6-.5 8-4.5 8-9V6l-8-3z" />
+                </svg>
+            );
+        case "crosshair":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <circle cx="12" cy="12" r="8" />
+                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                </svg>
+            );
+        case "map":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" />
+                    <path d="M9 4v14M15 6v14" />
+                </svg>
+            );
         default:
             return null;
     }

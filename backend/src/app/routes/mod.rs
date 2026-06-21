@@ -19,6 +19,7 @@ pub mod health;
 pub mod improvements;
 pub mod inventory;
 pub mod leaderboard;
+pub mod level;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
@@ -44,6 +45,7 @@ pub fn router() -> Router<AppState> {
         .route("/leaderboard/standing", get(leaderboard::standing))
         .route("/search", get(search::search))
         .route("/static/{resource}", get(static_data::get_static))
+        .route("/level/{stage_id}", get(level::get_level_map))
         .route("/avatar/{id}", get(assets::avatar))
         .route("/portrait/{id}", get(assets::portrait))
         .route("/skill-icon/{id}", get(assets::skill_icon))
@@ -140,6 +142,7 @@ pub fn router() -> Router<AppState> {
             "/{server}/static/{resource}",
             get(static_data::get_static_srv),
         )
+        .route("/{server}/level/{stage_id}", get(level::get_level_map_srv))
         .route("/{server}/avatar/{id}", get(assets::avatar_srv))
         .route("/{server}/portrait/{id}", get(assets::portrait_srv))
         .route("/{server}/skill-icon/{id}", get(assets::skill_icon_srv))

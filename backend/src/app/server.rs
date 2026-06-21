@@ -20,8 +20,12 @@ pub async fn run(state: AppState) -> Result<()> {
         .layer(CompressionLayer::new().compress_when(compression_predicate))
         .layer(CorsLayer::permissive());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3060").await?;
-    tracing::info!("listening on :3060");
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or(3060);
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await?;
+    tracing::info!("listening on :{port}");
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;

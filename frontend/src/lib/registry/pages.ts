@@ -20,6 +20,14 @@ export const PAGES: IPage[] = [
         keywords: ["operator", "roster", "characters", "list", "browse"],
     },
     {
+        id: "stages",
+        href: "/stages",
+        label: "Stages",
+        desc: "Every stage, mapped with an enemy-pathing simulator",
+        icon: "map",
+        keywords: ["stage", "stages", "map", "level", "mission", "operation", "pathing", "simulator"],
+    },
+    {
         id: "tier-lists",
         href: "/tier-lists",
         label: "Tier Lists",

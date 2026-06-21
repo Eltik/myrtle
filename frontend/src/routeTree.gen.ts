@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as StagesRouteImport } from './routes/stages'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as EnemiesRouteImport } from './routes/enemies'
@@ -30,6 +31,7 @@ import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
 import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
+import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
@@ -63,6 +65,11 @@ const TermsRoute = TermsRouteImport.update({
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StagesRoute = StagesRouteImport.update({
+  id: '/stages',
+  path: '/stages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -152,6 +159,11 @@ const ToolsBirthdaysRoute = ToolsBirthdaysRouteImport.update({
 const TierListsIdRoute = TierListsIdRouteImport.update({
   id: '/tier-lists_/$id',
   path: '/tier-lists/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StagesStageIdRoute = StagesStageIdRouteImport.update({
+  id: '/stages_/$stageId',
+  path: '/stages/$stageId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperatorsIdRoute = OperatorsIdRouteImport.update({
@@ -260,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
@@ -269,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/stages/$stageId': typeof StagesStageIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -301,6 +315,7 @@ export interface FileRoutesByTo {
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
@@ -309,6 +324,7 @@ export interface FileRoutesByTo {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/stages/$stageId': typeof StagesStageIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -343,6 +359,7 @@ export interface FileRoutesById {
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
@@ -352,6 +369,7 @@ export interface FileRoutesById {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
+  '/stages_/$stageId': typeof StagesStageIdRoute
   '/tier-lists_/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -386,6 +404,7 @@ export interface FileRouteTypes {
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
@@ -395,6 +414,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
+    | '/stages/$stageId'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -427,6 +447,7 @@ export interface FileRouteTypes {
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
@@ -435,6 +456,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
+    | '/stages/$stageId'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -468,6 +490,7 @@ export interface FileRouteTypes {
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
@@ -477,6 +500,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators_/$id'
+    | '/stages_/$stageId'
     | '/tier-lists_/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -511,6 +535,7 @@ export interface RootRouteChildren {
   EnemiesRoute: typeof EnemiesRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
+  StagesRoute: typeof StagesRoute
   StatsRoute: typeof StatsRoute
   TermsRoute: typeof TermsRoute
   TierListsRoute: typeof TierListsRoute
@@ -518,6 +543,7 @@ export interface RootRouteChildren {
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
+  StagesStageIdRoute: typeof StagesStageIdRoute
   TierListsIdRoute: typeof TierListsIdRoute
   ToolsBirthdaysRoute: typeof ToolsBirthdaysRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
@@ -554,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stages': {
+      id: '/stages'
+      path: '/stages'
+      fullPath: '/stages'
+      preLoaderRoute: typeof StagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -680,6 +713,13 @@ declare module '@tanstack/react-router' {
       path: '/tier-lists/$id'
       fullPath: '/tier-lists/$id'
       preLoaderRoute: typeof TierListsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stages_/$stageId': {
+      id: '/stages_/$stageId'
+      path: '/stages/$stageId'
+      fullPath: '/stages/$stageId'
+      preLoaderRoute: typeof StagesStageIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operators_/$id': {
@@ -870,6 +910,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnemiesRoute: EnemiesRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
+  StagesRoute: StagesRoute,
   StatsRoute: StatsRoute,
   TermsRoute: TermsRoute,
   TierListsRoute: TierListsRoute,
@@ -877,6 +918,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
+  StagesStageIdRoute: StagesStageIdRoute,
   TierListsIdRoute: TierListsIdRoute,
   ToolsBirthdaysRoute: ToolsBirthdaysRoute,
   ToolsDpsRoute: ToolsDpsRoute,

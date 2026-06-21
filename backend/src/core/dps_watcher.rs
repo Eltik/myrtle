@@ -140,9 +140,44 @@ async fn run_command(program: &str, args: &[&str], label: &str) -> Result<(), St
     Ok(())
 }
 
+/// Confirm `repo_path` is the root of its own git working tree. Guards against
+/// `git -C <path>` silently operating on a parent repository when `<path>` is
+/// not itself a checkout.
+async fn verify_repo_toplevel(repo_path: &str) -> Result<(), String> {
+    let output = tokio::process::Command::new("git")
+        .args(["-C", repo_path, "rev-parse", "--show-toplevel"])
+        .output()
+        .await
+        .map_err(|e| format!("git rev-parse: failed to spawn: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "git rev-parse failed in {repo_path}: not a git repository"
+        ));
+    }
+    let toplevel = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    let want =
+        std::fs::canonicalize(repo_path).map_err(|e| format!("canonicalize {repo_path}: {e}"))?;
+    let got =
+        std::fs::canonicalize(&toplevel).map_err(|e| format!("canonicalize {toplevel}: {e}"))?;
+    if want != got {
+        return Err(format!(
+            "refusing to update: {repo_path} resolves to git toplevel {}, not itself ({}) — aborting before reset",
+            got.display(),
+            want.display()
+        ));
+    }
+    Ok(())
+}
+
 async fn run_update_pipeline(config: &DpsWatcherConfig) -> Result<(), String> {
     let local = &config.local_repo_path;
     let branch = &config.upstream_branch;
+
+    // 0. Safety: confirm `local` is the toplevel of its own git repo before any
+    // destructive `reset --hard`. If git resolves the toplevel to a parent
+    // (because `local` isn't itself a repo), abort rather than reset the wrong
+    // checkout.
+    verify_repo_toplevel(local).await?;
 
     // 1. Fetch latest
     run_command(
@@ -272,11 +307,16 @@ pub fn spawn(state: AppState) {
         return;
     };
 
-    // Verify local repo exists
-    if !Path::new(&config.local_repo_path).exists() {
+    // Verify the local path is its OWN git repository. A bare `.exists()` check
+    // is not enough: if the directory exists but has no `.git` (e.g. an empty
+    // placeholder that was never cloned), `git -C <path> reset --hard` walks up
+    // the tree and resets the *parent* repo — here, the main myrtle checkout —
+    // wiping uncommitted work. Requiring `.git` keeps the watcher scoped to the
+    // DPS clone only.
+    if !Path::new(&config.local_repo_path).join(".git").exists() {
         tracing::warn!(
             path = %config.local_repo_path,
-            "DPS local repo not found, auto-update disabled"
+            "DPS local repo is missing or not a git checkout (no .git); auto-update disabled to avoid touching the parent repo"
         );
         return;
     }

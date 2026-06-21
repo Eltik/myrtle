@@ -25,35 +25,27 @@ export default function Header() {
             items: tools.map((t) => ({ href: t.href, label: t.label, desc: t.desc, icon: t.icon })),
         }));
         const toolItems: INavItem[] = toolSections.flatMap((s) => s.items);
+        const collectionItems: INavItem[] = [
+            { href: "/operators", label: "Operators", desc: "Every operator released in Arknights.", icon: "shield" },
+            { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" },
+            { href: "/stages", label: "Stages", desc: "Every stage, mapped with an enemy-pathing simulator.", icon: "map" },
+        ];
+        const gachaItems: INavItem[] = [
+            { href: "/gacha/community", label: "Community", desc: "Pull rates, top operators, and timing across opted-in doctors", icon: "users" },
+            { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
+        ];
+        const playerItems: INavItem[] = [
+            ...(user ? [{ href: `/user/${user.uid}`, label: "My Profile", desc: "Open your profile", icon: "user" as const }] : []),
+            { href: "/user/search", label: "Search", desc: "Find profiles by nickname or UID", icon: "search" },
+            { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
+        ];
         return [
             { href: "/", label: "Home" },
-            {
-                href: "/operators",
-                label: "Collection",
-                items: [
-                    { href: "/operators", label: "Operators", desc: "Every operator released in Arknights.", icon: "shield" },
-                    { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" },
-                ],
-            },
+            { href: "/operators", label: "Collection", items: collectionItems },
             { href: "/tools", label: "Tools", items: toolItems, sections: toolSections },
-            {
-                href: "/gacha",
-                label: "Gacha",
-                items: [
-                    { href: "/gacha/community", label: "Community", desc: "Pull rates, top operators, and timing across opted-in doctors", icon: "users" },
-                    { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
-                ],
-            },
+            { href: "/gacha", label: "Gacha", items: gachaItems },
             { href: "/tier-lists", label: "Tier Lists" },
-            {
-                href: "/user",
-                label: "Players",
-                items: [
-                    ...(user ? [{ href: `/user/${user.uid}`, label: "My Profile", desc: "Open your profile", icon: "user" }] : []),
-                    { href: "/user/search", label: "Search", desc: "Find profiles by nickname or UID", icon: "search" },
-                    { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
-                ],
-            },
+            { href: "/user", label: "Players", items: playerItems },
         ];
     }, [user]);
 

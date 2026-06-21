@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart" | "list-todo";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map";
 
 export type ToolCategory = "calculator" | "fun";
 

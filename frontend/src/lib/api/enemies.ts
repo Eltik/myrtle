@@ -1,9 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
 
 export type IEnemyLevel = "NORMAL" | "ELITE" | "BOSS";
+
+/** Backend-served square icon for an enemy, keyed by `enemyId`. */
+export function enemyIconURL(enemyId: string): string {
+    return `${env.VITE_BACKEND_URL ?? ""}/api/enemy-icon/${encodeURIComponent(enemyId)}`;
+}
 
 export type IEnemyDamageType = "PHYSIC" | "MAGIC" | "NO_DAMAGE" | "HEAL";
 

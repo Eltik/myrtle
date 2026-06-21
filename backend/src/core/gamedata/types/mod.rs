@@ -11,6 +11,7 @@ pub mod enemy;
 pub mod enemy_stages;
 pub mod gacha;
 pub mod handbook;
+pub mod level;
 pub mod material;
 pub mod medal;
 pub mod module;

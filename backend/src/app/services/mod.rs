@@ -4,6 +4,7 @@ pub mod gacha;
 pub mod game_session;
 pub mod improvements;
 pub mod leaderboard;
+pub mod level;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;

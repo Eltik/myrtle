@@ -29,6 +29,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Every enemy catalogued in Arknights.",
         activeTag: "Collection",
     },
+    stages: {
+        title: "Stage Index",
+        subtitle: "Every Arknights stage, mapped with an enemy-pathing simulator.",
+        activeTag: "Collection",
+    },
     stats: {
         title: "Stats",
         subtitle: "A live count of every operator, tier list, and roster indexed on myrtle.moe.",
