@@ -472,6 +472,16 @@ fn process_bundle(
                 .is_some_and(|s| s == "voice" || s.starts_with("voice_"))
         });
 
+        // Opaque `anon/<hash>` bundles carry no meaningful path in their
+        // filename, so textures would otherwise land under `textures/anon/<hash>/`.
+        // Recover a friendly directory from each asset's container address
+        // (e.g. `dyn/mouse/glow` -> `mouse`). Named bundles already encode their
+        // path and are left untouched.
+        let bundle_is_anon = bundle_subdir.starts_with("anon");
+        // Per-texture output subdir (relative to `textures/`), keyed by m_Name.
+        // Only populated for anon bundles; absent entries fall back to bundle_subdir.
+        let mut tex_dirs: HashMap<String, PathBuf> = HashMap::new();
+
         for entry in &bundle.files {
             if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
                 continue;
@@ -482,10 +492,34 @@ fn process_bundle(
                 Err(_) => continue,
             };
 
+            let has_audio = extract_audio && sf.objects.iter().any(|o| o.class_id == 83);
+            // The AssetBundle container map disambiguates co-packed audio and
+            // recovers friendly directories for opaque anon texture bundles.
+            // Only built when one of those consumers needs it.
+            let container_dirs = if has_audio || (extract_image && bundle_is_anon) {
+                build_container_dirs(&sf)
+            } else {
+                HashMap::new()
+            };
+
+            // An anon bundle usually represents a single addressable (e.g. the
+            // prefab `dyn/mouse/pc_mouse_mgr`); its leaf textures/sprites aren't
+            // individually registered in m_Container. Mirror AssetStudio by
+            // propagating that lone container directory to every co-packed
+            // texture — but only when the bundle maps to exactly one directory,
+            // so ambiguous multi-asset bundles fall back to the hashed name.
+            let anon_dir: Option<PathBuf> = if bundle_is_anon {
+                let dirs: std::collections::HashSet<&PathBuf> = container_dirs.values().collect();
+                (dirs.len() == 1)
+                    .then(|| dirs.into_iter().next().cloned())
+                    .flatten()
+            } else {
+                None
+            };
+
             // Audio pass: export AudioClips, disambiguating shared bundles via
-            // the AssetBundle container map. Only built when this file holds audio.
-            if extract_audio && sf.objects.iter().any(|o| o.class_id == 83) {
-                let container_dirs = build_container_dirs(&sf);
+            // the AssetBundle container map.
+            if has_audio {
                 let audio: Vec<(i64, serde_json::Value)> = sf
                     .objects
                     .iter()
@@ -547,6 +581,18 @@ fn process_bundle(
                         // Buffer textures instead of saving immediately
                         match decode_texture_object(&val, &resources) {
                             Ok(Some(tex)) => {
+                                // For opaque anon bundles, route each texture to
+                                // its container directory (e.g. `dyn/mouse/glow`
+                                // -> `mouse`) instead of the hashed bundle name,
+                                // preferring a per-asset entry and falling back
+                                // to the bundle's single addressable directory.
+                                if let Some(cdir) = container_dirs
+                                    .get(&obj.path_id)
+                                    .cloned()
+                                    .or_else(|| anon_dir.clone())
+                                {
+                                    tex_dirs.insert(tex.name.clone(), cdir);
+                                }
                                 decoded_textures.insert(tex.name.clone(), tex);
                             }
                             Ok(None) => {}
@@ -566,27 +612,45 @@ fn process_bundle(
             }
         }
 
-        // Export buffered textures (with or without alpha merging)
+        // Export buffered textures (with or without alpha merging).
         if !decoded_textures.is_empty() {
-            let dir = output_dir.join("textures").join(&bundle_subdir);
-            std::fs::create_dir_all(&dir).ok();
+            // Group textures by their resolved output subdir. Named bundles yield
+            // a single group (`bundle_subdir`), preserving prior behavior; anon
+            // bundles split assets into their container directories. Alpha pairs
+            // share a container, so grouping keeps `foo`/`foo[alpha]` together.
+            let mut groups: HashMap<PathBuf, HashMap<String, export::texture::DecodedTexture>> =
+                HashMap::new();
+            for (name, tex) in decoded_textures {
+                let sub = tex_dirs
+                    .get(&name)
+                    .cloned()
+                    .unwrap_or_else(|| bundle_subdir.clone());
+                groups.entry(sub).or_default().insert(name, tex);
+            }
 
             // Unsquash stage mappreview thumbnails to their natural aspect.
             // Arknights packs these as 512×512 squares; we resize back using
             // the level's tile grid dims (with a 16:9 fallback).
-            if stage_preview::detect_mappreview_bundle(&bundle_subdir) {
-                for tex in decoded_textures.values_mut() {
-                    stage_preview::unsquash_mappreview_texture(tex, stage_aspects);
-                }
-            }
+            let is_mappreview = stage_preview::detect_mappreview_bundle(&bundle_subdir);
 
-            if merge_alpha {
-                exported += alpha_merge::merge_and_export(decoded_textures, &dir);
-            } else {
-                for tex in decoded_textures.values() {
-                    match save_decoded_texture(tex, &dir) {
-                        Ok(()) => exported += 1,
-                        Err(e) => eprintln!("  error saving {}: {e}", tex.name),
+            for (sub, mut texs) in groups {
+                let dir = output_dir.join("textures").join(&sub);
+                std::fs::create_dir_all(&dir).ok();
+
+                if is_mappreview {
+                    for tex in texs.values_mut() {
+                        stage_preview::unsquash_mappreview_texture(tex, stage_aspects);
+                    }
+                }
+
+                if merge_alpha {
+                    exported += alpha_merge::merge_and_export(texs, &dir);
+                } else {
+                    for tex in texs.values() {
+                        match save_decoded_texture(tex, &dir) {
+                            Ok(()) => exported += 1,
+                            Err(e) => eprintln!("  error saving {}: {e}", tex.name),
+                        }
                     }
                 }
             }
