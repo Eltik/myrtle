@@ -117,17 +117,27 @@ async fn main() {
     // Start server
     let state = AppState::new(db, cache, servers, default_server, config, http_client);
 
-    // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
-    asset_watcher::spawn(state.clone());
+    // Background watchers + cron jobs. These query Postgres and (in the case of
+    // `regrade_job`) fan out parallel workers across every user, which is heavy
+    // and pointless for local stage-viewer / API work. Set
+    // `DISABLE_BACKGROUND_JOBS=1` to skip them during local development.
+    let jobs_disabled = std::env::var("DISABLE_BACKGROUND_JOBS")
+        .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes"));
+    if jobs_disabled {
+        info!("DISABLE_BACKGROUND_JOBS set - skipping asset/DPS watchers and cron jobs");
+    } else {
+        // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
+        asset_watcher::spawn(state.clone());
 
-    // Spawn DPS formula auto-update watcher (polls GitHub for upstream changes)
-    dps_watcher::spawn(state.clone());
+        // Spawn DPS formula auto-update watcher (polls GitHub for upstream changes)
+        dps_watcher::spawn(state.clone());
 
-    // Spawn cron jobs
-    trending_job::spawn(state.clone());
-    leaderboard_snapshot_job::spawn(state.clone());
-    operator_ownership_job::spawn(state.clone());
-    regrade_job::spawn(state.clone());
+        // Spawn cron jobs
+        trending_job::spawn(state.clone());
+        leaderboard_snapshot_job::spawn(state.clone());
+        operator_ownership_job::spawn(state.clone());
+        regrade_job::spawn(state.clone());
+    }
 
     server::run(state).await.expect("server error");
 }

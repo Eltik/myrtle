@@ -29,10 +29,60 @@ struct RawLevel {
     map_data: RawMapData,
     #[serde(default)]
     routes: Vec<RawRoute>,
+    /// Conditional / branch routes the board can reveal on demand.
+    #[serde(default)]
+    extra_routes: Vec<RawRoute>,
     #[serde(default)]
     waves: Vec<RawWave>,
     #[serde(default)]
     enemy_db_refs: Vec<RawDbRef>,
+    #[serde(default)]
+    options: Option<RawOptions>,
+    /// Stage-wide modifiers (CC/IS-style buffs); usually empty for normal play.
+    #[serde(default)]
+    runes: Vec<RawRune>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct RawOptions {
+    #[serde(default)]
+    character_limit: i64,
+    #[serde(default)]
+    max_life_point: i64,
+    #[serde(default)]
+    initial_cost: i64,
+    #[serde(default)]
+    max_cost: i64,
+    #[serde(default)]
+    cost_increase_time: f64,
+    #[serde(default)]
+    move_multiplier: f64,
+    #[serde(default)]
+    is_training_level: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct RawRune {
+    #[serde(default)]
+    key: String,
+    #[serde(default)]
+    difficulty_mask: String,
+    #[serde(default)]
+    profession_mask: String,
+    #[serde(default)]
+    blackboard: Vec<RawBlackboard>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawBlackboard {
+    #[serde(default)]
+    key: String,
+    #[serde(default)]
+    value: f64,
+    #[serde(default, rename = "valueStr")]
+    value_str: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -190,6 +240,71 @@ pub struct SpawnOut {
     pub level: String,
 }
 
+/// Grouped spawn-schedule entry (one per `SPAWN` action), powering the spawn
+/// table and the simulator's "spawn index". Unlike [`SpawnOut`] (one per token),
+/// this keeps the action's count/interval/wave intact.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScheduleEntry {
+    /// 1-based row number in spawn order.
+    pub index: u32,
+    /// Inclusive `[first, last]` 1-based enemy ordinals this action emits.
+    pub order: [u32; 2],
+    pub enemy_id: String,
+    pub route: usize,
+    /// Absolute time of the action's first token (seconds from stage start).
+    pub t0: f64,
+    /// Time of the action relative to its wave's start.
+    pub wave_time: f64,
+    /// Seconds between successive tokens in this action.
+    pub interval: f64,
+    /// Number of tokens this action emits.
+    pub count: u32,
+    /// 1-based wave number.
+    pub wave: u32,
+}
+
+/// A conditional / branch route the board can reveal (from `ExtraRoutes`).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HiddenRoute {
+    pub index: usize,
+    pub motion: String,
+    pub points: Vec<Point>,
+}
+
+/// A stage-wide modifier (from `Runes`) — CC/IS-style buffs. Frontend renders
+/// `key` as the effect, `difficulty`/`profession` as scope, blackboard as data.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Modifier {
+    pub key: String,
+    pub difficulty: String,
+    pub profession: String,
+    pub blackboard: Vec<ModifierValue>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModifierValue {
+    pub key: String,
+    pub value: f64,
+    pub value_str: Option<String>,
+}
+
+/// Stage rules parsed from the level's `Options` block.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MapOptions {
+    pub char_limit: i64,
+    pub max_life: i64,
+    pub initial_cost: i64,
+    pub max_cost: i64,
+    pub cost_increase_time: f64,
+    pub move_multiplier: f64,
+    pub is_training: bool,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterEntry {
@@ -217,7 +332,15 @@ pub struct StageMap {
     pub routes: Vec<RouteOut>,
     pub waves: Vec<WaveMarker>,
     pub spawns: Vec<SpawnOut>,
+    /// Grouped spawn schedule (one entry per action), for the spawn table.
+    pub schedule: Vec<ScheduleEntry>,
     pub roster: Vec<RosterEntry>,
+    /// Stage rules (character limit, cost, life points, …).
+    pub options: MapOptions,
+    /// Conditional / branch routes the board can reveal.
+    pub hidden_routes: Vec<HiddenRoute>,
+    /// Stage-wide modifiers (CC/IS runes); empty for normal play.
+    pub modifiers: Vec<Modifier>,
     /// Total run length in seconds (last enemy reaches the goal).
     pub duration: f64,
 }
@@ -269,10 +392,12 @@ pub fn parse_stage_map(
             let mut pts: Vec<Point> = Vec::with_capacity(r.checkpoints.len() + 2);
             pts.push(to_point(r.start_position));
             for cp in &r.checkpoints {
-                // Non-MOVE checkpoints (WAIT_*, APPEAR_AT_POS, …) don't add a
-                // distinct waypoint; we still place a point and dedupe below.
-                let _ = &cp.type_;
-                pts.push(to_point(cp.position));
+                // Only position-carrying checkpoints belong on the polyline. WAIT_*
+                // and DISAPPEAR checkpoints have no real position (they default to
+                // (0,0)); including them warps the line to the board corner.
+                if is_path_checkpoint(&cp.type_) {
+                    pts.push(to_point(cp.position));
+                }
             }
             pts.push(to_point(r.end_position));
             dedupe_consecutive(&mut pts);
@@ -313,8 +438,11 @@ pub fn parse_stage_map(
     // relative to its fragment; a count>1 action emits one token per interval.
     // Waves advance after the wave's last spawn + maxTimeWaitingForNextWave.
     let mut spawns: Vec<SpawnOut> = Vec::new();
+    let mut schedule: Vec<ScheduleEntry> = Vec::new();
     let mut wave_markers: Vec<WaveMarker> = Vec::new();
     let mut clock = 0.0_f64;
+    let mut order_counter: u32 = 0;
+    let mut schedule_index: u32 = 0;
 
     for (wi, wave) in raw.waves.iter().enumerate() {
         clock += wave.pre_delay;
@@ -337,6 +465,20 @@ pub fn parse_stage_map(
                 let speed = speed_of(key);
                 let level = level_of(key);
                 let action_start = frag_start + action.pre_delay;
+                let count_u = count as u32;
+                schedule_index += 1;
+                schedule.push(ScheduleEntry {
+                    index: schedule_index,
+                    order: [order_counter + 1, order_counter + count_u],
+                    enemy_id: key.to_owned(),
+                    route,
+                    t0: action_start,
+                    wave_time: action_start - wave_start,
+                    interval: action.interval,
+                    count: count_u,
+                    wave: (wi + 1) as u32,
+                });
+                order_counter += count_u;
                 for k in 0..count {
                     let t0 = action_start + (k as f64) * action.interval;
                     wave_has_spawn = true;
@@ -397,6 +539,60 @@ pub fn parse_stage_map(
             .then_with(|| a.name.cmp(&b.name))
     });
 
+    // ── Conditional / branch routes (revealed on demand by the board) ─────
+    let hidden_routes: Vec<HiddenRoute> = raw
+        .extra_routes
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let mut pts: Vec<Point> = Vec::with_capacity(r.checkpoints.len() + 2);
+            pts.push(to_point(r.start_position));
+            for cp in &r.checkpoints {
+                if is_path_checkpoint(&cp.type_) {
+                    pts.push(to_point(cp.position));
+                }
+            }
+            pts.push(to_point(r.end_position));
+            dedupe_consecutive(&mut pts);
+            HiddenRoute {
+                index: i,
+                motion: motion_label(&r.motion_mode),
+                points: pts,
+            }
+        })
+        .collect();
+
+    // ── Stage rules + modifiers ───────────────────────────────────────────
+    let o = raw.options.unwrap_or_default();
+    let options = MapOptions {
+        char_limit: o.character_limit,
+        max_life: o.max_life_point,
+        initial_cost: o.initial_cost,
+        max_cost: o.max_cost,
+        cost_increase_time: o.cost_increase_time,
+        move_multiplier: o.move_multiplier,
+        is_training: o.is_training_level,
+    };
+
+    let modifiers: Vec<Modifier> = raw
+        .runes
+        .into_iter()
+        .map(|r| Modifier {
+            key: r.key,
+            difficulty: r.difficulty_mask,
+            profession: r.profession_mask,
+            blackboard: r
+                .blackboard
+                .into_iter()
+                .map(|b| ModifierValue {
+                    key: b.key,
+                    value: b.value,
+                    value_str: b.value_str,
+                })
+                .collect(),
+        })
+        .collect();
+
     Ok(StageMap {
         stage_id: stage.stage_id.clone(),
         level_id: level_id.to_owned(),
@@ -408,7 +604,11 @@ pub fn parse_stage_map(
         routes,
         waves: wave_markers,
         spawns,
+        schedule,
         roster,
+        options,
+        hidden_routes,
+        modifiers,
         duration,
     })
 }
@@ -482,6 +682,13 @@ fn motion_label(m: &str) -> String {
     .to_owned()
 }
 
+/// Whether a route checkpoint carries a real board position (and so belongs on
+/// the drawn polyline). `MOVE`/`APPEAR_AT_POS` relocate the enemy; `WAIT_*` and
+/// `DISAPPEAR` have no position and default to (0,0), which would warp the line.
+fn is_path_checkpoint(type_: &str) -> bool {
+    matches!(type_, "MOVE" | "APPEAR_AT_POS")
+}
+
 const fn level_str(l: &EnemyLevel) -> &'static str {
     match l {
         EnemyLevel::Normal => "NORMAL",
@@ -552,7 +759,44 @@ mod tests {
         assert_eq!(map.tiles[0].len(), map.width);
         assert!(!map.routes.is_empty(), "has routes");
         assert!(!map.spawns.is_empty(), "has enemy spawns");
+        assert!(!map.schedule.is_empty(), "has grouped schedule");
+        // Schedule order ordinals are contiguous and 1-based.
+        assert_eq!(map.schedule[0].index, 1);
+        assert_eq!(map.schedule[0].order[0], 1);
+        assert!(map.options.char_limit > 0, "parsed map options");
         assert!(map.duration > 0.0);
+
+        // Wire-contract: the serialized JSON must use the exact camelCase keys
+        // the frontend (`IStageMap`) consumes.
+        let v = serde_json::to_value(&map).unwrap();
+        let obj = v.as_object().unwrap();
+        for k in [
+            "schedule",
+            "options",
+            "hiddenRoutes",
+            "modifiers",
+            "roster",
+            "routes",
+        ] {
+            assert!(obj.contains_key(k), "missing wire key `{k}`");
+        }
+        let opts = obj["options"].as_object().unwrap();
+        for k in [
+            "charLimit",
+            "maxLife",
+            "initialCost",
+            "maxCost",
+            "costIncreaseTime",
+            "isTraining",
+        ] {
+            assert!(opts.contains_key(k), "missing options key `{k}`");
+        }
+        let entry = obj["schedule"].as_array().unwrap()[0].as_object().unwrap();
+        for k in [
+            "index", "order", "enemyId", "route", "t0", "waveTime", "interval", "count", "wave",
+        ] {
+            assert!(entry.contains_key(k), "missing schedule key `{k}`");
+        }
         // start/end tiles should be discoverable
         let kinds: std::collections::HashSet<_> = map
             .tiles

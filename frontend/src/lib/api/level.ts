@@ -37,6 +37,57 @@ export interface ISpawn {
     level: IEnemyLevel;
 }
 
+/** Grouped spawn-schedule entry (one per SPAWN action): the spawn-table row. */
+export interface IScheduleEntry {
+    /** 1-based row number in spawn order. */
+    index: number;
+    /** Inclusive `[first, last]` 1-based enemy ordinals this action emits. */
+    order: [number, number];
+    enemyId: string;
+    route: number;
+    /** Absolute time of the action's first token (seconds from stage start). */
+    t0: number;
+    /** Time of the action relative to its wave's start. */
+    waveTime: number;
+    /** Seconds between successive tokens. */
+    interval: number;
+    count: number;
+    /** 1-based wave number. */
+    wave: number;
+}
+
+/** A conditional / branch route the board can reveal (from `ExtraRoutes`). */
+export interface IHiddenRoute {
+    index: number;
+    motion: string;
+    points: IPoint[];
+}
+
+export interface IModifierValue {
+    key: string;
+    value: number;
+    valueStr: string | null;
+}
+
+/** A stage-wide modifier (CC/IS rune). */
+export interface IModifier {
+    key: string;
+    difficulty: string;
+    profession: string;
+    blackboard: IModifierValue[];
+}
+
+/** Stage rules parsed from the level `Options` block. */
+export interface IMapOptions {
+    charLimit: number;
+    maxLife: number;
+    initialCost: number;
+    maxCost: number;
+    costIncreaseTime: number;
+    moveMultiplier: number;
+    isTraining: boolean;
+}
+
 export interface IRosterEntry {
     enemyId: string;
     name: string;
@@ -59,7 +110,15 @@ export interface IStageMap {
     routes: IRoute[];
     waves: IWaveMarker[];
     spawns: ISpawn[];
+    /** Grouped spawn schedule (one entry per action), for the spawn table. */
+    schedule: IScheduleEntry[];
     roster: IRosterEntry[];
+    /** Stage rules (character limit, cost, life points, …). */
+    options: IMapOptions;
+    /** Conditional / branch routes the board can reveal. */
+    hiddenRoutes: IHiddenRoute[];
+    /** Stage-wide modifiers (CC/IS runes); empty for normal play. */
+    modifiers: IModifier[];
     duration: number;
 }
 
