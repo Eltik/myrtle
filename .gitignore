@@ -9,3 +9,4 @@ README-prompt.md
 docs/
 vps-update.sh
 vps-info.sh
+backend/.dps-updater-state.json
