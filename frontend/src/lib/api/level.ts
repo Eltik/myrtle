@@ -1,125 +1,102 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
-import type { IEnemyLevel } from "./enemies";
 
-/** A single board tile, already normalized to a rendering `kind`. */
-export interface ITileCell {
-    kind: string;
+/** A grid coordinate in game space (`row`/`col`). */
+export interface IPosition {
+    row: number;
+    col: number;
+    reachOffset?: { x: number; y: number } | null;
+}
+
+export interface IRawTile {
     tileKey: string;
     heightType: string;
-    buildable: string;
-    passable: boolean;
+    buildableType: string;
+    passableMask: string;
+    playerSideMask?: string;
 }
 
-export interface IPoint {
-    x: number;
-    y: number;
+export interface ICheckpoint {
+    type: string | number;
+    position: IPosition;
+    time?: number;
+    reachOffset?: { x: number; y: number } | null;
 }
 
-export interface IRoute {
-    /** `WALK`, `FLY`, or `OTHER`. */
-    motion: string;
-    /** Polyline in screen space (y = 0 is the top row): spawn → checkpoints → goal. */
-    points: IPoint[];
+export interface IRouteDef {
+    motionMode: string | number;
+    startPosition: IPosition;
+    endPosition: IPosition;
+    checkpoints: ICheckpoint[] | null;
+    allowDiagonalMove?: boolean;
+    visitEveryCheckPoint?: boolean;
 }
 
-export interface IWaveMarker {
-    at: number;
-    label: string;
+export interface IMapData {
+    /** Row-major tile-index grid, top row first. */
+    map: number[][];
+    tiles: IRawTile[];
 }
 
-export interface ISpawn {
-    route: number;
-    enemyId: string;
-    t0: number;
-    speed: number;
-    level: IEnemyLevel;
+export interface IWaveAction {
+    actionType: string;
+    key?: string;
+    routeIndex?: number | null;
+    count?: number;
+    interval?: number;
+    preDelay: number;
+    hiddenGroup?: string | null;
 }
 
-/** Grouped spawn-schedule entry (one per SPAWN action): the spawn-table row. */
-export interface IScheduleEntry {
-    /** 1-based row number in spawn order. */
-    index: number;
-    /** Inclusive `[first, last]` 1-based enemy ordinals this action emits. */
-    order: [number, number];
-    enemyId: string;
-    route: number;
-    /** Absolute time of the action's first token (seconds from stage start). */
-    t0: number;
-    /** Time of the action relative to its wave's start. */
-    waveTime: number;
-    /** Seconds between successive tokens. */
-    interval: number;
-    count: number;
-    /** 1-based wave number. */
-    wave: number;
+export interface IFragment {
+    preDelay: number;
+    actions: IWaveAction[];
 }
 
-/** A conditional / branch route the board can reveal (from `ExtraRoutes`). */
-export interface IHiddenRoute {
-    index: number;
-    motion: string;
-    points: IPoint[];
+export interface IWave {
+    preDelay: number;
+    postDelay: number;
+    maxTimeWaitingForNextWave?: number;
+    fragments: IFragment[];
 }
 
-export interface IModifierValue {
-    key: string;
-    value: number;
-    valueStr: string | null;
+export interface ITokenInst {
+    position: IPosition;
+    hidden?: boolean;
+    inst?: { characterKey?: string };
 }
 
-/** A stage-wide modifier (CC/IS rune). */
-export interface IModifier {
-    key: string;
-    difficulty: string;
-    profession: string;
-    blackboard: IModifierValue[];
+export interface IEnemyDbRef {
+    id: string;
+    useDb?: boolean;
 }
 
-/** Stage rules parsed from the level `Options` block. */
-export interface IMapOptions {
-    charLimit: number;
-    maxLife: number;
-    initialCost: number;
-    maxCost: number;
-    costIncreaseTime: number;
-    moveMultiplier: number;
-    isTraining: boolean;
+/** The level `Options` block (stage rules). Serializable scalars only. */
+export interface ILevelOptions {
+    characterLimit?: number;
+    maxLifePoint?: number;
+    initialCost?: number;
+    maxCost?: number;
+    costIncreaseTime?: number;
+    moveMultiplier?: number;
+    steeringEnabled?: boolean;
+    isTrainingLevel?: boolean;
+    isHardTrainingLevel?: boolean;
+    isPredefinedCardsSelectable?: boolean;
+    displayRestTime?: boolean;
+    maxPlayTime?: number;
+    functionDisableMask?: string;
 }
 
-export interface IRosterEntry {
-    enemyId: string;
-    name: string;
-    level: IEnemyLevel;
-    damageType: string[];
-    attackType: string | null;
-    motion: string;
-    count: number;
-}
-
-export interface IStageMap {
-    stageId: string;
-    levelId: string;
-    code: string;
-    name: string | null;
-    width: number;
-    height: number;
-    /** Row-major, top row first: `tiles[y][x]`. */
-    tiles: ITileCell[][];
-    routes: IRoute[];
-    waves: IWaveMarker[];
-    spawns: ISpawn[];
-    /** Grouped spawn schedule (one entry per action), for the spawn table. */
-    schedule: IScheduleEntry[];
-    roster: IRosterEntry[];
-    /** Stage rules (character limit, cost, life points, …). */
-    options: IMapOptions;
-    /** Conditional / branch routes the board can reveal. */
-    hiddenRoutes: IHiddenRoute[];
-    /** Stage-wide modifiers (CC/IS runes); empty for normal play. */
-    modifiers: IModifier[];
-    duration: number;
+export interface ILevel {
+    mapData: IMapData;
+    routes: IRouteDef[];
+    waves: IWave[];
+    predefines?: { tokenInsts?: ITokenInst[] };
+    enemyDbRefs?: IEnemyDbRef[];
+    tilesDisallowToLocate?: number[];
+    options?: ILevelOptions;
 }
 
 export const getLevelFn = createServerFn({ method: "GET" })
@@ -128,7 +105,7 @@ export const getLevelFn = createServerFn({ method: "GET" })
         const res = await backendFetch(`/level/${encodeURIComponent(stageId)}`);
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load level ${stageId}: ${res.status}`);
-        return (await res.json()) as IStageMap;
+        return (await res.json()) as ILevel;
     });
 
 export function levelQueryOptions(stageId: string | null) {

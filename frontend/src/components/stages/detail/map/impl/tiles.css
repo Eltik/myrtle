@@ -1,0 +1,260 @@
+/* Tile colour palette + 3D box faces — the part of the board that can't be Tailwind utilities:
+ * a CSS-variable colour system and per-face 3D transforms (rotateX/translate3d with vars) whose
+ * appearance is selected by multi-class combinators (.tile.tile_block.tile_deployable, etc.).
+ *
+ * Class names are the PLAIN (un-hashed) names emitted by Tile.tsx (`type.render_as || key`, plus
+ * tile_block/tile_box/tile_hole/tile_fence/tile_deployable and the tile_box_* faces). Extracted
+ * from prts-map-tanstack/src/map/map.css:455–814.
+ *
+ * Hover extrusion: the original gated on `.map_render_hover .tile_rows__RpOzY …`. That class no
+ * longer exists — Board now toggles a `map-hovered` marker on the rows container, so those rules
+ * are re-gated to `.map-hovered …`. Layout (flex/size/position/transform-3d) lives in Tailwind on
+ * the elements themselves; this file only adds borders, colours and the 3D box geometry.
+ *
+ * Imported unlayered so it wins over Tailwind utilities / preflight (which zeroes border-width). */
+
+/* === palette (map.css:455–479) === */
+:root {
+    --tile-size: 48px;
+    --tile-box-half-height: 23px;
+    --tile-border-color-default: rgba(51, 51, 51, 0.6);
+    --tile-bgcolor-default: rgba(97, 97, 97, 0.4);
+    --tile-border-color-hover: #ff8100;
+    --tile-border-color-deployable: hsla(0, 0%, 87%, 0.9);
+    --tile-bgcolor-deployable: hsla(0, 0%, 71%, 0.6);
+    --tile-border-color-ignore: hsla(0, 0%, 87%, 0.3);
+    --tile-bgcolor-ignore: hsla(0, 0%, 6%, 0.3);
+    --tile-block-bgcolor-deployable: hsla(0, 0%, 78%, 0.93);
+    --tile-block-bgcolor-ignore: hsla(0, 0%, 8%, 0.93);
+    --tile-block-base-bgcolor-deployable: hsla(0, 0%, 51%, 0.95);
+    --tile-block-base-bgcolor-ignore: hsla(0, 0%, 6%, 0.95);
+    --tile-block-border-color-crate: rgba(80, 94, 98, 0.93);
+    --tile-block-bgcolor-crate: rgba(58, 60, 64, 0.95);
+    --tile-block-side-bgcolor-crate: rgba(46, 48, 56, 0.95);
+    --tile-block-base-bgcolor-crate: rgba(41, 44, 50, 0.95);
+    --tile-block-side-border-color-ignore: hsla(0, 0%, 47%, 0.1);
+    --tile-block-side-bgcolor-ignore: hsla(0, 0%, 39%, 0.1);
+    --tile-border-color-start: #e72d50;
+    --tile-bgcolor-start: rgba(231, 45, 80, 0.1);
+    --tile-border-color-end: #359dde;
+    --tile-bgcolor-end: rgba(53, 157, 222, 0.1);
+}
+
+/* === tile base border/colour cascade (map.css:535–573) === */
+.tile {
+    border: 1px solid var(--tile-border-color-default);
+    border-radius: 1px;
+    transition: border-color 0.4s ease;
+}
+.tile.tile_block {
+    border-color: transparent;
+    border-width: 0;
+}
+.tile.tile_floor {
+    background-color: var(--tile-bgcolor-default);
+}
+.tile.tile_block.tile_deployable {
+    background-color: var(--tile-block-base-bgcolor-deployable);
+}
+.tile.tile_block:not(.tile_deployable) {
+    background-color: var(--tile-block-base-bgcolor-ignore);
+}
+.tile:not(.tile_block).tile_deployable {
+    background-color: var(--tile-bgcolor-deployable);
+}
+.tile.tile_passable_wall_forbidden,
+.tile.tile_stairs {
+    background-color: var(--tile-bgcolor-default);
+}
+
+/* === box top face (map.css:574–643) === */
+.tile_box_top {
+    align-items: center;
+    border: 1px solid var(--tile-border-color-default);
+    border-radius: 1px;
+    bottom: 0;
+    display: flex;
+    flex-flow: row;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateZ(0);
+    transition:
+        transform 0.4s ease,
+        border-color 0.2s ease;
+    width: 100%;
+}
+.tile_hole .tile_box_top {
+    transform: translateZ(-1px);
+}
+.tile_fence .tile_box_top {
+    opacity: 0.8;
+    transform: translateZ(1px);
+}
+.tile_box .tile_box_top,
+.tile_fence .tile_box_top {
+    transition:
+        transform 0.4s ease 0.1s,
+        opacity 0.4s ease,
+        border-color 0.2s ease;
+}
+.tile_box .tile_box_top {
+    opacity: 0.2;
+    transform: translateZ(0);
+}
+.tile.tile_block.tile_deployable .tile_box_top {
+    background-color: var(--tile-block-bgcolor-deployable);
+}
+.tile.tile_block:not(.tile_deployable):not(.tile_crate):not(.tile_passable_wall_forbidden) .tile_box_top {
+    background-color: var(--tile-block-bgcolor-ignore);
+}
+.tile.tile_block.tile_passable_wall_forbidden .tile_box_top {
+    background-color: var(--tile-bgcolor-default);
+}
+
+/* === box side faces (map.css:644–689) === */
+.tile_box_left,
+.tile_box_right {
+    background-color: var(--tile-bgcolor-ignore);
+    border: 2px solid var(--tile-border-color-ignore);
+    border-radius: 1px;
+    bottom: 0;
+    height: calc(var(--tile-size) + 1px);
+    max-height: 0;
+    opacity: 0;
+    position: absolute;
+    transform-origin: center bottom;
+    transition:
+        max-height 0.4s ease 0.1s,
+        opacity 0.4s ease;
+    width: 100%;
+}
+.tile_box_left {
+    transform: rotateX(-90deg) translate3d(calc(var(--tile-box-half-height) * -1), 0, calc(var(--tile-box-half-height) * -1)) rotateY(-90deg);
+}
+.tile_box_right {
+    transform: rotateX(-90deg) translate3d(var(--tile-box-half-height), 0, calc(var(--tile-box-half-height) * -1)) rotateY(-90deg);
+}
+.tile_hole .tile_box_left {
+    transform: rotateX(90deg) translate3d(calc(var(--tile-box-half-height) * -1), 0, var(--tile-box-half-height)) rotateY(90deg);
+}
+.tile_hole .tile_box_right {
+    transform: rotateX(90deg) translate3d(var(--tile-box-half-height), 0, var(--tile-box-half-height)) rotateY(90deg);
+}
+.tile.tile_forbidden.tile_block .tile_box_left,
+.tile.tile_forbidden.tile_block .tile_box_right {
+    max-height: 0;
+    opacity: 0;
+}
+.tile.tile_block.tile_deployable .tile_box_left,
+.tile.tile_block.tile_deployable .tile_box_right,
+.tile.tile_block:not(.tile_deployable):not(.tile_crate) .tile_box_left,
+.tile.tile_block:not(.tile_deployable):not(.tile_crate) .tile_box_right {
+    background-color: var(--tile-block-side-bgcolor-ignore);
+    border-color: transparent;
+}
+
+/* === hover extrusion (map.css:707–736) — re-gated from `.map_render_hover .tile_rows` to `.map-hovered` === */
+.map-hovered .tile_block .tile_box_top {
+    transform: translateZ(calc(var(--tile-size) * 0.4));
+}
+.map-hovered .tile_box .tile_box_top {
+    opacity: 1;
+    transform: translateZ(var(--tile-size));
+}
+.map-hovered .tile_fence .tile_box_top {
+    opacity: 1;
+    transform: translateZ(calc(var(--tile-size) * 0.25));
+}
+.map-hovered .tile_hole .tile_box_top {
+    transform: translateZ(calc(var(--tile-size) * -1));
+}
+.map-hovered .tile_block .tile_box_left,
+.map-hovered .tile_block .tile_box_right {
+    max-height: calc(var(--tile-size) * 0.4);
+    opacity: 1;
+}
+.map-hovered .tile_box .tile_box_left,
+.map-hovered .tile_box .tile_box_right,
+.map-hovered .tile_hole .tile_box_left,
+.map-hovered .tile_hole .tile_box_right {
+    max-height: calc(var(--tile-size) + 1px);
+    opacity: 1;
+}
+
+/* === fence (map.css:737–746) === */
+.tile.tile_fence,
+.tile.tile_fence .tile_box_left,
+.tile.tile_fence .tile_box_right {
+    background-color: var(--tile-bgcolor-deployable);
+}
+.tile.tile_fence .tile_box_top {
+    background: hsla(0, 0%, 78%, 0.1);
+    border-color: hsla(0, 0%, 78%, 0.8);
+    border-width: 6px;
+}
+
+/* === start / fly start (map.css:752–765) === */
+.tile.tile_flystart,
+.tile.tile_flystart .tile_box_left,
+.tile.tile_flystart .tile_box_right,
+.tile.tile_flystart .tile_box_top,
+.tile.tile_start,
+.tile.tile_start .tile_box_left,
+.tile.tile_start .tile_box_right,
+.tile.tile_start .tile_box_top {
+    background-color: var(--tile-bgcolor-start);
+    border-color: var(--tile-border-color-start);
+}
+.tile.tile_flystart {
+    border-width: 1px;
+}
+
+/* === end (map.css:766–772) === */
+.tile.tile_end .tile_box_left,
+.tile.tile_end .tile_box_right,
+.tile.tile_end .tile_box_top,
+.tile_end {
+    background-color: var(--tile-bgcolor-end);
+    border-color: var(--tile-border-color-end);
+}
+
+/* === crate (map.css:773–784) === */
+.tile.tile_box.tile_crate {
+    background-color: var(--tile-block-base-bgcolor-crate);
+}
+.tile.tile_crate .tile_box_left,
+.tile.tile_crate .tile_box_right {
+    background-color: var(--tile-block-side-bgcolor-crate);
+    border-color: transparent;
+}
+.tile.tile_crate .tile_box_top {
+    background-color: var(--tile-block-bgcolor-crate);
+    border-color: var(--tile-block-border-color-crate);
+}
+
+/* === hole / deep water (map.css:785–805) === */
+.tile_hole {
+    border-color: rgba(51, 51, 51, 0.2);
+}
+.tile.tile_hole .tile_box_left,
+.tile.tile_hole .tile_box_right,
+.tile.tile_hole .tile_box_top {
+    background-color: hsla(0, 0%, 6%, 0.3);
+    border-color: rgba(51, 51, 51, 0.5);
+}
+.tile.tile_hole.tile_deepwater .tile_box_left,
+.tile.tile_hole.tile_deepwater .tile_box_right,
+.tile.tile_hole.tile_deepwater .tile_box_top {
+    background-color: rgba(11, 38, 65, 0.3);
+    border-color: rgba(23, 76, 130, 0.4);
+}
+
+/* === deployable borders (map.css:806–810; the .small variant is omitted — never emitted here) === */
+.tile.tile_deployable .tile_box_top,
+.tile:not(.tile_block).tile_deployable {
+    border-color: var(--tile-border-color-deployable);
+}

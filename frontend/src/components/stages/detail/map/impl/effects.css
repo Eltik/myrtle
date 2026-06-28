@@ -1,0 +1,323 @@
+/* Tile effect overlays — the one part of the PRTS.Map stylesheet that can't become Tailwind
+ * utilities: keyframe animations, pseudo-elements (content: ""), and CSS-variable patterns.
+ *
+ * Class names are the PLAIN (un-hashed) names emitted by Tile.tsx via `spec.type` (= ITileType.effect)
+ * and the `enable_animation` trigger. Extracted from prts-map-tanstack/src/map/map.css:
+ *   keyframes 12–117, effect :root vars 862–900, effect_* rules 930–1138.
+ * Vendor (-webkit-) duplicates dropped — the build's autoprefixer regenerates them.
+ *
+ * Imported unlayered (not in @layer), so these win over Tailwind utilities on the same element —
+ * matching the original cascade, where the effect class (e.g. .effect_yinyang_road, source-ordered
+ * after .tile_overlay) overrode the overlay's own `position`/box sizing. */
+
+/* === keyframes (map.css:12–117) === */
+@keyframes backgroundScroll {
+    0% {
+        background-position: 0;
+    }
+    to {
+        background-position: 48px;
+    }
+}
+@keyframes backgroundScrollDown {
+    0% {
+        background-position: 0;
+    }
+    to {
+        background-position: 0 48px;
+    }
+}
+@keyframes backgroundScrollReverse {
+    0% {
+        background-position: 0;
+    }
+    to {
+        background-position: -48px;
+    }
+}
+@keyframes backgroundScrollTop {
+    0% {
+        background-position: 0;
+    }
+    to {
+        background-position: 0 -48px;
+    }
+}
+@keyframes backgroundWaveSmall {
+    0% {
+        background-position: 0;
+    }
+    50% {
+        background-position: 12px 0;
+    }
+    to {
+        background-position: 0 0;
+    }
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* === effect variables (map.css:862–900) === */
+:root {
+    /* from the tile :root block (map.css:465/467) — referenced by the yin-yang :before borders */
+    --tile-block-bgcolor-deployable: hsla(0, 0%, 78%, 0.93);
+    --tile-block-base-bgcolor-deployable: hsla(0, 0%, 51%, 0.95);
+
+    --tile-bgcolor-buff: rgba(222, 120, 24, 0.8);
+    --tile-buff-pattern: transparent 5.656px, var(--tile-bgcolor-buff) 5.656px, var(--tile-bgcolor-buff) 8.484px, transparent 9.191px;
+    --tile-effect-corrosion-color: rgba(42, 88, 184, 0.8);
+    --tile-effect-grass-color: rgba(42, 148, 24, 0.8);
+    --tile-effect-infection-color: rgba(142, 48, 24, 0.8);
+    --tile-effect-volcano-color: rgba(142, 48, 24, 0.8);
+    --tile-effect-poison-color: rgba(70, 190, 36, 0.8);
+    --tile-effect-deepwater-color: rgba(26, 82, 116, 0.6);
+    --tile-effect-volspread-color: rgba(220, 84, 50, 0.8);
+    --tile-effect-yin-color: #101010;
+    --tile-effect-yang-color: #f8f8f8;
+    --tile-effect-yan-border: #c83b23;
+    --tile-effect-ice-color: rgba(170, 217, 234, 0.8);
+    --tile-effect-reed-color: rgba(73, 80, 60, 0.8);
+    --tile-effect-mire-color: rgba(19, 37, 24, 0.8);
+    --tile-effect-ristar-color: hsla(45, 90%, 72%, 0.4);
+    --tile-effect-volcano-pattern: var(--tile-effect-volcano-color) 0, var(--tile-effect-volcano-color) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-volspread-pattern: hsla(0, 0%, 9%, 0.85) 0, hsla(0, 0%, 9%, 0.85) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-smog-pattern: rgba(45, 45, 45, 0.85) 0, rgba(45, 45, 45, 0.85) 5px, transparent 6px, transparent 14px;
+    --tile-effect-poison-pattern: var(--tile-effect-poison-color) 0, var(--tile-effect-poison-color) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-ice-pattern: var(--tile-effect-ice-color) 0, var(--tile-effect-ice-color) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-reed-pattern: var(--tile-effect-reed-color) 0, var(--tile-effect-reed-color) 3px, transparent 4px, transparent 8px;
+    --tile-effect-reed-pattern2: var(--tile-effect-reed-color) 0, var(--tile-effect-reed-color) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-mire-pattern: var(--tile-effect-mire-color) 0, var(--tile-effect-mire-color) 3.535px, transparent 4.242px, transparent 8.484px;
+    --tile-effect-ristar-pattern: var(--tile-effect-ristar-color) 0, transparent 12px;
+}
+
+/* === buff (map.css:930) === */
+.effect_buff {
+    background: linear-gradient(45deg, var(--tile-buff-pattern)), linear-gradient(135deg, var(--tile-buff-pattern)), linear-gradient(-45deg, var(--tile-buff-pattern)), linear-gradient(-135deg, var(--tile-buff-pattern));
+    background-position: 50%;
+    background-repeat: no-repeat;
+    border-color: hsla(0, 0%, 87%, 0.6);
+}
+
+/* === healing (map.css:936) === */
+.effect_healing:after {
+    color: #359dde;
+    content: "+";
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(83, 140, 198, 0.8);
+    transform: scale(2);
+    transform-origin: 50% 60%;
+    transition: transform 0.4s ease;
+}
+.show_heatmap.effect_healing:after {
+    transform: scale(1.5) translate(8px, -8px);
+}
+
+/* === grass (map.css:958) === */
+.effect_grass {
+    background: repeating-linear-gradient(135deg, var(--tile-effect-grass-color) 0, var(--tile-effect-grass-color) 3.535px, transparent 4.242px, transparent 8.484px);
+}
+.enable_animation.effect_grass {
+    animation: backgroundScrollReverse 12s linear 0s infinite;
+}
+
+/* === corrosion (map.css:965) === */
+.effect_corrosion {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-corrosion-color) 0, var(--tile-effect-corrosion-color) 3.535px, transparent 4.242px, transparent 8.484px);
+}
+.enable_animation.effect_corrosion {
+    animation: backgroundScroll 8s linear 0s infinite;
+}
+
+/* === infection (map.css:972) === */
+.effect_infection {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-infection-color) 0, var(--tile-effect-infection-color) 3.535px, transparent 4.242px, transparent 8.484px);
+}
+.enable_animation.effect_infection {
+    animation: backgroundScroll 8s linear 0s infinite;
+}
+
+/* === volcano (map.css:979) === */
+.effect_volcano {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-volcano-pattern)), repeating-linear-gradient(135deg, var(--tile-effect-volcano-pattern));
+}
+.enable_animation.effect_volcano {
+    animation: backgroundScroll 12s linear 0s infinite;
+}
+
+/* === deepwater (map.css:986) === */
+.effect_deepwater {
+    background: repeating-linear-gradient(5deg, var(--tile-effect-deepwater-color) 0, var(--tile-effect-deepwater-color) 1.414px, transparent 2.121px, transparent 4.242px), rgba(12, 101, 131, 0.2);
+}
+.enable_animation.effect_deepwater {
+    animation: backgroundScroll 12s linear 0s infinite;
+}
+
+/* === volspread (map.css:993) === */
+.effect_volspread {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-volspread-pattern)), repeating-linear-gradient(135deg, var(--tile-effect-volspread-pattern)), var(--tile-effect-volspread-color);
+}
+.enable_animation.effect_volspread {
+    animation: backgroundScrollTop 12s linear 0s infinite;
+}
+
+/* === ice (map.css:1000) === */
+.effect_ice {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-ice-pattern)), repeating-linear-gradient(135deg, var(--tile-effect-ice-pattern)), rgba(109, 214, 255, 0.65);
+}
+.enable_animation.effect_ice {
+    animation: backgroundScrollDown 12s linear 0s infinite;
+}
+
+/* === reed (map.css:1007) === */
+.effect_reed {
+    background: repeating-linear-gradient(90deg, var(--tile-effect-reed-pattern)), repeating-linear-gradient(118.2deg, var(--tile-effect-reed-pattern2)), hsla(54, 17%, 64%, 0.9);
+}
+.enable_animation.effect_reed {
+    animation: backgroundWaveSmall 18s ease 0s infinite;
+}
+
+/* === mire (map.css:1014/1020) === */
+.effect_mire {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-mire-pattern)), repeating-linear-gradient(135deg, var(--tile-effect-mire-pattern)), hsla(157, 9%, 49%, 0.8);
+}
+.enable_animation.effect_mire {
+    animation: backgroundScrollDown 12s linear 0s infinite;
+}
+
+/* === ristar road (map.css:1017) === */
+.effect_ristar_road {
+    background: repeating-linear-gradient(0deg, var(--tile-effect-ristar-pattern)), hsla(42, 37%, 74%, 0.4);
+}
+
+/* === smog (map.css:1024) === */
+.effect_smog {
+    background: repeating-linear-gradient(0deg, var(--tile-effect-smog-pattern)), repeating-linear-gradient(90deg, var(--tile-effect-smog-pattern));
+}
+
+/* === yin-yang road / wall (map.css:1027–1076) === */
+.effect_yinyang_road,
+.effect_yinyang_wall {
+    background-color: var(--tile-effect-yan-border);
+    border: 3px solid var(--tile-effect-yan-border);
+    border-radius: 50% 50% 10% 50%;
+    height: 40px;
+    position: relative;
+    width: 40px;
+}
+.effect_yinyang_road:before,
+.effect_yinyang_wall:before {
+    background-color: var(--tile-effect-yang-color);
+    border: 9px solid var(--tile-block-base-bgcolor-deployable);
+    border-radius: 50%;
+    content: "";
+    height: 16px;
+    position: absolute;
+    width: 16px;
+}
+.effect_yinyang_yin.effect_yinyang_road:before,
+.effect_yinyang_yin.effect_yinyang_wall:before {
+    background-color: var(--tile-effect-yin-color);
+}
+.effect_yinyang_yang.effect_yinyang_road:before,
+.effect_yinyang_yang.effect_yinyang_wall:before {
+    background-color: var(--tile-effect-yang-color);
+}
+.effect_yinyang_road:before {
+    border-color: var(--tile-block-base-bgcolor-deployable);
+}
+.effect_yinyang_wall:before {
+    border-color: var(--tile-block-bgcolor-deployable);
+}
+.effect_yinyang_road:after,
+.effect_yinyang_wall:after {
+    border: 2px solid var(--tile-effect-yang-color);
+    border-radius: 50%;
+    content: "";
+    height: 22px;
+    position: absolute;
+    width: 22px;
+}
+.effect_yinyang_yin.effect_yinyang_road:after,
+.effect_yinyang_yin.effect_yinyang_wall:after {
+    border-color: var(--tile-effect-yin-color);
+}
+/* NOTE: original stylesheet typo — `effect_yinyanh_*` (h, not g), preserved verbatim. Dead unless an
+ * `effect_yinyang_yang` state class is also present, which this component never emits. */
+.effect_yinyang_yang.effect_yinyanh_road:after,
+.effect_yinyang_yang.effect_yinyanh_wall:after {
+    border-color: var(--tile-effect-yang-color);
+}
+
+/* === yin-yang switch (map.css:1077–1106) === */
+.effect_yinyang_switch {
+    background: var(--tile-effect-yang-color);
+    border: 2px solid var(--tile-effect-yin-color);
+    border-radius: 100%;
+    border-right-width: 18px;
+    height: 36px;
+    position: relative;
+    width: 36px;
+}
+.effect_yinyang_switch:before {
+    background: var(--tile-effect-yang-color);
+    top: 0;
+}
+.effect_yinyang_switch:after,
+.effect_yinyang_switch:before {
+    border-radius: 100%;
+    content: "";
+    height: 16px;
+    left: 50%;
+    position: absolute;
+    width: 16px;
+}
+.effect_yinyang_switch:after {
+    background: var(--tile-effect-yin-color);
+    bottom: 0;
+}
+.enable_animation.effect_yinyang_switch {
+    animation: spin 16s linear 0s infinite;
+}
+
+/* === poison (map.css:1107) === */
+.effect_poison {
+    background: repeating-linear-gradient(45deg, var(--tile-effect-poison-pattern)), repeating-linear-gradient(135deg, var(--tile-effect-poison-pattern));
+}
+.enable_animation.effect_poison {
+    animation: backgroundScrollTop 10s linear 0s infinite;
+}
+
+/* === crate (map.css:1114) === */
+.effect_crate {
+    overflow: hidden;
+    position: relative;
+}
+.effect_crate:after,
+.effect_crate:before {
+    background-color: rgba(224, 177, 82, 0.8);
+    content: "";
+    height: 10px;
+    left: 50%;
+    margin-left: -5px;
+    position: absolute;
+    transform: rotate(45deg);
+    width: 10px;
+}
+.effect_crate:before {
+    margin-top: -5px;
+    top: 0;
+}
+.effect_crate:after {
+    bottom: 0;
+    margin-bottom: -6px;
+}
+
+/* NOTE: `effect_shallowwater` (tile_shallowwater in tile-defs.ts) has NO rule in the source
+ * stylesheet — it renders unstyled, same as the original. If you want it to look like shallow
+ * water, alias it here (e.g. copy .effect_deepwater with a lighter color). */

@@ -1,0 +1,109 @@
+/* Enemy-route overlay visual system — SVG strokes, per-depth 3D states, and hover extrusion.
+ * Like tiles.css/effects.css: combinator- and transform-heavy, so not Tailwind utilities.
+ *
+ * Plain (un-hashed) names emitted by RoutesLayer.tsx: routes / route / route_active /
+ * route_inactive / route_air / route_shadow / route_air_shadow. Extracted from
+ * prts-map-tanstack/src/map/map.css:1337–1488 (animate/highlight/heatmap variants omitted —
+ * RoutesLayer never emits them).
+ *
+ * Hover was `.map_render_hover .routes …`; that ancestor class is gone, so it's re-gated to a
+ * `map-hovered` marker that RoutesLayer stamps on the `.routes` wrapper when the map is hovered.
+ * Imported unlayered so it wins over Tailwind utilities/preflight. */
+
+/* === routes wrapper (map.css:1337–1367) === */
+.routes {
+    align-content: center;
+    align-items: center;
+    display: flex;
+    flex-flow: column;
+    flex-wrap: wrap;
+    height: 100%;
+    justify-content: center;
+    padding: 48px 0;
+    position: relative;
+    transform: rotateX(0deg);
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease;
+    width: 100%;
+}
+.routes.map-hovered {
+    transform: rotateX(30deg);
+}
+
+/* === svg strokes (map.css:1368–1393) === */
+.route svg,
+.route_air svg,
+.route_shadow svg {
+    fill: none;
+    stroke-width: 2;
+}
+.route svg {
+    stroke: rgba(217, 38, 38, 0.8);
+}
+.route_air svg {
+    stroke: rgba(214, 194, 92, 0.9);
+}
+.route_shadow svg {
+    stroke: rgba(25, 16, 16, 0.95);
+}
+.route_air_shadow svg {
+    stroke: rgba(22, 20, 18, 0.8);
+}
+
+/* === route path: depth + active/inactive states (map.css:1394–1448) === */
+.route {
+    opacity: 0;
+    position: absolute;
+    transform: translateZ(1px);
+    transition:
+        transform 0.4s ease,
+        opacity 0.4s ease;
+}
+.route.route_active {
+    opacity: 0.6;
+    transform: translateZ(1px);
+}
+.route.route_inactive {
+    opacity: 0.2;
+    transform: translateZ(1px);
+}
+.map-hovered .route.route_active {
+    opacity: 0.6;
+    transform: translateZ(8px);
+}
+.map-hovered .route.route_inactive {
+    opacity: 0.2;
+    transform: translateZ(148px);
+}
+/* air sits slightly higher at rest, and lifts further on hover (after the above → wins on ties) */
+.route.route_air,
+.route.route_air.route_active,
+.route.route_air.route_inactive {
+    transform: translateZ(2px);
+}
+.map-hovered .route_air.route_active {
+    opacity: 0.6;
+    transform: translateZ(48px);
+}
+.map-hovered .route_air.route_inactive {
+    opacity: 0.2;
+    transform: translateZ(160px);
+}
+
+/* === route shadow: only visible while the map is tilted (map.css:1463–1488) === */
+.route_shadow {
+    opacity: 0;
+    position: absolute;
+    transform: translateZ(0);
+    transition:
+        transform 0.4s ease,
+        opacity 0.4s ease;
+}
+.map-hovered .route_shadow.route_active {
+    opacity: 1;
+    transform: translateZ(0);
+}
+.map-hovered .route_shadow.route_inactive {
+    opacity: 0.2;
+    transform: translateZ(0);
+}

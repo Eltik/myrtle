@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { MapView } from "#/components/stages/detail/map";
 import { levelQueryOptions } from "#/lib/api/level";
 import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { defaultOgURL } from "#/lib/og";
@@ -8,17 +9,12 @@ export const Route = createFileRoute("/stages_/$stageId")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
-        const [stages] = await Promise.all([
-            context.queryClient.ensureQueryData(stagesQueryOptions()),
-            context.queryClient.ensureQueryData(zonesQueryOptions()),
-            // Warm the level so the simulator renders without a client fetch flash.
-            context.queryClient.ensureQueryData(levelQueryOptions(params.stageId)),
-        ]);
-        return stages.find((s) => s.stageId === params.stageId) ?? null;
+        const [stages, , level] = await Promise.all([context.queryClient.ensureQueryData(stagesQueryOptions()), context.queryClient.ensureQueryData(zonesQueryOptions()), context.queryClient.ensureQueryData(levelQueryOptions(params.stageId))]);
+        return { stage: stages.find((s) => s.stageId === params.stageId) ?? null, level: level ?? null };
     },
     head: ({ loaderData, params }) => {
-        const code = loaderData?.code ?? params.stageId;
-        const name = loaderData?.name ? `${code} · ${loaderData.name}` : code;
+        const code = loaderData?.stage?.code ?? params.stageId;
+        const name = loaderData?.stage?.name ? `${code} · ${loaderData.stage.name}` : code;
         const { meta, links } = seo({
             title: `${name} - Stage`,
             description: `Tile layout and enemy pathing for ${name} in Arknights.`,
@@ -43,5 +39,6 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RouteComponent() {
-    return <h1>Hello world</h1>;
+    const { level } = Route.useLoaderData();
+    return <MapView level={level} />;
 }
