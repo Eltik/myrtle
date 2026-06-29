@@ -14,10 +14,12 @@ import { Watermark } from "./view/Watermark";
 
 const BOARD_PADDING_Y = 48;
 const H_GUTTER = 24;
+/** Keep the board within this fraction of the viewport height so tall maps stay fully visible without dominating the page. */
+const MAX_VIEWPORT_HEIGHT_FRACTION = 0.82;
 
 function MapControls({ onPrev, onNext, atStart, atEnd, hasRoutes, is3D, onToggle3D }: { onPrev: () => void; onNext: () => void; atStart: boolean; atEnd: boolean; hasRoutes: boolean; is3D: boolean; onToggle3D: () => void }) {
     return (
-        <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5 sm:top-4 sm:right-4">
+        <div className="absolute top-3 right-3 z-50 flex items-center gap-2 sm:top-4 sm:right-4 sm:gap-1.5">
             <Button aria-label="Toggle 3D view" aria-pressed={is3D} onClick={onToggle3D} size="icon" variant={is3D ? "secondary" : "outline"}>
                 <Box />
             </Button>
@@ -35,12 +37,12 @@ function MapControls({ onPrev, onNext, atStart, atEnd, hasRoutes, is3D, onToggle
     );
 }
 
-export function MapView({ level }: { level: ILevel | null }) {
+export function MapView({ level, code }: { level: ILevel | null; code?: string }) {
     if (!level) return null;
-    return <MapBoard level={level} />;
+    return <MapBoard code={code} level={level} />;
 }
 
-function MapBoard({ level }: { level: ILevel }) {
+function MapBoard({ level, code }: { level: ILevel; code?: string }) {
     const width = level.mapData.map[0].length;
     const height = level.mapData.map.length;
 
@@ -69,12 +71,23 @@ function MapBoard({ level }: { level: ILevel }) {
     useEffect(() => {
         const el = containerRef.current;
         if (!el) return;
-        const update = () => setScale(Math.min(1, Math.max(0.1, (el.clientWidth - H_GUTTER) / naturalWidth)));
+        const update = () => {
+            const widthScale = (el.clientWidth - H_GUTTER) / naturalWidth;
+            const viewportH = typeof window === "undefined" ? Infinity : window.innerHeight;
+            const heightScale = (viewportH * MAX_VIEWPORT_HEIGHT_FRACTION) / naturalHeight;
+            setScale(Math.min(1, Math.max(0.1, Math.min(widthScale, heightScale))));
+        };
         update();
         const ro = new ResizeObserver(update);
         ro.observe(el);
-        return () => ro.disconnect();
-    }, [naturalWidth]);
+        // ResizeObserver only fires on element-size changes; a pure viewport-height
+        // change (e.g. mobile orientation flip) needs the window listener too.
+        window.addEventListener("resize", update);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener("resize", update);
+        };
+    }, [naturalWidth, naturalHeight]);
 
     const step = useCallback((delta: number) => setFocus((f) => Math.max(-1, Math.min(maxIndex, f + delta))), [maxIndex]);
     const prev = useCallback(() => step(-1), [step]);
@@ -106,7 +119,7 @@ function MapBoard({ level }: { level: ILevel }) {
     }, [prev, next]);
 
     return (
-        <div className="flex min-h-screen w-full items-center justify-center">
+        <div className="flex h-full min-h-full w-full items-center justify-center">
             <div
                 ref={(node) => {
                     mapRef.current = node;
@@ -121,7 +134,7 @@ function MapBoard({ level }: { level: ILevel }) {
                         <RoutesLayer focus={focus} hovered={is3D} routes={routes} />
                     </div>
                 </div>
-                <Watermark text="Map" />
+                <Watermark text={code ?? "Map"} />
             </div>
         </div>
     );

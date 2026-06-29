@@ -1,16 +1,19 @@
 import type { ReactNode } from "react";
 import { env } from "#/env";
 import { deepCamelize } from "#/lib/api/operators";
+import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
+import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
 import { DEFAULT_OG_PRESETS } from "./presets";
 import type { IRenderDimensions } from "./render";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
+import { buildStageOgData, type IStageOgData, StageTemplate } from "./templates/Stage";
 import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
 import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TIER_LIST_BOARD_IMAGE_LAYOUT, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
@@ -549,11 +552,44 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
     dimensions: (data) => tierListBoardImageDimensions(data),
 };
 
+const STAGE_HASH_VERSION = "v1";
+
+/** Try preview candidates in priority order; return the first that loads as a data URI. */
+async function resolveStagePreview(paths: string[]): Promise<string | undefined> {
+    const CHUNK = 6;
+    for (let i = 0; i < paths.length; i += CHUNK) {
+        const chunk = paths.slice(i, i + CHUNK);
+        const resolved = await Promise.all(chunk.map((p) => fetchToDataURI(assetURL(p))));
+        const hit = resolved.find((r) => r);
+        if (hit) return hit;
+    }
+    return undefined;
+}
+
+const stageHandler: IOgHandler<IStageOgData> = {
+    fetch: async (stageId) => {
+        const [stagesRes, zonesRes] = await Promise.all([backendFetch("/static/stages"), backendFetch("/static/zones")]);
+        if (!stagesRes.ok) return null;
+        const stagesMap = (await stagesRes.json()) as Record<string, IStage>;
+        const stage = Object.values(stagesMap).find((s) => s.stageId === stageId);
+        if (!stage) return null;
+
+        const zonesMap = zonesRes.ok ? ((await zonesRes.json()) as Record<string, IZone>) : {};
+        const zone = Object.values(zonesMap).find((z) => z.zoneId === stage.zoneId);
+        const previewImageURL = await resolveStagePreview(stagePreviewAssetPaths(stage));
+
+        return buildStageOgData(stage, zone, previewImageURL);
+    },
+    hash: (data) => ogHash(["stage", STAGE_HASH_VERSION, data.code, data.name, data.description ?? "", data.zoneName, data.typeLabel, data.difficultyLabel ?? "", data.bossMark ? 1 : 0, data.stats.map((s) => `${s.label}=${s.value}`).join("|")]),
+    template: (data) => StageTemplate(data),
+};
+
 export const ogRegistry = {
     operator: operatorHandler,
     user: userHandler,
     "tier-list": tierListHandler,
     "tier-list-image": tierListBoardImageHandler,
+    stage: stageHandler,
     default: defaultHandler,
 };
 

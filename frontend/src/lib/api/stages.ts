@@ -5,7 +5,6 @@ import { backendFetch } from "#/lib/fetch";
 import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
 import { optionalSiteToken } from "./_shared.server";
 
-const PREVIEW_BASE = "/api/assets/textures/arts/ui";
 const PREVIEW_SUFFIX_RE = /#[a-z]#?$/i;
 
 /** Folder-variant suffixes that appear between the stage family and the trailing `_0`. */
@@ -62,36 +61,41 @@ function stageFamily(stageId: string): string {
 }
 
 /**
- * Build all candidate `/api/assets/...` URLs for a stage's map preview.
- * Stage preview assets live under
+ * Build all candidate map-preview asset paths for a stage, relative to the
+ * backend `/api/assets` root. Stage preview assets live under
  * `textures/arts/ui/stage_mappreview_h2_{family}{variant}_0/{stageId}.png` where
  * `variant` is one of "", "_a", "_b", "_1", "_2", … and is not derivable from
  * the stage data, so we emit a small product of candidates and let the consumer
  * fall through on 404.
  */
-export function stagePreviewURLs(stage: IStage): string[] {
+export function stagePreviewAssetPaths(stage: IStage): string[] {
     const ids = stagePreviewCandidates(stage);
     const families = new Set<string>();
     for (const id of ids) families.add(stageFamily(id));
 
-    const base = `${env.VITE_BACKEND_URL ?? ""}${PREVIEW_BASE}`;
     const seen = new Set<string>();
-    const urls: string[] = [];
+    const paths: string[] = [];
 
     for (const id of ids) {
         for (const family of families) {
             for (const variant of FOLDER_VARIANTS) {
                 const folder = `stage_mappreview_h2_${family}${variant}_0`;
-                const url = `${base}/${folder}/${encodeURIComponent(id)}.png`;
-                if (!seen.has(url)) {
-                    seen.add(url);
-                    urls.push(url);
+                const path = `/textures/arts/ui/${folder}/${encodeURIComponent(id)}.png`;
+                if (!seen.has(path)) {
+                    seen.add(path);
+                    paths.push(path);
                 }
             }
         }
     }
 
-    return urls;
+    return paths;
+}
+
+/** Absolute `/api/assets/...` candidate URLs for a stage's map preview. */
+export function stagePreviewURLs(stage: IStage): string[] {
+    const base = env.VITE_BACKEND_URL ?? "";
+    return stagePreviewAssetPaths(stage).map((path) => `${base}/api/assets${path}`);
 }
 
 export const getStagesFn = createServerFn({ method: "GET" }).handler(async () => {

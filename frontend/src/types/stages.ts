@@ -9,6 +9,23 @@ export interface IUnlockCondition {
     completeState: string;
 }
 
+/** Drop bucket on the stage results screen. */
+export type IStageDropType = "ONCE" | "NORMAL" | "SPECIAL" | "ADDITIONAL" | "COMPLETE" | "CONDITION_DROP" | (string & {});
+
+/** Qualitative drop-rate band the game shows instead of an exact percentage. */
+export type IStageDropOcc = "ALWAYS" | "ALMOST" | "USUAL" | "OFTEN" | "SOMETIMES" | "RARELY" | (string & {});
+
+export interface IDisplayDetailReward {
+    dropType: IStageDropType;
+    id: string;
+    occPercent: IStageDropOcc;
+    itemType: string;
+}
+
+export interface IStageDropInfo {
+    displayDetailRewards: IDisplayDetailReward[];
+}
+
 export interface IStage {
     stageId: string;
     levelId?: string;
@@ -34,6 +51,7 @@ export interface IStage {
     unlockCondition: IUnlockCondition[];
     loadingPicId?: string;
     bossMark: boolean;
+    stageDropInfo?: IStageDropInfo;
 }
 
 export type ZoneType = "MAINLINE" | "SIDESTORY" | "BRANCHLINE" | "ACTIVITY" | "WEEKLY" | "CAMPAIGN" | "CLIMB_TOWER" | "ROGUELIKE" | "GUIDE" | "EVOLVE" | "MAINLINE_ACTIVITY" | "MAINLINE_RETRO" | "SPECIAL";

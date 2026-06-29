@@ -67,6 +67,35 @@ pub struct UnlockCondition {
     pub complete_state: String,
 }
 
+/// A single item the stage can drop, with its drop category and occurrence band.
+///
+/// `drop_type` (ONCE / NORMAL / SPECIAL / ADDITIONAL / COMPLETE / `CONDITION_DROP`),
+/// `occ_percent` (ALWAYS / ALMOST / USUAL / OFTEN / SOMETIMES / RARELY) and
+/// `item_type` (MATERIAL / CHAR / `CARD_EXP` / DIAMOND / …) are kept as raw strings
+/// for forward-compatibility with new game-data values.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct DisplayDetailReward {
+    #[serde(alias = "DropType")]
+    pub drop_type: String,
+
+    #[serde(alias = "Id")]
+    pub id: String,
+
+    #[serde(alias = "OccPercent")]
+    pub occ_percent: String,
+
+    #[serde(alias = "Type_", alias = "Type")]
+    pub item_type: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct StageDropInfo {
+    #[serde(alias = "DisplayDetailRewards", default)]
+    pub display_detail_rewards: Vec<DisplayDetailReward>,
+}
+
 // ============================================================================
 // Stage
 // ============================================================================
@@ -145,6 +174,9 @@ pub struct Stage {
 
     #[serde(alias = "BossMark", default)]
     pub boss_mark: bool,
+
+    #[serde(alias = "StageDropInfo", skip_serializing_if = "Option::is_none")]
+    pub stage_drop_info: Option<StageDropInfo>,
 }
 
 // ============================================================================
