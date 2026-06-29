@@ -8,10 +8,12 @@ export interface RouteEntry {
     position: number;
     timestamp: number;
     enemyIndexRange: string;
+    enemyKey: string | null;
     d: string;
     length: number;
+    start: { x: number; y: number } | null;
     dots: { x: number; y: number }[];
-    waits: { x: number; y: number; time: number }[];
+    waits: { x: number; y: number; time: number; dist: number }[];
     isAir: boolean;
 }
 
@@ -26,7 +28,7 @@ export function buildRouteEntries(level: ILevel, mapObject: GameMap): RouteEntri
     const { actions, totalCount } = buildEnemyActions(level);
     const entries: RouteEntry[] = actions.map((a, position) => {
         const path = buildRoutePath(level.routes[a.routeIndex], mapObject, dims.height);
-        return { position, timestamp: a.timestamp, enemyIndexRange: a.enemyIndexRange, ...path };
+        return { position, timestamp: a.timestamp, enemyIndexRange: a.enemyIndexRange, enemyKey: a.enemyKey, ...path };
     });
     return { entries, total: totalCount, dims };
 }

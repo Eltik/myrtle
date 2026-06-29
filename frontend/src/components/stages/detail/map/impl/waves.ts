@@ -7,6 +7,8 @@ export interface IEnemyAction {
     timestamp: number;
     count: number;
     enemyIndexRange: string;
+    /** Enemy id of the spawn, used to resolve its icon. */
+    enemyKey: string | null;
 }
 
 export interface IEnemyActions {
@@ -40,6 +42,7 @@ export function buildEnemyActions(level: ILevel, waveIntervalFallback = 5): IEne
                         timestamp: t + waveOffset,
                         count,
                         enemyIndexRange: count === 1 ? `${enemyCount + 1}` : `${enemyCount + 1} ~ ${enemyCount + count}`,
+                        enemyKey: a.key ?? null,
                     });
                     enemyCount += count;
                 }

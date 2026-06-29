@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { enemiesQueryOptions } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import { materialsQueryOptions } from "#/lib/api/materials";
@@ -9,6 +9,7 @@ import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { DropsSection } from "./impl/DropsSection";
 import { EnemiesSection } from "./impl/EnemiesSection";
 import { groupDrops, tallyEnemies } from "./impl/helpers";
+import { DEFAULT_MAP_SETTINGS, MapSettings } from "./impl/MapSettings";
 import { OverviewSection } from "./impl/OverviewSection";
 import { PropertiesSection } from "./impl/PropertiesSection";
 import { TileLegend } from "./impl/primitives";
@@ -28,6 +29,7 @@ export function StageDetail({ level }: { level: ILevel | null }) {
     const zone = useMemo(() => zones.find((z) => z.zoneId === stage?.zoneId), [zones, stage]);
     const tally = useMemo(() => tallyEnemies(level, handbook.enemyData), [level, handbook.enemyData]);
     const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials.items) : []), [stage, materials.items]);
+    const [mapSettings, setMapSettings] = useState(DEFAULT_MAP_SETTINGS);
 
     if (!stage) {
         return (
@@ -66,9 +68,10 @@ export function StageDetail({ level }: { level: ILevel | null }) {
                 {level ? (
                     <>
                         <div className="relative overflow-hidden rounded-[14px] border border-border bg-[#181818]">
-                            <MapView code={stage.code} level={level} />
+                            <MapView code={stage.code} enemyData={handbook.enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} />
                         </div>
                         <TileLegend />
+                        <MapSettings settings={mapSettings} onChange={setMapSettings} />
                     </>
                 ) : (
                     <div className="flex min-h-70 items-center justify-center rounded-[14px] border border-border border-dashed p-10 text-center">

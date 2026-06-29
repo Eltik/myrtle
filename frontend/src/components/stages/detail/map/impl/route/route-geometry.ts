@@ -13,8 +13,10 @@ const TIMER_WAIT: (string | number)[] = [MOVE_TYPE.WAIT_FOR_SECONDS, MOVE_TYPE.W
 export interface IRoutePath {
     d: string;
     length: number;
+    start: { x: number; y: number } | null;
     dots: { x: number; y: number }[];
-    waits: { x: number; y: number; time: number }[];
+    /** `dist` is the distance along the path (px) where the pause happens. */
+    waits: { x: number; y: number; time: number; dist: number }[];
     isAir: boolean;
 }
 
@@ -38,7 +40,8 @@ export function buildRoutePath(route: IRouteDef, mapObject: GameMap, vbHeight: n
 
     const cmds: (string | number)[] = [];
     const dots: { x: number; y: number }[] = [];
-    const waits: { x: number; y: number; time: number }[] = [];
+    const waits: { x: number; y: number; time: number; dist: number }[] = [];
+    let start: { x: number; y: number } | null = null;
     let prev = waypoints[0];
     let portal = false;
     let length = 0;
@@ -51,16 +54,17 @@ export function buildRoutePath(route: IRouteDef, mapObject: GameMap, vbHeight: n
         const sy = vbHeight - y;
         if (wp.type !== undefined && WAIT_TYPES.includes(wp.type)) {
             const c = tileCenter(prev);
-            if (TIMER_WAIT.includes(wp.type)) waits.push({ x: c.x, y: vbHeight - c.y, time: wp.time ?? 0 });
+            if (TIMER_WAIT.includes(wp.type)) waits.push({ x: c.x, y: vbHeight - c.y, time: wp.time ?? 0, dist: length });
             continue;
         }
         const isMoveDot = (wp.type === MOVE_TYPE.MOVE || wp.type === 0) && !(wp.row === startPosition.row && wp.col === startPosition.col) && !(wp.row === endPosition.row && wp.col === endPosition.col);
         if (isMoveDot) dots.push({ x, y: sy });
         if (lastXY) length += Math.hypot(x - lastXY.x, sy - lastXY.y);
         lastXY = { x, y: sy };
+        if (cmds.length === 0) start = { x, y: sy };
         cmds.push(cmds.length === 0 ? "M" : "L", x, sy);
         prev = wp;
     }
     void portal;
-    return { d: cmds.join(" "), length: length || 1, dots, waits, isAir: motionMode === MOTION_MODE.FLY || motionMode === 1 };
+    return { d: cmds.join(" "), length: length || 1, start, dots, waits, isAir: motionMode === MOTION_MODE.FLY || motionMode === 1 };
 }
