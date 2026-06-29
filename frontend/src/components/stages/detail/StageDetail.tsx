@@ -59,7 +59,7 @@ export function StageDetail({ level }: { level: ILevel | null }) {
 
             <div className="flex flex-col gap-7">
                 <StageHeader stage={stage} zone={zone} />
-                <OverviewSection stage={stage} level={level} />
+                <OverviewSection level={level} />
             </div>
 
             <div className="mt-7 flex flex-col gap-3">

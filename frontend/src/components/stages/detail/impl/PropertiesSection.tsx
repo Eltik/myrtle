@@ -14,10 +14,10 @@ export function PropertiesSection({ stage, level }: { stage: IStage; level: ILev
                         <FlagRow label="Battle Replay" on={stage.canBattleReplay} />
                         <FlagRow label="Auto-Deploy (Multi)" on={stage.canMultipleBattle} />
                         <FlagRow label="Story Only" on={stage.isStoryOnly} />
-                        <FlagRow label="Predefined Squad" on={stage.isPredefined} />
-                        {opts?.isTrainingLevel != null && <FlagRow label="Training Level" on={opts.isTrainingLevel} />}
-                        {opts?.steeringEnabled != null && <FlagRow label="Steering Enabled" on={opts.steeringEnabled} />}
-                        {opts?.isPredefinedCardsSelectable != null && <FlagRow label="Cards Selectable" on={opts.isPredefinedCardsSelectable} />}
+                        <FlagRow label="Predefined Squad" on={stage.isPredefined} hint="The stage hands you a fixed roster of operators to clear it with, instead of letting you bring your own." />
+                        {opts?.isTrainingLevel != null && <FlagRow label="Training Level" on={opts.isTrainingLevel} hint="A tutorial / practice stage that teaches a mechanic and does not count toward normal progression." />}
+                        {opts?.steeringEnabled != null && <FlagRow label="Steering Enabled" on={opts.steeringEnabled} hint="A pathfinding flag: when on, enemies steer smoothly around each other and corners rather than snapping tile-to-tile. It rarely affects strategy." />}
+                        {opts?.isPredefinedCardsSelectable != null && <FlagRow label="Cards Selectable" on={opts.isPredefinedCardsSelectable} hint="In a predefined-squad stage, whether you may pick which of the provided operators to deploy. When off, the loadout is locked." />}
                     </div>
                 </div>
             </section>

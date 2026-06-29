@@ -1,5 +1,23 @@
+import { Info } from "lucide-react";
 import type React from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { cn } from "#/lib/utils";
+
+/** Small hover/focus info affordance that reveals an explanatory tooltip. */
+export function InfoHint({ children, label }: { children: React.ReactNode; label?: string }) {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={(triggerProps) => (
+                    <button {...triggerProps} type="button" aria-label={label ?? "More information"} className="inline-flex cursor-help items-center text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
+                        <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                )}
+            />
+            <TooltipPopup className="max-w-64 px-2.5 py-1.5 text-[12px] leading-snug">{children}</TooltipPopup>
+        </Tooltip>
+    );
+}
 
 export function Kicker({ children }: { children: React.ReactNode }) {
     return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
@@ -15,21 +33,29 @@ export function SectionHead({ children, aside }: { children: React.ReactNode; as
     );
 }
 
-export function StatCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) {
+export function GameIcon({ src, alt }: { src: string; alt: string }) {
+    return <img src={src} alt={alt} loading="lazy" decoding="async" className="h-6 w-6 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)]" />;
+}
+
+export function StatCard({ icon, label, value, accent, info }: { icon: React.ReactNode; label: string; value: string; accent?: string; info?: React.ReactNode }) {
     return (
         <div className="flex items-center gap-3 rounded-[10px] border border-border bg-card p-3">
             <span
                 aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md [&_svg]:h-4.5 [&_svg]:w-4.5"
+                className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md [&_svg]:h-4.5 [&_svg]:w-4.5"
                 style={{
-                    background: accent ? `color-mix(in oklch, ${accent} 14%, transparent)` : "color-mix(in oklch, var(--muted) 50%, transparent)",
+                    background: "linear-gradient(155deg, #1e2026, #111317)",
+                    boxShadow: accent ? `inset 0 0 0 1px color-mix(in oklch, ${accent} 42%, transparent)` : "inset 0 0 0 1px rgba(255,255,255,0.07)",
                     color: accent ?? "var(--muted-foreground)",
                 }}
             >
                 {icon}
             </span>
             <div className="flex min-w-0 flex-col gap-1">
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</span>
+                <span className="flex items-center gap-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">
+                    {label}
+                    {info && <InfoHint label={label}>{info}</InfoHint>}
+                </span>
                 <span className="font-mono font-semibold text-[15px] text-foreground tabular-nums leading-none">{value}</span>
             </div>
         </div>
@@ -46,10 +72,13 @@ export function Pill({ children, tone = "muted" }: { children: React.ReactNode; 
     return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-[11.5px] leading-none", tones[tone])}>{children}</span>;
 }
 
-export function FlagRow({ label, on }: { label: string; on: boolean }) {
+export function FlagRow({ label, on, hint }: { label: string; on: boolean; hint?: React.ReactNode }) {
     return (
         <div className="flex items-center justify-between gap-2 border-border/40 border-b py-2 last:border-b-0">
-            <span className="font-sans text-[12.5px] text-foreground">{label}</span>
+            <span className="flex items-center gap-1.5 font-sans text-[12.5px] text-foreground">
+                {label}
+                {hint && <InfoHint label={label}>{hint}</InfoHint>}
+            </span>
             <span className={cn("inline-flex h-5 items-center rounded-full px-2 font-medium font-mono text-[10px] uppercase tracking-widest", on ? "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-success-foreground" : "bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] text-muted-foreground")}>
                 {on ? "Yes" : "No"}
             </span>

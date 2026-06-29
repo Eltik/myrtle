@@ -1,26 +1,26 @@
-import { Clock, Coins, Flag, Gauge, Heart, Shield, Skull, Sparkles, Star, Timer, Zap } from "lucide-react";
+import { asset } from "#/components/operators/detail/impl/assets";
 import type { ILevel } from "#/lib/api/level";
-import type { IStage } from "#/types/stages";
-import { SectionHead, StatCard } from "./primitives";
+import { GameIcon, SectionHead, StatCard } from "./primitives";
 
-export function OverviewSection({ stage, level }: { stage: IStage; level: ILevel | null }) {
+const UI = (path: string) => asset(`/textures/ui/${path}`);
+const ICON = {
+    team: UI("activity/teamquest/icon_tab_team.png"),
+    cost: UI("%5Buc%5Dbattlefinish/icon_cost.png"),
+    speed: UI("cooperate/battle/cooperate_battle_ui_plugin/speedUp_1x.png"),
+};
+
+export function OverviewSection({ level }: { level: ILevel | null }) {
     const opts = level?.options;
     return (
         <section>
             <SectionHead>Overview</SectionHead>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                <StatCard icon={<Zap />} label="Sanity Cost" value={String(stage.apCost)} accent="var(--primary)" />
-                <StatCard icon={<Sparkles />} label="EXP Gain" value={stage.expGain.toLocaleString()} accent="var(--info)" />
-                <StatCard icon={<Coins />} label="LMD Gain" value={stage.goldGain.toLocaleString()} accent="var(--warning)" />
-                {stage.dangerLevel && <StatCard icon={<Skull />} label="Risk Level" value={stage.dangerLevel} accent="var(--destructive)" />}
-                {stage.dangerPoint > 0 && <StatCard icon={<Flag />} label="Danger Point" value={String(stage.dangerPoint)} accent="var(--destructive)" />}
-                {opts?.maxLifePoint != null && <StatCard icon={<Heart />} label="Life Points" value={String(opts.maxLifePoint)} accent="var(--destructive)" />}
-                {opts?.characterLimit != null && <StatCard icon={<Shield />} label="Unit Limit" value={String(opts.characterLimit)} accent="var(--primary)" />}
-                {opts?.initialCost != null && <StatCard icon={<Star />} label="Initial DP" value={String(opts.initialCost)} accent="var(--info)" />}
-                {opts?.maxCost != null && <StatCard icon={<Star />} label="Max DP" value={String(opts.maxCost)} accent="var(--info)" />}
-                {opts?.costIncreaseTime != null && <StatCard icon={<Timer />} label="DP / Tick" value={`${opts.costIncreaseTime}s`} accent="var(--muted-foreground)" />}
-                {opts?.moveMultiplier != null && opts.moveMultiplier !== 1 && <StatCard icon={<Gauge />} label="Move Speed" value={`×${opts.moveMultiplier}`} accent="var(--warning)" />}
-                {opts?.maxPlayTime != null && opts.maxPlayTime > 0 && <StatCard icon={<Clock />} label="Time Limit" value={`${opts.maxPlayTime}s`} accent="var(--warning)" />}
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {opts?.initialCost != null && <StatCard icon={<GameIcon src={ICON.cost} alt="Initial DP" />} label="Initial DP" value={String(opts.initialCost)} accent="var(--info)" info="The amount of Deployment Points (DP) you start the battle with." />}
+                {opts?.costIncreaseTime != null && <StatCard icon={<GameIcon src={ICON.cost} alt="DP per tick" />} label="DP / Tick" value={`${opts.costIncreaseTime}s`} accent="var(--muted-foreground)" info="How often you passively gain 1 DP - a lower number means DP regenerates faster." />}
+                {opts?.characterLimit != null && <StatCard icon={<GameIcon src={ICON.team} alt="Unit Limit" />} label="Unit Limit" value={String(opts.characterLimit)} accent="var(--primary)" info="The maximum number of operators you can have deployed on the field at once." />}
+                {opts?.moveMultiplier != null && opts.moveMultiplier !== 1 && (
+                    <StatCard icon={<GameIcon src={ICON.speed} alt="Move Speed" />} label="Move Speed" value={`×${opts.moveMultiplier}`} accent="var(--warning)" info="A global multiplier applied to every enemy's movement speed on this stage. ×0.5 means enemies move at half their normal speed." />
+                )}
             </div>
         </section>
     );
