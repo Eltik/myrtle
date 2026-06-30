@@ -70,7 +70,7 @@ export function MapSettings({ settings, onChange }: { settings: IMapSettings; on
                         key={def.key}
                         def={def}
                         checked={settings[def.key]}
-                        disabled={def.requires ? !settings[def.requires] : false}
+                        disabled={def.requires ? settings[def.requires] : false}
                         onChange={(v) => {
                             const next = { ...settings, [def.key]: v };
                             if (def.key === "walkingChibis" && v) next.showEnemyIcons = false;

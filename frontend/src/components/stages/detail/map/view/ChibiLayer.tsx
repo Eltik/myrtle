@@ -30,6 +30,7 @@ const SPRITE_H = TILE_SIZE * 2.6;
 const CHIBI_SCALE = 0.16;
 /** Lift toward the camera so chibis render in front of raised/high-ground tiles. */
 const Z_LIFT = TILE_SIZE;
+const HIT_PAD = 6;
 const WALK_ANIMS = ["Move", "Run", "Walk", "move", "run", "walk"];
 const IDLE_ANIMS = ["Idle", "idle", "Default", "default", "Relax", "Stand"];
 
@@ -38,8 +39,11 @@ function pickWalkAnimation(names: string[]): string | null {
         const hit = names.find((n) => n === want);
         if (hit) return hit;
     }
-    const moveLike = names.find((n) => /move|run|walk/i.test(n));
-    return moveLike ?? names.find((n) => !/idle|default|die|death/i.test(n)) ?? names[0] ?? null;
+    const moveLike = names.filter((n) => /move|run|walk/i.test(n));
+    if (moveLike.length) {
+        return moveLike.find((n) => /loop/i.test(n)) ?? moveLike.find((n) => !/begin|start|end|stop|finish/i.test(n)) ?? moveLike[0];
+    }
+    return names.find((n) => !/idle|default|die|death/i.test(n)) ?? names[0] ?? null;
 }
 
 function pickIdleAnimation(names: string[]): string | null {
@@ -106,16 +110,21 @@ function releaseChibiApp(app: PIXI.Application): void {
 function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChibiWalker; padY: number; tilt: number; onEnemyHover?: EnemyHoverFn }) {
     const wrapRef = useRef<HTMLDivElement>(null);
     const mountRef = useRef<HTMLDivElement>(null);
+    const hitRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const mount = mountRef.current;
         const wrap = wrapRef.current;
-        if (!mount || !wrap) return;
+        const hit = hitRef.current;
+        if (!mount || !wrap || !hit) return;
 
         // Re-hide on every run: when a route position is reused across spawn groups the effect re-runs
         // in place (no unmount), and a previous run may have left the wrap visible - which would show
         // the fresh, empty pixi canvas as a white square until the new spine finishes loading.
         wrap.style.visibility = "hidden";
+        // Disarm the hover target until the new spine loads and we know its footprint;
+        // also ensures a failed load never leaves an invisible, full-size box blocking neighbors.
+        hit.style.pointerEvents = "none";
 
         let cancelled = false;
         let spine: Spine | null = null;
@@ -204,6 +213,16 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
                 app.stage.addChild(s);
                 app.renderer.render(app.stage);
                 spine = s;
+                // Tighten the hover hitbox to the chibi's actual rendered footprint (it sits
+                // bottom-center of the sprite). The full SPRITE_W×SPRITE_H wrap is mostly empty
+                // space, so leaving it hoverable made adjacent enemies' boxes overlap badly.
+                const footW = Math.min(SPRITE_W, Math.max(b.width * scale + HIT_PAD * 2, TILE_SIZE * 0.7));
+                const footH = Math.min(SPRITE_H, Math.max(b.height * scale + HIT_PAD, TILE_SIZE * 0.9));
+                hit.style.width = `${footW}px`;
+                hit.style.height = `${footH}px`;
+                hit.style.left = `${(SPRITE_W - footW) / 2}px`;
+                hit.style.top = `${SPRITE_H - footH}px`;
+                hit.style.pointerEvents = "auto";
                 wrap.style.visibility = "visible";
             })
             .catch(() => {
@@ -224,15 +243,17 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
     }, [walker, padY, tilt]);
 
     return (
-        <div
-            ref={wrapRef}
-            className="absolute top-0 left-0"
-            style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform", pointerEvents: "auto", cursor: "help" }}
-            onPointerEnter={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
-            onPointerMove={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
-            onPointerLeave={() => onEnemyHover?.(null, 0, 0, false)}
-        >
-            <div ref={mountRef} className="h-full w-full" />
+        <div ref={wrapRef} className="absolute top-0 left-0" style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform", pointerEvents: "none" }}>
+            <div ref={mountRef} className="h-full w-full" style={{ pointerEvents: "none" }} />
+            {/* Hover target sized to the chibi's actual footprint (set on load) - kept small so adjacent enemies don't fight over one big rect. */}
+            <div
+                ref={hitRef}
+                className="absolute"
+                style={{ pointerEvents: "none", cursor: "help" }}
+                onPointerEnter={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
+                onPointerMove={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
+                onPointerLeave={() => onEnemyHover?.(null, 0, 0, false)}
+            />
         </div>
     );
 }
