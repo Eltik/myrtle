@@ -67,9 +67,24 @@ export interface ITokenInst {
     inst?: { characterKey?: string };
 }
 
+/** A Unity-style nullable field: `m_value` only applies when `m_defined` is true. */
+export interface IOverwrittenValue<T = number> {
+    m_defined: boolean;
+    m_value: T;
+}
+
+/** Per-stage overrides applied on top of an enemy's handbook stats. Only `m_defined` entries take effect. */
+export interface IEnemyOverwrittenData {
+    attributes?: Record<string, IOverwrittenValue<number | boolean> | undefined> | null;
+}
+
 export interface IEnemyDbRef {
     id: string;
+    /** Index into the enemy's `stats.levels[]` selected for this stage. */
+    level?: number;
     useDb?: boolean;
+    /** Stage-specific stat overrides (e.g. a buffed DEF for a story fight). */
+    overwrittenData?: IEnemyOverwrittenData | null;
 }
 
 /** The level `Options` block (stage rules). Serializable scalars only. */

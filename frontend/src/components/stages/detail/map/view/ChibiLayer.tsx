@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
 import { useEffect, useRef } from "react";
 import { loadSpineWithEncodedURLs } from "#/components/operators/detail/impl/components/chibi/helpers";
+import type { EnemyHoverFn } from "../impl/types";
 import { TILE_SIZE } from "../impl/util/geometry";
 
 /** One enemy spawn to render as a walking chibi. */
@@ -66,12 +67,43 @@ function makePath(d: string): SVGPathElement {
 }
 
 /**
+ * Reusable pool of PIXI applications. Each chibi needs a WebGL context, and creating/destroying one per
+ * chibi exhausts the browser's hard context limit (~16) while scrubbing waves - the browser then
+ * force-loses the oldest contexts, which pixi doesn't restore, leaving blank WHITE canvases flashing
+ * where chibis were. Keeping a bounded set of apps alive and reusing them caps the live context count
+ * (peak ≈ the on-screen chibi limit) so contexts are never churned or lost.
+ */
+const APP_POOL: PIXI.Application[] = [];
+const MAX_POOLED_APPS = 12;
+
+function acquireChibiApp(): PIXI.Application {
+    const pooled = APP_POOL.pop();
+    if (pooled) {
+        pooled.stage.removeChildren();
+        pooled.renderer.render(pooled.stage); // clear to transparent before reuse
+        return pooled;
+    }
+    const app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true });
+    app.renderer.render(app.stage);
+    return app;
+}
+
+function releaseChibiApp(app: PIXI.Application): void {
+    app.stage.removeChildren();
+    app.renderer.render(app.stage); // leave it cleared so the next borrower never shows a stale/white frame
+    const canvas = app.view as HTMLCanvasElement;
+    canvas.parentNode?.removeChild(canvas);
+    if (APP_POOL.length < MAX_POOLED_APPS) APP_POOL.push(app);
+    else app.destroy(true, { children: true, texture: true });
+}
+
+/**
  * A single enemy chibi that walks its route. The spine animation plays in a
  * small fixed PIXI canvas; the surrounding element is moved along the path and
  * counter-rotated by `tilt` so the chibi stands upright on the tilted board
  * (the parent layer is rotated by +tilt, this cancels it).
  */
-function ChibiWalkerSprite({ walker, padY, tilt }: { walker: IChibiWalker; padY: number; tilt: number }) {
+function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChibiWalker; padY: number; tilt: number; onEnemyHover?: EnemyHoverFn }) {
     const wrapRef = useRef<HTMLDivElement>(null);
     const mountRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +111,11 @@ function ChibiWalkerSprite({ walker, padY, tilt }: { walker: IChibiWalker; padY:
         const mount = mountRef.current;
         const wrap = wrapRef.current;
         if (!mount || !wrap) return;
+
+        // Re-hide on every run: when a route position is reused across spawn groups the effect re-runs
+        // in place (no unmount), and a previous run may have left the wrap visible - which would show
+        // the fresh, empty pixi canvas as a white square until the new spine finishes loading.
+        wrap.style.visibility = "hidden";
 
         let cancelled = false;
         let spine: Spine | null = null;
@@ -95,7 +132,7 @@ function ChibiWalkerSprite({ walker, padY, tilt }: { walker: IChibiWalker; padY:
         const length = path.getTotalLength() || 1;
         const waits = walker.waits;
 
-        const app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true });
+        const app = acquireChibiApp();
         mount.appendChild(app.view as HTMLCanvasElement);
 
         const setAnim = (name: string | null) => {
@@ -147,7 +184,7 @@ function ChibiWalkerSprite({ walker, padY, tilt }: { walker: IChibiWalker; padY:
         loadSpineWithEncodedURLs(walker.skel, walker.atlas)
             .then((s) => {
                 if (cancelled) {
-                    s.destroy();
+                    s.destroy({ children: true, texture: true, baseTexture: true });
                     return;
                 }
                 s.autoUpdate = false;
@@ -170,30 +207,41 @@ function ChibiWalkerSprite({ walker, padY, tilt }: { walker: IChibiWalker; padY:
                 wrap.style.visibility = "visible";
             })
             .catch(() => {
-                /* missing/failed chibi — silently skip */
+                /* missing/failed chibi - silently skip */
             });
 
         return () => {
             cancelled = true;
             cancelAnimationFrame(raf);
-            spine?.destroy();
+            if (spine) {
+                app.stage.removeChild(spine);
+                spine.destroy({ children: true, texture: true, baseTexture: true });
+            }
             path.remove();
-            app.destroy(true, { children: true, texture: true });
+            // Return the app (and its WebGL context) to the pool instead of destroying it - see APP_POOL.
+            releaseChibiApp(app);
         };
     }, [walker, padY, tilt]);
 
     return (
-        <div ref={wrapRef} className="absolute top-0 left-0" style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform" }}>
+        <div
+            ref={wrapRef}
+            className="absolute top-0 left-0"
+            style={{ width: SPRITE_W, height: SPRITE_H, visibility: "hidden", transformOrigin: "bottom center", transformStyle: "preserve-3d", willChange: "transform", pointerEvents: "auto", cursor: "help" }}
+            onPointerEnter={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
+            onPointerMove={(e) => onEnemyHover?.(walker.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0)}
+            onPointerLeave={() => onEnemyHover?.(null, 0, 0, false)}
+        >
             <div ref={mountRef} className="h-full w-full" />
         </div>
     );
 }
 
-export function ChibiLayer({ walkers, width, height, padY, tilt = 30 }: { walkers: IChibiWalker[]; width: number; height: number; padY: number; tilt?: number }) {
+export function ChibiLayer({ walkers, width, height, padY, tilt = 30, onEnemyHover }: { walkers: IChibiWalker[]; width: number; height: number; padY: number; tilt?: number; onEnemyHover?: EnemyHoverFn }) {
     return (
         <div className="transform-3d pointer-events-none absolute top-0 left-0" style={{ width, height }}>
             {walkers.map((w) => (
-                <ChibiWalkerSprite key={w.position} walker={w} padY={padY} tilt={tilt} />
+                <ChibiWalkerSprite key={w.position} walker={w} padY={padY} tilt={tilt} onEnemyHover={onEnemyHover} />
             ))}
         </div>
     );

@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
@@ -8,26 +7,20 @@ import { buildSpawnSchedule } from "./helpers";
 import { Kicker, Pill } from "./primitives";
 import type { ISpawnRow } from "./types";
 
-function SpawnEnemyIdentity({ row, iconClass }: { row: ISpawnRow; iconClass: string }) {
+function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; iconClass: string; onActivate: () => void }) {
     const accent = ENEMY_LEVEL_ACCENT[row.enemy?.enemyLevel ?? "NORMAL"];
     return (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <button type="button" aria-label={`Show ${row.enemy?.name ?? row.id} on map`} onClick={onActivate} className="group/enemy flex min-w-0 cursor-pointer items-center gap-2.5 text-left">
             <span className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)]", iconClass)} style={{ borderColor: `color-mix(in oklch, ${accent} 40%, var(--border))` }}>
                 <img src={enemyIconURL(row.id)} alt="" loading="lazy" className="h-full w-full object-contain" />
             </span>
-            <div className="flex min-w-0 flex-col gap-0.5">
-                {row.enemy ? (
-                    <Link to="/enemies/$id" params={{ id: row.id }} className="truncate font-medium font-sans text-[12.5px] text-foreground leading-tight transition-colors hover:text-primary">
-                        {row.enemy.name}
-                    </Link>
-                ) : (
-                    <span className="truncate font-medium font-sans text-[12.5px] text-foreground leading-tight">{row.id}</span>
-                )}
+            <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="truncate font-medium font-sans text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{row.enemy?.name ?? row.id}</span>
                 <span className="font-medium font-mono text-[9px] uppercase leading-none tracking-widest" style={{ color: accent }}>
                     {row.enemy?.enemyLevel ?? row.actionType}
                 </span>
-            </div>
-        </div>
+            </span>
+        </button>
     );
 }
 
@@ -40,11 +33,11 @@ function SpawnStat({ label, value, strong }: { label: string; value: string; str
     );
 }
 
-function SpawnCard({ row }: { row: ISpawnRow }) {
+function SpawnCard({ row, onFocusEnemy }: { row: ISpawnRow; onFocusEnemy: (id: string, time: number) => void }) {
     return (
         <li className="flex flex-col gap-2.5 px-4 py-3">
             <div className="flex items-start justify-between gap-3">
-                <SpawnEnemyIdentity iconClass="h-9 w-9" row={row} />
+                <SpawnEnemyIdentity iconClass="h-9 w-9" onActivate={() => onFocusEnemy(row.id, row.time)} row={row} />
                 <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">#{row.idx + 1}</span>
             </div>
             <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5 rounded-md bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-3 py-2.5">
@@ -58,7 +51,7 @@ function SpawnCard({ row }: { row: ISpawnRow }) {
     );
 }
 
-export function SpawnSchedule({ level, enemyData }: { level: ILevel | null; enemyData: Record<string, IEnemy> }) {
+export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILevel | null; enemyData: Record<string, IEnemy>; onFocusEnemy: (id: string, time: number) => void }) {
     const { rows, hiddenGroups } = useMemo(() => buildSpawnSchedule(level, enemyData), [level, enemyData]);
     if (rows.length === 0) return null;
     return (
@@ -79,7 +72,7 @@ export function SpawnSchedule({ level, enemyData }: { level: ILevel | null; enem
             <div className="max-h-140 overflow-auto">
                 <ul className="divide-y divide-border/40 sm:hidden">
                     {rows.map((r) => (
-                        <SpawnCard key={r.idx} row={r} />
+                        <SpawnCard key={r.idx} onFocusEnemy={onFocusEnemy} row={r} />
                     ))}
                 </ul>
                 <table className="hidden w-full min-w-150 border-collapse text-left sm:table">
@@ -99,7 +92,7 @@ export function SpawnSchedule({ level, enemyData }: { level: ILevel | null; enem
                             <tr key={r.idx} className="border-border/40 border-b transition-colors last:border-b-0 hover:bg-[color-mix(in_oklch,var(--muted)_25%,transparent)] [&>td]:px-3 [&>td]:py-2">
                                 <td className="text-right font-mono text-[11px] text-muted-foreground tabular-nums">{r.idx + 1}</td>
                                 <td>
-                                    <SpawnEnemyIdentity iconClass="h-8 w-8" row={r} />
+                                    <SpawnEnemyIdentity iconClass="h-8 w-8" onActivate={() => onFocusEnemy(r.id, r.time)} row={r} />
                                 </td>
                                 <td className="text-center font-mono text-[11.5px] text-muted-foreground tabular-nums">{r.wave}</td>
                                 <td className="text-right font-mono font-semibold text-[11.5px] text-foreground tabular-nums">×{r.count}</td>

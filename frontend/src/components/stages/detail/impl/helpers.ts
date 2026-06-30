@@ -1,11 +1,11 @@
 import { itemIcon } from "#/components/operators/detail/impl/assets";
-import type { IEnemy } from "#/lib/api/enemies";
-import type { ILevel } from "#/lib/api/level";
+import type { IEnemy, IEnemyAttributes } from "#/lib/api/enemies";
+import type { IEnemyDbRef, ILevel } from "#/lib/api/level";
 import type { IMaterialItem } from "#/lib/api/materials";
 import { getAvatarById } from "#/lib/utils";
 import type { IStage, IZone } from "#/types/stages";
 import { DROP_TYPE_META, OCC_FALLBACK, OCC_META } from "./constants";
-import type { IDropGroup, IEnemyTally, IResolvedDrop, ISpawnRow } from "./types";
+import type { IDropGroup, IEnemyTally, IResolvedDrop, ISpawnRow, IStageEnemyStats } from "./types";
 
 export function descToHtml(text: string): string {
     return text.replace(/<[@$][a-z0-9._]+>(.*?)<\/>/gi, (_m, inner: string) => `<strong style="color: var(--foreground)">${inner}</strong>`).replace(/\\n/g, "<br/>");
@@ -79,6 +79,55 @@ export function buildSpawnSchedule(level: ILevel | null, enemyData: Record<strin
         waveStart = fragTime + (wave.postDelay ?? 0);
     });
     return { rows, hiddenGroups: [...hidden] };
+}
+
+function applyAttributeOverrides(base: IEnemyAttributes, ref: IEnemyDbRef | undefined): { attrs: IEnemyAttributes; hasOverride: boolean } {
+    const overrides = ref?.overwrittenData?.attributes;
+    if (!overrides) return { attrs: base, hasOverride: false };
+    const attrs: IEnemyAttributes = { ...base };
+    let hasOverride = false;
+    for (const [key, ov] of Object.entries(overrides)) {
+        if (!ov?.m_defined || !(key in attrs)) continue;
+        (attrs as unknown as Record<string, number | boolean>)[key] = ov.m_value;
+        hasOverride = true;
+    }
+    return { attrs, hasOverride };
+}
+
+/**
+ * Resolve an enemy's effective stats for a given stage: the phase the stage uses
+ * (`enemyDbRefs[].level`), any per-stage attribute overrides, the move-speed
+ * multiplier, and the attack interval derived from attack speed.
+ */
+export function computeStageEnemyStats(enemy: IEnemy | null, ref: IEnemyDbRef | undefined, moveMultiplier: number): IStageEnemyStats | null {
+    const phases = enemy?.stats?.levels ?? [];
+    if (phases.length === 0) return null;
+    const levelIndex = Math.min(Math.max(ref?.level ?? 0, 0), phases.length - 1);
+    const { attrs, hasOverride } = applyAttributeOverrides(phases[levelIndex].attributes, ref);
+    const aspd = attrs.attackSpeed || 100;
+    return {
+        levelIndex,
+        phaseCount: phases.length,
+        maxHp: attrs.maxHp,
+        atk: attrs.atk,
+        def: attrs.def,
+        res: attrs.magicResistance,
+        moveSpeed: attrs.moveSpeed * moveMultiplier,
+        attackInterval: aspd > 0 ? (attrs.baseAttackTime * 100) / aspd : attrs.baseAttackTime,
+        hasOverride,
+    };
+}
+
+/** Build an `enemyId -> stage-effective stats` lookup for every enemy the stage declares. */
+export function buildStageEnemyStats(level: ILevel | null, enemyData: Record<string, IEnemy>): Record<string, IStageEnemyStats> {
+    const out: Record<string, IStageEnemyStats> = {};
+    if (!level) return out;
+    const moveMultiplier = level.options?.moveMultiplier ?? 1;
+    for (const ref of level.enemyDbRefs ?? []) {
+        const stats = computeStageEnemyStats(enemyData[ref.id] ?? null, ref, moveMultiplier);
+        if (stats) out[ref.id] = stats;
+    }
+    return out;
 }
 
 export function rarityNum(tier: string | null | undefined): number {

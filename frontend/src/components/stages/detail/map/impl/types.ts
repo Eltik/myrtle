@@ -3,6 +3,13 @@
 // importing its data model from `./types`.
 export type { ICheckpoint, IEnemyDbRef, IFragment, ILevel, IMapData, IPosition, IRawTile, IRouteDef, ITokenInst, IWave, IWaveAction } from "#/lib/api/level";
 
+/**
+ * Reports which enemy is hovered on the board (by id) and the pointer position; `key === null` clears.
+ * `pointerMoved` is whether the physical pointer actually moved for this event (false when a moving
+ * chibi/icon slid under a stationary cursor), so the tooltip only opens on a real hover.
+ */
+export type EnemyHoverFn = (key: string | null, clientX: number, clientY: number, pointerMoved: boolean) => void;
+
 // Renderer-only models (not part of the wire shape): player/token deployments
 // painted onto the board.
 export interface IMapOperator {

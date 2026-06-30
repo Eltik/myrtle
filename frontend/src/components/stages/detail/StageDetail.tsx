@@ -1,22 +1,23 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
-import { enemiesQueryOptions } from "#/lib/api/enemies";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { enemiesQueryOptions, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import { materialsQueryOptions } from "#/lib/api/materials";
 import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { DropsSection } from "./impl/DropsSection";
 import { EnemiesSection } from "./impl/EnemiesSection";
-import { groupDrops, tallyEnemies } from "./impl/helpers";
+import { buildStageEnemyStats, computeStageEnemyStats, groupDrops, tallyEnemies } from "./impl/helpers";
 import { DEFAULT_MAP_SETTINGS, MapSettings } from "./impl/MapSettings";
 import { OverviewSection } from "./impl/OverviewSection";
 import { PropertiesSection } from "./impl/PropertiesSection";
 import { TileLegend } from "./impl/primitives";
 import { SpawnSchedule } from "./impl/SpawnSchedule";
 import { StageHeader } from "./impl/StageHeader";
+import type { IStageEnemyStats } from "./impl/types";
 import { WavesSection } from "./impl/WavesSection";
-import { MapView } from "./map";
+import { type IMapViewHandle, MapView } from "./map";
 
 export function StageDetail({ level }: { level: ILevel | null }) {
     const { stageId } = useParams({ from: "/stages_/$stageId" });
@@ -30,6 +31,12 @@ export function StageDetail({ level }: { level: ILevel | null }) {
     const tally = useMemo(() => tallyEnemies(level, handbook.enemyData), [level, handbook.enemyData]);
     const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials.items) : []), [stage, materials.items]);
     const [mapSettings, setMapSettings] = useState(DEFAULT_MAP_SETTINGS);
+
+    const mapRef = useRef<IMapViewHandle>(null);
+    const moveMultiplier = level?.options?.moveMultiplier ?? 1;
+    const stageStats = useMemo(() => buildStageEnemyStats(level, handbook.enemyData), [level, handbook.enemyData]);
+    const statsFor = useCallback((id: string, enemy: IEnemy | null): IStageEnemyStats | null => stageStats[id] ?? computeStageEnemyStats(enemy, undefined, moveMultiplier), [stageStats, moveMultiplier]);
+    const focusEnemy = useCallback((id: string, time?: number) => mapRef.current?.focusSpawn({ enemyId: id, time }), []);
 
     if (!stage) {
         return (
@@ -68,7 +75,7 @@ export function StageDetail({ level }: { level: ILevel | null }) {
                 {level ? (
                     <>
                         <div className="relative overflow-hidden rounded-[14px] border border-border bg-[#181818]">
-                            <MapView code={stage.code} enemyData={handbook.enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} />
+                            <MapView ref={mapRef} code={stage.code} enemyData={handbook.enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} statsFor={statsFor} />
                         </div>
                         <TileLegend />
                         <MapSettings settings={mapSettings} onChange={setMapSettings} />
@@ -81,7 +88,7 @@ export function StageDetail({ level }: { level: ILevel | null }) {
             </div>
 
             <div className="mt-7 flex flex-col gap-7">
-                <SpawnSchedule level={level} enemyData={handbook.enemyData} />
+                <SpawnSchedule level={level} enemyData={handbook.enemyData} onFocusEnemy={focusEnemy} />
 
                 <div className="grid grid-cols-1 gap-x-5 gap-y-6 lg:grid-cols-2 lg:items-start">
                     <div className="flex min-w-0 flex-col gap-6">
@@ -89,7 +96,7 @@ export function StageDetail({ level }: { level: ILevel | null }) {
                         <WavesSection level={level} />
                     </div>
                     <div className="flex min-w-0 flex-col gap-6">
-                        <EnemiesSection tally={tally} />
+                        <EnemiesSection tally={tally} onFocusEnemy={focusEnemy} />
                         <PropertiesSection stage={stage} level={level} />
                     </div>
                 </div>

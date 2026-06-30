@@ -1,6 +1,7 @@
 import { enemyIconURL } from "#/lib/api/enemies";
 import type { IMapSettings } from "../../impl/MapSettings";
 import type { RouteEntries, RouteEntry } from "../impl/route/route-entries";
+import type { EnemyHoverFn } from "../impl/types";
 import { cx } from "../impl/util/cx";
 
 const WINDOW_BACK = 10;
@@ -17,7 +18,15 @@ function IconBadge({ enemyKey, ring }: { enemyKey: string; ring: string }) {
     );
 }
 
-function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed }: { entry: RouteEntry; active: boolean; inWindow: boolean; dims: { width: number; height: number }; settings: IMapSettings; is3D: boolean; speed: number }) {
+function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed, onEnemyHover }: { entry: RouteEntry; active: boolean; inWindow: boolean; dims: { width: number; height: number }; settings: IMapSettings; is3D: boolean; speed: number; onEnemyHover?: EnemyHoverFn }) {
+    const hoverProps = entry.enemyKey
+        ? {
+              style: { pointerEvents: "auto" as const, cursor: "help" },
+              onPointerEnter: (e: React.PointerEvent) => onEnemyHover?.(entry.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0),
+              onPointerMove: (e: React.PointerEvent) => onEnemyHover?.(entry.enemyKey, e.clientX, e.clientY, e.movementX !== 0 || e.movementY !== 0),
+              onPointerLeave: () => onEnemyHover?.(null, 0, 0, false),
+          }
+        : {};
     const vb = `0 0 ${dims.width} ${dims.height}`;
     const dur = Math.round(20 * entry.length ** 0.7);
     const pathId = `enemy-route-${entry.position}`;
@@ -52,7 +61,7 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed }: { ent
                             </g>
                         ))}
                     {showIcon && entry.enemyKey && settings.showMovement && (
-                        <g className="route_traveler">
+                        <g className="route_traveler" {...hoverProps}>
                             <IconBadge enemyKey={entry.enemyKey} ring={ring} />
                             <animateMotion dur={`${travelMs}ms`} repeatCount="indefinite" calcMode="linear" rotate="0">
                                 <mpath href={`#${pathId}`} />
@@ -60,7 +69,7 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed }: { ent
                         </g>
                     )}
                     {showIcon && entry.enemyKey && !settings.showMovement && entry.start && (
-                        <g transform={`translate(${entry.start.x} ${entry.start.y})`}>
+                        <g transform={`translate(${entry.start.x} ${entry.start.y})`} {...hoverProps}>
                             <IconBadge enemyKey={entry.enemyKey} ring={ring} />
                         </g>
                     )}
@@ -76,7 +85,7 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed }: { ent
     );
 }
 
-export function RoutesLayer({ routes, focus, hovered, settings, speedFor }: { routes: RouteEntries; focus: number; hovered?: boolean; settings: IMapSettings; speedFor: (key: string | null) => number }) {
+export function RoutesLayer({ routes, focus, hovered, settings, speedFor, onEnemyHover }: { routes: RouteEntries; focus: number; hovered?: boolean; settings: IMapSettings; speedFor: (key: string | null) => number; onEnemyHover?: EnemyHoverFn }) {
     const { entries, total, dims } = routes;
     const focusTs = focus >= 0 && entries[focus] ? entries[focus].timestamp : null;
 
@@ -95,7 +104,7 @@ export function RoutesLayer({ routes, focus, hovered, settings, speedFor }: { ro
                 {entries.map((entry) => {
                     const inWindow = focus >= entry.position - WINDOW_BACK && focus <= entry.position + WINDOW_FWD;
                     const active = focusTs !== null && entry.timestamp >= focusTs + GROUP_PREV && entry.timestamp <= focusTs + GROUP_NEXT;
-                    return <RouteEl key={entry.position} entry={entry} active={active} inWindow={inWindow} dims={dims} settings={settings} is3D={!!hovered} speed={speedFor(entry.enemyKey)} />;
+                    return <RouteEl key={entry.position} entry={entry} active={active} inWindow={inWindow} dims={dims} settings={settings} is3D={!!hovered} speed={speedFor(entry.enemyKey)} onEnemyHover={onEnemyHover} />;
                 })}
             </div>
         </div>
