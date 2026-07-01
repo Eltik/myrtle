@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
-import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
+import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap, StageDifficulty } from "#/types/stages";
 import { optionalSiteToken } from "./_shared.server";
 
 const PREVIEW_SUFFIX_RE = /#[a-z]#?$/i;
@@ -109,6 +109,94 @@ export function stagesQueryOptions() {
     return queryOptions({
         queryKey: ["static", "stages"],
         queryFn: () => getStagesFn(),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * One browsable stage in the Stage List, precomputed by the backend across all
+ * game modes (story / events / SSS / Annihilation / IS / RA / CC / Paradox).
+ */
+export interface IStageIndexEntry {
+    /** `stage_table` id, or the level file's relative id for procedural nodes. */
+    stageId: string;
+    levelId?: string | null;
+    code: string;
+    name?: string | null;
+    zoneId: string;
+    zoneName?: string | null;
+    /** Sort key within a group - episode number for story, else zone index. */
+    zoneOrder: number;
+    /** Fine group: story / events / annihilation / is / ra / sss / paradox / cc / supplies / other. */
+    group: string;
+    category: string;
+    apCost: number;
+    boss: boolean;
+    isHard: boolean;
+    difficulty: StageDifficulty;
+    /** Whether the stage detail / map viewer can render it (level file exists). */
+    canView: boolean;
+    /** Asset-relative path to the stage map preview (under `/api/assets/`), or null. */
+    preview?: string | null;
+    /** Asset-relative path to the zone/event banner key-art, or null. */
+    banner?: string | null;
+}
+
+/** Absolute URL for a backend asset-relative path (e.g. a stage preview). */
+export function assetURL(path: string): string {
+    const base = env.VITE_BACKEND_URL ?? "";
+    return `${base}/api/assets/${path.replace(/^\/+/, "")}`;
+}
+
+/**
+ * A minimal {@link IStage}/{@link IZone} synthesized from a stage-index entry,
+ * for procedural-mode stages (IS / RA / CC / Paradox) that have no `stage_table`
+ * entry but are still viewable (their level file resolves via the mode map).
+ */
+export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; zone: IZone } {
+    return {
+        stage: {
+            stageId: e.stageId,
+            zoneId: e.zoneId,
+            code: e.code,
+            name: e.name ?? undefined,
+            levelId: e.levelId ?? undefined,
+            stageType: "ACTIVITY",
+            difficulty: e.difficulty,
+            apCost: e.apCost,
+            canPractice: false,
+            canBattleReplay: false,
+            canMultipleBattle: false,
+            isStoryOnly: false,
+            isPredefined: false,
+            dangerPoint: 0,
+            expGain: 0,
+            goldGain: 0,
+            unlockCondition: [],
+            bossMark: e.boss,
+        },
+        zone: {
+            zoneId: e.zoneId,
+            zoneIndex: e.zoneOrder,
+            type: "ACTIVITY",
+            zoneNameSecond: e.zoneName ?? undefined,
+            canPreview: false,
+            hasAdditionalPanel: false,
+        },
+    };
+}
+
+export const getStageIndexFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/stage-index");
+    if (!res.ok) throw new Error(`Failed to load stage index: ${res.status}`);
+    return (await res.json()) as IStageIndexEntry[];
+});
+
+export function stageIndexQueryOptions() {
+    return queryOptions({
+        queryKey: ["static", "stage-index"],
+        queryFn: () => getStageIndexFn(),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

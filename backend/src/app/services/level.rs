@@ -33,8 +33,14 @@ pub async fn get_level(
     }
 
     let gd = server_data.game_data.load_full();
-    let stage = gd.stages.get(stage_id).ok_or(ApiError::NotFound)?;
-    let level_id = stage.level_id.as_deref().ok_or(ApiError::NotFound)?;
+    let level_id = match gd.stages.get(stage_id) {
+        Some(stage) => stage.level_id.clone().ok_or(ApiError::NotFound)?,
+        None => gd
+            .mode_levels
+            .get(stage_id)
+            .cloned()
+            .ok_or(ApiError::NotFound)?,
+    };
 
     // level_id (e.g. "Obt/Main/level_main_01-07") lowercases to the on-disk path
     // under `gamedata/levels/`.

@@ -40,6 +40,7 @@ fn serialize_resource(data: &GameData, resource: &str) -> Result<Value, ApiError
         "retro_acts" => serde_json::to_value(&data.retro_acts),
         "enemies" => serde_json::to_value(&data.enemies),
         "enemy-stages" => serde_json::to_value(&data.enemy_stage_index),
+        "stage-index" => serde_json::to_value(&data.stage_index),
         "gacha" => serde_json::to_value(&data.gacha),
         "banners" => serde_json::to_value(&data.gacha.gacha_pool_client),
         "voices" => serde_json::to_value(&data.voices),

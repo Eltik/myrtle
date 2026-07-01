@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import { StageList } from "#/components/stages/list/StageList";
+import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -7,7 +8,7 @@ export const Route = createFileRoute("/stages")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: async ({ context }) => {
-        await Promise.all([context.queryClient.ensureQueryData(stagesQueryOptions()), context.queryClient.ensureQueryData(zonesQueryOptions())]);
+        await context.queryClient.ensureQueryData(stageIndexQueryOptions());
     },
     head: () => {
         const { meta, links } = seo({
@@ -34,5 +35,5 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RouteComponent() {
-    return <h1>Hello world</h1>;
+    return <StageList />;
 }

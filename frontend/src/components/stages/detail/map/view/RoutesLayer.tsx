@@ -49,7 +49,8 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed, onEnemy
                 <svg width={dims.width} height={dims.height} viewBox={vb}>
                     <title>enemy route</title>
                     <path id={pathId} d={entry.d} style={pathStyle} />
-                    {settings.showRoutes && entry.dots.map((p) => <circle key={`dot-${p.x}-${p.y}`} cx={p.x} cy={p.y} r={3.5} style={markOpacity()} />)}
+                    {/* biome-ignore lint/suspicious/noArrayIndexKey: static route geometry (never reordered); position alone collides when a path revisits a tile */}
+                    {settings.showRoutes && entry.dots.map((p, i) => <circle key={`dot-${i}-${p.x}-${p.y}`} cx={p.x} cy={p.y} r={3.5} style={markOpacity()} />)}
                     {settings.showTimers &&
                         entry.waits.map((p) => (
                             <g key={`wait-${p.x}-${p.y}`} style={markOpacity()}>

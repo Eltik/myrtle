@@ -3,7 +3,7 @@ import { StageDetail } from "#/components/stages/detail/StageDetail";
 import { enemiesQueryOptions } from "#/lib/api/enemies";
 import { levelQueryOptions } from "#/lib/api/level";
 import { materialsQueryOptions } from "#/lib/api/materials";
-import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import { stageIndexQueryOptions, stagesQueryOptions, syntheticStageFromIndex, zonesQueryOptions } from "#/lib/api/stages";
 import { defaultOgURL } from "#/lib/og";
 import { buildStageOgData } from "#/lib/og/impl/templates/Stage";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
@@ -20,23 +20,35 @@ export const Route = createFileRoute("/stages_/$stageId")({
             context.queryClient.ensureQueryData(levelQueryOptions(params.stageId)),
             context.queryClient.ensureQueryData(materialsQueryOptions()),
         ]);
-        const stage = stages.find((s) => s.stageId === params.stageId) ?? null;
-        const zone = stage ? (zones.find((z) => z.zoneId === stage.zoneId) ?? null) : null;
-        if (stage) warmOg("stage", params.stageId, buildStageOgData(stage, zone ?? undefined));
-        return { stage, zone, level: level ?? null };
+        const realStage = stages.find((s) => s.stageId === params.stageId) ?? null;
+        let stage = realStage;
+        let zone = realStage ? (zones.find((z) => z.zoneId === realStage.zoneId) ?? null) : null;
+
+        if (!stage) {
+            const index = await context.queryClient.ensureQueryData(stageIndexQueryOptions());
+            const entry = index.find((e) => e.stageId === params.stageId);
+            if (entry) {
+                const synthetic = syntheticStageFromIndex(entry);
+                stage = synthetic.stage;
+                zone = synthetic.zone;
+            }
+        }
+        if (realStage) warmOg("stage", params.stageId, buildStageOgData(realStage, zone ?? undefined));
+        return { stage, zone, level: level ?? null, hasOg: !!realStage };
     },
     head: ({ loaderData, params }) => {
         const stage = loaderData?.stage ?? null;
         const zone = loaderData?.zone ?? null;
         const code = stage?.code ?? params.stageId;
         const name = stage?.name ? `${code} · ${stage.name}` : code;
-        const image = stage ? ogURL("stage", params.stageId, buildStageOgData(stage, zone ?? undefined)) : defaultOgURL("stages");
+        const hasOg = loaderData?.hasOg ?? false;
+        const image = stage && hasOg ? ogURL("stage", params.stageId, buildStageOgData(stage, zone ?? undefined)) : defaultOgURL("stages");
         const { meta, links } = seo({
             title: `${name} - Stage`,
             description: `Tile layout and enemy pathing for ${name} in Arknights.`,
             path: `/stages/${params.stageId}`,
             image,
-            preloadImage: !!stage,
+            preloadImage: stage != null && hasOg,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],
@@ -56,6 +68,6 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RouteComponent() {
-    const { level } = Route.useLoaderData();
-    return <StageDetail level={level} />;
+    const { level, stage, zone } = Route.useLoaderData();
+    return <StageDetail level={level} fallbackStage={stage} fallbackZone={zone} />;
 }

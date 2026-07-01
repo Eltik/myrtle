@@ -417,3 +417,26 @@ pre code {
 .dark .icon-theme-aware {
     filter: none;
 }
+
+.msv-row:hover {
+    background: color-mix(in oklch, var(--muted) 32%, transparent) !important;
+}
+.msv-stage:hover {
+    transform: translateY(-3px);
+    border-color: var(--rowtone) !important;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+}
+.msv-pill:hover {
+    color: var(--foreground) !important;
+}
+.msv-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+.msv-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+.msv-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}

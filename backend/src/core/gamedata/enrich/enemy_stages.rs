@@ -91,7 +91,7 @@ fn tally_level(path: &Path) -> Option<HashMap<String, u32>> {
 /// Recursively collect every `*.json` level file, skipping the `enemydata/`
 /// stats directory and `levelreplacers/` (IS layout variants that duplicate a
 /// base node).
-fn collect_level_files(dir: &Path, out: &mut Vec<PathBuf>) {
+pub(crate) fn collect_level_files(dir: &Path, out: &mut Vec<PathBuf>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -111,7 +111,7 @@ fn collect_level_files(dir: &Path, out: &mut Vec<PathBuf>) {
 
 /// The relative level id of a file under `levels_dir`: lowercased, forward
 /// slashes, no extension (matches the keys [`StageClassifier`] expects).
-fn relative_level_id(levels_dir: &Path, path: &Path) -> Option<String> {
+pub(crate) fn relative_level_id(levels_dir: &Path, path: &Path) -> Option<String> {
     let rel = path.strip_prefix(levels_dir).ok()?;
     Some(
         rel.with_extension("")

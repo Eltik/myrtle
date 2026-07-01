@@ -24,6 +24,7 @@ pub mod serde_helpers;
 pub mod skill;
 pub mod skin;
 pub mod stage;
+pub mod stage_index;
 pub mod stage_universe;
 pub mod trust;
 pub mod voice;
@@ -49,6 +50,7 @@ use sandbox_universe::SandboxUniverse;
 use skill::Skill;
 use skin::SkinData;
 use stage::Stage;
+use stage_index::StageIndex;
 use stage_universe::StageUniverse;
 use trust::Favor;
 use voice::Voices;
@@ -76,6 +78,8 @@ pub struct GameData {
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
     pub enemy_stage_index: EnemyStageIndex,
+    pub stage_index: StageIndex,
+    pub mode_levels: HashMap<String, String>,
     pub building: BuildingDataFile,
     pub stage_universe: StageUniverse,
     pub sandbox_universe: SandboxUniverse,

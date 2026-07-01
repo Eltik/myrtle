@@ -11,6 +11,7 @@ use crate::core::gamedata::{
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
         skins::enrich_all_skins,
+        stage_index::build_stage_index,
         voice::enrich_all_voices,
     },
     tables::{DataError, load_table, load_table_or_warn},
@@ -207,6 +208,15 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         &activity_file.basic_info,
     );
 
+    let (stage_index, mode_levels) = build_stage_index(
+        assets_dir,
+        &assets_dir.join("gamedata/levels"),
+        data_dir,
+        &stages,
+        &zones,
+        &activity_file.basic_info,
+    );
+
     for w in &warnings {
         eprintln!("warning: {w}");
     }
@@ -232,6 +242,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         roguelike,
         enemies,
         enemy_stage_index,
+        stage_index,
+        mode_levels,
         building: building_file,
         stage_universe,
         sandbox_universe,

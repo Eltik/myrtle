@@ -6,6 +6,7 @@ import { enemiesQueryOptions, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import { materialsQueryOptions } from "#/lib/api/materials";
 import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import type { IStage, IZone } from "#/types/stages";
 import { DropsSection } from "./impl/DropsSection";
 import { EnemiesSection } from "./impl/EnemiesSection";
 import { buildStageEnemyStats, computeStageEnemyStats, groupDrops, tallyEnemies } from "./impl/helpers";
@@ -19,15 +20,15 @@ import type { IStageEnemyStats } from "./impl/types";
 import { WavesSection } from "./impl/WavesSection";
 import { type IMapViewHandle, MapView } from "./map";
 
-export function StageDetail({ level }: { level: ILevel | null }) {
+export function StageDetail({ level, fallbackStage, fallbackZone }: { level: ILevel | null; fallbackStage?: IStage | null; fallbackZone?: IZone | null }) {
     const { stageId } = useParams({ from: "/stages_/$stageId" });
     const { data: stages } = useSuspenseQuery(stagesQueryOptions());
     const { data: zones } = useSuspenseQuery(zonesQueryOptions());
     const { data: handbook } = useSuspenseQuery(enemiesQueryOptions());
     const { data: materials } = useSuspenseQuery(materialsQueryOptions());
 
-    const stage = useMemo(() => stages.find((s) => s.stageId === stageId) ?? null, [stages, stageId]);
-    const zone = useMemo(() => zones.find((z) => z.zoneId === stage?.zoneId), [zones, stage]);
+    const stage = useMemo(() => stages.find((s) => s.stageId === stageId) ?? fallbackStage ?? null, [stages, stageId, fallbackStage]);
+    const zone = useMemo(() => zones.find((z) => z.zoneId === stage?.zoneId) ?? fallbackZone ?? undefined, [zones, stage, fallbackZone]);
     const tally = useMemo(() => tallyEnemies(level, handbook.enemyData), [level, handbook.enemyData]);
     const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials.items) : []), [stage, materials.items]);
     const [mapSettings, setMapSettings] = useState(DEFAULT_MAP_SETTINGS);
