@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { rarityToNumber } from "#/lib/utils";
+import type { OperatorRarityTier } from "#/types/operators";
 import { CLASS_SORT_ORDER } from "./constants";
 import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
 
@@ -48,7 +49,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
         const voiceActors = new Set<string>();
 
         for (const op of data) {
-            const { race, placeOfBirth } = op.profile?.basicInfo ?? {};
+            const { race, placeOfBirth } = op;
             if (op.subProfessionId) subclasses.add(op.subProfessionId);
             if (op.nationId) nations.add(op.nationId);
             if (op.groupId) factions.add(op.groupId);
@@ -94,7 +95,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             }
             if (sets.classes.size && !sets.classes.has(op.profession)) return false;
             if (sets.subclasses.size && !sets.subclasses.has(op.subProfessionId)) return false;
-            if (sets.rarities.size && !sets.rarities.has(op.rarity)) return false;
+            if (sets.rarities.size && !sets.rarities.has(`TIER_${op.rarity}` as OperatorRarityTier)) return false;
             if (sets.genders.size && (!op.gender || !sets.genders.has(op.gender))) return false;
             if (sets.nations.size && (!op.nationId || !sets.nations.has(op.nationId))) return false;
             if (sets.factions.size) {

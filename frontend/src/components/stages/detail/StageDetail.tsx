@@ -1,11 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { enemiesQueryOptions, type IEnemy } from "#/lib/api/enemies";
+import type { IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
-import { materialsQueryOptions } from "#/lib/api/materials";
-import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import type { IMaterialItem } from "#/lib/api/materials";
 import type { IStage, IZone } from "#/types/stages";
 import { DropsSection } from "./impl/DropsSection";
 import { EnemiesSection } from "./impl/EnemiesSection";
@@ -20,22 +18,16 @@ import type { IStageEnemyStats } from "./impl/types";
 import { WavesSection } from "./impl/WavesSection";
 import { type IMapViewHandle, MapView } from "./map";
 
-export function StageDetail({ level, fallbackStage, fallbackZone }: { level: ILevel | null; fallbackStage?: IStage | null; fallbackZone?: IZone | null }) {
+export function StageDetail({ stage, zone, level, enemyData, materials }: { stage: IStage | null; zone: IZone | null; level: ILevel | null; enemyData: Record<string, IEnemy>; materials: Record<string, IMaterialItem> }) {
     const { stageId } = useParams({ from: "/stages_/$stageId" });
-    const { data: stages } = useSuspenseQuery(stagesQueryOptions());
-    const { data: zones } = useSuspenseQuery(zonesQueryOptions());
-    const { data: handbook } = useSuspenseQuery(enemiesQueryOptions());
-    const { data: materials } = useSuspenseQuery(materialsQueryOptions());
 
-    const stage = useMemo(() => stages.find((s) => s.stageId === stageId) ?? fallbackStage ?? null, [stages, stageId, fallbackStage]);
-    const zone = useMemo(() => zones.find((z) => z.zoneId === stage?.zoneId) ?? fallbackZone ?? undefined, [zones, stage, fallbackZone]);
-    const tally = useMemo(() => tallyEnemies(level, handbook.enemyData), [level, handbook.enemyData]);
-    const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials.items) : []), [stage, materials.items]);
+    const tally = useMemo(() => tallyEnemies(level, enemyData), [level, enemyData]);
+    const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials) : []), [stage, materials]);
     const [mapSettings, setMapSettings] = useState(DEFAULT_MAP_SETTINGS);
 
     const mapRef = useRef<IMapViewHandle>(null);
     const moveMultiplier = level?.options?.moveMultiplier ?? 1;
-    const stageStats = useMemo(() => buildStageEnemyStats(level, handbook.enemyData), [level, handbook.enemyData]);
+    const stageStats = useMemo(() => buildStageEnemyStats(level, enemyData), [level, enemyData]);
     const statsFor = useCallback((id: string, enemy: IEnemy | null): IStageEnemyStats | null => stageStats[id] ?? computeStageEnemyStats(enemy, undefined, moveMultiplier), [stageStats, moveMultiplier]);
     const focusEnemy = useCallback((id: string, time?: number) => mapRef.current?.focusSpawn({ enemyId: id, time }), []);
 
@@ -68,7 +60,7 @@ export function StageDetail({ level, fallbackStage, fallbackZone }: { level: ILe
             </nav>
 
             <div className="flex flex-col gap-7">
-                <StageHeader stage={stage} zone={zone} />
+                <StageHeader stage={stage} zone={zone ?? undefined} />
                 <OverviewSection level={level} />
             </div>
 
@@ -76,7 +68,7 @@ export function StageDetail({ level, fallbackStage, fallbackZone }: { level: ILe
                 {level ? (
                     <>
                         <div className="relative overflow-hidden rounded-[14px] border border-border bg-[#181818]">
-                            <MapView ref={mapRef} code={stage.code} enemyData={handbook.enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} statsFor={statsFor} />
+                            <MapView ref={mapRef} code={stage.code} enemyData={enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} statsFor={statsFor} />
                         </div>
                         <TileLegend />
                         <MapSettings settings={mapSettings} onChange={setMapSettings} />
@@ -89,7 +81,7 @@ export function StageDetail({ level, fallbackStage, fallbackZone }: { level: ILe
             </div>
 
             <div className="mt-7 flex flex-col gap-7">
-                <SpawnSchedule level={level} enemyData={handbook.enemyData} onFocusEnemy={focusEnemy} />
+                <SpawnSchedule level={level} enemyData={enemyData} onFocusEnemy={focusEnemy} />
 
                 <div className="grid grid-cols-1 gap-x-5 gap-y-6 lg:grid-cols-2 lg:items-start">
                     <div className="flex min-w-0 flex-col gap-6">

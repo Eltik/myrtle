@@ -1,22 +1,13 @@
-import type { IOperatorView } from "#/components/operators/list/impl/types";
+import type { IOperatorExportRow } from "#/components/operators/list/impl/types";
 import type { IExportField, IExportSchema } from "./types";
 
-const RARITY_NUMERIC: Record<string, number> = {
-    TIER_1: 1,
-    TIER_2: 2,
-    TIER_3: 3,
-    TIER_4: 4,
-    TIER_5: 5,
-    TIER_6: 6,
-};
-
-const FIELDS: IExportField<IOperatorView>[] = [
+const FIELDS: IExportField<IOperatorExportRow>[] = [
     { id: "id", label: "id", group: "Identity", defaultEnabled: true, accessor: (o) => o.id },
     { id: "name", label: "name", group: "Identity", defaultEnabled: true, accessor: (o) => o.name },
     { id: "appellation", label: "appellation", group: "Identity", accessor: (o) => o.appellation },
     { id: "displayNumber", label: "displayNumber", group: "Identity", accessor: (o) => o.displayNumber },
-    { id: "rarity", label: "rarity", group: "Identity", defaultEnabled: true, accessor: (o) => RARITY_NUMERIC[o.rarity] ?? o.rarity },
-    { id: "rarityTier", label: "rarityTier", group: "Identity", accessor: (o) => o.rarity },
+    { id: "rarity", label: "rarity", group: "Identity", defaultEnabled: true, accessor: (o) => o.rarity },
+    { id: "rarityTier", label: "rarityTier", group: "Identity", accessor: (o) => `TIER_${o.rarity}` },
     { id: "profession", label: "profession", group: "Class", defaultEnabled: true, accessor: (o) => o.profession },
     { id: "subProfessionId", label: "subProfession", group: "Class", defaultEnabled: true, accessor: (o) => o.subProfessionId },
     { id: "position", label: "position", group: "Class", accessor: (o) => o.position },
@@ -53,7 +44,7 @@ const FIELDS: IExportField<IOperatorView>[] = [
     { id: "skin", label: "skin", group: "Media", accessor: (o) => o.skin },
 ];
 
-export const operatorsExportSchema: IExportSchema<IOperatorView> = {
+export const operatorsExportSchema: IExportSchema<IOperatorExportRow> = {
     id: "operators",
     itemName: "operator",
     pluralName: "operators",

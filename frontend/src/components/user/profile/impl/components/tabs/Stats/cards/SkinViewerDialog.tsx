@@ -6,7 +6,7 @@ import { skinTexture } from "#/components/operators/detail/impl/assets";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
-import { type ISkin, skinPopularityQueryOptions } from "#/lib/api/skins";
+import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { cn, formatSharePct, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 
@@ -20,7 +20,7 @@ interface ISkinPopularityInfo {
 }
 
 interface ISkinViewerDialogProps {
-    skins: ISkin[];
+    skins: ISkinIndexEntry[];
     ownedIds: Set<string>;
     /** Authoritative owned count from the user profile. Used for the header display
      *  so it's correct even before the per-skin ownership list finishes loading. */
@@ -62,9 +62,10 @@ const COL_BREAKPOINTS: readonly { minWidth: number; cols: number }[] = [
 
 const VIRTUAL_SCROLL_MARGIN = 12;
 const VIRTUAL_ROW_ESTIMATE_PX = 160;
+const VIRTUAL_ROW_OVERSCAN = 4;
 
 interface ICardData {
-    skin: ISkin;
+    skin: ISkinIndexEntry;
     op: IOperatorListItem | undefined;
     opName: string;
     skinName: string;
@@ -161,10 +162,6 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
 
     const sections = useMemo(() => buildSections(filteredCards, deferredSort, popularityMap), [filteredCards, deferredSort, popularityMap]);
     const totalFiltered = filteredCards.length;
-
-    useEffect(() => {
-        setRenderBudget(INITIAL_RENDER_CHUNK);
-    }, []);
 
     useEffect(() => {
         if (deferredSort !== "brand") return;
@@ -489,7 +486,7 @@ function VirtualizedSkinGrid({ cards, color, ownedIds, popularityMap, onSelect }
         count: rows.length,
         getScrollElement: () => scrollEl,
         estimateSize: () => rowHeight,
-        overscan: 4,
+        overscan: VIRTUAL_ROW_OVERSCAN,
         scrollMargin: VIRTUAL_SCROLL_MARGIN,
     });
 
@@ -590,7 +587,7 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
                                     <q className="italic">{dialog}</q>
                                 </DetailRow>
                             )}
-                            {(drawers?.length || designers?.length) && (
+                            {Boolean(drawers?.length || designers?.length) && (
                                 <DetailRow label="Credits">
                                     {drawers?.length ? <span>Art: {drawers.join(", ")}</span> : null}
                                     {drawers?.length && designers?.length ? " · " : null}
@@ -773,7 +770,7 @@ const SKIN_PRICE_OVERRIDES: Record<string, number> = {
     // "2024#witch": 21,
 };
 
-function getSkinPrice(skin: ISkin): ISkinPrice {
+function getSkinPrice(skin: ISkinIndexEntry): ISkinPrice {
     const channel = classifyChannel(skin.displaySkin?.displayTagId);
     if (channel === "event" || channel === "is" || channel === "seasonal" || channel === "code-exchange") {
         const label = channel === "is" ? "IS" : "Free";

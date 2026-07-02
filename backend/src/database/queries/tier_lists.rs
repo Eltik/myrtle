@@ -149,15 +149,6 @@ pub async fn create_version(
     .await
 }
 
-/// Soft delete a tier list
-pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE tier_lists SET is_active = false WHERE id = $1")
-        .bind(id)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
 /// Update tier list metadata
 pub async fn update(
     pool: &PgPool,
@@ -368,8 +359,7 @@ pub async fn grant_permission(
     granted_by: Uuid,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO tier_list_permissions (tier_list_id, user_id, permission, granted_by) VALUES ($1,$2,$3,$4) ON CONFLICT (tier_list_id, user_id,
-permission) DO NOTHING"
+        "INSERT INTO tier_list_permissions (tier_list_id, user_id, permission, granted_by) VALUES ($1,$2,$3,$4) ON CONFLICT (tier_list_id, user_id, permission) DO NOTHING"
     )
     .bind(tier_list_id).bind(user_id).bind(permission).bind(granted_by)
     .execute(pool).await?;
@@ -452,41 +442,44 @@ pub async fn record_view(
     user_id: Option<Uuid>,
     session_hash: Option<&str>,
 ) -> Result<bool, sqlx::Error> {
-    // Guard against lists without a stats row (defensive; backfill + create should handle it).
-    ensure_stats_row(pool, tier_list_id).await?;
-
-    // Dedupe check
-    let dedupe_exists: bool = match (user_id, session_hash) {
-        (Some(uid), _) => sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM tier_list_view_events
-            WHERE tier_list_id=$1 AND user_id=$2 AND viewed_at > NOW() - INTERVAL '30 minutes')"
-        ).bind(tier_list_id).bind(uid).fetch_one(pool).await?,
-        (None, Some(sh)) => sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM tier_list_view_events
-            WHERE tier_list_id=$1 AND session_hash=$2 AND viewed_at > NOW() - INTERVAL '30 minutes')"
-        ).bind(tier_list_id).bind(sh).fetch_one(pool).await?,
-        (None, None) => false,
-    };
-
-    if dedupe_exists {
-        return Ok(false);
-    }
-
-    sqlx::query(
-        "INSERT INTO tier_list_view_events (tier_list_id, user_id, session_hash) VALUES ($1,$2,$3)",
+    let inserted: Option<i64> = sqlx::query_scalar(
+        "INSERT INTO tier_list_view_events (tier_list_id, user_id, session_hash)
+         SELECT $1, $2, $3
+         WHERE NOT EXISTS (
+            SELECT 1 FROM tier_list_view_events
+            WHERE tier_list_id = $1
+              AND viewed_at > NOW() - INTERVAL '30 minutes'
+              AND (
+                ($2::uuid IS NOT NULL AND user_id = $2)
+                OR ($2::uuid IS NULL AND $3::text IS NOT NULL AND session_hash = $3)
+              )
+         )
+         RETURNING id",
     )
     .bind(tier_list_id)
     .bind(user_id)
     .bind(session_hash)
-    .execute(pool)
+    .fetch_optional(pool)
     .await?;
 
+    if inserted.is_none() {
+        return Ok(false);
+    }
+
     sqlx::query(
-        "UPDATE tier_list_stats
-        SET view_count = view_count + 1,
-            unique_view_count = unique_view_count + 1,
-            last_viewed_at = NOW()
-        WHERE tier_list_id = $1",
+        "INSERT INTO tier_list_stats (
+            tier_list_id,
+            view_count,
+            unique_view_count,
+            last_viewed_at
+        )
+        VALUES ($1, 1, 1, NOW())
+        ON CONFLICT (tier_list_id)
+        DO UPDATE SET
+            view_count = tier_list_stats.view_count + 1,
+            unique_view_count = tier_list_stats.unique_view_count + 1,
+            last_viewed_at = NOW(),
+            stats_updated_at = NOW()",
     )
     .bind(tier_list_id)
     .execute(pool)

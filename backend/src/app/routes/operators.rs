@@ -1,14 +1,16 @@
 use axum::{
     Json,
     extract::{Path, State},
+    http::HeaderMap,
+    response::Response,
 };
 
+use crate::app::routes::static_data::json_response;
 use crate::app::services::operators::{
-    OperatorIndexEntry, OperatorOwnershipResponse, get_index, get_operator, get_operator_skins,
-    get_operator_voices, get_ownership, get_upcoming, resolve_operator,
+    OperatorIndexEntry, OperatorOwnershipResponse, get_index, get_operator_json,
+    get_operator_skins, get_operator_voices, get_ownership, get_upcoming, resolve_operator_json,
 };
 use crate::app::{error::ApiError, state::AppState};
-use crate::core::gamedata::types::operator::Operator;
 use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
@@ -63,33 +65,21 @@ pub async fn upcoming_srv(
 /// found on, so the client fetches once for both global and upcoming operators.
 pub async fn detail(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<String>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let (op, server) =
-        resolve_operator(&state, state.default_server, &id).ok_or(ApiError::NotFound)?;
-    with_server(&op, server)
+) -> Result<Response, ApiError> {
+    let cached = resolve_operator_json(&state, state.default_server, &id).await?;
+    Ok(json_response(cached, &headers))
 }
 
 /// `GET /{server}/operators/{id}` - one enriched operator from `{server}`.
 pub async fn detail_srv(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path((server, id)): Path<(Server, String)>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let op = get_operator(&state, server, &id).await?;
-    with_server(&op, server)
-}
-
-/// Serialize an operator and tag it with the server it was resolved from, so the
-/// client can build region-correct asset URLs without a separate probe.
-fn with_server(op: &Operator, server: Server) -> Result<Json<serde_json::Value>, ApiError> {
-    let mut value = serde_json::to_value(op).map_err(|e| ApiError::Internal(e.into()))?;
-    if let serde_json::Value::Object(map) = &mut value {
-        map.insert(
-            "server".to_string(),
-            serde_json::Value::String(server.as_str().to_string()),
-        );
-    }
-    Ok(Json(value))
+) -> Result<Response, ApiError> {
+    let cached = get_operator_json(&state, server, &id).await?;
+    Ok(json_response(cached, &headers))
 }
 
 /// `GET /voices/{id}` - one operator's voice lines (default server).

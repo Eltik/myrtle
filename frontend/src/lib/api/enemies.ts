@@ -211,19 +211,49 @@ export function enemyCommunityAverageQueryOptions() {
     });
 }
 
-export const getEnemyFn = createServerFn({ method: "GET" })
+/**
+ * A single enemy's handbook record plus the race lookup needed to resolve its
+ * displayed race. Served by `GET /enemies/{id}`; replaces loading the entire
+ * enemy handbook to render one enemy.
+ */
+export interface IEnemyDetail {
+    enemy: IEnemy;
+    raceData: Record<string, IEnemyRaceData>;
+}
+
+export const getEnemyDetailFn = createServerFn({ method: "GET" })
     .inputValidator((id: string) => id)
     .handler(async ({ data: id }) => {
-        const res = await backendFetch("/static/enemies");
-        if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
-        const handbook = (await res.json()) as IEnemyHandbook;
-        return handbook.enemyData[id] ?? null;
+        const res = await backendFetch(`/enemies/${encodeURIComponent(id)}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load enemy ${id}: ${res.status}`);
+        return (await res.json()) as IEnemyDetail;
     });
 
-export function enemyQueryOptions(id: string) {
+export function enemyDetailQueryOptions(id: string) {
     return queryOptions({
         queryKey: ["enemies", "detail", id],
-        queryFn: () => getEnemyFn({ data: id }),
+        queryFn: () => getEnemyDetailFn({ data: id }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+        enabled: !!id,
+    });
+}
+
+/** The "Appears In" list for a single enemy, served by `GET /enemies/{id}/stages`. */
+export const getEnemyAppearsInFn = createServerFn({ method: "GET" })
+    .inputValidator((id: string) => id)
+    .handler(async ({ data: id }) => {
+        const res = await backendFetch(`/enemies/${encodeURIComponent(id)}/stages`);
+        if (res.status === 404) return [] as IEnemyStageRef[];
+        if (!res.ok) throw new Error(`Failed to load enemy stages ${id}: ${res.status}`);
+        return (await res.json()) as IEnemyStageRef[];
+    });
+
+export function enemyAppearsInQueryOptions(id: string) {
+    return queryOptions({
+        queryKey: ["enemies", "appears-in", id],
+        queryFn: () => getEnemyAppearsInFn({ data: id }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
         enabled: !!id,

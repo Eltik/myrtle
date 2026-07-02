@@ -1,6 +1,6 @@
 import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, type IActivityLookup, isActivityCurrentlyOpen } from "./activity-lookup";
 import { CHALLENGES } from "./challenges";
@@ -57,7 +57,7 @@ export function buildRosterIndex(roster: IRosterEntry[] | null | undefined): IRo
     return { owned, e2 };
 }
 
-export function toRandomizerOperator(op: IOperatorListItem): IRandomizerOperator | null {
+export function toRandomizerOperator(op: IOperatorIndexEntry): IRandomizerOperator | null {
     if (!op.id) return null;
     return {
         id: op.id,
@@ -66,6 +66,10 @@ export function toRandomizerOperator(op: IOperatorListItem): IRandomizerOperator
         profession: op.profession,
         subProfessionId: op.subProfessionId,
         position: op.position,
+        race: op.race,
+        hasOffensiveRecovery: op.hasOffensiveRecovery,
+        hasDefensiveRecovery: op.hasDefensiveRecovery,
+        allSkillsManual: op.allSkillsManual,
     };
 }
 
@@ -144,10 +148,10 @@ export interface IChallengePickContext {
     /** The rolled stage. Stage-specific challenges check this. */
     stage: IStage;
     /**
-     * Full operator pool after settings + roster filtering. Squad-filter
-     * challenges run their predicate against this list.
+     * Operator pool after settings + roster filtering. Squad-filter challenges
+     * run their predicate against this list.
      */
-    operators: IOperatorListItem[];
+    operators: IRandomizerOperator[];
     /** Minimum pool size a SQUAD_FILTER challenge must yield to be eligible. */
     squadSize: number;
 }
@@ -155,7 +159,7 @@ export interface IChallengePickContext {
 export interface IPickedChallenge {
     challenge: IChallenge;
     /** For SQUAD_FILTER: the operators that survived the filter. Undefined for PLAIN/STAGE. */
-    filteredOperators?: IOperatorListItem[];
+    filteredOperators?: IRandomizerOperator[];
 }
 
 /**
@@ -168,7 +172,7 @@ export interface IPickedChallenge {
  * applicable stage / plain challenges in the registry).
  */
 export function pickRandomChallenge(ctx: IChallengePickContext): IPickedChallenge | null {
-    type Entry = { challenge: IChallenge; weight: number; filteredOperators?: IOperatorListItem[] };
+    type Entry = { challenge: IChallenge; weight: number; filteredOperators?: IRandomizerOperator[] };
     const eligible: Entry[] = [];
 
     for (const ch of CHALLENGES) {

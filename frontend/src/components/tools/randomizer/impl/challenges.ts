@@ -3,7 +3,7 @@
  *
  * To add a new challenge, just push an entry into the appropriate section.
  *  - Plain: cosmetic / honor-system rule.
- *  - Squad filter: predicate over the full IOperatorListItem; restricts the squad pool.
+ *  - Squad filter: predicate over the slim IRandomizerOperator; restricts the squad pool.
  *  - Stage: predicate over IStage; only eligible when the rolled stage matches.
  *
  * The picker handles eligibility (stage match, sufficient pool size for filters)
@@ -11,31 +11,7 @@
  * step needed.
  */
 
-import { rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
-import type { IStage } from "#/types/stages";
 import type { IChallenge } from "./types";
-
-const SP_OFFENSIVE = "INCREASE_WHEN_ATTACK";
-const SP_DEFENSIVE = "INCREASE_WHEN_TAKEN_DAMAGE";
-
-/** True if any of the operator's skills carry the given spType at any level. */
-function hasSpType(op: IOperatorListItem, spType: string): boolean {
-    for (const skill of op.skills ?? []) {
-        const levels = skill.static?.levels ?? [];
-        for (const lvl of levels) {
-            if (lvl.spData?.spType === spType) return true;
-        }
-    }
-    return false;
-}
-
-/** Stage codes like "8-16", "13-21", "S4-9". Splits to ["8","16"], ["S4","9"]. */
-function codeParts(stage: IStage): { chapter: string; part: string } | null {
-    const m = stage.code.match(/^([^-]+)-(.+)$/);
-    if (!m?.[1] || !m?.[2]) return null;
-    return { chapter: m[1], part: m[2] };
-}
 
 const PLAIN_CHALLENGES: IChallenge[] = [
     { id: "speed-run", type: "PLAIN", kind: "modifier", title: "Speed run", description: "Complete the stage as quickly as you can." },
@@ -61,7 +37,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "Low rarity only",
         description: "Only 1★-3★ operators allowed.",
-        filter: (op) => rarityToNumber(op.rarity) <= 3,
+        filter: (op) => op.rarity <= 3,
     },
     {
         id: "four-star-ceiling",
@@ -69,7 +45,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "Four-star ceiling",
         description: "No operators above 4★ rarity.",
-        filter: (op) => rarityToNumber(op.rarity) <= 4,
+        filter: (op) => op.rarity <= 4,
     },
     {
         id: "five-star-ceiling",
@@ -77,7 +53,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "Five-star ceiling",
         description: "No operators above 5★ rarity.",
-        filter: (op) => rarityToNumber(op.rarity) <= 5,
+        filter: (op) => op.rarity <= 5,
     },
     {
         id: "four-star-rarity",
@@ -85,7 +61,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "4 stars only",
         description: "Only 4★ operators allowed.",
-        filter: (op) => rarityToNumber(op.rarity) === 4,
+        filter: (op) => op.rarity === 4,
     },
     {
         id: "five-star-rarity",
@@ -93,7 +69,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "5 stars only",
         description: "Only 5★ operators allowed.",
-        filter: (op) => rarityToNumber(op.rarity) === 5,
+        filter: (op) => op.rarity === 5,
     },
     {
         id: "ranged-only",
@@ -125,7 +101,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "Offensive Recovery only",
         description: "You may only use offensive recovery skills.",
-        filter: (op) => hasSpType(op, SP_OFFENSIVE),
+        filter: (op) => op.hasOffensiveRecovery,
     },
     {
         id: "defensive-recovery",
@@ -133,7 +109,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "restriction",
         title: "Defensive Recovery only",
         description: "You may only use defensive recovery skills.",
-        filter: (op) => hasSpType(op, SP_DEFENSIVE),
+        filter: (op) => op.hasDefensiveRecovery,
     },
     {
         id: "elf-operators",
@@ -141,7 +117,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "modifier",
         title: "Elf Operators",
         description: "Operators must equip Skill 1.",
-        filter: (op) => rarityToNumber(op.rarity) >= 4,
+        filter: (op) => op.rarity >= 4,
     },
     {
         id: "crisis-awareness",
@@ -149,14 +125,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "modifier",
         title: "Crisis Awareness",
         description: "Operators may not activate skills until their HP drops below 50%.",
-        filter: (op) => {
-            const skills = op.skills ?? [];
-            if (skills.length === 0) return false;
-            return skills.every((skill) => {
-                const type = skill.static?.levels[0]?.skillType;
-                return type === "MANUAL" || type === "1";
-            });
-        },
+        filter: (op) => op.allSkillsManual,
     },
     {
         id: "hoshiguma-mimi-meow-meow",
@@ -164,7 +133,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         kind: "modifier",
         title: "Hoshiguma Mimi Meow Meow",
         description: "Only “Feline” operators may be brought.",
-        filter: (op) => op.profile?.basicInfo.race === "Feline",
+        filter: (op) => op.race === "Feline",
     },
 ];
 
@@ -184,10 +153,11 @@ const STAGE_CHALLENGES: IChallenge[] = [
         kind: "objective",
         title: "Annihilation: 1P Relay",
         description: "You must do a 1 operator relay (eg. only one operator deployed at a time).",
-        match: (stage) => {
-            const parts = codeParts(stage);
-            return parts?.chapter === "0";
-        },
+        // Annihilation stages are the `camp_*` entries in stage_table, all typed
+        // CAMPAIGN (their codes are region names like "Ursus"/"Yan", not "N-M"), so
+        // match on stageType. Matching `code` chapter "0" was wrong: it never hit
+        // Annihilation and instead matched the Prologue (Chapter 0) story stages.
+        match: (stage) => stage.stageType === "CAMPAIGN",
     },
 ];
 

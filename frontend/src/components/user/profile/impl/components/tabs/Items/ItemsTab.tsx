@@ -1,18 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Grid3x3, LayoutGrid, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Toggle } from "#/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { materialsQueryOptions } from "#/lib/api/materials";
 import type { IInventoryItem } from "#/lib/api/user";
 import { capitalize, cn } from "#/lib/utils";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "./helpers";
-import type { ItemCategory, ItemRarityFilter, ItemSortKey, ItemViewMode } from "./types";
+import type { IItemEntry, ItemCategory, ItemRarityFilter, ItemSortKey, ItemViewMode } from "./types";
 import { useItems } from "./useItems";
 
 interface IItemsTabProps {
@@ -34,6 +36,21 @@ const RARITY_OPTIONS: { value: ItemRarityFilter; label: string }[] = [
     { value: "2", label: "2 Star" },
     { value: "1", label: "1 Star" },
 ];
+
+const COMPACT_COL_BREAKPOINTS = [
+    { minWidth: 1280, cols: 11 },
+    { minWidth: 1024, cols: 9 },
+    { minWidth: 768, cols: 7 },
+    { minWidth: 640, cols: 5 },
+    { minWidth: 0, cols: 3 },
+];
+const DETAILED_MIN_CARD_WIDTH_PX = 300;
+const DETAILED_GRID_GAP_PX = 16; // gap-4
+const COMPACT_GRID_GAP_PX = 10; // gap-2.5
+const DETAILED_ROW_ESTIMATE_PX = 200;
+const COMPACT_ROW_ESTIMATE_PX = 130;
+const COMPACT_CARD_LABEL_PX = 30; // quantity label + padding below a square icon
+const ITEMS_VIRTUAL_OVERSCAN = 4;
 
 function getRarityLabel(value: ItemRarityFilter): string {
     if (value === "all") return "All Rarities";
@@ -118,22 +135,88 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                 </div>
             </div>
 
-            {sorted.length === 0 ? (
-                <EmptyItems hasInventory={inventory.length > 0} />
-            ) : filters.viewMode === "detailed" ? (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
-                    {sorted.map((item) => (
-                        <DetailedCard key={item.item_id} item={item} />
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11">
-                    {sorted.map((item) => (
-                        <CompactCard key={item.item_id} item={item} />
-                    ))}
-                </div>
-            )}
+            {sorted.length === 0 ? <EmptyItems hasInventory={inventory.length > 0} /> : <VirtualizedItemsGrid items={sorted} viewMode={filters.viewMode} />}
         </section>
+    );
+}
+
+function getCompactColumnCount(): number {
+    if (typeof window === "undefined") return COMPACT_COL_BREAKPOINTS[COMPACT_COL_BREAKPOINTS.length - 1].cols;
+    const w = window.innerWidth;
+    for (const { minWidth, cols } of COMPACT_COL_BREAKPOINTS) {
+        if (w >= minWidth) return cols;
+    }
+    return COMPACT_COL_BREAKPOINTS[COMPACT_COL_BREAKPOINTS.length - 1].cols;
+}
+
+function getDetailedColumnCount(width: number): number {
+    if (width <= 0) return 1;
+    return Math.max(1, Math.floor((width + DETAILED_GRID_GAP_PX) / (DETAILED_MIN_CARD_WIDTH_PX + DETAILED_GRID_GAP_PX)));
+}
+
+function VirtualizedItemsGrid({ items, viewMode }: { items: IItemEntry[]; viewMode: ItemViewMode }) {
+    // Compact columns follow window breakpoints rather than the container width.
+    const [compactCols, setCompactCols] = useState(getCompactColumnCount);
+    useEffect(() => {
+        const onResize = () => setCompactCols(getCompactColumnCount());
+        window.addEventListener("resize", onResize, { passive: true });
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    const columnsFor = (width: number) => (viewMode === "detailed" ? getDetailedColumnCount(width) : compactCols);
+    const rowHeightFor = (width: number) => {
+        if (viewMode === "detailed") return DETAILED_ROW_ESTIMATE_PX;
+        if (width <= 0) return COMPACT_ROW_ESTIMATE_PX;
+        const cardWidth = (width - (compactCols - 1) * COMPACT_GRID_GAP_PX) / compactCols;
+        return Math.round(cardWidth + COMPACT_CARD_LABEL_PX);
+    };
+
+    const {
+        parentRef,
+        scrollMargin,
+        rows: chunks,
+        virtualizer,
+    } = useWindowVirtualRows<IItemEntry[]>({
+        buildRows: (width) => {
+            const cols = columnsFor(width);
+            const out: IItemEntry[][] = [];
+            for (let i = 0; i < items.length; i += cols) out.push(items.slice(i, i + cols));
+            return out;
+        },
+        rowDeps: [items, viewMode, compactCols],
+        estimateSize: (_row, _index, width) => rowHeightFor(width),
+        overscan: ITEMS_VIRTUAL_OVERSCAN,
+        measureDeps: [viewMode, compactCols],
+        scrollMarginDeps: [viewMode],
+    });
+
+    const gridClassName = viewMode === "detailed" ? "grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4" : "grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11";
+
+    return (
+        <div ref={parentRef} style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
+            {virtualizer.getVirtualItems().map((vi) => {
+                const row = chunks[vi.index];
+                if (!row) return null;
+                return (
+                    <div
+                        data-index={vi.index}
+                        key={vi.key}
+                        ref={virtualizer.measureElement}
+                        style={{
+                            contain: "content",
+                            left: 0,
+                            position: "absolute",
+                            top: 0,
+                            transform: `translateY(${vi.start - scrollMargin}px)`,
+                            width: "100%",
+                            willChange: "transform",
+                        }}
+                    >
+                        <div className={gridClassName}>{row.map((item) => (viewMode === "detailed" ? <DetailedCard key={item.item_id} item={item} /> : <CompactCard key={item.item_id} item={item} />))}</div>
+                    </div>
+                );
+            })}
+        </div>
     );
 }
 

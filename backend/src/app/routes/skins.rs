@@ -1,48 +1,46 @@
 use std::collections::HashMap;
 
 use axum::Json;
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
+use axum::http::HeaderMap;
+use axum::response::Response;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::resolve_user_id;
+use crate::app::routes::static_data::json_response;
+use crate::app::services::static_data::get_skins_index;
 use crate::app::state::AppState;
+use crate::core::hypergryph::constants::Server;
 use crate::database::queries::skins;
 use crate::database::queries::skins::OwnedSkin;
-use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct SkinsParams {
     pub uid: Option<String>,
 }
 
-async fn resolve_user_id(
-    state: &AppState,
-    auth: &MaybeAuthUser,
-    uid_param: Option<&str>,
-) -> Result<Uuid, ApiError> {
-    if let Some(uid) = uid_param {
-        let profile = find_by_uid(&state.db, uid)
-            .await?
-            .ok_or(ApiError::NotFound)?;
+/// `GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all
+/// skins (default server), for the profile Stats tab's skin count + browser.
+/// Replaces the full `/static/skins` fetch on that tab.
+pub async fn skins_index(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
+    let body = get_skins_index(&state, state.default_server).await?;
+    Ok(json_response(body, &headers))
+}
 
-        let is_own = auth
-            .0
-            .as_ref()
-            .and_then(|a| a.user_id.parse::<Uuid>().ok())
-            .is_some_and(|id| id == profile.id);
-
-        if !is_own && profile.public_profile != Some(true) {
-            return Err(ApiError::Forbidden);
-        }
-
-        Ok(profile.id)
-    } else {
-        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        auth.user_uuid()
-    }
+/// `GET /{server}/skins/index` - per-server variant.
+pub async fn skins_index_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(server): Path<Server>,
+) -> Result<Response, ApiError> {
+    let body = get_skins_index(&state, server).await?;
+    Ok(json_response(body, &headers))
 }
 
 pub async fn get_owned_skins(

@@ -17,6 +17,16 @@ export function getRouter() {
     });
 
     setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient });
+    if (typeof window === "undefined") {
+        const dehydrate = router.options.dehydrate;
+        router.options.dehydrate = async () => {
+            const dehydrated = await dehydrate?.();
+            router.serverSsr?.onRenderFinished(() => {
+                context.queryClient.clear();
+            });
+            return dehydrated;
+        };
+    }
 
     return router;
 }

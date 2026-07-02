@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { buildActivityLookup } from "./impl/activity-lookup";
@@ -33,7 +33,7 @@ export function Randomizer(): React.ReactElement {
     const hasProfile = isAuthenticated;
     const uid = user?.uid ?? null;
 
-    const { data: operatorsStatic = [] } = useQuery(operatorsListQueryOptions());
+    const { data: operatorsIndex = [] } = useQuery(operatorsIndexQueryOptions());
     const { data: stages = [] } = useQuery(stagesQueryOptions());
     const { data: zones = [] } = useQuery(zonesQueryOptions());
     const { data: activities = [] } = useQuery(activitiesQueryOptions());
@@ -45,11 +45,11 @@ export function Randomizer(): React.ReactElement {
 
     const randomizerOperators = React.useMemo<IRandomizerOperator[]>(
         () =>
-            operatorsStatic
+            operatorsIndex
                 .filter((op) => op.profession !== "TOKEN" && op.profession !== "TRAP")
                 .map(toRandomizerOperator)
                 .filter((op): op is IRandomizerOperator => op !== null),
-        [operatorsStatic],
+        [operatorsIndex],
     );
 
     const playableStages = React.useMemo(() => filterPlayableStages(stages, activityLookup), [stages, activityLookup]);
@@ -103,12 +103,6 @@ export function Randomizer(): React.ReactElement {
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
 
-    /** Full operator entities (skills, modules, etc) for the available pool - fed into challenge filters. */
-    const availableOperatorsFull = React.useMemo(() => {
-        const allowed = new Set(availableOperators.map((op) => op.id));
-        return operatorsStatic.filter((op) => op.id !== null && allowed.has(op.id));
-    }, [operatorsStatic, availableOperators]);
-
     const [rolledStage, setRolledStage] = React.useState<(typeof playableStages)[number] | null>(null);
     const [rolledSquad, setRolledSquad] = React.useState<IRandomizerOperator[]>([]);
     const [rolledChallenge, setRolledChallenge] = React.useState<IChallenge | null>(null);
@@ -121,17 +115,14 @@ export function Randomizer(): React.ReactElement {
 
     /**
      * Resolve the squad pool given the active challenge: if it's a SQUAD_FILTER,
-     * apply the filter to the full operator data, then map back to the slim
-     * representation used by the squad picker.
+     * apply the filter directly to the available operator pool.
      */
     const resolveSquadPool = React.useCallback(
         (challenge: IChallenge | null): IRandomizerOperator[] => {
             if (!challenge || challenge.type !== "SQUAD_FILTER") return availableOperators;
-            const restricted = availableOperatorsFull.filter(challenge.filter);
-            const restrictedIds = new Set(restricted.map((op) => op.id));
-            return availableOperators.filter((op) => restrictedIds.has(op.id));
+            return availableOperators.filter(challenge.filter);
         },
-        [availableOperators, availableOperatorsFull],
+        [availableOperators],
     );
 
     const rollStage = React.useCallback(() => setRolledStage(pickRandomStage(availableStages)), [availableStages]);
@@ -141,29 +132,25 @@ export function Randomizer(): React.ReactElement {
     }, [resolveSquadPool, rolledChallenge, settings.squadSize, settings.allowDuplicates]);
     const rollChallenge = React.useCallback(() => {
         if (!rolledStage) return;
-        const picked = pickRandomChallenge({ stage: rolledStage, operators: availableOperatorsFull, squadSize: settings.squadSize });
+        const picked = pickRandomChallenge({ stage: rolledStage, operators: availableOperators, squadSize: settings.squadSize });
         setRolledChallenge(picked?.challenge ?? null);
         // If the new challenge restricts the pool, reroll the squad to honour it.
         if (picked?.challenge.type === "SQUAD_FILTER") {
             setRolledSquad(pickRandomSquad(resolveSquadPool(picked.challenge), settings.squadSize, settings.allowDuplicates));
         }
-    }, [rolledStage, availableOperatorsFull, settings.squadSize, settings.allowDuplicates, resolveSquadPool]);
+    }, [rolledStage, availableOperators, settings.squadSize, settings.allowDuplicates, resolveSquadPool]);
 
     const rollAll = React.useCallback(() => {
         const stage = pickRandomStage(availableStages);
-        const picked = stage ? pickRandomChallenge({ stage, operators: availableOperatorsFull, squadSize: settings.squadSize }) : null;
+        const picked = stage ? pickRandomChallenge({ stage, operators: availableOperators, squadSize: settings.squadSize }) : null;
         const challenge = picked?.challenge ?? null;
-        let squadPool = availableOperators;
-        if (picked?.filteredOperators) {
-            const allowed = new Set(picked.filteredOperators.map((op) => op.id));
-            squadPool = availableOperators.filter((op) => allowed.has(op.id));
-        }
+        const squadPool = picked?.filteredOperators ?? availableOperators;
 
         setRolledStage(stage);
         setRolledChallenge(challenge);
         setRolledSquad(pickRandomSquad(squadPool, settings.squadSize, settings.allowDuplicates));
         setRollSeq((n) => n + 1);
-    }, [availableStages, availableOperatorsFull, availableOperators, settings.squadSize, settings.allowDuplicates]);
+    }, [availableStages, availableOperators, settings.squadSize, settings.allowDuplicates]);
 
     const reset = React.useCallback(() => {
         setRolledStage(null);

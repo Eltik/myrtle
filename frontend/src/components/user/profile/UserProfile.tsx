@@ -33,20 +33,25 @@ export function UserProfile() {
     const { id } = useParams({ from: "/user/$id" });
     const [activeTab, setActiveTab] = useState<TabId>("stats");
 
+    // Genuinely-global data: the profile record + roster power the hero, stat
+    // strip, and several tab counts, and the full operator table feeds the
+    // default (Stats) tab, so both stay eager. Everything else is gated to the
+    // tab that needs it and fetched only once that tab first becomes active.
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
-    const { data: inventory } = useQuery(userInventoryQueryOptions(id));
-    const { data: score, isLoading: isScoreLoading } = useQuery(userScoreQueryOptions(id));
-    const { data: publicPlans } = useQuery(publicPlansQueryOptions(id));
+    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
+
+    const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
+    const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
+    const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
         ...userImprovementsQueryOptions(id),
         enabled: activeTab === "score",
     });
-    const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery(userEncounteredEnemiesQueryOptions(id));
-    const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
-    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
+    const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
+    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(), enabled: activeTab === "roster" });
 
     const tabs = useMemo(
         () => [

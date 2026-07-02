@@ -1,6 +1,6 @@
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IVoices } from "#/types/voices";
-import type { IOperatorOwnershipInfo, IOperatorStats, IOperatorView } from "./types";
+import type { IOperatorOwnershipInfo, IOperatorView } from "./types";
 
 export type NotedSet = ReadonlySet<string>;
 export type OwnershipLookup = ReadonlyMap<string, IOperatorOwnershipInfo>;
@@ -15,35 +15,15 @@ function extractVoiceActors(charId: string, voices: IVoices | undefined): string
     return [...names];
 }
 
-function extractStats(op: IOperatorListItem): IOperatorStats | null {
-    const lastPhase = op.phases[op.phases.length - 1];
-    const lastFrame = lastPhase?.attributesKeyFrames ? lastPhase?.attributesKeyFrames[lastPhase?.attributesKeyFrames.length - 1] : undefined;
-    if (!lastFrame) return null;
-    const a = lastFrame.data;
-    return {
-        hp: a.maxHp,
-        atk: a.atk,
-        def: a.def,
-        res: a.magicResistance,
-        cost: a.cost,
-        block: a.blockCnt,
-    };
-}
-
-export function enrichOperator(op: IOperatorListItem, voices: IVoices | undefined, notedIds: NotedSet | undefined, ownership: OwnershipLookup | undefined): IOperatorView {
-    const info = op.profile?.basicInfo;
+export function enrichOperator(op: IOperatorIndexEntry, voices: IVoices | undefined, notedIds: NotedSet | undefined, ownership: OwnershipLookup | undefined): IOperatorView {
     return {
         ...op,
-        gender: info?.gender ?? null,
-        race: info?.race ?? null,
-        placeOfBirth: info?.placeOfBirth ?? null,
         voiceActors: op.id ? extractVoiceActors(op.id, voices) : [],
-        stats: extractStats(op),
         hasNotes: op.id ? (notedIds?.has(op.id) ?? false) : false,
         ownership: op.id ? (ownership?.get(op.id) ?? null) : null,
     };
 }
 
-export function enrichOperators(ops: IOperatorListItem[], voices: IVoices | undefined, notedIds: NotedSet | undefined, ownership: OwnershipLookup | undefined): IOperatorView[] {
+export function enrichOperators(ops: IOperatorIndexEntry[], voices: IVoices | undefined, notedIds: NotedSet | undefined, ownership: OwnershipLookup | undefined): IOperatorView[] {
     return ops.map((op) => enrichOperator(op, voices, notedIds, ownership));
 }

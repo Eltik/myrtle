@@ -1,5 +1,5 @@
 import { CLASS_SORT_ORDER, CLASSES } from "#/components/operators/list/impl/constants";
-import type { ISkin } from "#/lib/api/skins";
+import type { ISkinIndexEntry } from "#/lib/api/skins";
 import type { IRosterEntry } from "#/lib/api/user";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
@@ -63,7 +63,7 @@ interface IUserStats {
     collectionPercentage: number;
 }
 
-export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], skins: Record<string, ISkin> | undefined, nonDefaultSkinCount: number | null): IUserStats {
+export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], skins: Record<string, ISkinIndexEntry> | undefined, nonDefaultSkinCount: number | null): IUserStats {
     const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
     const EXCLUDED_MODULE_KEYS = ["uniequip_000", "uniequip_001"];
     const pct = (owned: number, total: number) => (total > 0 ? (owned / total) * 100 : 0);

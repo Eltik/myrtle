@@ -4,6 +4,9 @@ import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap, StageDifficulty } from "#/types/stages";
 import { optionalSiteToken } from "./_shared.server";
+import type { IEnemy } from "./enemies";
+import type { ILevel } from "./level";
+import type { IMaterialItem } from "./materials";
 
 const PREVIEW_SUFFIX_RE = /#[a-z]#?$/i;
 
@@ -202,6 +205,42 @@ export function stageIndexQueryOptions() {
     });
 }
 
+/**
+ * Everything the stage-detail page needs for a single stage, served by
+ * `GET /stages/{stageId}/detail`: the stage record, its zone, its level data,
+ * and only the enemies / materials referenced by that stage. Replaces the old
+ * approach of loading the full stages/zones/enemies/materials tables. Procedural
+ * IS/RA/CC nodes (no `stage_table` entry) return 404 -> the route falls back to
+ * the stage index.
+ */
+export interface IStageDetail {
+    stage: IStage;
+    zone: IZone | null;
+    levelData: ILevel | null;
+    /** Only the enemies referenced by this stage's level, keyed by enemyId. */
+    enemies: Record<string, IEnemy>;
+    /** Only the non-CHAR drop items referenced by this stage, keyed by itemId. */
+    materials: Record<string, IMaterialItem>;
+}
+
+export const getStageDetailFn = createServerFn({ method: "GET" })
+    .inputValidator((stageId: string) => stageId)
+    .handler(async ({ data: stageId }) => {
+        const res = await backendFetch(`/stages/${encodeURIComponent(stageId)}/detail`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load stage detail ${stageId}: ${res.status}`);
+        return (await res.json()) as IStageDetail;
+    });
+
+export function stageDetailQueryOptions(stageId: string) {
+    return queryOptions({
+        queryKey: ["stages", "detail", stageId],
+        queryFn: () => getStageDetailFn({ data: stageId }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
 export const getZonesFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/static/zones");
     if (!res.ok) throw new Error(`Failed to load zones: ${res.status}`);
@@ -256,8 +295,8 @@ export const getUserStageClearsFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/stage-clears?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            if (res.status === 404) return {} as StageClearsMap;
-            if (res.status === 403) return {} as StageClearsMap;
+            // Absent (404) or private (403) accounts have no clears, not an error.
+            if (res.status === 404 || res.status === 403) return {} as StageClearsMap;
             throw new Error(`Failed to load stage clears: ${res.status}`);
         }
         return (await res.json()) as StageClearsMap;

@@ -2,6 +2,9 @@ import { OG_CONFIG } from "./config";
 import { DEFAULT_OG_PRESETS, type DefaultOgPresetSlug } from "./presets";
 import { type OgKind, ogRegistry } from "./registry";
 
+const MAX_WARMED_URLS = 5_000;
+const warmedOgURLs = new Set<string>();
+
 export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0]): string {
     const handler = ogRegistry[kind];
     // biome-ignore lint/suspicious/noExplicitAny: bridging typed registry to runtime
@@ -11,7 +14,11 @@ export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(t
 
 export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0]): void {
     if (typeof window !== "undefined") return;
-    fetch(ogURL(kind, id, data)).catch(() => {});
+    const url = ogURL(kind, id, data);
+    if (warmedOgURLs.has(url)) return;
+    if (warmedOgURLs.size > MAX_WARMED_URLS) warmedOgURLs.clear();
+    warmedOgURLs.add(url);
+    fetch(url).catch(() => {});
 }
 
 // Convenience for default-template OG variants registered in DEFAULT_OG_PRESETS.

@@ -28,16 +28,22 @@ impl CacheStore {
     }
 
     pub async fn get<T: DeserializeOwned>(&self, key: &CacheKey<'_>) -> Option<T> {
+        let json = self.get_raw(key).await?;
+        serde_json::from_str(&json)
+            .inspect_err(|e| {
+                tracing::debug!(key = %key.to_key_string(), error = %e, "cache deser failed");
+            })
+            .ok()
+    }
+
+    pub async fn get_raw(&self, key: &CacheKey<'_>) -> Option<String> {
         match self {
-            Self::Redis(conn) => {
-                let raw: Option<String> = conn.clone().get(key.to_key_string()).await.ok()?;
-                let json = raw?;
-                serde_json::from_str(&json)
-                    .inspect_err(|e| {
-                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache deser failed");
-                    })
-                    .ok()
-            }
+            Self::Redis(conn) => conn
+                .clone()
+                .get::<_, Option<String>>(key.to_key_string())
+                .await
+                .ok()
+                .flatten(),
             Self::Memory { entries } => {
                 let key_str = key.to_key_string();
                 let entry = entries.get(&key_str)?;
@@ -47,11 +53,7 @@ impl CacheStore {
                     entries.remove(&key_str);
                     return None;
                 }
-                serde_json::from_str(json)
-                    .inspect_err(
-                        |e| tracing::debug!(key = %key_str, error = %e, "cache deser failed"),
-                    )
-                    .ok()
+                Some(json.clone())
             }
         }
     }
@@ -65,11 +67,15 @@ impl CacheStore {
             }
         };
 
+        self.set_raw(key, json).await;
+    }
+
+    pub async fn set_raw(&self, key: &CacheKey<'_>, value: String) {
         match self {
             Self::Redis(conn) => {
                 let _: Result<(), _> = conn
                     .clone()
-                    .set_ex(key.to_key_string(), json, key.ttl().as_secs())
+                    .set_ex(key.to_key_string(), value, key.ttl().as_secs())
                     .await
                     .inspect_err(|e| {
                         tracing::debug!(key = %key.to_key_string(), error = %e, "cache set failed");
@@ -77,7 +83,7 @@ impl CacheStore {
             }
             Self::Memory { entries } => {
                 let expires_at = Instant::now() + key.ttl();
-                entries.insert(key.to_key_string(), (json, expires_at));
+                entries.insert(key.to_key_string(), (value, expires_at));
             }
         }
     }

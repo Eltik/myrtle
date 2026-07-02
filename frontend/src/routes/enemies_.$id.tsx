@@ -1,25 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EnemyDetail } from "#/components/enemies/detail/Enemies";
-import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
-import { zonesQueryOptions } from "#/lib/api/stages";
+import { enemyDetailQueryOptions } from "#/lib/api/enemies";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/enemies_/$id")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
-    loader: async ({ context, params }) => {
-        const [handbook] = await Promise.all([
-            context.queryClient.ensureQueryData(enemiesQueryOptions()),
-            // Stage appearances + zones power the "Appears In" tab; warm them so
-            // the tab renders without a client fetch flash.
-            context.queryClient.ensureQueryData(enemyStagesQueryOptions()),
-            context.queryClient.ensureQueryData(zonesQueryOptions()),
-        ]);
-        return handbook.enemyData[params.id] ?? null;
-    },
+    // Only the single enemy record + its race lookup are needed for the default
+    // (Overview) tab. The "Appears In" and Chibi tabs fetch their own data lazily
+    // when opened, so nothing else is warmed here.
+    loader: ({ context, params }) => context.queryClient.ensureQueryData(enemyDetailQueryOptions(params.id)),
     head: ({ loaderData, params }) => {
-        const enemy = loaderData;
+        const enemy = loaderData?.enemy ?? null;
         if (!enemy) return seo({ title: "Enemy", path: `/enemies/${params.id}` });
         const desc = [enemy.enemyIndex, enemy.description].filter(Boolean).join(" - ") || `Enemy ${enemy.enemyIndex}`;
         const { meta, links } = seo({

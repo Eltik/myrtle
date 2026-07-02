@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { env } from "#/env";
-import { deepCamelize } from "#/lib/api/operators";
+import { getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
-import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
+import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
@@ -21,9 +21,33 @@ import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type
 export interface IOgHandler<TData> {
     fetch: (id: string) => Promise<TData | null>;
     hash: (data: TData) => string;
+    cacheVersion: (id: string, version?: string) => string;
     template: (data: TData) => ReactNode;
-    listIds?: () => Promise<string[]>;
     dimensions?: (data: TData) => IRenderDimensions;
+}
+
+// A handler declares its `kind` and `hashVersion` once; `hash` and `cacheVersion` are
+// derived from them so neither the kind string nor the version constant is restated.
+// Both feed ogHash the same leading `[kind, hashVersion, ...]`, so the resulting cache
+// keys are byte-identical to hand-written signatures.
+interface IOgHandlerDef<TData> {
+    kind: string;
+    hashVersion: string;
+    fetch: (id: string) => Promise<TData | null>;
+    hashParts: (data: TData) => unknown[];
+    template: (data: TData) => ReactNode;
+    dimensions?: (data: TData) => IRenderDimensions;
+}
+
+function defineOgHandler<TData>(def: IOgHandlerDef<TData>): IOgHandler<TData> {
+    const { kind, hashVersion } = def;
+    return {
+        fetch: def.fetch,
+        hash: (data) => ogHash([kind, hashVersion, ...def.hashParts(data)]),
+        cacheVersion: (id, version) => version || ogHash([kind, hashVersion, id]),
+        template: def.template,
+        dimensions: def.dimensions,
+    };
 }
 
 function backendBaseURL(): string {
@@ -66,14 +90,12 @@ const professionIconURL = (profession: string) => assetURL(`/textures/arts/ui/%5
 
 const OPERATOR_HASH_VERSION = "v8";
 
-const operatorHandler: IOgHandler<IOperatorOgData> = {
+const operatorHandler = defineOgHandler<IOperatorOgData>({
+    kind: "operator",
+    hashVersion: OPERATOR_HASH_VERSION,
     fetch: async (id) => {
-        const res = await backendFetch("/static/operators");
-        if (!res.ok) return null;
-        // Backend uses PascalCase for nested phases/skills/etc. - normalize so
-        // we can reach `phases[].attributesKeyFrames[].data.maxHp` etc.
-        const map = deepCamelize((await res.json()) as IOperatorsStaticMap);
-        const op = (Object.values(map) as IOperatorListItem[]).find((o) => o.id === id);
+        const operators = await getOperatorsListFn();
+        const op = operators.find((o) => o.id === id);
         if (!op) return null;
         const rarity = rarityToNumber(op.rarity);
         // Faction display chooses the most specific source the data has;
@@ -105,14 +127,9 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
             stats,
         };
     },
-    hash: (data) => ogHash(["operator", OPERATOR_HASH_VERSION, data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")]),
+    hashParts: (data) => [data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")],
     template: (data) => OperatorTemplate(data),
-    listIds: async () => {
-        const res = await backendFetch("/operators/index");
-        if (!res.ok) throw new Error(`operators/index failed: ${res.status}`);
-        return ((await res.json()) as IOperatorIndexEntry[]).map((o) => o.id);
-    },
-};
+});
 
 const USER_HASH_VERSION = "v15";
 
@@ -210,19 +227,18 @@ function topRosterPicks(roster: IRosterEntry[], opByIdMap: Map<string, IOperator
         );
 }
 
-const userHandler: IOgHandler<IUserOgData> = {
+const userHandler = defineOgHandler<IUserOgData>({
+    kind: "user",
+    hashVersion: USER_HASH_VERSION,
     fetch: async (uid) => {
         const enc = encodeURIComponent(uid);
-        const [userRes, supportsRes, rosterRes, opsRes] = await Promise.all([backendFetch(`/get-user?uid=${enc}`), backendFetch(`/get-user-supports?uid=${enc}`), backendFetch(`/roster?uid=${enc}`), backendFetch("/static/operators")]);
+        const [userRes, supportsRes, rosterRes, operators] = await Promise.all([backendFetch(`/get-user?uid=${enc}`), backendFetch(`/get-user-supports?uid=${enc}`), backendFetch(`/roster?uid=${enc}`), getOperatorsListFn().catch(() => [] as IOperatorListItem[])]);
         if (!userRes.ok) return null;
         const u = (await userRes.json()) as IUserProfile;
 
-        const opMap = opsRes.ok ? ((await opsRes.json()) as IOperatorsStaticMap) : undefined;
         const opByIdMap = new Map<string, IOperatorListItem>();
-        if (opMap) {
-            for (const op of Object.values(opMap) as IOperatorListItem[]) {
-                if (op.id) opByIdMap.set(op.id, op);
-            }
+        for (const op of operators) {
+            if (op.id) opByIdMap.set(op.id, op);
         }
 
         const roster = rosterRes.ok ? ((await rosterRes.json()) as IRosterEntry[]) : [];
@@ -282,33 +298,30 @@ const userHandler: IOgHandler<IUserOgData> = {
             rarityCounts: hasRarityCounts ? rarityCounts : undefined,
         };
     },
-    hash: (data) =>
-        ogHash([
-            "user",
-            USER_HASH_VERSION,
-            data.nickname,
-            data.nickNumber ?? "",
-            data.uid,
-            data.level,
-            data.grade,
-            data.totalScore,
-            data.operatorCount,
-            data.skinCount,
-            data.itemCount,
-            data.lmd,
-            data.secretaryArtURL ?? "",
-            data.supportUnitsKind ?? "",
-            (data.supportUnits ?? [])
-                .map((u) => {
-                    const sk = (u.skills ?? []).map((s) => `${s.mastery}.${s.skillLevel}`).join(",");
-                    const md = (u.modules ?? []).map((m) => m.level).join(",");
-                    return `${u.id}:${u.elite}:${u.level}:s${sk}:m${md}`;
-                })
-                .join("|"),
-            data.rarityCounts ? [6, 5, 4, 3, 2, 1].map((r) => `${r}=${data.rarityCounts?.[r] ?? 0}`).join(",") : "",
-        ]),
+    hashParts: (data) => [
+        data.nickname,
+        data.nickNumber ?? "",
+        data.uid,
+        data.level,
+        data.grade,
+        data.totalScore,
+        data.operatorCount,
+        data.skinCount,
+        data.itemCount,
+        data.lmd,
+        data.secretaryArtURL ?? "",
+        data.supportUnitsKind ?? "",
+        (data.supportUnits ?? [])
+            .map((u) => {
+                const sk = (u.skills ?? []).map((s) => `${s.mastery}.${s.skillLevel}`).join(",");
+                const md = (u.modules ?? []).map((m) => m.level).join(",");
+                return `${u.id}:${u.elite}:${u.level}:s${sk}:m${md}`;
+            })
+            .join("|"),
+        data.rarityCounts ? [6, 5, 4, 3, 2, 1].map((r) => `${r}=${data.rarityCounts?.[r] ?? 0}`).join(",") : "",
+    ],
     template: (data) => UserTemplate(data),
-};
+});
 
 const TIER_LIST_HASH_VERSION = "v3";
 
@@ -370,7 +383,9 @@ interface IBackendTierListResponse {
     tiers: IBackendTierListTier[];
 }
 
-const tierListHandler: IOgHandler<ITierListOgData> = {
+const tierListHandler = defineOgHandler<ITierListOgData>({
+    kind: "tier-list",
+    hashVersion: TIER_LIST_HASH_VERSION,
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
         const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
@@ -431,28 +446,25 @@ const tierListHandler: IOgHandler<ITierListOgData> = {
             tiers,
         };
     },
-    hash: (data) =>
-        ogHash([
-            "tier-list",
-            TIER_LIST_HASH_VERSION,
-            data.title,
-            data.slug,
-            data.description ?? "",
-            data.listType,
-            data.flairLabel ?? "",
-            data.flairColor ?? "",
-            data.authorName ?? "",
-            data.authorAvatarURL ?? "",
-            data.views ?? 0,
-            data.favorites ?? 0,
-            data.isTrending ? 1 : 0,
-            data.updatedRelative ?? "",
-            data.totalOperators,
-            data.tierCount,
-            data.tiers.map((t) => `${t.name}:${t.color}:${t.operatorCount}:${t.operators.map((o) => o.id).join(",")}`).join("|"),
-        ]),
+    hashParts: (data) => [
+        data.title,
+        data.slug,
+        data.description ?? "",
+        data.listType,
+        data.flairLabel ?? "",
+        data.flairColor ?? "",
+        data.authorName ?? "",
+        data.authorAvatarURL ?? "",
+        data.views ?? 0,
+        data.favorites ?? 0,
+        data.isTrending ? 1 : 0,
+        data.updatedRelative ?? "",
+        data.totalOperators,
+        data.tierCount,
+        data.tiers.map((t) => `${t.name}:${t.color}:${t.operatorCount}:${t.operators.map((o) => o.id).join(",")}`).join("|"),
+    ],
     template: (data) => TierListTemplate(data),
-};
+});
 
 const DEFAULT_HASH_VERSION = "v6";
 
@@ -461,16 +473,17 @@ const DEFAULT_HASH_VERSION = "v6";
 // literal (URL-encoded) title for one-off pages.
 export const DEFAULT_OG_ID = "_root";
 
-const defaultHandler: IOgHandler<IDefaultOgData> = {
+const defaultHandler = defineOgHandler<IDefaultOgData>({
+    kind: "default",
+    hashVersion: DEFAULT_HASH_VERSION,
     fetch: async (id) => {
         const preset = (DEFAULT_OG_PRESETS as Record<string, IDefaultOgData>)[id];
         if (preset) return preset;
         return { title: decodeURIComponent(id) };
     },
-    hash: (data) => ogHash(["default", DEFAULT_HASH_VERSION, data.title, data.subtitle ?? "", data.activeTag ?? ""]),
+    hashParts: (data) => [data.title, data.subtitle ?? "", data.activeTag ?? ""],
     template: (data) => DefaultTemplate(data),
-    listIds: async () => Object.keys(DEFAULT_OG_PRESETS),
-};
+});
 
 const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v12";
 
@@ -487,21 +500,9 @@ async function fetchToDataURI(url: string): Promise<string | undefined> {
     }
 }
 
-async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-    const results: R[] = new Array(items.length);
-    let cursor = 0;
-    const workers = Array.from({ length: Math.min(Math.max(1, limit), items.length) }, async () => {
-        while (true) {
-            const idx = cursor++;
-            if (idx >= items.length) return;
-            results[idx] = await fn(items[idx] as T);
-        }
-    });
-    await Promise.all(workers);
-    return results;
-}
-
-const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
+const tierListBoardImageHandler = defineOgHandler<ITierListBoardImageData>({
+    kind: "tier-list-image",
+    hashVersion: TIER_LIST_BOARD_IMAGE_HASH_VERSION,
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
         const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
@@ -511,13 +512,6 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
         const opById = new Map<string, IOperatorIndexEntry>(opIndex.map((op) => [op.id, op]));
 
         const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
-
-        const placedOperatorIds: string[] = [];
-        for (const t of sortedTiers) for (const p of t.placements) if (opById.has(p.operator_id)) placedOperatorIds.push(p.operator_id);
-        const uniqueIds = Array.from(new Set(placedOperatorIds));
-        const dataUriById = new Map<string, string | undefined>();
-        const fetched = await mapWithConcurrency(uniqueIds, 8, (id) => fetchToDataURI(avatarURL(id)));
-        for (let i = 0; i < uniqueIds.length; i++) dataUriById.set(uniqueIds[i] as string, fetched[i]);
 
         const tiers: ITierListBoardImageTier[] = sortedTiers.map((t, i) => {
             const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
@@ -530,7 +524,7 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
                         id: op.id,
                         name: op.name,
                         rarity: op.rarity,
-                        avatarURL: dataUriById.get(op.id),
+                        avatarURL: avatarURL(op.id),
                     };
                 })
                 .filter((x): x is ITierListBoardImageOperator => x !== null);
@@ -547,12 +541,54 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
             tiers,
         };
     },
-    hash: (data) => ogHash(["tier-list-image", TIER_LIST_BOARD_IMAGE_HASH_VERSION, TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")]),
+    hashParts: (data) => [TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")],
     template: (data) => TierListBoardImageTemplate(data),
     dimensions: (data) => tierListBoardImageDimensions(data),
-};
+});
 
 const STAGE_HASH_VERSION = "v1";
+const STATIC_STAGE_TTL_MS = 30 * 60 * 1000;
+let stagesCache: { promise: Promise<IStage[]>; expiresAt: number } | null = null;
+let zonesCache: { promise: Promise<IZone[]>; expiresAt: number } | null = null;
+
+function cachedStaticList<T>(getCache: () => { promise: Promise<T[]>; expiresAt: number } | null, setCache: (next: { promise: Promise<T[]>; expiresAt: number } | null) => void, path: string): Promise<T[]> {
+    const now = Date.now();
+    const cache = getCache();
+    if (!cache || now >= cache.expiresAt) {
+        const promise = backendFetch(path).then(async (res) => {
+            if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+            return Object.values((await res.json()) as Record<string, T>);
+        });
+        setCache({ promise, expiresAt: now + STATIC_STAGE_TTL_MS });
+        promise.catch(() => {
+            // Only clear if this promise is still the cached one; a late rejection
+            // must not null a newer valid entry (mirrors getOperatorsListFn).
+            if (getCache()?.promise === promise) setCache(null);
+        });
+        return promise;
+    }
+    return cache.promise;
+}
+
+function getCachedStages(): Promise<IStage[]> {
+    return cachedStaticList(
+        () => stagesCache,
+        (next) => {
+            stagesCache = next;
+        },
+        "/static/stages",
+    );
+}
+
+function getCachedZones(): Promise<IZone[]> {
+    return cachedStaticList(
+        () => zonesCache,
+        (next) => {
+            zonesCache = next;
+        },
+        "/static/zones",
+    );
+}
 
 /** Try preview candidates in priority order; return the first that loads as a data URI. */
 async function resolveStagePreview(paths: string[]): Promise<string | undefined> {
@@ -566,23 +602,22 @@ async function resolveStagePreview(paths: string[]): Promise<string | undefined>
     return undefined;
 }
 
-const stageHandler: IOgHandler<IStageOgData> = {
+const stageHandler = defineOgHandler<IStageOgData>({
+    kind: "stage",
+    hashVersion: STAGE_HASH_VERSION,
     fetch: async (stageId) => {
-        const [stagesRes, zonesRes] = await Promise.all([backendFetch("/static/stages"), backendFetch("/static/zones")]);
-        if (!stagesRes.ok) return null;
-        const stagesMap = (await stagesRes.json()) as Record<string, IStage>;
-        const stage = Object.values(stagesMap).find((s) => s.stageId === stageId);
+        const [stages, zones] = await Promise.all([getCachedStages().catch(() => [] as IStage[]), getCachedZones().catch(() => [] as IZone[])]);
+        const stage = stages.find((s) => s.stageId === stageId);
         if (!stage) return null;
 
-        const zonesMap = zonesRes.ok ? ((await zonesRes.json()) as Record<string, IZone>) : {};
-        const zone = Object.values(zonesMap).find((z) => z.zoneId === stage.zoneId);
+        const zone = zones.find((z) => z.zoneId === stage.zoneId);
         const previewImageURL = await resolveStagePreview(stagePreviewAssetPaths(stage));
 
         return buildStageOgData(stage, zone, previewImageURL);
     },
-    hash: (data) => ogHash(["stage", STAGE_HASH_VERSION, data.code, data.name, data.description ?? "", data.zoneName, data.typeLabel, data.difficultyLabel ?? "", data.bossMark ? 1 : 0, data.stats.map((s) => `${s.label}=${s.value}`).join("|")]),
+    hashParts: (data) => [data.code, data.name, data.description ?? "", data.zoneName, data.typeLabel, data.difficultyLabel ?? "", data.bossMark ? 1 : 0, data.stats.map((s) => `${s.label}=${s.value}`).join("|")],
     template: (data) => StageTemplate(data),
-};
+});
 
 export const ogRegistry = {
     operator: operatorHandler,

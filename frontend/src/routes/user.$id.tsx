@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserProfile } from "#/components/user/profile/UserProfile";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { userQueryOptions, userRosterQueryOptions } from "#/lib/api/user";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
@@ -18,7 +17,10 @@ function buildOgData(user: IUserProfile) {
 export const Route = createFileRoute("/user/$id")({
     component: RouteComponent,
     loader: async ({ context, params }) => {
-        const [user] = await Promise.all([context.queryClient.ensureQueryData(userQueryOptions(params.id)), context.queryClient.prefetchQuery(userRosterQueryOptions(params.id)), context.queryClient.prefetchQuery(operatorsIndexQueryOptions())]);
+        // Warm only what the header + default (Stats) tab need for SSR: the profile
+        // record and the roster. Per-tab data (score, inventory, plans, enemies,
+        // operators index) is fetched lazily when its tab first becomes active.
+        const [user] = await Promise.all([context.queryClient.ensureQueryData(userQueryOptions(params.id)), context.queryClient.prefetchQuery(userRosterQueryOptions(params.id))]);
         if (user) warmOg("user", params.id, buildOgData(user));
         return user;
     },

@@ -1,9 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
-import type { IEnemyStageRef } from "#/lib/api/enemies";
-import { enemyStagesQueryOptions } from "#/lib/api/enemies";
+import { Skeleton } from "#/components/ui/skeleton";
+import { enemyAppearsInQueryOptions, type IEnemyStageRef } from "#/lib/api/enemies";
 import { zonesQueryOptions } from "#/lib/api/stages";
 import { cn } from "#/lib/utils";
 import type { IZone } from "#/types/stages";
@@ -97,11 +97,13 @@ const ZONE_TYPE_LABEL: Partial<Record<IZone["type"], string>> = {
 };
 
 export function AppearsInTab({ enemyId }: { enemyId: string }) {
-    const { data: index } = useSuspenseQuery(enemyStagesQueryOptions());
-    const { data: zones } = useSuspenseQuery(zonesQueryOptions());
+    // Fetched lazily when this tab is opened (the panel mounts on demand), rather
+    // than warmed by the route loader. The refs carry a pre-resolved `zoneName`;
+    // the zones table is still needed for group `type` labels + `zoneIndex` sort.
+    const { data: refs = [], isLoading: refsLoading } = useQuery(enemyAppearsInQueryOptions(enemyId));
+    const { data: zones = [], isLoading: zonesLoading } = useQuery(zonesQueryOptions());
 
     const { sections, totalStages, totalZones } = useMemo(() => {
-        const refs = index[enemyId] ?? [];
         const zonesById = new Map(zones.map((z) => [z.zoneId, z]));
         const groups = groupByZone(refs, zonesById);
         const sections = CATEGORY_SECTIONS.map((s) => ({
@@ -109,7 +111,17 @@ export function AppearsInTab({ enemyId }: { enemyId: string }) {
             groups: groups.filter((g) => g.category === s.key),
         })).filter((s) => s.groups.length > 0);
         return { sections, totalStages: refs.length, totalZones: groups.length };
-    }, [index, enemyId, zones]);
+    }, [refs, zones]);
+
+    if (refsLoading || zonesLoading) {
+        return (
+            <div className="flex flex-col gap-2">
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+        );
+    }
 
     if (sections.length === 0) {
         return (

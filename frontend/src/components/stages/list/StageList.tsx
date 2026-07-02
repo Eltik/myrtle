@@ -1,9 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, Maximize2, Search, Skull } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
+import { cn } from "#/lib/utils";
 import { buildStageTree, coverImage, filterTree, type IEventVM, type IGroupVM, type IStageCardVM } from "./impl/derive";
 import { EventDetailDialog } from "./impl/EventDetailDialog";
 import { PreviewFallback, STAGE_GROUP_ICON } from "./impl/PreviewFallback";
@@ -25,10 +27,9 @@ export function StageList() {
 
     // Sections (categories) default open and remember what the user folded.
     const [closedSections, setClosedSections] = useState<Record<string, boolean>>({});
-    const isSectionOpen = (key: StageGroupKey) => searching || !closedSections[key];
+    // Zone the virtualized list should scroll into view once its row is mounted.
+    const [scrollZone, setScrollZone] = useState<string | null>(null);
     const toggleSection = (key: StageGroupKey) => setClosedSections((s) => ({ ...s, [key]: !s[key] }));
-
-    const isOpen = (zoneId: string) => searching || !!open[zoneId];
     const toggle = (zoneId: string) => setOpen((s) => ({ ...s, [zoneId]: !s[zoneId] }));
     const expandAll = () => {
         setOpen(Object.fromEntries(visibleEvents.map((e) => [e.zoneId, true])));
@@ -40,10 +41,7 @@ export function StageList() {
         setOpen((s) => ({ ...s, [ev.zoneId]: true }));
         setClosedSections((s) => ({ ...s, [ev.group]: false }));
         setDetailEvent(null);
-        requestAnimationFrame(() => {
-            const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            document.getElementById(`zone-${ev.zoneId}`)?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
-        });
+        setScrollZone(ev.zoneId);
     };
 
     const empty = visibleGroups.length === 0;
@@ -123,11 +121,7 @@ export function StageList() {
             {/* Timeline spine - decoration only above sm; phones get the full width back. */}
             <div className="relative sm:pl-6.5">
                 <div className="absolute top-2 bottom-2.5 left-0.75 hidden w-px sm:block" style={{ background: "linear-gradient(180deg,var(--border),color-mix(in oklch,var(--border) 25%,transparent))" }} />
-                <div className="flex flex-col gap-7 sm:gap-8">
-                    {visibleGroups.map((g) => (
-                        <GroupSection key={g.key} group={g} open={isSectionOpen(g.key)} onToggle={() => toggleSection(g.key)} isOpen={isOpen} toggle={toggle} onDetails={setDetailEvent} />
-                    ))}
-                </div>
+                <VirtualStageTree groups={visibleGroups} searching={searching} open={open} closedSections={closedSections} onToggleSection={toggleSection} onToggleZone={toggle} onDetails={setDetailEvent} scrollZone={scrollZone} onScrolled={() => setScrollZone(null)} />
             </div>
 
             <EventDetailDialog event={detailEvent} onClose={() => setDetailEvent(null)} onBrowse={browseEvent} />
@@ -161,11 +155,142 @@ function FilterPill({ label, count, tone, active, onClick }: { label: string; co
     );
 }
 
-function GroupSection({ group, open, onToggle, isOpen, toggle, onDetails }: { group: IGroupVM; open: boolean; onToggle: () => void; isOpen: (id: string) => boolean; toggle: (id: string) => void; onDetails: (ev: IEventVM) => void }) {
+const STAGE_VIRTUAL_OVERSCAN = 6;
+
+/**
+ * The visible tree flattened into one array so a single window virtualizer can
+ * window it. A `group` header, an `event` accordion header, or one `stages`
+ * grid-row (a chunk of stage cards). The group's rounded card, its per-event
+ * separators, and the stage panel's border/background are reconstructed across
+ * the flattened rows so the output matches the original nested markup.
+ */
+type FlatRow =
+    | { key: string; kind: "group"; group: IGroupVM; first: boolean }
+    | { key: string; kind: "event"; group: IGroupVM; event: IEventVM; open: boolean; containerFirst: boolean; blockLast: boolean; containerLast: boolean }
+    | { key: string; kind: "stages"; group: IGroupVM; event: IEventVM; cards: IStageCardVM[]; first: boolean; last: boolean; blockLast: boolean; containerLast: boolean };
+
+function buildFlatRows(groups: IGroupVM[], searching: boolean, open: Record<string, boolean>, closedSections: Record<string, boolean>, cols: number): FlatRow[] {
+    const rows: FlatRow[] = [];
+    const sectionOpen = (key: StageGroupKey) => searching || !closedSections[key];
+    const zoneOpen = (zoneId: string) => searching || !!open[zoneId];
+    groups.forEach((group, gi) => {
+        rows.push({ key: `g-${group.key}`, kind: "group", group, first: gi === 0 });
+        if (!sectionOpen(group.key)) return;
+        group.events.forEach((event, ei) => {
+            const isLastEvent = ei === group.events.length - 1;
+            if (zoneOpen(event.zoneId)) {
+                const chunks: IStageCardVM[][] = [];
+                for (let i = 0; i < event.stages.length; i += cols) chunks.push(event.stages.slice(i, i + cols));
+                const headerBlockLast = chunks.length === 0;
+                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: true, containerFirst: ei === 0, blockLast: headerBlockLast, containerLast: headerBlockLast && isLastEvent });
+                chunks.forEach((cards, ci) => {
+                    const last = ci === chunks.length - 1;
+                    rows.push({ key: `s-${event.zoneId}-${ci}`, kind: "stages", group, event, cards, first: ci === 0, last, blockLast: last, containerLast: last && isLastEvent });
+                });
+            } else {
+                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: false, containerFirst: ei === 0, blockLast: true, containerLast: isLastEvent });
+            }
+        });
+    });
+    return rows;
+}
+
+/** Rebuilds the group's `overflow-hidden rounded-xl border` card across the flattened rows it spans. */
+function containerBorder(row: { containerFirst?: boolean; blockLast: boolean; containerLast: boolean }): string {
+    return cn("border-border border-r border-l bg-card/40", row.containerFirst && "overflow-hidden rounded-t-xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-xl");
+}
+
+interface IVirtualStageTreeProps {
+    groups: IGroupVM[];
+    searching: boolean;
+    open: Record<string, boolean>;
+    closedSections: Record<string, boolean>;
+    onToggleSection: (key: StageGroupKey) => void;
+    onToggleZone: (zoneId: string) => void;
+    onDetails: (ev: IEventVM) => void;
+    scrollZone: string | null;
+    onScrolled: () => void;
+}
+
+function VirtualStageTree({ groups, searching, open, closedSections, onToggleSection, onToggleZone, onDetails, scrollZone, onScrolled }: IVirtualStageTreeProps) {
+    const [viewportWidth, setViewportWidth] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
+    useEffect(() => {
+        const onResize = () => setViewportWidth(window.innerWidth);
+        window.addEventListener("resize", onResize, { passive: true });
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    // Mirror the responsive stage grid (auto-fill minmax columns) so chunked rows size cards identically.
+    const isSm = viewportWidth >= 640;
+    const gridPadX = isSm ? 16 : 12; // px-4 / px-3
+    const minCard = isSm ? 154 : 126;
+    const gridGap = isSm ? 12 : 10; // gap-3 / gap-2.5
+    const columnsFor = (w: number) => {
+        const inner = w - gridPadX * 2 - 2;
+        if (inner <= 0) return 1;
+        return Math.max(1, Math.floor((inner + gridGap) / (minCard + gridGap)));
+    };
+    const cardHeightFor = (w: number) => {
+        const cols = columnsFor(w);
+        const inner = w - gridPadX * 2 - 2;
+        const cardW = inner > 0 ? (inner - (cols - 1) * gridGap) / cols : 140;
+        return (cardW * 10) / 16 + 56;
+    };
+
+    const { parentRef, width, scrollMargin, rows, virtualizer } = useWindowVirtualRows<FlatRow>({
+        buildRows: (w) => buildFlatRows(groups, searching, open, closedSections, columnsFor(w)),
+        rowDeps: [groups, searching, open, closedSections, viewportWidth],
+        estimateSize: (row, _index, w) => {
+            if (!row) return 80;
+            if (row.kind === "group") return row.first ? 44 : 80;
+            if (row.kind === "event") return 72;
+            const top = row.first ? 20 : gridGap;
+            const bottom = row.last ? (isSm ? 18 : 16) : 0;
+            return Math.round(top + cardHeightFor(w) + bottom);
+        },
+        overscan: STAGE_VIRTUAL_OVERSCAN,
+        measureDeps: [viewportWidth],
+    });
+
+    const cols = columnsFor(width);
+
+    useEffect(() => {
+        if (!scrollZone) return;
+        const index = rows.findIndex((r) => r.kind === "event" && r.event.zoneId === scrollZone);
+        if (index >= 0) {
+            const smooth = typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            virtualizer.scrollToIndex(index, { align: "center", behavior: smooth ? "smooth" : "auto" });
+        }
+        onScrolled();
+    }, [scrollZone, rows, virtualizer, onScrolled]);
+
+    return (
+        <div ref={parentRef} style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
+            {virtualizer.getVirtualItems().map((vi) => {
+                const row = rows[vi.index];
+                if (!row) return null;
+                return (
+                    <div data-index={vi.index} key={row.key} ref={virtualizer.measureElement} style={{ left: 0, position: "absolute", top: 0, transform: `translateY(${vi.start - scrollMargin}px)`, width: "100%" }}>
+                        {row.kind === "group" ? (
+                            <GroupHeaderRow row={row} open={searching || !closedSections[row.group.key]} onToggle={() => onToggleSection(row.group.key)} />
+                        ) : row.kind === "event" ? (
+                            <EventHeaderRow row={row} onToggle={() => onToggleZone(row.event.zoneId)} onDetails={() => onDetails(row.event)} />
+                        ) : (
+                            <StagesRow row={row} cols={cols} />
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind: "group" }>; open: boolean; onToggle: () => void }) {
+    const { group, first } = row;
     const Icon = STAGE_GROUP_ICON[group.key];
     return (
-        <section style={{ scrollMarginTop: 74 }}>
-            <div className="relative mb-2 sm:mb-3.5">
+        <section style={{ scrollMarginTop: 74 }} className={cn("relative", !first && "pt-7 sm:pt-8")}>
+            <div className="relative pb-2 sm:pb-3.5">
                 <span className="absolute top-2.5 -left-5.75 hidden h-1.75 w-1.75 rotate-45 sm:block" style={{ background: group.tone, boxShadow: "0 0 0 4px var(--background)" }} />
                 <h2 className="m-0">
                     <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
@@ -179,44 +304,16 @@ function GroupSection({ group, open, onToggle, isOpen, toggle, onDetails }: { gr
                     </button>
                 </h2>
             </div>
-
-            <CollapsiblePanel open={open}>
-                <div id={`section-${group.key}`} className="overflow-hidden rounded-xl border border-border bg-card/40">
-                    {group.events.map((ev) => (
-                        <EventRow key={ev.zoneId} event={ev} open={isOpen(ev.zoneId)} onToggle={() => toggle(ev.zoneId)} onDetails={() => onDetails(ev)} />
-                    ))}
-                </div>
-            </CollapsiblePanel>
         </section>
     );
 }
 
-/**
- * Animated expand/collapse via the grid-rows 0fr→1fr trick (no measured
- * heights). Children stay mounted while the close animation plays, then
- * unmount so collapsed rows don't keep hundreds of cards in the DOM.
- */
-function CollapsiblePanel({ open, children }: { open: boolean; children: ReactNode }) {
-    const [mounted, setMounted] = useState(open);
-    if (open && !mounted) setMounted(true);
-    return (
-        <div
-            className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
-            style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
-            onTransitionEnd={(e) => {
-                if (e.target === e.currentTarget && !open) setMounted(false);
-            }}
-        >
-            <div className={`min-h-0 overflow-hidden transition-opacity duration-200 motion-reduce:transition-none ${open ? "opacity-100" : "opacity-0"}`}>{mounted ? children : null}</div>
-        </div>
-    );
-}
-
-function EventRow({ event, open, onToggle, onDetails }: { event: IEventVM; open: boolean; onToggle: () => void; onDetails: () => void }) {
+function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { kind: "event" }>; onToggle: () => void; onDetails: () => void }) {
+    const { event, open, group } = row;
     const cover = coverImage(event);
     return (
-        <div id={`zone-${event.zoneId}`} className="border-border border-b last:border-b-0" style={{ ["--rowtone" as string]: event.tone }}>
-            <div className="msv-row relative flex items-center gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-4.5" style={{ background: open ? `color-mix(in oklch, ${event.tone} 7%, transparent)` : "transparent" }}>
+        <div className={containerBorder(row)} style={{ ["--rowtone" as string]: event.tone }} {...(row.containerFirst ? { id: `section-${group.key}` } : {})}>
+            <div id={`zone-${event.zoneId}`} className="msv-row relative flex items-center gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-4.5" style={{ background: open ? `color-mix(in oklch, ${event.tone} 7%, transparent)` : "transparent" }}>
                 {open && <span className="pointer-events-none absolute top-0 bottom-0 left-0 z-1 w-0.5 rounded-r" style={{ background: event.tone }} />}
 
                 <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${open ? "Collapse" : "Expand"} ${event.title}`} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
@@ -249,16 +346,21 @@ function EventRow({ event, open, onToggle, onDetails }: { event: IEventVM; open:
                 </span>
                 <ChevronDown className="pointer-events-none relative z-1 h-3.75 w-3.75 flex-none text-muted-foreground transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }} aria-hidden="true" />
             </div>
+        </div>
+    );
+}
 
-            <CollapsiblePanel open={open}>
-                <div className="border-border border-t bg-background/40 px-3 pt-2.5 pb-4 sm:px-4 sm:pb-4.5">
-                    <div className="mt-2.5 grid grid-cols-[repeat(auto-fill,minmax(126px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(154px,1fr))] sm:gap-3">
-                        {event.stages.map((st) => (
-                            <StageCard key={st.stageId} card={st} tone={event.tone} group={event.group} />
-                        ))}
-                    </div>
+function StagesRow({ row, cols }: { row: Extract<FlatRow, { kind: "stages" }>; cols: number }) {
+    const { event } = row;
+    return (
+        <div className={containerBorder(row)} style={{ ["--rowtone" as string]: event.tone }}>
+            <div className={cn("bg-background/40 px-3 sm:px-4", row.first ? "border-border border-t pt-5" : "pt-2.5 sm:pt-3", row.last && "pb-4 sm:pb-4.5")}>
+                <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+                    {row.cards.map((st) => (
+                        <StageCard key={st.stageId} card={st} tone={event.tone} group={event.group} />
+                    ))}
                 </div>
-            </CollapsiblePanel>
+            </div>
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import { Layers, Palette } from "lucide-react";
 import { useMemo } from "react";
-import type { ISkin } from "#/lib/api/skins";
+import type { ISkinIndexEntry } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IModuleGapDetails } from "../helpers";
@@ -11,7 +11,7 @@ import { SkinViewerDialog } from "./SkinViewerDialog";
 interface IModulesSkinsCardProps {
     modules: { unlocked: number; atMax: number; totalAvailable: number; details: IModuleGapDetails };
     skins: { totalOwned: number; totalAvailable: number; percentage: number };
-    charSkins: Record<string, ISkin>;
+    charSkins: Record<string, ISkinIndexEntry>;
     ownedSkinIds: Set<string>;
     operatorsStatic: IOperatorListItem[];
 }

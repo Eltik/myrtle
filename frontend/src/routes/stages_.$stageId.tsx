@@ -3,38 +3,44 @@ import { StageDetail } from "#/components/stages/detail/StageDetail";
 import { enemiesQueryOptions } from "#/lib/api/enemies";
 import { levelQueryOptions } from "#/lib/api/level";
 import { materialsQueryOptions } from "#/lib/api/materials";
-import { stageIndexQueryOptions, stagesQueryOptions, syntheticStageFromIndex, zonesQueryOptions } from "#/lib/api/stages";
+import { stageDetailQueryOptions, stageIndexQueryOptions, syntheticStageFromIndex } from "#/lib/api/stages";
 import { defaultOgURL } from "#/lib/og";
 import { buildStageOgData } from "#/lib/og/impl/templates/Stage";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
+import type { IStage, IZone } from "#/types/stages";
 
 export const Route = createFileRoute("/stages_/$stageId")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
-        const [stages, zones, , level] = await Promise.all([
-            context.queryClient.ensureQueryData(stagesQueryOptions()),
-            context.queryClient.ensureQueryData(zonesQueryOptions()),
-            context.queryClient.ensureQueryData(enemiesQueryOptions()),
+        // Primary path: one slim endpoint returns the stage + zone + level + only
+        // the enemies/materials this stage references.
+        const detail = await context.queryClient.ensureQueryData(stageDetailQueryOptions(params.stageId));
+        if (detail) {
+            const zone = detail.zone ?? null;
+            warmOg("stage", params.stageId, buildStageOgData(detail.stage, zone ?? undefined));
+            return { stage: detail.stage as IStage | null, zone, level: detail.levelData ?? null, enemyData: detail.enemies, materials: detail.materials, hasOg: true };
+        }
+
+        // Fallback: procedural IS/RA/CC nodes have no stage_table entry (404). Build a
+        // synthetic stage from the stage index (fetched lazily, only here) and load the
+        // full enemy/material tables for the map.
+        const [index, level, handbook, materials] = await Promise.all([
+            context.queryClient.ensureQueryData(stageIndexQueryOptions()),
             context.queryClient.ensureQueryData(levelQueryOptions(params.stageId)),
+            context.queryClient.ensureQueryData(enemiesQueryOptions()),
             context.queryClient.ensureQueryData(materialsQueryOptions()),
         ]);
-        const realStage = stages.find((s) => s.stageId === params.stageId) ?? null;
-        let stage = realStage;
-        let zone = realStage ? (zones.find((z) => z.zoneId === realStage.zoneId) ?? null) : null;
-
-        if (!stage) {
-            const index = await context.queryClient.ensureQueryData(stageIndexQueryOptions());
-            const entry = index.find((e) => e.stageId === params.stageId);
-            if (entry) {
-                const synthetic = syntheticStageFromIndex(entry);
-                stage = synthetic.stage;
-                zone = synthetic.zone;
-            }
+        const entry = index.find((e) => e.stageId === params.stageId);
+        let stage: IStage | null = null;
+        let zone: IZone | null = null;
+        if (entry) {
+            const synthetic = syntheticStageFromIndex(entry);
+            stage = synthetic.stage;
+            zone = synthetic.zone;
         }
-        if (realStage) warmOg("stage", params.stageId, buildStageOgData(realStage, zone ?? undefined));
-        return { stage, zone, level: level ?? null, hasOg: !!realStage };
+        return { stage, zone, level: level ?? null, enemyData: handbook.enemyData, materials: materials.items, hasOg: false };
     },
     head: ({ loaderData, params }) => {
         const stage = loaderData?.stage ?? null;
@@ -68,6 +74,6 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RouteComponent() {
-    const { level, stage, zone } = Route.useLoaderData();
-    return <StageDetail level={level} fallbackStage={stage} fallbackZone={zone} />;
+    const { stage, zone, level, enemyData, materials } = Route.useLoaderData();
+    return <StageDetail stage={stage} zone={zone} level={level} enemyData={enemyData} materials={materials} />;
 }

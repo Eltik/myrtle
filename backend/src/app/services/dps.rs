@@ -1,12 +1,13 @@
+use crate::app::cache::keys::CacheKey;
+use crate::app::cache::{CachedJson, cached_json};
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::module::ModuleType;
-use crate::core::gamedata::types::operator::Operator;
-use crate::core::gamedata::types::operator::OperatorModule;
-use crate::dps::engine::calculate_dps;
-use crate::dps::engine::supported_healers;
-use crate::dps::engine::supported_operators;
-use crate::dps::engine::{self, DpsResult, HpsResult, OperatorFormula};
+use crate::core::gamedata::types::operator::{Operator, OperatorModule};
+use crate::dps::engine::{
+    self, DpsResult, HpsResult, OperatorFormula, calculate_dps, supported_healers,
+    supported_operators,
+};
 use crate::dps::operator_unit::{
     EnemyStats, OperatorBuffs, OperatorConditionals, OperatorParams, OperatorShred,
 };
@@ -118,12 +119,25 @@ fn build_list_entries(
         .collect()
 }
 
-pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
-    build_list_entries(state, supported_operators())
+async fn list_json(
+    state: &AppState,
+    kind: &'static str,
+    formulas: &HashMap<String, OperatorFormula>,
+) -> Result<CachedJson, ApiError> {
+    let key = CacheKey::DpsList { kind };
+    cached_json(state, &key, move || async move {
+        let entries = build_list_entries(state, formulas);
+        serde_json::to_string(&entries).map_err(|e| ApiError::Internal(e.into()))
+    })
+    .await
 }
 
-pub fn list_healers(state: &AppState) -> Vec<OperatorListEntry> {
-    build_list_entries(state, supported_healers())
+pub async fn list_operators_json(state: &AppState) -> Result<CachedJson, ApiError> {
+    list_json(state, "operators", supported_operators()).await
+}
+
+pub async fn list_healers_json(state: &AppState) -> Result<CachedJson, ApiError> {
+    list_json(state, "healers", supported_healers()).await
 }
 
 #[derive(Deserialize)]

@@ -45,24 +45,51 @@ export interface ISkinDataResponse {
     charSkins: Record<string, ISkin>;
 }
 
-export const getSkinsFn = createServerFn({ method: "GET" })
+/** The slim per-skin projection served by `GET /skins/index` - exactly the field
+ *  set the profile Stats tab and its skin-collection dialog read, over ALL skins. */
+export interface ISkinIndexDisplay {
+    skinName: string | null;
+    skinGroupId: string;
+    skinGroupName: string;
+    skinGroupSortIndex: number;
+    displayTagId: string | null;
+    getTime: number;
+    sortId: number;
+    description: string | null;
+    content: string;
+    dialog: string | null;
+    usage: string | null;
+    obtainApproach: string | null;
+    designerList: string[] | null;
+    drawerList: string[];
+}
+
+export interface ISkinIndexEntry {
+    skinId: string;
+    charId: string;
+    displaySkin: ISkinIndexDisplay;
+}
+
+export type ISkinIndex = Record<string, ISkinIndexEntry>;
+
+export const getSkinsIndexFn = createServerFn({ method: "GET" })
     .inputValidator((server: "en" | "cn") => server)
     .handler(async ({ data: server }) => {
-        const res = await backendFetch(server === "cn" ? "/cn/static/skins" : "/static/skins");
-        if (!res.ok) throw new Error(`Failed to load skins: ${res.status}`);
-        return (await res.json()) as ISkinDataResponse;
+        const res = await backendFetch(server === "cn" ? "/cn/skins/index" : "/skins/index");
+        if (!res.ok) throw new Error(`Failed to load skins index: ${res.status}`);
+        return (await res.json()) as ISkinIndex;
     });
 
-export function skinsQueryOptions(server: "en" | "cn" = "en") {
+export function skinsIndexQueryOptions(server: "en" | "cn" = "en") {
     return queryOptions({
-        queryKey: ["skins", server],
-        queryFn: () => getSkinsFn({ data: server }),
+        queryKey: ["skins", "index", server],
+        queryFn: () => getSkinsIndexFn({ data: server }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-/// One operator's skins (KB) instead of the whole skins table.
+/** One operator's skins (a few KB) instead of the entire skins table. */
 export const getOperatorSkinsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { id: string; server: "en" | "cn" }) => data)
     .handler(async ({ data: { id, server } }) => {
@@ -92,8 +119,8 @@ export const getUserSkinsFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/user-skins?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            if (res.status === 404) return null;
-            if (res.status === 403) return null;
+            // Absent (404) or private (403) rosters are an empty state, not an error.
+            if (res.status === 404 || res.status === 403) return null;
             throw new Error(`Failed to load owned skins: ${res.status}`);
         }
         return (await res.json()) as IOwnedSkin[];

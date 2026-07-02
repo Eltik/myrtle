@@ -57,7 +57,7 @@ export function getSecretaryAvatarURL(user: User): string {
 
 export const getAvatarSkinId = getSecretaryAvatarURL;
 
-export function rarityToNumber(rarity: OperatorRarityTier | string | null | undefined, fallback: OperatorRarity = 1): OperatorRarity {
+export function rarityToNumber(rarity: OperatorRarityTier | OperatorRarity | string | number | null | undefined, fallback: OperatorRarity = 1): OperatorRarity {
     const n = Number(String(rarity ?? "").replace("TIER_", ""));
     return n >= 1 && n <= 6 ? (n as OperatorRarity) : fallback;
 }

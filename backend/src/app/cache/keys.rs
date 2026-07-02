@@ -56,6 +56,9 @@ pub enum CacheKey<'a> {
         server: &'a str,
     },
     CommunityEnemyAverage,
+    DpsList {
+        kind: &'a str,
+    },
 }
 
 impl CacheKey<'_> {
@@ -119,28 +122,30 @@ impl CacheKey<'_> {
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
             CacheKey::OperatorOwnership { server } => format!("operators:ownership:{server}"),
             CacheKey::CommunityEnemyAverage => "enemies:community_average".to_owned(),
+            CacheKey::DpsList { kind } => format!("dps:list:{kind}"),
         }
     }
 
     pub const fn ttl(&self) -> Duration {
         match self {
-            CacheKey::User { .. } => Duration::from_mins(10), // 10 min
-            CacheKey::Stats => Duration::from_mins(5),        // 5 min
+            CacheKey::User { .. } => Duration::from_mins(10),
+            CacheKey::Stats => Duration::from_mins(5),
             CacheKey::StaticData { .. } => Duration::from_hours(24), // invalidated on game-data reload
-            CacheKey::Leaderboard { .. } => Duration::from_mins(5),  // 5 min
-            CacheKey::Search { .. } => Duration::from_mins(2),       // 2 min
-            CacheKey::TierList { .. } => Duration::from_mins(10),    // 10 min
-            CacheKey::GameSession { .. } => Duration::from_hours(1), // 1 hour
+            CacheKey::Leaderboard { .. } => Duration::from_mins(5),
+            CacheKey::Search { .. } => Duration::from_mins(2),
+            CacheKey::TierList { .. } => Duration::from_mins(10),
+            CacheKey::GameSession { .. } => Duration::from_hours(1),
             CacheKey::PortalSession { .. } => Duration::from_hours(168), // 1 week
-            CacheKey::GachaGlobalStats => Duration::from_mins(5),    // 5 min
-            CacheKey::GachaEnhancedStats { .. } => Duration::from_mins(10), // 10 min
-            CacheKey::GachaPerBannerStats => Duration::from_mins(10), // 10 min
-            CacheKey::LeaderboardMovers { .. } => Duration::from_mins(15), // 15 min
-            CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10), // 10 min
-            CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1), // 1 min
-            CacheKey::SkinPopularity => Duration::from_hours(1),     // 1 hour
-            CacheKey::OperatorOwnership { .. } => Duration::from_hours(1), // 1 hour
-            CacheKey::CommunityEnemyAverage => Duration::from_mins(30), // 30 min
+            CacheKey::GachaGlobalStats => Duration::from_mins(5),
+            CacheKey::GachaEnhancedStats { .. } => Duration::from_mins(10),
+            CacheKey::GachaPerBannerStats => Duration::from_mins(10),
+            CacheKey::LeaderboardMovers { .. } => Duration::from_mins(15),
+            CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10),
+            CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1),
+            CacheKey::SkinPopularity => Duration::from_hours(1),
+            CacheKey::OperatorOwnership { .. } => Duration::from_hours(1),
+            CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
+            CacheKey::DpsList { .. } => Duration::from_hours(1),
         }
     }
 }

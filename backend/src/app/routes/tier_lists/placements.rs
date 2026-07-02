@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::routes::ok_status;
 use crate::app::services::tier_list::find_and_authorize;
+use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
 use crate::app::validation::{PLACEMENT_DESCRIPTION_MAX, validate_opt_length};
 use crate::core::auth::permissions::Permission;
@@ -48,6 +49,7 @@ pub async fn add(
         body.description.as_deref(),
     )
     .await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(placement))
 }
 
@@ -78,6 +80,7 @@ pub async fn update_description(
     )
     .await?
     .ok_or(ApiError::NotFound)?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(placement))
 }
 
@@ -97,6 +100,7 @@ pub async fn remove(
         let placements = get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
             remove_placement(&state.db, tier.id, &operator_id).await?;
+            invalidate_detail(&state, &slug).await;
             break;
         }
     }
@@ -118,7 +122,6 @@ pub async fn move_to(
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    // Find current tier
     let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
         let placements = get_placements(&state.db, tier.id).await?;
@@ -131,6 +134,7 @@ pub async fn move_to(
                 body.sub_order.unwrap_or(0),
             )
             .await?;
+            invalidate_detail(&state, &slug).await;
             return Ok(Json(result));
         }
     }

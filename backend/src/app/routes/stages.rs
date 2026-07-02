@@ -1,13 +1,17 @@
 use axum::Json;
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
+use axum::http::HeaderMap;
+use axum::response::Response;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::resolve_user_id;
+use crate::app::routes::static_data::json_response;
+use crate::app::services::static_data::get_stage_detail;
 use crate::app::state::AppState;
+use crate::core::hypergryph::constants::Server;
 use crate::database::queries::stages::get_user_stage_clears;
-use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct StageClearsParams {
@@ -23,31 +27,26 @@ pub struct StageClearDto {
     pub practice_times: i32,
 }
 
-async fn resolve_user_id(
-    state: &AppState,
-    auth: &MaybeAuthUser,
-    uid_param: Option<&str>,
-) -> Result<Uuid, ApiError> {
-    if let Some(uid) = uid_param {
-        let profile = find_by_uid(&state.db, uid)
-            .await?
-            .ok_or(ApiError::NotFound)?;
+/// `GET /stages/{stageId}/detail` - one stage plus its zone, level data, the
+/// enemies it references and its drop materials (default server). Replaces the
+/// stage-detail page's full stages/zones/enemies/materials table fetches.
+pub async fn stage_detail(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(stage_id): Path<String>,
+) -> Result<Response, ApiError> {
+    let body = get_stage_detail(&state, state.default_server, &stage_id).await?;
+    Ok(json_response(body, &headers))
+}
 
-        let is_own = auth
-            .0
-            .as_ref()
-            .and_then(|a| a.user_id.parse::<Uuid>().ok())
-            .is_some_and(|id| id == profile.id);
-
-        if !is_own && profile.public_profile != Some(true) {
-            return Err(ApiError::Forbidden);
-        }
-
-        Ok(profile.id)
-    } else {
-        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        auth.user_uuid()
-    }
+/// `GET /{server}/stages/{stageId}/detail` - per-server variant.
+pub async fn stage_detail_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((server, stage_id)): Path<(Server, String)>,
+) -> Result<Response, ApiError> {
+    let body = get_stage_detail(&state, server, &stage_id).await?;
+    Ok(json_response(body, &headers))
 }
 
 pub async fn get_stage_clears(

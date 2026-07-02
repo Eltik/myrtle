@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
-const isServer = import.meta.env.SSR;
+const isServer = typeof window === "undefined";
 const SERVER_MAX_GC_TIME = 1_000;
 
 export function getContext() {
@@ -17,9 +17,14 @@ export function getContext() {
     });
 
     if (isServer) {
-        // Per-query `gcTime` overrides (e.g. 24h on operators/stages/enemies) would
-        // defeat the default above. Clamp the *resolved* gcTime for every query in one
-        // place - this also covers any future call site without touching all of them.
+        // Many call sites set a 24h per-query `gcTime`, which supported `defaultOptions`
+        // can't override. Clamp the *resolved* gcTime for every query in one place so
+        // every current and future call site is covered without editing all 60+ of them.
+        //
+        // Load-bearing: this monkey-patch depends on TanStack Query internals (the shape
+        // of `defaultQueryOptions`), verified on 5.100.1. Min-clamp (not force 0) so SSR
+        // queries survive long enough to dehydrate; `queryClient.clear()` on render finish
+        // (router.tsx) remains the primary OOM defense.
         const resolve = queryClient.defaultQueryOptions.bind(queryClient);
         queryClient.defaultQueryOptions = ((options?: unknown) => {
             const resolved = resolve(options as never);

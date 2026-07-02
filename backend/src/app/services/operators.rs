@@ -3,8 +3,10 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::app::cache::keys::CacheKey;
+use crate::app::cache::{CachedJson, cached_json};
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
+use crate::core::gamedata::types::handbook::{OperatorBirthPlace, OperatorGender, OperatorRace};
 use crate::core::gamedata::types::operator::{
     Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
@@ -29,9 +31,90 @@ pub struct OperatorIndexEntry {
     pub tag_list: Vec<String>,
     pub nation_id: String,
     pub is_not_obtainable: bool,
+    // ---- Extended fields for the operators list page + randomizer ----
+    /// Faction group id (list page "factions" filter + faction-logo fallback).
+    pub group_id: Option<String>,
+    /// Sub-faction / team id (same faction filter + logo fallback).
+    pub team_id: Option<String>,
+    /// Illustrator names (list page "artists" filter).
+    pub artists: Vec<String>,
+    /// Small portrait image path (grid card image src).
+    pub portrait: Option<String>,
+    /// From the operator profile - list page gender/race/birthplace filters and
+    /// the randomizer "Feline" challenge (`race`). Defaulted when no profile.
+    pub gender: OperatorGender,
+    pub race: OperatorRace,
+    pub place_of_birth: OperatorBirthPlace,
+    /// Max-level, max-elite base stats, flattened so the list page can sort
+    /// without pulling `phases`/`attributesKeyFrames`.
+    pub stats: OperatorIndexStats,
+    /// Randomizer challenge-filter booleans, precomputed so the randomizer no
+    /// longer needs the full `/static/operators` table. `hasOffensiveRecovery` /
+    /// `hasDefensiveRecovery`: any skill level with the matching `spType`.
+    /// `allSkillsManual`: has >=1 skill and every skill's first level is manual.
+    pub has_offensive_recovery: bool,
+    pub has_defensive_recovery: bool,
+    pub all_skills_manual: bool,
+}
+
+/// Flattened final-phase base stats for the operators list sorters.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorIndexStats {
+    pub hp: i32,
+    pub atk: i32,
+    pub def: i32,
+    pub res: f64,
+    pub cost: i32,
+    pub block: i32,
 }
 
 fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
+    let stats = op
+        .phases
+        .last()
+        .and_then(|p| p.attributes_key_frames.last())
+        .map_or_else(OperatorIndexStats::default, |kf| OperatorIndexStats {
+            hp: kf.data.max_hp,
+            atk: kf.data.atk,
+            def: kf.data.def,
+            res: kf.data.magic_resistance,
+            cost: kf.data.cost,
+            block: kf.data.block_cnt,
+        });
+
+    let (gender, race, place_of_birth) = op.profile.as_ref().map_or_else(
+        <(OperatorGender, OperatorRace, OperatorBirthPlace)>::default,
+        |pr| {
+            (
+                pr.basic_info.gender.clone(),
+                pr.basic_info.race.clone(),
+                pr.basic_info.place_of_birth.clone(),
+            )
+        },
+    );
+
+    let mut has_offensive_recovery = false;
+    let mut has_defensive_recovery = false;
+    for sk in &op.skills {
+        if let Some(st) = &sk.static_data {
+            for lvl in &st.levels {
+                match lvl.sp_data.sp_type.as_str() {
+                    "INCREASE_WHEN_ATTACK" => has_offensive_recovery = true,
+                    "INCREASE_WHEN_TAKEN_DAMAGE" => has_defensive_recovery = true,
+                    _ => {}
+                }
+            }
+        }
+    }
+    let all_skills_manual = !op.skills.is_empty()
+        && op.skills.iter().all(|sk| {
+            sk.static_data
+                .as_ref()
+                .and_then(|st| st.levels.first())
+                .is_some_and(|lvl| matches!(lvl.skill_type.as_str(), "MANUAL" | "1"))
+        });
+
     OperatorIndexEntry {
         id: op.id.clone().unwrap_or_else(|| id.to_string()),
         name: op.name.clone(),
@@ -43,6 +126,17 @@ fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
         tag_list: op.tag_list.clone(),
         nation_id: op.nation_id.clone(),
         is_not_obtainable: op.is_not_obtainable,
+        group_id: op.group_id.clone(),
+        team_id: op.team_id.clone(),
+        artists: op.artists.clone(),
+        portrait: op.portrait.clone(),
+        gender,
+        race,
+        place_of_birth,
+        stats,
+        has_offensive_recovery,
+        has_defensive_recovery,
+        all_skills_manual,
     }
 }
 
@@ -152,16 +246,58 @@ pub async fn get_upcoming(
     Ok(entries)
 }
 
-/// One fully-enriched operator by id. Lets the detail page fetch a single
-/// operator instead of downloading the whole `/static/operators` table.
-pub async fn get_operator(
+#[derive(Serialize)]
+struct OperatorWithServer<'a> {
+    #[serde(flatten)]
+    operator: &'a Operator,
+    server: &'a str,
+}
+
+fn operator_with_server_json(op: &Operator, server: Server) -> Result<String, ApiError> {
+    serde_json::to_string(&OperatorWithServer {
+        operator: op,
+        server: server.as_str(),
+    })
+    .map_err(|e| ApiError::Internal(e.into()))
+}
+
+/// Loaded servers in resolution order: `preferred` first, then the rest of the
+/// configured servers. Shared by `resolve_operator` and `resolve_operator_json`.
+fn server_order(state: &AppState, preferred: Server) -> Vec<Server> {
+    let mut order = vec![preferred];
+    order.extend(
+        state
+            .config
+            .servers
+            .iter()
+            .copied()
+            .filter(|s| *s != preferred),
+    );
+    order
+}
+
+/// One fully-enriched operator by id, as pre-serialized JSON (+ its `ETag`), cached
+/// per `(server, id)`. Lets the detail page fetch a single operator instead of
+/// downloading the whole `/static/operators` table.
+pub async fn get_operator_json(
     state: &AppState,
     server: Server,
     id: &str,
-) -> Result<Operator, ApiError> {
+) -> Result<CachedJson, ApiError> {
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let gd = server_data.game_data.load_full();
-    gd.operators.get(id).cloned().ok_or(ApiError::NotFound)
+    let resource = format!("operator_detail:{id}");
+    let key = CacheKey::StaticData {
+        resource: &resource,
+        server: server.as_str(),
+        fields_hash: 0,
+        page: 0,
+    };
+    cached_json(state, &key, move || async move {
+        let gd = server_data.game_data.load_full();
+        let op = gd.operators.get(id).ok_or(ApiError::NotFound)?;
+        operator_with_server_json(op, server)
+    })
+    .await
 }
 
 /// Find an operator across loaded servers, preferring `preferred` (the default).
@@ -172,16 +308,7 @@ pub fn resolve_operator(
     preferred: Server,
     id: &str,
 ) -> Option<(Operator, Server)> {
-    let mut order = vec![preferred];
-    order.extend(
-        state
-            .config
-            .servers
-            .iter()
-            .copied()
-            .filter(|s| *s != preferred),
-    );
-    for srv in order {
+    for srv in server_order(state, preferred) {
         if let Some(sd) = state.try_server_data(srv)
             && let Some(op) = sd.game_data.load_full().operators.get(id)
         {
@@ -189,6 +316,36 @@ pub fn resolve_operator(
         }
     }
     None
+}
+
+/// Resolve one operator across loaded servers (preferring `preferred`) as
+/// pre-serialized JSON (+ its `ETag`). Cached on `preferred` with a distinct prefix,
+/// since resolution is deterministic from `preferred` + `config.servers`. Returns
+/// `ApiError::NotFound` when the id resolves on no loaded server.
+pub async fn resolve_operator_json(
+    state: &AppState,
+    preferred: Server,
+    id: &str,
+) -> Result<CachedJson, ApiError> {
+    let resource = format!("operator_resolve:{id}");
+    let key = CacheKey::StaticData {
+        resource: &resource,
+        server: preferred.as_str(),
+        fields_hash: 0,
+        page: 0,
+    };
+    cached_json(state, &key, move || async move {
+        for srv in server_order(state, preferred) {
+            if let Some(sd) = state.try_server_data(srv) {
+                let gd = sd.game_data.load_full();
+                if let Some(op) = gd.operators.get(id) {
+                    return operator_with_server_json(op, srv);
+                }
+            }
+        }
+        Err(ApiError::NotFound)
+    })
+    .await
 }
 
 /// Just one operator's voice lines (+ its voice-lang entry), so the Audio tab

@@ -32,6 +32,16 @@ export interface IOperatorAudio {
     sounds: IAudioSound[];
 }
 
+/** Final-phase, max-level base stats surfaced on the slim operators index. */
+export interface IOperatorIndexStats {
+    hp: number;
+    atk: number;
+    def: number;
+    res: number;
+    cost: number;
+    block: number;
+}
+
 export interface IOperatorIndexEntry {
     id: string;
     name: string;
@@ -43,6 +53,21 @@ export interface IOperatorIndexEntry {
     tagList: string[];
     nationId: string;
     isNotObtainable: boolean;
+    groupId: string | null;
+    teamId: string | null;
+    artists: string[];
+    /** Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
+    portrait: string | null;
+    /** "Male" / "Female" / etc.; empty string when unknown. */
+    gender: string;
+    /** e.g. "Feline"; empty string when unknown. */
+    race: string;
+    /** e.g. "Kazimierz"; empty string when unknown. */
+    placeOfBirth: string;
+    stats: IOperatorIndexStats;
+    hasOffensiveRecovery: boolean;
+    hasDefensiveRecovery: boolean;
+    allSkillsManual: boolean;
 }
 
 export interface IBlackboard {

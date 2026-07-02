@@ -5,7 +5,7 @@ import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { chibisQueryOptions, type IChibiCharacter } from "#/lib/api/chibis";
+import { chibiByOperatorQueryOptions } from "#/lib/api/chibis";
 import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
@@ -18,7 +18,7 @@ interface ISkinsContentProps {
 
 export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsContentProps) {
     const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", operator.server));
-    const { data: chibis } = useQuery(chibisQueryOptions(operator.server));
+    const { data: chibiCharacter } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
     const skins: IUISkin[] = useMemo(() => {
@@ -42,7 +42,6 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
 
-    const chibiCharacter: IChibiCharacter | null = useMemo(() => chibis?.characters?.find((c) => c.operatorCode === operator.id) ?? null, [chibis, operator.id]);
     const chibiSkin = useMemo(() => {
         if (!chibiCharacter || !selected) return null;
         const key = chibiSkinKey(selected.id);
@@ -90,7 +89,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
                                 <div className="font-mono text-[10px] text-white/70 uppercase tracking-wider">{selected.kicker}</div>
                                 <div className="mt-0.5 font-semibold text-2xl text-white drop-shadow-md">{selected.name}</div>
-                                {(selected.displaySkin?.drawerList?.join(", ") ?? null) && <div className="mt-0.5 text-white/70 text-xs">Artist · {selected.displaySkin?.drawerList?.join(", ")}</div>}
+                                {selected.displaySkin?.drawerList?.join(", ") && <div className="mt-0.5 text-white/70 text-xs">Artist · {selected.displaySkin?.drawerList?.join(", ")}</div>}
                             </div>
                         </div>
                     )}

@@ -23,6 +23,10 @@ struct AbInfo {
     pid: Option<String>,
 }
 
+/// # Errors
+///
+/// Returns an error if the HTTP request for `hot_update_list.json` fails or its
+/// body cannot be deserialized into the expected structure.
 pub async fn fetch_hot_update_list(
     client: &reqwest::Client,
     cdn_base_url: &str,

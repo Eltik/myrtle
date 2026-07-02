@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
-import { operatorOwnershipQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
 import { compactForSearch } from "#/lib/search/fuzzy";
-import type { OperatorRarityTier } from "#/types/operators";
+import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
@@ -21,13 +21,17 @@ import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
 import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
-import type { IOperatorOwnershipInfo, SortOption, SortOrder, ViewMode } from "./impl/types";
+import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
 
 const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
 
+// Shared empty array so the export-row memos keep a stable reference while the
+// export dialog is closed, avoiding needless ExportDialog re-renders.
+const EMPTY_EXPORT_ROWS: IOperatorExportRow[] = [];
+
 export function OperatorsList() {
-    const { data: operators = [] } = useQuery(operatorsListQueryOptions());
+    const { data: operators = [] } = useQuery(operatorsIndexQueryOptions());
     const { data: voices } = useQuery(voicesQueryOptions());
     const { data: notes } = useQuery(operatorNotesListQueryOptions());
     const { data: ownership } = useQuery(operatorOwnershipQueryOptions());
@@ -109,11 +113,35 @@ export function OperatorsList() {
     });
 
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
-        setCurrentPage(1);
-    }, []);
-
     const [exportOpen, setExportOpen] = useState(false);
+
+    // The export dialog offers full-table-only fields (descriptions, item usage,
+    // skin art, etc.) that the slim operators index doesn't carry. Fetch the full
+    // operator table lazily - only once the dialog is opened - and merge those
+    // fields onto the rows we hand the dialog.
+    const { data: fullOperators } = useQuery({ ...operatorsListQueryOptions(), enabled: exportOpen });
+    const fullById = useMemo(() => {
+        const map = new Map<string, IOperatorListItem>();
+        for (const op of fullOperators ?? []) if (op.id) map.set(op.id, op);
+        return map;
+    }, [fullOperators]);
+    const toExportRow = useCallback(
+        (v: IOperatorView): IOperatorExportRow => {
+            const full = v.id ? fullById.get(v.id) : undefined;
+            return {
+                ...v,
+                displayNumber: full?.displayNumber ?? null,
+                description: full?.description ?? null,
+                itemUsage: full?.itemUsage ?? null,
+                itemDesc: full?.itemDesc ?? null,
+                itemObtainApproach: full?.itemObtainApproach ?? null,
+                isSpChar: full?.isSpChar ?? null,
+                maxPotentialLevel: full?.maxPotentialLevel ?? null,
+                skin: full?.skin ?? null,
+            };
+        },
+        [fullById],
+    );
 
     const totalCount = isUpcoming ? upcomingFiltered.length : filteredOperators.length;
     const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
@@ -147,6 +175,12 @@ export function OperatorsList() {
         }
         return chips;
     }, [filters, removeFrom, setHasNotes]);
+
+    // Only the export dialog consumes these, and the full-table merge (toExportRow)
+    // is empty until it opens - so skip the row rebuild entirely while it's closed.
+    const exportAllRows = useMemo(() => (exportOpen ? enriched.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, enriched, toExportRow]);
+    const exportFilteredRows = useMemo(() => (exportOpen ? filteredOperators.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, filteredOperators, toExportRow]);
+    const exportPageRows = useMemo(() => (exportOpen ? paginated.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, paginated, toExportRow]);
 
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
@@ -426,7 +460,7 @@ export function OperatorsList() {
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </main>
             </div>
-            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={enriched} filteredRows={filteredOperators} pageRows={paginated} title="Operators" />
+            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title="Operators" />
         </div>
     );
 }

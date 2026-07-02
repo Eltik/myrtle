@@ -17,8 +17,10 @@ use crate::app::extractors::auth::AuthUser;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::routes::ok_status;
 use crate::app::services::tier_list::check_permission;
+use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
 use crate::app::validation::validate_hex_color;
+use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::{TierListFlair, TierListStats};
 use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::add_favorite;
@@ -114,6 +116,9 @@ pub async fn record_view(
         extract_session_id(&headers).map(|sid| hash_session_id(&state.config.jwt_secret, &sid))
     };
 
+    // Deliberately no invalidate_detail: views are high-frequency and a briefly
+    // stale view count in the cached detail is an acceptable trade for not
+    // churning the cache on every page load.
     let unique = queries::record_view(&state.db, list.id, user_id, session_hash.as_deref()).await?;
     Ok(Json(serde_json::json!({ "unique": unique })))
 }
@@ -143,6 +148,7 @@ pub async fn toggle_favorite(
         add_favorite(&state.db, list.id, user_id).await?;
         true
     };
+    invalidate_detail(&state, &slug).await;
     Ok(Json(serde_json::json!({ "favorited": favorited })))
 }
 
@@ -168,11 +174,11 @@ pub async fn set_flair(
     Path(slug): Path<String>,
     Json(body): Json<SetFlairRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    use crate::core::auth::permissions::Permission;
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_flair(&state.db, list.id, body.flair_id).await?;
+    invalidate_detail(&state, &slug).await;
     Ok(ok_status())
 }
 
@@ -193,11 +199,11 @@ pub async fn set_visibility(
     Path(slug): Path<String>,
     Json(body): Json<SetVisibilityRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    use crate::core::auth::permissions::Permission;
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_visibility(&state.db, list.id, body.is_listed).await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(serde_json::json!({ "is_listed": body.is_listed })))
 }
 

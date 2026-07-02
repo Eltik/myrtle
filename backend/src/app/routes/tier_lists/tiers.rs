@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::routes::ok_status;
 use crate::app::services::tier_list::find_and_authorize;
+use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
 use crate::app::validation::{
     TIER_DESCRIPTION_MAX, TIER_NAME_MAX, validate_hex_color, validate_length, validate_opt_length,
@@ -56,6 +57,7 @@ pub async fn create(
         body.description.as_deref(),
     )
     .await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(tier))
 }
 
@@ -79,6 +81,7 @@ pub async fn update(
         body.description.as_deref(),
     )
     .await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(tier))
 }
 
@@ -91,5 +94,6 @@ pub async fn delete(
     find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin).await?;
 
     delete_tier(&state.db, tier_id).await?;
+    invalidate_detail(&state, &slug).await;
     Ok(ok_status())
 }

@@ -28,18 +28,26 @@ export interface IChibiResponse {
     characters: IChibiCharacter[];
 }
 
-export const getChibisFn = createServerFn({ method: "GET" })
-    .inputValidator((server: "en" | "cn") => server)
-    .handler(async ({ data: server }) => {
-        const res = await backendFetch(server === "cn" ? "/cn/static/chibis" : "/static/chibis");
-        if (!res.ok) throw new Error(`Failed to load chibis: ${res.status}`);
-        return (await res.json()) as IChibiResponse;
+/**
+ * A single operator's chibi entry, served by `GET /chibis/{operatorId}` (where
+ * `operatorId` is the catalog `operatorCode` = charId). Avoids downloading the
+ * entire chibi catalog to render one operator. 404 -> `null`.
+ */
+export const getChibiByOperatorFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { operatorId: string; server: "en" | "cn" }) => data)
+    .handler(async ({ data: { operatorId, server } }) => {
+        const path = server === "cn" ? `/cn/chibis/${encodeURIComponent(operatorId)}` : `/chibis/${encodeURIComponent(operatorId)}`;
+        const res = await backendFetch(path);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load chibi ${operatorId}: ${res.status}`);
+        return (await res.json()) as IChibiCharacter;
     });
 
-export function chibisQueryOptions(server: "en" | "cn" = "en") {
+export function chibiByOperatorQueryOptions(operatorId: string, server: "en" | "cn" = "en") {
     return queryOptions({
-        queryKey: ["chibis", server],
-        queryFn: () => getChibisFn({ data: server }),
+        queryKey: ["chibis", "operator", server, operatorId],
+        queryFn: () => (operatorId ? getChibiByOperatorFn({ data: { operatorId, server } }) : Promise.resolve(null)),
+        enabled: !!operatorId,
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

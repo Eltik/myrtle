@@ -6,6 +6,12 @@ use crate::types::{DownloadTask, PipelineStats};
 use std::path::PathBuf;
 use std::sync::Arc;
 
+/// # Errors
+///
+/// Returns an error if a download task panics or its join handle fails, if the
+/// blocking extraction task fails to join, or if the manifest cannot be saved
+/// after a successful download. Individual download failures are recorded in the
+/// returned stats rather than propagated.
 pub async fn run(
     downloader: Arc<Downloader>,
     tasks: Vec<DownloadTask>,

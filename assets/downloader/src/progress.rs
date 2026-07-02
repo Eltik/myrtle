@@ -6,6 +6,10 @@ pub struct ProgressTracker {
 }
 
 impl ProgressTracker {
+    /// # Panics
+    ///
+    /// Panics if the hard-coded progress-bar template string is invalid, which
+    /// cannot happen at runtime for the fixed template used here.
     #[must_use]
     pub fn new(total_files: u64) -> Self {
         let multi = MultiProgress::new();

@@ -1,4 +1,4 @@
-import type { IOperatorListItem, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import type { IStage } from "#/types/stages";
 
 export interface IRandomizerOperator {
@@ -8,6 +8,14 @@ export interface IRandomizerOperator {
     profession: OperatorProfession;
     subProfessionId: string;
     position: OperatorPosition;
+    /** Operator race (e.g. "Feline"); empty string when unknown. Used by challenge filters. */
+    race: string;
+    /** Has at least one skill with an offensive (attack) SP-recovery type. */
+    hasOffensiveRecovery: boolean;
+    /** Has at least one skill with a defensive (damage-taken) SP-recovery type. */
+    hasDefensiveRecovery: boolean;
+    /** Every skill is manually activated (no auto-trigger). */
+    allSkillsManual: boolean;
 }
 
 export interface IRandomizerSettings {
@@ -48,10 +56,10 @@ export interface IPlainChallenge extends IChallengeBase {
 export interface ISquadFilterChallenge extends IChallengeBase {
     type: "SQUAD_FILTER";
     /**
-     * Predicate applied to the full operator data. Return true to KEEP the operator.
-     * Filter runs after settings/roster filtering.
+     * Predicate applied to the slim randomizer operator. Return true to KEEP the
+     * operator. Filter runs after settings/roster filtering.
      */
-    filter: (op: IOperatorListItem) => boolean;
+    filter: (op: IRandomizerOperator) => boolean;
 }
 
 /** A challenge that only applies when the rolled stage matches a predicate. */

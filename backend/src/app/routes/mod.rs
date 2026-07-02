@@ -2,16 +2,51 @@ use axum::{
     Json, Router,
     routing::{get, post, put},
 };
+use uuid::Uuid;
 
+use crate::app::error::ApiError;
+use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
+use crate::database::queries::users::find_by_uid;
 
 /// The standard `{"status":"ok"}` success body for endpoints that return no payload.
 pub fn ok_status() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok" }))
 }
 
+/// Resolve the target `user_id` from either a `uid` query param (public access)
+/// or the authenticated user's token (private access). A `uid` lookup is only
+/// allowed for the caller's own profile or a profile marked public.
+pub(crate) async fn resolve_user_id(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+) -> Result<Uuid, ApiError> {
+    if let Some(uid) = uid_param {
+        let profile = find_by_uid(&state.db, uid)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+
+        let is_own = auth
+            .0
+            .as_ref()
+            .and_then(|a| a.user_id.parse::<Uuid>().ok())
+            .is_some_and(|id| id == profile.id);
+
+        if !is_own && profile.public_profile != Some(true) {
+            return Err(ApiError::Forbidden);
+        }
+
+        Ok(profile.id)
+    } else {
+        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+        auth.user_uuid()
+    }
+}
+
 pub mod assets;
 pub mod auth;
+pub mod chibis;
 pub mod dps;
 pub mod enemies;
 pub mod gacha;
@@ -97,6 +132,11 @@ pub fn router() -> Router<AppState> {
         .route("/admin/stats", get(stats::admin_stats))
         .route("/operators/index", get(operators::index))
         .route("/operators/ownership", get(operators::ownership))
+        .route("/stages/{stage_id}/detail", get(stages::stage_detail))
+        .route("/enemies/{id}", get(enemies::enemy_detail))
+        .route("/enemies/{id}/stages", get(enemies::enemy_stages))
+        .route("/chibis/{operator_id}", get(chibis::chibi_detail))
+        .route("/skins/index", get(skins::skins_index))
         .route("/dps/operators", get(dps::operators))
         .route("/dps/calculate", post(dps::calculate))
         .route("/hps/operators", get(dps::healers))
@@ -138,6 +178,20 @@ pub fn router() -> Router<AppState> {
             get(operators::ownership_srv),
         )
         .route("/{server}/operators/{id}", get(operators::detail_srv))
+        .route(
+            "/{server}/stages/{stage_id}/detail",
+            get(stages::stage_detail_srv),
+        )
+        .route("/{server}/enemies/{id}", get(enemies::enemy_detail_srv))
+        .route(
+            "/{server}/enemies/{id}/stages",
+            get(enemies::enemy_stages_srv),
+        )
+        .route(
+            "/{server}/chibis/{operator_id}",
+            get(chibis::chibi_detail_srv),
+        )
+        .route("/{server}/skins/index", get(skins::skins_index_srv))
         .route(
             "/{server}/static/{resource}",
             get(static_data::get_static_srv),

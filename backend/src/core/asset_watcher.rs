@@ -1,5 +1,4 @@
 use std::path::Path;
-
 use std::time::{Duration, Instant};
 
 use futures_util::StreamExt;
@@ -183,6 +182,7 @@ async fn perform_reload(state: &AppState, server: Server) {
             );
 
             if is_default {
+                state.cache.invalidate_by_prefix("dps:list:").await;
                 reload(&http_client).await;
 
                 let state = state.clone();

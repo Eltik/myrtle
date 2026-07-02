@@ -1,48 +1,17 @@
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use serde::Deserialize;
-use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::resolve_user_id;
 use crate::app::state::AppState;
 use crate::database::models::roster::{RosterEntry, SupportUnit};
 use crate::database::queries::roster;
-use crate::database::queries::users::find_by_uid;
 
 #[derive(Deserialize)]
 pub struct RosterParams {
     pub uid: Option<String>,
-}
-
-/// Resolve the target `user_id` from either a `uid` query param (public access)
-/// or the authenticated user's token (private access).
-async fn resolve_user_id(
-    state: &AppState,
-    auth: &MaybeAuthUser,
-    uid_param: Option<&str>,
-) -> Result<Uuid, ApiError> {
-    if let Some(uid) = uid_param {
-        let profile = find_by_uid(&state.db, uid)
-            .await?
-            .ok_or(ApiError::NotFound)?;
-
-        // Allow if it's the caller's own profile
-        let is_own = auth
-            .0
-            .as_ref()
-            .and_then(|a| a.user_id.parse::<Uuid>().ok())
-            .is_some_and(|id| id == profile.id);
-
-        if !is_own && profile.public_profile != Some(true) {
-            return Err(ApiError::Forbidden);
-        }
-
-        Ok(profile.id)
-    } else {
-        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        auth.user_uuid()
-    }
 }
 
 pub async fn get_roster(

@@ -64,7 +64,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
         if (downloading) return;
         setDownloading(true);
         try {
-            const res = await fetch(`/api/tier-lists/${encodeURIComponent(detail.slug)}/image`);
+            const res = await fetch(`/api/tier-lists/${encodeURIComponent(detail.slug)}/image?v=${encodeURIComponent(detail.updatedAt)}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const blob = await res.blob();
             const baseSlug = detail.slug.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");

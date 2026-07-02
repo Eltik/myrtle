@@ -1,3 +1,4 @@
+use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::{GlobalRole, Permission};
@@ -18,12 +19,12 @@ use crate::database::queries::tier_lists::get_tiers;
 use crate::database::queries::tier_lists::get_tiers_for_lists;
 use crate::database::queries::tier_lists::get_user_permission;
 use crate::database::queries::tier_lists::update;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TierListDetail {
     #[serde(flatten)]
     pub list: TierList,
@@ -33,7 +34,7 @@ pub struct TierListDetail {
     pub author: Option<TierListAuthor>,
 }
 
-#[derive(Clone, Serialize, sqlx::FromRow)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListAuthor {
     pub id: Uuid,
     pub uid: String,
@@ -41,7 +42,7 @@ pub struct TierListAuthor {
     pub avatar_id: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TierDetail {
     #[serde(flatten)]
     pub tier: Tier,
@@ -158,6 +159,11 @@ pub async fn find_and_authorize(
 }
 
 pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail, ApiError> {
+    let key = CacheKey::TierList { slug };
+    if let Some(cached) = state.cache.get::<TierListDetail>(&key).await {
+        return Ok(cached);
+    }
+
     let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -205,13 +211,15 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
         })
         .collect();
 
-    Ok(TierListDetail {
+    let detail = TierListDetail {
         list,
         tiers,
         stats,
         flair,
         author,
-    })
+    };
+    state.cache.set(&key, &detail).await;
+    Ok(detail)
 }
 
 pub async fn list_details(state: &AppState, limit: i64) -> Result<Vec<TierListDetail>, ApiError> {
@@ -295,9 +303,14 @@ pub async fn update_list(
         .await?
         .ok_or(ApiError::NotFound)?;
     check_permission(state, &list, user_id, role, Permission::Edit).await?;
-    update(&state.db, list.id, name, description)
+    let updated = update(&state.db, list.id, name, description)
         .await
-        .map_err(std::convert::Into::into)
+        .map_err(ApiError::from)?;
+    Ok(updated)
+}
+
+pub async fn invalidate_detail(state: &AppState, slug: &str) {
+    state.cache.invalidate(&CacheKey::TierList { slug }).await;
 }
 
 fn generate_slug(name: &str) -> String {

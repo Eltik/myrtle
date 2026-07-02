@@ -3,7 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
-import { enemiesQueryOptions } from "#/lib/api/enemies";
+import { enemyDetailQueryOptions } from "#/lib/api/enemies";
 import { EnemyChibiTab } from "../list/impl/components/EnemyChibi";
 import { enrichEnemy } from "../list/impl/enrich";
 import { AppearsInTab } from "./impl/AppearsInTab";
@@ -11,12 +11,9 @@ import { EnemyHero, OverviewTab, SkillsTab, StatsTab } from "./impl/sections";
 
 export function EnemyDetail() {
     const { id } = useParams({ from: "/enemies_/$id" });
-    const { data: handbook } = useSuspenseQuery(enemiesQueryOptions());
+    const { data: detail } = useSuspenseQuery(enemyDetailQueryOptions(id));
 
-    const enemy = useMemo(() => {
-        const raw = handbook.enemyData[id];
-        return raw ? enrichEnemy(raw, handbook.raceData) : null;
-    }, [handbook, id]);
+    const enemy = useMemo(() => (detail ? enrichEnemy(detail.enemy, detail.raceData) : null), [detail]);
 
     if (!enemy) {
         return (

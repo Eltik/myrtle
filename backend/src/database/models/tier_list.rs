@@ -1,10 +1,10 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierList {
     pub id: Uuid,
     pub name: String,
@@ -19,7 +19,7 @@ pub struct TierList {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFlair {
     pub id: i16,
     pub code: String,
@@ -31,7 +31,7 @@ pub struct TierListFlair {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListStats {
     pub tier_list_id: Uuid,
     pub view_count: i64,
@@ -46,14 +46,14 @@ pub struct TierListStats {
     pub stats_updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFavorite {
     pub tier_list_id: Uuid,
     pub user_id: Uuid,
     pub favorited_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Tier {
     pub id: Uuid,
     pub tier_list_id: Uuid,
@@ -63,7 +63,7 @@ pub struct Tier {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierPlacement {
     pub tier_id: Uuid,
     pub operator_id: String,
@@ -72,7 +72,7 @@ pub struct TierPlacement {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListVersion {
     pub id: Uuid,
     pub tier_list_id: Uuid,
@@ -83,7 +83,7 @@ pub struct TierListVersion {
     pub published_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListPermission {
     pub tier_list_id: Uuid,
     pub user_id: Uuid,

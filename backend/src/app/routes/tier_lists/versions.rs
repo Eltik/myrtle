@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::get_by_slug;
+use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierListVersion;
@@ -52,5 +53,6 @@ pub async fn publish(
         user_id,
     )
     .await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(version))
 }

@@ -9,6 +9,7 @@ use crate::app::routes::ok_status;
 use crate::app::services;
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::get_by_slug;
+use crate::app::services::tier_list::invalidate_detail;
 use crate::app::services::tier_list::update_list;
 use crate::app::state::AppState;
 use crate::app::validation::{
@@ -108,6 +109,7 @@ pub async fn delete(
     // Owner check is inside check_permission; Admin level covers delete.
     check_permission(&state, &list, user_id, auth.role, Permission::Admin).await?;
     delete_list(&state.db, list.id).await?;
+    invalidate_detail(&state, &slug).await;
     Ok(ok_status())
 }
 
@@ -134,5 +136,6 @@ pub async fn update(
         body.description.as_deref(),
     )
     .await?;
+    invalidate_detail(&state, &slug).await;
     Ok(Json(list))
 }

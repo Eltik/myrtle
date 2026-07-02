@@ -14,6 +14,10 @@ pub struct Downloader {
 }
 
 impl Downloader {
+    /// # Panics
+    ///
+    /// Panics if the underlying `reqwest` HTTP client fails to build (e.g. the
+    /// TLS backend cannot be initialized).
     #[must_use]
     pub fn new(server: Server, version: String, max_concurrent: usize) -> Self {
         let client = Client::builder()
@@ -40,6 +44,11 @@ impl Downloader {
         )
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the concurrency semaphore is closed, the HTTP request
+    /// fails or returns a non-success status, or a temp file cannot be created or
+    /// written to.
     pub async fn download(&self, task: &DownloadTask) -> anyhow::Result<PathBuf> {
         let _permit = self.semaphore.acquire().await?;
         let url = self.build_url(&task.filename);
@@ -61,8 +70,8 @@ impl Downloader {
 
 #[must_use]
 pub fn replace_last_ext(name: &str, new_ext: &str) -> String {
-    match name.rfind('.') {
-        Some(pos) => format!("{}.{}", &name[..pos], new_ext),
-        None => format!("{name}.{new_ext}"),
-    }
+    name.rfind('.').map_or_else(
+        || format!("{name}.{new_ext}"),
+        |pos| format!("{}.{}", &name[..pos], new_ext),
+    )
 }

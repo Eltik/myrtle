@@ -3,7 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import { Randomizer } from "#/components/tools/randomizer/Randomizer";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
@@ -11,7 +11,7 @@ import { seo } from "#/lib/seo";
 export const Route = createFileRoute("/tools/randomizer")({
     component: RouteComponent,
     errorComponent: RandomizerErrorComponent,
-    loader: ({ context: { queryClient } }) => Promise.all([queryClient.prefetchQuery(operatorsListQueryOptions()), queryClient.prefetchQuery(stagesQueryOptions()), queryClient.prefetchQuery(zonesQueryOptions())]),
+    loader: ({ context: { queryClient } }) => Promise.all([queryClient.prefetchQuery(operatorsIndexQueryOptions()), queryClient.prefetchQuery(stagesQueryOptions()), queryClient.prefetchQuery(zonesQueryOptions())]),
     head: () => {
         const { meta, links } = seo({
             title: "Randomizer",

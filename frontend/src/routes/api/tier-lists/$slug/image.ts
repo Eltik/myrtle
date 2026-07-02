@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ogResponse } from "#/lib/og/impl/respond";
+import { ogResponse, ogVersion } from "#/lib/og/impl/respond";
 
 function safeFilename(slug: string): string {
     const cleaned = slug.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
@@ -10,10 +10,11 @@ function safeFilename(slug: string): string {
 export const Route = createFileRoute("/api/tier-lists/$slug/image")({
     server: {
         handlers: {
-            GET: ({ params }) =>
+            GET: ({ params, request }) =>
                 ogResponse({
                     kind: "tier-list-image",
                     fetchId: params.slug,
+                    version: ogVersion(request),
                     attachmentFilename: safeFilename(params.slug),
                 }),
         },
