@@ -33,6 +33,18 @@ pub async fn find_all_active(
     }
 }
 
+pub async fn find_all_active_limited(
+    pool: &PgPool,
+    limit: i64,
+) -> Result<Vec<TierList>, sqlx::Error> {
+    sqlx::query_as::<_, TierList>(
+        "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true ORDER BY updated_at DESC LIMIT $1",
+    )
+    .bind(limit)
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn set_visibility(
     pool: &PgPool,
     tier_list_id: Uuid,
@@ -73,6 +85,22 @@ pub async fn get_tiers(pool: &PgPool, tier_list_id: Uuid) -> Result<Vec<Tier>, s
         .await
 }
 
+pub async fn get_tiers_for_lists(
+    pool: &PgPool,
+    tier_list_ids: &[Uuid],
+) -> Result<Vec<Tier>, sqlx::Error> {
+    if tier_list_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    sqlx::query_as::<_, Tier>(
+        "SELECT * FROM tiers WHERE tier_list_id = ANY($1) ORDER BY tier_list_id, display_order",
+    )
+    .bind(tier_list_ids)
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn get_placements(
     pool: &PgPool,
     tier_id: Uuid,
@@ -81,6 +109,22 @@ pub async fn get_placements(
         "SELECT * FROM tier_placements WHERE tier_id = $1 ORDER BY sub_order",
     )
     .bind(tier_id)
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn get_placements_for_tiers(
+    pool: &PgPool,
+    tier_ids: &[Uuid],
+) -> Result<Vec<TierPlacement>, sqlx::Error> {
+    if tier_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    sqlx::query_as::<_, TierPlacement>(
+        "SELECT * FROM tier_placements WHERE tier_id = ANY($1) ORDER BY tier_id, sub_order",
+    )
+    .bind(tier_ids)
     .fetch_all(pool)
     .await
 }
@@ -379,6 +423,20 @@ pub async fn get_stats(
         .await
 }
 
+pub async fn get_stats_for_lists(
+    pool: &PgPool,
+    tier_list_ids: &[Uuid],
+) -> Result<Vec<TierListStats>, sqlx::Error> {
+    if tier_list_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    sqlx::query_as::<_, TierListStats>("SELECT * FROM tier_list_stats WHERE tier_list_id = ANY($1)")
+        .bind(tier_list_ids)
+        .fetch_all(pool)
+        .await
+}
+
 pub async fn ensure_stats_row(pool: &PgPool, tier_list_id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query("INSERT INTO tier_list_stats (tier_list_id) VALUES ($1) ON CONFLICT DO NOTHING")
         .bind(tier_list_id)
@@ -525,6 +583,20 @@ pub async fn list_flairs(
         "SELECT * FROM tier_list_flairs ORDER BY display_order, label"
     };
     sqlx::query_as::<_, TierListFlair>(sql)
+        .fetch_all(pool)
+        .await
+}
+
+pub async fn get_flairs_by_ids(
+    pool: &PgPool,
+    ids: &[i16],
+) -> Result<Vec<TierListFlair>, sqlx::Error> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    sqlx::query_as::<_, TierListFlair>("SELECT * FROM tier_list_flairs WHERE id = ANY($1)")
+        .bind(ids)
         .fetch_all(pool)
         .await
 }

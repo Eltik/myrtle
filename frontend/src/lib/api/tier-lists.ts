@@ -203,24 +203,19 @@ export const recordTierListViewFn = createServerFn({ method: "POST" })
         return (await res.json()) as { unique: boolean };
     });
 
-export const getHomeTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierList[]> => {
-    const [listRes, opsRes] = await Promise.all([backendFetch("/tier-lists"), backendFetch("/operators/index")]);
-    if (!listRes.ok) throw new Error(`Failed to load tier lists: ${listRes.status}`);
+async function fetchTierListDetails(limit: number): Promise<{ details: IBackendTierListDetail[]; opById: Record<string, IOperator> }> {
+    const [detailsRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/details?limit=${limit}`), backendFetch("/operators/index")]);
+    if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
     if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
 
-    const lists = (await listRes.json()) as IBackendTierList[];
+    const details = (await detailsRes.json()) as IBackendTierListDetail[];
     const operators = (await opsRes.json()) as IOperatorIndexEntry[];
     const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+    return { details, opById };
+}
 
-    const top = lists.slice(0, HOME_TIER_LIST_LIMIT);
-    const details = await Promise.all(
-        top.map(async (tl) => {
-            const res = await backendFetch(`/tier-lists/${tl.slug}`);
-            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
-            return (await res.json()) as IBackendTierListDetail;
-        }),
-    );
-
+export const getHomeTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierList[]> => {
+    const { details, opById } = await fetchTierListDetails(HOME_TIER_LIST_LIMIT);
     return details.map((detail, i) => mapDetail(detail, i, opById));
 });
 
@@ -273,27 +268,7 @@ function mapBrowseItem(detail: IBackendTierListDetail, index: number, opById: Re
 }
 
 export const getBrowseTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
-    const [listRes, opsRes] = await Promise.all([backendFetch("/tier-lists"), backendFetch("/operators/index")]);
-    if (!listRes.ok) throw new Error(`Failed to load tier lists: ${listRes.status}`);
-    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-
-    const lists = (await listRes.json()) as IBackendTierList[];
-    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
-
-    const subset = lists.slice(0, BROWSE_TIER_LIST_LIMIT);
-    const settled = await Promise.allSettled(
-        subset.map(async (tl) => {
-            const res = await backendFetch(`/tier-lists/${tl.slug}`);
-            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
-            return (await res.json()) as IBackendTierListDetail;
-        }),
-    );
-
-    const details: IBackendTierListDetail[] = [];
-    for (const result of settled) {
-        if (result.status === "fulfilled") details.push(result.value);
-    }
+    const { details, opById } = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT);
     return details.map((detail, i) => mapBrowseItem(detail, i, opById));
 });
 

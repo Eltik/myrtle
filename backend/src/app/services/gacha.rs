@@ -375,7 +375,14 @@ pub async fn get_enhanced_stats(
         first_pull_at: Option<i64>,
     }
 
-    let collective = sqlx::query_as::<_, CollectiveRow>(
+    #[derive(sqlx::FromRow)]
+    struct OpRow {
+        char_id: String,
+        rarity: i16,
+        pull_count: i64,
+    }
+
+    let collective_fut = sqlx::query_as::<_, CollectiveRow>(
         r"
         SELECT
             COUNT(*) AS total_pulls,
@@ -390,8 +397,26 @@ pub async fn get_enhanced_stats(
         WHERE us.share_stats = true
         ",
     )
-    .fetch_one(&state.db)
-    .await?;
+    .fetch_one(&state.db);
+
+    let op_rows_fut = sqlx::query_as::<_, OpRow>(
+        r"
+        SELECT char_id, rarity, pull_count FROM (
+            SELECT gr.char_id, gr.rarity, COUNT(*) AS pull_count,
+                   ROW_NUMBER() OVER (PARTITION BY gr.rarity ORDER BY COUNT(*) DESC) AS rn
+            FROM gacha_records gr
+            JOIN user_settings us ON us.user_id = gr.user_id
+            WHERE us.share_stats = true
+            GROUP BY gr.char_id, gr.rarity
+        ) t
+        WHERE rn <= $1
+        ORDER BY rarity DESC, pull_count DESC
+        ",
+    )
+    .bind(i64::from(top_n))
+    .fetch_all(&state.db);
+
+    let (collective, op_rows) = tokio::try_join!(collective_fut, op_rows_fut)?;
 
     let total = collective.total_pulls.max(1) as f64;
     let collective_stats = CollectiveStats {
@@ -407,35 +432,6 @@ pub async fn get_enhanced_stats(
         six_star_rate: collective.total_six_stars as f64 / total,
         five_star_rate: collective.total_five_stars as f64 / total,
     };
-
-    // Most common operators (top N overall)
-    #[derive(sqlx::FromRow)]
-    struct OpRow {
-        char_id: String,
-        rarity: i16,
-        pull_count: i64,
-    }
-
-    // Top-N **per rarity**, windowed. A single global top-N is dominated by
-    // 3-stars (which drop far more often than higher rarities) so the 6/5/4-star
-    // buckets would always be empty. Windowing fixes that.
-    let op_rows = sqlx::query_as::<_, OpRow>(
-        r"
-        SELECT char_id, rarity, pull_count FROM (
-            SELECT gr.char_id, gr.rarity, COUNT(*) AS pull_count,
-                   ROW_NUMBER() OVER (PARTITION BY gr.rarity ORDER BY COUNT(*) DESC) AS rn
-            FROM gacha_records gr
-            JOIN user_settings us ON us.user_id = gr.user_id
-            WHERE us.share_stats = true
-            GROUP BY gr.char_id, gr.rarity
-        ) t
-        WHERE rn <= $1
-        ORDER BY rarity DESC, pull_count DESC
-        ",
-    )
-    .bind(i64::from(top_n))
-    .fetch_all(&state.db)
-    .await?;
 
     let most_common_operators: Vec<OperatorPopularity> = op_rows
         .into_iter()
@@ -482,7 +478,7 @@ pub async fn get_enhanced_stats(
             pull_count: i64,
         }
 
-        let hours = sqlx::query_as::<_, HourRow>(
+        let hours_fut = sqlx::query_as::<_, HourRow>(
             r"
             SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp / 1000))::int AS hour,
                    COUNT(*) AS pull_count
@@ -493,10 +489,9 @@ pub async fn get_enhanced_stats(
             ORDER BY hour
             ",
         )
-        .fetch_all(&state.db)
-        .await?;
+        .fetch_all(&state.db);
 
-        let dows = sqlx::query_as::<_, DowRow>(
+        let dows_fut = sqlx::query_as::<_, DowRow>(
             r"
             SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp / 1000))::int AS day,
                    COUNT(*) AS pull_count
@@ -507,10 +502,9 @@ pub async fn get_enhanced_stats(
             ORDER BY day
             ",
         )
-        .fetch_all(&state.db)
-        .await?;
+        .fetch_all(&state.db);
 
-        let dates = sqlx::query_as::<_, DateRow>(
+        let dates_fut = sqlx::query_as::<_, DateRow>(
             r"
             SELECT to_char(to_timestamp(gr.pull_timestamp / 1000), 'YYYY-MM-DD') AS date,
                    COUNT(*) AS pull_count
@@ -521,8 +515,9 @@ pub async fn get_enhanced_stats(
             ORDER BY date
             ",
         )
-        .fetch_all(&state.db)
-        .await?;
+        .fetch_all(&state.db);
+
+        let (hours, dows, dates) = tokio::try_join!(hours_fut, dows_fut, dates_fut)?;
 
         let day_names = [
             "Sunday",

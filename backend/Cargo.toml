@@ -74,7 +74,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signa
 tokio-tungstenite = { version = "0.26", features = ["connect"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
 tower = "0.5.3"
-tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "trace", "request-id"] }
+tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br", "trace", "request-id"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 urlencoding = "2"

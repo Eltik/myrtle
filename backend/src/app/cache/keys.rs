@@ -126,19 +126,19 @@ impl CacheKey<'_> {
         match self {
             CacheKey::User { .. } => Duration::from_mins(10), // 10 min
             CacheKey::Stats => Duration::from_mins(5),        // 5 min
-            CacheKey::StaticData { .. } => Duration::from_mins(30), // 30 min
-            CacheKey::Leaderboard { .. } => Duration::from_mins(5), // 5 min
-            CacheKey::Search { .. } => Duration::from_mins(2), // 2 min
-            CacheKey::TierList { .. } => Duration::from_mins(10), // 10 min
+            CacheKey::StaticData { .. } => Duration::from_hours(24), // invalidated on game-data reload
+            CacheKey::Leaderboard { .. } => Duration::from_mins(5),  // 5 min
+            CacheKey::Search { .. } => Duration::from_mins(2),       // 2 min
+            CacheKey::TierList { .. } => Duration::from_mins(10),    // 10 min
             CacheKey::GameSession { .. } => Duration::from_hours(1), // 1 hour
             CacheKey::PortalSession { .. } => Duration::from_hours(168), // 1 week
-            CacheKey::GachaGlobalStats => Duration::from_mins(5), // 5 min
+            CacheKey::GachaGlobalStats => Duration::from_mins(5),    // 5 min
             CacheKey::GachaEnhancedStats { .. } => Duration::from_mins(10), // 10 min
             CacheKey::GachaPerBannerStats => Duration::from_mins(10), // 10 min
             CacheKey::LeaderboardMovers { .. } => Duration::from_mins(15), // 15 min
             CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10), // 10 min
             CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1), // 1 min
-            CacheKey::SkinPopularity => Duration::from_hours(1), // 1 hour
+            CacheKey::SkinPopularity => Duration::from_hours(1),     // 1 hour
             CacheKey::OperatorOwnership { .. } => Duration::from_hours(1), // 1 hour
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30), // 30 min
         }

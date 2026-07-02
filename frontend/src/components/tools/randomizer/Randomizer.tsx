@@ -38,7 +38,7 @@ export function Randomizer(): React.ReactElement {
     const { data: zones = [] } = useQuery(zonesQueryOptions());
     const { data: activities = [] } = useQuery(activitiesQueryOptions());
     const { data: retroActs = [] } = useQuery(retroActsQueryOptions());
-    const { data: rosterEntries } = useQuery(userRosterQueryOptions(uid ?? ""));
+    const { data: rosterEntries } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
     const { data: stageClears } = useQuery(userStageClearsQueryOptions(uid));
 
     const activityLookup = React.useMemo(() => buildActivityLookup(activities, retroActs), [activities, retroActs]);

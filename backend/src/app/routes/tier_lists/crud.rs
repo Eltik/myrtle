@@ -1,5 +1,5 @@
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -38,6 +38,20 @@ pub async fn get(
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<TierList>>, ApiError> {
     let lists = find_all_active(&state.db, None).await?;
     Ok(Json(lists))
+}
+
+#[derive(Deserialize)]
+pub struct ListDetailsQuery {
+    pub limit: Option<i64>,
+}
+
+pub async fn list_details(
+    State(state): State<AppState>,
+    Query(params): Query<ListDetailsQuery>,
+) -> Result<Json<Vec<services::tier_list::TierListDetail>>, ApiError> {
+    let limit = params.limit.unwrap_or(60).clamp(1, 200);
+    let details = services::tier_list::list_details(&state, limit).await?;
+    Ok(Json(details))
 }
 
 #[derive(Deserialize)]

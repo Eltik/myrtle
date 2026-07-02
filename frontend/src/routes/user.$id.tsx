@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserProfile } from "#/components/user/profile/UserProfile";
-import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { userQueryOptions, userRosterQueryOptions } from "#/lib/api/user";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
@@ -18,7 +18,7 @@ function buildOgData(user: IUserProfile) {
 export const Route = createFileRoute("/user/$id")({
     component: RouteComponent,
     loader: async ({ context, params }) => {
-        const [user] = await Promise.all([context.queryClient.ensureQueryData(userQueryOptions(params.id)), context.queryClient.prefetchQuery(userRosterQueryOptions(params.id)), context.queryClient.prefetchQuery(operatorsIndexQueryOptions()), context.queryClient.prefetchQuery(operatorsListQueryOptions())]);
+        const [user] = await Promise.all([context.queryClient.ensureQueryData(userQueryOptions(params.id)), context.queryClient.prefetchQuery(userRosterQueryOptions(params.id)), context.queryClient.prefetchQuery(operatorsIndexQueryOptions())]);
         if (user) warmOg("user", params.id, buildOgData(user));
         return user;
     },

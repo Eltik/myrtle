@@ -7,14 +7,19 @@ use crate::database::models::tier_list::{
 use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::count_by_user;
 use crate::database::queries::tier_lists::ensure_stats_row;
+use crate::database::queries::tier_lists::find_all_active_limited;
 use crate::database::queries::tier_lists::find_by_slug;
 use crate::database::queries::tier_lists::get_flair_by_id;
-use crate::database::queries::tier_lists::get_placements;
+use crate::database::queries::tier_lists::get_flairs_by_ids;
+use crate::database::queries::tier_lists::get_placements_for_tiers;
 use crate::database::queries::tier_lists::get_stats;
+use crate::database::queries::tier_lists::get_stats_for_lists;
 use crate::database::queries::tier_lists::get_tiers;
+use crate::database::queries::tier_lists::get_tiers_for_lists;
 use crate::database::queries::tier_lists::get_user_permission;
 use crate::database::queries::tier_lists::update;
 use serde::Serialize;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -28,7 +33,7 @@ pub struct TierListDetail {
     pub author: Option<TierListAuthor>,
 }
 
-#[derive(Serialize, sqlx::FromRow)]
+#[derive(Clone, Serialize, sqlx::FromRow)]
 pub struct TierListAuthor {
     pub id: Uuid,
     pub uid: String,
@@ -41,6 +46,63 @@ pub struct TierDetail {
     #[serde(flatten)]
     pub tier: Tier,
     pub placements: Vec<TierPlacement>,
+}
+
+fn assemble_details(
+    lists: Vec<TierList>,
+    tiers: Vec<Tier>,
+    placements: Vec<TierPlacement>,
+    stats: Vec<TierListStats>,
+    flairs: Vec<TierListFlair>,
+    authors: Vec<TierListAuthor>,
+) -> Vec<TierListDetail> {
+    let mut tiers_by_list: HashMap<Uuid, Vec<Tier>> = HashMap::new();
+    for tier in tiers {
+        tiers_by_list
+            .entry(tier.tier_list_id)
+            .or_default()
+            .push(tier);
+    }
+
+    let mut placements_by_tier: HashMap<Uuid, Vec<TierPlacement>> = HashMap::new();
+    for placement in placements {
+        placements_by_tier
+            .entry(placement.tier_id)
+            .or_default()
+            .push(placement);
+    }
+
+    let mut stats_by_list: HashMap<Uuid, TierListStats> =
+        stats.into_iter().map(|s| (s.tier_list_id, s)).collect();
+    let flairs_by_id: HashMap<i16, TierListFlair> = flairs.into_iter().map(|f| (f.id, f)).collect();
+    let authors_by_id: HashMap<Uuid, TierListAuthor> =
+        authors.into_iter().map(|a| (a.id, a)).collect();
+
+    lists
+        .into_iter()
+        .map(|list| {
+            let list_id = list.id;
+            let flair_id = list.flair_id;
+            let created_by = list.created_by;
+            let tier_details = tiers_by_list
+                .remove(&list_id)
+                .unwrap_or_default()
+                .into_iter()
+                .map(|tier| {
+                    let placements = placements_by_tier.remove(&tier.id).unwrap_or_default();
+                    TierDetail { tier, placements }
+                })
+                .collect();
+
+            TierListDetail {
+                list,
+                tiers: tier_details,
+                stats: stats_by_list.remove(&list_id),
+                flair: flair_id.and_then(|id| flairs_by_id.get(&id).cloned()),
+                author: created_by.and_then(|id| authors_by_id.get(&id).cloned()),
+            }
+        })
+        .collect()
 }
 
 /// Check if a user can perform `required` action on a tier list.
@@ -99,39 +161,100 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
     let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
-    let tiers = get_tiers(&state.db, list.id).await?;
 
-    // For each tier, load placements
-    let mut tier_details = Vec::new();
-    for tier in tiers {
-        let placements = get_placements(&state.db, tier.id).await?;
-        tier_details.push(TierDetail { tier, placements });
-    }
-
-    let stats = get_stats(&state.db, list.id).await?;
-    let flair = match list.flair_id {
-        Some(id) => get_flair_by_id(&state.db, id).await?,
-        None => None,
-    };
-    let author = match list.created_by {
-        Some(uid) => {
-            sqlx::query_as::<_, TierListAuthor>(
-                "SELECT id, uid, nickname, avatar_id FROM users WHERE id = $1",
-            )
-            .bind(uid)
-            .fetch_optional(&state.db)
-            .await?
+    let flair_id = list.flair_id;
+    let created_by = list.created_by;
+    let tiers_fut = get_tiers(&state.db, list.id);
+    let stats_fut = get_stats(&state.db, list.id);
+    let flair_fut = async {
+        match flair_id {
+            Some(id) => get_flair_by_id(&state.db, id).await,
+            None => Ok(None),
         }
-        None => None,
     };
+    let author_fut = async {
+        match created_by {
+            Some(uid) => {
+                sqlx::query_as::<_, TierListAuthor>(
+                    "SELECT id, uid, nickname, avatar_id FROM users WHERE id = $1",
+                )
+                .bind(uid)
+                .fetch_optional(&state.db)
+                .await
+            }
+            None => Ok(None),
+        }
+    };
+
+    let (tiers, stats, flair, author) =
+        tokio::try_join!(tiers_fut, stats_fut, flair_fut, author_fut)?;
+    let tier_ids: Vec<Uuid> = tiers.iter().map(|tier| tier.id).collect();
+    let placements = get_placements_for_tiers(&state.db, &tier_ids).await?;
+    let mut placement_map: HashMap<Uuid, Vec<TierPlacement>> = HashMap::new();
+    for placement in placements {
+        placement_map
+            .entry(placement.tier_id)
+            .or_default()
+            .push(placement);
+    }
+    let tiers = tiers
+        .into_iter()
+        .map(|tier| {
+            let placements = placement_map.remove(&tier.id).unwrap_or_default();
+            TierDetail { tier, placements }
+        })
+        .collect();
 
     Ok(TierListDetail {
         list,
-        tiers: tier_details,
+        tiers,
         stats,
         flair,
         author,
     })
+}
+
+pub async fn list_details(state: &AppState, limit: i64) -> Result<Vec<TierListDetail>, ApiError> {
+    let lists = find_all_active_limited(&state.db, limit).await?;
+    let list_ids: Vec<Uuid> = lists.iter().map(|list| list.id).collect();
+    let flair_ids: Vec<i16> = lists
+        .iter()
+        .filter_map(|list| list.flair_id)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let author_ids: Vec<Uuid> = lists
+        .iter()
+        .filter_map(|list| list.created_by)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    let tiers_fut = get_tiers_for_lists(&state.db, &list_ids);
+    let stats_fut = get_stats_for_lists(&state.db, &list_ids);
+    let flairs_fut = get_flairs_by_ids(&state.db, &flair_ids);
+    let authors_fut = async {
+        if author_ids.is_empty() {
+            Ok(Vec::new())
+        } else {
+            let authors = sqlx::query_as::<_, TierListAuthor>(
+                "SELECT id, uid, nickname, avatar_id FROM users WHERE id = ANY($1)",
+            )
+            .bind(&author_ids)
+            .fetch_all(&state.db)
+            .await?;
+            Ok(authors)
+        }
+    };
+
+    let (tiers, stats, flairs, authors) =
+        tokio::try_join!(tiers_fut, stats_fut, flairs_fut, authors_fut)?;
+    let tier_ids: Vec<Uuid> = tiers.iter().map(|tier| tier.id).collect();
+    let placements = get_placements_for_tiers(&state.db, &tier_ids).await?;
+
+    Ok(assemble_details(
+        lists, tiers, placements, stats, flairs, authors,
+    ))
 }
 
 pub async fn create(

@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{OnceLock, RwLock};
 use std::time::UNIX_EPOCH;
 
 use axum::extract::{Path as AxumPath, State};
@@ -16,6 +18,28 @@ const ALLOWED_EXTENSIONS: &[&str] = &[
     "png", "jpg", "jpeg", "webp", "svg", "mp3", "ogg", "wav", "m4a", "mp4", "webm", "skel",
     "atlas", "json", "txt",
 ];
+static CANONICAL_BASES: OnceLock<RwLock<HashMap<PathBuf, PathBuf>>> = OnceLock::new();
+
+fn canonical_base_dir(base_dir: &Path) -> Result<PathBuf, ApiError> {
+    let cache = CANONICAL_BASES.get_or_init(|| RwLock::new(HashMap::new()));
+    if let Some(canonical) = cache
+        .read()
+        .map_err(|_| ApiError::Internal(anyhow::anyhow!("asset path cache poisoned")))?
+        .get(base_dir)
+        .cloned()
+    {
+        return Ok(canonical);
+    }
+
+    let canonical = base_dir
+        .canonicalize()
+        .map_err(|_| ApiError::Internal(anyhow::anyhow!("assets dir missing")))?;
+    cache
+        .write()
+        .map_err(|_| ApiError::Internal(anyhow::anyhow!("asset path cache poisoned")))?
+        .insert(base_dir.to_path_buf(), canonical.clone());
+    Ok(canonical)
+}
 
 /// Serve an asset from `server`, falling back to the default server when the
 /// requested server has no data for it (a missing index entry, or the server
@@ -382,9 +406,7 @@ fn validate_asset_path(base_dir: &Path, requested: &str) -> Result<PathBuf, ApiE
 
     let full = base_dir.join(requested.trim_start_matches('/'));
     let canonical = full.canonicalize().map_err(|_| ApiError::NotFound)?;
-    let canonical_base = base_dir
-        .canonicalize()
-        .map_err(|_| ApiError::Internal(anyhow::anyhow!("assets dir missing")))?;
+    let canonical_base = canonical_base_dir(base_dir)?;
 
     if !canonical.starts_with(&canonical_base) {
         return Err(ApiError::Forbidden);

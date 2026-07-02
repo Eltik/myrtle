@@ -42,12 +42,27 @@ export function operatorsIndexQueryOptions() {
     });
 }
 
-export const getOperatorsListFn = createServerFn({ method: "GET" }).handler(async () => {
+const OPERATORS_LIST_TTL_MS = 30 * 60 * 1000;
+let operatorsListCache: { promise: Promise<IOperatorListItem[]>; expiresAt: number } | null = null;
+
+async function loadOperatorsList(): Promise<IOperatorListItem[]> {
     const res = await backendFetch("/static/operators");
     if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
     const raw = (await res.json()) as IOperatorsStaticMap;
     const normalized = deepCamelize(raw);
     return Object.values(normalized) as IOperatorListItem[];
+}
+
+export const getOperatorsListFn = createServerFn({ method: "GET" }).handler(async () => {
+    const now = Date.now();
+    if (!operatorsListCache || now >= operatorsListCache.expiresAt) {
+        const promise = loadOperatorsList();
+        operatorsListCache = { promise, expiresAt: now + OPERATORS_LIST_TTL_MS };
+        promise.catch(() => {
+            if (operatorsListCache?.promise === promise) operatorsListCache = null;
+        });
+    }
+    return operatorsListCache.promise;
 });
 
 export function operatorsListQueryOptions() {
