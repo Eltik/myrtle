@@ -91,8 +91,8 @@ function naturalCompare(a: string, b: string): number {
     const kb = naturalKey(b);
     const n = Math.min(ka.length, kb.length);
     for (let i = 0; i < n; i++) {
-        const x = ka[i]!;
-        const y = kb[i]!;
+        const x = ka[i] ?? "";
+        const y = kb[i] ?? "";
         if (x === y) continue;
         if (typeof x === "number" && typeof y === "number") return x - y;
         return String(x) < String(y) ? -1 : 1;
@@ -111,6 +111,14 @@ function preferEntry(a: IStageIndexEntry, b: IStageIndexEntry): IStageIndexEntry
 const KNOWN_GROUPS = new Set<StageGroupKey>(["story", "events", "annihilation", "is", "ra", "sss", "paradox", "cc", "supplies", "other"]);
 function asGroupKey(g: string): StageGroupKey {
     return KNOWN_GROUPS.has(g as StageGroupKey) ? (g as StageGroupKey) : "other";
+}
+
+/** Fallback title for zones without a display name: "guide_1" → "Guide 1". */
+function humanizeZoneId(id: string): string {
+    return id
+        .replace(/[_-]+/g, " ")
+        .trim()
+        .replace(/\b[a-z]/g, (c) => c.toUpperCase());
 }
 
 interface IZoneAccum {
@@ -134,7 +142,7 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
         const group = asGroupKey(e.group);
         let zone = zones.get(e.zoneId);
         if (!zone) {
-            zone = { zoneName: e.zoneName || e.zoneId, order: e.zoneOrder, group, banner: e.banner ?? null, byCode: new Map() };
+            zone = { zoneName: e.zoneName || humanizeZoneId(e.zoneId), order: e.zoneOrder, group, banner: e.banner ?? null, byCode: new Map() };
             zones.set(e.zoneId, zone);
         } else if (!zone.banner && e.banner) {
             zone.banner = e.banner;
@@ -173,7 +181,9 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
         cards.sort((a, b) => naturalCompare(a.badge ?? a.title, b.badge ?? b.title));
 
         const badges = cards.map((c) => c.badge).filter(codeLike);
-        const codeRange = badges.length >= 1 ? (badges[0] === badges[badges.length - 1] ? badges[0]! : `${badges[0]} ~ ${badges[badges.length - 1]}`) : "";
+        const first = badges[0];
+        const last = badges[badges.length - 1];
+        const codeRange = first !== undefined && last !== undefined ? (first === last ? first : `${first} ~ ${last}`) : "";
         const bossCount = cards.filter((c) => c.boss).length;
         // Mainline zone names split into "Episode 1" (kicker) + the arc name.
         const kicker = zone.group === "story" && /^(episode|prologue|interlude)/i.test(zone.zoneName) ? zone.zoneName : null;
@@ -218,6 +228,11 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
     const featured = storyEvents.length ? storyEvents.reduce((best, e) => (e.order > best.order ? e : best)) : null;
 
     return { groups, totalStages, totalZones, featured };
+}
+
+/** Best available cover art for an event row/hero/dialog: banner, else first stage preview. */
+export function coverImage(event: IEventVM): string | null {
+    return event.banner ?? event.stages.find((s) => s.preview)?.preview ?? null;
 }
 
 /** Filter the tree by a search query and/or active group, preserving order. */

@@ -27,6 +27,20 @@ export const STAGE_GROUPS: IStageGroup[] = [
 
 export const STAGE_GROUP_LABEL: Record<StageGroupKey, string> = Object.fromEntries(STAGE_GROUPS.map((g) => [g.key, g.label])) as Record<StageGroupKey, string>;
 
+/** One-line blurb per group, shown in the stage-list detail dialog. */
+export const STAGE_GROUP_DESCRIPTION: Record<StageGroupKey, string> = {
+    story: "The mainline campaign - Rhodes Island's canonical operations, told episode by episode across Terra.",
+    events: "Limited-time side stories, intermezzi and reruns, each with its own maps, mechanics and rewards.",
+    annihilation: "Endless-wave defense operations scored by total kills - the weekly source of Orundum.",
+    is: "Roguelike expeditions: assemble a squad node by node across randomized floors, one run at a time.",
+    ra: "A survival sandbox - scout the wilds, gather resources, build defenses and endure each cycle.",
+    sss: "Deck-building defense runs against escalating security directives at fixed installations.",
+    paradox: "Operator-specific challenge simulations that stress-test a single unit's kit.",
+    cc: "Score-attack contracts - stack risk modifiers on a fixed map for higher rewards.",
+    supplies: "Daily and weekly resource runs for LMD, battle records, skill summaries and chips.",
+    other: "Special and uncategorized operations that sit outside the regular rotation.",
+};
+
 /** Index of a group key in display order (unknown keys sort last). */
 export function stageGroupOrder(key: string): number {
     const i = STAGE_GROUPS.findIndex((g) => g.key === key);

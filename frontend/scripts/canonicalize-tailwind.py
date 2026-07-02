@@ -477,9 +477,10 @@ BANG_RE = re.compile(
 def rewrite_bang(text: str, edits: list[tuple[str, str]]) -> str:
     def sub(m: re.Match[str]) -> str:
         utility = m.group("utility")
-        # Skip TS-ish false positives — real Tailwind utilities almost always
-        # contain a hyphen or a bracketed arbitrary value.
-        if "-" not in utility and "[" not in utility:
+        # Skip TS-ish false positives — a real Tailwind utility has a hyphen,
+        # and an arbitrary value's bracket always follows one (`w-[…]`). A bare
+        # `name[…]` is TS indexing (`!s[zoneId]`), not a class.
+        if "-" not in utility.split("[", 1)[0]:
             return m.group(0)
         edits.append(("!" + utility, utility + "!"))
         return m.group("lead") + utility + "!"

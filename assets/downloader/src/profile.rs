@@ -1,3 +1,28 @@
+/// Bundles the Stage Viewer needs: every stage's level scene (for the map/enemy
+/// renderer and clickability) plus the map-preview thumbnails and zone/event/IS
+/// banner art. The `operators` profile omits all of these, so newer events (e.g.
+/// a just-released side story) and mode art never arrive on an incremental pull.
+#[must_use]
+pub fn keep_for_stages(name: &str) -> bool {
+    const PREFIXES: &[&str] = &[
+        // Stage level scenes -> gamedata/levels (all modes + events).
+        "scenes/activities/",
+        "scenes/obt/",
+        // Map-preview thumbnails (main / event / SSS / Annihilation / IS `ro*` /
+        // CC / Paradox / Rune / RA-in-arts).
+        "arts/ui/stage_mappreview_h2_",
+        // Reclamation Algorithm previews live in the sprite pack instead.
+        "spritepack/sandbox_1_stage_mappreview_",
+        // Zone / event / mode banner key-art.
+        "spritepack/ui_home_act_banner_zone_",
+        "spritepack/ui_zone_home_theme_",
+        // Integrated Strategies season KV banners (avg image bundles).
+        "avg/imgs/avg_img_rogue_",
+        "avg/imgs/asp_rl",
+    ];
+    name.ends_with(".idx") || PREFIXES.iter().any(|p| name.starts_with(p))
+}
+
 #[must_use]
 pub fn keep_for_operators(name: &str) -> bool {
     const PREFIXES: &[&str] = &[
@@ -55,5 +80,27 @@ mod tests {
         assert!(!keep_for_operators("arts/ui/[uc]loadingbg.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/music_0.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/enmy_snd_atk_0.ab"));
+    }
+
+    #[test]
+    fn keeps_stage_viewer_assets() {
+        use super::keep_for_stages;
+        // level scenes (map viewer + clickability)
+        assert!(keep_for_stages("scenes/activities/act45side/level_act45side_02/level_act45side_02.ab"));
+        assert!(keep_for_stages("scenes/obt/roguelike/ro1/level_rogue1_4-5/level_rogue1_4-5.ab"));
+        // previews
+        assert!(keep_for_stages("arts/ui/stage_mappreview_h2_main_09_0.ab"));
+        assert!(keep_for_stages("arts/ui/stage_mappreview_h2_ro1_n_0.ab"));
+        assert!(keep_for_stages("spritepack/sandbox_1_stage_mappreview_0.ab"));
+        // banners
+        assert!(keep_for_stages("spritepack/ui_zone_home_theme_act48side.ab"));
+        assert!(keep_for_stages("spritepack/ui_home_act_banner_zone_0.ab"));
+        // IS KV banners
+        assert!(keep_for_stages("avg/imgs/avg_img_rogue_2p2_0.ab"));
+        assert!(keep_for_stages("avg/imgs/asp_rl3_6_0.ab"));
+        assert!(keep_for_stages("hot_update_list.idx"));
+        // not stage-viewer content
+        assert!(!keep_for_stages("chararts/char_002_amiya.ab"));
+        assert!(!keep_for_stages("audio/sound_beta_2/music_0.ab"));
     }
 }

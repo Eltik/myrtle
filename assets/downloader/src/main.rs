@@ -68,13 +68,28 @@ async fn main() -> anyhow::Result<()> {
             let mut manifest = manifest::Manifest::load(&cli.savedir)?;
             let all_files: Vec<_> = selected.iter().flat_map(|g| &g.files).cloned().collect();
 
+            // `--profile` is a comma-separated set of named profiles, OR-combined
+            // (e.g. `operators,stages`). `full`/omitted keeps everything.
             let all_files: Vec<_> = match profile.as_deref() {
-                Some("operators") => all_files
-                    .into_iter()
-                    .filter(|f| downloader::profile::keep_for_operators(&f.name))
-                    .collect(),
                 Some("full") | None => all_files,
-                Some(other) => anyhow::bail!("unknown profile: {other}"),
+                Some(spec) => {
+                    let profiles: Vec<&str> = spec.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
+                    for p in &profiles {
+                        if !matches!(*p, "operators" | "stages") {
+                            anyhow::bail!("unknown profile: {p} (expected: operators, stages, full)");
+                        }
+                    }
+                    all_files
+                        .into_iter()
+                        .filter(|f| {
+                            profiles.iter().any(|p| match *p {
+                                "operators" => downloader::profile::keep_for_operators(&f.name),
+                                "stages" => downloader::profile::keep_for_stages(&f.name),
+                                _ => false,
+                            })
+                        })
+                        .collect()
+                }
             };
             let tasks: Vec<_> = manifest
                 .filter_needed(&all_files)

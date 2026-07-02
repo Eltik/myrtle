@@ -26,15 +26,13 @@ export function MobileNav({ items }: IMobileNavProps) {
         if (item.items && item.items.length > 0) {
             return (
                 <Collapsible key={item.href} className="flex flex-col">
-                    <CollapsibleTrigger className="group">
-                        <DrawerMenuItem className="justify-between">
-                            {item.label}
-                            <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
-                        </DrawerMenuItem>
+                    <CollapsibleTrigger className="group" render={<DrawerMenuItem className="justify-between" />}>
+                        {item.label}
+                        <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
                     </CollapsibleTrigger>
                     <CollapsiblePanel className="mt-1 ml-4 flex flex-col gap-1 border-border border-l">
                         {item.items.map((subItem) => (
-                            <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose render={<Link to={subItem.href} />}></DrawerClose>}>
+                            <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
                                 {subItem.label}
                             </DrawerMenuItem>
                         ))}
@@ -44,7 +42,7 @@ export function MobileNav({ items }: IMobileNavProps) {
         }
 
         return (
-            <DrawerMenuItem key={item.href} className={cn(isActive && "bg-accent text-accent-foreground")} render={<DrawerClose render={<Link to={item.href} />} />}>
+            <DrawerMenuItem key={item.href} className={cn(isActive && "bg-accent text-accent-foreground")} render={<DrawerClose nativeButton={false} render={<Link to={item.href} />} />}>
                 {item.label}
                 {isActive && <ActiveIndicator />}
             </DrawerMenuItem>
@@ -84,7 +82,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     </a>
                                 }
                             />
-                            <DrawerMenuItem render={<DrawerClose render={<Link to="/donate" target="_blank" />} />}>
+                            <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" target="_blank" />} />}>
                                 Donate
                                 <Heart className="mr-2 h-4 w-4" />
                                 <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
@@ -110,11 +108,11 @@ export function MobileNav({ items }: IMobileNavProps) {
                                             <span className="text-muted-foreground text-xs">Level {user.level}</span>
                                         </div>
                                     </div>
-                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} />}>
+                                    <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} />}>
                                         <LayoutList className="mr-2 h-4 w-4 text-muted-foreground" />
                                         My Tier Lists
                                     </DrawerMenuItem>
-                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/settings" />} />}>
+                                    <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/settings" />} />}>
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
                                         Settings
                                     </DrawerMenuItem>

@@ -51,12 +51,12 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
-            <div className="flex h-14 items-center gap-3.5 px-3 sm:h-16 sm:px-4">
+            <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3.5 sm:px-4">
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex shrink-0 items-center gap-2 text-foreground no-underline">
                         <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
-                        <span className="font-semibold text-[15px] tracking-tight">myrtle.moe</span>
+                        <span className="hidden font-semibold text-[15px] tracking-tight min-[340px]:inline">myrtle.moe</span>
                         <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>
 

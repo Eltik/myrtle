@@ -34,7 +34,9 @@ pub enum Commands {
         /// Comma-separated pack names
         #[arg(short, long)]
         packages: Option<String>,
-        /// Content profile: "operators" (gamedata + operator assets) or "full"
+        /// Content profile(s), comma-separated & OR-combined: "operators"
+        /// (operator assets), "stages" (stage-viewer level scenes + preview &
+        /// banner art), or "full" (everything). Omit for full.
         #[arg(long)]
         profile: Option<String>,
     },
