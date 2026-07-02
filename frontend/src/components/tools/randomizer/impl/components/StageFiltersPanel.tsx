@@ -4,6 +4,7 @@ import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
 import { Switch } from "#/components/ui/switch";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import type { IActivityLookup } from "../activity-lookup";
@@ -29,7 +30,7 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
 
     const groups = React.useMemo(() => buildStageGroups(stages, zones, activityLookup), [stages, zones, activityLookup]);
 
-    const trimmedQuery = query.trim().toLowerCase();
+    const trimmedQuery = compactForSearch(query);
 
     const visibleGroups = React.useMemo(() => {
         let pool = groups;
@@ -37,9 +38,9 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
         if (!trimmedQuery) return pool;
         return pool
             .map((group) => {
-                const groupHit = group.label.toLowerCase().includes(trimmedQuery) || (group.sublabel?.toLowerCase().includes(trimmedQuery) ?? false);
+                const groupHit = compactForSearch(group.label).includes(trimmedQuery) || (group.sublabel ? compactForSearch(group.sublabel).includes(trimmedQuery) : false);
                 if (groupHit) return group;
-                const stagesHit = group.stages.filter((s) => s.code.toLowerCase().includes(trimmedQuery) || (s.name?.toLowerCase().includes(trimmedQuery) ?? false));
+                const stagesHit = group.stages.filter((s) => compactForSearch(s.code).includes(trimmedQuery) || (s.name ? compactForSearch(s.name).includes(trimmedQuery) : false));
                 if (stagesHit.length === 0) return null;
                 return { ...group, stages: stagesHit } satisfies IStageGroup;
             })

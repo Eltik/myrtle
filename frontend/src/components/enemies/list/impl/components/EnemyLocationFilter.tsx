@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { STAGE_GROUPS, type StageGroupKey } from "#/lib/registry/stage-groups";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 
 // ── Tree types ──────────────────────────────────────────────────────────────
@@ -95,15 +96,15 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
 
     // Search-filter the tree.
     const visible = useMemo<IGroupNode[]>(() => {
-        const q = query.trim().toLowerCase();
+        const q = compactForSearch(query);
         if (!q) return tree;
         const out: IGroupNode[] = [];
         for (const g of tree) {
-            const groupHit = g.label.toLowerCase().includes(q);
+            const groupHit = compactForSearch(g.label).includes(q);
             const zones: IZoneNode[] = [];
             for (const z of g.zones) {
-                const zoneHit = groupHit || z.label.toLowerCase().includes(q);
-                const stages = zoneHit ? z.stages : z.stages.filter((s) => s.label.toLowerCase().includes(q));
+                const zoneHit = groupHit || compactForSearch(z.label).includes(q);
+                const stages = zoneHit ? z.stages : z.stages.filter((s) => compactForSearch(s.label).includes(q));
                 if (zoneHit || stages.length > 0) zones.push({ ...z, stages });
             }
             if (zones.length > 0) out.push({ ...g, zones });

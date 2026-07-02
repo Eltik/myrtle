@@ -1,6 +1,7 @@
 import type { IOperator } from "#/components/home/impl/data";
 import type { ITierListBrowseItem, ITierOperator } from "#/lib/api/tier-lists";
 import { stripMarkdown } from "#/lib/markdown";
+import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { FALLBACK_TIER_COLORS } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
@@ -83,10 +84,10 @@ export function sortBrowseItems(lists: ITierListBrowseItem[], sort: BrowseListSo
 
 export function matchesBrowseQuery(list: ITierListBrowseItem, q: string): boolean {
     if (!q) return true;
-    const needle = q.toLowerCase();
-    if (list.title.toLowerCase().includes(needle)) return true;
-    if (stripMarkdown(list.description).toLowerCase().includes(needle)) return true;
-    if (list.author.name.toLowerCase().includes(needle)) return true;
-    if (list.flairLabel?.toLowerCase().includes(needle)) return true;
+    const needle = normalizeForSearch(q);
+    if (normalizeForSearch(list.title).includes(needle)) return true;
+    if (normalizeForSearch(stripMarkdown(list.description)).includes(needle)) return true;
+    if (normalizeForSearch(list.author.name).includes(needle)) return true;
+    if (list.flairLabel && normalizeForSearch(list.flairLabel).includes(needle)) return true;
     return false;
 }

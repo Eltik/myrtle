@@ -2,6 +2,7 @@ import { Check, ChevronDown, FilterX, Info, RotateCcw, Search, X } from "lucide-
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, getAvatarById, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
@@ -27,11 +28,11 @@ const RARITY_SORT: Record<OperatorRarity, number> = { 6: 0, 5: 1, 4: 2, 3: 3, 2:
 export function RosterPicker({ allOperators, visibleOperators, selected, isExplicit, onChange, onReset, rosterIndex, hasProfile, settings }: IRosterPickerProps): React.ReactElement {
     const [query, setQuery] = React.useState("");
 
-    const trimmedQuery = query.trim().toLowerCase();
+    const trimmedQuery = compactForSearch(query);
     const searchMatches = React.useCallback(
         (op: IRandomizerOperator) => {
             if (!trimmedQuery) return true;
-            return op.name.toLowerCase().includes(trimmedQuery);
+            return compactForSearch(op.name).includes(trimmedQuery);
         },
         [trimmedQuery],
     );

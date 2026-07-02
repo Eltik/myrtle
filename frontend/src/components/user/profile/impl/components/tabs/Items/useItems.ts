@@ -3,6 +3,7 @@ import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import type { IMaterials } from "#/lib/api/materials";
 import type { IInventoryItem } from "#/lib/api/user";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { categorizeItem, rarityTierToNumber } from "./helpers";
 import type { IItemEntry, IItemFilterState } from "./types";
 
@@ -58,8 +59,8 @@ export function useItems(inventory: IInventoryItem[], materials: IMaterials | un
         let list = entries;
         if (filters.category !== "all") list = list.filter((e) => e.category === filters.category);
         if (filters.rarity !== "all") list = list.filter((e) => String(e.rarityNum) === filters.rarity);
-        const q = filters.search.trim().toLowerCase();
-        if (q) list = list.filter((e) => e.name.toLowerCase().includes(q) || e.item_id.toLowerCase().includes(q));
+        const q = compactForSearch(filters.search);
+        if (q) list = list.filter((e) => compactForSearch(e.name).includes(q) || compactForSearch(e.item_id).includes(q));
         return list;
     }, [entries, filters.category, filters.rarity, filters.search]);
 

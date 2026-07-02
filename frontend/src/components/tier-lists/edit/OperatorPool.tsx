@@ -13,6 +13,7 @@ import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, formatProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
 import { indexEntryToTierOperator } from "../shared";
@@ -46,7 +47,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
     const isDragOver = touchIsOver || mouseDragOver;
 
     const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase();
+        const q = compactForSearch(query);
         return operators
             .filter((op) => !op.isNotObtainable)
             .filter((op) => {
@@ -54,7 +55,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                 if (classes.length > 0 && !classes.includes(op.profession)) return false;
                 if (hideUsed && placedIds.has(op.id)) return false;
                 if (q.length === 0) return true;
-                return op.name.toLowerCase().includes(q) || op.appellation.toLowerCase().includes(q);
+                return compactForSearch(op.name).includes(q) || compactForSearch(op.appellation).includes(q);
             })
             .sort((a, b) => {
                 if (a.rarity !== b.rarity) return b.rarity - a.rarity;

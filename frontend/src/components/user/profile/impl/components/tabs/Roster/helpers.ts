@@ -1,16 +1,17 @@
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
 import { isMaxed } from "./helpers.card";
 import type { IDisplayEntry, RarityFilter, SortKey, SortOrder } from "./types";
 
 export function filterEntries(entries: IDisplayEntry[], rarity: RarityFilter, search: string): IDisplayEntry[] {
-    const q = search.trim().toLowerCase();
+    const q = compactForSearch(search);
     const tierNum = rarity === "all" ? null : rarityToNumber(rarity as OperatorRarityTier);
     if (!q && tierNum === null) return entries;
 
     return entries.filter((e) => {
         if (tierNum !== null && e.rarity !== tierNum) return false;
-        if (q && !e.name.toLowerCase().includes(q)) return false;
+        if (q && !compactForSearch(e.name).includes(q)) return false;
         return true;
     });
 }

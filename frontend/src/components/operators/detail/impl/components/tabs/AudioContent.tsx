@@ -7,6 +7,7 @@ import { Slider } from "#/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorVoicesQueryOptions } from "#/lib/api/voices";
+import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 import type { AudioCategory, IOperatorAudio, IOperatorListItem } from "#/types/operators";
 import type { IVoice, LangType } from "#/types/voices";
@@ -375,13 +376,13 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     }, [operatorVoices]);
 
     const [searchQuery, setSearchQuery] = useState("");
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedQuery = normalizeForSearch(searchQuery.trim());
 
     const filteredCategories: IVoiceCategory[] = useMemo(() => {
         if (!normalizedQuery) return categories;
         return categories.map((c) => ({
             ...c,
-            lines: c.lines.filter((v) => v.voiceTitle.toLowerCase().includes(normalizedQuery) || v.voiceText.toLowerCase().includes(normalizedQuery)),
+            lines: c.lines.filter((v) => normalizeForSearch(v.voiceTitle).includes(normalizedQuery) || normalizeForSearch(v.voiceText).includes(normalizedQuery)),
         }));
     }, [categories, normalizedQuery]);
 

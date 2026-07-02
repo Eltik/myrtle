@@ -1,3 +1,4 @@
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { formatNationId, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { MONTHS, MONTHS_SHORT, NON_OPERATOR_PROFESSIONS } from "./constants";
@@ -73,13 +74,13 @@ export function countActiveFilters(filters: IBirthdayFilters): number {
 }
 
 export function applyFilters(birthdays: IOperatorBirthday[], filters: IBirthdayFilters): IOperatorBirthday[] {
-    const query = filters.query.trim().toLowerCase();
+    const query = compactForSearch(filters.query);
     return birthdays.filter((b) => {
         const op = b.operator;
         if (filters.rarities.size > 0 && !filters.rarities.has(operatorRarity(op))) return false;
         if (filters.professions.size > 0 && !filters.professions.has(op.profession)) return false;
         if (filters.nations.size > 0 && !filters.nations.has(op.nationId)) return false;
-        if (query && !op.name.toLowerCase().includes(query)) return false;
+        if (query && !compactForSearch(op.name).includes(query)) return false;
         return true;
     });
 }

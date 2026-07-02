@@ -19,7 +19,7 @@ import { deleteGroupFn, plansQueryOptions, upsertGroupFn, upsertPlanFn } from "#
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { professionLabel } from "#/lib/registry/operator-display";
-import { searchAndRank } from "#/lib/search/fuzzy";
+import { compactForSearch, searchAndRank } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem, OperatorProfession } from "#/types/operators";
 
@@ -145,7 +145,8 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
     const filteredGroupNames = React.useMemo(() => {
         if (!groupSearchQuery.trim()) return allGroupNames;
-        return allGroupNames.filter((name) => name.toLowerCase().includes(groupSearchQuery.toLowerCase()));
+        const query = compactForSearch(groupSearchQuery);
+        return allGroupNames.filter((name) => compactForSearch(name).includes(query));
     }, [allGroupNames, groupSearchQuery]);
 
     const existingPlan = plans.find((p) => p.operator_id === selectedOperator?.id);

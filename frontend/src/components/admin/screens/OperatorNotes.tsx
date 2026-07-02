@@ -15,6 +15,7 @@ import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, update
 import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { Markdown } from "#/lib/markdown";
+import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { cn, formatRelativeShort, formatSubProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
@@ -63,12 +64,12 @@ export function OperatorNotes(): React.ReactElement {
     }, [combined]);
 
     const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
+        const q = normalizeForSearch(search.trim());
         const rows = combined.filter((c) => {
             if (statusFilter === "has-content" && !(c.note && noteHasContent(c.note))) return false;
             if (statusFilter === "empty" && c.note && noteHasContent(c.note)) return false;
             if (!q) return true;
-            return c.op.name.toLowerCase().includes(q) || c.operatorId.toLowerCase().includes(q) || (c.note?.summary ?? "").toLowerCase().includes(q) || (c.note?.tags ?? []).some((t) => t.toLowerCase().includes(q));
+            return normalizeForSearch(c.op.name).includes(q) || normalizeForSearch(c.operatorId).includes(q) || normalizeForSearch(c.note?.summary ?? "").includes(q) || (c.note?.tags ?? []).some((t) => normalizeForSearch(t).includes(q));
         });
         const sorted = [...rows];
         if (sortMode === "recent") sorted.sort((a, b) => Date.parse(b.note?.updated_at ?? "0") - Date.parse(a.note?.updated_at ?? "0"));

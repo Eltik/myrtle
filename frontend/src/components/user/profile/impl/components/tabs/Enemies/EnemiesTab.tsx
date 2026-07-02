@@ -13,6 +13,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
 import type { IEncounteredEnemies } from "#/lib/api/user";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 
 type StatusFilter = "all" | "encountered" | "missing";
@@ -76,12 +77,12 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     const avgPct = avg != null && total > 0 ? Math.min(100, Math.max(0, (avg / total) * 100)) : null;
 
     const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
+        const q = compactForSearch(search);
         return rows.filter(({ enemy, seen }) => {
             if (status === "encountered" && !seen) return false;
             if (status === "missing" && seen) return false;
             if (level !== "ALL" && enemy.enemyLevel !== level) return false;
-            if (q && !enemy.name.toLowerCase().includes(q) && !enemy.enemyIndex.toLowerCase().includes(q)) return false;
+            if (q && !compactForSearch(enemy.name).includes(q) && !compactForSearch(enemy.enemyIndex).includes(q)) return false;
             return true;
         });
     }, [rows, status, level, search]);

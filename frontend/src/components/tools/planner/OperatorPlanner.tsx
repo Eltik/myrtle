@@ -14,6 +14,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
+import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
@@ -258,8 +259,8 @@ export function OperatorPlanner(): React.ReactElement {
 
     const filteredRequirements = React.useMemo(() => {
         if (!reqSearchQuery.trim()) return aggregatedRequirements;
-        const query = reqSearchQuery.toLowerCase();
-        return aggregatedRequirements.filter((req) => req.name.toLowerCase().includes(query));
+        const query = compactForSearch(reqSearchQuery);
+        return aggregatedRequirements.filter((req) => compactForSearch(req.name).includes(query));
     }, [aggregatedRequirements, reqSearchQuery]);
 
     const togglePlan = (opId: string) => {
