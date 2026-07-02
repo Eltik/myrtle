@@ -28,7 +28,7 @@ const WEIGHT_TRUST: f64 = 5.0;
 /// Reaching this maps to a perfect trust dimension; trust beyond doesn't help
 /// non-support ops. Support-unit operators are held to `max_favor` instead -
 /// publishing an op for others to borrow implies completionist intent.
-const TRUST_MILESTONE_PCT: f64 = 100.0;
+pub const TRUST_MILESTONE_PCT: f64 = 100.0;
 
 /// Maximum partial credit when no milestone (M3 / Mod3) has been reached.
 const PARTIAL_CAP: f64 = 0.30;
@@ -45,14 +45,35 @@ struct MasteryEntry {
 struct ModuleEntry {
     id: String,
     level: i16,
+    #[serde(default)]
+    locked: bool,
 }
 
-fn parse_masteries(roster: &RosterEntry) -> Vec<MasteryEntry> {
-    Vec::<MasteryEntry>::deserialize(&roster.masteries).unwrap_or_default()
+fn parse_masteries(masteries_json: &serde_json::Value) -> Vec<MasteryEntry> {
+    Vec::<MasteryEntry>::deserialize(masteries_json).unwrap_or_default()
 }
 
-fn parse_modules(roster: &RosterEntry) -> Vec<ModuleEntry> {
-    Vec::<ModuleEntry>::deserialize(&roster.modules).unwrap_or_default()
+fn parse_modules(modules_json: &serde_json::Value) -> Vec<ModuleEntry> {
+    let mut modules = Vec::<ModuleEntry>::deserialize(modules_json).unwrap_or_default();
+    modules.retain(|m| !m.locked);
+    modules
+}
+
+/// Levels of the user's unlocked modules restricted to the operator's advanced
+/// module slots - the levels that milestone scoring counts.
+pub fn advanced_module_levels(
+    modules_json: &serde_json::Value,
+    advanced: &[&OperatorModule],
+) -> Vec<i16> {
+    let advanced_ids: HashSet<&str> = advanced
+        .iter()
+        .map(|m| m.module.uni_equip_id.as_str())
+        .collect();
+    parse_modules(modules_json)
+        .iter()
+        .filter(|m| advanced_ids.contains(m.id.as_str()))
+        .map(|m| m.level)
+        .collect()
 }
 
 /// Index a roster by operator id for O(1) lookups.
@@ -248,7 +269,7 @@ fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) ->
 /// Without any M3, partial credit is capped at `PARTIAL_CAP` (0.30).
 /// With M3 skills: 1 → 0.50, 2 → 0.75, all → 1.00, plus partial bonus.
 fn mastery_milestone_score(roster: &RosterEntry, num_skills: usize) -> f64 {
-    let masteries = parse_masteries(roster);
+    let masteries = parse_masteries(&roster.masteries);
     mastery_milestone_from_levels(
         &masteries.iter().map(|m| m.mastery).collect::<Vec<_>>(),
         num_skills,
@@ -294,17 +315,7 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
 /// Without any Mod3, partial credit is capped at `PARTIAL_CAP` (0.30).
 /// With Mod3: first → 0.50, second → 0.80, all → 1.00, plus partial bonus.
 fn module_milestone_score(roster: &RosterEntry, advanced_modules: &[&OperatorModule]) -> f64 {
-    let user_modules = parse_modules(roster);
-    let advanced_ids: HashSet<&str> = advanced_modules
-        .iter()
-        .map(|m| m.module.uni_equip_id.as_str())
-        .collect();
-
-    let user_advanced: Vec<i16> = user_modules
-        .iter()
-        .filter(|m| advanced_ids.contains(m.id.as_str()))
-        .map(|m| m.level)
-        .collect();
+    let user_advanced = advanced_module_levels(&roster.modules, advanced_modules);
     module_milestone_from_levels(&user_advanced, advanced_modules.len())
 }
 
@@ -365,7 +376,7 @@ fn trust_milestone_score(roster: &RosterEntry, favor: &Favor, is_support: bool) 
     (trust_pct / target).clamp(0.0, 1.0)
 }
 
-fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {
+pub fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {
     static_op
         .modules
         .iter()
@@ -384,7 +395,7 @@ pub const fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
     }
 }
 
-const fn potential_matters(static_op: &Operator) -> bool {
+pub const fn potential_matters(static_op: &Operator) -> bool {
     !static_op.can_use_general_potential_item || static_op.is_sp_char
 }
 
@@ -559,7 +570,10 @@ fn simulate_score_for_tag(
             if !can_master {
                 return None;
             }
-            let levels: Vec<i16> = parse_masteries(roster).iter().map(|m| m.mastery).collect();
+            let levels: Vec<i16> = parse_masteries(&roster.masteries)
+                .iter()
+                .map(|m| m.mastery)
+                .collect();
             let simulated = promote_to_milestone(&levels, num_skills, 3);
             mastery_dim = Some((
                 WEIGHT_MASTERY,
@@ -579,22 +593,8 @@ fn simulate_score_for_tag(
             if advanced_mods.is_empty() {
                 return None;
             }
-            let advanced_ids: HashSet<&str> = advanced_mods
-                .iter()
-                .map(|m| m.module.uni_equip_id.as_str())
-                .collect();
-            let user_advanced: Vec<i16> = parse_modules(roster)
-                .iter()
-                .filter(|m| advanced_ids.contains(m.id.as_str()))
-                .map(|m| m.level)
-                .collect();
-            // Pad with zeros so the slice length matches the number of slots -
-            // module_milestone_from_levels treats absent slots as level 0.
-            let mut padded = user_advanced;
-            while padded.len() < advanced_mods.len() {
-                padded.push(0);
-            }
-            let simulated = promote_to_milestone(&padded, advanced_mods.len(), 3);
+            let user_advanced = advanced_module_levels(&roster.modules, &advanced_mods);
+            let simulated = promote_to_milestone(&user_advanced, advanced_mods.len(), 3);
             module_dim = Some((
                 WEIGHT_MODULE,
                 module_milestone_from_levels(&simulated, advanced_mods.len()),
@@ -656,4 +656,20 @@ fn promote_to_milestone(levels: &[i16], slots: usize, milestone: i16) -> Vec<i16
         padded[idx] = milestone;
     }
     padded
+}
+
+#[cfg(test)]
+mod module_parse_tests {
+    use super::parse_modules;
+
+    #[test]
+    fn locked_modules_are_ignored() {
+        let json = serde_json::json!([
+            { "id": "uniequip_002_a", "level": 1, "locked": true },
+            { "id": "uniequip_003_a", "level": 2, "locked": false },
+            { "id": "uniequip_001_a", "level": 1 }
+        ]);
+        let ids: Vec<String> = parse_modules(&json).into_iter().map(|m| m.id).collect();
+        assert_eq!(ids, ["uniequip_003_a", "uniequip_001_a"]);
+    }
 }

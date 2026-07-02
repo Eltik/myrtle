@@ -10,9 +10,7 @@ use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::campaign::RotationStatus;
 use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainability};
-use crate::core::gamedata::types::operator::{
-    Operator, OperatorModule, OperatorProfession, OperatorRarity,
-};
+use crate::core::gamedata::types::operator::OperatorProfession;
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment_with_pins, compute_sustained_assignment,
@@ -30,13 +28,14 @@ use crate::core::grade::base::types::{
 };
 use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_operators::{
-    UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
+    TRUST_MILESTONE_PCT, UpgradeDelta, advanced_module_levels, advanced_modules,
+    operator_upgrade_deltas, potential_matters, rarity_to_weight, total_roster_weight,
 };
 use crate::core::grade::sandbox::grade_sandbox_detail;
 use crate::core::grade::sandbox::score::{
     ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
 };
-use crate::core::grade::stages::event_is_gradeable;
+use crate::core::grade::stages::{StageClear, event_is_gradeable};
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::building::get_building;
 use crate::database::queries::medals::get_user_medals;
@@ -502,77 +501,69 @@ async fn build_stage_improvements(
     let event_in_window =
         |e: &EventEntry| -> bool { event_is_gradeable(e, now, last_synced_ts, Some(&known)) };
 
-    let mut permanent = StagePoolImprovements::default();
-    for entry in &universe.permanent {
-        if !known.contains(&entry.stage_id) {
-            continue;
-        }
-        permanent.total += 1;
-        let clear = clears.get(&entry.stage_id);
-        let state = clear.map_or(0, |c| c.state);
-        let stage_meta = game_data.stages.get(&entry.stage_id);
-        let gap = StageGap {
-            stage_id: entry.stage_id.clone(),
-            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
-            name: stage_meta.and_then(|s| s.name.clone()),
-            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
-            weight: entry.weight,
-            state,
-            rotation: rotation_for(&entry.stage_id),
-        };
-        match state {
-            s if s >= 3 => {
-                permanent.cleared += 1;
-                permanent.three_starred += 1;
-            }
-            s if s >= 2 => {
-                permanent.cleared += 1;
-                permanent.not_three_starred.push(gap);
-            }
-            _ => {
-                permanent.missing.push(gap);
-            }
-        }
-    }
-    sort_by_weight_desc(&mut permanent.missing);
-    sort_by_weight_desc(&mut permanent.not_three_starred);
-
-    let mut event = StagePoolImprovements::default();
-    for entry in &universe.event {
-        if !event_in_window(entry) {
-            continue;
-        }
-        event.total += 1;
-        let clear = clears.get(&entry.stage_id);
-        let state = clear.map_or(0, |c| c.state);
-        let stage_meta = game_data.stages.get(&entry.stage_id);
-        let gap = StageGap {
-            stage_id: entry.stage_id.clone(),
-            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
-            name: stage_meta.and_then(|s| s.name.clone()),
-            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
-            weight: entry.weight,
-            state,
-            rotation: rotation_for(&entry.stage_id),
-        };
-        match state {
-            s if s >= 3 => {
-                event.cleared += 1;
-                event.three_starred += 1;
-            }
-            s if s >= 2 => {
-                event.cleared += 1;
-                event.not_three_starred.push(gap);
-            }
-            _ => {
-                event.missing.push(gap);
-            }
-        }
-    }
-    sort_by_weight_desc(&mut event.missing);
-    sort_by_weight_desc(&mut event.not_three_starred);
+    let permanent = build_stage_pool(
+        universe
+            .permanent
+            .iter()
+            .filter(|e| known.contains(&e.stage_id))
+            .map(|e| (e.stage_id.as_str(), e.weight)),
+        clears,
+        game_data,
+        rotation_for,
+    );
+    let event = build_stage_pool(
+        universe
+            .event
+            .iter()
+            .filter(|e| event_in_window(e))
+            .map(|e| (e.stage_id.as_str(), e.weight)),
+        clears,
+        game_data,
+        rotation_for,
+    );
 
     Ok(StageImprovements { permanent, event })
+}
+
+/// Bucket a pool of stages (already filtered to the gradeable set) into
+/// cleared / 3-starred / missing, with gap lists sorted by weight desc.
+fn build_stage_pool<'a>(
+    entries: impl Iterator<Item = (&'a str, f64)>,
+    clears: &HashMap<String, StageClear>,
+    game_data: &GameData,
+    rotation_for: impl Fn(&str) -> Option<RotationInfo>,
+) -> StagePoolImprovements {
+    let mut pool = StagePoolImprovements::default();
+    for (stage_id, weight) in entries {
+        pool.total += 1;
+        let state = clears.get(stage_id).map_or(0, |c| c.state);
+        let stage_meta = game_data.stages.get(stage_id);
+        let gap = StageGap {
+            stage_id: stage_id.to_string(),
+            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
+            name: stage_meta.and_then(|s| s.name.clone()),
+            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
+            weight,
+            state,
+            rotation: rotation_for(stage_id),
+        };
+        match state {
+            s if s >= 3 => {
+                pool.cleared += 1;
+                pool.three_starred += 1;
+            }
+            s if s >= 2 => {
+                pool.cleared += 1;
+                pool.not_three_starred.push(gap);
+            }
+            _ => {
+                pool.missing.push(gap);
+            }
+        }
+    }
+    sort_by_weight_desc(&mut pool.missing);
+    sort_by_weight_desc(&mut pool.not_three_starred);
+    pool
 }
 
 fn sort_by_weight_desc(items: &mut [StageGap]) {
@@ -911,10 +902,6 @@ fn rarity_weight(rarity: &str) -> f64 {
     }
 }
 
-/// Trust percent at which an ordinary operator is considered "complete" - must
-/// stay in sync with `core::grade::grade_operators::TRUST_MILESTONE_PCT`.
-const TRUST_COMPLETE_PCT: f64 = 100.0;
-
 fn build_operator_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
@@ -947,17 +934,9 @@ fn build_operator_improvements(
         let advanced_modules = advanced_modules(static_op);
 
         let masteries = parse_skill_levels(&entry.masteries);
-        let modules = parse_module_levels(&entry.modules);
-
         let max_mastery = masteries.iter().copied().max().unwrap_or(-1);
-        let max_module_level = modules
-            .iter()
-            .filter(|(id, _)| {
-                advanced_modules
-                    .iter()
-                    .any(|m| m.module.uni_equip_id == *id)
-            })
-            .map(|(_, lvl)| *lvl)
+        let max_module_level = advanced_module_levels(&entry.modules, &advanced_modules)
+            .into_iter()
             .max()
             .unwrap_or(-1);
 
@@ -970,7 +949,7 @@ fn build_operator_improvements(
         let trust_target = if is_support {
             max_trust
         } else {
-            TRUST_COMPLETE_PCT.min(max_trust)
+            TRUST_MILESTONE_PCT.min(max_trust)
         };
 
         let mut missing: Vec<&'static str> = Vec::new();
@@ -990,7 +969,7 @@ fn build_operator_improvements(
         if !advanced_modules.is_empty() && max_module_level < 3 {
             missing.push("MOD3");
         }
-        if rarity_potential_matters(static_op) && entry.potential < 5 {
+        if potential_matters(static_op) && entry.potential < 5 {
             missing.push("POT6");
         }
         if trust_target > 0.0 && current_trust < trust_target {
@@ -1064,18 +1043,6 @@ fn build_operator_improvements(
     OperatorImprovements { below_milestone }
 }
 
-fn advanced_modules(op: &Operator) -> Vec<&OperatorModule> {
-    use crate::core::gamedata::types::module::ModuleType;
-    op.modules
-        .iter()
-        .filter(|m| m.module.module_type == ModuleType::Advanced)
-        .collect()
-}
-
-const fn rarity_potential_matters(op: &Operator) -> bool {
-    !op.can_use_general_potential_item || op.is_sp_char
-}
-
 fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
     let Some(arr) = masteries_json.as_array() else {
         return Vec::new();
@@ -1087,27 +1054,6 @@ fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
                 .map(|v| v as i16)
         })
         .collect()
-}
-
-fn parse_module_levels(modules_json: &serde_json::Value) -> Vec<(String, i16)> {
-    let Some(arr) = modules_json.as_array() else {
-        return Vec::new();
-    };
-    arr.iter()
-        .filter_map(|m| {
-            let id = m.get("id").and_then(|v| v.as_str())?.to_string();
-            let level = m.get("level").and_then(serde_json::Value::as_i64)? as i16;
-            Some((id, level))
-        })
-        .collect()
-}
-
-// Re-export the rarity star helper from OperatorRarity for symmetry. (We
-// intentionally don't depend on `grade_operators.rs` internals - those are
-// scoring-specific and would change the response shape if reused.)
-#[allow(dead_code)]
-const fn rarity_to_star(rarity: &OperatorRarity) -> i16 {
-    rarity.to_star_int()
 }
 
 async fn build_base_improvements(
