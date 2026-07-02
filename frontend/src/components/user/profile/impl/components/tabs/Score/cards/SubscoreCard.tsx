@@ -18,6 +18,7 @@ interface ISubscoreCardProps {
 export function SubscoreCard({ sub, score, improvements, isImprovementsLoading }: ISubscoreCardProps) {
     const pct = toPct(score);
     const wShare = weightShare(sub.weight);
+    const contribution = (pct * wShare) / 100;
     const [open, setOpen] = useState(false);
 
     return (
@@ -36,7 +37,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading }
                             />
                             <TooltipContent sideOffset={5}>
                                 <p>
-                                    Counts for {wShare.toFixed(0)}% of your overall score · weight ×{sub.weight.toFixed(1)}
+                                    Worth {wShare.toFixed(0)}% of your overall grade - at {pct.toFixed(1)}%, this section contributes {contribution.toFixed(1)} of those {wShare.toFixed(0)} points
                                 </p>
                             </TooltipContent>
                         </Tooltip>

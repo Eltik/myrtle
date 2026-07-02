@@ -19,12 +19,12 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                 return (
                     <section key={type}>
                         <h3 className="mb-2 font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">{TAG_GROUP_LABELS[type]}</h3>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
                             {tagsForGroup.map((tag) => {
                                 const selected = selectedTagIds.has(tag.id);
                                 const disabled = !selected && maxReached;
                                 return (
-                                    <Button key={tag.id} size="sm" variant={selected ? "default" : "outline"} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(tag.id)}>
+                                    <Button key={tag.id} className="h-11 w-full px-2 md:h-10" variant={selected ? "default" : "outline"} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(tag.id)}>
                                         {tag.name}
                                     </Button>
                                 );
