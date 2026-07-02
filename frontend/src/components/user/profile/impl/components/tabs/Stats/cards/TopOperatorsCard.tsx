@@ -69,8 +69,8 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
 
     return (
         <PreviewCard>
-            <PreviewCardTrigger>
-                <div className="relative flex flex-col gap-2.5 bg-card p-3 sm:p-4">
+            <PreviewCardTrigger className="block h-full">
+                <div className="relative flex h-full flex-col gap-2.5 bg-card p-3 sm:p-4">
                     <div aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: rarityColor, opacity: 0.55 }} />
                     <div className="absolute top-2.5 right-2.5 font-bold font-mono text-[10px] text-muted-foreground/35 tabular-nums">#{rank}</div>
 
