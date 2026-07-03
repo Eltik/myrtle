@@ -145,7 +145,9 @@ fn medal_weight(medal: &MedalDefinition) -> f64 {
     }
 }
 
-fn rarity_weight(rarity: &str) -> f64 {
+/// Scoring weight of a medal rarity tier. Also used by the improvements
+/// service to sort medal gaps by value.
+pub fn rarity_weight(rarity: &str) -> f64 {
     match rarity {
         "T1" => RARITY_T1,
         "T1D5" => (RARITY_T1 + RARITY_T2) / 2.0, // Not in data, interpolate

@@ -12,6 +12,8 @@ export interface ISubscore {
     weight: number;
 }
 
+// `weight` mirrors the backend's SECTION_WEIGHT_* constants in
+// `backend/src/core/grade/calculate.rs` - change both together.
 export const SUBSCORES: ISubscore[] = [
     { key: "operator_score", label: "Operator", description: "Roster depth & investment", icon: Crown, color: SCORE_PALETTE.operator, weight: 1.0 },
     { key: "base_score", label: "Base", description: "Drone & facility upgrades", icon: Hammer, color: SCORE_PALETTE.base, weight: 0.5 },

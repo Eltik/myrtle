@@ -12,7 +12,11 @@ use crate::{
     database::models::roster::RosterEntry,
 };
 
-use super::{Dimension, weighted_average};
+use super::{
+    Dimension,
+    calculate::{SECTION_WEIGHT_OPERATOR, SECTION_WEIGHT_TOTAL},
+    weighted_average,
+};
 
 /// Dimension weights
 const WEIGHT_ELITE: f64 = 25.0;
@@ -145,63 +149,166 @@ pub fn grade_operator(
     favor: &Favor,
     is_support: bool,
 ) -> f64 {
-    let dims = build_dimensions(roster, static_op, favor, is_support);
-    weighted_average(&dims)
+    average_dimensions(&build_dimensions(roster, static_op, favor, is_support))
 }
+
+/// Collapse labeled dimensions to their weight-normalized average.
+fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
+    let unlabeled: Vec<Dimension> = dims.iter().map(|(_, dim)| *dim).collect();
+    weighted_average(&unlabeled)
+}
+
+/// The investment axes an operator is scored on. Which axes apply varies per
+/// operator (no advanced modules → no `Module` dimension, etc.).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DimensionKind {
+    Elite,
+    Level,
+    SkillLevel,
+    Mastery,
+    Module,
+    Potential,
+    Trust,
+}
+
+/// Display order for breakdowns: active investment first, passive accrual last.
+const DIMENSION_ORDER: [DimensionKind; 7] = [
+    DimensionKind::Elite,
+    DimensionKind::Level,
+    DimensionKind::Mastery,
+    DimensionKind::SkillLevel,
+    DimensionKind::Module,
+    DimensionKind::Potential,
+    DimensionKind::Trust,
+];
 
 fn build_dimensions(
     roster: &RosterEntry,
     static_op: &Operator,
     favor: &Favor,
     is_support: bool,
-) -> Vec<Dimension> {
+) -> Vec<(DimensionKind, Dimension)> {
     let max_elite = (static_op.phases.len() - 1) as f64;
     let num_skills = static_op.skills.len();
     let can_master = num_skills > 0 && static_op.phases.len() >= 3;
     let advanced_modules = advanced_modules(static_op);
 
-    let mut dimensions: Vec<Dimension> = vec![];
+    let mut dimensions: Vec<(DimensionKind, Dimension)> = vec![];
 
     // Elite promotion progress
     if max_elite > 0.0 {
         let elite_score = f64::from(roster.elite) / max_elite;
-        dimensions.push((WEIGHT_ELITE, elite_score));
+        dimensions.push((DimensionKind::Elite, (WEIGHT_ELITE, elite_score)));
     }
 
     // Level progress
     let level_score = cumulative_level_progress(roster, static_op);
-    dimensions.push((level_weight(&static_op.rarity), level_score));
+    dimensions.push((
+        DimensionKind::Level,
+        (level_weight(&static_op.rarity), level_score),
+    ));
 
     // Skill level
     if !can_master && num_skills > 0 {
         let sl_score = f64::from(roster.skill_level - 1) / 6.0; // SL1=0, SL7=1.0
-        dimensions.push((WEIGHT_SKILL_LEVEL, sl_score));
+        dimensions.push((DimensionKind::SkillLevel, (WEIGHT_SKILL_LEVEL, sl_score)));
     }
 
     // Mastery
     if can_master {
         let mastery_score = mastery_milestone_score(roster, num_skills);
-        dimensions.push((WEIGHT_MASTERY, mastery_score));
+        dimensions.push((DimensionKind::Mastery, (WEIGHT_MASTERY, mastery_score)));
     }
 
     // Modules
     if !advanced_modules.is_empty() {
         let module_score = module_milestone_score(roster, &advanced_modules);
-        dimensions.push((WEIGHT_MODULE, module_score));
+        dimensions.push((DimensionKind::Module, (WEIGHT_MODULE, module_score)));
     }
 
     // Potential
     if potential_matters(static_op) {
-        dimensions.push((WEIGHT_POTENTIAL, potential_score(roster.potential)));
+        dimensions.push((
+            DimensionKind::Potential,
+            (WEIGHT_POTENTIAL, potential_score(roster.potential)),
+        ));
     }
 
     // Trust - only meaningful once the favor table is loaded.
     if favor.max_trust_pct() > 0.0 {
         let trust_score = trust_milestone_score(roster, favor, is_support);
-        dimensions.push((WEIGHT_TRUST, trust_score));
+        dimensions.push((DimensionKind::Trust, (WEIGHT_TRUST, trust_score)));
     }
 
     dimensions
+}
+
+/// One row of the roster-wide operator score breakdown: how much of the
+/// Operators subscore a dimension is worth, and how much of that worth the
+/// user has earned.
+#[derive(Debug, Clone, Serialize)]
+pub struct ScoreDimension {
+    pub kind: DimensionKind,
+    /// Share of the Operators subscore this dimension carries across the
+    /// graded roster (0.0-1.0; all shares sum to 1.0).
+    pub weight_share: f64,
+    /// Rarity-weighted completion of this dimension (0.0-1.0).
+    pub completion: f64,
+    /// `weight_share x completion` - contributions sum to `operator_grade`.
+    pub contribution: f64,
+}
+
+/// Decompose the Operators subscore into per-dimension contributions.
+///
+/// `grade_operators` averages each operator's dimensions, then averages the
+/// operators by rarity weight - both are linear, so the subscore splits
+/// exactly: each operator's dimension contributes
+/// `(rarity_w / total_rarity_w) * (dim_w / op_dim_w_total) * dim_score`.
+/// Summing those per `DimensionKind` yields rows whose `contribution`s add up
+/// to the subscore, making the headline number auditable.
+pub fn operator_score_breakdown(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    support_ids: &HashSet<&str>,
+) -> Vec<ScoreDimension> {
+    let roster_map = build_roster_map(roster);
+    let total_rarity_weight: f64 = invested_operators(&roster_map, game_data)
+        .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
+        .sum();
+    if total_rarity_weight <= 0.0 {
+        return Vec::new();
+    }
+
+    let mut shares: HashMap<DimensionKind, (f64, f64)> = HashMap::new();
+    for (op_id, static_op, entry) in invested_operators(&roster_map, game_data) {
+        let is_support = support_ids.contains(op_id);
+        let dims = build_dimensions(entry, static_op, &game_data.favor, is_support);
+        let op_weight_total: f64 = dims.iter().map(|(_, (w, _))| w).sum();
+        if op_weight_total <= 0.0 {
+            continue;
+        }
+        let op_share = rarity_to_weight(&static_op.rarity) / total_rarity_weight;
+        for (kind, (weight, score)) in dims {
+            let dim_share = op_share * weight / op_weight_total;
+            let slot = shares.entry(kind).or_insert((0.0, 0.0));
+            slot.0 += dim_share;
+            slot.1 += dim_share * score;
+        }
+    }
+
+    DIMENSION_ORDER
+        .iter()
+        .filter_map(|kind| {
+            let &(weight_share, contribution) = shares.get(kind)?;
+            (weight_share > 0.0).then_some(ScoreDimension {
+                kind: *kind,
+                weight_share,
+                completion: contribution / weight_share,
+                contribution,
+            })
+        })
+        .collect()
 }
 
 const fn level_weight(rarity: &OperatorRarity) -> f64 {
@@ -432,14 +539,10 @@ pub struct UpgradeDelta {
     /// roster weight.
     pub operator_grade_delta: f64,
     /// Δ contribution to the user's `total_score` (0.0-1.0). Accounts for
-    /// the Operators subscore's share of the overall grade (1.0 / 2.6).
+    /// the Operators subscore's share of the overall grade
+    /// (`SECTION_WEIGHT_OPERATOR / SECTION_WEIGHT_TOTAL`).
     pub total_score_delta: f64,
 }
-
-/// Total of all category weights in `calculate_user_grade` (operator 1.0 +
-/// base 0.5 + roguelike 0.3 + medal 0.2 + stage 0.4 + sandbox 0.2).
-/// Kept in sync manually with `core::grade::calculate`.
-const TOTAL_CATEGORY_WEIGHT: f64 = 2.6;
 
 /// Compute per-tag deltas for the given operator. `missing` is the list of
 /// upgrade tags surfaced in `OperatorGap.missing`; each gets a simulated
@@ -457,11 +560,10 @@ pub fn operator_upgrade_deltas(
     total_roster_weight: f64,
 ) -> Vec<UpgradeDelta> {
     let current_dims = build_dimensions(roster, static_op, favor, is_support);
-    let total_weight: f64 = current_dims.iter().map(|(w, _)| w).sum();
-    if total_weight <= 0.0 {
+    if current_dims.iter().map(|(_, (w, _))| w).sum::<f64>() <= 0.0 {
         return Vec::new();
     }
-    let current_score = current_dims.iter().map(|(w, s)| w * s).sum::<f64>() / total_weight;
+    let current_score = average_dimensions(&current_dims);
 
     let mut out = Vec::with_capacity(missing.len());
     for &tag in missing {
@@ -473,7 +575,7 @@ pub fn operator_upgrade_deltas(
         } else {
             0.0
         };
-        let total_delta = grade_delta / TOTAL_CATEGORY_WEIGHT;
+        let total_delta = grade_delta * SECTION_WEIGHT_OPERATOR / SECTION_WEIGHT_TOTAL;
         out.push(UpgradeDelta {
             tag,
             operator_score_delta: op_delta,
@@ -487,6 +589,10 @@ pub fn operator_upgrade_deltas(
 /// Rebuild dimensions with one milestone reached, then average. Returns `None`
 /// if the tag isn't applicable to this operator (defensive - caller already
 /// filtered, but cheap to recheck).
+///
+/// A dimension exists on the operator exactly when the tag applies (no
+/// advanced modules → no `Module` dimension → MOD3 not applicable), so
+/// "replace by kind" doubles as the applicability check.
 fn simulate_score_for_tag(
     roster: &RosterEntry,
     static_op: &Operator,
@@ -494,63 +600,22 @@ fn simulate_score_for_tag(
     is_support: bool,
     tag: &str,
 ) -> Option<f64> {
-    let max_elite = (static_op.phases.len() - 1) as i16;
-    let num_skills = static_op.skills.len();
-    let can_master = num_skills > 0 && static_op.phases.len() >= 3;
-    let advanced_mods = advanced_modules(static_op);
-    let level_w = level_weight(&static_op.rarity);
-    let trust_active = favor.max_trust_pct() > 0.0;
-
-    // Build the current set of dimensions, but capture each component so we
-    // can selectively replace one (or two, for ELITE which also lifts the
-    // level dimension).
-    let mut elite_dim: Option<Dimension> = if max_elite > 0 {
-        Some((WEIGHT_ELITE, f64::from(roster.elite) / f64::from(max_elite)))
-    } else {
-        None
-    };
-    let mut level_dim: Dimension = (level_w, cumulative_level_progress(roster, static_op));
-    let mut sl_dim: Option<Dimension> = if !can_master && num_skills > 0 {
-        Some((WEIGHT_SKILL_LEVEL, f64::from(roster.skill_level - 1) / 6.0))
-    } else {
-        None
-    };
-    let mut mastery_dim: Option<Dimension> = if can_master {
-        Some((WEIGHT_MASTERY, mastery_milestone_score(roster, num_skills)))
-    } else {
-        None
-    };
-    let mut module_dim: Option<Dimension> = if advanced_mods.is_empty() {
-        None
-    } else {
-        Some((
-            WEIGHT_MODULE,
-            module_milestone_score(roster, &advanced_mods),
-        ))
-    };
-    let mut pot_dim: Option<Dimension> = if potential_matters(static_op) {
-        Some((WEIGHT_POTENTIAL, potential_score(roster.potential)))
-    } else {
-        None
-    };
-    let mut trust_dim: Option<Dimension> = if trust_active {
-        Some((
-            WEIGHT_TRUST,
-            trust_milestone_score(roster, favor, is_support),
-        ))
-    } else {
-        None
-    };
-
-    match tag {
-        // Full promotion path: jump to max elite + max level at that phase.
-        // Both elite and the level dimensions go to 1.0.
-        "ELITE" => {
-            if max_elite <= 0 {
-                return None;
+    fn set(dims: &mut [(DimensionKind, Dimension)], kind: DimensionKind, score: f64) -> bool {
+        match dims.iter_mut().find(|(k, _)| *k == kind) {
+            Some((_, dim)) => {
+                dim.1 = score;
+                true
             }
-            elite_dim = Some((WEIGHT_ELITE, 1.0));
-            level_dim = (level_w, 1.0);
+            None => false,
+        }
+    }
+
+    let mut dims = build_dimensions(roster, static_op, favor, is_support);
+    let applied = match tag {
+        // Full promotion path: jump to max elite + max level at that phase.
+        // Both the elite and level dimensions go to 1.0.
+        "ELITE" => {
+            set(&mut dims, DimensionKind::Elite, 1.0) && set(&mut dims, DimensionKind::Level, 1.0)
         }
         // Max level at current elite phase only.
         "MAX_LEVEL" => {
@@ -558,83 +623,50 @@ fn simulate_score_for_tag(
                 .phases
                 .get(roster.elite as usize)
                 .map_or(0, |p| p.max_level as i16);
-            level_dim = (
-                level_w,
+            set(
+                &mut dims,
+                DimensionKind::Level,
                 cumulative_level_progress_at(static_op, roster.elite, max_lvl_here),
-            );
+            )
         }
         // First mastery to M3. We assume the highest currently non-M3 skill is
         // the one promoted, which is the most generous read of the user's
         // current trajectory.
         "M3" => {
-            if !can_master {
-                return None;
-            }
+            let num_skills = static_op.skills.len();
             let levels: Vec<i16> = parse_masteries(&roster.masteries)
                 .iter()
                 .map(|m| m.mastery)
                 .collect();
             let simulated = promote_to_milestone(&levels, num_skills, 3);
-            mastery_dim = Some((
-                WEIGHT_MASTERY,
+            set(
+                &mut dims,
+                DimensionKind::Mastery,
                 mastery_milestone_from_levels(&simulated, num_skills),
-            ));
+            )
         }
         // Skill level → 7 (the dimension's max).
-        "SL7" => {
-            if can_master || num_skills == 0 {
-                return None;
-            }
-            sl_dim = Some((WEIGHT_SKILL_LEVEL, 1.0));
-        }
+        "SL7" => set(&mut dims, DimensionKind::SkillLevel, 1.0),
         // First advanced module to L3 (same "promote highest non-Mod3" model
         // as M3 above).
         "MOD3" => {
-            if advanced_mods.is_empty() {
-                return None;
-            }
+            let advanced_mods = advanced_modules(static_op);
             let user_advanced = advanced_module_levels(&roster.modules, &advanced_mods);
             let simulated = promote_to_milestone(&user_advanced, advanced_mods.len(), 3);
-            module_dim = Some((
-                WEIGHT_MODULE,
+            set(
+                &mut dims,
+                DimensionKind::Module,
                 module_milestone_from_levels(&simulated, advanced_mods.len()),
-            ));
+            )
         }
-        "POT6" => {
-            if !potential_matters(static_op) {
-                return None;
-            }
-            pot_dim = Some((WEIGHT_POTENTIAL, 1.0));
-        }
-        "TRUST" => {
-            if !trust_active {
-                return None;
-            }
-            trust_dim = Some((WEIGHT_TRUST, 1.0));
-        }
-        _ => return None,
+        "POT6" => set(&mut dims, DimensionKind::Potential, 1.0),
+        "TRUST" => set(&mut dims, DimensionKind::Trust, 1.0),
+        _ => false,
+    };
+    if !applied {
+        return None;
     }
-
-    let mut dims: Vec<Dimension> = vec![level_dim];
-    if let Some(d) = elite_dim {
-        dims.push(d);
-    }
-    if let Some(d) = sl_dim {
-        dims.push(d);
-    }
-    if let Some(d) = mastery_dim {
-        dims.push(d);
-    }
-    if let Some(d) = module_dim {
-        dims.push(d);
-    }
-    if let Some(d) = pot_dim {
-        dims.push(d);
-    }
-    if let Some(d) = trust_dim {
-        dims.push(d);
-    }
-    Some(weighted_average(&dims))
+    Some(average_dimensions(&dims))
 }
 
 /// Promote the highest entry below `milestone` up to `milestone`. Used to

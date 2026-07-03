@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { IImprovementsResponse, IOperatorGap, IUpgradeDelta } from "#/lib/api/user";
+import type { IImprovementsResponse, IOperatorGap, IScoreDimension, IUpgradeDelta } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { EmptyHint, operatorRarityColor, PANEL_PADDING, SectionHeader, ShowMoreButton, StatTile, TEXT_BADGE, TEXT_BODY, TEXT_KICKER } from "./shared";
 
@@ -41,6 +41,27 @@ const TAG_TOOLTIP_DETAIL: Record<Tag, string> = {
     MOD3: "raising one advanced module to Level 3",
     POT6: "reaching Potential 6",
     TRUST: "reaching the trust target (200% for published support units, 100% otherwise)",
+};
+
+// Labels for the score-breakdown axes (`IScoreDimension.kind`).
+const DIM_LABEL: Record<string, string> = {
+    elite: "Elites",
+    level: "Levels",
+    mastery: "Masteries",
+    skill_level: "Skill levels",
+    module: "Modules",
+    potential: "Potential",
+    trust: "Trust",
+};
+
+const DIM_TOOLTIP: Record<string, string> = {
+    elite: "Promotion progress toward each operator's max elite",
+    level: "Level progress across all elite phases",
+    mastery: "Skill masteries, anchored on M3 milestones",
+    skill_level: "Skill levels toward SL7 on operators without masteries",
+    module: "Advanced module levels, anchored on Mod3 milestones",
+    potential: "Potential on operators where dupes are scarce",
+    trust: "Trust toward 100% (200% for published support units)",
 };
 
 const INITIAL_VISIBLE = 18;
@@ -99,7 +120,8 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
     if (ops.length === 0) {
         return (
-            <div className={PANEL_PADDING}>
+            <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
+                <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
                 <EmptyHint>Every owned operator is at their last milestone - nothing to upgrade here.</EmptyHint>
             </div>
         );
@@ -109,6 +131,8 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
+            <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
+
             <SectionHeader title="Operators below milestone" count={`${ops.length} total · +${totalOverallGainPct.toFixed(1)} to overall grade`} accent={accent} />
 
             {/* By upgrade type - also acts as a filter for the rarity buckets below. */}
@@ -136,6 +160,52 @@ export function OperatorPanel({ improvements, accent }: IProps) {
             <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
                 The header's <span className="text-foreground/80">+{totalOverallGainPct.toFixed(1)} to overall grade</span> is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are <span className="text-foreground/80">% of this section</span>{" "}
                 (the percentage shown at the top of the card) - there's +{totalSubscoreGainPct.toFixed(1)}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
+            </p>
+        </div>
+    );
+}
+
+/**
+ * "Where your score comes from" - decomposes the current Operators subscore
+ * into its investment axes. Each row shows earned vs. available (both in %
+ * of this section); the earned figures sum to the section score on the card.
+ */
+function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined; accent: string }) {
+    // Tolerate an older backend that doesn't send the breakdown yet.
+    if (!dims?.length) return null;
+    const totalPct = dims.reduce((acc, d) => acc + d.contribution * 100, 0);
+
+    return (
+        <div className="flex flex-col gap-2.5">
+            <SectionHeader title="Where your score comes from" count={`${totalPct.toFixed(1)}% earned`} accent={accent} />
+            <div className="flex flex-col gap-1.5">
+                {dims.map((d) => {
+                    const sharePct = d.weight_share * 100;
+                    const earnedPct = d.contribution * 100;
+                    const completionPct = Math.max(0, Math.min(100, d.completion * 100));
+                    const label = DIM_LABEL[d.kind] ?? d.kind;
+                    const detail = DIM_TOOLTIP[d.kind];
+                    return (
+                        <div key={d.kind} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" title={`${label}${detail ? ` - ${detail.toLowerCase()}` : ""}: worth ${sharePct.toFixed(1)}% of this section. You've completed ${completionPct.toFixed(0)}% of that, earning ${earnedPct.toFixed(1)}%.`}>
+                            <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                                <div
+                                    className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                    style={{
+                                        width: `${completionPct}%`,
+                                        background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
+                                    }}
+                                />
+                            </div>
+                            <span className={cn(TEXT_BADGE, "text-foreground/85")}>
+                                {earnedPct.toFixed(1)} <span className="text-muted-foreground/70">/ {sharePct.toFixed(1)}%</span>
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+            <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
+                Each row is one investment axis: <span className="text-foreground/80">earned / available</span>, both in % of this section. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.
             </p>
         </div>
     );

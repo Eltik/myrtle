@@ -16,6 +16,29 @@ use crate::database::queries::roguelike::get_roguelike_progress;
 use crate::database::queries::roster::get_roster;
 use crate::database::queries::roster::get_supports;
 
+/// Section weights for the overall grade. Relative importance, not
+/// percentages - a section's share of the grade is `weight / SECTION_WEIGHT_TOTAL`.
+///
+/// Rationale: operators are the core long-term investment and anchor the
+/// scale at 1.0; base and stages are substantial but bounded systems; the
+/// side modes (roguelike, sandbox) and medals reward breadth without letting
+/// completionism dominate the grade.
+pub const SECTION_WEIGHT_OPERATOR: f64 = 1.0;
+pub const SECTION_WEIGHT_BASE: f64 = 0.5;
+pub const SECTION_WEIGHT_ROGUELIKE: f64 = 0.3;
+pub const SECTION_WEIGHT_MEDAL: f64 = 0.2;
+pub const SECTION_WEIGHT_STAGE: f64 = 0.4;
+pub const SECTION_WEIGHT_SANDBOX: f64 = 0.2;
+
+/// Sum of every section weight above. The frontend mirrors these shares in
+/// `Score/helpers.ts` (`SUBSCORES`) - keep the two in sync.
+pub const SECTION_WEIGHT_TOTAL: f64 = SECTION_WEIGHT_OPERATOR
+    + SECTION_WEIGHT_BASE
+    + SECTION_WEIGHT_ROGUELIKE
+    + SECTION_WEIGHT_MEDAL
+    + SECTION_WEIGHT_STAGE
+    + SECTION_WEIGHT_SANDBOX;
+
 pub struct UserGrade {
     pub operator_grade: f64,
     pub base_grade: f64,
@@ -59,16 +82,15 @@ pub async fn calculate_user_grade(
     let medal_grade = grade_medals(&user_medals, &game_data.medals, &owned_operators);
 
     let scores: Vec<(f64, f64)> = vec![
-        (1.0, operator_grade),
-        (0.5, base_grade),
-        (0.3, roguelike_grade),
-        (0.2, medal_grade),
-        (0.4, stage_grade),
-        (0.2, sandbox_grade),
+        (SECTION_WEIGHT_OPERATOR, operator_grade),
+        (SECTION_WEIGHT_BASE, base_grade),
+        (SECTION_WEIGHT_ROGUELIKE, roguelike_grade),
+        (SECTION_WEIGHT_MEDAL, medal_grade),
+        (SECTION_WEIGHT_STAGE, stage_grade),
+        (SECTION_WEIGHT_SANDBOX, sandbox_grade),
     ];
 
-    let total_weight: f64 = scores.iter().map(|(w, _)| w).sum();
-    let total_score = scores.iter().map(|(w, v)| w * v).sum::<f64>() / total_weight;
+    let total_score = scores.iter().map(|(w, v)| w * v).sum::<f64>() / SECTION_WEIGHT_TOTAL;
     let overall = score_to_grade(total_score);
 
     Ok(UserGrade {

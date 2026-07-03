@@ -346,7 +346,20 @@ export interface IOperatorGap {
     total_potential_gain: number;
 }
 
+export interface IScoreDimension {
+    /** Investment axis: elite, level, skill_level, mastery, module, potential, trust. */
+    kind: string;
+    /** Share of the Operators subscore this dimension carries (0.0-1.0; shares sum to 1.0). */
+    weight_share: number;
+    /** Rarity-weighted completion of this dimension (0.0-1.0). */
+    completion: number;
+    /** `weight_share x completion` - contributions sum to the Operators subscore. */
+    contribution: number;
+}
+
 export interface IOperatorImprovements {
+    /** Where the current Operators subscore comes from, one row per investment axis. */
+    score_breakdown: IScoreDimension[];
     below_milestone: IOperatorGap[];
 }
 
@@ -519,8 +532,8 @@ export const getUserImprovementsFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/user/improvements?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            if (res.status === 404) return null;
-            if (res.status === 403) return null;
+            // 403 = private profile, 404 = no such user - treat both as "unavailable".
+            if (res.status === 404 || res.status === 403) return null;
             throw new Error(`Failed to load improvements: ${res.status}`);
         }
         return (await res.json()) as IImprovementsResponse;

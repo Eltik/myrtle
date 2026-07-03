@@ -27,9 +27,11 @@ use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, RotationAssignment, UserBuilding,
 };
 use crate::core::grade::base::yield_model::room_yield;
+use crate::core::grade::grade_medals::rarity_weight;
 use crate::core::grade::grade_operators::{
-    TRUST_MILESTONE_PCT, UpgradeDelta, advanced_module_levels, advanced_modules,
-    operator_upgrade_deltas, potential_matters, rarity_to_weight, total_roster_weight,
+    ScoreDimension, TRUST_MILESTONE_PCT, UpgradeDelta, advanced_module_levels, advanced_modules,
+    operator_score_breakdown, operator_upgrade_deltas, potential_matters, rarity_to_weight,
+    total_roster_weight,
 };
 use crate::core::grade::sandbox::grade_sandbox_detail;
 use crate::core::grade::sandbox::score::{
@@ -199,6 +201,9 @@ pub struct MedalOperatorLock {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorImprovements {
+    /// Where the current Operators subscore comes from: per-dimension weight
+    /// share, completion, and contribution. Contributions sum to the subscore.
+    pub score_breakdown: Vec<ScoreDimension>,
     /// Owned operators that haven't reached their full investment milestones.
     /// Each entry lists what's still upgradeable. Sorted by rarity desc.
     pub below_milestone: Vec<OperatorGap>,
@@ -889,19 +894,6 @@ fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i
     }
 }
 
-fn rarity_weight(rarity: &str) -> f64 {
-    // TODO: Keep this in sync with `core/grade/grade_medals.rs`.
-    match rarity {
-        "T1" => 1.0,
-        "T1D5" => 2.5,
-        "T2" => 4.0,
-        "T2D5" => 10.0,
-        "T3" => 20.0,
-        "T3D5" => 40.0,
-        _ => 1.0,
-    }
-}
-
 fn build_operator_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
@@ -1040,7 +1032,10 @@ fn build_operator_improvements(
             .then_with(|| a.operator_id.cmp(&b.operator_id))
     });
 
-    OperatorImprovements { below_milestone }
+    OperatorImprovements {
+        score_breakdown: operator_score_breakdown(roster, game_data, support_ids),
+        below_milestone,
+    }
 }
 
 fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
