@@ -10,10 +10,9 @@ type Aes128CbcDec = Decryptor<Aes128>;
 /// Arknights AES-CBC mask (`chat_mask` v2)
 const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
 
-/// Decode a `TextAsset`'s `m_Script` into a JSON `Value`, mirroring the full
-/// pipeline used by `export_text_asset` (base64, AES-CBC, `FlatBuffer` with
-/// optional 128-byte RSA header). Returns `None` if no decode path yields
-/// structured data — e.g. plain text or invalid payloads.
+/// Decode a `TextAsset`'s `m_Script` into a JSON `Value` (base64, AES-CBC,
+/// `FlatBuffer` with optional 128-byte RSA header). Returns `None` if no
+/// decode path yields structured data — e.g. plain text or invalid payloads.
 ///
 /// Used by callers that need the parsed JSON in-memory rather than written
 /// to disk — for example the mappreview pre-scan that reads each level's
@@ -34,21 +33,25 @@ pub fn parse_text_asset_json(obj: &Value) -> Option<Value> {
     }
 
     let decrypted = try_aes_decrypt(&raw);
-    let bytes = decrypted.as_deref().unwrap_or(&raw);
+    let name = obj.get("m_Name").and_then(|v| v.as_str()).unwrap_or("");
+    try_structured_decode(&raw, decrypted.as_deref(), name)
+}
 
-    // Plain JSON (post-decrypt or original)
+/// Try every structured-decode path over a `TextAsset` payload, in order:
+/// plain JSON (on AES-decrypted bytes if decryption succeeded, else raw),
+/// `FlatBuffer` on raw (most level data: 128-byte RSA header + `FlatBuffer`),
+/// then `FlatBuffer` on the AES-decrypted bytes.
+fn try_structured_decode(raw: &[u8], decrypted: Option<&[u8]>, name: &str) -> Option<Value> {
+    let bytes = decrypted.unwrap_or(raw);
+
     if let Ok(json) = serde_json::from_slice::<Value>(bytes) {
         return Some(json);
     }
 
-    let name = obj.get("m_Name").and_then(|v| v.as_str()).unwrap_or("");
-
-    // FlatBuffer on raw (most level data: 128-byte RSA header + FlatBuffer)
-    if let Some(json) = try_flatbuffer_decode(&raw, name) {
+    if let Some(json) = try_flatbuffer_decode(raw, name) {
         return Some(json);
     }
 
-    // FlatBuffer on AES-decrypted bytes
     if decrypted.is_some()
         && let Some(json) = try_flatbuffer_decode(bytes, name)
     {
@@ -87,8 +90,7 @@ pub fn export_text_asset(
     let decrypted = try_aes_decrypt(&raw);
     let bytes = decrypted.as_deref().unwrap_or(&raw);
 
-    // Try parsing as JSON
-    if let Ok(json) = serde_json::from_slice::<Value>(bytes) {
+    if let Some(json) = try_structured_decode(&raw, decrypted.as_deref(), name) {
         let path = output_dir.join(format!("{name}.json"));
         fs::write(
             &path,
@@ -97,31 +99,18 @@ pub fn export_text_asset(
         return Ok(());
     }
 
-    // Try FlatBuffer decoding on raw data (128-byte RSA header + FlatBuffer)
-    if let Some(json) = try_flatbuffer_decode(&raw, name) {
-        let path = output_dir.join(format!("{name}.json"));
-        fs::write(
-            &path,
-            serde_json::to_string_pretty(&json).unwrap().as_bytes(),
-        )?;
-        return Ok(());
-    }
-
-    // Try FlatBuffer decoding on AES-decrypted data (some files are AES-encrypted FlatBuffers)
-    if decrypted.is_some()
-        && let Some(json) = try_flatbuffer_decode(bytes, name)
-    {
-        let path = output_dir.join(format!("{name}.json"));
-        fs::write(
-            &path,
-            serde_json::to_string_pretty(&json).unwrap().as_bytes(),
-        )?;
-        return Ok(());
-    }
-
-    // Save as text if valid UTF-8, otherwise raw bytes
+    // Save as text if valid UTF-8, otherwise raw bytes. Lua scripts already
+    // carry their real extension from the manifest path — keep it instead of
+    // appending .txt.
     if let Ok(text) = std::str::from_utf8(bytes) {
-        let path = output_dir.join(format!("{name}.txt"));
+        let path = if std::path::Path::new(name)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("lua"))
+        {
+            output_dir.join(name)
+        } else {
+            output_dir.join(format!("{name}.txt"))
+        };
         fs::write(&path, text)?;
     } else {
         let path = output_dir.join(format!("{name}.bytes"));

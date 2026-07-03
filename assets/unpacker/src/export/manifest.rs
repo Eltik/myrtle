@@ -72,7 +72,10 @@ impl ResourceManifest {
                 if !result.starts_with("gamedata/") {
                     continue;
                 }
-                match filename_to_path.entry(name.to_string()) {
+                // Manifest asset names are lowercase, but TextAsset m_Name keeps
+                // the original casing (e.g. `PCHotfixer.lua` vs manifest
+                // `pchotfixer.lua`), so key the map case-insensitively.
+                match filename_to_path.entry(name.to_lowercase()) {
                     Entry::Vacant(e) => {
                         e.insert(result);
                     }
@@ -93,7 +96,7 @@ impl ResourceManifest {
     #[must_use]
     pub fn get_output_path(&self, filename: &str) -> Option<&str> {
         self.filename_to_path
-            .get(filename)
+            .get(&filename.to_lowercase())
             .map(std::string::String::as_str)
     }
 }
