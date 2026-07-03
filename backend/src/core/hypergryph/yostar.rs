@@ -485,7 +485,7 @@ pub async fn get_battle_replay(
     client: &Client,
     session: &mut AuthSession,
     server: Server,
-    battle_type: &str, // quest or main, normally quest
+    battle_type: &str, // "quest" (normal stages) or "campaignV2" (Annihilation) - see saved_replay_targets
     stage_id: &str,
 ) -> Result<BattleReplay, FetchError> {
     let endpoint = format!("{battle_type}/getBattleReplay");
@@ -633,15 +633,18 @@ pub async fn sync_data(
 /// real replay from [`get_battle_replay`]; everything else returns code 5516.
 ///
 /// Source of truth per `OpenBachelorS` / `DoctoratePy` server reimpls:
-/// - `user.dungeon.stages[*].hasBattleReplay == 1`     → `battle_type = "quest"`
-/// - `user.dungeon.campaignsV2[*].hasBattleReplay == 1` → `battle_type = "campaignV2"`
+/// - `user.dungeon.stages[*].hasBattleReplay == 1`          → `battle_type = "quest"`
+/// - `user.campaignsV2.instances[*].hasBattleReplay == 1`   → `battle_type = "campaignV2"`
+///
+/// Note `campaignsV2` sits at the top level of `user`, not under `dungeon`.
 pub fn saved_replay_targets(sync: &serde_json::Value) -> Vec<(String, String)> {
     let mut out = Vec::new();
-    let Some(dungeon) = sync.pointer("/user/dungeon") else {
-        return out;
-    };
-    collect_replay_flags(dungeon.get("stages"), "quest", &mut out);
-    collect_replay_flags(dungeon.get("campaignsV2"), "campaignV2", &mut out);
+    collect_replay_flags(sync.pointer("/user/dungeon/stages"), "quest", &mut out);
+    collect_replay_flags(
+        sync.pointer("/user/campaignsV2/instances"),
+        "campaignV2",
+        &mut out,
+    );
     out
 }
 

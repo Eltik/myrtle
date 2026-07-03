@@ -7,6 +7,7 @@ use crate::database::queries::users::find_by_uid;
 use crate::{
     app::{error::ApiError, services::game_session, state::AppState},
     core::{
+        gamedata::types::campaign::CampaignRotations,
         grade::calculate::calculate_user_grade,
         hypergryph::{constants::Server, yostar::sync_data_raw},
     },
@@ -249,12 +250,17 @@ pub async fn refresh(
     let skins = extract_skins(&user.skin);
     let status_json = extract_status(status);
     let supports = extract_supports(&user.troop, &user.social);
-    let stages = user
+    let mut stages = user
         .dungeon
         .as_ref()
         .and_then(|d| d.get("stages"))
         .cloned()
         .unwrap_or_default();
+    merge_campaign_clears(
+        &mut stages,
+        &raw,
+        &state.default_game_data().campaign_rotations,
+    );
     let roguelike = extract_roguelike(&user.roguelike);
     let sandbox = user.sandbox_perm.unwrap_or_default();
     let medals = extract_medals(&user.medal);
@@ -341,20 +347,25 @@ fn extract_nick_number(raw: &serde_json::Value) -> Option<String> {
     None
 }
 
-fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
+/// Parse the troop map into `(char_id, TroopChar)` pairs, skipping entries
+/// that fail to parse or lack a char id.
+fn troop_chars(troop: &Option<Troop>) -> Vec<(String, TroopChar)> {
     let Some(chars) = troop.as_ref().and_then(|t| t.chars.as_ref()) else {
-        return serde_json::json!([]);
+        return Vec::new();
     };
+    chars
+        .values()
+        .filter_map(|raw| {
+            let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
+            let char_id = c.char_id.clone()?;
+            Some((char_id, c))
+        })
+        .collect()
+}
 
+fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
     let mut ops: Vec<serde_json::Value> = Vec::new();
-    for raw in chars.values() {
-        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
-            continue;
-        };
-        let Some(char_id) = c.char_id.clone() else {
-            continue;
-        };
-
+    for (char_id, c) in troop_chars(troop) {
         // Amiya: emit one row per form. The base char_id row uses the same
         // id as the original troop key (e.g. `char_002_amiya`) so existing
         // lookups still resolve. Branches (`char_1001_amiya2`,
@@ -403,107 +414,79 @@ fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
 }
 
 fn extract_skills(troop: &Option<Troop>) -> serde_json::Value {
-    let Some(chars) = troop.as_ref().and_then(|t| t.chars.as_ref()) else {
-        return serde_json::json!([]);
-    };
-
     let mut skills: Vec<serde_json::Value> = Vec::new();
-    for raw in chars.values() {
-        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
-            continue;
-        };
-        let Some(char_id) = c.char_id.clone() else {
-            continue;
-        };
-
+    for (char_id, c) in troop_chars(troop) {
         if let Some(tmpl) = c.tmpl.as_ref()
             && !tmpl.is_empty()
         {
             for (form_id, form) in tmpl {
-                let Some(form_skills) = form.skills.as_ref() else {
-                    continue;
-                };
-                for (i, skill) in form_skills.iter().enumerate() {
-                    skills.push(serde_json::json!({
-                        "operator_id": form_id,
-                        "skill_index": i,
-                        "specialize_level": skill.specialize_level.unwrap_or(0),
-                    }));
+                if let Some(form_skills) = form.skills.as_ref() {
+                    push_skills(&mut skills, form_id, form_skills);
                 }
             }
             continue;
         }
 
-        let Some(c_skills) = c.skills else { continue };
-        for (i, skill) in c_skills.into_iter().enumerate() {
-            skills.push(serde_json::json!({
-                "operator_id": char_id,
-                "skill_index": i,
-                "specialize_level": skill.specialize_level.unwrap_or(0),
-            }));
+        if let Some(c_skills) = c.skills.as_ref() {
+            push_skills(&mut skills, &char_id, c_skills);
         }
     }
 
     serde_json::to_value(skills).unwrap_or_default()
 }
 
+fn push_skills(out: &mut Vec<serde_json::Value>, operator_id: &str, skills: &[TroopSkill]) {
+    for (i, skill) in skills.iter().enumerate() {
+        out.push(serde_json::json!({
+            "operator_id": operator_id,
+            "skill_index": i,
+            "specialize_level": skill.specialize_level.unwrap_or(0),
+        }));
+    }
+}
+
 fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
-    let Some(chars) = troop.as_ref().and_then(|t| t.chars.as_ref()) else {
-        return serde_json::json!([]);
-    };
-
     let mut modules: Vec<serde_json::Value> = Vec::new();
-    for raw in chars.values() {
-        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
-            continue;
-        };
-        let Some(char_id) = c.char_id.clone() else {
-            continue;
-        };
-
+    for (char_id, c) in troop_chars(troop) {
         if let Some(tmpl) = c.tmpl.as_ref()
             && !tmpl.is_empty()
         {
             for (form_id, form) in tmpl {
-                let Some(form_equip) = form.equip.as_ref() else {
-                    continue;
-                };
-                for (module_id, data) in form_equip {
-                    if module_id.starts_with("uniequip_001_") {
-                        continue;
-                    }
-                    let Ok(entry) = serde_json::from_value::<EquipEntry>(data.clone()) else {
-                        continue;
-                    };
-                    modules.push(serde_json::json!({
-                        "operator_id": form_id,
-                        "module_id": module_id,
-                        "module_level": entry.level.unwrap_or(0),
-                        "locked": entry.locked.is_some_and(|l| l != 0),
-                    }));
+                if let Some(form_equip) = form.equip.as_ref() {
+                    push_modules(&mut modules, form_id, form_equip);
                 }
             }
             continue;
         }
 
-        let Some(c_equip) = c.equip else { continue };
-        for (module_id, data) in c_equip {
-            if module_id.starts_with("uniequip_001_") {
-                continue;
-            }
-            let Ok(entry) = serde_json::from_value::<EquipEntry>(data) else {
-                continue;
-            };
-            modules.push(serde_json::json!({
-                "operator_id": char_id,
-                "module_id": module_id,
-                "module_level": entry.level.unwrap_or(0),
-                "locked": entry.locked.is_some_and(|l| l != 0),
-            }));
+        if let Some(c_equip) = c.equip.as_ref() {
+            push_modules(&mut modules, &char_id, c_equip);
         }
     }
 
     serde_json::to_value(modules).unwrap_or_default()
+}
+
+fn push_modules(
+    out: &mut Vec<serde_json::Value>,
+    operator_id: &str,
+    equip: &serde_json::Map<String, serde_json::Value>,
+) {
+    for (module_id, data) in equip {
+        // uniequip_001_* is the default badge every operator owns, not a real module.
+        if module_id.starts_with("uniequip_001_") {
+            continue;
+        }
+        let Ok(entry) = serde_json::from_value::<EquipEntry>(data.clone()) else {
+            continue;
+        };
+        out.push(serde_json::json!({
+            "operator_id": operator_id,
+            "module_id": module_id,
+            "module_level": entry.level.unwrap_or(0),
+            "locked": entry.locked.is_some_and(|l| l != 0),
+        }));
+    }
 }
 
 fn extract_items(
@@ -703,6 +686,60 @@ fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_jso
     serde_json::to_value(entries).unwrap_or_default()
 }
 
+/// Annihilation progress lives at `user.campaignsV2.instances` (top level of
+/// the save, not under `user.dungeon`) and is kill-count based - there is no
+/// `state` flag like normal stages. Merge it into the stages object with a
+/// synthesized `state` (kill target reached → 3, partial kills → 2) so every
+/// downstream stage-clear consumer treats Annihilation like any other stage.
+fn merge_campaign_clears(
+    stages: &mut serde_json::Value,
+    raw: &serde_json::Value,
+    campaign: &CampaignRotations,
+) {
+    let Some(instances) = raw
+        .pointer("/user/campaignsV2/instances")
+        .and_then(serde_json::Value::as_object)
+    else {
+        return;
+    };
+    if instances.is_empty() {
+        return;
+    }
+
+    if !stages.is_object() {
+        *stages = serde_json::json!({});
+    }
+    let Some(map) = stages.as_object_mut() else {
+        return;
+    };
+
+    for (stage_id, instance) in instances {
+        if map.contains_key(stage_id) {
+            continue;
+        }
+        let kills = instance
+            .get("maxKills")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
+        if kills <= 0 {
+            continue;
+        }
+        let full = campaign
+            .kill_max(stage_id)
+            .is_some_and(|max| kills >= i64::from(max));
+        map.insert(
+            stage_id.clone(),
+            serde_json::json!({
+                "stageId": stage_id,
+                "state": if full { 3 } else { 2 },
+                "completeTimes": 1,
+                "practiceTimes": 0,
+                "campaignMaxKills": kills,
+            }),
+        );
+    }
+}
+
 fn extract_roguelike(rlv2: &Option<serde_json::Value>) -> serde_json::Value {
     let Some(outer) = rlv2
         .as_ref()
@@ -723,4 +760,86 @@ fn extract_roguelike(rlv2: &Option<serde_json::Value>) -> serde_json::Value {
         .collect();
 
     serde_json::to_value(entries).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::gamedata::types::campaign::CampaignTableFile;
+
+    fn rotations() -> CampaignRotations {
+        let table: CampaignTableFile = serde_json::from_value(serde_json::json!({
+            "Campaigns": [
+                {"key": "camp_01", "value": {"BreakLadders": [{"KillCnt": 100}, {"KillCnt": 400}]}},
+                {"key": "camp_r_01", "value": {"BreakLadders": [{"KillCnt": 400}]}}
+            ]
+        }))
+        .unwrap();
+        CampaignRotations::from_table(table)
+    }
+
+    #[test]
+    fn campaign_clears_merge_into_stages() {
+        let raw = serde_json::json!({
+            "user": {
+                "campaignsV2": {
+                    "instances": {
+                        "camp_01": {"maxKills": 400, "rewardStatus": [1,1,1,1,1,1,1,1]},
+                        "camp_r_01": {"maxKills": 250, "rewardStatus": [1,1,1,0,0,0,0,0]},
+                        "camp_r_02": {"maxKills": 0, "rewardStatus": [0,0,0,0,0,0,0,0]}
+                    }
+                }
+            }
+        });
+        let mut stages = serde_json::json!({
+            "main_00-01": {"stageId": "main_00-01", "state": 3, "completeTimes": 1, "practiceTimes": 0}
+        });
+
+        merge_campaign_clears(&mut stages, &raw, &rotations());
+
+        // Kill target reached -> full clear.
+        assert_eq!(stages["camp_01"]["state"], 3);
+        assert_eq!(stages["camp_01"]["campaignMaxKills"], 400);
+        // Partial kills -> cleared but not maxed.
+        assert_eq!(stages["camp_r_01"]["state"], 2);
+        // Never played -> no synthesized entry.
+        assert!(stages.get("camp_r_02").is_none());
+        // Existing stage entries untouched.
+        assert_eq!(stages["main_00-01"]["state"], 3);
+    }
+
+    #[test]
+    fn campaign_merge_handles_missing_stages_and_unknown_maps() {
+        // dungeon.stages absent -> stages defaults to Null; the merge must
+        // still produce an object.
+        let raw = serde_json::json!({
+            "user": {"campaignsV2": {"instances": {
+                // Not in the campaign table (no kill_max) - partial credit only.
+                "camp_r_99": {"maxKills": 400}
+            }}}
+        });
+        let mut stages = serde_json::Value::Null;
+
+        merge_campaign_clears(&mut stages, &raw, &rotations());
+
+        assert_eq!(stages["camp_r_99"]["state"], 2);
+    }
+
+    #[test]
+    fn campaign_merge_prefers_existing_dungeon_entry() {
+        let raw = serde_json::json!({
+            "user": {"campaignsV2": {"instances": {
+                "camp_01": {"maxKills": 400}
+            }}}
+        });
+        let mut stages = serde_json::json!({
+            "camp_01": {"stageId": "camp_01", "state": 2, "completeTimes": 5, "practiceTimes": 0}
+        });
+
+        merge_campaign_clears(&mut stages, &raw, &rotations());
+
+        // A real save-provided record wins over the synthesized one.
+        assert_eq!(stages["camp_01"]["completeTimes"], 5);
+        assert_eq!(stages["camp_01"]["state"], 2);
+    }
 }

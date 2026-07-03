@@ -10,12 +10,31 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-/// Root of `campaign_table.json` - only the rotation schedule is parsed.
+use super::serde_helpers::deserialize_fb_map_or_default;
+
+/// Root of `campaign_table.json` - the rotation schedule plus per-map kill
+/// ladders (for the full-clear kill count).
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CampaignTableFile {
     #[serde(default)]
     pub campaign_rotate_stage_open_times: Vec<CampaignRotateOpenTime>,
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub campaigns: HashMap<String, CampaignStage>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CampaignStage {
+    #[serde(default)]
+    pub break_ladders: Vec<KillLadder>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct KillLadder {
+    #[serde(default)]
+    pub kill_cnt: i32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -51,6 +70,7 @@ pub enum RotationStatus {
 #[derive(Debug, Clone, Default)]
 pub struct CampaignRotations {
     windows: HashMap<String, RotationWindow>,
+    kill_max: HashMap<String, i32>,
 }
 
 impl CampaignRotations {
@@ -69,7 +89,22 @@ impl CampaignRotations {
                 )
             })
             .collect();
-        Self { windows }
+        let kill_max = table
+            .campaigns
+            .into_iter()
+            .filter_map(|(stage_id, c)| {
+                let max = c.break_ladders.iter().map(|l| l.kill_cnt).max()?;
+                (max > 0).then_some((stage_id, max))
+            })
+            .collect();
+        Self { windows, kill_max }
+    }
+
+    /// Kill count for a full clear of an Annihilation map - the highest
+    /// `BreakLadders` milestone (400 for every map to date). `None` for
+    /// stages not in the campaign table.
+    pub fn kill_max(&self, stage_id: &str) -> Option<i32> {
+        self.kill_max.get(stage_id).copied()
     }
 
     /// The scheduled window for a rotating map, if it is one.
@@ -88,5 +123,26 @@ impl CampaignRotations {
         } else {
             RotationStatus::Past
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Guard against the real table's shape drifting away from the parser
+    /// (kill ladders live in `Campaigns[].BreakLadders[].KillCnt`). Skips
+    /// when the gamedata assets aren't checked out.
+    #[test]
+    fn kill_max_parses_from_real_campaign_table() {
+        let path = std::path::Path::new("../assets/output/en/gamedata/excel/campaign_table.json");
+        let Ok(text) = std::fs::read_to_string(path) else {
+            return;
+        };
+        let table: CampaignTableFile = serde_json::from_str(&text).unwrap();
+        let rotations = CampaignRotations::from_table(table);
+        assert_eq!(rotations.kill_max("camp_01"), Some(400));
+        assert_eq!(rotations.kill_max("camp_r_01"), Some(400));
+        assert_eq!(rotations.kill_max("main_00-01"), None);
     }
 }
