@@ -42,9 +42,11 @@ function MedalIcon({ medal, color }: { medal: IMedalGap; color: string }) {
     );
 }
 
+type MedalMode = "permanent" | "event" | "locked" | "unobtainable";
+
 export function MedalPanel({ improvements, accent }: IProps) {
-    const { permanent_missing: permanent, event_in_window_missing: event, operator_locked: locked } = improvements.medals;
-    if (permanent.length === 0 && event.length === 0 && locked.length === 0) {
+    const { permanent_missing: permanent, event_in_window_missing: event, operator_locked: locked, unobtainable_missing: unobtainable } = improvements.medals;
+    if (permanent.length === 0 && event.length === 0 && locked.length === 0 && unobtainable.length === 0) {
         return (
             <div className={PANEL_PADDING}>
                 <EmptyHint>You've earned every medal that's currently reachable. Nice work.</EmptyHint>
@@ -65,11 +67,22 @@ export function MedalPanel({ improvements, accent }: IProps) {
                     mode="locked"
                 />
             )}
+            {unobtainable.length > 0 && (
+                <MedalList
+                    title="No longer obtainable"
+                    subtitle="These medals' windows have passed and won't reopen. Past event medals still count in your score with decaying weight rather than against the permanent pool; one-time modes and retired towers are excluded. Shown for reference."
+                    medals={unobtainable}
+                    accent={accent}
+                    mode="unobtainable"
+                    startCollapsed
+                />
+            )}
         </div>
     );
 }
 
-function MedalList({ title, subtitle, medals, accent, mode }: { title: string; subtitle: string; medals: IMedalGap[]; accent: string; mode: "permanent" | "event" | "locked" }) {
+function MedalList({ title, subtitle, medals, accent, mode, startCollapsed = false }: { title: string; subtitle: string; medals: IMedalGap[]; accent: string; mode: MedalMode; startCollapsed?: boolean }) {
+    const [collapsed, setCollapsed] = useState(startCollapsed);
     const [showAll, setShowAll] = useState(false);
     const visible = useMemo(() => (showAll ? medals : medals.slice(0, INITIAL_VISIBLE)), [showAll, medals]);
 
@@ -77,22 +90,38 @@ function MedalList({ title, subtitle, medals, accent, mode }: { title: string; s
         <div className="flex flex-col gap-2">
             <SectionHeader title={title} count={`${medals.length} missing`} accent={accent} />
             <p className={cn(TEXT_META, "text-muted-foreground")}>{subtitle}</p>
-            <div className="flex flex-col gap-1.5">
-                {visible.map((m) => (
-                    <MedalRow key={m.medal_id} medal={m} mode={mode} />
-                ))}
-            </div>
-            {medals.length > INITIAL_VISIBLE && <ShowMoreButton onClick={() => setShowAll((s) => !s)} label={showAll ? "Show less" : `Show ${medals.length - INITIAL_VISIBLE} more`} />}
+            {collapsed ? (
+                <ShowMoreButton onClick={() => setCollapsed(false)} label={`Show ${medals.length}`} />
+            ) : (
+                <>
+                    <div className="flex flex-col gap-1.5">
+                        {visible.map((m) => (
+                            <MedalRow key={m.medal_id} medal={m} mode={mode} />
+                        ))}
+                    </div>
+                    {medals.length > INITIAL_VISIBLE && <ShowMoreButton onClick={() => setShowAll((s) => !s)} label={showAll ? "Show less" : `Show ${medals.length - INITIAL_VISIBLE} more`} />}
+                    {startCollapsed && (
+                        <ShowMoreButton
+                            onClick={() => {
+                                setCollapsed(true);
+                                setShowAll(false);
+                            }}
+                            label="Hide"
+                        />
+                    )}
+                </>
+            )}
         </div>
     );
 }
 
-function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "event" | "locked" }) {
+function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
     const color = medalRarityColor(medal.rarity);
     const daysLeft = medal.end_time ? Math.max(0, Math.ceil((medal.end_time * 1000 - Date.now()) / 86_400_000)) : null;
+    const endedLabel = medal.end_time ? new Date(medal.end_time * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : null;
     const lock = medal.operator_lock;
     return (
-        <div className={cn("flex items-center gap-2.5 rounded-md border border-border/40 bg-muted/15 px-3 py-2 transition-colors hover:border-border/65 hover:bg-muted/25", mode === "locked" && "opacity-70")}>
+        <div className={cn("flex items-center gap-2.5 rounded-md border border-border/40 bg-muted/15 px-3 py-2 transition-colors hover:border-border/65 hover:bg-muted/25", (mode === "locked" || mode === "unobtainable") && "opacity-70")}>
             <Tooltip>
                 <TooltipTrigger
                     render={
@@ -122,6 +151,11 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "even
             {mode === "event" && daysLeft !== null && (
                 <Pill color={daysLeft <= 7 ? URGENT_COLOR : color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
                     {daysLeft <= 0 ? "ending now" : `${daysLeft}d left`}
+                </Pill>
+            )}
+            {mode === "unobtainable" && endedLabel && (
+                <Pill color={color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
+                    Ended {endedLabel}
                 </Pill>
             )}
             {mode === "locked" && lock && (

@@ -173,6 +173,13 @@ pub struct MedalImprovements {
     /// obtain. These are excluded from medal scoring; surfaced separately so the
     /// user understands why they're stuck rather than seeing them as earnable.
     pub operator_locked: Vec<MedalGap>,
+    /// Medals whose earnable window has passed and won't reopen: closed-window
+    /// event medals plus finished one-time modes / retired towers. Not
+    /// actionable, but shown so players can tell what's a dead end vs. still
+    /// achievable. Closed-window event medals still contribute to the event pool
+    /// with recency decay; one-time / retired medals stay excluded from scoring
+    /// (see `build_medal_improvements`). Sorted most-recently-closed first.
+    pub unobtainable_missing: Vec<MedalGap>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -801,6 +808,7 @@ async fn build_medal_improvements(
     let mut permanent_missing: Vec<MedalGap> = Vec::new();
     let mut event_in_window_missing: Vec<MedalGap> = Vec::new();
     let mut operator_locked: Vec<MedalGap> = Vec::new();
+    let mut unobtainable_missing: Vec<MedalGap> = Vec::new();
 
     for medal in game_data.medals.medals.values() {
         if earned.contains(&medal.medal_id) {
@@ -828,12 +836,16 @@ async fn build_medal_improvements(
                 permanent_missing.push(medal_gap(medal, &game_data.medals, None));
             }
             Obtainability::Event { proxy_close_ts } => {
-                // Skip events whose window has already closed - the user can't
-                // reach them anymore so it isn't an improvement opportunity.
-                // (Past-event medals still affect scoring via the event pool
-                // with recency decay - see grade_medals.rs - but they don't
-                // belong in the user's "missing" lists.)
+                // A closed event window is no longer an improvement opportunity,
+                // but it isn't invisible either - route it to the "no longer
+                // obtainable" bucket so the user can see it was missed. (Still
+                // scored via the event pool with recency decay - see grade_medals.rs.)
                 if proxy_close_ts > 0 && proxy_close_ts < now {
+                    unobtainable_missing.push(medal_gap(
+                        medal,
+                        &game_data.medals,
+                        Some(proxy_close_ts),
+                    ));
                     continue;
                 }
                 event_in_window_missing.push(medal_gap(
@@ -847,19 +859,20 @@ async fn build_medal_improvements(
                 ));
             }
             #[allow(clippy::needless_continue)]
-            // Seasonal/event content not yet reachable (e.g. an SSS tower season
-            // that hasn't started). Not an improvement opportunity right now, so
-            // it's left out of the lists entirely.
-            Obtainability::Unobtainable => continue,
+            // Seasonal/event content not reachable *yet* (e.g. an SSS tower season
+            // that hasn't started). It will open later, so it isn't an actionable
+            // gap - left out of the lists entirely.
+            Obtainability::NotYet => continue,
+            // Never obtainable again: finished one-time modes / retired towers.
+            // Surfaced in the "no longer obtainable" bucket for reference;
+            // excluded from scoring entirely (grade_medals.rs).
+            Obtainability::Unobtainable => {
+                unobtainable_missing.push(medal_gap(medal, &game_data.medals, None));
+            }
         }
     }
 
-    permanent_missing.sort_by(|a, b| {
-        rarity_weight(&b.rarity)
-            .partial_cmp(&rarity_weight(&a.rarity))
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| a.medal_id.cmp(&b.medal_id))
-    });
+    permanent_missing.sort_by(cmp_medal_by_rarity_desc);
 
     event_in_window_missing.sort_by(|a, b| {
         a.end_time
@@ -867,17 +880,23 @@ async fn build_medal_improvements(
             .cmp(&b.end_time.unwrap_or(i64::MAX))
     });
 
-    operator_locked.sort_by(|a, b| {
-        rarity_weight(&b.rarity)
-            .partial_cmp(&rarity_weight(&a.rarity))
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| a.medal_id.cmp(&b.medal_id))
+    operator_locked.sort_by(cmp_medal_by_rarity_desc);
+
+    // Most recently closed first; medals with no known close ts (one-time /
+    // retired) sort last. Tiebreak by rarity desc then medal id for stability.
+    unobtainable_missing.sort_by(|a, b| {
+        let a_key = a.end_time.unwrap_or(i64::MIN);
+        let b_key = b.end_time.unwrap_or(i64::MIN);
+        b_key
+            .cmp(&a_key)
+            .then_with(|| cmp_medal_by_rarity_desc(a, b))
     });
 
     Ok(MedalImprovements {
         permanent_missing,
         event_in_window_missing,
         operator_locked,
+        unobtainable_missing,
     })
 }
 
@@ -892,6 +911,15 @@ fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i
         end_time,
         operator_lock: None,
     }
+}
+
+/// Order medal gaps by rarity weight (desc) so the highest-value gaps rank
+/// first, with medal id as a stable tiebreak.
+fn cmp_medal_by_rarity_desc(a: &MedalGap, b: &MedalGap) -> std::cmp::Ordering {
+    rarity_weight(&b.rarity)
+        .partial_cmp(&rarity_weight(&a.rarity))
+        .unwrap_or(std::cmp::Ordering::Equal)
+        .then_with(|| a.medal_id.cmp(&b.medal_id))
 }
 
 fn build_operator_improvements(

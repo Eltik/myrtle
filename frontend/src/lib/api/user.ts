@@ -312,6 +312,8 @@ export interface IMedalImprovements {
     event_in_window_missing: IMedalGap[];
     /** Medals gated on a collab / one-time operator - shown for reference, excluded from scoring. */
     operator_locked: IMedalGap[];
+    /** Medals whose earnable window has passed and won't reopen. Closed-window event medals still score with recency decay; one-time / retired medals are excluded. Shown for reference. */
+    unobtainable_missing: IMedalGap[];
 }
 
 export interface IUpgradeDelta {

@@ -554,6 +554,14 @@ const COLLAB_TEAMS: &[&str] = &["rainbow", "mujica", "laios"];
 /// Ave Mujica `AM`, Delicious in Dungeon `DD`) are already covered by team.
 const COLLAB_DISPLAY_PREFIXES: &[&str] = &["MH"];
 
+/// Collab operators that have neither a collab `team_id` nor a distinguishing
+/// `DisplayNumber` prefix, so they must be named directly. "The Legend of Luo
+/// Xiaohei" (`char_4067_lolxh`) is the earliest collab, predating the team-id
+/// convention: `TeamId`/`GroupId` are null and its `DisplayNumber` (`R161`)
+/// shares the `R` prefix with ordinary Rhodes operators, so neither of the
+/// signals above can catch it. Its single operator gates the Luo Xiaohei medals.
+const COLLAB_CHAR_IDS: &[&str] = &["char_4067_lolxh"];
+
 impl Operator {
     /// True if this is a collab (third-party IP) operator. The one consolidated
     /// place that answers "is this a collab op" - consumers (medal locks,
@@ -563,6 +571,13 @@ impl Operator {
             .team_id
             .as_deref()
             .is_some_and(|t| COLLAB_TEAMS.contains(&t))
+        {
+            return true;
+        }
+        if self
+            .id
+            .as_deref()
+            .is_some_and(|id| COLLAB_CHAR_IDS.contains(&id))
         {
             return true;
         }
