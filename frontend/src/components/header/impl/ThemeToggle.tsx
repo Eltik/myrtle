@@ -59,6 +59,7 @@ export default function ThemeToggle() {
                     <div className="grid grid-cols-6 gap-1.5">
                         {COLOR_PRESETS.map((preset) => {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
+                            const swatch = accentToRenderedHex({ type: "preset", hue: preset.hue }, resolved === "dark");
                             return (
                                 <button
                                     key={preset.name}
@@ -68,7 +69,7 @@ export default function ThemeToggle() {
                                     aria-label={`Set accent color to ${preset.name}`}
                                     aria-pressed={selected}
                                     className={cn("relative aspect-square w-full rounded-full ring-offset-2 ring-offset-popover transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
-                                    style={{ backgroundColor: preset.color }}
+                                    style={{ backgroundColor: swatch }}
                                 />
                             );
                         })}

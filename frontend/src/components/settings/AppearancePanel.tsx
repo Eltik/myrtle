@@ -46,6 +46,7 @@ export function AppearancePanel() {
                     <div className="mb-5 grid max-w-110 grid-cols-6 gap-2.5 sm:grid-cols-12">
                         {COLOR_PRESETS.map((preset) => {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
+                            const swatch = accentToRenderedHex({ type: "preset", hue: preset.hue }, resolved === "dark");
                             return (
                                 <button
                                     key={preset.name}
@@ -55,7 +56,7 @@ export function AppearancePanel() {
                                     aria-label={`Set accent color to ${preset.name}`}
                                     aria-pressed={selected}
                                     className={cn("relative aspect-square w-full cursor-pointer rounded-full border-2 border-background outline-none ring-1 ring-border transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
-                                    style={{ backgroundColor: preset.color }}
+                                    style={{ backgroundColor: swatch }}
                                 />
                             );
                         })}

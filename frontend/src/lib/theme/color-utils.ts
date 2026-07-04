@@ -13,18 +13,18 @@ export const DEFAULT_PRIMARY_HUE = 25;
 export const PRESET_MATCH_TOLERANCE = 5;
 
 export const COLOR_PRESETS = [
-    { name: "Orange", hue: 25, color: "#e66e68" },
-    { name: "Red", hue: 15, color: "#e65050" },
-    { name: "Rose", hue: 350, color: "#e6506e" },
-    { name: "Pink", hue: 330, color: "#e650a0" },
-    { name: "Purple", hue: 300, color: "#c050e6" },
-    { name: "Violet", hue: 280, color: "#9050e6" },
-    { name: "Blue", hue: 250, color: "#5070e6" },
-    { name: "Cyan", hue: 200, color: "#50b0e6" },
-    { name: "Teal", hue: 180, color: "#50d6c6" },
-    { name: "Green", hue: 145, color: "#50e680" },
-    { name: "Lime", hue: 120, color: "#70e650" },
-    { name: "Yellow", hue: 85, color: "#c6d650" },
+    { name: "Orange", hue: 25 },
+    { name: "Red", hue: 15 },
+    { name: "Rose", hue: 350 },
+    { name: "Pink", hue: 330 },
+    { name: "Purple", hue: 300 },
+    { name: "Violet", hue: 280 },
+    { name: "Blue", hue: 250 },
+    { name: "Cyan", hue: 200 },
+    { name: "Teal", hue: 180 },
+    { name: "Green", hue: 145 },
+    { name: "Lime", hue: 120 },
+    { name: "Yellow", hue: 85 },
 ] as const;
 
 export type Accent = { type: "preset"; hue: number } | { type: "custom"; hex: string };
@@ -45,9 +45,13 @@ export interface IThemeColorSet {
 const LIGHT_FG = "oklch(0.985 0.002 285)";
 const DARK_FG = "oklch(0.13 0.005 285)";
 
+const PRESET_OKLCH = {
+    dark: { l: 0.75, c: 0.15 },
+    light: { l: 0.58, c: 0.22 },
+} as const;
+
 function generateFromHue(hue: number, isDark: boolean): IThemeColorSet {
-    const L = isDark ? "0.75" : "0.58";
-    const C = isDark ? "0.15" : "0.22";
+    const { l: L, c: C } = PRESET_OKLCH[isDark ? "dark" : "light"];
     const base = `oklch(${L} ${C} ${hue})`;
     return {
         primary: base,
@@ -84,7 +88,7 @@ function pickForeground(hex: string): string {
     const rgb = hexToRgb(hex);
     if (!rgb) return LIGHT_FG;
     const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
-    // WCAG threshold ~0.5 separates "light" surfaces (need dark text) from dark ones.
+    // Above ~0.55 relative luminance the accent reads as a light surface → dark text.
     return lum > 0.55 ? DARK_FG : LIGHT_FG;
 }
 
@@ -127,22 +131,15 @@ export function clearAccentColors(root: HTMLElement): void {
     }
 }
 
-/** Produce a preview swatch hex for a stored accent value. */
-export function previewHex(accent: Accent): string {
-    if (accent.type === "custom") return accent.hex;
-    return oklchToHex(0.7, 0.15, accent.hue);
-}
-
 /**
  * Render the accent as the literal hex it produces on screen for a given
- * theme - used to pre-fill the native color input so it tracks the live state.
+ * theme - used for the preset swatches and to pre-fill the native color input
+ * so both track the live state.
  */
 export function accentToRenderedHex(accent: Accent | null, isDark: boolean): string {
-    if (accent === null) {
-        return oklchToHex(isDark ? 0.75 : 0.58, isDark ? 0.15 : 0.22, DEFAULT_PRIMARY_HUE);
-    }
-    if (accent.type === "custom") return accent.hex;
-    return oklchToHex(isDark ? 0.75 : 0.58, isDark ? 0.15 : 0.22, accent.hue);
+    if (accent?.type === "custom") return accent.hex;
+    const { l, c } = PRESET_OKLCH[isDark ? "dark" : "light"];
+    return oklchToHex(l, c, accent?.hue ?? DEFAULT_PRIMARY_HUE);
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {

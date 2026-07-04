@@ -117,26 +117,14 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
-                {filters.viewMode === "detailed" ? (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6">
-                        {visible.map((entry, i) => {
-                            const isLast = i === visible.length - 1;
-                            const ref = isLast ? lastRef : null;
-                            const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
-                            return entry.isOwned ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <UnownedCard key={key} entry={entry} viewMode={filters.viewMode} lastRef={ref} />;
-                        })}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9">
-                        {visible.map((entry, i) => {
-                            const isLast = i === visible.length - 1;
-                            const ref = isLast ? lastRef : null;
-                            const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
-
-                            return entry.isOwned ? <CompactCard key={key} entry={entry} lastRef={ref} /> : <UnownedCard key={key} entry={entry} viewMode={filters.viewMode} lastRef={ref} />;
-                        })}
-                    </div>
-                )}
+                <div className={viewMode === "detailed" ? "grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(9rem,1fr))]"}>
+                    {visible.map((entry, i) => {
+                        const ref = i === visible.length - 1 ? lastRef : null;
+                        const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
+                        if (!entry.isOwned) return <UnownedCard key={key} entry={entry} viewMode={viewMode} lastRef={ref} />;
+                        return viewMode === "detailed" ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <CompactCard key={key} entry={entry} lastRef={ref} />;
+                    })}
+                </div>
                 {displayCount < totalCount && (
                     <p className="py-4 text-center text-muted-foreground text-sm">
                         Showing {displayCount} of {totalCount} operators. Scroll to load more.
