@@ -18,49 +18,39 @@ function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode
     });
 }
 
-function resultHasRarity(result: ITagCombinationResult, rarity: number): boolean {
-    return result.operators.some((op) => op.rarity === rarity);
+// A combination is only as good as its worst possible outcome, ranked on the same
+// scale as "highest rarity first" (6 > 5 > 4 > Robot > 3 > 2): a pool that is all
+// 4★+ must always outrank one that can still drop a 1★/3★, and a robot lock stays
+// above 3★ floors because robots are valuable guaranteed pulls.
+function floorPriority(result: ITagCombinationResult): number {
+    if (result.guaranteedRarity >= 5) {
+        return RARITY_DESC_PRIORITY[result.guaranteedRarity] ?? 99;
+    }
+    return Math.max(...result.operators.map((op) => RARITY_DESC_PRIORITY[op.rarity] ?? 99));
 }
 
-function isRobotValuable(result: ITagCombinationResult): boolean {
-    return resultHasRarity(result, 1) && !resultHasRarity(result, 3);
-}
+// In-game ids for the position, class, and rarity-qualification tags. Affix tags
+// (Nuker, Summon, ...) carry no special semantics and match by name instead.
+const POSITION_BY_TAG_ID: Record<number, string> = { 9: "MELEE", 10: "RANGED" };
+const PROFESSION_BY_TAG_ID: Record<number, string> = { 1: "WARRIOR", 2: "SNIPER", 3: "TANK", 4: "MEDIC", 5: "SUPPORT", 6: "CASTER", 7: "SPECIAL", 8: "PIONEER" };
+const RARITY_BY_TAG_ID: Record<number, number> = {
+    [TOP_OPERATOR_TAG_ID]: 6,
+    [SENIOR_OPERATOR_TAG_ID]: 5,
+    17: 2, // Starter
+    28: 1, // Robot
+};
 
 function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tagName: string): boolean {
-    const rarity = rarityToNumber(op.rarity);
+    const position = POSITION_BY_TAG_ID[tagId];
+    if (position) return op.position === position;
 
-    switch (tagId) {
-        case 9:
-            return op.position === "MELEE";
-        case 10:
-            return op.position === "RANGED";
-        case 1:
-            return op.profession === "WARRIOR";
-        case 2:
-            return op.profession === "SNIPER";
-        case 3:
-            return op.profession === "TANK";
-        case 4:
-            return op.profession === "MEDIC";
-        case 5:
-            return op.profession === "SUPPORT";
-        case 6:
-            return op.profession === "CASTER";
-        case 7:
-            return op.profession === "SPECIAL";
-        case 8:
-            return op.profession === "PIONEER";
-        case 11:
-            return rarity === 6;
-        case 14:
-            return rarity === 5;
-        case 17:
-            return rarity === 2;
-        case 28:
-            return rarity === 1;
-        default:
-            return op.tagList.includes(tagName);
-    }
+    const profession = PROFESSION_BY_TAG_ID[tagId];
+    if (profession) return op.profession === profession;
+
+    const rarity = RARITY_BY_TAG_ID[tagId];
+    if (rarity) return rarityToNumber(op.rarity) === rarity;
+
+    return op.tagList.includes(tagName);
 }
 
 export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
@@ -145,15 +135,8 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
     }
 
     return results.sort((a, b) => {
-        const aGuaranteedHigh = a.guaranteedRarity >= 5 ? a.guaranteedRarity : 0;
-        const bGuaranteedHigh = b.guaranteedRarity >= 5 ? b.guaranteedRarity : 0;
-        if (aGuaranteedHigh !== bGuaranteedHigh) return bGuaranteedHigh - aGuaranteedHigh;
-
-        const aRobot = isRobotValuable(a) ? 1 : 0;
-        const bRobot = isRobotValuable(b) ? 1 : 0;
-        if (aRobot !== bRobot) return bRobot - aRobot;
-
-        if (b.guaranteedRarity !== a.guaranteedRarity) return b.guaranteedRarity - a.guaranteedRarity;
+        const floorDiff = floorPriority(a) - floorPriority(b);
+        if (floorDiff !== 0) return floorDiff;
 
         if (operatorSortMode === "common-first") {
             if (a.operators.length !== b.operators.length) return b.operators.length - a.operators.length;

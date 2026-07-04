@@ -6,9 +6,12 @@ use crate::{
     app::{error::ApiError, services::operators::resolve_operator, state::AppState},
     core::{
         gamedata::{
+            assets::AssetIndex,
             enrich::resolve_item_icon,
             types::{
-                material::ItemRarity,
+                GameData,
+                building::{BuildingDataFile, FormulaCost, FormulaRoomReq},
+                material::{ItemRarity, Materials},
                 operator::{Operator, OperatorPhase},
             },
         },
@@ -89,36 +92,34 @@ fn requirement_sort_key(id: &str, name: &str, rarity: i16) -> (i8, i8) {
     (5, -(rarity as i8))
 }
 
-#[allow(clippy::too_many_arguments)]
-fn resolve_requirement_item(
-    item_id: &str,
-    required_count: i32,
-    inventory_count: i32,
-    craftable_count: i32,
-    can_craft: bool,
-    craft_reason: String,
-    recipe: Option<PlanRecipe>,
-    state: &AppState,
-) -> PlanRequirementItem {
-    let gamedata = state.default_game_data();
-    let materials = &gamedata.materials;
-    let asset_index = state.default_asset_index();
-    let (icon_id, image) = resolve_item_icon(item_id, materials, &asset_index);
+/// Chip cross-class conversion recipes in the workshop (`F_ASC`, e.g. 3 Medic
+/// Chips -> 2 Defender Chips). Converting chips is a waste and never the intended
+/// way to acquire them, so the planner treats chips as obtain-only. Dualchip
+/// factory recipes carry the same `F_ASC` type but live in `manufact_formulas`
+/// and stay craftable — combining chip packs with a catalyst *is* the intended
+/// way to obtain dualchips.
+const CHIP_CONVERSION_FORMULA_TYPE: &str = "F_ASC";
+const CHIP_CRAFT_REASON: &str =
+    "Chip conversion isn't recommended — obtain chips from stages, the store, or events";
 
-    let mut name = item_id.to_owned();
-    let mut item_type = "MATERIAL".to_owned();
-    let mut rarity: i16 = 0;
+/// Read-only inputs shared by the whole requirement computation.
+struct PlannerCtx<'a> {
+    gamedata: &'a GameData,
+    asset_index: &'a AssetIndex,
+    inventory_map: &'a HashMap<String, i32>,
+    user_building: &'a UserBuilding,
+    clears: &'a HashMap<String, StageClear>,
+}
 
+fn item_display_meta(item_id: &str, materials: &Materials) -> (String, String, i16) {
     if item_id == "4001" {
-        name = "LMD".to_owned();
-        item_type = "GOLD".to_owned();
-    } else if item_id == "5001" {
-        name = "EXP".to_owned();
-        item_type = "EXP_PLAYER".to_owned();
-    } else if let Some(item) = materials.items.get(item_id) {
-        name = item.name.clone();
-        item_type = format!("{:?}", item.item_type).to_uppercase();
-        rarity = match item.rarity {
+        return ("LMD".to_owned(), "GOLD".to_owned(), 0);
+    }
+    if item_id == "5001" {
+        return ("EXP".to_owned(), "EXP_PLAYER".to_owned(), 0);
+    }
+    if let Some(item) = materials.items.get(item_id) {
+        let rarity = match item.rarity {
             ItemRarity::Tier1 => 1,
             ItemRarity::Tier2 => 2,
             ItemRarity::Tier3 => 3,
@@ -126,9 +127,29 @@ fn resolve_requirement_item(
             ItemRarity::Tier5 => 5,
             ItemRarity::Tier6 => 6,
         };
+        return (
+            item.name.clone(),
+            format!("{:?}", item.item_type).to_uppercase(),
+            rarity,
+        );
     }
+    (item_id.to_owned(), "MATERIAL".to_owned(), 0)
+}
 
-    let missing_count = (required_count - inventory_count - craftable_count).max(0);
+#[allow(clippy::too_many_arguments)]
+fn resolve_requirement_item(
+    ctx: &PlannerCtx,
+    item_id: &str,
+    required_count: i32,
+    inventory_count: i32,
+    craftable_count: i32,
+    missing_count: i32,
+    can_craft: bool,
+    craft_reason: String,
+    recipe: Option<PlanRecipe>,
+) -> PlanRequirementItem {
+    let (icon_id, image) = resolve_item_icon(item_id, &ctx.gamedata.materials, ctx.asset_index);
+    let (name, item_type, rarity) = item_display_meta(item_id, &ctx.gamedata.materials);
     let (sort_group, sort_subrank) = requirement_sort_key(item_id, &name, rarity);
 
     PlanRequirementItem {
@@ -152,14 +173,13 @@ fn resolve_requirement_item(
 
 fn calculate_leveling_costs(
     operator: &Operator,
-    state: &AppState,
+    gamedata: &GameData,
     current_elite: i16,
     current_level: i16,
     target_elite: i16,
     target_level: i16,
     materials: &mut HashMap<String, i32>,
 ) {
-    let gamedata = state.default_game_data();
     let consts = &gamedata.consts;
     let mut exp_needed = 0;
     let mut lmd_needed = 0;
@@ -214,112 +234,171 @@ fn calculate_leveling_costs(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+/// Claims up to `count` units of `item_id` from the shared pool, returning how
+/// many were actually taken.
+fn claim_from_pool(pool: &mut HashMap<String, i32>, item_id: &str, count: i32) -> i32 {
+    let entry = pool.entry(item_id.to_owned()).or_insert(0);
+    let take = (*entry).min(count).max(0);
+    *entry -= take;
+    take
+}
+
+/// A craft recipe normalized across workshop and factory formulas.
+struct RecipeView<'a> {
+    output_count: i32,
+    costs: &'a [FormulaCost],
+    require_rooms: &'a [FormulaRoomReq],
+    /// Stage clears gating the recipe (workshop formulas only).
+    require_stage_ids: Vec<&'a str>,
+}
+
+enum RecipeLookup<'a> {
+    Found(RecipeView<'a>),
+    ChipConversion,
+    None,
+}
+
+fn find_recipe<'a>(building: &'a BuildingDataFile, item_id: &str) -> RecipeLookup<'a> {
+    if let Some(formula) = building
+        .workshop_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        if formula.formula_type == CHIP_CONVERSION_FORMULA_TYPE {
+            return RecipeLookup::ChipConversion;
+        }
+        return RecipeLookup::Found(RecipeView {
+            output_count: formula.count,
+            costs: &formula.costs,
+            require_rooms: &formula.require_rooms,
+            require_stage_ids: formula
+                .require_stages
+                .iter()
+                .map(|s| s.stage_id.as_str())
+                .collect(),
+        });
+    }
+    if let Some(formula) = building
+        .manufact_formulas
+        .values()
+        .find(|f| f.item_id == item_id)
+    {
+        return RecipeLookup::Found(RecipeView {
+            output_count: formula.count,
+            costs: &formula.costs,
+            require_rooms: &formula.require_rooms,
+            require_stage_ids: Vec::new(),
+        });
+    }
+    RecipeLookup::None
+}
+
+fn unmet_recipe_requirements(ctx: &PlannerCtx, view: &RecipeView) -> Vec<String> {
+    let mut unmet_reqs = Vec::new();
+    for room_req in view.require_rooms {
+        let matching_count = ctx
+            .user_building
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
+            .count();
+        if matching_count < room_req.room_count as usize {
+            unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level));
+        }
+    }
+    for stage_id in &view.require_stage_ids {
+        let is_cleared = ctx
+            .clears
+            .get(*stage_id)
+            .is_some_and(|c| c.state >= 2 || c.complete_times > 0);
+        if !is_cleared {
+            let stage_code = ctx
+                .gamedata
+                .stages
+                .get(*stage_id)
+                .map_or(*stage_id, |s| s.code.as_str());
+            unmet_reqs.push(format!("Stage {stage_code}"));
+        }
+    }
+    unmet_reqs
+}
+
+/// Builds the requirement node for one item, allocating units out of `pool` — the
+/// shared ledger of not-yet-claimed inventory — so the same unit is never counted
+/// toward two requirements. Inventory is claimed first; only the remaining
+/// shortfall is (recursively) crafted, with ingredient claims drawn from the same
+/// ledger. `craftable_count` is therefore plan-scoped: the units that will
+/// actually be crafted for this requirement, not total workshop capacity.
 fn build_requirement_tree(
+    ctx: &PlannerCtx,
     item_id: &str,
     required_count: i32,
-    materials: &HashMap<String, i32>,
-    inventory_map: &HashMap<String, i32>,
-    user_building: &UserBuilding,
-    clears: &HashMap<String, StageClear>,
-    state: &AppState,
+    reserved_from_pool: Option<i32>,
+    pool: &mut HashMap<String, i32>,
     visited: &[&str],
 ) -> PlanRequirementItem {
-    let inv_count = *inventory_map.get(item_id).unwrap_or(&0);
-    let deficit = (required_count - inv_count).max(0);
+    let inv_count = *ctx.inventory_map.get(item_id).unwrap_or(&0);
 
-    let gamedata = state.default_game_data();
+    let satisfied_from_inv =
+        reserved_from_pool.unwrap_or_else(|| claim_from_pool(pool, item_id, required_count));
+    let shortfall = (required_count - satisfied_from_inv).max(0);
 
-    let mut has_cycle = false;
-    if let Some(formula) = gamedata
-        .building
-        .workshop_formulas
-        .values()
-        .find(|f| f.item_id == item_id)
-    {
-        has_cycle = formula
-            .costs
-            .iter()
-            .any(|c| visited.contains(&c.id.as_str()));
-    } else if let Some(formula) = gamedata
-        .building
-        .manufact_formulas
-        .values()
-        .find(|f| f.item_id == item_id)
-    {
-        has_cycle = formula
-            .costs
-            .iter()
-            .any(|c| visited.contains(&c.id.as_str()));
-    }
+    let lookup = find_recipe(&ctx.gamedata.building, item_id);
 
-    if has_cycle {
-        return resolve_requirement_item(
-            item_id,
-            required_count,
-            inv_count,
-            0,
-            false,
-            "Recipe cycle detected".to_owned(),
-            None,
-            state,
-        );
-    }
-
-    let mut recipe = None;
     let mut craftable_count = 0;
     let mut can_craft = false;
-    let mut craft_reason = "No workshop or factory formula".to_owned();
+    let mut craft_reason = match &lookup {
+        RecipeLookup::ChipConversion => CHIP_CRAFT_REASON.to_owned(),
+        _ => "No workshop or factory formula".to_owned(),
+    };
+    let mut recipe = None;
 
-    if let Some(formula) = gamedata
-        .building
-        .workshop_formulas
-        .values()
-        .find(|f| f.item_id == item_id)
-    {
-        let mut unmet_reqs = Vec::new();
-        for room_req in &formula.require_rooms {
-            let matching_count = user_building
-                .rooms
-                .iter()
-                .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
-                .count();
-            if matching_count < room_req.room_count as usize {
-                unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level));
-            }
-        }
-        for stage_req in &formula.require_stages {
-            let is_cleared = clears
-                .get(&stage_req.stage_id)
-                .is_some_and(|c| c.state >= 2 || c.complete_times > 0);
-            if !is_cleared {
-                let stage_code = gamedata
-                    .stages
-                    .get(&stage_req.stage_id)
-                    .map_or(stage_req.stage_id.as_str(), |s| s.code.as_str());
-                unmet_reqs.push(format!("Stage {stage_code}"));
-            }
+    if let RecipeLookup::Found(view) = lookup {
+        if view.costs.iter().any(|c| visited.contains(&c.id.as_str())) {
+            return resolve_requirement_item(
+                ctx,
+                item_id,
+                required_count,
+                inv_count,
+                0,
+                shortfall,
+                false,
+                "Recipe cycle detected".to_owned(),
+                None,
+            );
         }
 
-        let mut costs = Vec::new();
-        let num_crafts_needed = if deficit > 0 {
-            (deficit + formula.count - 1) / formula.count
+        let unmet_reqs = unmet_recipe_requirements(ctx, &view);
+        let gates_met = unmet_reqs.is_empty();
+
+        let crafts_needed = if shortfall > 0 {
+            (shortfall + view.output_count - 1) / view.output_count
         } else {
             0
         };
 
-        for cost in &formula.costs {
-            let cost_required = num_crafts_needed * cost.count;
-            let mut next_visited = visited.to_vec();
-            next_visited.push(item_id);
+        // A gated recipe is still shown, but nothing will actually be crafted, so
+        // expand it against a scratch copy — it must not consume pool units that
+        // other requirements can still use.
+        let mut scratch;
+        let child_pool: &mut HashMap<String, i32> = if gates_met {
+            pool
+        } else {
+            scratch = pool.clone();
+            &mut scratch
+        };
+
+        let mut next_visited = visited.to_vec();
+        next_visited.push(item_id);
+
+        let mut costs = Vec::with_capacity(view.costs.len());
+        for cost in view.costs {
             let cost_item = build_requirement_tree(
+                ctx,
                 &cost.id,
-                cost_required,
-                materials,
-                inventory_map,
-                user_building,
-                clears,
-                state,
+                crafts_needed * cost.count,
+                None,
+                child_pool,
                 &next_visited,
             );
             costs.push(PlanRecipeCost {
@@ -328,131 +407,50 @@ fn build_requirement_tree(
             });
         }
 
-        if unmet_reqs.is_empty() {
+        if gates_met {
             can_craft = true;
             craft_reason = String::new();
-
-            let mut max_crafts = i32::MAX;
-            for cost in &formula.costs {
-                let ingredient_inv = *inventory_map.get(&cost.id).unwrap_or(&0);
-                let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
-                let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
-
-                let ingredient_avail_craft = costs
-                    .iter()
-                    .find(|c| c.item.id == cost.id)
-                    .map_or(0, |c| c.item.craftable_count);
-
-                let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
-                let craft_limit = ingredient_avail / cost.count;
-                max_crafts = max_crafts.min(craft_limit);
-            }
-
-            if max_crafts != i32::MAX && max_crafts > 0 {
-                craftable_count = max_crafts * formula.count;
+            if crafts_needed > 0 {
+                // Each ingredient covers its requirement from claimed inventory
+                // plus its own recursive crafts; the achievable craft count is the
+                // tightest ingredient.
+                let achievable =
+                    costs
+                        .iter()
+                        .filter(|c| c.count > 0)
+                        .fold(crafts_needed, |acc, c| {
+                            let satisfied = c.item.required_count - c.item.missing_count;
+                            acc.min(satisfied / c.count)
+                        });
+                craftable_count = achievable * view.output_count;
             }
         } else {
-            can_craft = false;
             craft_reason = format!("Requirements not met: {}", unmet_reqs.join(", "));
         }
 
         recipe = Some(PlanRecipe {
-            count: formula.count,
-            costs,
-        });
-    } else if let Some(formula) = gamedata
-        .building
-        .manufact_formulas
-        .values()
-        .find(|f| f.item_id == item_id)
-    {
-        let mut unmet_reqs = Vec::new();
-        for room_req in &formula.require_rooms {
-            let matching_count = user_building
-                .rooms
-                .iter()
-                .filter(|r| r.room_type == room_req.room_id && r.level >= room_req.room_level)
-                .count();
-            if matching_count < room_req.room_count as usize {
-                unmet_reqs.push(format!("{} lv.{}", room_req.room_id, room_req.room_level));
-            }
-        }
-
-        let mut costs = Vec::new();
-        let num_crafts_needed = if deficit > 0 {
-            (deficit + formula.count - 1) / formula.count
-        } else {
-            0
-        };
-
-        for cost in &formula.costs {
-            let cost_required = num_crafts_needed * cost.count;
-            let mut next_visited = visited.to_vec();
-            next_visited.push(item_id);
-            let cost_item = build_requirement_tree(
-                &cost.id,
-                cost_required,
-                materials,
-                inventory_map,
-                user_building,
-                clears,
-                state,
-                &next_visited,
-            );
-            costs.push(PlanRecipeCost {
-                count: cost.count,
-                item: cost_item,
-            });
-        }
-
-        if unmet_reqs.is_empty() {
-            can_craft = true;
-            craft_reason = String::new();
-
-            let mut max_crafts = i32::MAX;
-            for cost in &formula.costs {
-                let ingredient_inv = *inventory_map.get(&cost.id).unwrap_or(&0);
-                let ingredient_needed = materials.get(&cost.id).copied().unwrap_or(0);
-                let ingredient_avail_inv = (ingredient_inv - ingredient_needed).max(0);
-
-                let ingredient_avail_craft = costs
-                    .iter()
-                    .find(|c| c.item.id == cost.id)
-                    .map_or(0, |c| c.item.craftable_count);
-
-                let ingredient_avail = ingredient_avail_inv + ingredient_avail_craft;
-                let craft_limit = ingredient_avail / cost.count;
-                max_crafts = max_crafts.min(craft_limit);
-            }
-
-            if max_crafts != i32::MAX && max_crafts > 0 {
-                craftable_count = max_crafts * formula.count;
-            }
-        } else {
-            can_craft = false;
-            craft_reason = format!("Requirements not met: {}", unmet_reqs.join(", "));
-        }
-
-        recipe = Some(PlanRecipe {
-            count: formula.count,
+            count: view.output_count,
             costs,
         });
     }
 
+    let missing_count = (shortfall - craftable_count).max(0);
+
     resolve_requirement_item(
+        ctx,
         item_id,
         required_count,
         inv_count,
         craftable_count,
+        missing_count,
         can_craft,
         craft_reason,
         recipe,
-        state,
     )
 }
 
 fn get_plan_direct_materials(
-    state: &AppState,
+    gamedata: &GameData,
     plan: &OperatorPlan,
     operator: &Operator,
     roster_entry: Option<&RosterEntry>,
@@ -479,7 +477,7 @@ fn get_plan_direct_materials(
 
     calculate_leveling_costs(
         operator,
-        state,
+        gamedata,
         current_elite,
         current_level,
         plan.target_elite,
@@ -552,13 +550,48 @@ fn get_plan_direct_materials(
     Ok(materials)
 }
 
+/// Builds requirement trees for the aggregated plan materials against a single
+/// shared inventory ledger. Each requirement's own inventory share is reserved
+/// before any crafting is evaluated, so a craft can't consume units another
+/// requirement line needs directly.
+fn build_all_requirements(
+    ctx: &PlannerCtx,
+    combined_materials: HashMap<String, i32>,
+) -> Vec<PlanRequirementItem> {
+    // Deterministic allocation order matching the display sort, so contended
+    // inventory is claimed by the rows the user sees first.
+    let mut ordered: Vec<(String, i32)> = combined_materials.into_iter().collect();
+    ordered.sort_by_cached_key(|(item_id, _)| {
+        let (name, _, rarity) = item_display_meta(item_id, &ctx.gamedata.materials);
+        let (sort_group, sort_subrank) = requirement_sort_key(item_id, &name, rarity);
+        (sort_group, sort_subrank, name.to_lowercase())
+    });
+
+    let mut pool = ctx.inventory_map.clone();
+    let mut reserved: HashMap<String, i32> = HashMap::with_capacity(ordered.len());
+    for (item_id, count) in &ordered {
+        reserved.insert(item_id.clone(), claim_from_pool(&mut pool, item_id, *count));
+    }
+
+    ordered
+        .iter()
+        .map(|(item_id, count)| {
+            build_requirement_tree(
+                ctx,
+                item_id,
+                *count,
+                Some(reserved[item_id]),
+                &mut pool,
+                &[],
+            )
+        })
+        .collect()
+}
+
 fn calculate_requirements(
-    state: &AppState,
+    ctx: &PlannerCtx,
     plans_with_ops: &[(OperatorPlan, Operator, Option<&RosterEntry>)],
     active_ids: &[String],
-    inventory_map: &HashMap<String, i32>,
-    user_building: &UserBuilding,
-    clears: &HashMap<String, StageClear>,
 ) -> Result<Vec<PlanRequirementItem>, ApiError> {
     let mut combined_materials = HashMap::new();
     for (plan, operator, roster_entry) in plans_with_ops {
@@ -566,31 +599,14 @@ fn calculate_requirements(
         if !is_active {
             continue;
         }
-        let plan_materials = get_plan_direct_materials(state, plan, operator, *roster_entry)?;
+        let plan_materials =
+            get_plan_direct_materials(ctx.gamedata, plan, operator, *roster_entry)?;
         for (item_id, count) in plan_materials {
             *combined_materials.entry(item_id).or_insert(0) += count;
         }
     }
 
-    let mut requirements: Vec<PlanRequirementItem> = Vec::with_capacity(combined_materials.len());
-
-    for (item_id, &count) in &combined_materials {
-        let req_item = build_requirement_tree(
-            item_id,
-            count,
-            &combined_materials,
-            inventory_map,
-            user_building,
-            clears,
-            state,
-            &[],
-        );
-        requirements.push(req_item);
-    }
-
-    requirements.sort_by_key(|r| (r.sort_group, r.sort_subrank, r.name.to_lowercase()));
-
-    Ok(requirements)
+    Ok(build_all_requirements(ctx, combined_materials))
 }
 
 pub async fn list_plans(
@@ -670,14 +686,15 @@ pub async fn list_plans(
         }
     }
 
-    let aggregated_requirements = calculate_requirements(
-        state,
-        &plans_with_ops,
-        &active_ids,
-        &inventory_map,
-        &user_building,
-        &clears,
-    )?;
+    let asset_index = state.default_asset_index();
+    let ctx = PlannerCtx {
+        gamedata: gamedata.as_ref(),
+        asset_index: asset_index.as_ref(),
+        inventory_map: &inventory_map,
+        user_building: &user_building,
+        clears: &clears,
+    };
+    let aggregated_requirements = calculate_requirements(&ctx, &plans_with_ops, &active_ids)?;
 
     Ok(PlannerResponse {
         plans: responses,
@@ -1001,4 +1018,239 @@ pub async fn list_public_plans(
         }
     }
     Ok(responses)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::gamedata::types::building::{ManufactFormula, WorkshopFormula};
+
+    fn formula_costs(inputs: &[(&str, i32)]) -> Vec<FormulaCost> {
+        inputs
+            .iter()
+            .map(|(id, count)| FormulaCost {
+                id: (*id).to_owned(),
+                item_type: "MATERIAL".to_owned(),
+                count: *count,
+            })
+            .collect()
+    }
+
+    fn workshop_formula(
+        item_id: &str,
+        output_count: i32,
+        formula_type: &str,
+        inputs: &[(&str, i32)],
+    ) -> WorkshopFormula {
+        WorkshopFormula {
+            formula_id: format!("wf_{item_id}"),
+            formula_type: formula_type.to_owned(),
+            item_id: item_id.to_owned(),
+            count: output_count,
+            rarity: 0,
+            gold_cost: 0,
+            ap_cost: 0,
+            costs: formula_costs(inputs),
+            require_rooms: Vec::new(),
+            require_stages: Vec::new(),
+        }
+    }
+
+    fn manufact_formula(
+        item_id: &str,
+        output_count: i32,
+        formula_type: &str,
+        inputs: &[(&str, i32)],
+    ) -> ManufactFormula {
+        ManufactFormula {
+            formula_id: format!("mf_{item_id}"),
+            formula_type: formula_type.to_owned(),
+            buff_type: String::new(),
+            item_id: item_id.to_owned(),
+            cost_point: 0,
+            count: output_count,
+            weight: 0,
+            costs: formula_costs(inputs),
+            require_rooms: Vec::new(),
+            require_stages: Vec::new(),
+        }
+    }
+
+    struct Fixture {
+        gamedata: GameData,
+        asset_index: AssetIndex,
+        inventory: HashMap<String, i32>,
+        building: UserBuilding,
+        clears: HashMap<String, StageClear>,
+    }
+
+    impl Fixture {
+        fn new(inventory: &[(&str, i32)]) -> Self {
+            Self {
+                gamedata: GameData::default(),
+                asset_index: AssetIndex::default(),
+                inventory: inventory
+                    .iter()
+                    .map(|(id, count)| ((*id).to_owned(), *count))
+                    .collect(),
+                building: UserBuilding { rooms: Vec::new() },
+                clears: HashMap::new(),
+            }
+        }
+
+        fn add_workshop(&mut self, formula: WorkshopFormula) {
+            self.gamedata
+                .building
+                .workshop_formulas
+                .insert(formula.formula_id.clone(), formula);
+        }
+
+        fn add_manufact(&mut self, formula: ManufactFormula) {
+            self.gamedata
+                .building
+                .manufact_formulas
+                .insert(formula.formula_id.clone(), formula);
+        }
+
+        fn requirements(&self, required: &[(&str, i32)]) -> Vec<PlanRequirementItem> {
+            let ctx = PlannerCtx {
+                gamedata: &self.gamedata,
+                asset_index: &self.asset_index,
+                inventory_map: &self.inventory,
+                user_building: &self.building,
+                clears: &self.clears,
+            };
+            let combined = required
+                .iter()
+                .map(|(id, count)| ((*id).to_owned(), *count))
+                .collect();
+            build_all_requirements(&ctx, combined)
+        }
+    }
+
+    fn find<'a>(reqs: &'a [PlanRequirementItem], id: &str) -> &'a PlanRequirementItem {
+        reqs.iter().find(|r| r.id == id).unwrap()
+    }
+
+    /// Regression for the Rephasic Enantiomer report: required 10, have 7, every
+    /// ingredient either owned outright or craftable one tier down. The old code
+    /// reserved ingredient inventory against the global requirement aggregate and
+    /// reported Craftable 0 / Missing 3.
+    #[test]
+    fn parent_craftable_when_ingredients_owned_or_craftable() {
+        let mut fx = Fixture::new(&[("t5", 7), ("t4", 5), ("t3", 30), ("t2a", 39), ("t2b", 4)]);
+        fx.add_workshop(workshop_formula(
+            "t5",
+            1,
+            "F_EVOLVE",
+            &[("t4", 2), ("t2a", 1), ("t2b", 1)],
+        ));
+        fx.add_workshop(workshop_formula("t4", 1, "F_EVOLVE", &[("t3", 3)]));
+
+        let reqs = fx.requirements(&[("t5", 10)]);
+        let t5 = find(&reqs, "t5");
+        assert!(t5.can_craft);
+        assert_eq!(t5.craftable_count, 3);
+        assert_eq!(t5.missing_count, 0);
+
+        let recipe = t5.recipe.as_ref().unwrap();
+        let t4 = &recipe
+            .costs
+            .iter()
+            .find(|c| c.item.id == "t4")
+            .unwrap()
+            .item;
+        assert_eq!(t4.required_count, 6);
+        assert_eq!(t4.craftable_count, 1); // 5 owned + 1 crafted from t3
+        assert_eq!(t4.missing_count, 0);
+    }
+
+    /// An ingredient's inventory reserved by its own top-level requirement can't
+    /// be double-spent on crafting a parent.
+    #[test]
+    fn direct_requirements_reserve_inventory_before_crafting() {
+        let mut fx = Fixture::new(&[("ing", 1)]);
+        fx.add_workshop(workshop_formula("a", 1, "F_EVOLVE", &[("ing", 1)]));
+
+        let reqs = fx.requirements(&[("a", 1), ("ing", 1)]);
+        let ing = find(&reqs, "ing");
+        assert_eq!(ing.missing_count, 0);
+        let a = find(&reqs, "a");
+        assert_eq!(a.craftable_count, 0);
+        assert_eq!(a.missing_count, 1);
+    }
+
+    /// Two craftable requirements sharing an ingredient pool can't both claim the
+    /// same unit.
+    #[test]
+    fn shared_ingredients_not_double_counted_across_requirements() {
+        let mut fx = Fixture::new(&[("ing", 1)]);
+        fx.add_workshop(workshop_formula("a", 1, "F_EVOLVE", &[("ing", 1)]));
+        fx.add_workshop(workshop_formula("b", 1, "F_EVOLVE", &[("ing", 1)]));
+
+        let reqs = fx.requirements(&[("a", 1), ("b", 1)]);
+        let total_craftable: i32 = reqs.iter().map(|r| r.craftable_count).sum();
+        let total_missing: i32 = reqs.iter().map(|r| r.missing_count).sum();
+        assert_eq!(total_craftable, 1);
+        assert_eq!(total_missing, 1);
+    }
+
+    /// Chip cross-class conversion (workshop `F_ASC`) must never be proposed as a
+    /// craft path.
+    #[test]
+    fn chip_conversion_is_not_a_craft_path() {
+        let mut fx = Fixture::new(&[("chip_b", 10)]);
+        fx.add_workshop(workshop_formula("chip_a", 2, "F_ASC", &[("chip_b", 3)]));
+
+        let reqs = fx.requirements(&[("chip_a", 2)]);
+        let chip = find(&reqs, "chip_a");
+        assert!(!chip.can_craft);
+        assert_eq!(chip.craftable_count, 0);
+        assert_eq!(chip.missing_count, 2);
+        assert!(chip.recipe.is_none());
+        assert!(chip.craft_reason.contains("Chip conversion"));
+    }
+
+    /// Dualchip factory recipes (manufact `F_ASC`) are the intended acquisition
+    /// path and stay craftable.
+    #[test]
+    fn dualchip_factory_recipe_stays_craftable() {
+        let mut fx = Fixture::new(&[("chip_pack", 2), ("catalyst", 1)]);
+        fx.add_manufact(manufact_formula(
+            "dualchip",
+            1,
+            "F_ASC",
+            &[("chip_pack", 2), ("catalyst", 1)],
+        ));
+
+        let reqs = fx.requirements(&[("dualchip", 1)]);
+        let dual = find(&reqs, "dualchip");
+        assert!(dual.can_craft);
+        assert_eq!(dual.craftable_count, 1);
+        assert_eq!(dual.missing_count, 0);
+    }
+
+    /// A recipe locked behind an unbuilt room is still shown, but must not consume
+    /// pool units that other requirements can still use.
+    #[test]
+    fn gated_recipe_does_not_consume_shared_pool() {
+        let mut fx = Fixture::new(&[("ing", 1)]);
+        let mut gated = workshop_formula("a", 1, "F_EVOLVE", &[("ing", 1)]);
+        gated.require_rooms.push(FormulaRoomReq {
+            room_id: "WORKSHOP".to_owned(),
+            room_count: 1,
+            room_level: 1,
+        });
+        fx.add_workshop(gated);
+        fx.add_workshop(workshop_formula("b", 1, "F_EVOLVE", &[("ing", 1)]));
+
+        let reqs = fx.requirements(&[("a", 1), ("b", 1)]);
+        let a = find(&reqs, "a");
+        assert!(!a.can_craft);
+        assert_eq!(a.craftable_count, 0);
+        assert!(a.craft_reason.starts_with("Requirements not met"));
+        let b = find(&reqs, "b");
+        assert_eq!(b.craftable_count, 1);
+        assert_eq!(b.missing_count, 0);
+    }
 }

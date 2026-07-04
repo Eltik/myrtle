@@ -441,6 +441,10 @@ pub struct WorkshopPhase {
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopFormula {
     pub formula_id: String,
+    /// Product category (e.g. `"F_EVOLVE"` for material crafting, `"F_ASC"` for
+    /// chip conversion, `"F_SKILL"` for skill summaries).
+    #[serde(default)]
+    pub formula_type: String,
     pub item_id: String,
     pub count: i32,
     pub rarity: i32,
