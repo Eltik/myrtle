@@ -29,8 +29,8 @@ export interface ITagCombinationResult {
     tagNames: string[];
     operators: IRecruitableOperator[];
     guaranteedRarity: number;
-    minRarity: number;
     maxRarity: number;
+    fiveStarCount: number;
 }
 
 export type OperatorSortMode = "rarity-desc" | "common-first";

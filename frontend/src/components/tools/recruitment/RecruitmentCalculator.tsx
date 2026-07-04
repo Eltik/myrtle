@@ -52,6 +52,7 @@ export function RecruitmentCalculator(): React.ReactElement {
                     return { ...prev, tags: [...next] };
                 },
                 replace: true,
+                resetScroll: false,
             });
         },
         [navigate],
@@ -100,7 +101,7 @@ export function RecruitmentCalculator(): React.ReactElement {
                 <div className="min-w-0 flex-1">
                     <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Recruitment Calculator</h1>
                     <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">
-                        Pick the tags shown in your recruitment screen - up to {MAX_SELECTED_TAGS}. Combinations are ranked by guaranteed minimum rarity. Six-star operators only appear when "Top Operator" is selected.
+                        Pick the tags shown in your recruitment screen - up to {MAX_SELECTED_TAGS}. Combinations that can give a 5★ rank first. Six-star operators only appear in combinations that include "Top Operator".
                     </p>
                 </div>
             </div>

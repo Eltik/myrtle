@@ -29,6 +29,11 @@ function floorPriority(result: ITagCombinationResult): number {
     return Math.max(...result.operators.map((op) => RARITY_DESC_PRIORITY[op.rarity] ?? 99));
 }
 
+function fiveStarChance(result: ITagCombinationResult): number {
+    if (result.guaranteedRarity >= 5) return 1;
+    return result.fiveStarCount / result.operators.length;
+}
+
 // In-game ids for the position, class, and rarity-qualification tags. Affix tags
 // (Nuker, Summon, ...) carry no special semantics and match by name instead.
 const POSITION_BY_TAG_ID: Record<number, string> = { 9: "MELEE", 10: "RANGED" };
@@ -53,7 +58,7 @@ function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tag
     return op.tagList.includes(tagName);
 }
 
-export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
+function getCombinations<T>(arr: T[], maxSize: number): T[][] {
     const result: T[][] = [];
 
     function combine(start: number, current: T[]) {
@@ -81,15 +86,15 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
 
     if (selectedTags.length === 0) return [];
 
-    const hasTopOperator = selectedTags.some((t) => t.id === TOP_OPERATOR_TAG_ID);
-
     const combinations = getCombinations(selectedTags, selectedTags.length);
     const results: ITagCombinationResult[] = [];
 
     for (const combo of combinations) {
+        const comboHasTopOperator = combo.some((t) => t.id === TOP_OPERATOR_TAG_ID);
+
         const matching = allOperators.filter((op) => {
             const rarity = rarityToNumber(op.rarity);
-            if (!hasTopOperator && rarity === 6) return false;
+            if (!comboHasTopOperator && rarity === 6) return false;
 
             return combo.every((tag) => operatorMatchesTag(op, tag.id, tag.name));
         });
@@ -129,12 +134,15 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
             tagNames: combo.map((t) => t.name),
             operators: sortOperators(filteredOps, operatorSortMode),
             guaranteedRarity,
-            minRarity,
             maxRarity,
+            fiveStarCount: filteredOps.filter((op) => op.rarity >= 5).length,
         });
     }
 
     return results.sort((a, b) => {
+        const chanceDiff = fiveStarChance(b) - fiveStarChance(a);
+        if (chanceDiff !== 0) return chanceDiff;
+
         const floorDiff = floorPriority(a) - floorPriority(b);
         if (floorDiff !== 0) return floorDiff;
 
