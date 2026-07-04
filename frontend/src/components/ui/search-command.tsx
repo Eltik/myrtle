@@ -156,12 +156,12 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                         </CommandList>
                     </CommandPanel>
                     <CommandFooter>
-                        <span className="flex items-center gap-1">
+                        <span className="flex pointer-coarse:hidden items-center gap-1">
                             <Kbd>↑</Kbd>
                             <Kbd>↓</Kbd>
                             to navigate
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex pointer-coarse:hidden items-center gap-1">
                             <Kbd>↵</Kbd> to select
                         </span>
                         <span className="ml-auto font-mono text-[10.5px] text-muted-foreground/60 tracking-[0.04em]">powered by COSS UI</span>

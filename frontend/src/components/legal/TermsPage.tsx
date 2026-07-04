@@ -3,16 +3,12 @@ import { Calendar, FileText, ScaleIcon, ShieldIcon } from "lucide-react";
 import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
+import { CONTACT_EMAIL, CONTACT_MAILTO, PRIVACY_EMAIL, PRIVACY_MAILTO, REPO_URL } from "#/lib/constants";
 
 const EFFECTIVE_DATE = "January 12, 2026";
 const LAST_UPDATED = "January 12, 2026";
 const VERSION = "Version 2.0";
-const REPO_URL = "https://github.com/Eltik/myrtle";
 const FBS_URL = "https://github.com/MooncellWiki/OpenArknightsFBS";
-const CONTACT_EMAIL = "contact@myrtle.moe";
-const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
-const PRIVACY_EMAIL = "privacy@myrtle.moe";
-const PRIVACY_MAILTO = `mailto:${PRIVACY_EMAIL}?subject=GDPR%20data%20request`;
 
 const TOC = [
     { id: "acceptance", label: "Acceptance of Terms" },

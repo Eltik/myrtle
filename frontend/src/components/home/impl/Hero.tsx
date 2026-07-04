@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { AuthDialog } from "#/components/header/impl/AuthDialog";
 import { Button } from "#/components/ui/button";
 import { Kbd } from "#/components/ui/kbd";
 import { Separator } from "#/components/ui/separator";
+import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { statsQueryOptions } from "#/lib/api/stats";
 import { formatNumberCompact } from "#/lib/utils";
@@ -21,6 +23,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
     ];
 
     const isMac = useIsMac();
+    const { user } = useAuth();
     return (
         <section className={styles.hero}>
             <div className={styles.heroAmbient} aria-hidden="true" />
@@ -44,8 +47,10 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                     </h1>
 
                     <p className="m-0 mb-7 flex max-w-[48ch] flex-wrap items-center gap-1 font-sans text-[17px] text-muted-foreground leading-[1.55]">
-                        400+ operators, complete stats, community tier lists, and live roster sync. <br />
-                        <span className="flex flex-row items-center gap-2">
+                        400+ operators, complete stats, community tier lists, and live roster sync.
+                        {/* Coarse pointer ≈ no physical keyboard, where a ⌘/Ctrl+K hint is meaningless. */}
+                        <br className="pointer-coarse:hidden" />
+                        <span className="flex pointer-coarse:hidden flex-row items-center gap-2">
                             Hit{" "}
                             <span>
                                 <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd> <Kbd>K</Kbd>
@@ -62,17 +67,33 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                             </svg>
                             Search operators
                         </Button>
-                        <AuthDialog
-                            trigger={
-                                <Button variant="outline" size="lg">
-                                    Link Yostar account
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
-                                        <path d="M5 12h14" />
-                                        <path d="m12 5 7 7-7 7" />
-                                    </svg>
-                                </Button>
-                            }
-                        />
+                        {user ? (
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                render={
+                                    <Link to="/user/$id" params={{ id: user.uid }}>
+                                        View profile
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
+                                            <path d="M5 12h14" />
+                                            <path d="m12 5 7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                }
+                            />
+                        ) : (
+                            <AuthDialog
+                                trigger={
+                                    <Button variant="outline" size="lg">
+                                        Link Yostar account
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
+                                            <path d="M5 12h14" />
+                                            <path d="m12 5 7 7-7 7" />
+                                        </svg>
+                                    </Button>
+                                }
+                            />
+                        )}
                     </div>
 
                     <div className="flex gap-7 border-border border-t pt-5">

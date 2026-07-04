@@ -65,7 +65,6 @@ const SCORE_NAME_WORD_PREFIX = 450;
 const SCORE_NAME_CONTAINS = 300;
 const SCORE_NAME_SUBSEQUENCE = 180;
 const SCORE_EXTRA_CONTAINS = 90;
-const SCORE_EXTRA_SUBSEQUENCE = 40;
 
 /**
  * Returns a score ≥ 0 for how well `target` matches `query`. 0 means "no match".
@@ -93,10 +92,13 @@ export function scoreMatch(query: string, target: IScoreTarget): number {
 
     if (isSubsequence(q, name)) return SCORE_NAME_SUBSEQUENCE + lengthBonus(name);
 
+    // `extra` gets contiguous-substring matching only. Subsequence matching is
+    // reserved for `name`: `extra` concatenates unrelated fields, so a
+    // subsequence can assemble its letters across field boundaries ("myr" out
+    // of "amiya caster …"), which matches nothing meaningful.
     if (extra.length > 0) {
         if (extra.includes(q)) return SCORE_EXTRA_CONTAINS;
         if (extra.replace(/\s+/g, "").includes(qc)) return SCORE_EXTRA_CONTAINS;
-        if (isSubsequence(q, extra)) return SCORE_EXTRA_SUBSEQUENCE;
     }
 
     return 0;

@@ -5,14 +5,10 @@ import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { CONTACT_EMAIL, CONTACT_MAILTO, PRIVACY_EMAIL, PRIVACY_MAILTO, REPO_URL } from "#/lib/constants";
 
 const EFFECTIVE_DATE = "Jan 12, 2026";
 const VERSION = "Version 2.0";
-const REPO_URL = "https://github.com/Eltik/myrtle";
-const CONTACT_EMAIL = "contact@myrtle.moe";
-const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
-const PRIVACY_EMAIL = "privacy@myrtle.moe";
-const PRIVACY_MAILTO = `mailto:${PRIVACY_EMAIL}?subject=GDPR%20data%20request`;
 
 function Section({ id, children }: { id: string; children: ReactNode }) {
     return (

@@ -19,6 +19,12 @@ pub async fn insert_batch(
 }
 
 /// Get gacha history
+///
+/// All history queries order ties on `batch_index ASC, id ASC`: a multi-pull
+/// shares one `pull_timestamp`, and the in-game Headhunting History lists the
+/// batch `batch_index` 0→9 top-to-bottom in its newest-first view. Without the
+/// tiebreaker Postgres returns tied rows in undefined order, which mis-numbers
+/// pulls and corrupts pity distances downstream.
 pub async fn get_history(
     pool: &PgPool,
     user_id: Uuid,
@@ -28,7 +34,7 @@ pub async fn get_history(
 ) -> Result<Vec<GachaRecord>, sqlx::Error> {
     if let Some(r) = rarity {
         sqlx::query_as::<_, GachaRecord>(
-            "SELECT * FROM gacha_records WHERE user_id = $1 AND rarity = $2 ORDER BY pull_timestamp DESC LIMIT $3 OFFSET $4"
+            "SELECT * FROM gacha_records WHERE user_id = $1 AND rarity = $2 ORDER BY pull_timestamp DESC, batch_index ASC, id ASC LIMIT $3 OFFSET $4"
         )
         .bind(user_id)
         .bind(r)
@@ -38,7 +44,7 @@ pub async fn get_history(
         .await
     } else {
         sqlx::query_as::<_, GachaRecord>(
-            "SELECT * FROM gacha_records WHERE user_id = $1 ORDER BY pull_timestamp DESC LIMIT $2 OFFSET $3"
+            "SELECT * FROM gacha_records WHERE user_id = $1 ORDER BY pull_timestamp DESC, batch_index ASC, id ASC LIMIT $2 OFFSET $3"
         )
         .bind(user_id)
         .bind(limit)
@@ -91,7 +97,7 @@ pub async fn get_history_filtered(
            AND ($4::TEXT IS NULL OR char_id = $4) \
            AND ($5::BIGINT IS NULL OR pull_timestamp >= $5) \
            AND ($6::BIGINT IS NULL OR pull_timestamp <= $6) \
-         ORDER BY pull_timestamp {order_sql} \
+         ORDER BY pull_timestamp {order_sql}, batch_index ASC, id ASC \
          LIMIT $7 OFFSET $8"
     );
 
@@ -134,7 +140,7 @@ pub async fn get_all_for_user(
     user_id: Uuid,
 ) -> Result<Vec<GachaRecord>, sqlx::Error> {
     sqlx::query_as::<_, GachaRecord>(
-        "SELECT * FROM gacha_records WHERE user_id = $1 ORDER BY pull_timestamp DESC",
+        "SELECT * FROM gacha_records WHERE user_id = $1 ORDER BY pull_timestamp DESC, batch_index ASC, id ASC",
     )
     .bind(user_id)
     .fetch_all(pool)
@@ -148,7 +154,7 @@ pub async fn get_by_char_for_user(
     char_id: &str,
 ) -> Result<Vec<GachaRecord>, sqlx::Error> {
     sqlx::query_as::<_, GachaRecord>(
-        "SELECT * FROM gacha_records WHERE user_id = $1 AND char_id = $2 ORDER BY pull_timestamp DESC",
+        "SELECT * FROM gacha_records WHERE user_id = $1 AND char_id = $2 ORDER BY pull_timestamp DESC, batch_index ASC, id ASC",
     )
     .bind(user_id)
     .bind(char_id)

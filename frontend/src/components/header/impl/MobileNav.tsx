@@ -4,8 +4,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
+import { GithubIcon } from "#/components/ui/github-icon";
 import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
+import { REPO_URL } from "#/lib/constants";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import { ActiveIndicator } from "./ActiveIndicator";
 import { AuthDialog } from "./AuthDialog";
@@ -72,12 +74,9 @@ export function MobileNav({ items }: IMobileNavProps) {
                             <DrawerMenuGroupLabel>External</DrawerMenuGroupLabel>
                             <DrawerMenuItem
                                 render={
-                                    <a href="https://github.com/myrtle-moe" target="_blank" rel="noreferrer" className="cursor-pointer">
+                                    <a href={REPO_URL} target="_blank" rel="noreferrer" className="cursor-pointer">
                                         GitHub
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github h-4 w-4" aria-hidden="true">
-                                            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-                                            <path d="M9 18c-4.51 2-5-2-7-2" />
-                                        </svg>
+                                        <GithubIcon className="h-4 w-4" />
                                         <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
                                     </a>
                                 }
@@ -101,7 +100,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     <div className="mb-2 flex items-center gap-3 px-2 py-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
-                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
+                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
                                             <span className="font-medium text-sm">{user.nickname ?? "Doctor"}</span>
