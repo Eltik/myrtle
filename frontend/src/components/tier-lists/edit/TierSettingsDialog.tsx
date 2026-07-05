@@ -1,5 +1,5 @@
 import { EraserIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
@@ -23,6 +23,7 @@ interface ITierSettingsDialogProps {
 export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete, onClear }: ITierSettingsDialogProps) {
     const nameId = useId();
     const descId = useId();
+    const nameInputRef = useRef<HTMLInputElement>(null);
     const [name, setName] = useState("");
     const [color, setColor] = useState("#dc4d56");
     const [description, setDescription] = useState("");
@@ -36,6 +37,12 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
             setDescription(tier.description);
             setConfirmingDelete(false);
             setConfirmingClear(false);
+
+            const frame = requestAnimationFrame(() => {
+                nameInputRef.current?.focus();
+                nameInputRef.current?.select();
+            });
+            return () => cancelAnimationFrame(frame);
         }
     }, [tier]);
 
@@ -68,7 +75,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
-                            <Input id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder="S, A, Pick-One, etc." autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
+                            <Input ref={nameInputRef} id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder="S, A, Pick-One, etc." autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
                             <FieldDescription>Short labels like "S" or "A" read clearest; up to {NAME_MAX} characters.</FieldDescription>
                         </Field>
 
