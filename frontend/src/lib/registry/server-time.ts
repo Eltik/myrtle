@@ -18,3 +18,14 @@ export function countGameDays(startTs: number, endTs: number, server: string): n
     const dayIndex = (ts: number) => Math.floor((ts + offsetSec) / 86400);
     return Math.max(1, dayIndex(endTs) - dayIndex(startTs) + 1);
 }
+
+/**
+ * Calendar date (in server time, respecting the 04:00 reset) of the game day
+ * containing `ts` (Unix seconds). E.g. 02:00 server time on the 8th is still
+ * the game day of the 7th. `month` is 0-based, matching `Date`.
+ */
+export function gameDate(ts: number, server: string): { year: number; month: number; day: number } {
+    const offsetSec = ((SERVER_UTC_OFFSET_HOURS[server.toUpperCase()] ?? 0) - DAILY_RESET_HOUR) * 3600;
+    const d = new Date((ts + offsetSec) * 1000);
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth(), day: d.getUTCDate() };
+}

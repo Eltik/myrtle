@@ -43,7 +43,7 @@ export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinC
             <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsStatic={operatorsStatic} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
             <TopOperatorsCard operatorsStatic={operatorsStatic} roster={roster} />
             <SignInOverviewCard checkin={checkin} server={server} />
-            <SignInCalendarCard checkin={checkin} />
+            <SignInCalendarCard checkin={checkin} server={server} />
         </div>
     );
 }

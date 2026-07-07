@@ -1,5 +1,5 @@
 import { CalendarCheck, CalendarDays, Check, Clock } from "lucide-react";
-import { countGameDays } from "#/lib/registry/server-time";
+import { countGameDays, gameDate } from "#/lib/registry/server-time";
 import { cn } from "#/lib/utils";
 import type { IUserCheckin } from "#/types/user";
 import { PALETTE } from "../palette";
@@ -7,9 +7,6 @@ import { CARD_PADDING, KICKER_TEXT, Kicker, MetricRow, StatCard, Tile } from "..
 
 interface ICardProps {
     checkin: IUserCheckin | null | undefined;
-}
-
-interface IOverviewCardProps extends ICardProps {
     server: string;
 }
 
@@ -56,7 +53,7 @@ function StatRow({ label, value, title }: { label: string; value: string; title?
 }
 
 /** Left card: lifetime / account-level sign-in engagement. */
-export function SignInOverviewCard({ checkin, server }: IOverviewCardProps) {
+export function SignInOverviewCard({ checkin, server }: ICardProps) {
     if (!checkin) return null;
 
     const { history, cumulative_signin, register_ts, last_online_ts } = checkin;
@@ -108,18 +105,20 @@ function LegendSwatch({ state }: { state: DayState }) {
 }
 
 /** Right card: the current month's sign-in calendar (snapshot as of last sync). */
-export function SignInCalendarCard({ checkin }: ICardProps) {
+export function SignInCalendarCard({ checkin, server }: ICardProps) {
     if (!checkin) return null;
 
     const { history, can_check_in, updated_at } = checkin;
 
     const sync = new Date(updated_at);
-    const year = sync.getFullYear();
-    const month = sync.getMonth();
-    const monthLabel = sync.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const monthShort = sync.toLocaleDateString("en-US", { month: "short" });
+    // The calendar reflects game days, which live in SERVER time (with the
+    // 04:00 reset) - the viewer's local date may already be a day ahead.
+    const { year, month, day: syncGameDay } = gameDate(Math.floor(sync.getTime() / 1000), server);
+    const monthAnchor = new Date(year, month, 1);
+    const monthLabel = monthAnchor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const monthShort = monthAnchor.toLocaleDateString("en-US", { month: "short" });
     const syncAbsolute = sync.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    const firstWeekday = new Date(year, month, 1).getDay();
+    const firstWeekday = monthAnchor.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const elapsed = history.length;
@@ -176,7 +175,7 @@ export function SignInCalendarCard({ checkin }: ICardProps) {
                         ))}
                         {days.map((day) => {
                             const state: DayState = day > elapsed ? "upcoming" : history[day - 1] === 1 ? "claimed" : "missed";
-                            const isSyncDay = day === sync.getDate();
+                            const isSyncDay = day === syncGameDay;
                             return (
                                 <div
                                     className={cn(CELL_BASE, state === "missed" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
