@@ -14,6 +14,7 @@ import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 
+import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
 import { RequirementsPanel } from "./RequirementsPanel";
 
@@ -224,6 +225,9 @@ export function OperatorPlanner(): React.ReactElement {
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
     const [editOperatorId, setEditOperatorId] = React.useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = React.useState<IDeletePlansTarget | null>(null);
+    const [isDeleting, setIsDeleting] = React.useState(false);
+    const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
     const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
         ...plansQueryOptions(),
@@ -273,35 +277,39 @@ export function OperatorPlanner(): React.ReactElement {
         setActivePlans(next);
     };
 
-    const handleDeletePlan = async (opId: string) => {
-        try {
-            await deletePlanFn({ data: opId });
-            setActivePlans((prev) => {
-                const next = { ...prev };
-                delete next[opId];
-                return next;
-            });
-            queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
-        } catch (err) {
-            console.error(err);
-        }
+    const requestDeletePlan = (plan: IOperatorPlanResponse) => {
+        setDeleteError(null);
+        setDeleteTarget({ ids: [plan.operator_id], names: [plan.operator?.name ?? "Unknown operator"] });
     };
 
-    const handleDeleteSelected = async () => {
-        const selectedIds = activePlansList.map((p) => p.operator_id);
-        if (selectedIds.length === 0) return;
+    const requestDeleteSelected = () => {
+        if (activePlansList.length === 0) return;
+        setDeleteError(null);
+        setDeleteTarget({
+            ids: activePlansList.map((p) => p.operator_id),
+            names: activePlansList.map((p) => p.operator?.name ?? "Unknown operator"),
+        });
+    };
+
+    const handleConfirmDelete = async (ids: string[]) => {
+        setIsDeleting(true);
+        setDeleteError(null);
         try {
-            await Promise.all(selectedIds.map((id) => deletePlanFn({ data: id })));
+            await Promise.all(ids.map((id) => deletePlanFn({ data: id })));
             setActivePlans((prev) => {
                 const next = { ...prev };
-                for (const id of selectedIds) {
+                for (const id of ids) {
                     delete next[id];
                 }
                 return next;
             });
             queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
+            setDeleteTarget(null);
         } catch (err) {
             console.error(err);
+            setDeleteError("Failed to delete. Please try again.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -429,7 +437,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                         variant="ghost"
                                                         size="xs"
                                                         className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                                                        onClick={handleDeleteSelected}
+                                                        onClick={requestDeleteSelected}
                                                     >
                                                         <Trash className="mr-1 size-3.5" />
                                                         Delete selected ({selectedPlansCount})
@@ -449,7 +457,7 @@ export function OperatorPlanner(): React.ReactElement {
 
                                                         {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
 
-                                                        <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="mt-auto border-border/40 border-t pt-3" />
+                                                        <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="mt-auto border-border/40 border-t pt-3" />
                                                     </label>
                                                 );
                                             })}
@@ -544,7 +552,7 @@ export function OperatorPlanner(): React.ReactElement {
 
                                                                                 {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="pl-7" />}
 
-                                                                                <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="pl-7" dense />
+                                                                                <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="pl-7" dense />
                                                                             </div>
                                                                         );
                                                                     })
@@ -565,6 +573,16 @@ export function OperatorPlanner(): React.ReactElement {
                     </div>
                 </div>
             )}
+
+            <DeletePlansDialog
+                target={deleteTarget}
+                onOpenChange={(isOpen) => {
+                    if (!isOpen && !isDeleting) setDeleteTarget(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                isSubmitting={isDeleting}
+                errorMessage={deleteError}
+            />
 
             {isAuthenticated && (
                 <OperatorPlannerDialog

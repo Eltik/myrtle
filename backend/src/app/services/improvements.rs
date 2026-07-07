@@ -38,8 +38,10 @@ use crate::core::grade::sandbox::score::{
     ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
 };
 use crate::core::grade::stages::{StageClear, event_is_gradeable};
+use crate::core::hypergryph::constants::Server;
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::building::get_building;
+use crate::database::queries::medal_ownership::get_medal_ownership;
 use crate::database::queries::medals::get_user_medals;
 use crate::database::queries::roguelike::get_roguelike_progress;
 use crate::database::queries::roster::get_roster;
@@ -195,6 +197,11 @@ pub struct MedalGap {
     /// Set when the medal is locked behind an unobtainable operator.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub operator_lock: Option<MedalOperatorLock>,
+    /// Share (percent, 0-100) of stat-sharing synced players on the user's
+    /// server who have earned this medal - the medal's community rarity.
+    /// None until the daily ownership aggregate has been computed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owned_pct: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -496,7 +503,14 @@ pub async fn get_improvements(
     let stages = build_stage_improvements(&state.db, user_id, &game_data).await?;
     let roguelike = build_roguelike_improvements(&state.db, user_id, &game_data).await?;
     let sandbox = build_sandbox_improvements(&state.db, user_id, &game_data).await?;
-    let medals = build_medal_improvements(&state.db, user_id, &game_data, &owned_operators).await?;
+    let medals = build_medal_improvements(
+        &state.db,
+        user_id,
+        &user.server,
+        &game_data,
+        &owned_operators,
+    )
+    .await?;
     let operators = build_operator_improvements(&roster, &game_data, &support_ids);
     let base = build_base_improvements(&state.db, user_id, &roster, &game_data).await?;
 
@@ -819,6 +833,7 @@ async fn build_sandbox_improvements(
 async fn build_medal_improvements(
     pool: &PgPool,
     user_id: Uuid,
+    server: &str,
     game_data: &GameData,
     owned_operators: &HashSet<&str>,
 ) -> Result<MedalImprovements, ApiError> {
@@ -831,6 +846,35 @@ async fn build_medal_improvements(
         })
         .map(|(id, _, _, _)| id.clone())
         .collect();
+
+    // Community rarity: how many stat-sharing players on this server have
+    // earned each medal, from the daily precomputed aggregate. A zero
+    // population (job never ran, or unknown server code) yields no percentages
+    // rather than misleading ones.
+    let (population, ownership_rows) = match Server::parse(server) {
+        Some(s) => get_medal_ownership(pool, s.index() as i16).await?,
+        None => (0, Vec::new()),
+    };
+    let ownership: HashMap<&str, i64> = ownership_rows
+        .iter()
+        .map(|r| (r.medal_id.as_str(), r.owners))
+        .collect();
+    #[allow(clippy::cast_precision_loss)]
+    let owned_pct = |medal_id: &str| -> Option<f64> {
+        if population <= 0 {
+            return None;
+        }
+        let owners = ownership.get(medal_id).copied().unwrap_or(0);
+        Some((owners as f64 / population as f64 * 1000.0).round() / 10.0)
+    };
+    let make_gap = |medal: &MedalDefinition, end_time: Option<i64>| {
+        medal_gap(
+            medal,
+            &game_data.medals,
+            end_time,
+            owned_pct(&medal.medal_id),
+        )
+    };
 
     let now = chrono::Utc::now().timestamp();
 
@@ -851,7 +895,7 @@ async fn build_medal_improvements(
         if let Some(lock) = game_data.medals.operator_lock(&medal.medal_id)
             && !owned_operators.contains(lock.operator_id.as_str())
         {
-            let mut gap = medal_gap(medal, &game_data.medals, None);
+            let mut gap = make_gap(medal, None);
             gap.operator_lock = Some(MedalOperatorLock {
                 operator_id: lock.operator_id.clone(),
                 operator_name: lock.operator_name.clone(),
@@ -862,7 +906,7 @@ async fn build_medal_improvements(
         }
         match game_data.medals.obtainability(&medal.medal_id, now) {
             Obtainability::Permanent => {
-                permanent_missing.push(medal_gap(medal, &game_data.medals, None));
+                permanent_missing.push(make_gap(medal, None));
             }
             Obtainability::Event { proxy_close_ts } => {
                 // A closed event window is no longer an improvement opportunity,
@@ -870,16 +914,11 @@ async fn build_medal_improvements(
                 // obtainable" bucket so the user can see it was missed. (Still
                 // scored via the event pool with recency decay - see grade_medals.rs.)
                 if proxy_close_ts > 0 && proxy_close_ts < now {
-                    unobtainable_missing.push(medal_gap(
-                        medal,
-                        &game_data.medals,
-                        Some(proxy_close_ts),
-                    ));
+                    unobtainable_missing.push(make_gap(medal, Some(proxy_close_ts)));
                     continue;
                 }
-                event_in_window_missing.push(medal_gap(
+                event_in_window_missing.push(make_gap(
                     medal,
-                    &game_data.medals,
                     if proxy_close_ts > 0 {
                         Some(proxy_close_ts)
                     } else {
@@ -896,7 +935,7 @@ async fn build_medal_improvements(
             // Surfaced in the "no longer obtainable" bucket for reference;
             // excluded from scoring entirely (grade_medals.rs).
             Obtainability::Unobtainable => {
-                unobtainable_missing.push(medal_gap(medal, &game_data.medals, None));
+                unobtainable_missing.push(make_gap(medal, None));
             }
         }
     }
@@ -929,7 +968,12 @@ async fn build_medal_improvements(
     })
 }
 
-fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i64>) -> MedalGap {
+fn medal_gap(
+    medal: &MedalDefinition,
+    medal_data: &MedalData,
+    end_time: Option<i64>,
+    owned_pct: Option<f64>,
+) -> MedalGap {
     MedalGap {
         medal_id: medal.medal_id.clone(),
         name: medal.medal_name.clone(),
@@ -939,6 +983,7 @@ fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i
         is_hidden: medal.is_hidden,
         end_time,
         operator_lock: None,
+        owned_pct,
     }
 }
 

@@ -305,6 +305,8 @@ export interface IMedalGap {
     end_time: number | null;
     /** Set when the medal is locked behind an operator that can't be obtained. */
     operator_lock?: IMedalOperatorLock | null;
+    /** Share (percent, 0-100) of stat-sharing synced players on the user's server who have earned this medal. Absent until the daily ownership aggregate has run. */
+    owned_pct?: number;
 }
 
 export interface IMedalImprovements {

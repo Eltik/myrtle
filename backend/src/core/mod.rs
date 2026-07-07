@@ -6,6 +6,7 @@ pub mod gamedata;
 pub mod grade;
 pub mod hypergryph;
 pub mod leaderboard_snapshot_job;
+pub mod medal_ownership_job;
 pub mod operator_ownership_job;
 pub mod regrade_job;
 pub mod trending_job;

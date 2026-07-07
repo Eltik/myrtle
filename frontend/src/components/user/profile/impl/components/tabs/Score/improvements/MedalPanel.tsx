@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
@@ -14,6 +15,11 @@ const INITIAL_VISIBLE = 12;
 
 function rarityLabel(rarity: string): string {
     return rarity.replace("D5", ".5");
+}
+
+function ownedPctLabel(pct: number): string {
+    if (pct > 0 && pct < 1) return "<1%";
+    return `${Math.round(pct)}%`;
 }
 
 function medalIconURL(medalId: string): string {
@@ -148,6 +154,21 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
                 </div>
                 {medal.get_method && <p className={cn(TEXT_META, "mt-0.5 text-muted-foreground/85")}>{medal.get_method}</p>}
             </div>
+            {typeof medal.owned_pct === "number" && (
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <span className={cn(TEXT_META, "flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground tabular-nums")}>
+                                <Users className="size-3" aria-hidden />
+                                {ownedPctLabel(medal.owned_pct)}
+                            </span>
+                        }
+                    />
+                    <TooltipContent sideOffset={4}>
+                        <p>Earned by {medal.owned_pct}% of synced players on your server who share stats - how rare this medal is in the community.</p>
+                    </TooltipContent>
+                </Tooltip>
+            )}
             {mode === "event" && daysLeft !== null && (
                 <Pill color={daysLeft <= 7 ? URGENT_COLOR : color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
                     {daysLeft <= 0 ? "ending now" : `${daysLeft}d left`}

@@ -3,9 +3,9 @@ import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide
 import * as React from "react";
 
 import { itemIcon } from "#/components/operators/detail/impl/assets";
-import { FilterChip } from "#/components/ui/filter-chip";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -118,8 +118,15 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
     );
 }
 
-/** Density override for the shared FilterChip - the requirements card is tighter than the profile tabs. */
-const CHIP_CLASS = "h-7 gap-1.5 px-2.5 text-xs";
+/** Dropdown option row: label left, count right, matching the table's tabular numerals. */
+function FilterOption({ label, count }: { label: string; count: number }) {
+    return (
+        <span className="flex w-full items-center justify-between gap-3">
+            <span>{label}</span>
+            <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
+        </span>
+    );
+}
 
 const TABLE_HEAD = (
     <thead>
@@ -352,19 +359,37 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
             </div>
 
             {hasRequirements && (
-                <div className="mt-3 flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <FilterChip className={CHIP_CLASS} label="All" active={settings.category === "all"} count={searchFiltered.length} onSelect={() => setCategory("all")} />
-                        {REQUIREMENT_CATEGORIES.filter((def) => categoryCounts[def.key] > 0 || settings.category === def.key).map((def) => (
-                            <FilterChip className={CHIP_CLASS} key={def.key} label={def.label} active={settings.category === def.key} count={categoryCounts[def.key]} onSelect={() => setCategory(def.key)} />
-                        ))}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <FilterChip className={CHIP_CLASS} label="All" active={settings.status === "all"} count={categoryFiltered.length} onSelect={() => setStatus("all")} />
-                        {STATUS_FILTER_ORDER.filter((s) => statusCounts[s] > 0 || settings.status === s).map((s) => (
-                            <FilterChip className={CHIP_CLASS} key={s} label={STATUS_FILTER_LABELS[s]} active={settings.status === s} count={statusCounts[s]} onSelect={() => setStatus(s)} />
-                        ))}
-                    </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Select value={settings.category} onValueChange={(v) => v != null && setCategory(v as CategoryFilter)}>
+                        <SelectTrigger size="sm" className={cn("h-7 text-xs", settings.category !== "all" && "border-primary/50")}>
+                            <SelectValue placeholder="Type">{() => `Type: ${settings.category === "all" ? "All" : (REQUIREMENT_CATEGORIES.find((d) => d.key === settings.category)?.label ?? "All")}`}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">
+                                <FilterOption label="All" count={searchFiltered.length} />
+                            </SelectItem>
+                            {REQUIREMENT_CATEGORIES.map((def) => (
+                                <SelectItem key={def.key} value={def.key} disabled={categoryCounts[def.key] === 0}>
+                                    <FilterOption label={def.label} count={categoryCounts[def.key]} />
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={settings.status} onValueChange={(v) => v != null && setStatus(v as StatusFilter)}>
+                        <SelectTrigger size="sm" className={cn("h-7 text-xs", settings.status !== "all" && "border-primary/50")}>
+                            <SelectValue placeholder="Status">{() => `Status: ${settings.status === "all" ? "All" : STATUS_FILTER_LABELS[settings.status]}`}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">
+                                <FilterOption label="All" count={categoryFiltered.length} />
+                            </SelectItem>
+                            {STATUS_FILTER_ORDER.map((s) => (
+                                <SelectItem key={s} value={s} disabled={statusCounts[s] === 0}>
+                                    <FilterOption label={STATUS_FILTER_LABELS[s]} count={statusCounts[s]} />
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             )}
 
