@@ -70,9 +70,10 @@ fn compare_dps(rust_dps: f64, python_dps: f64) -> bool {
 #[test]
 fn test_engine_vs_python_expected() {
     dotenv::dotenv().ok();
-    let data_dir_str =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let data_dir_str = std::env::var("GAME_DATA_DIR")
+        .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into());
+    let assets_dir_str =
+        std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
     let data_dir = Path::new(&data_dir_str);
     let assets_dir = Path::new(&assets_dir_str);
     let game_data =
@@ -115,8 +116,7 @@ fn test_engine_vs_python_expected() {
                 .get(&skill.to_string())
                 .map_or("unknown", |sf| sf.formula_type.as_str());
 
-            // Skip operators with no skill data in game files (e.g. CN-only operators)
-            // Skip operators with no skill data (CN-only) or clone-dependent (Muelsyse)
+            // Skip operators with no skill data (CN-only) or clone-dependent (Muelsyse).
             if operator.skills.is_empty() || formula.class_name == "Muelsyse" {
                 skipped += 1;
                 continue;
@@ -290,9 +290,10 @@ fn test_engine_vs_python_expected() {
 #[test]
 fn test_unavailable_module_returns_none() {
     dotenv::dotenv().ok();
-    let data_dir_str =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let data_dir_str = std::env::var("GAME_DATA_DIR")
+        .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into());
+    let assets_dir_str =
+        std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
     let game_data = gamedata::init_game_data(Path::new(&data_dir_str), Path::new(&assets_dir_str))
         .expect("Failed to load game data");
 

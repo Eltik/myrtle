@@ -18,8 +18,16 @@ use super::{
     weighted_average,
 };
 
-/// Dimension weights
-const WEIGHT_ELITE: f64 = 25.0;
+/// Dimension weights.
+///
+/// Elite outweighs level by material value: each promotion gates skills,
+/// masteries and modules behind a spike of rare materials plus the LMD fee,
+/// making it the most expensive *discrete* milestone in an operator's build.
+/// Levels rank second (leveling EXP + LMD is the largest *continuous* sanity
+/// sink of a full build - see `level_weight`), so the promotion track
+/// (elite + level) leads the mastery/module track while potentials stay
+/// scored as their own dimension.
+const WEIGHT_ELITE: f64 = 35.0;
 const WEIGHT_MASTERY: f64 = 30.0;
 const WEIGHT_MODULE: f64 = 25.0;
 const WEIGHT_POTENTIAL: f64 = 10.0;
@@ -311,11 +319,14 @@ pub fn operator_score_breakdown(
         .collect()
 }
 
+/// Level weight per rarity. By average sanity distribution, leveling is the
+/// single largest continuous cost of a full build, so for 4★+ it weighs just
+/// under the elite gate (`WEIGHT_ELITE`) and ahead of the per-skill
+/// dimensions. For 3★ and below - no E2, no masteries, no modules - leveling
+/// *is* nearly the whole investment, so it carries a dominant weight.
 const fn level_weight(rarity: &OperatorRarity) -> f64 {
     match rarity {
-        OperatorRarity::SixStar => 15.0,
-        OperatorRarity::FiveStar => 18.0,
-        OperatorRarity::FourStar => 20.0,
+        OperatorRarity::SixStar | OperatorRarity::FiveStar | OperatorRarity::FourStar => 25.0,
         _ => 40.0,
     }
 }

@@ -37,6 +37,9 @@ function allItems(records: IClientGachaRecords): IGachaItem[] {
     return [...records.limited.records, ...records.linkage.records, ...records.regular.records, ...records.special.records];
 }
 
+// Headhunting cost per pull; free/discounted pulls make the total an estimate.
+const ORUNDUM_PER_PULL = 600;
+
 export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
     if (isLoading) {
         return (
@@ -56,6 +59,7 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
 
     const items = allItems(records);
     const total = items.length;
+    const bannerTypeCount = [records.limited, records.linkage, records.regular, records.special].filter((g) => g.total > 0).length;
     const sixStars = items.filter((i) => i.star === "6").length;
     const fiveStars = items.filter((i) => i.star === "5").length;
     const sixRate = total > 0 ? (sixStars / total) * 100 : 0;
@@ -68,10 +72,12 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
                 label="Total pulls"
                 value={formatNumber(total)}
                 meta={
-                    <span>
-                        across {[records.limited, records.linkage, records.regular, records.special].filter((g) => g.total > 0).length} banner type
-                        {[records.limited, records.linkage, records.regular, records.special].filter((g) => g.total > 0).length !== 1 ? "s" : ""}
-                    </span>
+                    <>
+                        <span>
+                            across {bannerTypeCount} banner type{bannerTypeCount !== 1 ? "s" : ""}
+                        </span>
+                        {total > 0 ? <span title={`${formatNumber(total)} pulls x ${ORUNDUM_PER_PULL} Orundum; free and discounted pulls make this an upper estimate`}>≈ {formatNumber(total * ORUNDUM_PER_PULL)} Orundum</span> : null}
+                    </>
                 }
             />
             <Kpi

@@ -7,6 +7,7 @@ use crate::core::{
     grade::base::{
         buff_registry::BuffResolutionStrategy,
         evaluate::evaluate_buff,
+        team_select::PlannedGroup,
         types::{
             BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, RoomRotation,
             RotationAssignment, RotationMember, RotationSet, RotationSetRoom, TeammateInfo,
@@ -30,7 +31,9 @@ const BASE_TRADING_ORDER_LIMIT: i32 = 6;
 const MIN_TRADING_ORDER_LIMIT: i32 = 1;
 
 /// Build a `char_id` → profile index for O(1) lookups in the hot inner loops.
-fn build_op_index(operators: &[OperatorBaseProfile]) -> HashMap<&str, &OperatorBaseProfile> {
+pub(crate) fn build_op_index(
+    operators: &[OperatorBaseProfile],
+) -> HashMap<&str, &OperatorBaseProfile> {
     operators.iter().map(|o| (o.char_id.as_str(), o)).collect()
 }
 
@@ -81,7 +84,7 @@ pub fn compute_optimal_assignment_with_pins(
 /// True when the roster owns an operator whose base-wide conditional (Hoederer's "+5% when Ines or
 /// W works any Work Area") could fire - i.e. at least one required partner is itself in the candidate
 /// pool and so could be deployed. Only then is the two-pass resolution worth running.
-fn base_wide_relevant(
+pub(crate) fn base_wide_relevant(
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> bool {
@@ -99,7 +102,7 @@ fn base_wide_relevant(
 
 /// True when some base-wide bonus is actually unlocked by `deployed` - a required partner ended up
 /// stationed in a work area. If none did, the second optimizer pass would be identical to the first.
-fn base_wide_unlocked(
+pub(crate) fn base_wide_unlocked(
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
     deployed: &HashSet<String>,
@@ -119,7 +122,7 @@ fn base_wide_unlocked(
 /// its base, plus the bonus when one of its required partners is in `present` (the operators
 /// deployed in work areas). This lets the room scorer stay deployment-agnostic - it just reads the
 /// already-resolved efficiency.
-fn resolve_base_wide(
+pub(crate) fn resolve_base_wide(
     registry: &HashMap<String, BuffResolutionStrategy>,
     present: &HashSet<String>,
 ) -> HashMap<String, BuffResolutionStrategy> {
@@ -548,7 +551,7 @@ fn best_reception_crew(
 /// ambience model (rarity + elite + skill, best pair vs best solo). Chosen operators are reserved
 /// so the rest of the plan doesn't double-book them; a room already staffed (e.g. an Office held by
 /// a perception support generator) is left alone.
-fn assign_auxiliary_rooms(
+pub(crate) fn assign_auxiliary_rooms(
     rooms: &mut Vec<RoomAssignment>,
     building: &UserBuilding,
     building_data: &BuildingDataFile,
@@ -773,7 +776,7 @@ fn cc_global_morale_recovery(
 /// Fill the Control Center's spare seats with idle global morale-recovery operators
 /// (strongest first), reserving them from production padding. Each lifts the whole
 /// base's sustain, so it is a better use of a spare seat than a zero-value filler.
-fn reserve_cc_morale_seats(
+pub(crate) fn reserve_cc_morale_seats(
     cc_room: &mut ControlCenter,
     control_slots: i32,
     operators: &[OperatorBaseProfile],
@@ -1391,7 +1394,7 @@ fn count_facilities(building: &UserBuilding) -> HashMap<String, usize> {
 /// per-facility automation it powers. Automation scalers (Weedy/Eunectes/Pudding) then score
 /// against the boosted count, so those combos are correctly valued; bases without such operators
 /// are unaffected (nothing reads the extra count).
-fn effective_facility_counts(
+pub(crate) fn effective_facility_counts(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -1429,15 +1432,39 @@ fn effective_facility_counts(
         distinct_formulas.len()
     };
     counts.insert(MANUFACTURE_RECIPE_TYPES.to_string(), recipe_types);
+    // The base's max Drone capacity, which capacity-scaled drone skills (Greyy the
+    // Lightningbearer: "+1% per 10 max Drone capacity") read: 100 base plus each
+    // Power Plant's per-level grant. These are client-side game constants not present
+    // in the extracted gamedata tables (a full 3x L3 base holds 235 drones - the
+    // user-visible figure the skill tooltips confirm).
+    let drone_capacity: usize = BASE_DRONE_CAPACITY
+        + building
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == "POWER")
+            .map(|r| {
+                let level = (r.level.max(1) as usize).min(POWER_PLANT_DRONE_CAPACITY.len());
+                POWER_PLANT_DRONE_CAPACITY[level - 1]
+            })
+            .sum::<usize>();
+    counts.insert(DRONE_CAPACITY.to_string(), drone_capacity);
     counts
 }
+
+/// Max Drone (Labor) capacity of a base with no Power Plants - a client-side game
+/// constant (not in the extracted gamedata tables).
+const BASE_DRONE_CAPACITY: usize = 100;
+/// Per-level max-Drone grant of a Power Plant (L1/L2/L3) - client-side game constants.
+const POWER_PLANT_DRONE_CAPACITY: [usize; 3] = [20, 30, 45];
+/// Synthetic `facility_counts` key holding the base's max Drone capacity.
+const DRONE_CAPACITY: &str = "DRONE_CAPACITY";
 
 /// Synthetic `facility_counts` key holding the number of DISTINCT recipe types the factories run
 /// (not the factory count) - the quantity Quartz's recipe-type trading scaler reads.
 const MANUFACTURE_RECIPE_TYPES: &str = "MANUFACTURE_RECIPE_TYPES";
 
 /// Max stationed for the user's highest-level room of `room_type` (e.g. their CC).
-fn max_stationed_for_room(
+pub(crate) fn max_stationed_for_room(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     room_type: &str,
@@ -1453,8 +1480,8 @@ fn max_stationed_for_room(
 }
 
 /// A Control Center assignment plus the global production bonuses it grants.
-struct ControlCenter {
-    operators: Vec<String>,
+pub(crate) struct ControlCenter {
+    pub(crate) operators: Vec<String>,
     /// The user's CONTROL room (slot/level), if they have one built.
     slot_id: Option<String>,
     level: i32,
@@ -1464,7 +1491,7 @@ struct ControlCenter {
 }
 
 impl ControlCenter {
-    fn into_room(self) -> Option<RoomAssignment> {
+    pub(crate) fn into_room(self) -> Option<RoomAssignment> {
         let slot_id = self.slot_id?;
         if self.operators.is_empty() {
             return None;
@@ -1486,7 +1513,7 @@ impl ControlCenter {
 /// with the lowest *opportunity cost* - those with the fewest base skills for
 /// OTHER rooms - keeping operators with useful Dormitory/Training/etc. skills
 /// (e.g. Schwarz) available for the rooms where they actually help.
-fn fill_remaining_slots(
+pub(crate) fn fill_remaining_slots(
     slots: &mut Vec<String>,
     max_slots: i32,
     room_type: &str,
@@ -1505,9 +1532,45 @@ fn fill_remaining_slots(
     }
 }
 
+/// Opportunity cost of parking `op` in a room as a FILLER. Counts the other room
+/// types its skills serve (value lost elsewhere), plus a heavy penalty when the
+/// team it joins ZEROES the operator's own same-room contribution: a nullifier
+/// team (Shamare) wastes a speed/limit trader (`SilverAsh`'s +20%/+4 contributes
+/// nothing under her), and an automation factory wastes a normal production
+/// operator. Contributions that survive - order value under a nullifier,
+/// facility-count productivity under automation - carry no penalty, so genuine
+/// partners (Bibeak) and true benchwarmers rank ahead of wasted specialists.
+pub(crate) fn padding_cost(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    team_nullifies: bool,
+    team_automation: bool,
+) -> usize {
+    let mut cost = other_room_skill_count(op, room_type, building_data);
+    let has_room_skill =
+        applicable_strategies(op, room_type, formula_type, registry, building_data).count() > 0;
+    if has_room_skill {
+        let survives = if team_nullifies {
+            op_surviving_order_value(op, room_type, formula_type, registry, building_data) > 0.0
+        } else if team_automation {
+            applicable_strategies(op, room_type, formula_type, registry, building_data)
+                .any(|s| matches!(s, BuffResolutionStrategy::FacilityCountScaling { .. }))
+        } else {
+            true
+        };
+        if !survives {
+            cost += 100;
+        }
+    }
+    cost
+}
+
 /// How many *other* room types this operator has base skills for (a proxy for
 /// how much value is lost by using them as a filler here). 0 = pure benchwarmer.
-fn other_room_skill_count(
+pub(crate) fn other_room_skill_count(
     op: &OperatorBaseProfile,
     room_type: &str,
     building_data: &BuildingDataFile,
@@ -1547,7 +1610,7 @@ struct CcBonus {
 /// A Control Center bonus that is gated on a production room's team composition.
 /// Resolved per-room in `compute_team_efficiency` rather than added flat.
 #[derive(Clone)]
-struct CcCondition {
+pub(crate) struct CcCondition {
     target_room: String,
     faction_token: String,
     required_count: usize,
@@ -1557,7 +1620,7 @@ struct CcCondition {
 
 impl CcCondition {
     /// This condition's contribution to a room of `room_type` staffed by `team`.
-    fn contribution(&self, room_type: &str, team: &[&OperatorBaseProfile]) -> f64 {
+    pub(crate) fn contribution(&self, room_type: &str, team: &[&OperatorBaseProfile]) -> f64 {
         if self.target_room != room_type {
             return 0.0;
         }
@@ -1774,7 +1837,7 @@ fn cc_condition_fires(
 /// does NOT fire in the actual production teams? The production optimizer is already
 /// rewarded for satisfying these gates (it credits the bonus per room), so if it
 /// declined to, the gate is genuinely unmet and the operator should yield its seat.
-fn cc_op_is_dead(
+pub(crate) fn cc_op_is_dead(
     op: &OperatorBaseProfile,
     rooms: &[RoomAssignment],
     op_index: &HashMap<&str, &OperatorBaseProfile>,
@@ -1807,7 +1870,7 @@ fn cc_buff_stacks(buff: &Buff) -> bool {
 /// slot with a second operator whose only effect duplicates one already present
 /// adds nothing, so a complementary operator (different effect family / target
 /// room) is preferred instead.
-fn assign_control_center(
+pub(crate) fn assign_control_center(
     operators: &[OperatorBaseProfile],
     control_room: Option<&UserRoom>,
     max_slots: i32,
@@ -1847,6 +1910,138 @@ fn assign_control_center(
         total_global_pct: global_bonuses.values().sum(),
     };
     (cc, global_bonuses, conditions)
+}
+
+/// The rotation's Control-Center plan: Squad 1 (the best global-bonus crew) plus the
+/// bonuses/conditions it grants, with enough context to fill Squad 2 from leftovers.
+pub(crate) struct RotationCcPlan {
+    pub(crate) slot_id: Option<String>,
+    pub(crate) control_slots: i32,
+    pub(crate) squad1: Vec<String>,
+    pub(crate) conditions: Vec<CcCondition>,
+    /// The flat global bonuses Squad 1 grants per room type, for re-planning teams.
+    pub(crate) global_bonuses: HashMap<String, f64>,
+}
+
+impl RotationCcPlan {
+    /// The best Squad-2 fill from operators not in `exclude` (nor Squad 1): the
+    /// leftover global-bonus operators, then leftover global morale-recovery
+    /// operators for the spare seats (the same priority Squad 1 gets). Empty when
+    /// nothing useful remains - the CC then rests dark that shift.
+    pub(crate) fn squad2(
+        &self,
+        operators: &[OperatorBaseProfile],
+        building_data: &BuildingDataFile,
+        registry: &HashMap<String, BuffResolutionStrategy>,
+        exclude: &HashSet<String>,
+    ) -> Vec<String> {
+        let mut exclude = exclude.clone();
+        exclude.extend(self.squad1.iter().cloned());
+        let (mut cc, _, _) = assign_control_center(
+            operators,
+            None,
+            self.control_slots,
+            registry,
+            building_data,
+            &exclude,
+        );
+        let mut assigned = exclude;
+        assigned.extend(cc.operators.iter().cloned());
+        reserve_cc_morale_seats(
+            &mut cc,
+            self.control_slots,
+            operators,
+            &mut assigned,
+            registry,
+            building_data,
+        );
+        cc.operators
+    }
+}
+
+/// Control-Center Squad 1 + the balanced production teams for the rotation, with the
+/// peak optimizer's dead-weight reselection: a CC operator whose only effect is a
+/// conditional the chosen teams never satisfy (`SilverAsh`'s Kjerag gate with no
+/// 3-Kjerag post) is dropped and the CC re-picked, so its seat goes to an operator
+/// that actually contributes. `plan_teams` builds the production teams for a given
+/// (reserved CC crew, global bonuses, conditions).
+pub(crate) fn rotation_cc_plan<F>(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    mut plan_teams: F,
+) -> (RotationCcPlan, Vec<PlannedGroup>)
+where
+    F: FnMut(&HashSet<String>, &HashMap<String, f64>, &[CcCondition]) -> Vec<PlannedGroup>,
+{
+    let op_index = build_op_index(operators);
+    let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
+    let control_slots = if control_room.is_some() {
+        max_stationed_for_room(building, building_data, "CONTROL")
+    } else {
+        0
+    };
+    let mut exclude_cc: HashSet<String> = HashSet::new();
+    loop {
+        let (mut cc_room, global_bonuses, cc_conditions) = assign_control_center(
+            operators,
+            control_room,
+            control_slots,
+            registry,
+            building_data,
+            &exclude_cc,
+        );
+        let mut assigned: HashSet<String> = cc_room.operators.iter().cloned().collect();
+        reserve_cc_morale_seats(
+            &mut cc_room,
+            control_slots,
+            operators,
+            &mut assigned,
+            registry,
+            building_data,
+        );
+        let groups = plan_teams(&assigned, &global_bonuses, &cc_conditions);
+        // The dead check inspects the teams the rotation actually fields.
+        let team_rooms: Vec<RoomAssignment> = groups
+            .iter()
+            .flat_map(|g| {
+                g.teams
+                    .iter()
+                    .filter(|t| !t.ops.is_empty())
+                    .map(|t| RoomAssignment {
+                        room_type: g.room_type.clone(),
+                        formula_type: g.formula_type.clone(),
+                        operators: t.ops.clone(),
+                        ..Default::default()
+                    })
+            })
+            .collect();
+        let newly_dead: Vec<String> = cc_room
+            .operators
+            .iter()
+            .filter(|id| !exclude_cc.contains(*id))
+            .filter(|id| {
+                op_index.get(id.as_str()).is_some_and(|op| {
+                    cc_op_is_dead(op, &team_rooms, &op_index, registry, building_data)
+                })
+            })
+            .cloned()
+            .collect();
+        if newly_dead.is_empty() {
+            return (
+                RotationCcPlan {
+                    slot_id: control_room.map(|r| r.slot_id.clone()),
+                    control_slots,
+                    squad1: cc_room.operators,
+                    conditions: cc_conditions,
+                    global_bonuses,
+                },
+                groups,
+            );
+        }
+        exclude_cc.extend(newly_dead);
+    }
 }
 
 /// Marginal-greedy Control-Center fill over pre-scored `candidates` for `max_slots` seats:
@@ -2243,6 +2438,17 @@ fn pad_production_rooms(
             // Add the leftover that maximizes the room's efficiency (usually +0);
             // among equally-good picks, prefer the lowest opportunity-cost one so
             // operators useful elsewhere aren't burned as fillers.
+            let team_nullifies = room.operators.iter().any(|id| {
+                op_index.get(id.as_str()).copied().is_some_and(|op| {
+                    op_is_nullifier(
+                        op,
+                        &room.room_type,
+                        room.formula_type.as_deref(),
+                        registry,
+                        building_data,
+                    )
+                })
+            });
             while (room.operators.len() as i32) < max_slots {
                 // The seat may stay empty: a filler is only worth adding if it does
                 // not LOWER the room's output. Degenbrecher (+25% speed but -6 order
@@ -2290,7 +2496,15 @@ fn pad_production_rooms(
                         cc_conditions,
                     );
                     let score = room_search_score(&room.room_type, speed, value);
-                    let cost = other_room_skill_count(op, &room.room_type, building_data);
+                    let cost = padding_cost(
+                        op,
+                        &room.room_type,
+                        room.formula_type.as_deref(),
+                        registry,
+                        building_data,
+                        team_nullifies,
+                        false,
+                    );
                     let better = best_id.is_none()
                         || score > best_score + 1e-9
                         || ((score - best_score).abs() <= 1e-9 && cost < best_cost);
@@ -2407,7 +2621,7 @@ fn assign_single_room(
 /// (Shamare) with order-value partners, or any member's buff is gated on a
 /// teammate / faction that the team actually satisfies. A team of independent
 /// operators (each contributing standalone) is NOT locked - it's interchangeable.
-fn team_is_locked(
+pub(crate) fn team_is_locked(
     ops: &[String],
     room_type: &str,
     formula_type: Option<&str>,
@@ -2567,6 +2781,16 @@ fn op_surviving_order_value(
         .sum()
 }
 
+/// One scored team combination for a room type/formula - the unit the balanced
+/// rotation selector packs into disjoint team sets.
+#[derive(Clone, Debug)]
+pub(crate) struct CandidateTeam {
+    pub(crate) ops: Vec<String>,
+    pub(crate) speed: f64,
+    pub(crate) value: f64,
+    pub(crate) score: f64,
+}
+
 /// Find the best NORMAL-mode team for a room by exhaustively evaluating
 /// combinations of the top candidate operators.
 ///
@@ -2589,14 +2813,67 @@ fn best_team_for_room(
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
 ) -> (Vec<String>, f64, f64) {
+    // The best team is the head of the full enumeration; a top score of 0 means
+    // no combination beats an empty room (the old `score > 0` replacement rule).
+    enumerate_candidate_teams(
+        &room.room_type,
+        room.level,
+        formula_type,
+        operators,
+        already_assigned,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        max_slots,
+        cc_conditions,
+        morale_drains,
+        cap_aware,
+        CANDIDATE_LIMIT,
+        false,
+    )
+    .into_iter()
+    .find(|c| c.score > 0.0)
+    .map_or((Vec::new(), 0.0, 0.0), |c| (c.ops, c.speed, c.value))
+}
+
+/// Enumerate EVERY scored team combination for a room type/formula, best first - the
+/// engine behind `best_team_for_room` (which takes the head) and the rotation's
+/// balanced multi-team selection (which packs several disjoint teams from the list).
+///
+/// `pool_limit` widens the candidate cut when several disjoint teams must come out of
+/// one enumeration. `include_automation` admits Weedy-type automation operators to the
+/// pool: `compute_team_efficiency` already scores automation teams correctly (only
+/// facility-count productivity survives), so enumerating them yields pure automation
+/// teams AND automation + facility-count-scaler pairings (Weedy + Purestream, whose
+/// per-Trading-Post gold buff survives the nullify) as ordinary candidates.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn enumerate_candidate_teams(
+    room_type: &str,
+    room_level: i32,
+    formula_type: Option<&str>,
+    operators: &[OperatorBaseProfile],
+    already_assigned: &HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    max_slots: i32,
+    cc_conditions: &[CcCondition],
+    morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
+    pool_limit: usize,
+    include_automation: bool,
+) -> Vec<CandidateTeam> {
     if max_slots <= 0 {
-        return (Vec::new(), 0.0, 0.0);
+        return Vec::new();
     }
     let max_slots = max_slots as usize;
     let op_index = build_op_index(operators);
 
-    // Candidate pool: operators with at least one applicable buff, excluding
-    // automation operators (their nullify-others buff can't mix with a team).
+    // Candidate pool: operators with at least one applicable buff. Automation
+    // operators (nullify-others) are excluded unless the caller wants automation
+    // teams enumerated too.
     let candidates: Vec<&OperatorBaseProfile> = operators
         .iter()
         .filter(|op| !already_assigned.contains(&op.char_id))
@@ -2605,14 +2882,14 @@ fn best_team_for_room(
                 building_data
                     .buffs
                     .get(b)
-                    .is_some_and(|buff| buff_applies(buff, &room.room_type, formula_type))
+                    .is_some_and(|buff| buff_applies(buff, room_type, formula_type))
             })
         })
-        .filter(|op| !has_automation_buff(op, registry))
+        .filter(|op| include_automation || !has_automation_buff(op, registry))
         .collect();
 
     if candidates.is_empty() {
-        return (Vec::new(), 0.0, 0.0);
+        return Vec::new();
     }
 
     // Operators that *enable* another candidate's conditional buff get that
@@ -2635,115 +2912,162 @@ fn best_team_for_room(
 
     // A nullifier (Shamare) zeroes teammates' SPEED and gains efficiency per
     // teammate, so its only worthwhile partners are operators whose order VALUE
-    // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal). Every
-    // other operator would merely be a warm body for the per-teammate scaling - and
-    // that body slot is better filled by a true benchwarmer (during padding) than by
-    // consuming a value operator (Proviso, who is wasted here) or a teammate-gated
-    // operator (Lappland, reserved for when her partner is around). So when a
-    // nullifier is present, only the nullifier itself and surviving-value operators
-    // are eligible team members; the rest are left for padding to fill as bodies.
+    // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal) - every
+    // other operator would merely be a warm body. Nullifier teams are therefore
+    // enumerated from a RESTRICTED pool (nullifier + surviving-value operators),
+    // and a second nullifier-free pool covers the normal teams: a rotation needs
+    // several disjoint teams, so the Shamare combo must not crowd Texas+Lappland
+    // and the flat traders out of the candidate list.
     let has_nullifier = candidates
         .iter()
-        .any(|op| op_is_nullifier(op, &room.room_type, formula_type, registry, building_data));
+        .any(|op| op_is_nullifier(op, room_type, formula_type, registry, building_data));
 
-    let candidates: Vec<&OperatorBaseProfile> = if has_nullifier {
-        candidates
-            .into_iter()
+    let pools: Vec<(Vec<&OperatorBaseProfile>, bool)> = if has_nullifier {
+        let restricted: Vec<&OperatorBaseProfile> = candidates
+            .iter()
+            .copied()
             .filter(|op| {
-                op_is_nullifier(op, &room.room_type, formula_type, registry, building_data)
+                op_is_nullifier(op, room_type, formula_type, registry, building_data)
                     || op_surviving_order_value(
                         op,
-                        &room.room_type,
+                        room_type,
                         formula_type,
                         registry,
                         building_data,
                     ) > 0.0
             })
-            .collect()
+            .collect();
+        let without: Vec<&OperatorBaseProfile> = candidates
+            .iter()
+            .copied()
+            .filter(|op| !op_is_nullifier(op, room_type, formula_type, registry, building_data))
+            .collect();
+        vec![(restricted, true), (without, false)]
     } else {
-        candidates
+        vec![(candidates, false)]
     };
 
-    let mut ranked: Vec<(&OperatorBaseProfile, f64, bool)> = candidates
-        .iter()
-        .map(|op| {
-            // Fold surviving order value into the ranking so value partners (which
-            // score ~0 on speed) survive the top-K cut alongside the nullifier.
-            let value_boost = if has_nullifier {
-                op_surviving_order_value(op, &room.room_type, formula_type, registry, building_data)
-                    * 5.0
-            } else {
-                0.0
-            };
-            let bound = optimistic_bound(
-                op,
-                &room.room_type,
-                formula_type,
-                registry,
-                building_data,
-                facility_counts,
-                total_dorm_levels,
-                max_slots,
-            ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
-                + value_boost;
-            let specialist =
-                op_is_formula_specialist(op, &room.room_type, formula_type, building_data);
-            (*op, bound, specialist)
-        })
-        .collect();
-    // Rank by upside, breaking ties toward formula specialists: a generic operator
-    // that merely matches a specialist's value is freed for a formula that lacks
-    // one (Metalwork ops take the Gold factory, a generic +30% goes to EXP).
-    ranked.sort_by(|a, b| {
-        b.1.partial_cmp(&a.1)
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| b.2.cmp(&a.2))
-    });
-    ranked.truncate(CANDIDATE_LIMIT);
+    let mut teams: Vec<CandidateTeam> = Vec::new();
+    let mut seen: HashSet<Vec<String>> = HashSet::new();
+    for (pool_candidates, nullifier_pool) in pools {
+        let mut ranked: Vec<(&OperatorBaseProfile, f64, bool)> = pool_candidates
+            .iter()
+            .map(|op| {
+                // Fold surviving order value into the ranking so value partners (which
+                // score ~0 on speed) survive the top-K cut alongside the nullifier.
+                let value_boost = if nullifier_pool {
+                    op_surviving_order_value(op, room_type, formula_type, registry, building_data)
+                        * 5.0
+                } else {
+                    0.0
+                };
+                let bound = optimistic_bound(
+                    op,
+                    room_type,
+                    formula_type,
+                    registry,
+                    building_data,
+                    facility_counts,
+                    total_dorm_levels,
+                    max_slots,
+                ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
+                    + value_boost;
+                let specialist =
+                    op_is_formula_specialist(op, room_type, formula_type, building_data);
+                (*op, bound, specialist)
+            })
+            .collect();
+        // Rank by upside, breaking ties toward formula specialists: a generic operator
+        // that merely matches a specialist's value is freed for a formula that lacks
+        // one (Metalwork ops take the Gold factory, a generic +30% goes to EXP).
+        ranked.sort_by(|a, b| {
+            b.1.partial_cmp(&a.1)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| b.2.cmp(&a.2))
+        });
+        ranked.truncate(pool_limit);
 
-    let pool: Vec<String> = ranked.iter().map(|(op, _, _)| op.char_id.clone()).collect();
+        let pool: Vec<String> = ranked.iter().map(|(op, _, _)| op.char_id.clone()).collect();
 
-    let mut best_team: Vec<String> = Vec::new();
-    let mut best_score = 0.0;
-    let mut best_speed = 0.0;
-    let mut best_value = 0.0;
-
-    for combo in combinations(&pool, max_slots) {
-        let (speed, value) = compute_team_efficiency(
-            &combo,
-            &room.room_type,
-            formula_type,
-            &op_index,
-            registry,
-            building_data,
-            facility_counts,
-            total_dorm_levels,
-            morale_drains,
-            cc_conditions,
-        );
-        let mut score = room_search_score(&room.room_type, speed, value);
-        // Sustained objective: throttle a gold factory by its AFK buffer stall, so a high-capacity
-        // team (Vermeil) that keeps producing across long AFK beats a denser team that overflows.
-        if cap_aware {
-            let cap = team_capacity_bonus(
+        for combo in combinations(&pool, max_slots) {
+            let mut key = combo.clone();
+            key.sort();
+            if !seen.insert(key) {
+                continue;
+            }
+            let (mut speed, value) = compute_team_efficiency(
                 &combo,
-                &room.room_type,
+                room_type,
                 formula_type,
                 &op_index,
                 registry,
                 building_data,
+                facility_counts,
+                total_dorm_levels,
+                morale_drains,
+                cc_conditions,
             );
-            score *= factory_cap_factor(formula_type, room.level, speed, cap);
-        }
-        if score > best_score {
-            best_score = score;
-            best_speed = speed;
-            best_value = value;
-            best_team = combo;
+            // A nullifier's strength comes from the BODIES that fill its remaining
+            // seats (+45% per teammate), which padding adds after selection - score
+            // the empty seats as phantom bodies so a Shamare candidate isn't
+            // undervalued against ordinary teams. Padding recomputes the real figure.
+            if nullifier_pool {
+                let empty_seats = max_slots.saturating_sub(combo.len()) as f64;
+                if empty_seats > 0.0 {
+                    let per_teammate = combo
+                        .iter()
+                        .filter_map(|id| op_index.get(id.as_str()).copied())
+                        .flat_map(|op| {
+                            applicable_strategies(
+                                op,
+                                room_type,
+                                formula_type,
+                                registry,
+                                building_data,
+                            )
+                        })
+                        .filter_map(|s| match s {
+                            BuffResolutionStrategy::NullifyTeammatesSelfScaling {
+                                per_teammate_pct,
+                            } => Some(*per_teammate_pct),
+                            _ => None,
+                        })
+                        .fold(0.0, f64::max);
+                    speed += per_teammate * empty_seats;
+                }
+            }
+            let mut score = room_search_score(room_type, speed, value);
+            // Sustained objective: throttle a gold factory by its AFK buffer stall, so a
+            // high-capacity team (Vermeil) that keeps producing across long AFK beats a
+            // denser team that overflows.
+            if cap_aware {
+                let cap = team_capacity_bonus(
+                    &combo,
+                    room_type,
+                    formula_type,
+                    &op_index,
+                    registry,
+                    building_data,
+                );
+                score *= factory_cap_factor(formula_type, room_level, speed, cap);
+            }
+            teams.push(CandidateTeam {
+                ops: combo,
+                speed,
+                value,
+                score,
+            });
         }
     }
-
-    (best_team, best_speed, best_value)
+    // Stable sort: among equal scores the earliest-generated combination stays first,
+    // preserving `best_team_for_room`'s old first-strictly-greatest-wins tie behaviour
+    // (the nullifier pool enumerates first, matching the old restricted-pool pick).
+    teams.sort_by(|a, b| {
+        b.score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    teams
 }
 
 /// Best automation team for a factory: greedily take the operators with the
@@ -2790,7 +3114,7 @@ fn best_automation_team(
     (ops, total)
 }
 
-fn has_automation_buff(
+pub(crate) fn has_automation_buff(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> bool {
@@ -2806,7 +3130,7 @@ fn has_automation_buff(
 }
 
 /// True if the operator nullifies teammates' output in this room (Shamare-type).
-fn op_is_nullifier(
+pub(crate) fn op_is_nullifier(
     op: &OperatorBaseProfile,
     room_type: &str,
     formula_type: Option<&str>,
@@ -3063,7 +3387,7 @@ fn compute_order_limit(
 /// shows) and order VALUE (LMD per order, Proviso etc.), kept separate so value
 /// doesn't inflate the displayed efficiency.
 #[allow(clippy::too_many_arguments)]
-fn compute_team_efficiency(
+pub(crate) fn compute_team_efficiency(
     member_ids: &[String],
     room_type: &str,
     formula_type: Option<&str>,
@@ -3276,7 +3600,7 @@ pub fn team_value(
 /// The optimizer's per-room objective: a room's LMD-equivalent output, with order
 /// VALUE multiplying trading LMD (not adding to speed). Within a room the base
 /// rate is constant, so maximizing this multiplier maximizes the room's yield.
-fn room_search_score(room_type: &str, speed_pct: f64, value_pct: f64) -> f64 {
+pub(crate) fn room_search_score(room_type: &str, speed_pct: f64, value_pct: f64) -> f64 {
     let speed_mult = 1.0 + speed_pct / 100.0;
     if room_type == "TRADING" {
         speed_mult * (1.0 + value_pct / 100.0)
@@ -3363,7 +3687,7 @@ fn team_capacity_bonus(
 /// LMD-equivalent value. Each room's efficiency is soft-capped (per-room
 /// throughput ceiling) and converted to its resource yield; the gold→trade loop
 /// is then coupled so LMD = min(gold made, gold sold) × 500 and EXP adds at 1:1.
-fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
+pub(crate) fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
     let mut flows = BaseFlows::default();
     for r in rooms {
         let speed = room_value(r.total_efficiency, &r.room_type);

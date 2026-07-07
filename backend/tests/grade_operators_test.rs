@@ -68,8 +68,8 @@ fn breakdown_sums_to_the_operator_grade() {
 
     let support_ids: HashSet<&str> = HashSet::from(["char_003_kalts"]);
 
-    let grade = grade_operators(&roster, &game_data, &support_ids);
-    let breakdown = operator_score_breakdown(&roster, &game_data, &support_ids);
+    let grade = grade_operators(&roster, game_data, &support_ids);
+    let breakdown = operator_score_breakdown(&roster, game_data, &support_ids);
 
     assert!(!breakdown.is_empty());
     assert!(grade > 0.0 && grade < 1.0, "grade = {grade}");
@@ -93,7 +93,10 @@ fn breakdown_sums_to_the_operator_grade() {
             dim.completion
         );
         assert!(
-            (dim.contribution - dim.weight_share * dim.completion).abs() < 1e-12,
+            dim.weight_share
+                .mul_add(-dim.completion, dim.contribution)
+                .abs()
+                < 1e-12,
             "{:?} contribution must equal share x completion",
             dim.kind
         );
@@ -105,6 +108,6 @@ fn breakdown_is_empty_for_an_uninvested_roster() {
     let game_data = common::load_game_data();
     // E0 L1 = no investment; such operators don't count toward the grade.
     let roster = vec![entry("char_123_fang", 0, 1)];
-    let breakdown = operator_score_breakdown(&roster, &game_data, &HashSet::new());
+    let breakdown = operator_score_breakdown(&roster, game_data, &HashSet::new());
     assert!(breakdown.is_empty());
 }

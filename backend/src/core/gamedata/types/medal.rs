@@ -19,6 +19,11 @@ const OPERATOR_GATED_TEMPLATES: &[&str] = &[
     "CharEvolvePhase",
 ];
 
+/// Max hops to follow when walking the `origin_medal` chain of an upgrade-variant
+/// medal. Bounds the walk so malformed data that points a medal back into a cycle
+/// can't loop forever; the real chains are only one or two links deep.
+const ORIGIN_CHAIN_MAX_DEPTH: usize = 4;
+
 /// A medal gated on a collab operator. Whether it's actually *locked* for a
 /// given user depends on whether they own the operator - that per-user check
 /// happens at scoring / improvements time, not here. This just records the
@@ -193,35 +198,26 @@ impl MedalData {
     pub fn from_table(table: MedalTableFile) -> Self {
         let mut data = Self::default();
 
-        // Index all medals
         for medal in table.medal_list {
             let medal_id = medal.medal_id.clone();
             let medal_type = medal.medal_type.clone();
             let rarity = medal.rarity.clone();
 
-            // Add to medals_by_type
             data.medals_by_type
                 .entry(medal_type)
                 .or_default()
                 .push(medal_id.clone());
-
-            // Add to medals_by_rarity
             data.medals_by_rarity
                 .entry(rarity)
                 .or_default()
                 .push(medal_id.clone());
-
-            // Add to main index
             data.medals.insert(medal_id, medal);
         }
 
-        // Process type data for category names and groups
         for type_entry in table.medal_type_data {
-            // Store category display name
             data.category_names
                 .insert(type_entry.key.clone(), type_entry.value.medal_name);
 
-            // Index all groups from this type
             for group in type_entry.value.group_data {
                 for medal_id in &group.medal_id {
                     data.medal_to_group
@@ -457,7 +453,7 @@ impl MedalData {
             return self.groups.get(gid);
         }
         let mut current = medal;
-        for _ in 0..4 {
+        for _ in 0..ORIGIN_CHAIN_MAX_DEPTH {
             if current.origin_medal.is_empty() || current.origin_medal == current.medal_id {
                 return None;
             }
@@ -475,7 +471,7 @@ impl MedalData {
     /// whose own description field is empty.
     pub fn resolve_description(&self, medal_id: &str) -> String {
         let mut current = medal_id;
-        for _ in 0..4 {
+        for _ in 0..ORIGIN_CHAIN_MAX_DEPTH {
             let Some(medal) = self.medals.get(current) else {
                 return String::new();
             };
@@ -680,7 +676,7 @@ mod tests {
     }
 
     /// Login-anniversary medals (`JoinGameDays`, e.g. "log in for 6 years") carry
-    /// an `INIT`-type ExpireTimes window with a real End - available since account
+    /// an `INIT`-type `ExpireTimes` window with a real End - available since account
     /// creation. INIT is neither TEMP nor PERM, so it must stay Permanent rather
     /// than being read as a limited-time event goal.
     #[test]

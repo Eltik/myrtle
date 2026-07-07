@@ -11,6 +11,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             per_level,
             nullifies_others: _,
             base_pct,
+            cap_pct,
         } => {
             let scaled = if *per_level {
                 // "+X% per level of each Dormitory" → per_unit_pct * total_dorm_levels
@@ -24,7 +25,8 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
                     .unwrap_or(0);
                 per_unit_pct * count as f64
             };
-            *base_pct + scaled
+            // A stated ceiling ("Max +25%") clamps the scaled part.
+            *base_pct + cap_pct.map_or(scaled, |cap| scaled.min(cap))
             // Note: nullifies_others is not handled here - the assignment
             // algorithm handles it by zeroing teammates' contributions
         }

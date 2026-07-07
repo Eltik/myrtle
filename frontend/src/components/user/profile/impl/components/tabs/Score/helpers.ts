@@ -15,9 +15,9 @@ export interface ISubscore {
 // `weight` mirrors the backend's SECTION_WEIGHT_* constants in
 // `backend/src/core/grade/calculate.rs` - change both together.
 export const SUBSCORES: ISubscore[] = [
-    { key: "operator_score", label: "Operator", description: "Roster depth & investment", icon: Crown, color: SCORE_PALETTE.operator, weight: 1.0 },
-    { key: "base_score", label: "Base", description: "Drone & facility upgrades", icon: Hammer, color: SCORE_PALETTE.base, weight: 0.5 },
-    { key: "stage_score", label: "Stages", description: "Story & event clears", icon: Swords, color: SCORE_PALETTE.stage, weight: 0.4 },
+    { key: "operator_score", label: "Operator", description: "Roster depth & investment", icon: Crown, color: SCORE_PALETTE.operator, weight: 0.85 },
+    { key: "base_score", label: "Base", description: "Drone & facility upgrades", icon: Hammer, color: SCORE_PALETTE.base, weight: 0.35 },
+    { key: "stage_score", label: "Stages", description: "Story & event clears", icon: Swords, color: SCORE_PALETTE.stage, weight: 0.6 },
     { key: "roguelike_score", label: "Roguelike", description: "IS endings & relics", icon: Sparkles, color: SCORE_PALETTE.roguelike, weight: 0.3 },
     { key: "sandbox_score", label: "Sandbox", description: "RA progress & nodes", icon: Mountain, color: SCORE_PALETTE.sandbox, weight: 0.2 },
     { key: "medal_score", label: "Medals", description: "Achievement collection", icon: Medal, color: SCORE_PALETTE.medal, weight: 0.2 },

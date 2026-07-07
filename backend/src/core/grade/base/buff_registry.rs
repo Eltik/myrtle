@@ -85,9 +85,6 @@ static RE_NTH_PCT: LazyLock<Regex> =
 static RE_VUP_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>(\d+)</>").unwrap());
 
-// Buff text uses both "Morale consumed per hour" and "Morale consumed each
-// hour" (the latter covers the Penguin Logistics trio - Texas/Lappland/Exusiai
-// - among others). Accept either wording so those drains aren't silently lost.
 // First keyword after "for each/every" - the thing a count-scaling buff counts.
 static RE_COUNT_KEYWORD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"for (?:each|every).*?<@cc\.kw>([^<]+)</>").unwrap());
@@ -112,7 +109,10 @@ static RE_FACTION_TOKEN: LazyLock<Regex> =
 static RE_NULLIFY_SELF_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap());
 
-// Some skills phrase it "...per hour BY +2" (Enforcer's reception skill); allow the optional "by".
+// Buff text phrases the drain as "Morale consumed per hour" or "...each hour" (the latter
+// covers the Penguin Logistics trio - Texas/Lappland/Exusiai), and some add "...BY +2"
+// (Enforcer's reception skill) - so accept "(?:per|each) hour" and an optional "by", else
+// those drains are silently lost.
 static RE_MORALE_INCREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vdown>\+?([\d.]+)</>").unwrap()
 });
@@ -136,6 +136,8 @@ pub enum BuffResolutionStrategy {
         per_level: bool,        // true for dorm-level scaling ("per level of each Dormitory")
         nullifies_others: bool, // true for Automation buffs
         base_pct: f64,          // always-on efficiency added on top of the scaling part
+        /// Ceiling on the scaled part, when the buff states one ("Max +25%").
+        cap_pct: Option<f64>,
     },
 
     /// Bonus scales with teammates' skills matching a pattern.
@@ -353,16 +355,15 @@ pub fn build_registry(
     let mut morale_drains = HashMap::new();
 
     for (buff_id, buff) in buffs {
+        // Strip the tier suffix: "manu_prod_spd&power[000]" → "manu_prod_spd&power".
         let prefix = buff_id.split('[').next().unwrap_or(buff_id);
-        // "manu_prod_spd&power[000]" → "manu_prod_spd&power"
-        // Then check: prefix.contains("&power"), prefix.contains("_variable"), etc.
 
         // Facility-count enablers (Greyy the Lightningbearer E2 "Power Plant +1", Eunectes E2
         // "+2") raise a room type's EFFECTIVE facility count - they grant no productivity but
-        // power every per-facility automation scaler. Detected room-agnostically by their stock
-        // "(only affects facility quantity/count)" clause and the room they name.
-        // Match ONLY the enabler clause "(only affects facility quantity/count)" - not the
-        // automation buffs (Weedy/Eunectes) that merely mention "...based on facility count".
+        // power every per-facility automation scaler. Detected room-agnostically by the stock
+        // "(only affects facility quantity/count)" clause and the room they name - matching that
+        // exact clause (not the "...based on facility count" of Weedy/Eunectes automation buffs)
+        // keeps the two apart.
         let desc_l = buff.description.to_lowercase();
         if desc_l.contains("only affects facility quantity")
             || desc_l.contains("only affects the facility count")
@@ -399,15 +400,9 @@ pub fn build_registry(
                     .unwrap_or(0.0);
                 BuffResolutionStrategy::NonProduction { value }
             }
-            "WORKSHOP" | "HIRE" | "TRAINING" => {
-                let effiency = if buff.efficiency == 0 {
-                    // parse from description
-                    0.0
-                } else {
-                    f64::from(buff.efficiency)
-                };
-                BuffResolutionStrategy::NonProduction { value: effiency }
-            }
+            "WORKSHOP" | "HIRE" | "TRAINING" => BuffResolutionStrategy::NonProduction {
+                value: f64::from(buff.efficiency),
+            },
             "DORMITORY" => {
                 let recovery = parse_first_float(&buff.description).unwrap_or(0.0);
                 let desc_lower = buff.description.to_lowercase();
@@ -732,9 +727,8 @@ pub fn build_registry(
                 else if prefix.contains("_addition") && buff.description.contains("per hour") {
                     // Pattern: "+X% base, +Y% per hour, up to +Z%"
                     let base = f64::from(buff.efficiency); // starting value (may be 0)
-                    // let per_hour = parse_first_pct(&buff.description).unwrap_or(0.0);
-                    // Note: parse_first_pct will grab the first %, which for [030] is "20%"
-                    // We need the "per hour" value specifically. Use a targeted regex.
+                    // A targeted regex, not parse_first_pct: the first % in the text is the
+                    // [030] tier's base (20%), not the per-hour ramp rate we need here.
                     let per_hr = parse_per_hour_pct(&buff.description).unwrap_or(1.0);
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
                     // Time to reach cap from base: (cap - base) / per_hr hours
@@ -826,6 +820,7 @@ pub fn build_registry(
                         per_level: false,
                         nullifies_others: false,
                         base_pct: f64::from(buff.efficiency),
+                        cap_pct: None,
                     }
                 }
                 // Direct efficiency
@@ -843,6 +838,7 @@ pub fn build_registry(
                         per_level: false,
                         nullifies_others: true,
                         base_pct: 0.0,
+                        cap_pct: None,
                     }
                 }
                 // Snegurochka-type: nullifies teammates but only grants Capacity
@@ -855,6 +851,7 @@ pub fn build_registry(
                         per_level: false,
                         nullifies_others: true,
                         base_pct: 0.0,
+                        cap_pct: None,
                     }
                 }
                 // Dormitory scaling
@@ -866,6 +863,7 @@ pub fn build_registry(
                         per_level: true,
                         nullifies_others: false,
                         base_pct: 0.0,
+                        cap_pct: None,
                     }
                 }
                 // Teammate skill scaling (eg. +5% per Standardization skill)
@@ -916,13 +914,29 @@ pub fn build_registry(
                         per_level: false,
                         nullifies_others: false,
                         base_pct: 0.0,
+                        cap_pct: None,
                     }
                 }
                 // Drone-recovery power skill scaling with max Drone capacity (Greyy the
-                // Lightningbearer's "+1% per 10 max Drone capacity, Max +25%"). The flat
-                // `power_rec_spd` variants are already caught by `efficiency > 0`; this is the
-                // capacity-scaled kind (efficiency 0) - value it at its stated cap so a dedicated
-                // power operator ranks among the drone specialists instead of at its per-unit %.
+                // Lightningbearer's "+1% Drone recovery rate for every 10 max Drone capacity
+                // (Max +25%)"). Scales on the base's ACTUAL max drone capacity - the synthetic
+                // `DRONE_CAPACITY` facility count (a 3x L3-plant base holds 235 drones, so the
+                // skill reads +23.5%, under its +25% ceiling) - with the stated cap carried.
+                else if buff.room_type == "POWER"
+                    && buff.description.contains("Drone recovery")
+                    && buff.description.contains("max Drone capacity")
+                    && let Some((per_pct, per_units)) = parse_per_capacity_rate(&buff.description)
+                {
+                    BuffResolutionStrategy::FacilityCountScaling {
+                        target_room: "DRONE_CAPACITY".to_string(),
+                        per_unit_pct: per_pct / per_units,
+                        per_level: false,
+                        nullifies_others: false,
+                        base_pct: f64::from(buff.efficiency),
+                        cap_pct: parse_last_pct(&buff.description),
+                    }
+                }
+                // Non-capacity-scaled drone skill with its % only in the description.
                 else if buff.room_type == "POWER" && buff.description.contains("Drone recovery") {
                     let value = parse_last_pct(&buff.description)
                         .or_else(|| parse_first_pct(&buff.description))
@@ -1099,6 +1113,22 @@ fn find_faction_token(desc: &str) -> Option<(String, usize)> {
     let m = RE_FACTION_TOKEN.captures(desc)?;
     let token = m[1].to_lowercase();
     Some((token, m.get(0)?.end()))
+}
+
+/// The `(percent, units)` of a per-capacity rate: "+1% Drone recovery rate for every
+/// 10 max Drone capacity" → `(1.0, 10.0)`.
+fn parse_per_capacity_rate(desc: &str) -> Option<(f64, f64)> {
+    static RE_PER_CAPACITY: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"for every\s*(?:<[^>]+>)?\s*(\d+)\s*(?:</>)?\s*max Drone capacity").unwrap()
+    });
+    let per_pct = parse_first_pct(desc)?;
+    let units: f64 = RE_PER_CAPACITY
+        .captures(desc)?
+        .get(1)?
+        .as_str()
+        .parse()
+        .ok()?;
+    (units > 0.0).then_some((per_pct, units))
 }
 
 /// Extract first float like "+0.7" from description markup (for morale values)

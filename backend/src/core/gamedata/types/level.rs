@@ -740,13 +740,14 @@ mod tests {
     #[test]
     fn parses_main_01_07() {
         let path = "../assets/output/en/gamedata/levels/obt/main/level_main_01-07.json";
-        let bytes = match std::fs::read(path) {
-            Ok(b) => b,
-            Err(_) => return, // asset not present in this checkout
+        let Ok(bytes) = std::fs::read(path) else {
+            return; // asset not present in this checkout
         };
-        let mut stage = Stage::default();
-        stage.stage_id = "main_01-07".into();
-        stage.code = "1-7".into();
+        let stage = Stage {
+            stage_id: "main_01-07".into(),
+            code: "1-7".into(),
+            ..Default::default()
+        };
         let map = parse_stage_map(
             &stage,
             "Obt/Main/level_main_01-07",

@@ -5,16 +5,20 @@
 use backend::core::gamedata::types::sandbox_universe::SandboxUniverse;
 use std::path::Path;
 
-#[test]
-fn sandbox_node_count_reflects_one_playthrough() {
-    let data_dir_str =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
+/// Parse `sandbox_perm_table.json` and build the universe the way the grader does.
+fn load_universe() -> SandboxUniverse {
+    let data_dir_str = std::env::var("GAME_DATA_DIR")
+        .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into());
     let path = Path::new(&data_dir_str).join("sandbox_perm_table.json");
     let raw: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&path).expect("read sandbox_perm_table"))
             .expect("parse sandbox_perm_table");
+    SandboxUniverse::build(&raw)
+}
 
-    let universe = SandboxUniverse::build(&raw);
+#[test]
+fn sandbox_node_count_reflects_one_playthrough() {
+    let universe = load_universe();
 
     // The persistent overworld (sandbox_1_main) has ~127 nodes - "over 100",
     // matching what a player actually explores. The old bug produced 1032.
@@ -37,14 +41,7 @@ fn sandbox_node_count_reflects_one_playthrough() {
 /// set the player's `collect.complete.quest` records completion against.
 #[test]
 fn sandbox_quest_count_reflects_archive_quests() {
-    let data_dir_str =
-        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let path = Path::new(&data_dir_str).join("sandbox_perm_table.json");
-    let raw: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(&path).expect("read sandbox_perm_table"))
-            .expect("parse sandbox_perm_table");
-
-    let universe = SandboxUniverse::build(&raw);
+    let universe = load_universe();
 
     assert_eq!(
         universe.max_quests, 7,

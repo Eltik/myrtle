@@ -195,11 +195,11 @@ fn trading_post_finds_penguin_logistics_synergy() {
     // Texas + Exusiai + a distractor and drop Lappland. The correct optimum is
     // Texas + Lappland + Exusiai.
     let roster = vec![
-        profile(&gd, TEXAS),
-        profile(&gd, EXUSIAI),
-        profile(&gd, LAPPLAND),
-        profile(&gd, "char_502_nblade"), // flat +30%
-        profile(&gd, "char_185_frncat"), // flat +30%
+        profile(gd, TEXAS),
+        profile(gd, EXUSIAI),
+        profile(gd, LAPPLAND),
+        profile(gd, "char_502_nblade"), // flat +30%
+        profile(gd, "char_185_frncat"), // flat +30%
     ];
 
     let name_to_char = build_name_to_char(&gd.operators);
@@ -256,9 +256,9 @@ fn control_center_is_surfaced_in_the_assignment() {
 
     // Kal'tsit's "Highest Authority" is a Control Center buff (+factory output).
     let roster = vec![
-        profile(&gd, "char_003_kalts"),
-        profile(&gd, EXUSIAI),
-        profile(&gd, "char_502_nblade"),
+        profile(gd, "char_003_kalts"),
+        profile(gd, EXUSIAI),
+        profile(gd, "char_502_nblade"),
     ];
 
     let name_to_char = build_name_to_char(&gd.operators);
@@ -286,9 +286,9 @@ fn texas_without_lappland_is_not_overcredited() {
     // Texas's +65% is conditional on Lappland (absent here), her Feud buff must
     // contribute 0 - so the two +30% operators should both beat her.
     let roster = vec![
-        profile(&gd, TEXAS),
-        profile(&gd, "char_502_nblade"),
-        profile(&gd, "char_185_frncat"),
+        profile(gd, TEXAS),
+        profile(gd, "char_502_nblade"),
+        profile(gd, "char_185_frncat"),
     ];
 
     let name_to_char = build_name_to_char(&gd.operators);
@@ -320,19 +320,19 @@ fn shamare_nullifies_teammate_output() {
 
     // Strong trading teammates …
     let with_strong = vec![
-        profile(&gd, SHAMARE),
-        profile(&gd, EXUSIAI),           // +35%
-        profile(&gd, "char_4045_heidi"), // +35%
+        profile(gd, SHAMARE),
+        profile(gd, EXUSIAI),           // +35%
+        profile(gd, "char_4045_heidi"), // +35%
     ];
     // … vs operators with no trading skill at all (pure bodies).
     let with_bodies = vec![
-        profile(&gd, SHAMARE),
-        profile(&gd, "char_003_kalts"),  // no trading buff
-        profile(&gd, "char_180_amgoat"), // no trading buff
+        profile(gd, SHAMARE),
+        profile(gd, "char_003_kalts"),  // no trading buff
+        profile(gd, "char_180_amgoat"), // no trading buff
     ];
 
-    let strong = trading_efficiency(&gd, &with_strong);
-    let bodies = trading_efficiency(&gd, &with_bodies);
+    let strong = trading_efficiency(gd, &with_strong);
+    let bodies = trading_efficiency(gd, &with_bodies);
 
     assert!(
         (strong - bodies).abs() < 1.0,
@@ -355,34 +355,34 @@ fn rhine_lab_faction_synergy_boosts_dorothy() {
     const DOROTHY: &str = "char_4048_doroth";
 
     let rhine_team = vec![
-        profile(&gd, DOROTHY),
-        profile(&gd, "char_128_plosis"), // Ptilopsis, Rhine, +25%
-        profile(&gd, "char_108_silent"), // Silence, Rhine, +25%
+        profile(gd, DOROTHY),
+        profile(gd, "char_128_plosis"), // Ptilopsis, Rhine, +25%
+        profile(gd, "char_108_silent"), // Silence, Rhine, +25%
     ];
     let mixed_team = vec![
-        profile(&gd, DOROTHY),
-        profile(&gd, "char_237_gravel"), // non-Rhine, +35%
-        profile(&gd, "char_159_peacok"), // non-Rhine, +35%
+        profile(gd, DOROTHY),
+        profile(gd, "char_237_gravel"), // non-Rhine, +35%
+        profile(gd, "char_159_peacok"), // non-Rhine, +35%
     ];
 
-    let rhine = factory_efficiency(&gd, &rhine_team);
-    let mixed = factory_efficiency(&gd, &mixed_team);
+    let rhine = factory_efficiency(gd, &rhine_team);
+    let mixed = factory_efficiency(gd, &mixed_team);
 
     // Even though the non-Rhine teammates have *higher* flat efficiency (35 vs
     // 25), Dorothy's faction bonus (+5% × 2 Rhine = +10%) makes the Rhine team
     // competitive/better. The key assertion: the faction bonus is actually applied.
     let mixed_no_dorothy = factory_efficiency(
-        &gd,
+        gd,
         &[
-            profile(&gd, "char_237_gravel"),
-            profile(&gd, "char_159_peacok"),
+            profile(gd, "char_237_gravel"),
+            profile(gd, "char_159_peacok"),
         ],
     );
     let rhine_no_dorothy = factory_efficiency(
-        &gd,
+        gd,
         &[
-            profile(&gd, "char_128_plosis"),
-            profile(&gd, "char_108_silent"),
+            profile(gd, "char_128_plosis"),
+            profile(gd, "char_108_silent"),
         ],
     );
     // Dorothy's marginal contribution on the Rhine team includes the faction
@@ -408,8 +408,8 @@ fn highmore_converts_rhine_skills_for_standardization_scaler() {
 
     let fac = |ids: &[&str]| {
         factory_efficiency(
-            &gd,
-            &ids.iter().map(|id| profile(&gd, id)).collect::<Vec<_>>(),
+            gd,
+            &ids.iter().map(|id| profile(gd, id)).collect::<Vec<_>>(),
         )
     };
 
@@ -431,7 +431,7 @@ fn rotation_plan_orders_members_by_when_to_swap_and_names_a_backup() {
     // needs swapping FIRST (shortest hours), plus an idle backup to rotate in.
     let gd = load_game_data();
     let building = generic_base();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -482,7 +482,7 @@ fn staggered_rotation_shares_a_small_bench_across_rooms() {
     // doubled roster (one backup per room), never bigger than the room count.
     let gd = load_game_data();
     let building = generic_base();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -543,10 +543,10 @@ fn weedy_is_not_padded_into_a_normal_factory() {
         rooms: vec![room("mf", "MANUFACTURE", 3), room("pp", "POWER", 3)],
     };
     let roster = vec![
-        profile(&gd, "char_4141_marcil"), // Marcille, generic +30%
-        profile(&gd, "char_242_otter"),   // Mayer, generic +30%
-        profile(&gd, "char_400_weedy"),   // Weedy, nullifying automation
-        profile(&gd, "char_102_texas"),   // Texas, trading-only (no factory value)
+        profile(gd, "char_4141_marcil"), // Marcille, generic +30%
+        profile(gd, "char_242_otter"),   // Mayer, generic +30%
+        profile(gd, "char_400_weedy"),   // Weedy, nullifying automation
+        profile(gd, "char_102_texas"),   // Texas, trading-only (no factory value)
     ];
 
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -584,12 +584,12 @@ fn metalwork_specialists_take_gold_freeing_generics_for_exp() {
     // order: the Gold factory must still resolve to the Metalwork specialists, with
     // the generic flowing to EXP.
     let roster = vec![
-        profile(&gd, "char_4141_marcil"), // Marcille, generic +30% (ties Haze)
-        profile(&gd, "char_237_gravel"),  // Gravel, Metalwork +35% (Gold only)
-        profile(&gd, "char_141_nights"),  // Haze, Metalwork +30% (Gold only)
-        profile(&gd, "char_4106_bryota"), // Bryophyta, Metalwork +30% (Gold only)
-        profile(&gd, "char_102_texas"),   // a trader to staff the trading post
-        profile(&gd, "char_103_angel"),   // Exusiai, trader
+        profile(gd, "char_4141_marcil"), // Marcille, generic +30% (ties Haze)
+        profile(gd, "char_237_gravel"),  // Gravel, Metalwork +35% (Gold only)
+        profile(gd, "char_141_nights"),  // Haze, Metalwork +30% (Gold only)
+        profile(gd, "char_4106_bryota"), // Bryophyta, Metalwork +30% (Gold only)
+        profile(gd, "char_102_texas"),   // a trader to staff the trading post
+        profile(gd, "char_103_angel"),   // Exusiai, trader
     ];
 
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -622,14 +622,14 @@ fn proviso_is_credited_as_a_strong_gold_trader() {
     // so it shows up in the LMD yield, not the efficiency %. By LMD she should
     // rival or beat a strong flat (speed) trader.
     let gd = load_game_data();
-    let proviso = trading_lmd(&gd, &[profile(&gd, "char_4032_provs")]);
-    let flat = trading_lmd(&gd, &[profile(&gd, "char_502_nblade")]); // +30% flat speed
+    let proviso = trading_lmd(gd, &[profile(gd, "char_4032_provs")]);
+    let flat = trading_lmd(gd, &[profile(gd, "char_502_nblade")]); // +30% flat speed
     assert!(
         proviso >= flat,
         "Proviso's order value should rival a strong flat trader by LMD (proviso {proviso:.0} vs flat {flat:.0})"
     );
     // And her order VALUE must NOT inflate the displayed efficiency %.
-    let proviso_eff = trading_efficiency(&gd, &[profile(&gd, "char_4032_provs")]);
+    let proviso_eff = trading_efficiency(gd, &[profile(gd, "char_4032_provs")]);
     assert!(
         proviso_eff < 5.0,
         "Proviso's value must not show as order-speed efficiency, got +{proviso_eff:.1}%"
@@ -647,8 +647,8 @@ fn proviso_value_does_not_survive_shamare() {
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let asn = compute_optimal_assignment(
         &[
-            profile(&gd, "char_254_vodfox"),
-            profile(&gd, "char_4032_provs"),
+            profile(gd, "char_254_vodfox"),
+            profile(gd, "char_4032_provs"),
         ],
         &trading_post(3),
         &gd.building,
@@ -671,11 +671,11 @@ fn jaye_order_limit_efficiency_is_counted() {
     // TIME-AVERAGED diff bonus over a shift (~20%, not the empty-post peak).
     let gd = load_game_data();
     let team = vec![
-        profile(&gd, TEXAS),
-        profile(&gd, LAPPLAND),
-        profile(&gd, "char_272_strong"), // Jaye
+        profile(gd, TEXAS),
+        profile(gd, LAPPLAND),
+        profile(gd, "char_272_strong"), // Jaye
     ];
-    let eff = trading_efficiency(&gd, &team);
+    let eff = trading_efficiency(gd, &team);
     assert!(
         eff > 75.0 && eff < 95.0,
         "Texas+Lappland+Jaye should read above Texas's +65% by Jaye's shift-averaged diff bonus (~+85%), got +{eff:.1}%"
@@ -691,11 +691,11 @@ fn jaye_diff_skill_is_bounded_by_the_order_limit() {
     // un-bounded efficiency-mirror gave, which inflated the post to ~140%).
     let gd = load_game_data();
     let team = vec![
-        profile(&gd, "char_272_strong"), // Jaye
-        profile(&gd, EXUSIAI),
-        profile(&gd, "char_4193_lemuen"),
+        profile(gd, "char_272_strong"), // Jaye
+        profile(gd, EXUSIAI),
+        profile(gd, "char_4193_lemuen"),
     ];
-    let eff = trading_efficiency(&gd, &team);
+    let eff = trading_efficiency(gd, &team);
     assert!(
         (eff - 100.0).abs() < 6.0,
         "Jaye/Exusiai/Lemuen should read ~+100% (Jaye shift-averaged ≈ 20), got +{eff:.1}%"
@@ -711,11 +711,11 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // user saw as ~92%). With it counted: Lemuen 45 + Exusiai 35 + Quartz 30 = 110.
     let gd = load_game_data();
     let team = vec![
-        profile(&gd, "char_4193_lemuen"),
-        profile(&gd, EXUSIAI),
-        profile(&gd, "char_4063_quartz"),
+        profile(gd, "char_4193_lemuen"),
+        profile(gd, EXUSIAI),
+        profile(gd, "char_4063_quartz"),
     ];
-    let eff = trading_efficiency(&gd, &team);
+    let eff = trading_efficiency(gd, &team);
     assert!(
         eff > 105.0,
         "Lemuen+Exusiai+Quartz should read ~+110% (Lemuen's +25% Exusiai bonus counted), got +{eff:.1}%"
@@ -724,10 +724,10 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // The +25% is genuinely conditional: drop Exusiai and Lemuen keeps only her
     // base +20%, so the same two-trader pairing must read materially lower.
     let no_exu = trading_efficiency(
-        &gd,
+        gd,
         &[
-            profile(&gd, "char_4193_lemuen"),
-            profile(&gd, "char_4063_quartz"),
+            profile(gd, "char_4193_lemuen"),
+            profile(gd, "char_4063_quartz"),
         ],
     );
     assert!(
@@ -743,7 +743,6 @@ fn quartz_recipe_scaling_counts_distinct_recipe_types_not_factories() {
     // base runs (gold + EXP = 2), NOT the factory count - four gold/EXP factories still process two
     // recipe types. Her buff resolves to a FacilityCountScaling targeting the synthetic
     // MANUFACTURE_RECIPE_TYPES count with a +30% base, so a 2-recipe base reads +34% (30 + 2×2).
-    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -784,7 +783,6 @@ fn morgan_glasgow_count_carries_a_siege_rider() {
     // Morgan "Gang Compass": +20% per Glasgow Gang op in the post, AND +35% more
     // "when in the same Trading Post as Siege". The faction count is the dominant
     // term (MatchCountScaling), but the named Siege rider must ride along on top.
-    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -824,7 +822,6 @@ fn faction_conditional_credits_base_plus_glasgow_bonus() {
     // more "if a Glasgow Gang Operator is assigned to the same Trading Post". The
     // faction analogue of a named-teammate conditional - base always on, bonus
     // gated on a faction tag rather than one operator.
-    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -865,19 +862,15 @@ fn morgan_reads_higher_with_siege_in_the_post() {
     const MATTERHORN: &str = "char_199_yak";
 
     let with_siege = trading_efficiency(
-        &gd,
-        &[
-            profile(&gd, MORGAN),
-            profile(&gd, SIEGE),
-            profile(&gd, INDRA),
-        ],
+        gd,
+        &[profile(gd, MORGAN), profile(gd, SIEGE), profile(gd, INDRA)],
     );
     let without_siege = trading_efficiency(
-        &gd,
+        gd,
         &[
-            profile(&gd, MORGAN),
-            profile(&gd, MATTERHORN),
-            profile(&gd, INDRA),
+            profile(gd, MORGAN),
+            profile(gd, MATTERHORN),
+            profile(gd, INDRA),
         ],
     );
     assert!(
@@ -893,7 +886,6 @@ fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
     //   - Umiri "all Siracusa Operators +5%"      → per-operator ConditionalGlobalEffect
     //   - SilverAsh "posts w/ 3 Kjerag ops +10%"  → count-gated ConditionalGlobalEffect
     // Only the first may be credited flat to every post.
-    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -977,7 +969,7 @@ fn control_center_same_type_buffs_do_not_stack() {
                 },
             ],
         };
-        let roster: Vec<_> = cc.iter().map(|s| profile(&gd, s)).collect();
+        let roster: Vec<_> = cc.iter().map(|s| profile(gd, s)).collect();
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -1026,7 +1018,7 @@ fn control_center_clauseless_buffs_stack() {
                 },
             ],
         };
-        let roster: Vec<_> = cc.iter().map(|s| profile(&gd, s)).collect();
+        let roster: Vec<_> = cc.iter().map(|s| profile(gd, s)).collect();
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -1074,11 +1066,11 @@ fn shamare_money_printer_forms_despite_a_deep_distractor_pool() {
         "char_4163_rosesa",
     ];
     let mut roster = vec![
-        profile(&gd, SHAMARE),
-        profile(&gd, TEQUILA),
-        profile(&gd, BIBEAK),
+        profile(gd, SHAMARE),
+        profile(gd, TEQUILA),
+        profile(gd, BIBEAK),
     ];
-    roster.extend(distractors.iter().map(|d| profile(&gd, d)));
+    roster.extend(distractors.iter().map(|d| profile(gd, d)));
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -1121,9 +1113,9 @@ fn fixed_synergy_squads_are_marked_locked_and_flexible_teams_are_not() {
     };
 
     let shamare_team = vec![
-        profile(&gd, "char_254_vodfox"), // Shamare (nullifier)
-        profile(&gd, "char_486_takila"), // Tequila (order value)
-        profile(&gd, "char_252_bibeak"), // Bibeak (order value)
+        profile(gd, "char_254_vodfox"), // Shamare (nullifier)
+        profile(gd, "char_486_takila"), // Tequila (order value)
+        profile(gd, "char_252_bibeak"), // Bibeak (order value)
     ];
     assert!(
         locked_for(&shamare_team),
@@ -1131,9 +1123,9 @@ fn fixed_synergy_squads_are_marked_locked_and_flexible_teams_are_not() {
     );
 
     let flexible_team = vec![
-        profile(&gd, "char_502_nblade"), // flat +30%
-        profile(&gd, "char_123_fang"),   // flat
-        profile(&gd, "char_211_adnach"), // flat
+        profile(gd, "char_502_nblade"), // flat +30%
+        profile(gd, "char_123_fang"),   // flat
+        profile(gd, "char_211_adnach"), // flat
     ];
     assert!(
         !locked_for(&flexible_team),
@@ -1142,9 +1134,9 @@ fn fixed_synergy_squads_are_marked_locked_and_flexible_teams_are_not() {
 
     // Penguin Logistics (Texas needs Lappland) is a fixed synergy -> locked.
     let penguin = vec![
-        profile(&gd, TEXAS),
-        profile(&gd, LAPPLAND),
-        profile(&gd, EXUSIAI),
+        profile(gd, TEXAS),
+        profile(gd, LAPPLAND),
+        profile(gd, EXUSIAI),
     ];
     assert!(
         locked_for(&penguin),
@@ -1182,7 +1174,7 @@ fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
                 },
             ],
         };
-        let roster: Vec<_> = cc.iter().chain(factory).map(|s| profile(&gd, s)).collect();
+        let roster: Vec<_> = cc.iter().chain(factory).map(|s| profile(gd, s)).collect();
         let asn =
             compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
@@ -1231,7 +1223,7 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
         "char_103_angel",
     ]
     .iter()
-    .map(|s| profile(&gd, s))
+    .map(|s| profile(gd, s))
     .collect();
 
     let building = UserBuilding {
@@ -1290,7 +1282,7 @@ fn weedy_is_treated_as_power_scaling_automation() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    let weedy = vec![profile(&gd, "char_400_weedy")];
+    let weedy = vec![profile(gd, "char_400_weedy")];
     let factory_with_power = |n: usize| {
         let mut rooms = vec![UserRoom {
             slot_id: "f".into(),
@@ -1331,7 +1323,7 @@ fn gold_exp_split_is_yield_based() {
     // factories are wasted (no post to sell their gold) and switches them to EXP,
     // which is worth more than unsold gold.
     let gd = load_game_data();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
 
     let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
     rooms.extend((0..4).map(|i| room(&format!("f{i}"), "MANUFACTURE", 3)));
@@ -1366,7 +1358,7 @@ fn current_preset_shifts_are_distinct() {
     // static crew for both.
     use backend::core::grade::base::assignment::{compute_current_assignment, has_preset_shifts};
     let gd = load_game_data();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
     // A trading post with two distinct planned shifts.
     let building = UserBuilding {
         rooms: vec![UserRoom {
@@ -1424,7 +1416,7 @@ fn staggered_rotation_sustains_near_peak() {
     // peak (their rest gaps go uncovered), which is why the floor is ~20%.
     let gd = load_game_data();
     let building = generic_base();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
@@ -1458,7 +1450,7 @@ fn low_morale_drain_teams_sustain_better_longevity_axis() {
     // Same room peak, different drain: Vermeil (-0.25/hr) is a far lower-drain
     // factory worker than a neutral/high-drain operator.
     let sustain_fraction = |op: &str| -> f64 {
-        let roster = vec![profile(&gd, op)];
+        let roster = vec![profile(gd, op)];
         let building = UserBuilding {
             rooms: vec![UserRoom {
                 slot_id: "mf".into(),
@@ -1504,7 +1496,7 @@ fn current_assignment_reflects_live_base() {
     // operators and be no better than the optimizer's peak (which is the best
     // possible arrangement of the same roster).
     let gd = load_game_data();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
     // A base where the player has stationed a deliberately mediocre crew (plain
     // flat traders / factory ops), so the optimizer has room to improve.
     let building = UserBuilding {
@@ -1593,7 +1585,7 @@ fn base_grade_perf() {
     use std::time::Instant;
     let gd = load_game_data();
     let building = generic_base();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
@@ -1618,7 +1610,7 @@ fn optimizes_a_full_base() {
     // the Control Center and fully staff every production room.
     let gd = load_game_data();
     let building = generic_base();
-    let profiles = full_roster(&gd);
+    let profiles = full_roster(gd);
 
     assert!(
         profiles.len() > 50,
@@ -1644,7 +1636,7 @@ fn optimizes_a_full_base() {
     // Every production room is fully staffed.
     for room in &optimal.rooms {
         if room.room_type == "TRADING" || room.room_type == "MANUFACTURE" {
-            let slots = max_stationed(&gd, &room.room_type, room.level);
+            let slots = max_stationed(gd, &room.room_type, room.level);
             assert_eq!(
                 room.operators.len() as i32,
                 slots,
@@ -1684,7 +1676,7 @@ fn grade_base_produces_a_sane_score() {
     .iter()
     .map(|id| roster_entry(id))
     .collect();
-    let partial_score = grade_base(&partial, Some(&building_json), &gd);
+    let partial_score = grade_base(&partial, Some(&building_json), gd);
     assert!(
         (0.0..=1.0).contains(&partial_score) && partial_score > 0.0,
         "partial-roster score should be in (0, 1], got {partial_score}"
@@ -1697,7 +1689,7 @@ fn grade_base_produces_a_sane_score() {
         .filter(|id| id.starts_with("char_"))
         .map(|id| roster_entry(id))
         .collect();
-    let full_score = grade_base(&full, Some(&building_json), &gd);
+    let full_score = grade_base(&full, Some(&building_json), gd);
     assert!(
         (0.0..=1.0).contains(&full_score) && full_score >= partial_score - 1e-6,
         "full-roster score ({full_score}) should be in [0,1] and >= partial ({partial_score})"
@@ -1718,10 +1710,10 @@ fn conditional_cc_buff_is_not_credited_when_its_gate_cannot_be_met() {
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     let roster = vec![
-        profile(&gd, "char_1045_svash2"), // SilverAsh the Reignfrost (conditional CC)
-        profile(&gd, "char_002_amiya"),   // Amiya (unconditional CC global)
-        profile(&gd, "char_103_angel"),   // Exusiai, trader
-        profile(&gd, "char_102_texas"),   // Texas, trader
+        profile(gd, "char_1045_svash2"), // SilverAsh the Reignfrost (conditional CC)
+        profile(gd, "char_002_amiya"),   // Amiya (unconditional CC global)
+        profile(gd, "char_103_angel"),   // Exusiai, trader
+        profile(gd, "char_102_texas"),   // Texas, trader
     ];
 
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -1756,9 +1748,9 @@ fn degenbrecher_is_not_used_in_a_trading_post_without_cap_synergy() {
         rooms: vec![room("tp", "TRADING", 3)],
     };
     let roster = vec![
-        profile(&gd, "char_4116_blkkgt"), // Degenbrecher (order-limit wrecker)
-        profile(&gd, "char_103_angel"),   // Exusiai, trader
-        profile(&gd, "char_102_texas"),   // Texas, trader
+        profile(gd, "char_4116_blkkgt"), // Degenbrecher (order-limit wrecker)
+        profile(gd, "char_103_angel"),   // Exusiai, trader
+        profile(gd, "char_102_texas"),   // Texas, trader
     ];
 
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -1796,9 +1788,9 @@ fn cross_formula_reallocation_frees_a_generic_for_exp() {
         ],
     };
     let roster = vec![
-        profile(&gd, "char_4141_marcil"), // Marcille, generic +30%
-        profile(&gd, "char_242_otter"),   // Mayer, generic +30%
-        profile(&gd, "char_103_angel"),   // Exusiai, trader
+        profile(gd, "char_4141_marcil"), // Marcille, generic +30%
+        profile(gd, "char_242_otter"),   // Mayer, generic +30%
+        profile(gd, "char_103_angel"),   // Exusiai, trader
     ];
 
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
@@ -1828,11 +1820,11 @@ fn texas_is_not_a_standalone_rotation_backup_without_lappland() {
     // Three strong traders staff the post; Texas (no Lappland) and one ordinary
     // trader sit idle. The ordinary trader, not Texas, should be the backup.
     let roster = vec![
-        profile(&gd, "char_103_angel"),  // Exusiai +35
-        profile(&gd, "char_4032_provs"), // Proviso (order value)
-        profile(&gd, "char_502_nblade"), // Yato +30
-        profile(&gd, "char_185_frncat"), // Mousse +30
-        profile(&gd, "char_102_texas"),  // Texas (conditional on Lappland)
+        profile(gd, "char_103_angel"),  // Exusiai +35
+        profile(gd, "char_4032_provs"), // Proviso (order value)
+        profile(gd, "char_502_nblade"), // Yato +30
+        profile(gd, "char_185_frncat"), // Mousse +30
+        profile(gd, "char_102_texas"),  // Texas (conditional on Lappland)
     ];
     let rot = compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
     let tp = rot
@@ -1867,7 +1859,7 @@ fn low_level_dorms_reduce_sustained_output() {
             room("d1", "DORMITORY", dorm_lv),
         ],
     };
-    let roster = full_roster(&gd);
+    let roster = full_roster(gd);
     let hi = compute_sustained_assignment(&roster, &layout(5), &gd.building, &registry, &drains);
     let lo = compute_sustained_assignment(&roster, &layout(1), &gd.building, &registry, &drains);
     assert!(
@@ -1891,14 +1883,14 @@ fn dead_conditional_cc_operator_is_dropped_after_assignment() {
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
     };
     let roster = vec![
-        profile(&gd, "char_1045_svash2"), // SilverAsh the Reignfrost (CC, Kjerag gate)
-        profile(&gd, "char_002_amiya"),   // Amiya (unconditional CC global)
-        profile(&gd, "char_198_blackd"),  // Courier (Kjerag, weak trader)
-        profile(&gd, "char_199_yak"),     // Matterhorn (Kjerag, weak trader)
-        profile(&gd, "char_173_slchan"),  // Cliffheart (Kjerag, weak trader)
-        profile(&gd, "char_103_angel"),   // Exusiai (strong trader)
-        profile(&gd, "char_502_nblade"),  // Yato (strong trader)
-        profile(&gd, "char_185_frncat"),  // Mousse (strong trader)
+        profile(gd, "char_1045_svash2"), // SilverAsh the Reignfrost (CC, Kjerag gate)
+        profile(gd, "char_002_amiya"),   // Amiya (unconditional CC global)
+        profile(gd, "char_198_blackd"),  // Courier (Kjerag, weak trader)
+        profile(gd, "char_199_yak"),     // Matterhorn (Kjerag, weak trader)
+        profile(gd, "char_173_slchan"),  // Cliffheart (Kjerag, weak trader)
+        profile(gd, "char_103_angel"),   // Exusiai (strong trader)
+        profile(gd, "char_502_nblade"),  // Yato (strong trader)
+        profile(gd, "char_185_frncat"),  // Mousse (strong trader)
     ];
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let cc = asn
@@ -1938,14 +1930,14 @@ fn morale_operator_takes_a_spare_cc_seat_and_lifts_sustain() {
     };
     let roster = |morale: bool| {
         let mut r = vec![
-            profile(&gd, "char_103_angel"),
-            profile(&gd, "char_502_nblade"),
-            profile(&gd, "char_4032_provs"),
-            profile(&gd, "char_237_gravel"),
-            profile(&gd, "char_141_nights"),
+            profile(gd, "char_103_angel"),
+            profile(gd, "char_502_nblade"),
+            profile(gd, "char_4032_provs"),
+            profile(gd, "char_237_gravel"),
+            profile(gd, "char_141_nights"),
         ];
         if morale {
-            r.push(profile(&gd, "char_1035_wisdel"));
+            r.push(profile(gd, "char_1035_wisdel"));
         }
         r
     };
@@ -1989,7 +1981,7 @@ fn insufficient_dorm_capacity_throttles_sustained_output() {
         rooms.extend((0..dorms).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
         UserBuilding { rooms }
     };
-    let roster = full_roster(&gd);
+    let roster = full_roster(gd);
     let cramped =
         compute_sustained_assignment(&roster, &layout(1), &gd.building, &registry, &drains);
     let roomy = compute_sustained_assignment(&roster, &layout(4), &gd.building, &registry, &drains);
@@ -2011,7 +2003,7 @@ fn rotation_is_expressed_as_overlapping_sets() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let rot = compute_sustained_assignment(
-        &full_roster(&gd),
+        &full_roster(gd),
         &generic_base(),
         &gd.building,
         &registry,
@@ -2092,7 +2084,7 @@ fn set_count_tracks_real_rest_demand_not_seat_count() {
         rooms: vec![room("mf", "MANUFACTURE", 3), room("d0", "DORMITORY", 3)],
     };
     let sets_for = |ids: &[&str]| {
-        let roster: Vec<_> = ids.iter().map(|id| profile(&gd, id)).collect();
+        let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
         compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains)
             .sets
             .len()
@@ -2156,7 +2148,7 @@ fn weedy_is_not_suggested_as_a_rotation_backup() {
         "char_400_weedy",
     ]
     .iter()
-    .map(|c| profile(&gd, c))
+    .map(|c| profile(gd, c))
     .collect();
     let rot = compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
 
@@ -2190,7 +2182,7 @@ fn locked_synergy_teams_get_no_individual_backup() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let rot = compute_sustained_assignment(
-        &full_roster(&gd),
+        &full_roster(gd),
         &generic_base(),
         &gd.building,
         &registry,
@@ -2236,8 +2228,8 @@ fn proviso_and_tequila_order_value_does_not_stack() {
     // Level-2 post (2 seats) forces both value operators in together.
     let asn = compute_optimal_assignment(
         &[
-            profile(&gd, "char_4032_provs"),
-            profile(&gd, "char_486_takila"),
+            profile(gd, "char_4032_provs"),
+            profile(gd, "char_486_takila"),
         ],
         &trading_post(2),
         &gd.building,
@@ -2261,11 +2253,11 @@ fn proviso_pairs_with_speed_not_another_value_operator() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let roster = vec![
-        profile(&gd, "char_4032_provs"), // Proviso (value)
-        profile(&gd, "char_486_takila"), // Tequila (value)
-        profile(&gd, "char_103_angel"),  // Exusiai +35 speed
-        profile(&gd, "char_502_nblade"), // Yato +30 speed
-        profile(&gd, "char_185_frncat"), // Mousse +30 speed
+        profile(gd, "char_4032_provs"), // Proviso (value)
+        profile(gd, "char_486_takila"), // Tequila (value)
+        profile(gd, "char_103_angel"),  // Exusiai +35 speed
+        profile(gd, "char_502_nblade"), // Yato +30 speed
+        profile(gd, "char_185_frncat"), // Mousse +30 speed
     ];
     let asn =
         compute_optimal_assignment(&roster, &trading_post(3), &gd.building, &registry, &drains);
@@ -2299,12 +2291,12 @@ fn proviso_is_not_staffed_in_a_shamare_post() {
         ],
     };
     let roster = vec![
-        profile(&gd, "char_140_whitew"), // Lappland (needs Texas, absent)
-        profile(&gd, "char_4032_provs"), // Proviso
-        profile(&gd, "char_254_vodfox"), // Shamare
-        profile(&gd, "char_486_takila"), // Tequila
-        profile(&gd, "char_003_kalts"),  // body
-        profile(&gd, "char_180_amgoat"), // body
+        profile(gd, "char_140_whitew"), // Lappland (needs Texas, absent)
+        profile(gd, "char_4032_provs"), // Proviso
+        profile(gd, "char_254_vodfox"), // Shamare
+        profile(gd, "char_486_takila"), // Tequila
+        profile(gd, "char_003_kalts"),  // body
+        profile(gd, "char_180_amgoat"), // body
     ];
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let same_post = asn.rooms.iter().any(|r| {
@@ -2341,7 +2333,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
     rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
     let building = UserBuilding { rooms };
     let rot = recommend_shift_rotation(
-        &full_roster(&gd),
+        &full_roster(gd),
         &building,
         &gd.building,
         &registry,
@@ -2350,116 +2342,120 @@ fn shift_rotation_forms_three_overlapping_shifts() {
 
     assert_eq!(rot.shifts.len(), 3, "three shifts");
 
-    // The Control Center rests its main crew on the MIDDLE shift (work / off / work) so its
-    // operators never sit two shifts back-to-back; a backup off-team covers that middle shift,
-    // so the room stays staffed all three shifts. Shifts 1 and 3 are the main; shift 2 differs.
-    let cc = |shift: usize| -> &backend::core::grade::base::shift_rotation::ShiftRoom {
-        rot.shifts[shift]
-            .rooms
-            .iter()
-            .find(|r| r.room_type == "CONTROL")
-            .unwrap()
-    };
-    let cc_active: Vec<bool> = (0..3).map(|k| cc(k).active).collect();
-    assert_eq!(
-        cc_active,
-        vec![true, true, true],
-        "CC stays staffed via its off-team"
-    );
-    assert_eq!(
-        cc(0).recommended,
-        cc(2).recommended,
-        "shifts 1 and 3 run the same main CC crew"
-    );
-    assert_ne!(
-        cc(0).recommended,
-        cc(1).recommended,
-        "the middle-shift off-team should differ from the main CC crew, got {:?}",
-        cc(1).recommended
-    );
-
-    // The HR Office and Reception Room ALSO rotate a main + off-team (rest the middle shift),
-    // not a single crew kept stationed - so their operators get to rest too.
-    for rt in ["HIRE", "MEETING"] {
-        let crew = |shift: usize| -> Vec<String> {
+    let cell =
+        |shift: usize, slot: &str| -> &backend::core::grade::base::shift_rotation::ShiftRoom {
             rot.shifts[shift]
                 .rooms
                 .iter()
-                .find(|r| r.room_type == rt)
+                .find(|r| r.slot_id == slot)
                 .unwrap()
-                .recommended
-                .clone()
         };
-        assert!(!crew(0).is_empty(), "{rt} should be staffed");
-        assert_eq!(
-            crew(0),
-            crew(2),
-            "{rt} runs the same main crew shifts 1 and 3"
-        );
-        assert_ne!(
-            crew(0),
-            crew(1),
-            "{rt} should rotate a different off-team on the middle shift"
-        );
-    }
-
-    // Every production room runs its MAIN team on shifts 1 & 3 and rests the MIDDLE shift (an
-    // off-team covers it) - a clean work / rest / work cycle. The main never works two shifts
-    // back-to-back, no operator is in both the main and its off-team, and nobody works all three.
-    let tp_team = |shift: usize, slot: &str| -> Vec<String> {
-        let mut v = rot.shifts[shift]
-            .rooms
-            .iter()
-            .find(|r| r.slot_id == slot)
-            .unwrap()
-            .recommended
-            .clone();
+    let crew = |shift: usize, slot: &str| -> Vec<String> {
+        let mut v = cell(shift, slot).recommended.clone();
         v.sort();
         v
     };
-    for slot in ["tp0", "tp1"] {
-        assert!(!tp_team(0, slot).is_empty(), "{slot} should be staffed");
-        assert_eq!(
-            tp_team(0, slot),
-            tp_team(2, slot),
-            "{slot} runs its main team on shifts 1 and 3"
-        );
-        assert_ne!(
-            tp_team(0, slot),
-            tp_team(1, slot),
-            "{slot} rests its main on the middle shift"
-        );
-        assert!(
-            !tp_team(0, slot)
-                .iter()
-                .any(|o| tp_team(1, slot).contains(o)),
-            "no operator is in both {slot}'s main and its middle-shift off-team"
-        );
-    }
 
-    // A power plant ALSO works shifts 1 & 3 and rests the middle (its off-team covers, or it rests
-    // dark) - so its operators recover too, instead of working two shifts in a row.
-    let p0 = |s: usize| -> Vec<String> {
-        let mut v = rot.shifts[s]
-            .rooms
-            .iter()
-            .find(|r| r.slot_id == "p0")
-            .unwrap()
-            .recommended
-            .clone();
-        v.sort();
-        v
-    };
-    assert!(!p0(0).is_empty(), "the power plant should be staffed");
+    // The Control Center runs TWO squads: Squad 1 on two shifts, Squad 2 (disjoint) covering the
+    // third - either alternating (1&3 / 2) or as a 24h block (1+2 / 3) when a synergy aligns it.
+    let cc_slot = "cc";
+    let cc_crews: Vec<Vec<String>> = (0..3).map(|k| crew(k, cc_slot)).collect();
+    assert!(
+        (0..3).all(|k| cell(k, cc_slot).active),
+        "CC staffed all three shifts"
+    );
+    let distinct_cc: std::collections::HashSet<&Vec<String>> = cc_crews.iter().collect();
     assert_eq!(
-        p0(0),
-        p0(2),
-        "the power plant runs its main crew on shifts 1 and 3"
+        distinct_cc.len(),
+        2,
+        "CC cycles exactly two squads: {cc_crews:?}"
+    );
+    let (a, b) = (
+        &cc_crews[0],
+        cc_crews.iter().find(|c| *c != &cc_crews[0]).unwrap(),
+    );
+    assert!(
+        !a.iter().any(|o| b.contains(o)),
+        "the two CC squads are disjoint so Squad 1 actually rests"
+    );
+
+    // The HR Office and Reception Room cycle two squads too - the per-login swap.
+    for slot in ["hr", "rc"] {
+        let crews: Vec<Vec<String>> = (0..3).map(|k| crew(k, slot)).collect();
+        assert!(!crews[0].is_empty(), "{slot} should be staffed");
+        let distinct: std::collections::HashSet<&Vec<String>> = crews.iter().collect();
+        assert_eq!(distinct.len(), 2, "{slot} cycles two squads: {crews:?}");
+    }
+
+    // The trading-post pair runs the login rhythm: THREE distinct, pairwise-disjoint teams tiled
+    // as 24h blocks (room0 = [A, A, B], room1 = [B, C, C]), so each team works two consecutive
+    // shifts then rests one, and exactly one of the pair's rooms changes team at each boundary.
+    let team_id = |shift: usize, slot: &str| -> String {
+        cell(shift, slot)
+            .team_id
+            .clone()
+            .expect("production cells carry a team id")
+    };
+    let tp_ids: Vec<Vec<String>> = ["tp0", "tp1"]
+        .iter()
+        .map(|slot| (0..3).map(|k| team_id(k, slot)).collect())
+        .collect();
+    assert_eq!(
+        tp_ids[0][0], tp_ids[0][1],
+        "room0 runs one team for shifts 1+2"
     );
     assert_ne!(
-        p0(0),
-        p0(1),
-        "a distinct off-team (or rest) covers the middle shift"
+        tp_ids[0][1], tp_ids[0][2],
+        "room0 swaps its team for shift 3"
+    );
+    assert_eq!(
+        tp_ids[1][1], tp_ids[1][2],
+        "room1 runs one team for shifts 2+3"
+    );
+    assert_ne!(
+        tp_ids[1][0], tp_ids[1][1],
+        "room1 swaps its team after shift 1"
+    );
+    assert_eq!(
+        tp_ids[0][2], tp_ids[1][0],
+        "the wrap team's block spans room0 shift 3 and room1 shift 1"
+    );
+    let distinct_teams: std::collections::HashSet<&String> = tp_ids.iter().flatten().collect();
+    assert_eq!(
+        distinct_teams.len(),
+        3,
+        "a pair of posts runs exactly three teams"
+    );
+    // Teams working the same shift never share an operator, and a team shares nobody with its
+    // replacement - EXCEPT a Fiammetta-sustained operator, who is deliberately pinned to one
+    // room across every shift (the full roster owns a manager, so one trader gets sustained).
+    let sustained: std::collections::HashSet<&String> = rot.sustained.iter().collect();
+    let rotating = |c: Vec<String>| -> Vec<String> {
+        c.into_iter().filter(|o| !sustained.contains(o)).collect()
+    };
+    for k in 0..3 {
+        let (c0, c1) = (rotating(crew(k, "tp0")), rotating(crew(k, "tp1")));
+        assert!(
+            !c0.iter().any(|o| c1.contains(o)),
+            "shift {k}: concurrent trading teams are disjoint"
+        );
+    }
+    assert!(!crew(0, "tp0").is_empty(), "tp0 staffed");
+    assert!(
+        !rotating(crew(0, "tp0"))
+            .iter()
+            .any(|o| rotating(crew(2, "tp0")).contains(o)),
+        "a team and its replacement share no rotating operator"
+    );
+
+    // A power plant alternates two squads (Squad 1 on shifts 1&3, Squad 2 on shift 2), so its
+    // operators recover instead of working two shifts in a row.
+    let p0: Vec<Vec<String>> = (0..3).map(|k| crew(k, "p0")).collect();
+    assert!(!p0[0].is_empty(), "the power plant should be staffed");
+    assert_eq!(p0[0], p0[2], "the plant runs Squad 1 on shifts 1 and 3");
+    assert_ne!(
+        p0[0], p0[1],
+        "Squad 2 (or a dark rest) covers the middle shift"
     );
 }
 
@@ -2481,10 +2477,10 @@ fn perception_pool_credits_rosmontis_on_a_243() {
     assert_eq!(resting, 20, "4 dorms x 5 slots");
 
     let roster = vec![
-        profile(&gd, "char_391_rosmon"), // Rosmontis (generator + Chain-of-Thought consumer)
-        profile(&gd, "char_4046_ebnhlz"), // Ebenholz (generator + Soundless-Resonance consumer)
-        profile(&gd, "char_245_cello"),  // Virtuosa (dorm Soundless-Resonance generator)
-        profile(&gd, "char_455_nothin"), // Mr. Nothing (Worldly Plight / "Yan" economy)
+        profile(gd, "char_391_rosmon"), // Rosmontis (generator + Chain-of-Thought consumer)
+        profile(gd, "char_4046_ebnhlz"), // Ebenholz (generator + Soundless-Resonance consumer)
+        profile(gd, "char_245_cello"),  // Virtuosa (dorm Soundless-Resonance generator)
+        profile(gd, "char_455_nothin"), // Mr. Nothing (Worldly Plight / "Yan" economy)
     ];
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let result = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
@@ -2542,13 +2538,13 @@ fn perception_consumer_is_placed_and_credited_on_a_243() {
     let building = UserBuilding { rooms };
 
     let roster = vec![
-        profile(&gd, "char_391_rosmon"),  // Rosmontis (perception consumer)
-        profile(&gd, "char_4046_ebnhlz"), // Ebenholz (feeds the pool)
-        profile(&gd, "char_237_gravel"),  // Metalwork +35% (gold)
-        profile(&gd, "char_4141_marcil"), // generic +30%
-        profile(&gd, "char_159_peacok"),  // generic
-        profile(&gd, "char_102_texas"),   // trader
-        profile(&gd, "char_103_angel"),   // trader
+        profile(gd, "char_391_rosmon"),  // Rosmontis (perception consumer)
+        profile(gd, "char_4046_ebnhlz"), // Ebenholz (feeds the pool)
+        profile(gd, "char_237_gravel"),  // Metalwork +35% (gold)
+        profile(gd, "char_4141_marcil"), // generic +30%
+        profile(gd, "char_159_peacok"),  // generic
+        profile(gd, "char_102_texas"),   // trader
+        profile(gd, "char_103_angel"),   // trader
     ];
 
     let name_to_char = build_name_to_char(&gd.operators);
@@ -2593,10 +2589,10 @@ fn perception_cross_room_support_placement_on_a_243() {
     let building = UserBuilding { rooms };
 
     let roster = vec![
-        profile(&gd, "char_473_mberry"), // Mulberry  - HR Worldly Plight generator
-        profile(&gd, "char_436_whispr"), // Whisperain - HR (Memory Fragment, non-bd -> 0)
-        profile(&gd, "char_2025_shu"),   // Shu     - Factory Worldly Plight consumer
-        profile(&gd, "char_4078_bdhkgt"), // Jieyun  - Factory WP -> Witchcraft Crystal consumer
+        profile(gd, "char_473_mberry"), // Mulberry  - HR Worldly Plight generator
+        profile(gd, "char_436_whispr"), // Whisperain - HR (Memory Fragment, non-bd -> 0)
+        profile(gd, "char_2025_shu"),   // Shu     - Factory Worldly Plight consumer
+        profile(gd, "char_4078_bdhkgt"), // Jieyun  - Factory WP -> Witchcraft Crystal consumer
     ];
 
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -2649,17 +2645,17 @@ fn perception_support_is_pinned_and_reserved_in_the_optimal_plan() {
     let building = UserBuilding { rooms };
 
     let roster = vec![
-        profile(&gd, "char_473_mberry"), // Mulberry - Office Worldly-Plight generator
-        profile(&gd, "char_2023_ling"),  // Ling - Control-Center conditional generator
-        profile(&gd, "char_2015_dusk"),  // Dusk - Control-Center conditional generator
-        profile(&gd, "char_300_phenxi"), // Fiammetta - morale-swap rotation manager
-        profile(&gd, "char_455_nothin"), // Mr. Nothing - Trading consumer
-        profile(&gd, "char_391_rosmon"), // Rosmontis - Factory consumer
-        profile(&gd, "char_2025_shu"),   // Shu - Factory consumer
+        profile(gd, "char_473_mberry"), // Mulberry - Office Worldly-Plight generator
+        profile(gd, "char_2023_ling"),  // Ling - Control-Center conditional generator
+        profile(gd, "char_2015_dusk"),  // Dusk - Control-Center conditional generator
+        profile(gd, "char_300_phenxi"), // Fiammetta - morale-swap rotation manager
+        profile(gd, "char_455_nothin"), // Mr. Nothing - Trading consumer
+        profile(gd, "char_391_rosmon"), // Rosmontis - Factory consumer
+        profile(gd, "char_2025_shu"),   // Shu - Factory consumer
         // A few strong generic producers so the optimizer has plenty to staff production with.
-        profile(&gd, "char_002_amiya"),
-        profile(&gd, "char_003_kalts"),
-        profile(&gd, "char_134_ifrit"),
+        profile(gd, "char_002_amiya"),
+        profile(gd, "char_003_kalts"),
+        profile(gd, "char_134_ifrit"),
     ];
 
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -2739,7 +2735,7 @@ fn team_value_is_order_independent_and_rewards_staffing() {
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let roster: Vec<_> = ["char_134_ifrit", "char_002_amiya", "char_003_kalts"]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let team: Vec<String> = vec!["char_134_ifrit".into(), "char_002_amiya".into()];
     let reversed: Vec<String> = team.iter().rev().cloned().collect();
@@ -2800,10 +2796,10 @@ fn facility_count_enabler_boosts_power_scaling_automation() {
             .find(|r| r.room_type == "MANUFACTURE")
             .map_or(0.0, |r| r.total_efficiency)
     };
-    let weedy_only = vec![profile(&gd, "char_400_weedy")];
+    let weedy_only = vec![profile(gd, "char_400_weedy")];
     let weedy_greyy = vec![
-        profile(&gd, "char_400_weedy"),
-        profile(&gd, "char_1027_greyy2"),
+        profile(gd, "char_400_weedy"),
+        profile(gd, "char_1027_greyy2"),
     ];
     let (a, b) = (factory_eff(&weedy_greyy), factory_eff(&weedy_only));
     assert!(
@@ -2822,7 +2818,7 @@ fn vermeil_converts_her_own_capacity() {
         rooms: vec![room("mf", "MANUFACTURE", 3)],
     };
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let roster = vec![profile(&gd, "char_190_clour")]; // Vermeil (E1+ in game data fixture)
+    let roster = vec![profile(gd, "char_190_clour")]; // Vermeil (E1+ in game data fixture)
     let solo = team_value(
         &["char_190_clour".into()],
         "MANUFACTURE",
@@ -2861,7 +2857,7 @@ fn optimal_with_empty_pins_is_identical_to_the_plain_optimum() {
         "char_2023_ling",
     ]
     .iter()
-    .map(|id| profile(&gd, id))
+    .map(|id| profile(gd, id))
     .collect();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
 
@@ -2908,10 +2904,10 @@ fn perception_conditional_ling_dusk_feed_both_economies_sustainably() {
     let building = UserBuilding { rooms };
 
     let roster = vec![
-        profile(&gd, "char_2023_ling"), // Ling - high morale -> Worldly Plight (Yan)
-        profile(&gd, "char_2015_dusk"), // Dusk - high morale -> Perception Information (A/B)
-        profile(&gd, "char_455_nothin"), // Mr. Nothing - Trading Worldly-Plight gen + consumer
-        profile(&gd, "char_391_rosmon"), // Rosmontis - Factory Chain-of-Thought consumer
+        profile(gd, "char_2023_ling"), // Ling - high morale -> Worldly Plight (Yan)
+        profile(gd, "char_2015_dusk"), // Dusk - high morale -> Perception Information (A/B)
+        profile(gd, "char_455_nothin"), // Mr. Nothing - Trading Worldly-Plight gen + consumer
+        profile(gd, "char_391_rosmon"), // Rosmontis - Factory Chain-of-Thought consumer
     ];
 
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -2983,9 +2979,9 @@ fn perception_rotation_needs_a_morale_swap_manager() {
     let building = UserBuilding { rooms };
 
     let base = vec![
-        profile(&gd, "char_2023_ling"),  // Ling (conditional)
-        profile(&gd, "char_2015_dusk"),  // Dusk (conditional)
-        profile(&gd, "char_455_nothin"), // Mr. Nothing (Worldly-Plight consumer)
+        profile(gd, "char_2023_ling"),  // Ling (conditional)
+        profile(gd, "char_2015_dusk"),  // Dusk (conditional)
+        profile(gd, "char_455_nothin"), // Mr. Nothing (Worldly-Plight consumer)
     ];
 
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -2998,7 +2994,7 @@ fn perception_rotation_needs_a_morale_swap_manager() {
 
     // With Fiammetta owned -> she's named as the manager and the flag clears.
     let mut with = base;
-    with.push(profile(&gd, "char_300_phenxi")); // Fiammetta (morale-swap manager)
+    with.push(profile(gd, "char_300_phenxi")); // Fiammetta (morale-swap manager)
     let result = perception::evaluate(&with, &building, &gd.building, &drains, &registry);
     assert_eq!(
         result.rotation_manager.as_deref(),
@@ -3069,9 +3065,9 @@ fn passion_combo_is_committed_realized_and_counts_the_dual_role_once() {
     // worth ~nothing, so the whole-base combo wins and commits.
     let roster: Vec<_> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
-    let p = perception_of(&gd, &roster, &building);
+    let p = perception_of(gd, &roster, &building);
 
     let mf = mf_override(&p).expect("factories should get the committed Passion bonus");
     let td = td_override(&p).expect("trading should get the committed Passion bonus");
@@ -3126,9 +3122,9 @@ fn passion_combo_staffs_the_control_center_and_lifts_factories() {
     let combo: std::collections::HashSet<&str> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
         .into_iter()
         .collect();
-    let roster: Vec<_> = full_roster(&gd)
+    let roster: Vec<_> = full_roster(gd)
         .into_iter()
-        .filter(|op| combo.contains(op.char_id.as_str()) || !is_control_op(&gd, op))
+        .filter(|op| combo.contains(op.char_id.as_str()) || !is_control_op(gd, op))
         .collect();
     let p = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
 
@@ -3202,17 +3198,17 @@ fn partial_passion_roster_yields_a_smaller_pool() {
     let building = bd_base_243();
     let full: Vec<_> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     // Drop the dorm generator and one flat generator: a smaller Passion pool.
     let partial: Vec<_> = [SAKIKO, MORTIS, AMORIS]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
 
-    let full_mf = mf_override(&perception_of(&gd, &full, &building)).expect("full combo commits");
+    let full_mf = mf_override(&perception_of(gd, &full, &building)).expect("full combo commits");
     let part_mf =
-        mf_override(&perception_of(&gd, &partial, &building)).expect("partial combo still commits");
+        mf_override(&perception_of(gd, &partial, &building)).expect("partial combo still commits");
     assert!(
         part_mf > 0.0,
         "the partial combo still pays something: {part_mf}"
@@ -3230,11 +3226,11 @@ fn weak_partial_combo_is_not_committed_when_ordinary_buffs_win() {
     // Sakiko + one small generator, but the full roster of ordinary Control-Center buffers competes
     // for the same seats. The combo's lone ~+0.5% to factories loses, so it must NOT commit.
     let drop: std::collections::HashSet<&str> = [MORTIS, DOLRIS, TMORIS].into_iter().collect();
-    let roster: Vec<_> = full_roster(&gd)
+    let roster: Vec<_> = full_roster(gd)
         .into_iter()
         .filter(|op| !drop.contains(op.char_id.as_str()))
         .collect();
-    let p = perception_of(&gd, &roster, &building);
+    let p = perception_of(gd, &roster, &building);
     assert!(
         p.global_overrides.is_empty(),
         "a weak partial combo must lose to the ordinary CC fill and emit no global override, got {:?}",
@@ -3249,11 +3245,11 @@ fn a_roster_without_passion_ops_has_no_combo_override() {
     let combo: std::collections::HashSet<&str> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
         .into_iter()
         .collect();
-    let roster: Vec<_> = full_roster(&gd)
+    let roster: Vec<_> = full_roster(gd)
         .into_iter()
         .filter(|op| !combo.contains(op.char_id.as_str()))
         .collect();
-    let p = perception_of(&gd, &roster, &building);
+    let p = perception_of(gd, &roster, &building);
     assert!(
         p.global_overrides.is_empty(),
         "no Passion operators -> no Control-Center combo override"
@@ -3270,7 +3266,7 @@ fn shift_rotation_never_double_books_an_operator_within_a_shift() {
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     // bd_base_243 has 3 power plants, exercising the widened power-plan exclusion.
     let building = bd_base_243();
-    let roster = full_roster(&gd);
+    let roster = full_roster(gd);
     let rotation = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
     for shift in &rotation.shifts {
         let mut owner: HashMap<&str, &str> = HashMap::new();
@@ -3305,7 +3301,7 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     // No morale-swap manager owned -> nobody is held at full morale.
     let base: Vec<_> = [PROVISO, EXUSIAI, TEXAS]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let main = compute_optimal_assignment(&base, &building, &gd.building, &registry, &drains);
     let none = morale_sustained_beneficiaries(&main, &base, &drains, recovery, &gd.building);
@@ -3317,7 +3313,7 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     // With Fiammetta owned -> EXACTLY ONE operator is sustained, and crediting it doesn't lower
     // (it raises) the trading post's sustained efficiency.
     let mut with = base;
-    with.push(profile(&gd, FIAMMETTA));
+    with.push(profile(gd, FIAMMETTA));
     let main2 = compute_optimal_assignment(&with, &building, &gd.building, &registry, &drains);
     let benef = morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &gd.building);
     assert_eq!(
@@ -3368,7 +3364,7 @@ fn reception_room_staffs_caper_during_exchange() {
     // the permanent-exchange assumption); without that, he'd be dropped for the two +25% operators.
     let roster: Vec<_> = [CAPER, VIGIL, RED]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let m = asn
@@ -3388,7 +3384,7 @@ fn reception_total_includes_rarity_elite_and_level() {
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = meeting_room(3);
-    let roster: Vec<_> = [VIGIL, RED].iter().map(|id| profile(&gd, id)).collect();
+    let roster: Vec<_> = [VIGIL, RED].iter().map(|id| profile(gd, id)).collect();
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let m = asn.rooms.iter().find(|r| r.room_type == "MEETING").unwrap();
     // Raw clue skills are 25 + 25 = 50; the total also folds in per-operator rarity + elite (E2
@@ -3409,7 +3405,7 @@ fn reception_applies_the_solo_skill_when_an_operator_works_alone() {
     // cost). With no partner available he's staffed alone, and the room's total reflects his higher
     // SOLO skill, not the paired one.
     const KAZEMARU: &str = "char_4016_kazema";
-    let roster = vec![profile(&gd, KAZEMARU)];
+    let roster = vec![profile(gd, KAZEMARU)];
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let m = asn.rooms.iter().find(|r| r.room_type == "MEETING").unwrap();
     assert_eq!(
@@ -3460,7 +3456,7 @@ fn enforcer_loses_to_chen_in_reception_because_he_burns_out() {
     };
     let roster: Vec<_> = [ENFORCER, CHEN, FEATER]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let m = asn
@@ -3506,7 +3502,7 @@ fn factory_formula_assignment_respects_the_players_current_layout() {
     let building = UserBuilding { rooms };
 
     let asn = compute_optimal_assignment(
-        &full_roster(&gd),
+        &full_roster(gd),
         &building,
         &gd.building,
         &registry,
@@ -3569,7 +3565,7 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
         "char_211_adnach",
     ]
     .iter()
-    .map(|id| profile(&gd, id))
+    .map(|id| profile(gd, id))
     .collect();
 
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
@@ -3629,7 +3625,7 @@ fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
         "char_211_adnach",
     ]
     .iter()
-    .map(|id| profile(&gd, id))
+    .map(|id| profile(gd, id))
     .collect();
 
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
@@ -3639,18 +3635,20 @@ fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
         "without a manager nobody is sustained, got {:?}",
         rot.sustained
     );
-    // The middle (off) shift must NOT keep Proviso working - she rests like everyone else.
-    let middle = &rot.shifts[rot.shifts.len() / 2];
-    let tp = middle
-        .rooms
+    // Without a manager Proviso rotates like everyone else: her team's 24h block covers at most
+    // two shifts, so she must NOT be shown working all three.
+    let shifts_working = rot
+        .shifts
         .iter()
-        .find(|r| r.room_type == "TRADING")
-        .expect("a trading post");
+        .filter(|s| {
+            s.rooms
+                .iter()
+                .any(|r| r.active && r.recommended.iter().any(|o| o == PROVISO))
+        })
+        .count();
     assert!(
-        !(tp.active && tp.recommended.iter().any(|o| o == PROVISO)),
-        "Proviso should rest the middle shift without a manager (got active={}, {:?})",
-        tp.active,
-        tp.recommended
+        shifts_working <= 2,
+        "Proviso must rest at least one shift without a manager (worked {shifts_working}/3)"
     );
 }
 
@@ -3675,6 +3673,9 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
         recommended: rec.iter().map(|s| (*s).to_string()).collect(),
         current: cur.iter().map(|s| (*s).to_string()).collect(),
         active: true,
+        efficiency: None,
+        team_id: None,
+        team_label: None,
     };
     // "X" is a main operator (recommended in slots a on shifts 1 & 3) the player also keeps on the
     // rest shift. The shared P/Q makes the rest cell match the player's [X,P,Q] team deterministically.
@@ -3697,7 +3698,7 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
         sustained: vec![],
     };
 
-    let dto = shift_rotation_to_dto(&rotation, &gd, &profiles, &building, &registry, &drains);
+    let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
     let s2 = dto
         .shifts
         .iter()
@@ -3734,7 +3735,7 @@ fn reception_does_not_credit_a_co_op_conditional_without_the_partner() {
     let building = meeting_room(3); // capacity 2
     let roster: Vec<_> = [VULPIS, RED, VIGIL]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
     let crew: Vec<&str> = asn
@@ -3766,10 +3767,7 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
     const INDIGO: &str = "char_469_indigo";
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let profiles: Vec<_> = [PUDDING, INDIGO]
-        .iter()
-        .map(|id| profile(&gd, id))
-        .collect();
+    let profiles: Vec<_> = [PUDDING, INDIGO].iter().map(|id| profile(gd, id)).collect();
     let building = UserBuilding { rooms: vec![] };
     let rotation = ShiftRotation {
         shifts: vec![Shift {
@@ -3781,11 +3779,14 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
                 recommended: vec![PUDDING.into()],
                 current: vec![INDIGO.into()],
                 active: true,
+                efficiency: None,
+                team_id: None,
+                team_label: None,
             }],
         }],
         sustained: vec![],
     };
-    let dto = shift_rotation_to_dto(&rotation, &gd, &profiles, &building, &registry, &drains);
+    let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
     let pp = &dto.shifts[0].rooms[0];
     assert!(
         pp.equivalent,
@@ -3809,7 +3810,7 @@ fn base_wide_bonus_applies_only_when_the_partner_works_a_work_area() {
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let roster: Vec<_> = [HOEDERER, INES, "char_502_nblade", "char_185_frncat"]
         .iter()
-        .map(|id| profile(&gd, id))
+        .map(|id| profile(gd, id))
         .collect();
     let trading_eff = |building: &UserBuilding| -> f64 {
         compute_optimal_assignment(&roster, building, &gd.building, &registry, &drains)
@@ -3845,7 +3846,7 @@ fn quartz_value_reflects_distinct_recipe_types_not_factory_count() {
     const QUARTZ: &str = "char_4063_quartz";
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let profiles = vec![profile(&gd, QUARTZ)];
+    let profiles = vec![profile(gd, QUARTZ)];
     let fac = |slot: &str, formula: &str| UserRoom {
         slot_id: slot.into(),
         room_type: "MANUFACTURE".into(),
@@ -3875,5 +3876,268 @@ fn quartz_value_reflects_distinct_recipe_types_not_factory_count() {
     assert!(
         (v - 1.34).abs() < 0.01,
         "Quartz should read +34% (2 recipe types), not +38% (4 factories): got {v}"
+    );
+}
+
+// ─── Rotation rework: login-rhythm tiling, proactive Fiammetta, alignment, leniency ──────────
+
+#[test]
+fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
+    // The balanced packer selects whole candidate teams, so a superadditive pair
+    // (Texas + Lappland) is never split across teams - while a roster with enough
+    // traders staffs all three of the pair-of-posts teams instead of frontloading
+    // two and leaving the third hollow.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..2).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_4063_quartz",
+        "char_502_nblade",
+        "char_185_frncat",
+        "char_211_adnach",
+        "char_123_fang",
+        "char_133_mm",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+
+    // Collect the distinct trading teams by team_id.
+    let mut teams: std::collections::HashMap<String, std::collections::HashSet<String>> =
+        std::collections::HashMap::new();
+    for s in &rot.shifts {
+        for r in s
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == "TRADING" && r.active)
+        {
+            if let Some(id) = &r.team_id {
+                teams
+                    .entry(id.clone())
+                    .or_default()
+                    .extend(r.recommended.iter().cloned());
+            }
+        }
+    }
+    let texas_team = teams.values().find(|ops| ops.contains(TEXAS));
+    assert!(
+        texas_team.is_some_and(|ops| ops.contains(LAPPLAND)),
+        "Texas and Lappland must stay co-teamed (the pair is superadditive): {teams:?}"
+    );
+    assert!(
+        teams.values().filter(|ops| !ops.is_empty()).count() >= 3,
+        "a pair of posts with a deep trader pool staffs three distinct teams: {teams:?}"
+    );
+}
+
+#[test]
+fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
+    // NO preset evidence at all - owning a morale-swap manager alone makes the rotation
+    // recommend holding the highest-gain trading operator (high team output x high morale
+    // drain - a Shamare/Proviso-type) at full morale 24/7, pinned to one post every shift.
+    // Shamare's skill burns extra morale per hour, so she gains the most from the manager.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const FIAMMETTA: &str = "char_300_phenxi";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
+    };
+    let roster: Vec<_> = [
+        SHAMARE,
+        TEQUILA,
+        FIAMMETTA,
+        EXUSIAI,
+        "char_502_nblade",
+        "char_185_frncat",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    assert_eq!(
+        rot.sustained,
+        vec![SHAMARE.to_string()],
+        "owning Fiammetta proactively sustains the highest-gain (high-drain) trader"
+    );
+    for s in &rot.shifts {
+        let tp = s
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .expect("the post");
+        assert!(
+            tp.active && tp.recommended.iter().any(|o| o == SHAMARE),
+            "the sustained operator works every shift (shift {}: {:?})",
+            s.index,
+            tp.recommended
+        );
+    }
+}
+
+#[test]
+fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
+    // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
+    // team fielding her Knights: the CC flips to a 24h block (Squad 1 on shifts 1+2) and the
+    // Knight team is phased onto the same shifts-1+2 block, so the buff is live while they work.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const VIVIANA: &str = "char_4098_vvana";
+    const WILD_MANE: &str = "char_496_wildmn"; // Knight with a factory skill
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [
+        VIVIANA,
+        WILD_MANE,
+        "char_36_forget", // generic factory ops fill the other teams
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+
+    let cc = |k: usize| -> Vec<String> {
+        rot.shifts[k]
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "CONTROL")
+            .map(|r| r.recommended.clone())
+            .unwrap_or_default()
+    };
+    assert!(
+        cc(0).contains(&VIVIANA.to_string()),
+        "Viviana anchors CC Squad 1: {:?}",
+        cc(0)
+    );
+    assert_eq!(
+        cc(0),
+        cc(1),
+        "the CC runs a 24h BLOCK (Squad 1 on shifts 1+2) when a synergy links it"
+    );
+    // Her Knight works the same shifts-1+2 window (the ordinal-0 block of its group).
+    let knight_shifts: Vec<usize> = rot
+        .shifts
+        .iter()
+        .enumerate()
+        .filter(|(_, s)| {
+            s.rooms
+                .iter()
+                .any(|r| r.active && r.recommended.iter().any(|o| o == WILD_MANE))
+        })
+        .map(|(k, _)| k)
+        .collect();
+    assert_eq!(
+        knight_shifts,
+        vec![0, 1],
+        "the Knight team is phased onto the shifts-1+2 block, aligned with Viviana"
+    );
+}
+
+#[test]
+fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
+    // A player team within 5% of the recommendation reads "≈ yours" with the small gap
+    // surfaced (gap_pct); a team further behind still gets the swap suggestion.
+    use backend::app::services::improvements::shift_rotation_to_dto;
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    const NBLADE: &str = "char_502_nblade"; // +30% flat trading
+    const FRNCAT: &str = "char_185_frncat"; // +30% flat trading
+    const QUARTZ: &str = "char_4063_quartz"; // +30% (+recipe types, 0 here)
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let building = UserBuilding { rooms: vec![] };
+    let profiles: Vec<_> = [EXUSIAI, NBLADE, FRNCAT, QUARTZ, "char_211_adnach"]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let tp = |slot: &str, rec: &[&str], cur: &[&str]| ShiftRoom {
+        slot_id: slot.into(),
+        room_type: "TRADING".into(),
+        formula_type: None,
+        recommended: rec.iter().map(|s| (*s).to_string()).collect(),
+        current: cur.iter().map(|s| (*s).to_string()).collect(),
+        active: true,
+        efficiency: None,
+        team_id: None,
+        team_label: None,
+    };
+    let rotation = ShiftRotation {
+        shifts: vec![Shift {
+            index: 1,
+            rooms: vec![
+                // rec +35% vs yours +30%: a ~3.7% gap -> equivalent, gap surfaced.
+                tp("close", &[EXUSIAI], &[FRNCAT]),
+                // rec +60% vs yours +30%: far outside the band -> swap suggested.
+                tp("far", &[QUARTZ, NBLADE], &["char_211_adnach"]),
+            ],
+        }],
+        sustained: vec![],
+    };
+    let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
+    let cell = |slot: &str| {
+        dto.shifts[0]
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .unwrap()
+    };
+    let close = cell("close");
+    assert!(
+        close.equivalent,
+        "a ~3.7% gap is within the 5% leniency band"
+    );
+    let gap = close.gap_pct.expect("gap surfaced");
+    assert!(
+        (-5.0..0.0).contains(&gap),
+        "gap_pct shows the small deficit, got {gap}"
+    );
+    let far = cell("far");
+    assert!(!far.equivalent, "a ~19% gap is a real swap suggestion");
+    assert!(
+        far.gap_pct.expect("gap present") < -10.0,
+        "the large deficit is surfaced too"
+    );
+    assert!(!far.swap_in.is_empty(), "the far cell suggests the swap");
+}
+
+#[test]
+fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
+    // Greyy the Lightningbearer's "+1% Drone recovery rate for every 10 max Drone capacity
+    // (Max +25%)" reads the base's REAL drone capacity: 100 base + 45 per L3 Power Plant.
+    // On a full 243 (3x L3 plants = 235 drones) that's +23.5% - under the +25% cap, not AT it.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const GREYY_ALTER: &str = "char_1027_greyy2";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut rooms = vec![room("d0", "DORMITORY", 5)];
+    rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    let building = UserBuilding { rooms };
+    let roster = vec![profile(gd, GREYY_ALTER)];
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let cell = rot.shifts[0]
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "POWER" && r.recommended.iter().any(|o| o == GREYY_ALTER))
+        .expect("Greyy Alter staffs a plant");
+    let eff = cell.efficiency.expect("power cells carry efficiency");
+    assert!(
+        (eff - 23.5).abs() < 0.1,
+        "3x L3 plants = 235 drones -> +23.5% (not the +25% cap), got {eff}"
     );
 }

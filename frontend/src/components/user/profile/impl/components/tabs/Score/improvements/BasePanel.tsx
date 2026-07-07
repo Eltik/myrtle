@@ -43,6 +43,23 @@ function YieldSummary({ assignment }: { assignment: IBaseAssignment }) {
     );
 }
 
+/** Current → optimal daily-yield line: the realized current yield, the optimal LMD/EXP,
+ *  and the efficiency delta between them. */
+function YieldHeadline({ current, optimal, accent }: { current: IBaseAssignment; optimal: IBaseAssignment; accent: string }) {
+    return (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <YieldSummary assignment={current} />
+            <span className="text-muted-foreground/50">→</span>
+            <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
+                {compactNum(optimal.yield_lmd_per_day)} LMD
+                {optimal.yield_exp_per_day > 0 && <> · {compactNum(optimal.yield_exp_per_day)} EXP</>}
+                <PerDay className="font-sans text-muted-foreground/60" />
+            </span>
+            <span className={cn(TEXT_BADGE, "text-muted-foreground")}>({signedCompact(optimal.total_production_efficiency - current.total_production_efficiency)}% efficiency)</span>
+        </div>
+    );
+}
+
 export function BasePanel({ improvements, accent }: IProps) {
     const { base } = improvements;
     if (!base.optimal && !base.rotation) {
@@ -81,7 +98,6 @@ export function BasePanel({ improvements, accent }: IProps) {
                 </div>
             )}
 
-            {/* Current vs optimal headline + comparison entry point */}
             {base.current && base.optimal && (
                 <div className="flex flex-col gap-2 rounded-md border border-border/40 bg-muted/10 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -90,19 +106,10 @@ export function BasePanel({ improvements, accent }: IProps) {
                         </span>
                         {gain > 0 && <Pill color={accent}>+{compactNum(gain)} value/day</Pill>}
                     </div>
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <YieldSummary assignment={base.current} />
-                        <span className="text-muted-foreground/50">→</span>
-                        <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
-                            {compactNum(base.optimal.yield_lmd_per_day)} LMD
-                            {base.optimal.yield_exp_per_day > 0 && <> · {compactNum(base.optimal.yield_exp_per_day)} EXP</>}
-                            <PerDay className="font-sans text-muted-foreground/60" />
-                        </span>
-                        <span className={cn(TEXT_BADGE, "text-muted-foreground")}>({signedCompact(base.optimal.total_production_efficiency - base.current.total_production_efficiency)}% efficiency)</span>
-                    </div>
+                    <YieldHeadline current={base.current} optimal={base.optimal} accent={accent} />
 
-                    {/* The entire base plan in a dialog - available on every screen
-                        size, including desktop, for a focused full-screen view. */}
+                    {/* Dialog opens the full plan as a focused full-screen view on every
+                        screen size, desktop included. */}
                     <FullPlanDialog base={base} accent={accent} />
                 </div>
             )}
@@ -138,8 +145,7 @@ function FullPlanDialog({ base, accent }: { base: IBaseImprovements; accent: str
     );
 }
 
-/** Exports a dedicated, wide poster layout (rendered off-screen) to a PNG - capturing
- *  that instead of the tall dialog body keeps the image well-proportioned. */
+/** Renders the off-screen poster (`targetRef`) to a downloadable PNG. */
 function ExportPlanButton({ targetRef }: { targetRef: RefObject<HTMLDivElement | null> }) {
     const [busy, setBusy] = useState(false);
     const handleExport = async () => {
@@ -229,18 +235,7 @@ function PlanHeader({ base, accent }: { base: IBaseImprovements; accent: string 
                     })}
                 </div>
             )}
-            {base.current && base.optimal && (
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <YieldSummary assignment={base.current} />
-                    <span className="text-muted-foreground/50">→</span>
-                    <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
-                        {compactNum(base.optimal.yield_lmd_per_day)} LMD
-                        {base.optimal.yield_exp_per_day > 0 && <> · {compactNum(base.optimal.yield_exp_per_day)} EXP</>}
-                        <PerDay className="font-sans text-muted-foreground/60" />
-                    </span>
-                    <span className={cn(TEXT_BADGE, "text-muted-foreground")}>({signedCompact(base.optimal.total_production_efficiency - base.current.total_production_efficiency)}% efficiency)</span>
-                </div>
-            )}
+            {base.current && base.optimal && <YieldHeadline current={base.current} optimal={base.optimal} accent={accent} />}
         </div>
     );
 }
@@ -256,8 +251,8 @@ function ShiftPoster({ rotation }: { rotation: IShiftRotation }) {
     return (
         <div className="flex flex-col gap-2.5">
             <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Run your main team on shifts 1 &amp; 3 and rest it on the middle shift, where a backup covers - so operators recover instead of grinding all three. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove.
-                Power plants swap every shift; the Control Center runs two on, one off.
+                Each production team (Team A/B/C per room pair) works a 24h block - two shifts in a row - then rests one; at every login you swap exactly one team per room group. Power plants, the Office, Reception and the Control Center alternate two squads (Squad 1 / Squad 2) - the swap you make each login.{" "}
+                <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove; ≈ yours = your team is close enough to keep (the small % shows what the recommended team would add).
                 {sustained.size > 0 && (
                     <>
                         {" "}

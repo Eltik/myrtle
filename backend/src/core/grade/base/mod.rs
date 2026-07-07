@@ -4,6 +4,7 @@ pub mod evaluate;
 pub mod perception;
 pub mod score;
 pub mod shift_rotation;
+pub(crate) mod team_select;
 pub mod types;
 pub(crate) mod util;
 pub mod yield_model;

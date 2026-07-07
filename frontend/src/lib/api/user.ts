@@ -461,9 +461,20 @@ export interface IShiftRoom {
     swap_out: IAssignedOperator[];
     /** True when the player's preset already matches the recommendation. */
     matches: boolean;
-    /** True when the player's CURRENT team differs but produces at least as much (an exact tie),
-     *  so no swap is suggested - e.g. a Dorothy-boosted Rhine operator matching Bryophyta. */
+    /** True when the player's CURRENT team differs but produces within the leniency band of the
+     *  recommendation (see gap_pct), so no swap is suggested. */
     equivalent: boolean;
+    /** Signed % gap of the player's team vs the recommendation (negative = slightly behind).
+     *  Present whenever both teams are scoreable. */
+    gap_pct?: number | null;
+    /** The recommended crew's room efficiency % (production/power cells), for judging how
+     *  output is distributed across teams. */
+    efficiency?: number | null;
+    /** Stable identity of the team/squad staffing this cell - spans the two consecutive shift
+     *  columns a production team's 24h block covers, for visual pairing. */
+    team_id?: string | null;
+    /** Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere. */
+    team_label?: string | null;
 }
 
 export interface IShift {

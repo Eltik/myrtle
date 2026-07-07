@@ -434,11 +434,26 @@ pub struct ShiftRoomDto {
     pub swap_out: Vec<AssignedOperator>,
     /// True when the player's preset already matches the recommendation.
     pub matches: bool,
-    /// True when the player's CURRENT team isn't the recommended set but produces at least as
-    /// much (an exact tie on the room's objective), so swapping wouldn't help - e.g. a Rhine
+    /// True when the player's CURRENT team isn't the recommended set but produces within the
+    /// leniency band of it (see `gap_pct`), so swapping wouldn't meaningfully help - e.g. a Rhine
     /// operator boosted by Dorothy matching Bryophyta's flat bonus. No swap is suggested.
     pub equivalent: bool,
+    /// Signed % gap of the player's team vs the recommendation on the room objective
+    /// (negative = the player is slightly behind). Present whenever both teams are scoreable.
+    pub gap_pct: Option<f64>,
+    /// The recommended crew's room efficiency % (speed incl. global bonuses), for
+    /// production/power cells - lets players see how output is distributed across teams.
+    pub efficiency: Option<f64>,
+    /// Stable identity of the team/squad staffing this cell - the same id spans the two
+    /// consecutive shift columns a production team's 24h block covers.
+    pub team_id: Option<String>,
+    /// Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere.
+    pub team_label: Option<String>,
 }
+
+/// A player's team within this fraction of the recommendation's output is "≈ yours" -
+/// good enough to keep, with the small gap surfaced as a note instead of a swap nag.
+const EQUIVALENT_LENIENCY: f64 = 0.05;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomLayoutEntry {
@@ -922,6 +937,15 @@ fn cmp_medal_by_rarity_desc(a: &MedalGap, b: &MedalGap) -> std::cmp::Ordering {
         .then_with(|| a.medal_id.cmp(&b.medal_id))
 }
 
+/// Mastery 3 on the operator's top skill (the "M3" milestone).
+const MASTERY_MILESTONE: i16 = 3;
+/// Max skill level for operators that can't master (E0/E1 or skill-less-of-mastery ops).
+const SKILL_LEVEL_MILESTONE: i16 = 7;
+/// Stage 3 on the operator's top advanced module (the "MOD3" milestone).
+const MODULE_MILESTONE: i16 = 3;
+/// Potential is 0-indexed, so index 5 is pot 6 - full potential (the "POT6" milestone).
+const POTENTIAL_MILESTONE_INDEX: i16 = 5;
+
 fn build_operator_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
@@ -980,16 +1004,16 @@ fn build_operator_improvements(
             missing.push("MAX_LEVEL");
         }
         if can_master {
-            if max_mastery < 3 {
+            if max_mastery < MASTERY_MILESTONE {
                 missing.push("M3");
             }
-        } else if num_skills > 0 && entry.skill_level < 7 {
+        } else if num_skills > 0 && entry.skill_level < SKILL_LEVEL_MILESTONE {
             missing.push("SL7");
         }
-        if !advanced_modules.is_empty() && max_module_level < 3 {
+        if !advanced_modules.is_empty() && max_module_level < MODULE_MILESTONE {
             missing.push("MOD3");
         }
-        if potential_matters(static_op) && entry.potential < 5 {
+        if potential_matters(static_op) && entry.potential < POTENTIAL_MILESTONE_INDEX {
             missing.push("POT6");
         }
         if trust_target > 0.0 && current_trust < trust_target {
@@ -1480,21 +1504,22 @@ pub fn shift_rotation_to_dto(
                 .iter()
                 .filter(|id| !rec.contains(id.as_str()))
                 // An operator recommended to WORK in another room this shift isn't being removed -
-                // they're relocating to their recommended slot (shown as an add there). Flagging them
-                // OUT here too made an operator look like they both work and leave the same shift.
+                // they're relocating to their recommended slot (shown as an add there). Excluding
+                // them here avoids showing one operator as both working and leaving the same shift.
                 .filter(|id| !matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id))
                 .cloned()
                 .collect();
             let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
 
-            // A team the player ALREADY runs that ties the recommendation's output needs no swap -
-            // a factory/trading team (Bryophyta vs a Dorothy-boosted Rhine operator), or a Power
-            // Plant specialist with the same drone-recovery % (Pudding vs Indigo, both +15%). Only
-            // checked when there's a difference to suppress, and only for rooms whose output
-            // `team_value` can score (production + power).
+            // A team the player ALREADY runs that comes within the leniency band of the
+            // recommendation's output needs no swap - a factory/trading team (Bryophyta vs a
+            // Dorothy-boosted Rhine operator), or a Power Plant specialist with the same
+            // drone-recovery % (Pudding vs Indigo, both +15%). The signed gap is surfaced so the
+            // UI can note a small improvement exists without nagging a swap. Only checked for
+            // rooms whose output `team_value` can score (production + power).
             let mut equivalent = false;
-            if !matches
-                && !current.is_empty()
+            let mut gap_pct: Option<f64> = None;
+            if !current.is_empty()
                 && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING" | "POWER")
             {
                 let f = room.formula_type.as_deref();
@@ -1518,10 +1543,13 @@ pub fn shift_rotation_to_dto(
                     registry,
                     morale_drains,
                 );
+                if rec_v > 0.0 {
+                    gap_pct = Some((cur_v - rec_v) / rec_v * 100.0);
+                }
                 // Keeping this team is only valid if it doesn't double-book an operator the shift
                 // needs in another room (recommended there, or already kept here), and doesn't keep
                 // an operator working a shift the rotation rests them on (recommended on another
-                // shift but not this one) - that's what made a main-team operator look 24/7.
+                // shift but not this one) - otherwise a main-team operator would appear to work 24/7.
                 let conflicts = current.iter().any(|id| {
                     matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id)
                         || kept.contains(id)
@@ -1529,7 +1557,7 @@ pub fn shift_rotation_to_dto(
                             .get(id.as_str())
                             .is_some_and(|shifts| !shifts.contains(&shift.index))
                 });
-                if cur_v + 1e-4 >= rec_v && !conflicts {
+                if !matches && cur_v >= rec_v * (1.0 - EQUIVALENT_LENIENCY) && !conflicts {
                     equivalent = true;
                     matches = true;
                     swap_in.clear();
@@ -1557,6 +1585,10 @@ pub fn shift_rotation_to_dto(
                 current: ops(&current),
                 matches,
                 equivalent,
+                gap_pct,
+                efficiency: room.efficiency,
+                team_id: room.team_id.clone(),
+                team_label: room.team_label.clone(),
                 swap_in: ops(&swap_in),
                 swap_out: ops(&swap_out),
             });
@@ -1728,6 +1760,9 @@ mod shift_match_tests {
             recommended: rec.iter().map(|s| (*s).to_string()).collect(),
             current: cur.iter().map(|s| (*s).to_string()).collect(),
             active: true,
+            efficiency: None,
+            team_id: None,
+            team_label: None,
         }
     }
     fn sorted(v: &[String]) -> Vec<String> {

@@ -63,33 +63,76 @@ export function RoomBlock({ roomType, formula, badge, right, dim, children }: { 
     );
 }
 
+/** Deterministic accent hue for a team id, so the same team's cells visually pair up
+ *  across the two shift columns its 24h block spans. */
+function teamHue(teamId: string): number {
+    let h = 0;
+    for (let i = 0; i < teamId.length; i++) h = (h * 31 + teamId.charCodeAt(i)) >>> 0;
+    return h % 360;
+}
+
+/** Small team/squad tag ("Team B" / "Squad 1") tinted by its stable team id, with the
+ *  crew's efficiency % beside it (production/power cells) so output distribution is visible. */
+function TeamTag({ room }: { room: IShiftRoom }) {
+    if (!room.team_label) return null;
+    const hue = teamHue(room.team_id ?? room.team_label);
+    return (
+        <span className="flex items-center gap-1">
+            {room.efficiency != null && room.active && <span className="font-mono text-[8px] text-muted-foreground/70">{Math.round(room.efficiency)}%</span>}
+            <span className="rounded-sm px-1 font-semibold text-[8px] leading-tight" style={{ background: `hsl(${hue} 70% 50% / 0.18)`, color: `hsl(${hue} 75% 65%)` }}>
+                {room.team_label}
+            </span>
+        </span>
+    );
+}
+
+/** "−3%" style note for the leniency gap; hidden for negligible gaps. */
+function gapNote(gapPct: number | null | undefined): string | null {
+    if (gapPct == null || Math.abs(gapPct) < 0.5) return null;
+    const rounded = Math.round(gapPct * 10) / 10;
+    return `${rounded > 0 ? "+" : "−"}${Math.abs(rounded).toFixed(Math.abs(rounded) >= 10 ? 0 : 1)}%`;
+}
+
 /**
  * One room within a shift, rendered identically in the in-app dialog and the downloadable
  * poster so the export always matches what you see. Shows the crew to run this shift (green =
  * add vs your preset), an "out" row for operators to pull, and the off / matches / "≈ yours"
- * (your team already ties the recommendation) states. `interactive` adds hover tooltips for the
- * dialog; the export passes it off so html-to-image captures a clean, static image.
+ * (your team is within the leniency band of the recommendation) states - equivalent cells also
+ * show the system's pick in a muted "rec" row so the alternative stays visible. `interactive`
+ * adds hover tooltips for the dialog; the export passes it off so html-to-image captures a
+ * clean, static image.
  */
 export function ShiftRoomBlock({ room, interactive = false, sustained }: { room: IShiftRoom; interactive?: boolean; sustained?: Set<string> }) {
     const swapIn = new Set(room.swap_in.map((o) => o.operator_id));
     const hasPreset = room.current.length > 0;
-    // A tie on output: show the player's OWN team (keep it) rather than nudging a pointless swap.
+    // Within the leniency band: show the player's OWN team (keep it) rather than nudging a
+    // pointless swap, with the small gap surfaced on the badge.
     const isEquivalent = room.active && room.equivalent;
     const crew = isEquivalent ? room.current : room.recommended;
+    const gap = gapNote(room.gap_pct);
+    const equivalentLabel = gap && (room.gap_pct ?? 0) < 0 ? `· ≈ yours (${gap})` : "· ≈ yours";
     const equivalentBadge = interactive ? (
         <Tooltip>
-            <TooltipTrigger render={<span className="cursor-help text-emerald-500/80">· ≈ yours</span>} />
+            <TooltipTrigger render={<span className="cursor-help text-emerald-500/80">{equivalentLabel}</span>} />
             <TooltipContent sideOffset={4}>
-                <p className="max-w-xs">Your current team here already produces as much as the recommended one, so there's no need to swap.</p>
+                <p className="max-w-xs">
+                    Your current team here is close enough to the recommended one that swapping isn't worth it.
+                    {gap && (room.gap_pct ?? 0) < 0 ? ` The recommendation below would produce about ${gap.replace("−", "")} more.` : ""}
+                </p>
             </TooltipContent>
         </Tooltip>
     ) : (
-        <span className="text-emerald-500/80">· ≈ yours</span>
+        <span className="text-emerald-500/80">{equivalentLabel}</span>
     );
     const badge = !room.active ? <span className="text-amber-500/80">· off</span> : isEquivalent ? equivalentBadge : hasPreset && room.matches ? <span className="text-emerald-500/80">· ✓</span> : undefined;
     const showRemoved = room.active && !isEquivalent && hasPreset && !room.matches && room.swap_out.length > 0;
+    // Only ≈-yours cells show the side-by-side: the player's team above, the system's
+    // recommendation in a muted "rec" row below (when they actually differ).
+    const recSet = new Set(room.recommended.map((o) => o.operator_id));
+    const curSet = new Set(room.current.map((o) => o.operator_id));
+    const showRecRow = isEquivalent && (room.recommended.length !== room.current.length || room.recommended.some((o) => !curSet.has(o.operator_id)) || room.current.some((o) => !recSet.has(o.operator_id)));
     return (
-        <RoomBlock roomType={room.room_type} formula={room.formula_type} dim={!room.active} badge={badge}>
+        <RoomBlock roomType={room.room_type} formula={room.formula_type} dim={!room.active} badge={badge} right={<TeamTag room={room} />}>
             <div className="flex flex-wrap items-center gap-0.5">
                 {crew.length === 0 && <span className="text-[10px] text-muted-foreground/50">-</span>}
                 {crew.map((op) => {
@@ -114,6 +157,14 @@ export function ShiftRoomBlock({ room, interactive = false, sustained }: { room:
                     );
                 })}
             </div>
+            {showRecRow && (
+                <div className="flex flex-wrap items-center gap-0.5 opacity-70">
+                    <span className="mr-0.5 font-mono text-[9px] text-muted-foreground/50 uppercase tracking-wide">rec</span>
+                    {room.recommended.map((op) => (
+                        <MiniChip key={op.operator_id} op={op} dashed tip={interactive ? <p>The system's pick: {op.name}.</p> : undefined} />
+                    ))}
+                </div>
+            )}
             {showRemoved && (
                 <div className="flex flex-wrap items-center gap-0.5">
                     <span className="mr-0.5 font-mono text-[9px] text-muted-foreground/50 uppercase tracking-wide">out</span>
