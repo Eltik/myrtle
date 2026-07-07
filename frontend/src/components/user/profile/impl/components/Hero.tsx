@@ -4,6 +4,7 @@ import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
+import { countGameDays } from "#/lib/registry/server-time";
 import { DEFAULT_AVATAR_ID, getAvatarById } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import shared from "./shared.module.css";
@@ -43,6 +44,8 @@ export function Hero({ profile }: IHeroProps) {
     const displayNickname = profile.nickname ?? `Doctor ${profile.uid}`;
     const usernameWithDiscriminator = profile.nick_number ? `${displayNickname}#${profile.nick_number}` : displayNickname;
     const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, "Username copied", `${usernameWithDiscriminator} copied to clipboard.`, "Couldn't copy username");
+
+    const totalSigninDays = profile.register_ts && profile.last_online_ts ? countGameDays(profile.register_ts, profile.last_online_ts, profile.server) : 0;
 
     return (
         <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
@@ -145,7 +148,7 @@ export function Hero({ profile }: IHeroProps) {
                                 <span>
                                     Signed in ·{" "}
                                     <b className="text-foreground tabular-nums">
-                                        {profile.cumulative_signin.toLocaleString()}/{profile.register_ts && profile.last_online_ts ? Math.floor((profile.last_online_ts * 1000 - profile.register_ts * 1000) / 86400000).toLocaleString() : "0"}
+                                        {profile.cumulative_signin.toLocaleString()}/{totalSigninDays.toLocaleString()}
                                     </b>{" "}
                                     days
                                 </span>

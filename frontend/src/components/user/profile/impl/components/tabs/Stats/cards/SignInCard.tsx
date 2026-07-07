@@ -1,4 +1,5 @@
 import { CalendarCheck, CalendarDays, Check, Clock } from "lucide-react";
+import { countGameDays } from "#/lib/registry/server-time";
 import { cn } from "#/lib/utils";
 import type { IUserCheckin } from "#/types/user";
 import { PALETTE } from "../palette";
@@ -8,8 +9,11 @@ interface ICardProps {
     checkin: IUserCheckin | null | undefined;
 }
 
+interface IOverviewCardProps extends ICardProps {
+    server: string;
+}
+
 const SIGNIN = PALETTE.signin;
-const DAY_MS = 86_400_000;
 const WEEKDAYS = [
     { k: "sun", l: "S" },
     { k: "mon", l: "M" },
@@ -52,14 +56,14 @@ function StatRow({ label, value, title }: { label: string; value: string; title?
 }
 
 /** Left card: lifetime / account-level sign-in engagement. */
-export function SignInOverviewCard({ checkin }: ICardProps) {
+export function SignInOverviewCard({ checkin, server }: IOverviewCardProps) {
     if (!checkin) return null;
 
     const { history, cumulative_signin, register_ts, last_online_ts } = checkin;
 
+    const ageDays = register_ts ? countGameDays(register_ts, last_online_ts ?? Math.floor(Date.now() / 1000), server) : null;
     // Floor (not round) so e.g. 915/919 reads 99%, never a misleading 100%.
-    const ageDays = register_ts ? Math.max(0, Math.floor((Date.now() - register_ts * 1000) / DAY_MS)) : null;
-    const rate = ageDays && ageDays > 0 ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
+    const rate = ageDays !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
     const missed = ageDays !== null ? Math.max(0, ageDays - cumulative_signin) : null;
     const claimedThisMonth = history.filter((d) => d === 1).length;
 

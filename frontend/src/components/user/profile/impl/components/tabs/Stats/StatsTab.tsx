@@ -15,6 +15,7 @@ import { StatsTabSkeleton } from "./StatsTabSkeleton";
 
 interface IStatsTabProps {
     uid: string;
+    server: string;
     roster: IRosterEntry[];
     operatorsStatic: IOperatorListItem[];
     nonDefaultSkinCount: number | null;
@@ -22,7 +23,7 @@ interface IStatsTabProps {
 
 const EMPTY_OWNED_SKINS = new Set<string>();
 
-export function StatsTab({ uid, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
+export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: charSkins } = useQuery(skinsIndexQueryOptions());
     const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
@@ -41,7 +42,7 @@ export function StatsTab({ uid, roster, operatorsStatic, nonDefaultSkinCount }: 
             <MasteryCard masteries={stats.masteries} />
             <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsStatic={operatorsStatic} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
             <TopOperatorsCard operatorsStatic={operatorsStatic} roster={roster} />
-            <SignInOverviewCard checkin={checkin} />
+            <SignInOverviewCard checkin={checkin} server={server} />
             <SignInCalendarCard checkin={checkin} />
         </div>
     );
