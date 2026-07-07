@@ -8,6 +8,8 @@ import type { ICalculatorOptions, OperatorSortMode } from "../types";
 interface ICalculatorOptionsPanelProps {
     options: Required<ICalculatorOptions>;
     onChangeIncludeRobots: (value: boolean) => void;
+    onChangeIncludeTwoStars: (value: boolean) => void;
+    onChangeIncludeThreeStars: (value: boolean) => void;
     onChangeSortMode: (value: OperatorSortMode) => void;
 }
 
@@ -16,10 +18,12 @@ const SORT_LABELS: Record<OperatorSortMode, string> = {
     "common-first": "Most common first",
 };
 
-export function CalculatorOptionsPanel({ options, onChangeIncludeRobots, onChangeSortMode }: ICalculatorOptionsPanelProps): React.ReactElement {
+export function CalculatorOptionsPanel({ options, onChangeIncludeRobots, onChangeIncludeTwoStars, onChangeIncludeThreeStars, onChangeSortMode }: ICalculatorOptionsPanelProps): React.ReactElement {
     return (
         <div className="flex flex-col gap-3">
             <ToggleRow id="recruit-include-robots" label="Include robots" checked={options.includeRobots} onCheckedChange={onChangeIncludeRobots} />
+            <ToggleRow id="recruit-include-two-stars" label="Include 2★ operators" checked={options.includeTwoStars} onCheckedChange={onChangeIncludeTwoStars} />
+            <ToggleRow id="recruit-include-three-stars" label="Include 3★ operators" checked={options.includeThreeStars} onCheckedChange={onChangeIncludeThreeStars} />
             <div className="flex flex-col gap-1.5 border-border/60 border-t pt-3">
                 <label htmlFor="recruit-sort" className="font-medium text-foreground text-sm">
                     Sort operators

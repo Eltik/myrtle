@@ -25,13 +25,13 @@ export function ProfilePanel({ user, onResync, syncing }: IProfilePanelProps) {
                 <div className="flex flex-col gap-4 p-4 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:p-6">
                     <div className="flex items-center gap-4 sm:contents">
                         <div className="relative size-14 shrink-0 overflow-hidden rounded-full border-2 border-primary/30 bg-linear-to-br from-primary to-primary/60 text-primary-foreground sm:size-16">
-                            <span className="absolute inset-0 flex items-center justify-center font-(--font-heading) font-bold text-[20px] sm:text-[22px]">
+                            <span className="absolute inset-0 flex items-center justify-center font-bold text-[20px] sm:text-[22px]">
                                 <OperatorAvatar charId={user.secretary_skin_id ?? user.secretary} name={display} />
                             </span>
                         </div>
                         <div className="flex min-w-0 flex-col gap-1.5">
                             <div className="flex min-w-0 items-baseline gap-1.5">
-                                <span className="truncate font-(--font-heading) font-semibold text-[17px] text-foreground leading-tight tracking-[-0.01em] sm:text-[18px]">{display}</span>
+                                <span className="truncate font-semibold text-[17px] text-foreground leading-tight tracking-[-0.01em] sm:text-[18px]">{display}</span>
                                 {nickNum ? <span className="font-mono text-[12px] text-muted-foreground">{nickNum}</span> : null}
                             </div>
                             <div className="flex flex-wrap items-center gap-1.5">

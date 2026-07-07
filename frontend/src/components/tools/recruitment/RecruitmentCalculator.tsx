@@ -16,6 +16,8 @@ import type { ICalculatorOptions, IRecruitmentTag, OperatorSortMode } from "./im
 
 const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
     includeRobots: true,
+    includeTwoStars: true,
+    includeThreeStars: true,
     operatorSortMode: "rarity-desc",
 };
 
@@ -83,6 +85,12 @@ export function RecruitmentCalculator(): React.ReactElement {
     const onChangeIncludeRobots = React.useCallback((value: boolean) => {
         setOptions((prev) => ({ ...prev, includeRobots: value }));
     }, []);
+    const onChangeIncludeTwoStars = React.useCallback((value: boolean) => {
+        setOptions((prev) => ({ ...prev, includeTwoStars: value }));
+    }, []);
+    const onChangeIncludeThreeStars = React.useCallback((value: boolean) => {
+        setOptions((prev) => ({ ...prev, includeThreeStars: value }));
+    }, []);
     const onChangeSortMode = React.useCallback((value: OperatorSortMode) => {
         setOptions((prev) => ({ ...prev, operatorSortMode: value }));
     }, []);
@@ -127,7 +135,7 @@ export function RecruitmentCalculator(): React.ReactElement {
                             <CardTitle className="text-[15px]">Options</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
-                            <CalculatorOptionsPanel options={options} onChangeIncludeRobots={onChangeIncludeRobots} onChangeSortMode={onChangeSortMode} />
+                            <CalculatorOptionsPanel options={options} onChangeIncludeRobots={onChangeIncludeRobots} onChangeIncludeTwoStars={onChangeIncludeTwoStars} onChangeIncludeThreeStars={onChangeIncludeThreeStars} onChangeSortMode={onChangeSortMode} />
                         </CardPanel>
                     </Card>
                 </aside>

@@ -37,5 +37,7 @@ export type OperatorSortMode = "rarity-desc" | "common-first";
 
 export interface ICalculatorOptions {
     includeRobots?: boolean;
+    includeTwoStars?: boolean;
+    includeThreeStars?: boolean;
     operatorSortMode?: OperatorSortMode;
 }

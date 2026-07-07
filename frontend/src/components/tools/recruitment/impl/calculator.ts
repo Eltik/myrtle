@@ -82,7 +82,7 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 }
 
 export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperatorWithTags[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
-    const { includeRobots = true, operatorSortMode = "rarity-desc" } = options;
+    const { includeRobots = true, includeTwoStars = true, includeThreeStars = true, operatorSortMode = "rarity-desc" } = options;
 
     if (selectedTags.length === 0) return [];
 
@@ -114,6 +114,12 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
 
         if (!includeRobots) {
             filteredOps = filteredOps.filter((op) => op.rarity !== 1);
+        }
+        if (!includeTwoStars) {
+            filteredOps = filteredOps.filter((op) => op.rarity !== 2);
+        }
+        if (!includeThreeStars) {
+            filteredOps = filteredOps.filter((op) => op.rarity !== 3);
         }
 
         if (filteredOps.length === 0) continue;
