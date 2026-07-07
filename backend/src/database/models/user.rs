@@ -44,6 +44,7 @@ pub struct UserProfile {
     pub item_count: Option<i64>,
     pub skin_count: Option<i64>,
     pub non_default_skin_count: Option<i64>,
+    pub updated_at: DateTime<Utc>,
 }
 
 /// users table

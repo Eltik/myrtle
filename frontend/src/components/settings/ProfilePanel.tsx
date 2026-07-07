@@ -43,7 +43,7 @@ export function ProfilePanel({ user, onResync, syncing }: IProfilePanelProps) {
                                 </Badge>
                                 <Badge variant="success" size="sm">
                                     <CheckIcon className="size-3" />
-                                    Synced {formatRelativeShort(user.last_online_ts)}
+                                    Synced {formatRelativeShort(user.updated_at)}
                                 </Badge>
                             </div>
                         </div>

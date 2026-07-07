@@ -27,6 +27,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v008_medal_ownership",
         include_str!("v008_medal_ownership.sql"),
     ),
+    (
+        "v009_profile_sync_ts",
+        include_str!("v009_profile_sync_ts.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

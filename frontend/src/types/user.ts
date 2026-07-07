@@ -39,6 +39,7 @@ export interface IUserProfile {
     skin_count: number | null;
     /** Owned skins excluding defaults - skin IDs containing `@`. */
     non_default_skin_count: number | null;
+    updated_at: string;
 }
 
 /** Daily sign-in state from the game's `checkIn` section (`/get-user-checkin`). */
