@@ -1,20 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Grid3x3, LayoutGrid, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
-import { Toggle } from "#/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { materialsQueryOptions } from "#/lib/api/materials";
 import type { IInventoryItem } from "#/lib/api/user";
-import { capitalize, cn } from "#/lib/utils";
+import { capitalize } from "#/lib/utils";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "./helpers";
-import type { IItemEntry, ItemCategory, ItemRarityFilter, ItemSortKey, ItemViewMode } from "./types";
+import type { IItemEntry, ItemRarityFilter, ItemSortKey, ItemViewMode } from "./types";
 import { useItems } from "./useItems";
 
 interface IItemsTabProps {
@@ -37,14 +35,8 @@ const RARITY_OPTIONS: { value: ItemRarityFilter; label: string }[] = [
     { value: "1", label: "1 Star" },
 ];
 
-const COMPACT_COL_BREAKPOINTS = [
-    { minWidth: 1280, cols: 11 },
-    { minWidth: 1024, cols: 9 },
-    { minWidth: 768, cols: 7 },
-    { minWidth: 640, cols: 5 },
-    { minWidth: 0, cols: 3 },
-];
 const DETAILED_MIN_CARD_WIDTH_PX = 300;
+const COMPACT_MIN_CARD_WIDTH_PX = 96;
 const DETAILED_GRID_GAP_PX = 16; // gap-4
 const COMPACT_GRID_GAP_PX = 10; // gap-2.5
 const DETAILED_ROW_ESTIMATE_PX = 200;
@@ -53,8 +45,7 @@ const COMPACT_CARD_LABEL_PX = 30; // quantity label + padding below a square ico
 const ITEMS_VIRTUAL_OVERSCAN = 4;
 
 function getRarityLabel(value: ItemRarityFilter): string {
-    if (value === "all") return "All Rarities";
-    return `${value} Star`;
+    return RARITY_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
 
 export function ItemsTab({ inventory }: IItemsTabProps) {
@@ -67,7 +58,7 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
         <section aria-label="Inventory items" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
                 {visibleCategories.map((c) => (
-                    <CategoryChip key={c} category={c} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />
+                    <FilterChip key={c} label={CATEGORY_LABELS[c]} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />
                 ))}
             </div>
 
@@ -83,10 +74,11 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                         <SelectValue placeholder="Sort by">{(value) => SORT_LABELS[value as ItemSortKey] ?? value}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="rarity">Sort by Rarity</SelectItem>
-                        <SelectItem value="qty">Sort by Quantity</SelectItem>
-                        <SelectItem value="name">Sort by Name</SelectItem>
-                        <SelectItem value="category">Sort by Category</SelectItem>
+                        {(Object.entries(SORT_LABELS) as [ItemSortKey, string][]).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                                {label}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
                 <Select onValueChange={(v) => v && set("rarity", v as ItemRarityFilter)} value={filters.rarity}>
@@ -140,57 +132,48 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
     );
 }
 
-function getCompactColumnCount(): number {
-    if (typeof window === "undefined") return COMPACT_COL_BREAKPOINTS[COMPACT_COL_BREAKPOINTS.length - 1].cols;
-    const w = window.innerWidth;
-    for (const { minWidth, cols } of COMPACT_COL_BREAKPOINTS) {
-        if (w >= minWidth) return cols;
-    }
-    return COMPACT_COL_BREAKPOINTS[COMPACT_COL_BREAKPOINTS.length - 1].cols;
-}
-
 function getDetailedColumnCount(width: number): number {
     if (width <= 0) return 1;
     return Math.max(1, Math.floor((width + DETAILED_GRID_GAP_PX) / (DETAILED_MIN_CARD_WIDTH_PX + DETAILED_GRID_GAP_PX)));
 }
 
-function VirtualizedItemsGrid({ items, viewMode }: { items: IItemEntry[]; viewMode: ItemViewMode }) {
-    // Compact columns follow window breakpoints rather than the container width.
-    const [compactCols, setCompactCols] = useState(getCompactColumnCount);
-    useEffect(() => {
-        const onResize = () => setCompactCols(getCompactColumnCount());
-        window.addEventListener("resize", onResize, { passive: true });
-        return () => window.removeEventListener("resize", onResize);
-    }, []);
+function getCompactColumnCount(width: number): number {
+    if (width <= 0) return 3;
+    return Math.max(2, Math.floor((width + COMPACT_GRID_GAP_PX) / (COMPACT_MIN_CARD_WIDTH_PX + COMPACT_GRID_GAP_PX)));
+}
 
-    const columnsFor = (width: number) => (viewMode === "detailed" ? getDetailedColumnCount(width) : compactCols);
+function VirtualizedItemsGrid({ items, viewMode }: { items: IItemEntry[]; viewMode: ItemViewMode }) {
+    const columnsFor = (width: number) => (viewMode === "detailed" ? getDetailedColumnCount(width) : getCompactColumnCount(width));
     const rowHeightFor = (width: number) => {
         if (viewMode === "detailed") return DETAILED_ROW_ESTIMATE_PX;
         if (width <= 0) return COMPACT_ROW_ESTIMATE_PX;
-        const cardWidth = (width - (compactCols - 1) * COMPACT_GRID_GAP_PX) / compactCols;
+        const cols = getCompactColumnCount(width);
+        const cardWidth = (width - (cols - 1) * COMPACT_GRID_GAP_PX) / cols;
         return Math.round(cardWidth + COMPACT_CARD_LABEL_PX);
     };
 
     const {
         parentRef,
+        width,
         scrollMargin,
         rows: chunks,
         virtualizer,
     } = useWindowVirtualRows<IItemEntry[]>({
-        buildRows: (width) => {
-            const cols = columnsFor(width);
+        buildRows: (w) => {
+            const cols = columnsFor(w);
             const out: IItemEntry[][] = [];
             for (let i = 0; i < items.length; i += cols) out.push(items.slice(i, i + cols));
             return out;
         },
-        rowDeps: [items, viewMode, compactCols],
-        estimateSize: (_row, _index, width) => rowHeightFor(width),
+        rowDeps: [items, viewMode],
+        estimateSize: (_row, _index, w) => rowHeightFor(w),
         overscan: ITEMS_VIRTUAL_OVERSCAN,
-        measureDeps: [viewMode, compactCols],
+        measureDeps: [viewMode],
         scrollMarginDeps: [viewMode],
     });
 
-    const gridClassName = viewMode === "detailed" ? "grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4" : "grid grid-cols-3 gap-2.5 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11";
+    const gridClassName = viewMode === "detailed" ? "grid gap-4" : "grid gap-2.5";
+    const gridStyle = { gridTemplateColumns: `repeat(${columnsFor(width)}, minmax(0, 1fr))` };
 
     return (
         <div ref={parentRef} style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
@@ -212,35 +195,13 @@ function VirtualizedItemsGrid({ items, viewMode }: { items: IItemEntry[]; viewMo
                             willChange: "transform",
                         }}
                     >
-                        <div className={gridClassName}>{row.map((item) => (viewMode === "detailed" ? <DetailedCard key={item.item_id} item={item} /> : <CompactCard key={item.item_id} item={item} />))}</div>
+                        <div className={gridClassName} style={gridStyle}>
+                            {row.map((item) => (viewMode === "detailed" ? <DetailedCard key={item.item_id} item={item} /> : <CompactCard key={item.item_id} item={item} />))}
+                        </div>
                     </div>
                 );
             })}
         </div>
-    );
-}
-
-interface ICategoryChipProps {
-    category: ItemCategory;
-    active: boolean;
-    count: number;
-    onSelect: () => void;
-}
-
-function CategoryChip({ category, active, count, onSelect }: ICategoryChipProps) {
-    return (
-        <Toggle
-            pressed={active}
-            onPressedChange={() => onSelect()}
-            variant="outline"
-            size="sm"
-            className={cn("h-8 gap-2 rounded-full px-3 font-medium text-[13px]", active && "border-primary/50 bg-primary/10 text-foreground shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_25%,transparent),0_0_12px_color-mix(in_srgb,var(--primary)_20%,transparent)] hover:bg-primary/15")}
-        >
-            <span>{CATEGORY_LABELS[category]}</span>
-            <Badge size="sm" variant={active ? "default" : "secondary"} className="font-mono tabular-nums">
-                {count}
-            </Badge>
-        </Toggle>
     );
 }
 

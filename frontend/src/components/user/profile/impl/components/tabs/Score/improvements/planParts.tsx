@@ -173,6 +173,32 @@ export function ShiftRoomBlock({ room, interactive = false, sustained }: { room:
                     ))}
                 </div>
             )}
+            {room.active && !isEquivalent && (room.moved_out?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap items-center gap-0.5">
+                    <span className="mr-0.5 font-mono text-[9px] text-muted-foreground/50 uppercase tracking-wide">moves</span>
+                    {room.moved_out?.map((m) => (
+                        <MiniChip
+                            key={m.operator.operator_id}
+                            op={m.operator}
+                            dashed
+                            suffix={
+                                <span className="text-[8px] text-muted-foreground/70">
+                                    → {roomFormulaLabel(m.to_room_type, null)}
+                                    {m.to_team_label ? ` · ${m.to_team_label}` : ""}
+                                </span>
+                            }
+                            tip={
+                                interactive ? (
+                                    <p>
+                                        {m.operator.name} isn't benched - they move to {roomFormulaLabel(m.to_room_type, null)}
+                                        {m.to_team_label ? ` (${m.to_team_label})` : ""} this shift.
+                                    </p>
+                                ) : undefined
+                            }
+                        />
+                    ))}
+                </div>
+            )}
             {!hasPreset && room.active && <span className="text-[9px] text-muted-foreground/45">no saved preset</span>}
         </RoomBlock>
     );

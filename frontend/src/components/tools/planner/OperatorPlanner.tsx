@@ -1,23 +1,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Info, Lock, Pencil, Plus, Trash } from "lucide-react";
+import { ChevronDown, ChevronRight, Lock, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
-import { eliteIcon, itemIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
+import { eliteIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
-import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
-import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
+import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
-import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
+import { RequirementsPanel } from "./RequirementsPanel";
 
 function UnauthenticatedState() {
     return (
@@ -218,90 +216,6 @@ function isInteractiveGroupChild(target: HTMLElement): boolean {
     return Boolean(target.closest("button") || target.closest("input") || target.closest("[role='checkbox']") || target.closest(".group-plans-list"));
 }
 
-interface PlannerRequirementRowProps {
-    item: IPlanRequirementItem;
-    depth: number;
-    path: string;
-    expandedPaths: Record<string, boolean>;
-    onToggleExpand: (path: string) => void;
-}
-
-function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
-    const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
-    const isExpanded = expandedPaths[path];
-    const isMissingRequirements = !item.canCraft && item.craftReason.startsWith("Requirements not met");
-    const craftShortfall = Math.max(item.requiredCount - item.inventoryCount, 0);
-    const needsCrafting = item.missingCount === 0 && craftShortfall > 0;
-
-    const handleClick = () => {
-        if (hasRecipe) {
-            onToggleExpand(path);
-        }
-    };
-
-    return (
-        <>
-            <tr className={cn("group transition-colors hover:bg-muted/20", hasRecipe && "cursor-pointer")} onClick={handleClick}>
-                <td className="py-2.5 pr-4">
-                    <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                        {hasRecipe ? isExpanded ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" /> : <div className="size-3.5 shrink-0" />}
-                        <img
-                            src={itemIcon(item.id, item.iconId, item.image)}
-                            alt={item.name}
-                            className="size-8 shrink-0 rounded-md object-contain"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = "none";
-                            }}
-                        />
-                        <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>
-                    </div>
-                </td>
-                <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{item.requiredCount.toLocaleString()}</td>
-                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", item.inventoryCount >= item.requiredCount ? "text-emerald-400" : needsCrafting ? "text-amber-400" : "text-muted-foreground")}>{item.inventoryCount.toLocaleString()}</td>
-                <td className="px-2 py-2.5 text-right text-xs tabular-nums">
-                    {item.canCraft ? (
-                        <span className="text-sky-400">{item.craftableCount.toLocaleString()}</span>
-                    ) : isMissingRequirements ? (
-                        <div className="flex justify-end">
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={(props) => (
-                                        <span {...props} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground">
-                                            <Info className="size-3.5" />
-                                        </span>
-                                    )}
-                                />
-                                <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
-                            </Tooltip>
-                        </div>
-                    ) : (
-                        <span className="text-muted-foreground/50" title={item.craftReason}>
-                            -
-                        </span>
-                    )}
-                </td>
-                <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
-                    {item.missingCount > 0 ? (
-                        <span className="font-semibold text-red-400 text-xs">{item.missingCount.toLocaleString()}</span>
-                    ) : needsCrafting ? (
-                        <span className="font-semibold text-amber-400 text-xs" title={`You have ${item.inventoryCount.toLocaleString()} of ${item.requiredCount.toLocaleString()} - the remaining ${craftShortfall.toLocaleString()} must be crafted`}>
-                            craft {craftShortfall.toLocaleString()}
-                        </span>
-                    ) : (
-                        <span className="font-semibold text-emerald-400">✓</span>
-                    )}
-                </td>
-            </tr>
-            {hasRecipe &&
-                isExpanded &&
-                item.recipe?.costs.map((cost) => {
-                    const childPath = `${path}/${cost.item.id}`;
-                    return <PlannerRequirementRow key={childPath} item={cost.item} depth={depth + 1} path={childPath} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />;
-                })}
-        </>
-    );
-}
-
 export function OperatorPlanner(): React.ReactElement {
     const { isAuthenticated, user } = useAuth();
     const queryClient = useQueryClient();
@@ -309,8 +223,6 @@ export function OperatorPlanner(): React.ReactElement {
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
-    const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
-    const [reqSearchQuery, setReqSearchQuery] = React.useState("");
     const [editOperatorId, setEditOperatorId] = React.useState<string | null>(null);
 
     const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
@@ -348,9 +260,10 @@ export function OperatorPlanner(): React.ReactElement {
 
     const plans = plannerData?.plans ?? initialPlannerData?.plans ?? [];
     const aggregatedRequirements = plannerData?.aggregatedRequirements ?? [];
+    const activePlansList = plans.filter((p) => activePlans[p.operator_id] ?? true);
 
-    const allSelected = plans.length > 0 && plans.every((p) => activePlans[p.operator_id] ?? true);
-    const selectedPlansCount = plans.filter((p) => activePlans[p.operator_id] ?? true).length;
+    const allSelected = plans.length > 0 && activePlansList.length === plans.length;
+    const selectedPlansCount = activePlansList.length;
 
     const toggleSelectAll = () => {
         const next: Record<string, boolean> = {};
@@ -375,7 +288,7 @@ export function OperatorPlanner(): React.ReactElement {
     };
 
     const handleDeleteSelected = async () => {
-        const selectedIds = plans.filter((p) => activePlans[p.operator_id] ?? true).map((p) => p.operator_id);
+        const selectedIds = activePlansList.map((p) => p.operator_id);
         if (selectedIds.length === 0) return;
         try {
             await Promise.all(selectedIds.map((id) => deletePlanFn({ data: id })));
@@ -432,12 +345,6 @@ export function OperatorPlanner(): React.ReactElement {
         }
     };
 
-    const filteredRequirements = React.useMemo(() => {
-        if (!reqSearchQuery.trim()) return aggregatedRequirements;
-        const query = compactForSearch(reqSearchQuery);
-        return aggregatedRequirements.filter((req) => compactForSearch(req.name).includes(query));
-    }, [aggregatedRequirements, reqSearchQuery]);
-
     const togglePlan = (opId: string) => {
         setActivePlans((prev) => ({
             ...prev,
@@ -449,13 +356,6 @@ export function OperatorPlanner(): React.ReactElement {
         setExpandedPlans((prev) => ({
             ...prev,
             [planId]: !prev[planId],
-        }));
-    };
-
-    const handleToggleExpand = (path: string) => {
-        setExpandedPaths((prev) => ({
-            ...prev,
-            [path]: !prev[path],
         }));
     };
 
@@ -482,264 +382,201 @@ export function OperatorPlanner(): React.ReactElement {
             {!isAuthenticated ? (
                 <UnauthenticatedState />
             ) : !isPlansListLoading && plans.length === 0 ? (
-                <>
-                    <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
-                        <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
-                            <Plus className="size-5" />
-                            Create new plan
-                        </Button>
-                    </div>
-
-                    <OperatorPlannerDialog
-                        open={open}
-                        onOpenChange={(isOpen) => {
-                            setOpen(isOpen);
-                            if (!isOpen) {
-                                setEditOperatorId(null);
-                            }
-                        }}
-                        initialOperatorId={editOperatorId ?? undefined}
-                    />
-                </>
+                <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
+                    <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
+                        <Plus className="size-5" />
+                        Create new plan
+                    </Button>
+                </div>
             ) : (
-                <>
-                    <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
-                        <div className="w-full shrink-0 min-[720px]:w-90">
-                            <div className="rounded-xl border border-border bg-card p-4">
-                                <Tabs defaultValue="plans">
-                                    <TabsList className="w-full">
-                                        <TabsTrigger value="plans" className="flex-1">
-                                            Plans
-                                        </TabsTrigger>
-                                        <TabsTrigger value="groups" className="flex-1">
-                                            Groups
-                                        </TabsTrigger>
-                                    </TabsList>
+                <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
+                    <div className="w-full shrink-0 min-[720px]:w-90">
+                        <div className="rounded-xl border border-border bg-card p-4">
+                            <Tabs defaultValue="plans">
+                                <TabsList className="w-full">
+                                    <TabsTrigger value="plans" className="flex-1">
+                                        Plans
+                                    </TabsTrigger>
+                                    <TabsTrigger value="groups" className="flex-1">
+                                        Groups
+                                    </TabsTrigger>
+                                </TabsList>
 
-                                    <TabsContent value="plans" className="mt-4">
-                                        {isPlansListLoading ? (
-                                            <div className="flex flex-col gap-4">
-                                                {["sk-1", "sk-2", "sk-3"].map((key) => (
-                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
-                                                        <Skeleton className="size-4 rounded" />
-                                                        <Skeleton className="size-10 rounded-xl" />
-                                                        <div className="flex flex-1 flex-col gap-1.5">
-                                                            <Skeleton className="h-3.5 w-24 rounded" />
-                                                            <Skeleton className="h-3 w-16 rounded" />
-                                                        </div>
+                                <TabsContent value="plans" className="mt-4">
+                                    {isPlansListLoading ? (
+                                        <div className="flex flex-col gap-4">
+                                            {["sk-1", "sk-2", "sk-3"].map((key) => (
+                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                    <Skeleton className="size-4 rounded" />
+                                                    <Skeleton className="size-10 rounded-xl" />
+                                                    <div className="flex flex-1 flex-col gap-1.5">
+                                                        <Skeleton className="h-3.5 w-24 rounded" />
+                                                        <Skeleton className="h-3 w-16 rounded" />
                                                     </div>
-                                                ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-between border-border/40 border-b pb-3">
+                                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
+                                                <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
+                                                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                                                    <span>{allSelected ? "Unselect all" : "Select all"}</span>
+                                                </label>
+                                                {selectedPlansCount > 0 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="xs"
+                                                        className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                                        onClick={handleDeleteSelected}
+                                                    >
+                                                        <Trash className="mr-1 size-3.5" />
+                                                        Delete selected ({selectedPlansCount})
+                                                    </Button>
+                                                )}
                                             </div>
-                                        ) : (
-                                            <div className="flex flex-col gap-4">
-                                                <div className="flex items-center justify-between border-border/40 border-b pb-3">
-                                                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
-                                                    <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
-                                                        <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
-                                                        <span>{allSelected ? "Unselect all" : "Select all"}</span>
+                                            {plans.map((p) => {
+                                                const op = p.operator;
+                                                if (!op) return null;
+                                                const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                const isActive = activePlans[p.operator_id] ?? true;
+
+                                                return (
+                                                    /* biome-ignore lint/a11y/noLabelWithoutControl: PlanCardHeader renders the plan's Checkbox inside this label */
+                                                    <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
+                                                        <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
+
+                                                        {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
+
+                                                        <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="mt-auto border-border/40 border-t pt-3" />
                                                     </label>
-                                                    {selectedPlansCount > 0 && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="xs"
-                                                            className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                                                            onClick={handleDeleteSelected}
-                                                        >
-                                                            <Trash className="mr-1 size-3.5" />
-                                                            Delete selected ({selectedPlansCount})
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                                {plans.map((p: IOperatorPlanResponse) => {
-                                                    const op = p.operator;
-                                                    if (!op) return null;
-                                                    const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
-                                                    const isActive = activePlans[p.operator_id] ?? true;
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </TabsContent>
 
-                                                    return (
-                                                        /* biome-ignore lint/a11y/noLabelWithoutControl: PlanCardHeader renders the plan's Checkbox inside this label */
-                                                        <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
-                                                            <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
-
-                                                            {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
-
-                                                            <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="mt-auto border-border/40 border-t pt-3" />
-                                                        </label>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </TabsContent>
-
-                                    <TabsContent value="groups" className="mt-4">
-                                        {isPlansListLoading ? (
-                                            <div className="flex flex-col gap-4">
-                                                {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
-                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
-                                                        <Skeleton className="size-4 rounded" />
-                                                        <div className="flex flex-1 flex-col gap-1.5">
-                                                            <Skeleton className="h-3.5 w-24 rounded" />
-                                                        </div>
+                                <TabsContent value="groups" className="mt-4">
+                                    {isPlansListLoading ? (
+                                        <div className="flex flex-col gap-4">
+                                            {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
+                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                    <Skeleton className="size-4 rounded" />
+                                                    <div className="flex flex-1 flex-col gap-1.5">
+                                                        <Skeleton className="h-3.5 w-24 rounded" />
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
-                                            <p className="py-4 text-center text-muted-foreground text-xs">No groups created yet.</p>
-                                        ) : (
-                                            <div className="flex flex-col gap-6">
-                                                {plannerData.groups.map((g) => {
-                                                    const plansInGroup = plans.filter((p) => p.groups?.includes(g.name));
-                                                    const isGroupActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
-                                                    const isExpanded = expandedGroups[g.name] ?? true;
-
-                                                    return (
-                                                        /* biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper */
-                                                        <div
-                                                            key={g.name}
-                                                            role="button"
-                                                            tabIndex={0}
-                                                            onClick={(e) => {
-                                                                if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                                                                toggleGroupPlansActive(g.name);
-                                                            }}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key !== "Enter" && e.key !== " ") return;
-                                                                if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                                                                e.preventDefault();
-                                                                toggleGroupPlansActive(g.name);
-                                                            }}
-                                                            className={cn(
-                                                                "relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
-                                                                isExpanded ? "gap-4" : "gap-0",
-                                                                isGroupActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-card opacity-60 hover:opacity-100",
-                                                            )}
-                                                        >
-                                                            <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
-                                                                <div className="flex items-center gap-3">
-                                                                    <Checkbox checked={isGroupActive} onCheckedChange={() => toggleGroupPlansActive(g.name)} />
-                                                                    <span className="font-semibold text-foreground text-sm">{g.name}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            setExpandedGroups((prev) => ({
-                                                                                ...prev,
-                                                                                [g.name]: !isExpanded,
-                                                                            }));
-                                                                        }}
-                                                                        className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted"
-                                                                    >
-                                                                        <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
-                                                                    </button>
-                                                                    <button type="button" onClick={() => handleRenameGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted">
-                                                                        <Pencil className="size-3.5" />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleDeleteGroup(g.name)}
-                                                                        className="flex size-7 items-center justify-center rounded-md border border-red-500/20 bg-red-500/5 text-red-600 transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
-                                                                    >
-                                                                        <Trash className="size-3.5" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                            {isExpanded && (
-                                                                <div className="group-plans-list mt-3 divide-y divide-border/30">
-                                                                    {plansInGroup.length === 0 ? (
-                                                                        <p className="py-4 text-center text-muted-foreground text-xs">No plans in this group.</p>
-                                                                    ) : (
-                                                                        plansInGroup.map((p) => {
-                                                                            const op = p.operator;
-                                                                            if (!op) return null;
-                                                                            const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
-                                                                            const isActive = activePlans[p.operator_id] ?? true;
-
-                                                                            return (
-                                                                                <div key={p.id} className="flex flex-col gap-3 py-4 first:pt-1 last:pb-1">
-                                                                                    <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
-
-                                                                                    {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="pl-7" />}
-
-                                                                                    <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="pl-7" dense />
-                                                                                </div>
-                                                                            );
-                                                                        })
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </TabsContent>
-                                </Tabs>
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="rounded-xl border border-border bg-card p-4">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <h2 className="font-semibold text-foreground text-sm">Requirements</h2>
-                                    {!isRequirementsLoading && aggregatedRequirements.length > 0 && <Input type="search" placeholder="Search requirements..." value={reqSearchQuery} onChange={(e) => setReqSearchQuery(e.target.value)} className="h-7 max-w-48 text-xs sm:h-7 sm:text-xs" />}
-                                </div>
-                                {isRequirementsLoading ? (
-                                    <div className="mt-4 flex flex-col divide-y divide-border/40">
-                                        {["sk-req-1", "sk-req-2", "sk-req-3", "sk-req-4", "sk-req-5", "sk-req-6", "sk-req-7", "sk-req-8"].map((key) => (
-                                            <div key={key} className="flex items-center gap-3 py-3 first:pt-1">
-                                                <Skeleton className="size-9 shrink-0 rounded-lg" />
-                                                <Skeleton className="h-3.5 w-24 rounded" />
-                                                <div className="ml-auto flex gap-6">
-                                                    <Skeleton className="h-3 w-8 rounded" />
-                                                    <Skeleton className="h-3 w-8 rounded" />
-                                                    <Skeleton className="h-3 w-8 rounded" />
-                                                    <Skeleton className="h-3 w-8 rounded" />
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : aggregatedRequirements.length === 0 ? (
-                                    <p className="mt-6 text-center text-muted-foreground text-sm">No requirements for the selected plans.</p>
-                                ) : (
-                                    <div className="mt-3 overflow-x-auto">
-                                        {filteredRequirements.length === 0 ? (
-                                            <p className="py-6 text-center text-muted-foreground text-sm">No matching requirements found.</p>
-                                        ) : (
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="border-border/40 border-b">
-                                                        <th className="pb-2 text-left font-medium text-muted-foreground text-xs">Item</th>
-                                                        <th className="pr-2 pb-2 text-right font-medium text-muted-foreground text-xs">Required</th>
-                                                        <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Have</th>
-                                                        <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Craftable</th>
-                                                        <th className="pb-2 pl-2 text-right font-medium text-muted-foreground text-xs">Missing</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-border/30">
-                                                    {filteredRequirements.map((req) => (
-                                                        <PlannerRequirementRow key={req.id} item={req} depth={0} path={req.id} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                                            ))}
+                                        </div>
+                                    ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
+                                        <p className="py-4 text-center text-muted-foreground text-xs">No groups created yet.</p>
+                                    ) : (
+                                        <div className="flex flex-col gap-6">
+                                            {plannerData.groups.map((g) => {
+                                                const plansInGroup = plans.filter((p) => p.groups?.includes(g.name));
+                                                const isGroupActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
+                                                const isExpanded = expandedGroups[g.name] ?? true;
+
+                                                return (
+                                                    /* biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper */
+                                                    <div
+                                                        key={g.name}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={(e) => {
+                                                            if (isInteractiveGroupChild(e.target as HTMLElement)) return;
+                                                            toggleGroupPlansActive(g.name);
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key !== "Enter" && e.key !== " ") return;
+                                                            if (isInteractiveGroupChild(e.target as HTMLElement)) return;
+                                                            e.preventDefault();
+                                                            toggleGroupPlansActive(g.name);
+                                                        }}
+                                                        className={cn(
+                                                            "relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
+                                                            isExpanded ? "gap-4" : "gap-0",
+                                                            isGroupActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-card opacity-60 hover:opacity-100",
+                                                        )}
+                                                    >
+                                                        <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
+                                                            <div className="flex items-center gap-3">
+                                                                <Checkbox checked={isGroupActive} onCheckedChange={() => toggleGroupPlansActive(g.name)} />
+                                                                <span className="font-semibold text-foreground text-sm">{g.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setExpandedGroups((prev) => ({
+                                                                            ...prev,
+                                                                            [g.name]: !isExpanded,
+                                                                        }));
+                                                                    }}
+                                                                    className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted"
+                                                                >
+                                                                    <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
+                                                                </button>
+                                                                <button type="button" onClick={() => handleRenameGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted">
+                                                                    <Pencil className="size-3.5" />
+                                                                </button>
+                                                                <button type="button" onClick={() => handleDeleteGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-red-500/20 bg-red-500/5 text-red-600 transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400">
+                                                                    <Trash className="size-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {isExpanded && (
+                                                            <div className="group-plans-list mt-3 divide-y divide-border/30">
+                                                                {plansInGroup.length === 0 ? (
+                                                                    <p className="py-4 text-center text-muted-foreground text-xs">No plans in this group.</p>
+                                                                ) : (
+                                                                    plansInGroup.map((p) => {
+                                                                        const op = p.operator;
+                                                                        if (!op) return null;
+                                                                        const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                                        const isActive = activePlans[p.operator_id] ?? true;
+
+                                                                        return (
+                                                                            <div key={p.id} className="flex flex-col gap-3 py-4 first:pt-1 last:pb-1">
+                                                                                <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
+
+                                                                                {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="pl-7" />}
+
+                                                                                <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => handleDeletePlan(p.operator_id)} className="pl-7" dense />
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
                         </div>
                     </div>
+                    <div className="flex-1">
+                        <RequirementsPanel aggregatedRequirements={aggregatedRequirements} isLoading={isRequirementsLoading} activePlans={activePlansList} />
+                    </div>
+                </div>
+            )}
 
-                    <OperatorPlannerDialog
-                        open={open}
-                        onOpenChange={(isOpen) => {
-                            setOpen(isOpen);
-                            if (!isOpen) {
-                                setEditOperatorId(null);
-                            }
-                        }}
-                        initialOperatorId={editOperatorId ?? undefined}
-                    />
-                </>
+            {isAuthenticated && (
+                <OperatorPlannerDialog
+                    open={open}
+                    onOpenChange={(isOpen) => {
+                        setOpen(isOpen);
+                        if (!isOpen) {
+                            setEditOperatorId(null);
+                        }
+                    }}
+                    initialOperatorId={editOperatorId ?? undefined}
+                />
             )}
         </div>
     );

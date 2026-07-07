@@ -400,6 +400,16 @@ pub struct AssignedOperator {
     pub name: String,
 }
 
+/// An operator leaving a cell for another room in the SAME shift.
+#[derive(Debug, Clone, Serialize)]
+pub struct MovedOperator {
+    pub operator: AssignedOperator,
+    /// Destination room type ("TRADING", "MANUFACTURE", ...).
+    pub to_room_type: String,
+    /// Destination team/squad label ("Team C", "Squad 2"), when known.
+    pub to_team_label: Option<String>,
+}
+
 /// A recommended 3-shift rotation alongside the player's saved presets, for the
 /// preset-vs-recommended comparison.
 #[derive(Debug, Clone, Serialize)]
@@ -432,6 +442,10 @@ pub struct ShiftRoomDto {
     pub swap_in: Vec<AssignedOperator>,
     /// Current preset operators the player should REMOVE (not in the recommendation).
     pub swap_out: Vec<AssignedOperator>,
+    /// Current preset operators who aren't removed but RELOCATE - they're recommended
+    /// in a different room this same shift (shown as an add there). Surfaced so the
+    /// cell's arithmetic balances instead of an operator silently vanishing.
+    pub moved_out: Vec<MovedOperator>,
     /// True when the player's preset already matches the recommendation.
     pub matches: bool,
     /// True when the player's CURRENT team isn't the recommended set but produces within the
@@ -1509,7 +1523,28 @@ pub fn shift_rotation_to_dto(
                 .filter(|id| !matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id))
                 .cloned()
                 .collect();
-            let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
+            // The relocating operators are surfaced separately with their destination, so
+            // the cell's arithmetic balances (a 3-member preset never just loses someone).
+            let mut moved_out: Vec<MovedOperator> = current
+                .iter()
+                .filter(|id| !rec.contains(id.as_str()))
+                .filter_map(|id| {
+                    let owner = rec_owner.get(id.as_str())?;
+                    if *owner == room.slot_id {
+                        return None;
+                    }
+                    let dest = shift.rooms.iter().find(|r| &r.slot_id == owner)?;
+                    Some(MovedOperator {
+                        operator: assigned_operator(id, game_data),
+                        to_room_type: dest.room_type.clone(),
+                        to_team_label: dest.team_label.clone(),
+                    })
+                })
+                .collect();
+            let mut matches = !current.is_empty()
+                && swap_in.is_empty()
+                && swap_out.is_empty()
+                && moved_out.is_empty();
 
             // A team the player ALREADY runs that comes within the leniency band of the
             // recommendation's output needs no swap - a factory/trading team (Bryophyta vs a
@@ -1562,6 +1597,7 @@ pub fn shift_rotation_to_dto(
                     matches = true;
                     swap_in.clear();
                     swap_out.clear();
+                    moved_out.clear();
                 }
             }
 
@@ -1591,6 +1627,7 @@ pub fn shift_rotation_to_dto(
                 team_label: room.team_label.clone(),
                 swap_in: ops(&swap_in),
                 swap_out: ops(&swap_out),
+                moved_out,
             });
         }
         shift_dtos.push(ShiftDto {

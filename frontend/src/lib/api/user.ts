@@ -446,6 +446,13 @@ export interface IRoomLayoutEntry {
     levels: number[];
 }
 
+/** An operator leaving a cell for another room in the SAME shift. */
+export interface IMovedOperator {
+    operator: IAssignedOperator;
+    to_room_type: string;
+    to_team_label?: string | null;
+}
+
 export interface IShiftRoom {
     slot_id: string;
     room_type: string;
@@ -459,6 +466,9 @@ export interface IShiftRoom {
     swap_in: IAssignedOperator[];
     /** Operators to REMOVE (in the current preset, not the recommendation). */
     swap_out: IAssignedOperator[];
+    /** Preset operators who aren't removed but RELOCATE to another room this same
+     *  shift (they appear as an add there), with their destination. */
+    moved_out?: IMovedOperator[];
     /** True when the player's preset already matches the recommendation. */
     matches: boolean;
     /** True when the player's CURRENT team differs but produces within the leniency band of the

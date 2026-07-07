@@ -5,10 +5,9 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "rea
 import { LevelBadge } from "#/components/enemies/list/impl/components/atoms";
 import { EnemyPlaceholder } from "#/components/enemies/list/impl/components/EnemyPlaceholder";
 import { LEVEL_TOKENS } from "#/components/enemies/list/impl/tokens";
-import { Badge } from "#/components/ui/badge";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
-import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
@@ -37,13 +36,7 @@ const LEVEL_FILTERS: { value: LevelFilter; label: string }[] = [
     { value: "BOSS", label: "Boss" },
 ];
 
-// Descending by minWidth - mirrors the grid's `grid-cols-4 sm:6 md:8 lg:10`.
-const COL_BREAKPOINTS = [
-    { minWidth: 1024, cols: 10 },
-    { minWidth: 768, cols: 8 },
-    { minWidth: 640, cols: 6 },
-    { minWidth: 0, cols: 4 },
-];
+const MIN_CARD_WIDTH_PX = 80; // ≈ old breakpoint density (4 cols mobile, 10 at lg), but reflows with zoom
 const GRID_GAP_PX = 10; // gap-2.5
 const CARD_TEXT_HEIGHT_PX = 30; // name row beneath the portrait
 const ROW_ESTIMATE_PX = 150; // fallback before the grid width is measured
@@ -91,7 +84,7 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
         return (
             <section aria-busy="true" aria-label="Enemy handbook" className="flex flex-col gap-4">
                 <Skeleton className="h-20 w-full rounded-2xl" />
-                <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-2.5">
                     {SKELETON_GRID_IDS.map((id) => (
                         <Skeleton className="aspect-3/4 w-full rounded-md" key={id} />
                     ))}
@@ -136,13 +129,9 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     );
 }
 
-function getColumnCount(): number {
-    if (typeof window === "undefined") return COL_BREAKPOINTS[COL_BREAKPOINTS.length - 1].cols;
-    const w = window.innerWidth;
-    for (const { minWidth, cols } of COL_BREAKPOINTS) {
-        if (w >= minWidth) return cols;
-    }
-    return COL_BREAKPOINTS[COL_BREAKPOINTS.length - 1].cols;
+function getColumnCount(width: number): number {
+    if (width <= 0) return 4;
+    return Math.max(2, Math.floor((width + GRID_GAP_PX) / (MIN_CARD_WIDTH_PX + GRID_GAP_PX)));
 }
 
 /** Window-scroll virtualized grid: only the rows near the viewport are mounted,
@@ -150,25 +139,22 @@ function getColumnCount(): number {
  *  from the measured grid width, so no per-row measurement is needed. */
 function VirtualizedEnemyGrid({ rows }: { rows: IEnemyRow[] }) {
     const parentRef = useRef<HTMLDivElement>(null);
-    const [cols, setCols] = useState(getColumnCount);
     const [width, setWidth] = useState(0);
     const [scrollMargin, setScrollMargin] = useState(0);
+    // Derived from the measured container width (not window breakpoints), so
+    // browser zoom and container resizes reflow the grid continuously.
+    const cols = getColumnCount(width);
 
-    // Track column count + container width.
+    // Track container width.
     useEffect(() => {
         const el = parentRef.current;
         if (!el) return;
-        const onResize = () => setCols(getColumnCount());
         const observer = new ResizeObserver((entries) => {
             const w = entries[0]?.contentRect.width ?? 0;
             if (w > 0) setWidth(w);
         });
         observer.observe(el);
-        window.addEventListener("resize", onResize, { passive: true });
-        return () => {
-            observer.disconnect();
-            window.removeEventListener("resize", onResize);
-        };
+        return () => observer.disconnect();
     }, []);
 
     // Distance from the document top, so window scrolling maps to the right rows.
@@ -204,7 +190,7 @@ function VirtualizedEnemyGrid({ rows }: { rows: IEnemyRow[] }) {
         scrollMargin,
     });
 
-    // Re-flow rows when the derived height changes (width / column breakpoint).
+    // Re-flow rows when the derived height changes (width / column count).
     // biome-ignore lint/correctness/useExhaustiveDependencies: measure() must re-run when rowHeight changes.
     useLayoutEffect(() => virtualizer.measure(), [rowHeight, virtualizer]);
 
@@ -342,32 +328,6 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
         </div>
     );
 });
-
-interface IFilterChipProps {
-    label: string;
-    active: boolean;
-    count?: number;
-    onSelect: () => void;
-}
-
-function FilterChip({ label, active, count, onSelect }: IFilterChipProps) {
-    return (
-        <Toggle
-            className={cn("h-8 gap-2 rounded-full px-3 font-medium text-[13px]", active && "border-primary/50 bg-primary/10 text-foreground shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_25%,transparent),0_0_12px_color-mix(in_srgb,var(--primary)_20%,transparent)] hover:bg-primary/15")}
-            onPressedChange={() => onSelect()}
-            pressed={active}
-            size="sm"
-            variant="outline"
-        >
-            <span>{label}</span>
-            {count != null && (
-                <Badge className="font-mono tabular-nums" size="sm" variant={active ? "default" : "secondary"}>
-                    {count}
-                </Badge>
-            )}
-        </Toggle>
-    );
-}
 
 function EnemiesEmpty({ title, body }: { title: string; body: string }) {
     return (
