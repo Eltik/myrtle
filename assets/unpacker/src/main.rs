@@ -36,6 +36,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use base64::Engine;
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
@@ -149,6 +150,35 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             std::sync::Arc::new(std::collections::HashMap::new())
         };
 
+    // Pre-pass: resolve shader names from any shader bundles in the input, so
+    // dynchar particle materials (whose shader is an external ref into
+    // `[uc]shaders.ab`) can be classified — notably the procedural
+    // `VertexDisturb(CustomData)` targeting-ring reticles. Empty (feature off)
+    // when no shader bundles are present.
+    let shader_map = if extract_spine {
+        let map = export::shader_map::build_shader_map(&files);
+        if !map.is_empty() {
+            println!("Resolved {} shader name(s) for particle classification", map.len());
+        }
+        map
+    } else {
+        std::collections::HashMap::new()
+    };
+
+    // Pre-pass: load the shared FX texture bundles (`refs/fx/*`) so dynchar
+    // particle emitters that reference them externally (sparkles, streaks,
+    // smoke, flow — currently `tex: null` and invisible) render their real
+    // sprite. Empty (feature off) when the FX bundles aren't in the input.
+    let fx_textures = if extract_spine {
+        let fx = export::fx_textures::FxTextures::build(&files);
+        if !fx.is_empty() {
+            println!("Loaded shared FX texture bundles for external-texture resolution");
+        }
+        fx
+    } else {
+        export::fx_textures::FxTextures::default()
+    };
+
     let exported = AtomicUsize::new(0);
 
     std::fs::create_dir_all(&args.output).unwrap();
@@ -166,6 +196,8 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             extract_portrait,
             merge_alpha,
             &stage_aspects,
+            &shader_map,
+            &fx_textures,
         );
         if count > 0 {
             let prev = exported.fetch_add(count, Ordering::Relaxed);
@@ -200,10 +232,33 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
     None
 }
 
+/// `.resS` / `.resource` bundle entries hold streamed payload bytes, not a
+/// `SerializedFile`.
+fn is_resource_entry(path: &str) -> bool {
+    path.ends_with(".resS") || path.ends_with(".resource")
+}
+
+/// The `(m_FileID, m_PathID)` pair of a PPtr JSON object; `None` when either
+/// field is missing.
+fn pptr_ids(v: &serde_json::Value) -> Option<(i64, i64)> {
+    Some((
+        v.get("m_FileID").and_then(serde_json::Value::as_i64)?,
+        v.get("m_PathID").and_then(serde_json::Value::as_i64)?,
+    ))
+}
+
 /// Class IDs needed for spine `MonoBehaviour` reference chain:
 /// 1=GameObject (front/back classification), 114=MonoBehaviour, 49=TextAsset,
 /// 21=Material, 28=Texture2D
 const SPINE_CLASS_IDS: &[i32] = &[1, 114, 49, 21, 28];
+
+/// Dynchars additionally need Transform (4), MeshRenderer (23), MeshFilter (33)
+/// and Mesh (43) to locate, place and rasterize the background scene quads, plus
+/// AnimationClip (74) to evaluate the idle pose the quads settle into, and
+/// ParticleSystem (198) + ParticleSystemRenderer (199) + Camera (20) for the
+/// `[particles]` export.
+const DYNCHAR_SPINE_CLASS_IDS: &[i32] =
+    &[1, 4, 20, 21, 23, 28, 33, 43, 49, 74, 114, 198, 199];
 
 /// Map local (`m_FileID == 0`) object `path_ids` to their intended output directory,
 /// taken from the bundle's `AssetBundle` (class 142) `m_Container`.
@@ -260,6 +315,8 @@ fn process_bundle(
     extract_portrait: bool,
     merge_alpha: bool,
     stage_aspects: &StageAspectMap,
+    shader_map: &export::shader_map::ShaderMap,
+    fx_textures: &export::fx_textures::FxTextures,
 ) -> usize {
     let data = match std::fs::read(file_path) {
         Ok(d) => d,
@@ -284,7 +341,7 @@ fn process_bundle(
     // Build resource map from .resS / .resource entries
     let mut resources = HashMap::new();
     for entry in &bundle.files {
-        if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+        if is_resource_entry(&entry.path) {
             let filename = entry.path.rsplit('/').next().unwrap_or(&entry.path);
             resources.insert(filename.to_string(), entry.data.clone());
         }
@@ -299,12 +356,20 @@ fn process_bundle(
         extract_portrait && portrait::detect_portrait_bundle(&bundle_subdir, input_dir);
     let needs_phase2 = extract_image || extract_text || extract_audio;
 
-    // Phase 1: Spine extraction (only read spine-relevant class_ids)
+    // Phase 1: Spine extraction (only read spine-relevant class_ids).
+    // Dynchars bundles also need the scene graph (Transform=4, MeshRenderer=23,
+    // MeshFilter=33) to reach and place the standalone background layer.
+    let is_dynchar_bundle = is_spine_bundle && spine::detect_dynchar_bundle(&bundle_subdir, input_dir);
+    let spine_class_ids: &[i32] = if is_dynchar_bundle {
+        DYNCHAR_SPINE_CLASS_IDS
+    } else {
+        SPINE_CLASS_IDS
+    };
     let spine_claimed_pids: HashSet<i64> = if is_spine_bundle {
         let mut spine_objects = HashMap::new();
 
         for entry in &bundle.files {
-            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+            if is_resource_entry(&entry.path) {
                 continue;
             }
             let sf = match SerializedFile::parse(entry.data.clone()) {
@@ -313,13 +378,131 @@ fn process_bundle(
             };
             for obj in &sf.objects {
                 // Only deserialize objects relevant to the spine reference chain
-                if !SPINE_CLASS_IDS.contains(&obj.class_id) {
+                if !spine_class_ids.contains(&obj.class_id) {
                     continue;
                 }
-                let val = match read_object(&sf, obj) {
+                let mut val = match read_object(&sf, obj) {
                     Ok(v) => v,
                     Err(_) => continue,
                 };
+                // Materials reference their shader externally; resolve the name
+                // here (where this SerializedFile's `externals` are in scope) and
+                // stash it so particle classification can read it downstream.
+                if obj.class_id == 21 {
+                    if let Some((fid, pid)) = val.get("m_Shader").and_then(pptr_ids)
+                        && let Some(name) = export::shader_map::resolve_shader(&sf.externals, fid, pid, shader_map)
+                    {
+                        val["_shaderName"] = serde_json::Value::String(name.to_string());
+                    }
+                    // Resolve EXTERNAL texture slots (shared FX sprites / data maps)
+                    // into synthetic in-bundle Texture2Ds so the emitter renders
+                    // them. The pixels stream from the FX bundle's resS, so decode
+                    // here (where the FX map is available) and inline the RGBA.
+                    //
+                    // The ordinary single-`_MainTex` path skips grab-pass /
+                    // distortion shaders (they warp the framebuffer behind them — a
+                    // normal/flow map, not a sprite — so the raw texture stamps an
+                    // iridescent blob) and gates opaque textures out.
+                    //
+                    // The `Ram/` shader family (`Ram/Disturb`, `Ram/VertexDisturb`)
+                    // is NOT a framebuffer-grab distortion: it composites ramp +
+                    // dissolve + UV-disturb from FOUR-to-SIX of its own textures,
+                    // several of them legitimately opaque. So for Ram materials we
+                    // resolve every sampled slot and bypass BOTH gates (the
+                    // Disturb-name gate and the opaque gate).
+                    let shader = val.get("_shaderName").and_then(serde_json::Value::as_str).unwrap_or("");
+                    let is_ram = shader.contains("Ram/");
+                    let is_distortion = shader.contains("GrabPass") || (shader.contains("Disturb") && !shader.contains("VertexDisturb"));
+                    let slots: &[&str] = if is_ram {
+                        &[
+                            "_MainTex",
+                            "_RamTex",
+                            "_DisturbTex",
+                            "_DissolveTex",
+                            "_VertexDisturbTex",
+                            "_VertexDisturbWeightTex",
+                        ]
+                    } else if is_distortion {
+                        &[]
+                    } else {
+                        &["_MainTex"]
+                    };
+                    for slot in slots {
+                        let Some((fid, pid)) = val
+                            .get("m_SavedProperties")
+                            .and_then(|sp| sp.get("m_TexEnvs"))
+                            .and_then(|te| te.get(*slot))
+                            .and_then(|m| m.get("m_Texture"))
+                            .and_then(pptr_ids)
+                        else {
+                            continue;
+                        };
+                        if fid == 0 {
+                            continue; // already in-bundle
+                        }
+                        let decoded = if is_ram {
+                            fx_textures.resolve_decode_ram(&sf.externals, fid, pid)
+                        } else {
+                            fx_textures.resolve_decode(&sf.externals, fid, pid)
+                        };
+                        if let Some(decoded) = decoded {
+                            let synth = serde_json::json!({
+                                "m_Name": decoded.name,
+                                "m_Width": decoded.width,
+                                "m_Height": decoded.height,
+                                "_decodedRGBA": base64::engine::general_purpose::STANDARD.encode(&decoded.rgba),
+                            });
+                            spine_objects.insert(pid, (28, synth));
+                            val["m_SavedProperties"]["m_TexEnvs"][*slot]["m_Texture"] =
+                                serde_json::json!({ "m_FileID": 0, "m_PathID": pid });
+                        }
+                    }
+                }
+                // A ParticleSystemRenderer whose MATERIAL lives in another bundle
+                // (dynchar `effect.ab`) resolves to `tex: null` and renders nothing —
+                // the emitter has neither a blend class nor a sprite (Virtuosa's
+                // falling gold-mist + standing rain). Resolve the external material
+                // here (externals in scope) + its own `_MainTex` (in that same FX
+                // bundle) and INLINE both as synthetic in-bundle objects, rewriting the
+                // renderer's ref to in-bundle, so downstream `resolve_material` finds
+                // the blend (`_DstBlend`) and the decoded sprite. Scalable — any skin's
+                // external-material emitters resolve, no per-skin constant.
+                if obj.class_id == 199
+                    && let Some(mats) = val.get("m_Materials").and_then(|m| m.as_array()).cloned()
+                {
+                    for (i, mref) in mats.iter().enumerate() {
+                        let Some((mfid, mpid)) = pptr_ids(mref) else {
+                            continue;
+                        };
+                        if mfid == 0 {
+                            continue; // material already in-bundle
+                        }
+                        let Some((mat_cab, mut mat_json, mat_ext_cabs)) = fx_textures.resolve_material_ref(&sf.externals, mfid, mpid) else {
+                            continue;
+                        };
+                        // Resolve the material's own `_MainTex` — in the SAME FX bundle
+                        // (`file_id==0`) or a FURTHER one it references (`file_id>0`).
+                        if let Some((tfid, tpid)) = mat_json
+                            .get("m_SavedProperties")
+                            .and_then(|sp| sp.get("m_TexEnvs"))
+                            .and_then(|te| te.get("_MainTex"))
+                            .and_then(|m| m.get("m_Texture"))
+                            .and_then(pptr_ids)
+                            && let Some(decoded) = fx_textures.material_texture(&mat_cab, &mat_ext_cabs, tfid, tpid)
+                        {
+                            let synth = serde_json::json!({
+                                "m_Name": decoded.name,
+                                "m_Width": decoded.width,
+                                "m_Height": decoded.height,
+                                "_decodedRGBA": base64::engine::general_purpose::STANDARD.encode(&decoded.rgba),
+                            });
+                            spine_objects.insert(tpid, (28, synth));
+                            mat_json["m_SavedProperties"]["m_TexEnvs"]["_MainTex"]["m_Texture"] = serde_json::json!({ "m_FileID": 0, "m_PathID": tpid });
+                        }
+                        spine_objects.insert(mpid, (21, mat_json));
+                        val["m_Materials"][i] = serde_json::json!({ "m_FileID": 0, "m_PathID": mpid });
+                    }
+                }
                 spine_objects.insert(obj.path_id, (obj.class_id, val));
             }
         }
@@ -361,7 +544,7 @@ fn process_bundle(
         let mut all_objects: HashMap<i64, (i32, serde_json::Value)> = HashMap::new();
 
         for entry in &bundle.files {
-            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+            if is_resource_entry(&entry.path) {
                 continue;
             }
             let sf = match SerializedFile::parse(entry.data.clone()) {
@@ -483,7 +666,7 @@ fn process_bundle(
         let mut tex_dirs: HashMap<String, PathBuf> = HashMap::new();
 
         for entry in &bundle.files {
-            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+            if is_resource_entry(&entry.path) {
                 continue;
             }
 
@@ -686,7 +869,7 @@ fn cmd_list(args: &cli::ListArgs) {
             entry.data.len()
         );
 
-        if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+        if is_resource_entry(&entry.path) {
             println!("  (resource data)");
             continue;
         }

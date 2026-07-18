@@ -1,14 +1,16 @@
-import { MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SparklesIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
+import { Switch } from "#/components/ui/switch";
 import { useTheme } from "#/hooks/use-theme";
 import { accentToRenderedHex, COLOR_PRESETS, PRESET_MATCH_TOLERANCE } from "#/lib/theme/color-utils";
 import { cn } from "#/lib/utils";
 
 export default function ThemeToggle() {
-    const { mode, resolved, accent, isDefaultAccent, setMode, setPresetHue, setCustomHex, resetAccent } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork } = useTheme();
     const customInputId = useId();
+    const dynamicArtId = useId();
 
     const TriggerIcon = mode === "auto" ? MonitorIcon : mode === "dark" ? MoonIcon : SunIcon;
     const triggerLabel = mode === "auto" ? "Theme: System" : `Theme: ${mode === "dark" ? "Dark" : "Light"}`;
@@ -85,6 +87,17 @@ export default function ThemeToggle() {
                         <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label="Choose custom accent color" />
                     </label>
+
+                    <div className="-mx-1 h-px bg-border" />
+
+                    <label htmlFor={dynamicArtId} className="flex cursor-pointer items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
+                            <SparklesIcon className="h-3.5 w-3.5" />
+                            Dynamic art
+                        </span>
+                        <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label="Animate dynamic (L2D) operator art" />
+                    </label>
+                    <p className="text-[10px] text-muted-foreground/70 leading-snug">Animate L2D art on operator and profile pages. Heavier to load.</p>
                 </div>
             </PopoverContent>
         </Popover>

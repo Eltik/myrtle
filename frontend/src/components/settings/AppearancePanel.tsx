@@ -3,13 +3,14 @@ import { useId } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { Switch } from "#/components/ui/switch";
 import { useTheme } from "#/hooks/use-theme";
 import { accentToRenderedHex, COLOR_PRESETS, PRESET_MATCH_TOLERANCE } from "#/lib/theme/color-utils";
 import { cn } from "#/lib/utils";
-import { SectionLabel } from "./SettingsShell";
+import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, setMode, setPresetHue, setCustomHex, resetAccent } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork } = useTheme();
     const customInputId = useId();
 
     const renderedHex = accentToRenderedHex(accent, resolved === "dark");
@@ -76,6 +77,21 @@ export function AppearancePanel() {
                             </Button>
                         ) : null}
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Dynamic art</CardTitle>
+                    <CardDescription>
+                        Animate L2D (dynamic) operator illustrations across operator and profile pages.{" "}
+                        <Badge variant="outline" size="sm" className="ml-1 font-mono">
+                            localStorage · myrtle-dynamic-art
+                        </Badge>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <SettingRow layout="inline" title="Animate dynamic art" description="Plays multi-megabyte Spine animations in place of static art. On by default; turn it off to save bandwidth." control={<Switch checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label="Animate dynamic art" />} />
                 </CardContent>
             </Card>
         </div>

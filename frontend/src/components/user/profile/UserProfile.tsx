@@ -14,6 +14,7 @@ import { PlansTab } from "./impl/components/tabs/Plans/PlansTab";
 import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
 import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
+import { DynamicArtProvider } from "./impl/dynamic-art";
 import type { TabId } from "./impl/types";
 
 const SKELETON_TAG_WIDTHS = [
@@ -157,16 +158,18 @@ export function UserProfile() {
     }
 
     return (
-        <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
-            <Hero profile={data} />
-            <StatStrip profile={data} rosterCount={roster?.length} />
-            <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-            {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
-            {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
-            {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
-            {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
-            {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} server={data.server} uid={id} />}
-            {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
-        </main>
+        <DynamicArtProvider server={data.server}>
+            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
+                <Hero profile={data} />
+                <StatStrip profile={data} rosterCount={roster?.length} />
+                <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+                {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
+                {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
+                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} secretary={data.secretary} secretarySkinId={data.secretary_skin_id} server={data.server} uid={id} />}
+                {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
+            </main>
+        </DynamicArtProvider>
     );
 }

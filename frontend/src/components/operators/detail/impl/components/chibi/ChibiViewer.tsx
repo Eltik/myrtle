@@ -6,13 +6,27 @@ import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
 import { capitalize } from "#/lib/utils";
 import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, type ViewType } from "./constants";
 import { DownloadButton } from "./download-button";
-import { chibiMaxScale, getAvailableViewTypes, getChibiSkinData, type IAnimationBounds, loadSpineWithEncodedURLs, measureAnimationBounds } from "./helpers";
+import { chibiMaxScale, getAvailableViewTypes, type IAnimationBounds, loadSpineWithEncodedURLs, measureAnimationBounds, resolveChibiView } from "./helpers";
 import { useRecorder } from "./use-recorder";
 
 interface IChibiViewerProps {
     chibi: IChibiCharacter | null;
     skin: IChibiSkin | null;
     server?: "en" | "cn";
+}
+
+/**
+ * Dorm chibis rest on "Relax" when available; other views open on the looping
+ * "Idle" (skeletons that ship a "Start" intro clip still begin on "Idle").
+ */
+function pickInitialAnimation(animations: string[], viewType: ViewType): string {
+    if (viewType === "dorm") {
+        if (animations.includes("Relax")) return "Relax";
+        if (animations.includes("Idle")) return "Idle";
+        return animations[0] ?? "Idle";
+    }
+    if (animations.includes("Start") || animations.includes("Idle")) return "Idle";
+    return animations[0] ?? "Idle";
 }
 
 export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
@@ -72,8 +86,9 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
         const loadSpine = async () => {
             if (currentLoadId !== loadIdRef.current || !mountedRef.current) return;
 
-            const skinData = getChibiSkinData(chibi, skinName, viewType);
-            if (!skinData?.atlas || !skinData.skel || !skinData.png) {
+            const resolved = resolveChibiView(chibi, skinName, viewType);
+            const skinData = resolved?.files;
+            if (!resolved || !skinData?.atlas || !skinData.skel || !skinData.png) {
                 setError("No spine data available");
                 setIsLoading(false);
                 return;
@@ -85,7 +100,6 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             try {
                 if (currentLoadId !== loadIdRef.current || !mountedRef.current) return;
 
-                // Drop any prior spine before loading the new one
                 if (spineRef.current && appRef.current) {
                     appRef.current.stage.removeChild(spineRef.current);
                     spineRef.current.destroy();
@@ -106,14 +120,15 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 const animations = spine.spineData.animations.map((a: { name: string }) => a.name);
                 setAvailableAnimations(animations);
 
+                const initialAnim = pickInitialAnimation(animations, viewType);
+
+                const bounds = measureAnimationBounds(spine, initialAnim);
                 const { width, height } = appRef.current.screen;
                 spine.x = width * CHIBI_OFFSET_X;
                 spine.y = height * CHIBI_OFFSET_Y;
                 spine.scale.set(chibiMaxScale(width, height));
 
-                const initialAnim = viewType === "dorm" ? (animations.includes("Relax") ? "Relax" : animations.includes("Idle") ? "Idle" : (animations[0] ?? "Idle")) : animations.includes("Start") ? "Idle" : animations.includes("Idle") ? "Idle" : (animations[0] ?? "Idle");
-
-                setAnimationBounds(measureAnimationBounds(spine, initialAnim));
+                setAnimationBounds(bounds);
                 spine.state.setAnimation(0, initialAnim, true);
                 setSelectedAnimation(initialAnim);
 
@@ -177,7 +192,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             mountedRef.current = false;
             cleanup();
         };
-    }, [chibi, skin?.name, viewType, skin, server]);
+    }, [chibi, skin, viewType, server]);
 
     const handleAnimationChange = (value: string | null) => {
         setSelectedAnimation(value ?? selectedAnimation);
@@ -199,11 +214,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Select disabled={isLoading || availableViewTypes.length <= 1 || isRecording} onValueChange={handleViewTypeChange} value={viewType}>
                     <SelectTrigger className="h-8 w-22.5 text-xs">
-                        <SelectValue placeholder="View">
-                            {(value: string) => {
-                                return capitalize(value);
-                            }}
-                        </SelectValue>
+                        <SelectValue placeholder="View">{(value: string) => capitalize(value)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                         {availableViewTypes.includes("front") && <SelectItem value="front">Front</SelectItem>}

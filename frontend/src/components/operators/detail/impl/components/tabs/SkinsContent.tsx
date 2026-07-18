@@ -5,12 +5,14 @@ import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { chibiByOperatorQueryOptions } from "#/lib/api/chibis";
+import { useTheme } from "#/hooks/use-theme";
+import { chibiByOperatorQueryOptions, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
 import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
+import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
 
 interface ISkinsContentProps {
     operator: IOperatorListItem;
@@ -48,6 +50,36 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
         return chibiCharacter.skins.find((s) => s.name === key) ?? chibiCharacter.skins[0] ?? null;
     }, [chibiCharacter, selected]);
 
+    // Dynamic (L2D) art for the selected outfit. Matched strictly (no
+    // fallback-to-first-skin like the chibi above) so it never plays another
+    // outfit's animation; the default skin's dynamic art is the E2
+    // illustration, so it's only used on the E2 art entry.
+    const dynamicFiles = useMemo(() => {
+        if (!chibiCharacter || !selected) return null;
+        const key = chibiSkinKey(selected.id);
+        if (key === "default" && !selected.id.endsWith("_e2")) return null;
+        const keyLower = key.toLowerCase();
+        const skinEntry = chibiCharacter.skins.find((s) => s.name.toLowerCase() === keyLower);
+        const dyn = skinEntry?.animationTypes.dynamic;
+        return isCompleteSpineFiles(dyn) ? dyn : null;
+    }, [chibiCharacter, selected]);
+
+    // Playing dynamic art is a global preference (localStorage) set from the
+    // Appearance menu, not a per-page toggle. The L2D skeleton frames itself to
+    // its own animation bounds (it's a different crop/composition than the static
+    // charart, so the two can't be reliably overlaid — the reference aklive2d
+    // renderer likewise shows no static). The static image is the load placeholder
+    // and fades out once the animation is ready.
+    const { dynamicArtwork } = useTheme();
+    const dynSkel = dynamicFiles?.skel ?? null;
+    // Which dynamic skin has finished loading — so the static fades only once the
+    // CURRENT skin's animation is ready (switching skins clears it automatically).
+    const [readySkel, setReadySkel] = useState<string | null>(null);
+    // The live renderer plays whenever a dynamic scene exists; skins without one
+    // simply keep their static illustration (the player errors out quietly).
+    const showDynamic = dynamicArtwork && !!dynamicFiles;
+    const dynamicReady = !!dynSkel && readySkel === dynSkel;
+
     if (skinsLoading)
         return (
             <div className="min-w-0 overflow-hidden p-4 md:p-6">
@@ -79,9 +111,14 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                 <div className="flex min-w-0 flex-col gap-4">
                     {selected && (
                         <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border bg-linear-to-b from-secondary/30 via-secondary/10 to-secondary/40 md:aspect-16/11">
-                            <img alt={selected.name} className="absolute inset-0 h-full w-full object-contain" decoding="async" loading="eager" src={selected.image} />
+                            {/* The static skin art is a load placeholder that fades out once the
+                                animation is ready; the L2D then draws the same art as its backdrop
+                                (aligned behind the spine) so the full painted vista fills in even
+                                when the dynamic asset omits it (sky/interior). */}
+                            <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
+                            {showDynamic && dynamicFiles && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
-                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name}>
+                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null}>
                                 <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
@@ -120,7 +157,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                     const obtained = selected.displaySkin?.obtainApproach ?? (selected.isDefault || selected.id.endsWith("_e2") ? "Unlocked by default" : null);
                     const dialog = selected.displaySkin?.dialog;
                     const usage = selected.displaySkin?.usage;
-                    const colors = (selected.displaySkin?.colorList ?? []).filter((c) => c?.startsWith("#"));
+                    const colors = [...new Set((selected.displaySkin?.colorList ?? []).filter((c) => c?.startsWith("#")))];
 
                     return (
                         <div className="mt-5 overflow-hidden rounded-xl border border-border bg-card/60">
@@ -191,6 +228,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
 interface ISkinViewerDialogProps {
     imageSrc: string;
     skinName: string;
+    /** When set, the fullscreen viewer plays the animated L2D (authored framing)
+     * instead of the static zoom/pan image. */
+    dynamic?: { files: IChibiSpineFiles; server?: "en" | "cn" } | null;
     children: React.ReactNode;
 }
 
@@ -209,7 +249,7 @@ const INITIAL_TRANSFORM: ITransform = { zoom: 1, pan: { x: 0, y: 0 } };
 
 const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
 
-export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, children }: ISkinViewerDialogProps) {
+export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, children }: ISkinViewerDialogProps) {
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
     const [isPanning, setIsPanning] = useState(false);
     const panStartRef = useRef({ x: 0, y: 0 });
@@ -312,32 +352,45 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
-                        <ZoomOut className="h-4 w-4" />
-                    </ToolButton>
-                    <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
-                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
-                        <ZoomIn className="h-4 w-4" />
-                    </ToolButton>
-                    <div className="mx-1 h-4 w-px bg-border" />
-                    <ToolButton onClick={reset} label="Reset view">
-                        <RotateCcw className="h-3.5 w-3.5" />
-                    </ToolButton>
+                    {!dynamic && (
+                        <>
+                            <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
+                                <ZoomOut className="h-4 w-4" />
+                            </ToolButton>
+                            <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
+                            <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
+                                <ZoomIn className="h-4 w-4" />
+                            </ToolButton>
+                            <div className="mx-1 h-4 w-px bg-border" />
+                            <ToolButton onClick={reset} label="Reset view">
+                                <RotateCcw className="h-3.5 w-3.5" />
+                            </ToolButton>
+                        </>
+                    )}
                     <ToolButton onClick={onDownload} label="Download">
                         <Download className="h-3.5 w-3.5" />
                     </ToolButton>
                 </div>
 
-                <div ref={setContainerRef} role="application" className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
-                    <div
-                        className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
-                        style={{
-                            transform: `scale(${BASE_SCALE * transform.zoom}) translate(${transform.pan.x / (BASE_SCALE * transform.zoom)}px, ${transform.pan.y / (BASE_SCALE * transform.zoom)}px)`,
-                        }}
-                    >
-                        <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />
+                {dynamic ? (
+                    // Fullscreen L2D with the game's authored (`_adjustes`) framing —
+                    // the large, roughly-square viewport where the full-scene
+                    // composition looks right (unlike the narrow card).
+                    <div className="relative h-full w-full overflow-hidden">
+                        <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" backdrop={imageSrc} />
                     </div>
-                </div>
+                ) : (
+                    <div ref={setContainerRef} role="application" className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
+                        <div
+                            className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
+                            style={{
+                                transform: `scale(${BASE_SCALE * transform.zoom}) translate(${transform.pan.x / (BASE_SCALE * transform.zoom)}px, ${transform.pan.y / (BASE_SCALE * transform.zoom)}px)`,
+                            }}
+                        >
+                            <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />
+                        </div>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );

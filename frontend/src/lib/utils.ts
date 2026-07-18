@@ -12,8 +12,6 @@ type User = {
     secretary_skin_id?: string | null;
 } | null;
 
-const DEFAULT_SECRETARY_ID = "char_002_amiya";
-
 function avatarBase(): string {
     return env.VITE_BACKEND_URL ?? "";
 }
@@ -51,7 +49,7 @@ function resolveSecretarySkinId(user: User): string | null {
 }
 
 export function getSecretaryAvatarURL(user: User): string {
-    const skinId = resolveSecretarySkinId(user) ?? DEFAULT_SECRETARY_ID;
+    const skinId = resolveSecretarySkinId(user) ?? DEFAULT_AVATAR_ID;
     return `${avatarBase()}/api/avatar/${toAvatarStem(skinId)}`;
 }
 
@@ -262,6 +260,8 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Ritualist Supporter";
         case "summoner":
             return "Summoner Supporter";
+        case "supportiveranger":
+            return "Supportive Ranger";
 
         // Vanguard
         case "agent":
@@ -323,6 +323,7 @@ export const SUB_PROFESSION_TO_PROFESSION: Record<string, string> = {
     ringhealer: "MEDIC",
     healer: "MEDIC",
     wandermedic: "MEDIC",
+    watchman: "MEDIC",
 
     aoesniper: "SNIPER",
     siegesniper: "SNIPER",
@@ -588,18 +589,5 @@ export const RARITY_LABELS: Record<number, string> = {
 export const FALLBACK_TIER_COLORS = ["oklch(0.62 0.21 24)", "oklch(0.70 0.17 50)", "oklch(0.78 0.15 92)", "oklch(0.66 0.17 150)", "oklch(0.60 0.15 230)", "oklch(0.55 0.18 290)", "oklch(0.50 0.04 285)"] as const;
 
 export function rarityStarColor(rarity: number): string {
-    switch (rarity) {
-        case 6:
-            return "#f7a452";
-        case 5:
-            return "#f7e79e";
-        case 4:
-            return "#bcabdb";
-        case 3:
-            return "#88c8e3";
-        case 2:
-            return "#7ef2a3";
-        default:
-            return "#b5b5b5";
-    }
+    return RARITY_HEX_MUTED[rarity] ?? "#b5b5b5";
 }

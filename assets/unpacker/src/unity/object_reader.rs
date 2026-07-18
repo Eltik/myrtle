@@ -105,7 +105,7 @@ fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, 
     const MAX_INITIAL_CAP: usize = 1024;
 
     // Check if this is a map (element type is "pair")
-    if element_node.type_name == "pair" {
+    let result = if element_node.type_name == "pair" {
         let mut map = serde_json::Map::with_capacity(size.min(MAX_INITIAL_CAP));
         for _ in 0..size {
             let key = read_value(r, &element_node.children[0])?;
@@ -116,22 +116,25 @@ fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, 
             };
             map.insert(key_str, val);
         }
-        Ok(Value::Object(map))
+        Value::Object(map)
     } else {
         let mut arr = Vec::with_capacity(size.min(MAX_INITIAL_CAP));
         for _ in 0..size {
             arr.push(read_value(r, element_node)?);
         }
-        Ok(Value::Array(arr))
-    }
-}
+        Value::Array(arr)
+    };
 
-#[allow(dead_code)]
-#[must_use]
-pub fn read_objects_by_class(file: &SerializedFile, class_ids: &[i32]) -> Vec<(i64, Value)> {
-    file.objects
-        .iter()
-        .filter(|obj| class_ids.contains(&obj.class_id))
-        .filter_map(|obj| read_object(file, obj).ok().map(|v| (obj.path_id, v)))
-        .collect()
+    // Unity's `kAlignBytes` (0x4000) flag for an array lives on the inner `Array`
+    // node, not on the outer container (vector/set/...). It means "align to 4
+    // after the whole array". Applying it here is required for arrays of packed
+    // primitives whose byte length isn't a multiple of 4 (e.g. an odd-length
+    // `m_IndexBuffer`); omitting it leaves the reader misaligned and corrupts
+    // every subsequent field. align(4) on an already-aligned position is a no-op,
+    // so this never over-shifts arrays that were already aligned.
+    if array_node.meta_flag & 0x4000 != 0 {
+        r.align(4);
+    }
+
+    Ok(result)
 }

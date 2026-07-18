@@ -6,6 +6,7 @@ pub mod manifest;
 pub mod pipeline;
 pub mod profile;
 pub mod progress;
+pub mod resource_manifest;
 pub mod server;
 pub mod types;
 pub mod version;

@@ -9,6 +9,7 @@ import { ScrollArea } from "#/components/ui/scroll-area";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { cn, formatSharePct, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import { DynamicArtOverlay } from "../../../../DynamicArtOverlay";
 
 type OwnershipFilter = "all" | "missing" | "owned";
 type SortMode = "brand" | "date" | "popularity";
@@ -548,13 +549,15 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
     const drawers = ds?.drawerList ?? null;
     const releaseTs = ds?.getTime ? ds.getTime * 1000 : null;
     const heroUrl = skinTexture(skin.charId, skin.skinId);
+    const [dynActive, setDynActive] = useState(false);
 
     return (
         <DialogContent bottomStickOnMobile={false} className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" showCloseButton>
             <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[5fr_4fr]">
                 <div className="relative flex items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:border-border/60 md:border-r">
-                    <img alt={`${opName} ${skinName}`} className="h-full w-full object-contain object-bottom" decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarUrl)} src={heroUrl} />
+                    <img alt={`${opName} ${skinName}`} className={cn("h-full w-full object-contain object-bottom transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarUrl)} src={heroUrl} />
+                    <DynamicArtOverlay operatorCode={skin.charId} skinId={skin.skinId} fit={{ mode: "contain", align: "bottom" }} onActiveChange={setDynActive} />
                     <span className="absolute top-3 left-3">
                         <OwnershipBadge color={color} owned={owned} />
                     </span>

@@ -8,7 +8,10 @@ export interface IChibiSpineFiles {
     png: string | null;
 }
 
-export type ChibiAnimationType = "front" | "back" | "dorm";
+/** Whether a spine set is complete enough to load (skel + atlas + png all present). */
+export function isCompleteSpineFiles(files: IChibiSpineFiles | undefined | null): files is IChibiSpineFiles {
+    return !!files?.skel && !!files.atlas && !!files.png;
+}
 
 export interface IChibiSkin {
     name: string;
@@ -48,6 +51,30 @@ export function chibiByOperatorQueryOptions(operatorId: string, server: "en" | "
         queryKey: ["chibis", "operator", server, operatorId],
         queryFn: () => (operatorId ? getChibiByOperatorFn({ data: { operatorId, server } }) : Promise.resolve(null)),
         enabled: !!operatorId,
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * The full operator chibi catalog (`GET /static/chibis`). One request covers
+ * every operator's skin -> animationTypes map, so a page that needs dynamic-art
+ * lookups for many operators at once (e.g. the roster) fetches this once instead
+ * of hitting `/chibis/{id}` per operator.
+ */
+export const getOperatorChibisFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { server: "en" | "cn" }) => data)
+    .handler(async ({ data: { server } }) => {
+        const path = server === "cn" ? "/cn/static/chibis" : "/static/chibis";
+        const res = await backendFetch(path);
+        if (!res.ok) throw new Error(`Failed to load chibi catalog: ${res.status}`);
+        return (await res.json()) as IChibiResponse;
+    });
+
+export function operatorChibisQueryOptions(server: "en" | "cn" = "en") {
+    return queryOptions({
+        queryKey: ["chibis", "catalog", server],
+        queryFn: () => getOperatorChibisFn({ data: { server } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

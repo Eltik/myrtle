@@ -10,6 +10,7 @@ import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { formatProfession } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
+import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
@@ -34,6 +35,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const [levelProgress, setLevelProgress] = useState(0);
     const [trustProgress, setTrustProgress] = useState(0);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [dynActive, setDynActive] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -100,7 +102,8 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                 >
                     <div className="relative">
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
-                            <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-transform duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                            <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[transform,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
+                            <DynamicArtOverlay operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "contain", align: "center" }} onActiveChange={setDynActive} />
                             <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
                             <div className="absolute right-0 bottom-0 left-0 p-4">
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>

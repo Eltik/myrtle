@@ -1,5 +1,5 @@
 import { Store } from "@tanstack/store";
-import { type Accent, applyAccentColors, clearAccentColors, DEFAULT_PRIMARY_HUE, generateAccentColors, getStoredAccent, setStoredAccent } from "#/lib/theme/color-utils";
+import { type Accent, applyAccentColors, clearAccentColors, generateAccentColors, getStoredAccent, setStoredAccent } from "#/lib/theme/color-utils";
 
 export type ThemeMode = "light" | "dark" | "auto";
 export type ResolvedTheme = "light" | "dark";
@@ -8,16 +8,26 @@ interface IThemeState {
     mode: ThemeMode;
     resolved: ResolvedTheme;
     accent: Accent | null;
+    /** Play animated L2D (dynamic) operator art site-wide. On by default; users can opt out. */
+    dynamicArtwork: boolean;
     hydrated: boolean;
 }
 
 const THEME_MODE_STORAGE_KEY = "theme";
+const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
     const stored = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
     if (stored === "light" || stored === "dark" || stored === "auto") return stored;
     return "auto";
+}
+
+function getInitialDynamicArtwork(): boolean {
+    // On by default; only an explicit opt-out ("false") disables it.
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(DYNAMIC_ART_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
 }
 
 function getSystemResolved(): ResolvedTheme {
@@ -33,6 +43,7 @@ export const themeStore = new Store<IThemeState>({
     mode: "auto",
     resolved: "dark",
     accent: null,
+    dynamicArtwork: true,
     hydrated: false,
 });
 
@@ -67,7 +78,7 @@ export function hydrateTheme(): void {
     const accent = getStoredAccent();
     const resolved = applyMode(mode);
     applyAccent(accent, resolved);
-    themeStore.setState(() => ({ mode, resolved, accent, hydrated: true }));
+    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), hydrated: true }));
 }
 
 let systemMediaQuery: MediaQueryList | null = null;
@@ -120,6 +131,10 @@ export const themeActions = {
         themeStore.setState((s) => ({ ...s, accent: null }));
         setStoredAccent(null);
     },
+    setDynamicArtwork(enabled: boolean): void {
+        themeStore.setState((s) => ({ ...s, dynamicArtwork: enabled }));
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem(DYNAMIC_ART_STORAGE_KEY, String(enabled));
+        }
+    },
 };
-
-export { DEFAULT_PRIMARY_HUE };

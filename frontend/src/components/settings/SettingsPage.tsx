@@ -21,20 +21,24 @@ const NAV = [
     { id: "danger" as const, label: "Danger zone", Icon: TriangleAlertIcon },
 ];
 
-function initialSettings(user: IUserProfile): IUpdateUserSettingsInput {
+function initialSettings(user: IUserProfile | null): IUpdateUserSettingsInput {
     return {
-        public_profile: user.public_profile ?? true,
-        store_gacha: user.store_gacha ?? true,
-        share_stats: user.share_stats ?? true,
+        public_profile: user?.public_profile ?? true,
+        store_gacha: user?.store_gacha ?? true,
+        share_stats: user?.share_stats ?? true,
     };
 }
 
-export function SettingsPage({ user }: { user: IUserProfile }) {
+export function SettingsPage({ user }: { user: IUserProfile | null }) {
     const navigate = useNavigate();
     const { logout } = useAuth();
     const queryClient = useQueryClient();
 
-    const [active, setActive] = useState<SettingsSectionId>("profile");
+    // Appearance is a client-side preference (theme, accent, dynamic art) and
+    // is available to everyone; the account sections require signing in.
+    const nav = user ? NAV : NAV.filter((n) => n.id === "appearance");
+
+    const [active, setActive] = useState<SettingsSectionId>(user ? "profile" : "appearance");
     const [settings, setSettings] = useState<IUpdateUserSettingsInput>(() => initialSettings(user));
     const [signingOut, setSigningOut] = useState(false);
 
@@ -106,12 +110,12 @@ export function SettingsPage({ user }: { user: IUserProfile }) {
     };
 
     return (
-        <SettingsShell nav={NAV} active={active} onChange={setActive}>
-            {active === "profile" && <ProfilePanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} />}
+        <SettingsShell nav={nav} active={active} onChange={setActive}>
+            {user && active === "profile" && <ProfilePanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} />}
             {active === "appearance" && <AppearancePanel />}
-            {active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
-            {active === "data" && <DataPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} />}
-            {active === "danger" && <DangerPanel />}
+            {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
+            {user && active === "data" && <DataPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} />}
+            {user && active === "danger" && <DangerPanel />}
         </SettingsShell>
     );
 }

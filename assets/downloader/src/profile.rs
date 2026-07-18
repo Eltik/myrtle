@@ -1,3 +1,12 @@
+/// Index files (`hot_update_list.idx`, the resource-manifest `<md5>.idx`) are
+/// kept by every profile — they drive incremental pulls and dependency
+/// resolution.
+fn is_idx(name: &str) -> bool {
+    std::path::Path::new(name)
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("idx"))
+}
+
 /// Bundles the Stage Viewer needs: every stage's level scene (for the map/enemy
 /// renderer and clickability) plus the map-preview thumbnails and zone/event/IS
 /// banner art.
@@ -22,10 +31,7 @@ pub fn keep_for_stages(name: &str) -> bool {
         "avg/imgs/avg_img_rogue_",
         "avg/imgs/asp_rl",
     ];
-    std::path::Path::new(name)
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("idx"))
-        || PREFIXES.iter().any(|p| name.starts_with(p))
+    is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
 }
 
 #[must_use]
@@ -34,6 +40,10 @@ pub fn keep_for_operators(name: &str) -> bool {
         "anon/",
         "chararts/",
         "skinpack/",
+        "arts/dynchars/",
+        "arts/dynavatars",
+        "[uc]shaders",
+        "refs/fx/",
         "spritepack/char_portrait_",
         "arts/charportraits/",
         "spritepack/ui_char_avatar_",
@@ -50,10 +60,7 @@ pub fn keep_for_operators(name: &str) -> bool {
         "audio/sound_beta_2/btl_snd_",
         "audio/sound_beta_2/voice",
     ];
-    std::path::Path::new(name)
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("idx"))
-        || PREFIXES.iter().any(|p| name.starts_with(p))
+    is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
 }
 
 #[cfg(test)]
@@ -63,6 +70,10 @@ mod tests {
     #[test]
     fn keeps_operator_assets_and_ui_icons() {
         assert!(keep_for_operators("chararts/char_002_amiya.ab"));
+        assert!(keep_for_operators(
+            "arts/dynchars/char_1012_skadi2_boc#4.ab"
+        ));
+        assert!(keep_for_operators("arts/dynavatars_0.ab"));
         assert!(keep_for_operators("spritepack/skill_icons_h1_0.ab"));
         assert!(keep_for_operators("anon/foo.ab"));
         assert!(keep_for_operators("hot_update_list.idx"));

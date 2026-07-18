@@ -13,9 +13,11 @@ import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as StagesRouteImport } from './routes/stages'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as EnemiesRouteImport } from './routes/enemies'
+import { Route as DyntestRouteImport } from './routes/dyntest'
 import { Route as DonateRouteImport } from './routes/donate'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as ChangelogRouteImport } from './routes/changelog'
@@ -36,7 +38,6 @@ import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
-import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/index'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
@@ -72,6 +73,11 @@ const StagesRoute = StagesRouteImport.update({
   path: '/stages',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -85,6 +91,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
 const EnemiesRoute = EnemiesRouteImport.update({
   id: '/enemies',
   path: '/enemies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DyntestRoute = DyntestRouteImport.update({
+  id: '/dyntest',
+  path: '/dyntest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DonateRoute = DonateRouteImport.update({
@@ -186,11 +197,6 @@ const EnemiesIdRoute = EnemiesIdRouteImport.update({
   path: '/enemies/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const AuthedAdminRoute = AuthedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -269,15 +275,16 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
+  '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
-  '/settings': typeof AuthedSettingsRoute
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -312,14 +319,15 @@ export interface FileRoutesByTo {
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
+  '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
-  '/settings': typeof AuthedSettingsRoute
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -356,15 +364,16 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
   '/donate': typeof DonateRoute
+  '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
+  '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
-  '/_authed/settings': typeof AuthedSettingsRoute
   '/enemies_/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -401,15 +410,16 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/discord'
     | '/donate'
+    | '/dyntest'
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/settings'
     | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
     | '/admin'
-    | '/settings'
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
@@ -444,14 +454,15 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/discord'
     | '/donate'
+    | '/dyntest'
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/settings'
     | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
-    | '/settings'
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
@@ -487,15 +498,16 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/discord'
     | '/donate'
+    | '/dyntest'
     | '/enemies'
     | '/operators'
     | '/privacy'
+    | '/settings'
     | '/stages'
     | '/stats'
     | '/terms'
     | '/tier-lists'
     | '/_authed/admin'
-    | '/_authed/settings'
     | '/enemies_/$id'
     | '/gacha/community'
     | '/gacha/history'
@@ -532,9 +544,11 @@ export interface RootRouteChildren {
   ChangelogRoute: typeof ChangelogRoute
   DiscordRoute: typeof DiscordRoute
   DonateRoute: typeof DonateRoute
+  DyntestRoute: typeof DyntestRoute
   EnemiesRoute: typeof EnemiesRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
+  SettingsRoute: typeof SettingsRoute
   StagesRoute: typeof StagesRoute
   StatsRoute: typeof StatsRoute
   TermsRoute: typeof TermsRoute
@@ -589,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -608,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/enemies'
       fullPath: '/enemies'
       preLoaderRoute: typeof EnemiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dyntest': {
+      id: '/dyntest'
+      path: '/dyntest'
+      fullPath: '/dyntest'
+      preLoaderRoute: typeof DyntestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/donate': {
@@ -750,13 +778,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnemiesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/settings': {
-      id: '/_authed/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/admin': {
       id: '/_authed/admin'
       path: '/admin'
@@ -886,14 +907,12 @@ const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
 
 interface AuthedRouteChildren {
   AuthedAdminRoute: typeof AuthedAdminRouteWithChildren
-  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedTierListsMyRoute: typeof AuthedTierListsMyRoute
   AuthedTierListsMyIdEditRoute: typeof AuthedTierListsMyIdEditRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminRoute: AuthedAdminRouteWithChildren,
-  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedTierListsMyRoute: AuthedTierListsMyRoute,
   AuthedTierListsMyIdEditRoute: AuthedTierListsMyIdEditRoute,
 }
@@ -907,9 +926,11 @@ const rootRouteChildren: RootRouteChildren = {
   ChangelogRoute: ChangelogRoute,
   DiscordRoute: DiscordRoute,
   DonateRoute: DonateRoute,
+  DyntestRoute: DyntestRoute,
   EnemiesRoute: EnemiesRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
+  SettingsRoute: SettingsRoute,
   StagesRoute: StagesRoute,
   StatsRoute: StatsRoute,
   TermsRoute: TermsRoute,

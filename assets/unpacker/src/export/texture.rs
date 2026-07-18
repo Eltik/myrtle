@@ -20,6 +20,19 @@ pub fn decode_texture_object(
     let name = obj["m_Name"].as_str().unwrap_or("unnamed");
     let width = obj["m_Width"].as_u64().unwrap_or(0) as u32;
     let height = obj["m_Height"].as_u64().unwrap_or(0) as u32;
+
+    // A pre-decoded texture injected by external-texture resolution (`fx_textures`):
+    // the RGBA is already decoded + flipped, so pass it straight through.
+    if let Some(b64) = obj.get("_decodedRGBA").and_then(Value::as_str) {
+        let rgba = base64::engine::general_purpose::STANDARD
+            .decode(b64)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        if width == 0 || height == 0 || rgba.len() != (width * height * 4) as usize {
+            return Ok(None);
+        }
+        return Ok(Some(DecodedTexture { name: name.to_string(), width, height, rgba }));
+    }
+
     let format = obj["m_TextureFormat"].as_i64().unwrap_or(0) as i32;
     let image_data = obj["image data"].as_str().unwrap_or("");
 

@@ -5,7 +5,6 @@ use crate::unity::{
     type_tree::{TypeTreeNode, read_type_tree_blob},
 };
 
-#[allow(dead_code)]
 pub struct SerializedFile {
     pub objects: Vec<ObjectInfo>,
     pub types: Vec<SerializedType>,
@@ -13,8 +12,25 @@ pub struct SerializedFile {
     pub target_platform: i32,
     pub enable_type_tree: bool,
     pub data: Vec<u8>,
-    pub data_offset: u64,
     pub big_endian: bool,
+    /// External file dependencies (`m_Externals`), indexed by a PPtr's
+    /// `m_FileID`: `m_FileID == 0` is this file, `n` is `externals[n-1]`.
+    pub externals: Vec<FileIdentifier>,
+}
+
+/// One entry of a SerializedFile's `m_Externals` dependency table.
+pub struct FileIdentifier {
+    /// The referenced file's path (e.g. a CAB name like `CAB-<hash>`), used to
+    /// locate the bundle that actually holds an externally-referenced object.
+    pub path: String,
+}
+
+impl FileIdentifier {
+    /// The bare CAB name: the last path segment (`"archive:/CAB-x/CAB-x"` → `"CAB-x"`).
+    #[must_use]
+    pub fn cab_name(&self) -> &str {
+        self.path.rsplit('/').next().unwrap_or(&self.path)
+    }
 }
 
 pub struct ObjectInfo {
@@ -116,6 +132,36 @@ impl SerializedFile {
             });
         }
 
+        // ScriptTypes (`m_ScriptTypes`) — present since version 11; skipped.
+        if version >= 11 {
+            let script_count = r.read_i32()?;
+            for _ in 0..script_count.max(0) {
+                let _local_file_index = r.read_i32()?;
+                if version >= 14 {
+                    r.align(4);
+                    let _local_id = r.read_i64()?;
+                } else {
+                    let _local_id = i64::from(r.read_i32()?);
+                }
+            }
+        }
+
+        // Externals (`m_Externals`): the dependency table PPtrs point into.
+        let mut externals = Vec::new();
+        if let Ok(ext_count) = r.read_i32() {
+            for _ in 0..ext_count.max(0) {
+                if version >= 6 {
+                    let _temp_empty = r.read_cstring()?;
+                }
+                if version >= 5 {
+                    let _guid = r.read_bytes(16)?;
+                    let _type = r.read_i32()?;
+                }
+                let path = r.read_cstring()?;
+                externals.push(FileIdentifier { path });
+            }
+        }
+
         Ok(Self {
             objects,
             types,
@@ -123,8 +169,8 @@ impl SerializedFile {
             target_platform,
             enable_type_tree,
             data,
-            data_offset,
             big_endian,
+            externals,
         })
     }
 }

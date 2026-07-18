@@ -1,10 +1,13 @@
 mod cli;
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use downloader::{download, hot_update, manifest, pipeline, server::Server, types, version};
+use downloader::{
+    download, hot_update, manifest, pipeline, resource_manifest, server::Server, types, version,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,7 +20,6 @@ async fn main() -> anyhow::Result<()> {
     let server: Server = cli.server.parse()?;
     let client = reqwest::Client::new();
 
-    // Fetch version
     let ver = version::fetch_version(&client, server.version_url()).await?;
     println!(
         "Client: {}  Resources: {}",
@@ -74,7 +76,6 @@ async fn run_download(
     let groups =
         hot_update::fetch_hot_update_list(client, server.cdn_base_url(), &ver.res_version).await?;
 
-    // Select which groups to download
     let selected: Vec<_> = if all {
         groups
     } else if let Some(pkgs) = packages {
@@ -87,7 +88,6 @@ async fn run_download(
         anyhow::bail!("specify --all or --packages");
     };
 
-    // Flatten to tasks, filter by manifest
     std::fs::create_dir_all(&cli.savedir)?;
     let mut manifest = manifest::Manifest::load(&cli.savedir)?;
     let all_files: Vec<_> = selected.iter().flat_map(|g| &g.files).cloned().collect();
@@ -97,26 +97,20 @@ async fn run_download(
     let all_files: Vec<_> = match profile {
         Some("full") | None => all_files,
         Some(spec) => {
-            let profiles: Vec<&str> = spec
-                .split(',')
-                .map(str::trim)
-                .filter(|s| !s.is_empty())
-                .collect();
-            for p in &profiles {
-                if !matches!(*p, "operators" | "stages") {
-                    anyhow::bail!("unknown profile: {p} (expected: operators, stages, full)");
-                }
+            let mut keep_fns: Vec<fn(&str) -> bool> = Vec::new();
+            for p in spec.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+                keep_fns.push(match p {
+                    "operators" => downloader::profile::keep_for_operators,
+                    "stages" => downloader::profile::keep_for_stages,
+                    _ => anyhow::bail!("unknown profile: {p} (expected: operators, stages, full)"),
+                });
             }
-            all_files
-                .into_iter()
-                .filter(|f| {
-                    profiles.iter().any(|p| match *p {
-                        "operators" => downloader::profile::keep_for_operators(&f.name),
-                        "stages" => downloader::profile::keep_for_stages(&f.name),
-                        _ => false,
-                    })
-                })
-                .collect()
+            let kept: Vec<_> = all_files
+                .iter()
+                .filter(|f| keep_fns.iter().any(|keep| keep(&f.name)))
+                .cloned()
+                .collect();
+            expand_with_dependencies(&cli.savedir, all_files, kept)
         }
     };
     let tasks: Vec<_> = manifest
@@ -148,4 +142,46 @@ async fn run_download(
     );
 
     Ok(())
+}
+
+/// Expand a prefix-selected set (`kept`) to include every downloadable bundle
+/// reachable via transitive `allDependencies` in the resource manifest.
+///
+/// `all_files` is the full downloadable set (before profile filtering); it is
+/// the source we map dependency bundle *names* back to concrete
+/// [`types::HotFile`]s (with md5/size). Dependency names absent from
+/// `all_files` (not separately downloadable) are skipped. When no resource
+/// manifest `.idx` is present under `savedir`, `kept` is returned unchanged so
+/// behavior matches the prior prefix-only selection.
+fn expand_with_dependencies(
+    savedir: &std::path::Path,
+    all_files: Vec<types::HotFile>,
+    kept: Vec<types::HotFile>,
+) -> Vec<types::HotFile> {
+    let manifest = match resource_manifest::ResourceManifest::find_and_load(savedir) {
+        Ok(Some(m)) => m,
+        Ok(None) => return kept,
+        Err(e) => {
+            eprintln!(
+                "warning: could not parse resource manifest, using prefix-only selection: {e}"
+            );
+            return kept;
+        }
+    };
+
+    let closure = manifest.dependency_closure(kept.iter().map(|f| f.name.as_str()));
+    let kept_names: HashSet<String> = kept.iter().map(|f| f.name.clone()).collect();
+
+    let mut result = kept;
+    let before = result.len();
+    result.extend(
+        all_files
+            .into_iter()
+            .filter(|f| !kept_names.contains(&f.name) && closure.contains(&f.name)),
+    );
+    let added = result.len() - before;
+    if added > 0 {
+        println!("+{added} shared dependency bundle(s) added via manifest closure");
+    }
+    result
 }

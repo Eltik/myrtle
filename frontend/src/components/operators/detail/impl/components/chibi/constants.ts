@@ -3,11 +3,17 @@ export const CHIBI_OFFSET_Y = 0.85;
 export const CHIBI_SCALE = 0.75;
 export const ANIMATION_SPEED = 1;
 
+// Dynamic illustrations are full-size art (thousands of px), so they are
+// fitted to the canvas from measured bounds instead of using the fixed chibi
+// anchor/scale. The margin leaves a little breathing room at the edges.
+export const DYNAMIC_FIT_MARGIN = 0.95;
+
 export const EXPORT_WIDTH = 600;
 export const EXPORT_HEIGHT = 400;
 export const EXPORT_PADDING = 8;
-export const EXPORT_GIF_FPS = 20;
-export const EXPORT_MP4_FPS = 30;
+// Dyn illust bounds can be huge; past this the H.264 encoder rejects the
+// configure and gif.js memory explodes, so exports shrink to fit instead.
+export const MAX_EXPORT_DIM = 2048;
 export const EXPORT_BG_COLOR = 0x111014;
 
 export type ViewType = "front" | "back" | "dorm" | "dynamic";
