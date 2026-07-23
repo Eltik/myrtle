@@ -16,15 +16,15 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::path::Path;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
-use super::spine::{get_path_id, is_additive, BgParticleHost};
+use super::spine::{BgParticleHost, get_path_id, is_additive};
 use super::texture::decode_texture_object;
 
 const RAD_TO_DEG: f64 = 180.0 / PI;
 
 /// Identity `_MainTex_ST` tuple: `[scaleX, scaleY, offsetX, offsetY]`.
-const ST_IDENTITY: [f64; 4] = [1.0, 1.0, 0.0, 0.0];
+pub(super) const ST_IDENTITY: [f64; 4] = [1.0, 1.0, 0.0, 0.0];
 
 /// One parsed particle system, ready for texture dedup + JSON emit. The system
 /// JSON is fully built except for the `tex` index, which is resolved in
@@ -160,7 +160,10 @@ fn decode_gradient(g: &Value) -> Vec<Value> {
     let mut col_keys: Vec<(f64, [f64; 3])> = Vec::new();
     for idx in 0..n_col {
         let t = fd(g, &format!("ctime{idx}"), 0.0) / 65535.0;
-        let c = g.get(format!("key{idx}")).map(read_color).unwrap_or([1.0; 4]);
+        let c = g
+            .get(format!("key{idx}"))
+            .map(read_color)
+            .unwrap_or([1.0; 4]);
         col_keys.push((t, [c[0], c[1], c[2]]));
     }
     let mut alpha_keys: Vec<(f64, f64)> = Vec::new();
@@ -282,6 +285,79 @@ fn matrix_z_deg(m: &super::mesh::Mat4) -> f64 {
     (f64::from(a[1][0]).atan2(f64::from(a[0][0]))) * RAD_TO_DEG
 }
 
+/// Prefab-root membership scoping for a particle collection pass: the exporting
+/// skeleton's OWN root and the set of ALL skeleton roots in the bundle (see the
+/// scoping skip in [`collect_dynchar_particles`]).
+pub(crate) struct RootScope<'a> {
+    pub own: Option<i64>,
+    pub skeleton_roots: &'a std::collections::HashSet<i64>,
+}
+
+/// The `_Start`-cinematic animation context for a particle collection pass: the
+/// per-GameObject reveal windows, animated emission-rate curves, event-driven-rate
+/// GameObjects (idle path), and effect-host transform (scale/position) curves. All
+/// empty for the idle/main scene (which plays none of these clips).
+pub(crate) struct EntranceCtx<'a> {
+    pub windows: &'a HashMap<i64, super::anim::ActiveWindow>,
+    pub rate_curves: &'a HashMap<i64, Vec<(f32, f32)>>,
+    pub event_rate_gos: &'a std::collections::HashSet<i64>,
+    pub transform_curves: &'a HashMap<i64, super::anim::EntranceTransform>,
+    /// Whether this pass is the `_Start` cinematic (vs. the idle/main scene).
+    /// Gates [`apply_followbone_reveal_inheritance`] — a bone-follower rig
+    /// "sibling reveal" is a cinematic reveal-window (`m_IsActive`) concept;
+    /// the idle scene's `delay` field means something different (a per-system
+    /// serialized `startDelay`/`_delayTime`, not a group reveal), so it must
+    /// not borrow a sibling's individually-authored startup delay.
+    pub is_entrance: bool,
+}
+
+/// Propagate a shared reveal through a bone-follower rig. Some falling-apple/
+/// comet-rig leaves are not individually gated by `m_IsActive`/`_delayTime`,
+/// but share a `followBone` with siblings that are and should not render from
+/// t=0.
+fn apply_followbone_reveal_inheritance(out: &mut [ParticleData]) {
+    let mut groups: HashMap<String, Vec<usize>> = HashMap::new();
+    for (idx, particle) in out.iter().enumerate() {
+        if let Some(follow_bone) = particle.json.get("followBone").and_then(Value::as_str) {
+            groups.entry(follow_bone.to_owned()).or_default().push(idx);
+        }
+    }
+
+    for indices in groups.into_values() {
+        let mut gated = Vec::new();
+        let mut ungated = Vec::new();
+        for idx in indices {
+            match out[idx].json.get("delay").and_then(Value::as_f64) {
+                Some(delay) => gated.push(delay),
+                None if out[idx].json.get("delay").is_none() => ungated.push(idx),
+                None => {}
+            }
+        }
+
+        if gated.is_empty() || ungated.is_empty() {
+            continue;
+        }
+
+        gated.sort_by(|a, b| a.total_cmp(b));
+        let mut reveal_value = gated[0];
+        let mut largest_count = 0;
+        for &candidate in &gated {
+            let count = gated
+                .iter()
+                .filter(|&&delay| (delay - candidate).abs() < 1e-4)
+                .count();
+            if count > largest_count {
+                largest_count = count;
+                reveal_value = candidate;
+            }
+        }
+
+        for idx in ungated {
+            out[idx].json["delay"] = json!(reveal_value);
+        }
+    }
+}
+
 /// Parse every enabled, emitting `ParticleSystem` in a dynchar prefab into
 /// [`ParticleData`]. `inv_scale` is `1.0 / skeletonScale` (Unity units → px).
 ///
@@ -293,8 +369,13 @@ pub(crate) fn collect_dynchar_particles(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
     host: &BgParticleHost,
-    entrance_windows: &HashMap<i64, super::anim::ActiveWindow>,
+    entrance: &EntranceCtx<'_>,
+    scope: &RootScope<'_>,
 ) -> (Vec<ParticleData>, usize) {
+    let entrance_windows = entrance.windows;
+    let entrance_rate_curves = entrance.rate_curves;
+    let event_rate_gos = entrance.event_rate_gos;
+    let entrance_transform_curves = entrance.transform_curves;
     // GameObject path_id → Renderer(199) value.
     let mut go_to_renderer: HashMap<i64, &Value> = HashMap::new();
     for (cid, v) in all_objects.values() {
@@ -322,10 +403,30 @@ pub(crate) fn collect_dynchar_particles(
             continue;
         };
 
+        // The nearest ancestor the `_Start` clip drives with a Transform-scale curve
+        // (Virtuosa's crown `ctrl` above the glow hosts). Empty map on the idle path.
+        let transform_host =
+            host.entrance_transform_host_of_go(all_objects, go_pid, entrance_transform_curves);
+
+        // Is this system under a DIFFERENT skeleton's prefab root (the sibling
+        // `dyn_illust_*`/`dyn_entrance_*` instance)? Such systems are normally that
+        // scene's effect, dropped here — UNLESS the cinematic reaches across roots to
+        // drive this exact host (a clip-scaled effect host), in which case it belongs
+        // in the entrance scene and bypasses both the active-state and scoping gates.
+        let cross_root = matches!(
+            (scope.own, host.prefab_root_of_go(all_objects, go_pid)),
+            (Some(own), Some(root)) if root != own && scope.skeleton_roots.contains(&root)
+        );
+        let admit_cross_root = cross_root && transform_host.is_some();
+
         // Active up the whole hierarchy — excludes emitters under a state-gated
         // inactive group ("Start/Interact/Special Only Effects"), which otherwise
         // all play at once in the idle scene (noise).
-        if !host.effectively_active(all_objects, go_pid) {
+        if !admit_cross_root && !host.effectively_active(all_objects, go_pid) {
+            skipped += 1;
+            continue;
+        }
+        if cross_root && !admit_cross_root {
             skipped += 1;
             continue;
         }
@@ -347,6 +448,12 @@ pub(crate) fn collect_dynchar_particles(
             skipped += 1; // nothing is ever emitted
             continue;
         }
+        // Event-clip-driven rate with no bursts: quiet at the steady state (the rate
+        // is exported as 0 below) — nothing would ever spawn, so drop the system.
+        if event_rate_gos.contains(&go_pid) && bursts_raw.is_empty() {
+            skipped += 1;
+            continue;
+        }
 
         // Renderer (blend / sort / render mode / material texture).
         let renderer = go_to_renderer.get(&go_pid).copied();
@@ -357,15 +464,13 @@ pub(crate) fn collect_dynchar_particles(
             continue;
         }
 
-        let sort = renderer
-            .and_then(|r| i(r, "m_SortingOrder"))
-            .unwrap_or(0);
-        let render_mode = render_mode_name(
-            renderer.and_then(|r| i(r, "m_RenderMode")).unwrap_or(0),
-        );
+        let sort = renderer.and_then(|r| i(r, "m_SortingOrder")).unwrap_or(0);
+        let render_mode =
+            render_mode_name(renderer.and_then(|r| i(r, "m_RenderMode")).unwrap_or(0));
 
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
-        let (tex_val, alpha_val, tex_pid, blend, main_st) = resolve_renderer_texture(all_objects, renderer);
+        let (tex_val, alpha_val, tex_pid, blend, main_st) =
+            resolve_renderer_texture(all_objects, renderer);
 
         // Ram shader family (`Ram/Disturb` / `Ram/VertexDisturb`): a ramp-tint +
         // dissolve + UV-disturb compositor sampling 4–6 textures. Its params +
@@ -376,7 +481,10 @@ pub(crate) fn collect_dynchar_particles(
         // Emitter world transform (spine-root frame) → position (px) + Z rot.
         let world = host.world_of_go(all_objects, go_pid);
         let origin = world.point([0.0, 0.0, 0.0]);
-        let pos = [f64::from(origin[0]) * inv_scale, f64::from(origin[1]) * inv_scale];
+        let pos = [
+            f64::from(origin[0]) * inv_scale,
+            f64::from(origin[1]) * inv_scale,
+        ];
         let rot = matrix_z_deg(&world);
 
         // Ancestor GameObject-name chain (nearest→root). The frontend matches
@@ -395,8 +503,23 @@ pub(crate) fn collect_dynchar_particles(
         //      ~4.8–9.8s; without this they emit from t=0 (seated intro) and are spent
         //      before the apple falls, so the gold sparkle is missing at the transform.
         // Empty `entrance_windows` (main/idle scenes) → mechanism 2 is a no-op.
+        //   3. the ParticleSystem's own serialized `startDelay` (seconds) — Unity waits
+        //      this long after Play() before the system's clock starts. Mlynar "Fields
+        //      of Ruination" sequences its ENTIRE entrance with it (weapon flash 8.72s,
+        //      the transform explosion `bao_01` 12.4s, wind gusts 2.3–11.6s, the bird
+        //      burst 4.4s) — no `_delayTime` activators exist in that prefab at all.
+        //      It runs AFTER the activation gates, so it ADDS to the later of (1)/(2).
         let ent_reveal = host.entrance_reveal_of_go(all_objects, go_pid, entrance_windows);
-        let delay = host.delay_of_go(all_objects, go_pid).max(f64::from(ent_reveal.unwrap_or(0.0)));
+        let start_delay = ps
+            .get("startDelay")
+            .and_then(|sd| sd.get("scalar"))
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+            .max(0.0);
+        let delay = host
+            .delay_of_go(all_objects, go_pid)
+            .max(f64::from(ent_reveal.unwrap_or(0.0)))
+            + start_delay;
 
         // The emitter's world scale. Particle SIZE, SPEED, SHAPE offsets and
         // per-particle VELOCITY are authored in the emitter's LOCAL frame; Unity
@@ -434,10 +557,116 @@ pub(crate) fn collect_dynchar_particles(
             sys["delay"] = json!(delay);
         }
 
+        // spine-unity `BoneFollower` in the ancestry: the followed rig's serialized
+        // transform is only an editor pose — at runtime the follower SNAPS that GO
+        // onto the named SPINE BONE, so the emitter's true position is
+        // `bone(t) + followOffset` (the emitter's offset within the rig). Virtuosa's
+        // entrance apple/comet rig (`start_apple_01(Clone)` → `L_C_Apple_F`) rides a
+        // bone the `Start` animation plunges down the shaft — without this the whole
+        // rig exports at its editor pose and the falling apple never appears. The
+        // baked `pos` is kept as-is; the frontend rebases when the bone exists.
+        if let Some((bone, follow_rot, follower_go)) = host.follower_of_go(all_objects, go_pid) {
+            let fw = host.world_of_go(all_objects, follower_go);
+            let fo = fw.point([0.0, 0.0, 0.0]);
+            sys["followBone"] = json!(bone);
+            sys["followBoneRot"] = json!(follow_rot);
+            sys["followOffset"] = json!([
+                (f64::from(origin[0]) - f64::from(fo[0])) * inv_scale,
+                (f64::from(origin[1]) - f64::from(fo[1])) * inv_scale,
+            ]);
+        }
+
+        // Entrance-clip Transform SCALE/position on an effect-host ancestor (Virtuosa's
+        // crown `ctrl`): a big golden halo shrinks (scale 1.0→0.28) into the small resting
+        // crown over 9.4–12.43s. The baked pose captures only the resting transform, so the
+        // shrink-in is emitted as replayable curves the frontend applies to the emitter
+        // container. Fully generic — any skin whose `_Start` clip scales an effect host
+        // gains its scale-in, keyed on data alone.
+        if let Some(ctrl) = transform_host
+            && let Some(et) = entrance_transform_curves.get(&ctrl)
+            && let Some((scale0, pos0)) = host.local_scale_pos_of_go(all_objects, ctrl)
+        {
+            // The ctrl's world ORIGIN — the fixed point the scale pivots about (px, Y-up).
+            let ctrl_world = host.world_of_go(all_objects, ctrl);
+            let pivot_w = ctrl_world.point([0.0, 0.0, 0.0]);
+            let pivot_px = [
+                f64::from(pivot_w[0]) * inv_scale,
+                f64::from(pivot_w[1]) * inv_scale,
+            ];
+            // scaleCurve: the animated factor / the baked (resting) factor → a multiplier
+            // of the emitter's already-baked size, 1.0 at the resting pose.
+            let s0 = f64::from(scale0[0]);
+            if s0.abs() > 1e-4 {
+                let sc: Vec<Value> = et
+                    .scale
+                    .iter()
+                    .map(|&(t, v)| json!({ "t": t, "v": f64::from(v) / s0 }))
+                    .collect();
+                sys["scaleCurve"] = json!(sc);
+                sys["scalePivot"] = json!(pivot_px);
+            }
+            // posCurve: the ctrl's animated LOCAL position, projected through its PARENT
+            // world matrix into a px OFFSET of the pivot from its resting position (Y-up).
+            if !et.pos_x.is_empty()
+                && let Some(parent_w) = host.parent_world_of_go(all_objects, ctrl)
+            {
+                let base = parent_w.point(pos0);
+                let mut times: Vec<f32> = et
+                    .pos_x
+                    .iter()
+                    .map(|&(t, _)| t)
+                    .chain(et.pos_y.iter().map(|&(t, _)| t))
+                    .collect();
+                times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                times.dedup_by(|a, b| (*a - *b).abs() < 1e-4);
+                let sample = |c: &[(f32, f32)], t: f32, fb: f32| -> f32 {
+                    if c.is_empty() {
+                        return fb;
+                    }
+                    if t <= c[0].0 {
+                        return c[0].1;
+                    }
+                    for w in c.windows(2) {
+                        if t <= w[1].0 {
+                            let (t0, v0) = w[0];
+                            let (t1, v1) = w[1];
+                            return if t1 > t0 {
+                                v0 + (v1 - v0) * (t - t0) / (t1 - t0)
+                            } else {
+                                v0
+                            };
+                        }
+                    }
+                    c[c.len() - 1].1
+                };
+                let pc: Vec<Value> = times
+                    .iter()
+                    .map(|&t| {
+                        let lp = [
+                            sample(&et.pos_x, t, pos0[0]),
+                            sample(&et.pos_y, t, pos0[1]),
+                            pos0[2],
+                        ];
+                        let w = parent_w.point(lp);
+                        json!({
+                            "t": t,
+                            "x": f64::from(w[0] - base[0]) * inv_scale,
+                            "y": f64::from(w[1] - base[1]) * inv_scale,
+                        })
+                    })
+                    .collect();
+                sys["posCurve"] = json!(pc);
+            }
+        }
+
         // _MainTex UV tiling/offset [scaleX,scaleY,offsetX,offsetY]. Emitted only
         // when non-identity so the frontend crops the billboard to the atlas cell
         // the material selects (else it draws the whole flipbook atlas as one sprite).
-        if (main_st[0] - 1.0).abs() > 1e-4 || (main_st[1] - 1.0).abs() > 1e-4 || main_st[2].abs() > 1e-4 || main_st[3].abs() > 1e-4 {
+        if (main_st[0] - 1.0).abs() > 1e-4
+            || (main_st[1] - 1.0).abs() > 1e-4
+            || main_st[2].abs() > 1e-4
+            || main_st[3].abs() > 1e-4
+        {
             sys["mainST"] = json!(main_st);
         }
 
@@ -495,21 +724,36 @@ pub(crate) fn collect_dynchar_particles(
             let mut mesh_json = json!({ "pos": mpos, "uv": muv, "idx": m.indices });
             // Per-vertex colour only when it carries real (non-white) modulation
             // (fx meshes bake edge falloff / opacity here). Omitted when all white.
-            if m.colors.iter().any(|c| c[0] < 0.999 || c[1] < 0.999 || c[2] < 0.999 || c[3] < 0.999) {
+            if m.colors
+                .iter()
+                .any(|c| c[0] < 0.999 || c[1] < 0.999 || c[2] < 0.999 || c[3] < 0.999)
+            {
                 let mut mcol = Vec::with_capacity(m.colors.len() * 4);
                 for c in &m.colors {
-                    mcol.extend([f64::from(c[0]), f64::from(c[1]), f64::from(c[2]), f64::from(c[3])]);
+                    mcol.extend([
+                        f64::from(c[0]),
+                        f64::from(c[1]),
+                        f64::from(c[2]),
+                        f64::from(c[3]),
+                    ]);
                 }
                 mesh_json["col"] = json!(mcol);
             }
             sys["mesh"] = mesh_json;
         }
 
-        // Emission (rate + bursts).
-        let rate = emission
-            .get("rateOverTime")
-            .map(|r| mmscalar(r, 1.0))
-            .unwrap_or_else(|| json!({ "mode": "const", "v": 0.0 }));
+        // Emission (rate + bursts). A MAIN-scene emitter whose rate is driven by
+        // transition/one-shot state clips (`event_rate_gos`) is quiet at the steady
+        // idle — export rate 0 so the flourish-peak constant doesn't rain forever.
+        let event_quiet = event_rate_gos.contains(&go_pid);
+        let rate = if event_quiet {
+            json!({ "mode": "const", "v": 0.0 })
+        } else {
+            emission
+                .get("rateOverTime")
+                .map(|r| mmscalar(r, 1.0))
+                .unwrap_or_else(|| json!({ "mode": "const", "v": 0.0 }))
+        };
         let bursts: Vec<Value> = bursts_raw
             .iter()
             .map(|bu| {
@@ -526,6 +770,51 @@ pub(crate) fn collect_dynchar_particles(
             "bursts": bursts,
             "enabled": emission_enabled,
         });
+        // `rateOverDistance` (particles per world-unit of EMITTER travel): the trail
+        // mechanic of rigs that ride a moving anchor — Virtuosa's falling-apple comet
+        // (`spark_small`/`sand_ab_01`, rate-over-TIME 0) sheds gold dust only while
+        // its `L_C_Apple_F` bone plunges. Exported per-px (÷ inv_scale, the frontend
+        // measures emitter movement in export px). Omitted when zero everywhere.
+        if let Some(rod) = emission.get("rateOverDistance")
+            && !mmscalar_is_zero(rod)
+        {
+            sys["rateOverDistance"] = mmscalar(rod, 1.0 / inv_scale);
+        }
+        // Per-particle DISSOLVE-amount curve over normalized lifetime, from the
+        // `CustomDataModule`'s first Vector-mode stream (component 0 — the value the
+        // Ram shader reads as vs_TEXCOORD2.x and adds to `_Amount`). Virtuosa's
+        // entrance apples crumble away with it (−0.12 → 1.0 by ~30% of their 10s
+        // life); without it they'd ride the falling rig forever. Consumed by the
+        // frontend's RamEmitter only (plain billboards have no dissolve stage).
+        if let Some(cdm) = ps.get("CustomDataModule")
+            && b(cdm, "enabled", false)
+        {
+            for stream in 0..2 {
+                if i(cdm, &format!("mode{stream}")).unwrap_or(0) != 1 {
+                    continue;
+                }
+                if let Some(v0) = cdm.get(format!("vector{stream}_0").as_str())
+                    && let Some(mc) = v0.get("maxCurve")
+                {
+                    let scalar = fd(v0, "scalar", 1.0);
+                    let pts = sample_curve(mc, if scalar != 0.0 { scalar } else { 1.0 }, 1.0);
+                    if pts.len() > 1 {
+                        sys["ramDissolveCurve"] = json!(pts);
+                    }
+                }
+                break;
+            }
+        }
+        // The `_Start` cinematic can drive an emitter's rate DIRECTLY as an animation
+        // curve (`EmissionModule.rateOverTime.scalar` bindings) — Mlynar's sword clips
+        // gate the confetti/star systems this way (serialized rates of 60–150/s that
+        // the clips hold at 0 until the ~7–13s flourish). Without the curve those
+        // systems emit at full serialized rate from t=0. Exported in absolute
+        // cinematic seconds; the frontend samples it in place of the constant rate.
+        if let Some(rc) = entrance_rate_curves.get(&go_pid) {
+            let pts: Vec<Value> = rc.iter().map(|&(t, v)| json!({ "t": t, "v": v })).collect();
+            sys["rateCurve"] = json!(pts);
+        }
 
         // Shape.
         if let Some(shape) = ps.get("ShapeModule")
@@ -537,7 +826,10 @@ pub(crate) fn collect_dynchar_particles(
                 .and_then(|r| f(r, "value"))
                 .unwrap_or(0.0)
                 * em_inv;
-            let arc = shape.get("arc").and_then(|a| f(a, "value")).unwrap_or(360.0);
+            let arc = shape
+                .get("arc")
+                .and_then(|a| f(a, "value"))
+                .unwrap_or(360.0);
             let scale = shape.get("m_Scale");
             let box_wh = [
                 scale.and_then(|s| f(s, "x")).unwrap_or(1.0) * em_inv,
@@ -548,7 +840,10 @@ pub(crate) fn collect_dynchar_particles(
                 posv.and_then(|p| f(p, "x")).unwrap_or(0.0) * em_inv,
                 posv.and_then(|p| f(p, "y")).unwrap_or(0.0) * em_inv,
             ];
-            let rot_deg = shape.get("m_Rotation").and_then(|r| f(r, "z")).unwrap_or(0.0);
+            let rot_deg = shape
+                .get("m_Rotation")
+                .and_then(|r| f(r, "z"))
+                .unwrap_or(0.0);
             sys["shape"] = json!({
                 "type": stype,
                 "radius": radius,
@@ -604,7 +899,11 @@ pub(crate) fn collect_dynchar_particles(
             if nonzero {
                 // World-space velocity is already in the skeleton world frame
                 // (inv_scale); local-space velocity is in the emitter frame (em_inv).
-                let vscale = if b(vm, "inWorldSpace", false) { inv_scale } else { em_inv };
+                let vscale = if b(vm, "inWorldSpace", false) {
+                    inv_scale
+                } else {
+                    em_inv
+                };
                 sys["velocityOverLife"] = json!({
                     "x": vx.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
                     "y": vy.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
@@ -629,7 +928,11 @@ pub(crate) fn collect_dynchar_particles(
             let nonzero = fx.is_some_and(|v| !mmscalar_is_zero(v))
                 || fy.is_some_and(|v| !mmscalar_is_zero(v));
             if nonzero {
-                let fscale = if b(fm, "inWorldSpace", false) { inv_scale } else { em_inv };
+                let fscale = if b(fm, "inWorldSpace", false) {
+                    inv_scale
+                } else {
+                    em_inv
+                };
                 sys["forceOverLife"] = json!({
                     "x": fx.map(|v| mmscalar_repr(v, fscale)).unwrap_or(0.0),
                     "y": fy.map(|v| mmscalar_repr(v, fscale)).unwrap_or(0.0),
@@ -708,6 +1011,10 @@ pub(crate) fn collect_dynchar_particles(
         });
     }
 
+    if entrance.is_entrance {
+        apply_followbone_reveal_inheritance(&mut out);
+    }
+
     (out, skipped)
 }
 
@@ -750,7 +1057,13 @@ fn resolve_material(
     // atlas as one sprite (Hoshiguma the Breacher's wave systems → giant multi-wave
     // "plumes"). Reuse mat_texenv purely for its ST tuple.
     let (_, _, main_st) = mat_texenv(all_objects, mat, "_MainTex");
-    Some((tex_val.clone(), alpha_val, main_pid, is_additive(mat), main_st))
+    Some((
+        tex_val.clone(),
+        alpha_val,
+        main_pid,
+        is_additive(mat),
+        main_st,
+    ))
 }
 
 /// Resolve the renderer's first usable material (the particle's own texture)
@@ -759,7 +1072,9 @@ fn resolve_renderer_texture(
     all_objects: &HashMap<i64, (i32, Value)>,
     renderer: Option<&Value>,
 ) -> (Option<Value>, Option<Value>, Option<i64>, bool, [f64; 4]) {
-    let Some(materials) = renderer.and_then(|r| r.get("m_Materials")).and_then(Value::as_array)
+    let Some(materials) = renderer
+        .and_then(|r| r.get("m_Materials"))
+        .and_then(Value::as_array)
     else {
         return (None, None, None, false, ST_IDENTITY);
     };
@@ -807,7 +1122,7 @@ fn mat_color(mat: &Value, name: &str, default: [f64; 4]) -> [f64; 4] {
 /// `(path_id, Texture2D value, [scaleX,scaleY,offsetX,offsetY])`. The path_id /
 /// value are `None` when the slot is empty or its texture is not resolvable
 /// (in another bundle); the ST tuple always falls back to `[1,1,0,0]`.
-fn mat_texenv(
+pub(super) fn mat_texenv(
     all_objects: &HashMap<i64, (i32, Value)>,
     mat: &Value,
     slot: &str,
@@ -852,7 +1167,9 @@ fn resolve_ram(
     let materials = renderer?.get("m_Materials")?.as_array()?;
     let (mat, shader) = materials.iter().find_map(|mat_ref| {
         let mat_pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
-        let (21, mat) = all_objects.get(&mat_pid)? else { return None };
+        let (21, mat) = all_objects.get(&mat_pid)? else {
+            return None;
+        };
         let shader = mat.get("_shaderName").and_then(Value::as_str)?;
         shader.contains("Ram/").then_some((mat, shader))
     })?;
@@ -932,9 +1249,7 @@ fn resolve_trail_material(
 /// Reduce a Unity `NoiseModule` to the schema's `noise` object. All authored
 /// `MinMaxCurve`s are flattened to their representative (max-endpoint) scalar.
 fn parse_noise(nm: &Value, inv_scale: f64) -> Value {
-    let repr = |k: &str, scale: f64, d: f64| {
-        nm.get(k).map_or(d, |v| mmscalar_repr(v, scale))
-    };
+    let repr = |k: &str, scale: f64, d: f64| nm.get(k).map_or(d, |v| mmscalar_repr(v, scale));
     json!({
         // Position displacement amplitude → px.
         "strength": repr("strength", inv_scale, 0.0),

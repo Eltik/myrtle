@@ -143,6 +143,32 @@ pub struct BgQuad {
     /// is switched OFF by an `m_IsActive` curve in the `_Start` clips (the cinematic's
     /// environment SWAP). `None` = never hidden (visible to the end). Only `_Start` scenes.
     pub active_until: Option<f32>,
+    /// CROSS-ROOT reveal (seconds): the layer belongs to ANOTHER skeleton's prefab
+    /// root (the idle world inside an entrance scene) and only becomes visible when
+    /// the game activates that prefab at the director's transform beat. Kept apart
+    /// from `active_from`: it gates VISIBILITY only — the layer is scenery, not a
+    /// clip-authored overlay, so the frontend's overlay exemptions must not apply.
+    pub root_reveal_from: Option<f32>,
+    /// ENTRANCE material-colour animation `(t_seconds, rgba)` — the `_Start` clip's
+    /// animated material colour resolved against the static tint (see
+    /// [`super::anim::layer_color_curve`]), e.g. Mlynar's white flash fading 0→0.671.
+    /// `None` = the material colour isn't animated (the static `tint` stands).
+    pub color_curve: Option<Vec<(f32, [f32; 4])>>,
+    /// SHADER UV-SCROLL (Capability A): the Ram flowing-light shader family
+    /// (`Torappu/Particles-L2D/Ram/{Disturb,VertexDisturb}`, `_shaderName` contains
+    /// `"Ram/"`) scrolls `_MainTex` continuously against Unity `_Time` via the STATIC
+    /// material floats `_MainUSpeed`/`_MainVSpeed` (UV/sec, no AnimationClip). Baking only
+    /// the static ST froze it; this carries the per-second UV velocity `[u, v]` (Unity UV
+    /// space) so the frontend re-adds `_Time · speed` each frame. `None` unless the
+    /// material is a Ram-family shader with a non-zero `_Main*Speed`.
+    pub uv_scroll: Option<[f32; 2]>,
+    /// CLIP `_MainTex_ST` curve (Capability B): absolute texture Scale/Offset samples
+    /// `(t_seconds, [scaleX, scaleY, offsetX, offsetY])` animated by the `_Start` entrance
+    /// clip (e.g. Skadi2's `01 (4)`/`01 (5)` offset-Y sweep). When present, the STATIC `_MainTex`
+    /// ST is NOT baked into the UVs (the curve carries the full ST, including its static
+    /// components); the frontend applies `uv·[sx,sy]+[ox,oy]` per frame during the entrance.
+    /// `None` = no animated ST (the static ST is baked as before).
+    pub st_curve: Option<Vec<(f32, [f32; 4])>>,
 }
 
 /// Everything [`collect_dynchar_bg_quads`] resolves from a dynillust prefab's
@@ -177,9 +203,9 @@ pub fn detect_spine_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
         "arts/dynchars",
         "arts/dynavatars",
     ];
-    SPINE_SEGMENTS
-        .iter()
-        .any(|segment| path_lower.contains(&format!("/{segment}")) || path_lower.starts_with(segment))
+    SPINE_SEGMENTS.iter().any(|segment| {
+        path_lower.contains(&format!("/{segment}")) || path_lower.starts_with(segment)
+    })
 }
 
 /// Check if a bundle path is an enemy spine art bundle.
@@ -214,7 +240,9 @@ pub(crate) fn go_effectively_active(
     go_to_transform: &HashMap<i64, i64>,
     idle_active: &HashMap<i64, bool>,
 ) -> bool {
-    const STATE_ONLY: &[&str] = &["start", "interact", "special", "skill", "attack", "die", "assist"];
+    const STATE_ONLY: &[&str] = &[
+        "start", "interact", "special", "skill", "attack", "die", "assist",
+    ];
     let mut cur_tr = match go_to_transform.get(&go_pid) {
         Some(&t) => t,
         None => return true,
@@ -239,7 +267,11 @@ pub(crate) fn go_effectively_active(
                     }
                 }
             }
-            let name = gv.get("m_Name").and_then(Value::as_str).unwrap_or("").to_ascii_lowercase();
+            let name = gv
+                .get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_ascii_lowercase();
             if name.contains("only") && STATE_ONLY.iter().any(|s| name.contains(s)) {
                 return false;
             }
@@ -339,19 +371,103 @@ pub fn collect_spine_assets(
             // `_Start` cinematic scene; the MAIN scene's idle/interact/special clips also
             // toggle effects, but those layers are idle-visible, not entrance-sequenced.
             let is_entrance = base_name.to_lowercase().contains("_start");
-            let scene = collect_dynchar_bg_quads(all_objects, &spine_tex_pids, is_entrance);
-            claimed.extend(scene.claimed_tex.iter().copied());
             // Particle systems share the prefab's scene graph. Parse them into the
             // reduced `[particles]` schema; the character sort is the same key the
             // frontend uses to composite particles among the scene layers.
             let host = BgParticleHost::new(all_objects);
             let inv_scale = 1.0 / skel_scale.unwrap_or(0.01);
+            // Prefab-instance roots (see the particle RootScope below) — also used to
+            // sequence the ENTRANCE scene's cross-root layers at its authored reveal beat.
+            let own_root = mecanim_val
+                .get("m_GameObject")
+                .and_then(get_path_id)
+                .and_then(|go| host.prefab_root_of_go(all_objects, go));
+            let skeleton_roots: HashSet<i64> = skeleton_mecanims
+                .iter()
+                .filter_map(|(_, v)| v.get("m_GameObject").and_then(get_path_id))
+                .filter_map(|go| host.prefab_root_of_go(all_objects, go))
+                .collect();
+            // ENTRANCE scenes bundle BOTH prefab roots' layers (the union used to ship
+            // unsequenced). The game only activates the idle prefab at the earliest
+            // sufficiently-late authored beat — transform completion or voice-line start.
+            // This replaces always using transform completion, which was ~1.7s too late
+            // for skins with an earlier voice-line beat. Skins with neither late beat
+            // (Mlynar) keep the union always-on.
+            let cross_root_reveal = if is_entrance {
+                find_entrance_timing(all_objects).4
+            } else {
+                None
+            };
+            let scene = collect_dynchar_bg_quads(
+                all_objects,
+                &spine_tex_pids,
+                is_entrance,
+                cross_root_reveal,
+                own_root,
+                &skeleton_roots,
+                &host,
+            );
+            claimed.extend(scene.claimed_tex.iter().copied());
             // Entrance `m_IsActive` reveal times gate the `_Start` cinematic's particle
             // emitters (apple/glow/wing sparks toggle on mid-cinematic); empty for the
             // main/idle prefab so its particles keep their `_delayTime`-only delays.
-            let particle_windows = if is_entrance { super::anim::active_windows(all_objects) } else { HashMap::new() };
-            let (particles, skipped) =
-                super::particles::collect_dynchar_particles(all_objects, inv_scale, &host, &particle_windows);
+            let particle_windows = if is_entrance {
+                super::anim::active_windows(all_objects)
+            } else {
+                HashMap::new()
+            };
+            // Entrance-clip-animated emission rates (`EmissionModule.rateOverTime`
+            // bindings) gate confetti/star emitters whose SERIALIZED rate is a large
+            // constant (Mlynar's sword-flourish stars). Entrance-only: the idle
+            // prefab's copies are driven by their own state clips, not the cinematic.
+            let particle_rate_curves = if is_entrance {
+                super::anim::entrance_ps_rate_curves(all_objects)
+            } else {
+                HashMap::new()
+            };
+            // MAIN scene only: emitters whose rate is driven by transition/one-shot
+            // state clips are quiet at the steady idle (see `event_driven_rate_gos`);
+            // their serialized constant is a flourish peak, not an ambient rate. The
+            // entrance path instead replays the actual clip curves (`rateCurve`).
+            let event_rate_gos = if is_entrance {
+                HashSet::new()
+            } else {
+                super::anim::event_driven_rate_gos(all_objects)
+            };
+            // Entrance-clip Transform SCALE/position curves on effect hosts. A host the
+            // `_Start` clip scales (Virtuosa's crown `ctrl`, 1.0→0.28) is ADMITTED into the
+            // entrance export even when it lives under the OTHER (idle) prefab root — the
+            // cinematic reaches across roots to drive it — and its baked resting pose is
+            // animated by the exported `scaleCurve`/`posCurve`. Entrance-only: the idle
+            // scene never plays these clips, so its export stays scoped as before.
+            let entrance_transform_curves = if is_entrance {
+                super::anim::entrance_transform_curves(all_objects)
+            } else {
+                HashMap::new()
+            };
+            // Scope particle membership to THIS skeleton's prefab-instance root. A
+            // dynchar bundle ships sibling roots (`dyn_illust_*` idle + `dyn_entrance_*`
+            // cinematic), and every ParticleSystem of BOTH used to land in BOTH
+            // exports — the idle scene then ran the entrance's sword-confetti/star
+            // relays at their big SERIALIZED rates forever (the cinematic clips that
+            // gate them don't play in the idle). A system under ANOTHER skeleton's
+            // root is dropped; systems in shared/non-skeleton roots are kept.
+            let (particles, skipped) = super::particles::collect_dynchar_particles(
+                all_objects,
+                inv_scale,
+                &host,
+                &super::particles::EntranceCtx {
+                    windows: &particle_windows,
+                    rate_curves: &particle_rate_curves,
+                    event_rate_gos: &event_rate_gos,
+                    transform_curves: &entrance_transform_curves,
+                    is_entrance,
+                },
+                &super::particles::RootScope {
+                    own: own_root,
+                    skeleton_roots: &skeleton_roots,
+                },
+            );
             if !particles.is_empty() || skipped > 0 {
                 eprintln!(
                     "  particles: {} exported, {} skipped ({base_name})",
@@ -365,8 +481,17 @@ pub fn collect_spine_assets(
         };
 
         // ENTRANCE (`_Start`) director timing + camera — only the `_Start` prefab has them.
-        let (bg_entrance_duration, bg_entrance_transform, bg_entrance_view, bg_entrance_cam_offset, bg_entrance_ortho_curve, bg_entrance_voice, bg_entrance_pan_curve, bg_entrance_cam_center) = if category == SpineCategory::DynIllust && base_name.to_lowercase().contains("_start") {
-            let (dur, tr, ortho, voice) = find_entrance_timing(all_objects);
+        let (
+            bg_entrance_duration,
+            bg_entrance_transform,
+            bg_entrance_view,
+            bg_entrance_cam_offset,
+            bg_entrance_ortho_curve,
+            bg_entrance_voice,
+            bg_entrance_pan_curve,
+            bg_entrance_cam_center,
+        ) = if category == SpineCategory::DynIllust && base_name.to_lowercase().contains("_start") {
+            let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             // Entrance camera ortho size (world units) → authored-px full view (2·ortho·invScale),
             // the tight close-up the cinematic opens on before dollying out to the display frame.
             let inv = 1.0 / skel_scale.unwrap_or(0.01);
@@ -376,7 +501,16 @@ pub fn collect_spine_assets(
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects);
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
             let cam_center = super::anim::entrance_camera_track(all_objects, inv);
-            (dur, tr, ortho.map(|o| 2.0 * o * inv), cam_off, ortho_curve, voice, pan_curve, cam_center)
+            (
+                dur,
+                tr,
+                ortho.map(|o| 2.0 * o * inv),
+                cam_off,
+                ortho_curve,
+                voice,
+                pan_curve,
+                cam_center,
+            )
         } else {
             (None, None, None, None, None, None, None, None)
         };
@@ -425,7 +559,12 @@ fn atlas_max_dim(atlas_text: &str) -> u64 {
         .lines()
         .filter_map(|l| {
             let (w, h) = l.trim().strip_prefix("size:")?.split_once(',')?;
-            Some(w.trim().parse::<u64>().ok()?.max(h.trim().parse::<u64>().ok()?))
+            Some(
+                w.trim()
+                    .parse::<u64>()
+                    .ok()?
+                    .max(h.trim().parse::<u64>().ok()?),
+            )
         })
         .max()
         .unwrap_or(0)
@@ -480,10 +619,19 @@ fn reveal_of_go(
         if let Some(&w) = reveal.get(&g) {
             return w;
         }
-        let Some(tf) = go_to_transform.get(&g) else { break };
-        let father = all_objects.get(tf).and_then(|(_, v)| v.get("m_Father")).and_then(get_path_id).filter(|&p| p != 0);
+        let Some(tf) = go_to_transform.get(&g) else {
+            break;
+        };
+        let father = all_objects
+            .get(tf)
+            .and_then(|(_, v)| v.get("m_Father"))
+            .and_then(get_path_id)
+            .filter(|&p| p != 0);
         let Some(father) = father else { break };
-        cur_go = all_objects.get(&father).and_then(|(_, v)| v.get("m_GameObject")).and_then(get_path_id);
+        cur_go = all_objects
+            .get(&father)
+            .and_then(|(_, v)| v.get("m_GameObject"))
+            .and_then(get_path_id);
     }
     (None, None)
 }
@@ -500,6 +648,10 @@ fn collect_dynchar_bg_quads(
     all_objects: &HashMap<i64, (i32, Value)>,
     spine_tex_pids: &HashSet<i64>,
     is_entrance: bool,
+    cross_root_reveal: Option<f64>,
+    own_root: Option<i64>,
+    skeleton_roots: &HashSet<i64>,
+    host: &BgParticleHost,
 ) -> BgScene {
     // GameObject path_id → Transform (class 4), and → MeshFilter mesh pid.
     let mut go_to_transform: HashMap<i64, i64> = HashMap::new();
@@ -527,7 +679,27 @@ fn collect_dynchar_bg_quads(
     // A scene layer inherits the reveal of its nearest such ancestor. Only for the
     // `_Start` cinematic — the main scene's clip toggles are idle/interact state, not
     // an entrance sequence, so its layers stay always-visible.
-    let reveal_map = if is_entrance { super::anim::active_windows(all_objects) } else { HashMap::new() };
+    let reveal_map = if is_entrance {
+        super::anim::active_windows(all_objects)
+    } else {
+        HashMap::new()
+    };
+    // ENTRANCE per-layer material-colour animation: GO → animated colour channels from
+    // the `_Start` clip(s) (Mlynar's white flash ramps `_TintColor.a` 0→0.671 over
+    // 13→15s — static tint alone would hold it as an opaque white-wash).
+    let color_channels = if is_entrance {
+        super::anim::entrance_material_color_channels(all_objects)
+    } else {
+        HashMap::new()
+    };
+    // ENTRANCE per-layer animated `_MainTex_ST` curves (Capability B): GO → the four ST
+    // component curves from the `_Start` clip(s) (Skadi2's entrance seam sweep). Empty for
+    // the main scene (its clips don't animate ST).
+    let st_channels = if is_entrance {
+        super::anim::entrance_st_curves(all_objects)
+    } else {
+        HashMap::new()
+    };
 
     // GameObjects that own a spine skeleton (SkeletonMecanim/Animation) — the
     // character itself, excluded from the background.
@@ -538,32 +710,58 @@ fn collect_dynchar_bg_quads(
         .collect();
 
     // Character draw order = sorting order of a MeshRenderer on a spine GO.
-    let spine_sort = all_objects
-        .values()
-        .filter(|(cid, v)| {
-            *cid == 23
-                && v.get("m_GameObject")
-                    .and_then(get_path_id)
-                    .is_some_and(|go| spine_gos.contains(&go))
+    // Deterministic pick: own prefab root's spine renderer first, then path_id.
+    let mut spine_renderers: Vec<(i64, i64, i64)> = all_objects
+        .iter()
+        .filter_map(|(pid, (cid, v))| {
+            if *cid != 23 {
+                return None;
+            }
+            let go = v.get("m_GameObject").and_then(get_path_id)?;
+            if !spine_gos.contains(&go) {
+                return None;
+            }
+            let sort = v
+                .get("m_SortingOrder")
+                .and_then(serde_json::Value::as_i64)?;
+            Some((*pid, go, sort))
         })
-        .filter_map(|(_, v)| v.get("m_SortingOrder").and_then(serde_json::Value::as_i64))
-        .next()
-        .unwrap_or(0);
+        .collect();
+    spine_renderers.sort_unstable_by_key(|(pid, ..)| *pid);
+    if let Some(own) = own_root {
+        spine_renderers
+            .sort_by_key(|(_, go, _)| host.prefab_root_of_go(all_objects, *go) != Some(own));
+    }
+    let spine_sort = spine_renderers.first().map_or(0, |(.., sort)| *sort);
 
-    let camera_size = all_objects
-        .values()
-        .filter(|(cid, _)| *cid == 114)
+    // Display-controller MonoBehaviours in a DETERMINISTIC order: the OWN prefab
+    // root's controller first, then ascending path_id. A bundle can ship several
+    // controllers (sibling prefab roots), and picking via HashMap iteration made
+    // the camera fields flip between runs (amiya2's cameraSize 10.0 vs 10.5).
+    let mut controller_mbs: Vec<(i64, &Value)> = all_objects
+        .iter()
+        .filter(|(_, (cid, _))| *cid == 114)
+        .map(|(pid, (_, v))| (*pid, v))
+        .collect();
+    controller_mbs.sort_unstable_by_key(|(pid, _)| *pid);
+    if let Some(own) = own_root {
+        controller_mbs.sort_by_key(|(_, v)| {
+            v.get("m_GameObject")
+                .and_then(get_path_id)
+                .and_then(|go| host.prefab_root_of_go(all_objects, go))
+                != Some(own)
+        });
+    }
+    let camera_size = controller_mbs
+        .iter()
         .find_map(|(_, v)| v.get("_cameraSize").and_then(serde_json::Value::as_f64));
     // Render-target aspect from the display controller's _maxSize.
-    let max_aspect = all_objects
-        .values()
-        .filter(|(cid, _)| *cid == 114)
-        .find_map(|(_, v)| {
-            let ms = v.get("_maxSize")?;
-            let x = ms.get("x").and_then(serde_json::Value::as_f64)?;
-            let y = ms.get("y").and_then(serde_json::Value::as_f64)?;
-            (y > 0.0).then_some(x / y)
-        });
+    let max_aspect = controller_mbs.iter().find_map(|(_, v)| {
+        let ms = v.get("_maxSize")?;
+        let x = ms.get("x").and_then(serde_json::Value::as_f64)?;
+        let y = ms.get("y").and_then(serde_json::Value::as_f64)?;
+        (y > 0.0).then_some(x / y)
+    });
     // Authored full-illustration display frame from the display controller's
     // `_adjustes[0]` (offset = frame CENTRE, size.x = square full EXTENT, both in
     // spine-authored px). The camera is not centred on the skeleton root, so this
@@ -572,14 +770,20 @@ fn collect_dynchar_bg_quads(
     // (idle framing) and the tight adjust[1] (the zoomed-in open the viewer dollies out from).
     let parse_adjust = |a: &Value| -> (Option<(f64, f64)>, Option<f64>) {
         let off = a.get("offset");
-        let ox = off.and_then(|o| o.get("x")).and_then(serde_json::Value::as_f64);
-        let oy = off.and_then(|o| o.get("y")).and_then(serde_json::Value::as_f64);
-        let size = a.get("size").and_then(|s| s.get("x")).and_then(serde_json::Value::as_f64);
+        let ox = off
+            .and_then(|o| o.get("x"))
+            .and_then(serde_json::Value::as_f64);
+        let oy = off
+            .and_then(|o| o.get("y"))
+            .and_then(serde_json::Value::as_f64);
+        let size = a
+            .get("size")
+            .and_then(|s| s.get("x"))
+            .and_then(serde_json::Value::as_f64);
         (ox.zip(oy), size)
     };
-    let (camera_offset, camera_view, camera_offset2, camera_view2) = all_objects
-        .values()
-        .filter(|(cid, _)| *cid == 114)
+    let (camera_offset, camera_view, camera_offset2, camera_view2) = controller_mbs
+        .iter()
         .find_map(|(_, v)| {
             let adjustes = v.get("_adjustes")?.as_array()?;
             let (o0, s0) = parse_adjust(adjustes.first()?);
@@ -610,14 +814,49 @@ fn collect_dynchar_bg_quads(
         let Some(go_pid) = renderer.get("m_GameObject").and_then(get_path_id) else {
             continue;
         };
-        if spine_gos.contains(&go_pid) || !renderer.get("m_Enabled").and_then(serde_json::Value::as_bool).unwrap_or(true) {
+        if spine_gos.contains(&go_pid)
+            || !renderer
+                .get("m_Enabled")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true)
+        {
             continue;
         }
+        // ENTRANCE visibility window (self or nearest toggled ancestor). Resolved
+        // BEFORE the active-drop below: entrance-exclusive overlays (the
+        // `dyn_entrance_*` subtree, e.g. Mlynar's white-transition flash) ship
+        // `m_IsActive=0` in the prefab and are switched ON by the `_Start` clip's
+        // reveal timeline, so the static walk alone would drop them.
+        let window = reveal_of_go(go_pid, &reveal_map, &go_to_transform, all_objects);
+        // Cross-root reveal: in an ENTRANCE scene with an authored transform beat, a
+        // layer under ANOTHER skeleton's prefab root (the idle `dyn_illust_*` world)
+        // only becomes visible when the game activates that prefab AT the transform.
+        // Virtuosa's white mirror-world lives ONLY in the idle root — un-sequenced it
+        // washed out the 10.2–12.4s reveal that the game shows as the blue sea.
+        // Kept SEPARATE from the clip window: it must not rescue layers the gates
+        // below drop (inactive groups / `_meshExtResolved` materials).
+        let cross_from: Option<f32> = if is_entrance
+            && let Some(tr) = cross_root_reveal
+            && let (Some(own), Some(root)) = (own_root, host.prefab_root_of_go(all_objects, go_pid))
+            && root != own
+            && skeleton_roots.contains(&root)
+        {
+            Some(tr as f32)
+        } else {
+            None
+        };
         // Skip renderers under a state-gated (inactive) group. The prefab keeps
         // "Start Only Effects" / "Interact Only Effects" / "Special Only Effects"
         // groups m_IsActive=0 by default (the game activates them only during
         // those states), so their descendants must not appear in the idle scene.
-        if !go_effectively_active(all_objects, go_pid, &go_to_transform, &idle_pose.active) {
+        // EXCEPT: in the `_Start` scene, a GO whose `m_IsActive` the cinematic
+        // clip drives (a reveal window exists) is kept — the clip overrides the
+        // prefab flag at runtime and the window gates visibility instead. Covers
+        // both delayed reveals (Mlynar's white transition, activeFrom 13.0) and
+        // shown-from-0-then-hidden overlays (activeUntil only).
+        if !go_effectively_active(all_objects, go_pid, &go_to_transform, &idle_pose.active)
+            && window == (None, None)
+        {
             skipped_inactive += 1;
             continue;
         }
@@ -630,8 +869,23 @@ fn collect_dynchar_bg_quads(
         // Material: first with a resolvable, non-spine _MainTex.
         let materials = renderer.get("m_Materials").and_then(|v| v.as_array());
         let Some(materials) = materials else { continue };
-        // (tex_val, alpha_val, tint, additive, main_pid, src_blend, dst_blend)
-        type ResolvedQuadMaterial = (Value, Option<Value>, [f32; 4], bool, i64, f64, f64);
+        // (tex_val, alpha_val, tint, additive, main_pid, src_blend, dst_blend,
+        //  _MainTex ST as [scale_x, scale_y, offset_x, offset_y],
+        //  (saved colour props, tint-source prop) for the entrance colour animation,
+        //  shader tint scale — 2.0 for the legacy ×2 _TintColor family)
+        type ResolvedQuadMaterial = (
+            Value,
+            Option<Value>,
+            [f32; 4],
+            bool,
+            i64,
+            f64,
+            f64,
+            [f64; 4],
+            (Vec<(String, [f32; 4])>, Option<String>),
+            f32,
+            Option<[f32; 2]>,
+        );
         let mut resolved: Option<ResolvedQuadMaterial> = None;
         for mat_ref in materials {
             let Some(mat_pid) = get_path_id(mat_ref).filter(|&p| p != 0) else {
@@ -640,60 +894,164 @@ fn collect_dynchar_bg_quads(
             let Some((21, mat)) = all_objects.get(&mat_pid) else {
                 continue;
             };
-            let tex_envs = mat
-                .get("m_SavedProperties")
-                .and_then(|sp| sp.get("m_TexEnvs"))
-                .and_then(|te| te.as_object());
-            let Some(tex_envs) = tex_envs else { continue };
-            let Some(main_pid) = tex_envs
-                .get("_MainTex")
-                .and_then(|t| t.get("m_Texture"))
-                .and_then(get_path_id)
-                .filter(|&p| p != 0)
-            else {
+            // A `_MainTex` resolved BEYOND the baseline particle gates (opaque
+            // fill / distortion-shader sprite — see `_meshExtResolved` in the
+            // extractor) renders only on entrance-windowed layers: the cinematic
+            // deliberately sequences those (Mlynar's white flash), while an
+            // always-on frozen fx quad would pollute the idle scene.
+            if mat.get("_meshExtResolved").is_some() && window == (None, None) {
+                continue;
+            }
+            // _MainTex slot: texture + its Scale/Offset (ST). Unresolvable
+            // (cross-bundle) or non-Texture2D refs yield None → skip material.
+            let (main_pid, tex_val, st) =
+                super::particles::mat_texenv(all_objects, mat, "_MainTex");
+            let (Some(main_pid), Some(tex_val)) = (main_pid, tex_val) else {
                 continue;
             };
             if spine_tex_pids.contains(&main_pid) {
                 continue;
             }
-            // Skip textures living in other bundles (unresolvable) and non-Texture2D.
-            let Some((28, tex_val)) = all_objects.get(&main_pid) else {
-                continue;
-            };
             let tex_name = tex_val.get("m_Name").and_then(|v| v.as_str()).unwrap_or("");
             if tex_name.to_lowercase().starts_with("dyn_illust_")
                 || tex_name.to_lowercase().starts_with("dyn_portrait_")
             {
                 continue;
             }
-            let alpha_val = tex_envs
-                .get("_AlphaTex")
-                .and_then(|t| t.get("m_Texture"))
-                .and_then(get_path_id)
-                .filter(|&p| p != 0)
-                .and_then(|p| all_objects.get(&p))
-                .and_then(|(cid, v)| (*cid == 28).then(|| v.clone()));
-            let blend = |k: &str, d: f64| mat.get("m_SavedProperties").and_then(|s| s.get("m_Floats")).and_then(|f| f.get(k)).and_then(serde_json::Value::as_f64).unwrap_or(d);
+            let (_, alpha_val, _) = super::particles::mat_texenv(all_objects, mat, "_AlphaTex");
+            let blend = |k: &str, d: f64| {
+                mat.get("m_SavedProperties")
+                    .and_then(|s| s.get("m_Floats"))
+                    .and_then(|f| f.get(k))
+                    .and_then(serde_json::Value::as_f64)
+                    .unwrap_or(d)
+            };
+            // Legacy ×2 tint family: the shader samples `2 × _TintColor × tex`, so the
+            // effective static tint is the DOUBLED `_TintColor` (clamped like the blend
+            // stage) and `_TintColor` — not the unused `_Color` leftover — is the tint
+            // source the animated channels replace.
+            //
+            // Ram-family (`Torappu/Particles-L2D/Ram/*`) scene compositors are the same
+            // ×2 convention under a DIFFERENT property: they modulate by `_MainColor`
+            // (α≈0.5 = neutral, mirrored by the frontend Ram GLSL's `col += col`), and
+            // carry an inert Unity-default `_Color` placeholder that `material_tint`
+            // would wrongly pick — rendering a soft/dim `_MainColor` as full white. So a
+            // Ram layer uses `(_MainColor × 2).clamp`, with `_MainColor` as the animated
+            // channels' tint source and ×2 threaded into `layer_color_curve`.
+            let legacy_scale = legacy_tint_scale(mat);
+            let ram_scale = ram_tint_scale(mat);
+            let mut cprops = material_color_props(mat);
+            let (tint, tint_scale) = if legacy_scale > 1.0 {
+                cprops.1 = Some("_TintColor".to_string());
+                let tc = cprops
+                    .0
+                    .iter()
+                    .find(|(n, _)| n == "_TintColor")
+                    .map_or([1.0; 4], |(_, c)| *c);
+                (
+                    [
+                        (tc[0] * legacy_scale).clamp(0.0, 1.0),
+                        (tc[1] * legacy_scale).clamp(0.0, 1.0),
+                        (tc[2] * legacy_scale).clamp(0.0, 1.0),
+                        (tc[3] * legacy_scale).clamp(0.0, 1.0),
+                    ],
+                    legacy_scale,
+                )
+            } else if ram_scale > 1.0 {
+                cprops.1 = Some("_MainColor".to_string());
+                let mc = cprops
+                    .0
+                    .iter()
+                    .find(|(n, _)| n == "_MainColor")
+                    .map_or([1.0; 4], |(_, c)| *c);
+                (
+                    [
+                        (mc[0] * ram_scale).clamp(0.0, 1.0),
+                        (mc[1] * ram_scale).clamp(0.0, 1.0),
+                        (mc[2] * ram_scale).clamp(0.0, 1.0),
+                        (mc[3] * ram_scale).clamp(0.0, 1.0),
+                    ],
+                    ram_scale,
+                )
+            } else {
+                (material_tint(mat), 1.0)
+            };
+            // Capability A — Ram-family shader UV-scroll (static material floats, no clip).
+            // Gate STRICTLY: only a Ram-family shader with a non-zero `_Main*Speed` carries
+            // scroll; every other layer stays byte-identical.
+            let uv_scroll = {
+                let shader = mat
+                    .get("_shaderName")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                if shader.contains("Ram/") {
+                    let us = blend("_MainUSpeed", 0.0) as f32;
+                    let vs = blend("_MainVSpeed", 0.0) as f32;
+                    if us != 0.0 || vs != 0.0 {
+                        Some([us, vs])
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            };
             resolved = Some((
-                tex_val.clone(),
+                tex_val,
                 alpha_val,
-                material_tint(mat),
+                tint,
                 is_additive(mat),
                 main_pid,
                 blend("_SrcBlend", 5.0),
                 blend("_DstBlend", 10.0),
+                st,
+                cprops,
+                tint_scale,
+                uv_scroll,
             ));
             break;
         }
-        let Some((tex_val, alpha_val, tint, additive, main_pid, src_blend, dst_blend)) = resolved else {
+        let Some((
+            tex_val,
+            alpha_val,
+            tint,
+            additive,
+            main_pid,
+            src_blend,
+            dst_blend,
+            st,
+            (color_props, tint_prop),
+            tint_scale,
+            uv_scroll,
+        )) = resolved
+        else {
             continue;
         };
+        // The layer's animated material colour (entrance scenes only), matched against
+        // the material's own colour properties and resolved onto the static tint.
+        let color_curve = color_channels.get(&go_pid).and_then(|chs| {
+            super::anim::layer_color_curve(
+                chs,
+                &color_props,
+                tint_prop.as_deref(),
+                tint,
+                tint_scale,
+            )
+        });
+        // The layer's animated `_MainTex_ST` curve (entrance scenes only). When present it
+        // supersedes the static ST bake below (the curve carries the full ST).
+        let st_curve = st_channels.get(&go_pid).and_then(|chs| {
+            super::anim::layer_st_curve(
+                chs,
+                [st[0] as f32, st[1] as f32, st[2] as f32, st[3] as f32],
+            )
+        });
 
         // Geometry from the GameObject's MeshFilter. An in-bundle Mesh (class
         // 43) is parsed; a null (`m_Mesh == 0`) or external/built-in reference
         // (e.g. Unity's Quad primitive, path_id 10210, in default resources)
         // falls back to the unit quad — dynchar scene layers are flat quads.
-        let mesh = match go_to_mesh.get(&go_pid).copied() {
+        let mut mesh = match go_to_mesh.get(&go_pid).copied() {
             Some(mp) if mp != 0 => match all_objects.get(&mp) {
                 Some((43, mesh_val)) => match super::mesh::parse_mesh(mesh_val, &HashMap::new()) {
                     Some(m) => m,
@@ -704,6 +1062,17 @@ fn collect_dynchar_bg_quads(
             _ => super::mesh::unit_quad(),
         };
 
+        // Bake the material's _MainTex Scale/Offset into the UVs (Unity UV
+        // space, pre-flip — the frontend flips V). Layers that reference a
+        // sub-rect of an atlas (e.g. Mlynar's bg_02: city / clouds / rainbow
+        // packed in one texture) would otherwise show the whole atlas squashed.
+        if st_curve.is_none() && st != super::particles::ST_IDENTITY {
+            for uv in &mut mesh.uvs {
+                uv[0] = uv[0] * st[0] as f32 + st[2] as f32;
+                uv[1] = uv[1] * st[1] as f32 + st[3] as f32;
+            }
+        }
+
         // Full world transform relative to the spine root, with idle-pose
         // overrides applied to any animated transforms in the chain.
         let world = go_to_transform
@@ -712,7 +1081,6 @@ fn collect_dynchar_bg_quads(
             .unwrap_or_else(super::mesh::Mat4::identity);
         let z = world.point([0.0, 0.0, 0.0])[2];
 
-        let window = reveal_of_go(go_pid, &reveal_map, &go_to_transform, all_objects);
         quads.push(BgQuad {
             mesh,
             tex_val,
@@ -727,11 +1095,17 @@ fn collect_dynchar_bg_quads(
             dst_blend,
             active_from: window.0,
             active_until: window.1,
+            root_reveal_from: cross_from,
+            color_curve,
+            uv_scroll,
+            st_curve,
         });
     }
 
     if skipped_inactive > 0 {
-        eprintln!("  scene: skipped {skipped_inactive} mesh renderer(s) under state-gated inactive groups");
+        eprintln!(
+            "  scene: skipped {skipped_inactive} mesh renderer(s) under state-gated inactive groups"
+        );
     }
     let mut scene = BgScene {
         camera_size,
@@ -754,6 +1128,53 @@ fn collect_dynchar_bg_quads(
     scene
 }
 
+/// Shader-family tint multiplier for a scene-layer material. Torappu's ports of
+/// Unity's LEGACY particle shaders (`Torappu/Particles/AlphaBlend`, `…/Additive`, … —
+/// the plain `…/Particles/…` namespace, NOT the `Particles-L2D`/Ram compositors)
+/// sample `2 × _TintColor × tex`, so authors key `_TintColor` rgb 0.5 as neutral
+/// white and the doubling applies to ALPHA too. Mlynar "Fields of Ruination" proves
+/// the convention in data: its white-flash plane (`Torappu/Particles/AlphaBlend`)
+/// keys `_TintColor` rgb to a CONSTANT 0.5 while ramping `.a` to 0.671 — in-game a
+/// pure-white FULL white-out (2 × 0.671 clamps to 1), where a plain multiply reads
+/// half-grey. (The Ram GLSL port in particles.ts mirrors the same ×2 as `col += col`.)
+/// Returns 2.0 for that family when the material carries `_TintColor`, else 1.0.
+fn legacy_tint_scale(mat: &Value) -> f32 {
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let legacy = shader.contains("/Particles/") || shader.starts_with("Particles/");
+    let has_tint_color = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.as_object())
+        .is_some_and(|c| c.contains_key("_TintColor"));
+    if legacy && has_tint_color { 2.0 } else { 1.0 }
+}
+
+/// Ram-family (`Torappu/Particles-L2D/Ram/*`) scene-layer tint multiplier. These
+/// compositors sample `2 × _MainColor × tex` (the frontend Ram GLSL mirrors it as
+/// `col += col`), so authors key `_MainColor` α≈0.5 as neutral and dim/colour-shift it
+/// below that for a soft wash — while `material_tint` would read the inert Unity
+/// `_Color` default and render full white. Returns 2.0 when the shader is Ram-family
+/// AND the material carries a `_MainColor` colour property, else 1.0.
+fn ram_tint_scale(mat: &Value) -> f32 {
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let has_main_color = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.as_object())
+        .is_some_and(|c| c.contains_key("_MainColor"));
+    if shader.contains("Ram/") && has_main_color {
+        2.0
+    } else {
+        1.0
+    }
+}
+
 /// Material colour multiply: `_Color` if present, else `_TintColor`, else white.
 pub(crate) fn material_tint(mat: &Value) -> [f32; 4] {
     let colors = mat
@@ -763,13 +1184,53 @@ pub(crate) fn material_tint(mat: &Value) -> [f32; 4] {
     let read = |key: &str| -> Option<[f32; 4]> {
         let c = colors?.get(key)?;
         Some([
-            c.get("r").and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32,
-            c.get("g").and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32,
-            c.get("b").and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32,
-            c.get("a").and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32,
+            c.get("r")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0) as f32,
+            c.get("g")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0) as f32,
+            c.get("b")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0) as f32,
+            c.get("a")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0) as f32,
         ])
     };
-    read("_Color").or_else(|| read("_TintColor")).unwrap_or([1.0, 1.0, 1.0, 1.0])
+    read("_Color")
+        .or_else(|| read("_TintColor"))
+        .unwrap_or([1.0, 1.0, 1.0, 1.0])
+}
+
+/// A material's saved colour properties `(name, rgba)` plus the name of the one
+/// [`material_tint`] folded into the static tint (`_Color` first, else `_TintColor`).
+/// Feeds [`super::anim::layer_color_curve`], which matches the `_Start` clip's animated
+/// colour-channel bindings against these names.
+fn material_color_props(mat: &Value) -> (Vec<(String, [f32; 4])>, Option<String>) {
+    let comp =
+        |c: &Value, k: &str| c.get(k).and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32;
+    let props: Vec<(String, [f32; 4])> = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.as_object())
+        .map(|colors| {
+            colors
+                .iter()
+                .map(|(k, c)| {
+                    (
+                        k.clone(),
+                        [comp(c, "r"), comp(c, "g"), comp(c, "b"), comp(c, "a")],
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let tint_prop = ["_Color", "_TintColor"]
+        .into_iter()
+        .find(|k| props.iter().any(|(n, _)| n == k))
+        .map(String::from);
+    (props, tint_prop)
 }
 
 /// Detect additive blending from the material's `_DstBlend` factor (`One` = 1).
@@ -781,37 +1242,58 @@ pub(crate) fn is_additive(mat: &Value) -> bool {
         .is_some_and(|dst| (dst - 1.0).abs() < 0.01)
 }
 
+/// `find_entrance_timing`'s return: `(duration, transform, camera_ortho, voice,
+/// background_reveal)`, all in seconds / world units — see that function's doc comment.
+type EntranceTiming = (
+    Option<f64>,
+    Option<f64>,
+    Option<f64>,
+    Option<f64>,
+    Option<f64>,
+);
+
 /// Read the entrance (`_Start`) cinematic timing from the prefab's director
 /// MonoBehaviour. The director is the class-114 that owns `_mainCamera` + `_params`
-/// (`{ duration, charVoiceOffset, fadeColor }`). Returns `(duration, transform)`:
+/// (`{ duration, charVoiceOffset, fadeColor }`). Returns
+/// `(duration, transform, camera_ortho, voice, background_reveal)`:
 /// - `duration`  = `_params.duration` — the whole entrance span.
 /// - `transform` = the reform beat: the per-object `_delayTime` value shared by the
 ///   MOST objects in the LATE half of the timeline (> duration·0.4). The `_Start`
 ///   sequences its sub-animations/effects by `_delayTime`; the big late cluster
 ///   (Virtuosa: 12.0s ×5) is the gala transformation burst — the camera has reached
 ///   the wide stop and the character has reformed by then, so it's the hand-off.
+/// - `background_reveal` = the earliest of `transform` and `voice` that is later than
+///   `duration · 0.4`, or `None` when neither is a sufficiently-late authored beat.
 ///
 /// Also returns the entrance CAMERA's orthographic size (world units) — the tight
 /// close-up the `_Start` opens on (Virtuosa: 2.99, vs the display `_cameraSize` 10.5;
 /// 2.99/10.5 ≈ 0.28, a real head-to-torso close-up on the seated cellist). The
 /// `_mainCamera` is fixed at this size; the client dollies OUT from it to the display
 /// stop as she reforms. All `None` when the prefab has no entrance director.
-fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> (Option<f64>, Option<f64>, Option<f64>, Option<f64>) {
+fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTiming {
     let params = all_objects.values().find_map(|(cid, v)| {
-        (*cid == 114 && v.get("_mainCamera").is_some()).then(|| v.get("_params")).flatten()
+        (*cid == 114 && v.get("_mainCamera").is_some())
+            .then(|| v.get("_params"))
+            .flatten()
     });
-    let duration = params.and_then(|p| p.get("duration")).and_then(Value::as_f64);
+    let duration = params
+        .and_then(|p| p.get("duration"))
+        .and_then(Value::as_f64);
     // `charVoiceOffset` — when the reformed cellist starts her voice line (Virtuosa 10.3s).
     // She is STANDING and talking by then, so it's the true entrance→standing-idle hand-off
     // beat (the seated form has dissolved; the tall standing form lives elsewhere in the rig).
-    let voice = params.and_then(|p| p.get("charVoiceOffset")).and_then(Value::as_f64);
+    let voice = params
+        .and_then(|p| p.get("charVoiceOffset"))
+        .and_then(Value::as_f64);
     let Some(dur) = duration else {
-        return (None, None, None, None);
+        return (None, None, None, None, None);
     };
     // Orthographic size of the entrance camera (class 20). One per `_Start` prefab.
-    let cam_ortho = all_objects
-        .values()
-        .find_map(|(cid, v)| (*cid == 20).then(|| v.get("orthographic size").and_then(Value::as_f64)).flatten());
+    let cam_ortho = all_objects.values().find_map(|(cid, v)| {
+        (*cid == 20)
+            .then(|| v.get("orthographic size").and_then(Value::as_f64))
+            .flatten()
+    });
     // Tally `_delayTime`s (rounded to 0.05s) and pick the most-shared LATE beat.
     let mut counts: HashMap<i64, usize> = HashMap::new();
     for (cid, v) in all_objects.values() {
@@ -828,7 +1310,12 @@ fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> (Option<f64
         .filter(|(t, _)| *t > dur * 0.4)
         .max_by(|a, b| a.1.cmp(&b.1).then(a.0.partial_cmp(&b.0).unwrap()))
         .map(|(t, _)| t);
-    (Some(dur), transform, cam_ortho, voice)
+    let background_reveal = [transform, voice]
+        .into_iter()
+        .flatten()
+        .filter(|&time| time > dur * 0.4)
+        .min_by(|a, b| a.partial_cmp(b).unwrap());
+    (Some(dur), transform, cam_ortho, voice, background_reveal)
 }
 
 /// Accumulate a GameObject's world TRANSLATION by summing `m_LocalPosition` up the
@@ -836,12 +1323,16 @@ fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> (Option<f64
 /// prefabs is identity-rotated at unit scale). Used to find the entrance camera's aim
 /// point relative to the skeleton root.
 fn go_world_translation(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> [f64; 3] {
-    let start_tf = all_objects.iter().find_map(|(pid, (cid, v))| (*cid == 4 && v.get("m_GameObject").and_then(get_path_id) == Some(go_pid)).then_some(*pid));
+    let start_tf = all_objects.iter().find_map(|(pid, (cid, v))| {
+        (*cid == 4 && v.get("m_GameObject").and_then(get_path_id) == Some(go_pid)).then_some(*pid)
+    });
     let mut acc = [0.0, 0.0, 0.0];
     let mut cur = start_tf;
     for _ in 0..256 {
         let Some(p) = cur else { break };
-        let Some((4, tf)) = all_objects.get(&p) else { break };
+        let Some((4, tf)) = all_objects.get(&p) else {
+            break;
+        };
         if let Some(lp) = tf.get("m_LocalPosition") {
             acc[0] += lp.get("x").and_then(Value::as_f64).unwrap_or(0.0);
             acc[1] += lp.get("y").and_then(Value::as_f64).unwrap_or(0.0);
@@ -858,8 +1349,16 @@ fn go_world_translation(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -
 /// game frames — the close-up sits on her upper body / the halo, not the hair-dragged
 /// centroid. `None` when the prefab has no entrance camera + skeleton.
 fn find_entrance_camera_offset(all_objects: &HashMap<i64, (i32, Value)>) -> Option<(f64, f64)> {
-    let cam_go = all_objects.values().find_map(|(cid, v)| (*cid == 20).then(|| v.get("m_GameObject").and_then(get_path_id)).flatten())?;
-    let skel_go = all_objects.values().find_map(|(cid, v)| (*cid == 114 && v.get("skeletonDataAsset").is_some()).then(|| v.get("m_GameObject").and_then(get_path_id)).flatten())?;
+    let cam_go = all_objects.values().find_map(|(cid, v)| {
+        (*cid == 20)
+            .then(|| v.get("m_GameObject").and_then(get_path_id))
+            .flatten()
+    })?;
+    let skel_go = all_objects.values().find_map(|(cid, v)| {
+        (*cid == 114 && v.get("skeletonDataAsset").is_some())
+            .then(|| v.get("m_GameObject").and_then(get_path_id))
+            .flatten()
+    })?;
     let c = go_world_translation(all_objects, cam_go);
     let s = go_world_translation(all_objects, skel_go);
     Some((c[0] - s[0], c[1] - s[1]))
@@ -877,6 +1376,13 @@ pub(crate) struct BgParticleHost {
     /// activating them after a delay; a particle system's own start delay is its
     /// nearest such ancestor's value (see {@link delay_of_go}).
     go_delay: HashMap<i64, f64>,
+    /// GameObject `path_id` → spine-unity `BoneFollower` on it: `(boneName,
+    /// followBoneRotation)`. Effect-prefab CLONE roots (the director `_effects`,
+    /// e.g. Virtuosa's `start_apple_01(Clone)`) ride a SPINE BONE at runtime via
+    /// this MonoBehaviour — their serialized transform is only an editor pose the
+    /// follower overrides. Identified by field shape (`boneName` +
+    /// `followXYPosition`), no script whitelist.
+    go_follower: HashMap<i64, (String, bool)>,
     idle: super::anim::IdlePose,
 }
 
@@ -909,18 +1415,106 @@ impl BgParticleHost {
                 *e = e.max(dt);
             }
         }
+        // spine-unity BoneFollower components (field-shape identified).
+        let mut go_follower: HashMap<i64, (String, bool)> = HashMap::new();
+        for (cid, v) in all_objects.values() {
+            if *cid == 114
+                && let Some(bone) = v.get("boneName").and_then(Value::as_str)
+                && !bone.is_empty()
+                && v.get("followXYPosition").is_some()
+                && let Some(go) = v.get("m_GameObject").and_then(get_path_id)
+            {
+                let rot = v
+                    .get("followBoneRotation")
+                    .and_then(Value::as_i64)
+                    .unwrap_or(0)
+                    != 0;
+                go_follower.insert(go, (bone.to_string(), rot));
+            }
+        }
         let idle = super::anim::evaluate_idle_pose(all_objects, &go_to_transform);
         Self {
             go_to_transform,
             spine_gos,
             go_delay,
+            go_follower,
             idle,
         }
     }
 
+    /// Nearest `BoneFollower` in the GameObject's transform ancestry (self first,
+    /// stopping at the spine root): `(boneName, followBoneRotation, follower GO)`.
+    /// The follower's GO is returned so the caller can bake the emitter's local
+    /// offset WITHIN the followed rig (the follower snaps that GO onto the bone).
+    pub(crate) fn follower_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> Option<(String, bool, i64)> {
+        let mut cur_go = Some(go_pid);
+        for _ in 0..256 {
+            let g = cur_go?;
+            if let Some((bone, rot)) = self.go_follower.get(&g) {
+                return Some((bone.clone(), *rot, g));
+            }
+            if self.spine_gos.contains(&g) {
+                return None;
+            }
+            let tf = self.go_to_transform.get(&g)?;
+            let father = all_objects
+                .get(tf)
+                .and_then(|(_, v)| v.get("m_Father"))
+                .and_then(get_path_id)
+                .filter(|&p| p != 0)?;
+            cur_go = all_objects
+                .get(&father)
+                .and_then(|(_, v)| v.get("m_GameObject"))
+                .and_then(get_path_id);
+        }
+        None
+    }
+
+    /// Topmost ancestor GameObject of `go_pid` — the prefab-INSTANCE root its
+    /// subtree belongs to. Dynchar bundles ship SEVERAL sibling prefab roots
+    /// (`dyn_illust_*` idle + `dyn_entrance_*` cinematic), each with its own
+    /// skeleton and effect rigs; membership decisions must compare these roots.
+    pub(crate) fn prefab_root_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> Option<i64> {
+        let mut cur_tr = *self.go_to_transform.get(&go_pid)?;
+        for _ in 0..256 {
+            let Some((4, tf)) = all_objects.get(&cur_tr) else {
+                break;
+            };
+            match tf
+                .get("m_Father")
+                .and_then(get_path_id)
+                .filter(|&f| f != 0 && all_objects.contains_key(&f))
+            {
+                Some(f) => cur_tr = f,
+                None => break,
+            }
+        }
+        all_objects
+            .get(&cur_tr)
+            .and_then(|(_, tf)| tf.get("m_GameObject"))
+            .and_then(get_path_id)
+    }
+
     /// Whether the GameObject and every ancestor are active (see `go_effectively_active`).
-    pub(crate) fn effectively_active(&self, all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> bool {
-        go_effectively_active(all_objects, go_pid, &self.go_to_transform, &self.idle.active)
+    pub(crate) fn effectively_active(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> bool {
+        go_effectively_active(
+            all_objects,
+            go_pid,
+            &self.go_to_transform,
+            &self.idle.active,
+        )
     }
 
     /// World matrix of a GameObject's Transform, in the spine root's local frame.
@@ -929,10 +1523,88 @@ impl BgParticleHost {
         all_objects: &HashMap<i64, (i32, Value)>,
         go_pid: i64,
     ) -> super::mesh::Mat4 {
-        self.go_to_transform.get(&go_pid).map_or_else(
-            super::mesh::Mat4::identity,
-            |&tf| accumulate_matrix(all_objects, tf, &self.spine_gos, &self.idle),
-        )
+        self.go_to_transform
+            .get(&go_pid)
+            .map_or_else(super::mesh::Mat4::identity, |&tf| {
+                accumulate_matrix(all_objects, tf, &self.spine_gos, &self.idle)
+            })
+    }
+
+    /// The world matrix of the GameObject's Transform PARENT (its `m_Father` chain,
+    /// up to but excluding the spine root). Used to project a child's animated LOCAL
+    /// position (in the parent's frame) into the spine-root world frame — the pivot
+    /// offset of an entrance-driven effect host (see `entrance_transform_curves`).
+    /// `None` when the GameObject has no transform or its transform has no parent.
+    pub(crate) fn parent_world_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> Option<super::mesh::Mat4> {
+        let tf = *self.go_to_transform.get(&go_pid)?;
+        let father = all_objects
+            .get(&tf)
+            .and_then(|(_, v)| v.get("m_Father"))
+            .and_then(get_path_id)
+            .filter(|&p| p != 0)?;
+        Some(accumulate_matrix(
+            all_objects,
+            father,
+            &self.spine_gos,
+            &self.idle,
+        ))
+    }
+
+    /// The GameObject's serialized local `(scale, position)` from its Transform. Used
+    /// to normalise an entrance SCALE curve into a multiplier of the baked (resting)
+    /// pose and to reference the animated POSITION delta.
+    pub(crate) fn local_scale_pos_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> Option<([f32; 3], [f32; 3])> {
+        let tf = *self.go_to_transform.get(&go_pid)?;
+        let (_, v) = all_objects.get(&tf)?;
+        let vec3 = |field: &str, d: f32| {
+            let g = |k: &str| {
+                v.get(field)
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(d.into()) as f32
+            };
+            [g("x"), g("y"), g("z")]
+        };
+        Some((vec3("m_LocalScale", 1.0), vec3("m_LocalPosition", 0.0)))
+    }
+
+    /// The nearest ancestor GameObject of `go_pid` (self first, up to the spine root)
+    /// that the `_Start` cinematic drives with a Transform-scale curve (present in
+    /// `curves`). This is the effect-host whose animated scale/position the emitter
+    /// rides — Virtuosa's crown `ctrl` above the `spark_small` glow host. `None` when
+    /// no ancestor is entrance-transform-driven.
+    pub(crate) fn entrance_transform_host_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+        curves: &HashMap<i64, super::anim::EntranceTransform>,
+    ) -> Option<i64> {
+        let mut cur_go = Some(go_pid);
+        for _ in 0..256 {
+            let g = cur_go?;
+            if curves.contains_key(&g) {
+                return Some(g);
+            }
+            let tf = self.go_to_transform.get(&g)?;
+            let father = all_objects
+                .get(tf)
+                .and_then(|(_, v)| v.get("m_Father"))
+                .and_then(get_path_id)
+                .filter(|&p| p != 0)?;
+            cur_go = all_objects
+                .get(&father)
+                .and_then(|(_, v)| v.get("m_GameObject"))
+                .and_then(get_path_id);
+        }
+        None
     }
 
     /// The GameObject `m_Name` of every ancestor of `go_pid`, nearest-first,
@@ -956,7 +1628,9 @@ impl BgParticleHost {
         let mut cur = Some(start);
         for _ in 0..256 {
             let Some(tf_pid) = cur else { break };
-            let Some((4, tf)) = all_objects.get(&tf_pid) else { break };
+            let Some((4, tf)) = all_objects.get(&tf_pid) else {
+                break;
+            };
             let go = tf.get("m_GameObject").and_then(get_path_id);
             if go.is_some_and(|g| self.spine_gos.contains(&g)) {
                 break; // reached the spine root; its own name is not a bone
@@ -984,10 +1658,16 @@ impl BgParticleHost {
         let Some(&start) = self.go_to_transform.get(&go_pid) else {
             return total;
         };
-        let mut cur = all_objects.get(&start).and_then(|(_, tf)| tf.get("m_Father")).and_then(get_path_id).filter(|&p| p != 0);
+        let mut cur = all_objects
+            .get(&start)
+            .and_then(|(_, tf)| tf.get("m_Father"))
+            .and_then(get_path_id)
+            .filter(|&p| p != 0);
         for _ in 0..256 {
             let Some(tf_pid) = cur else { break };
-            let Some((4, tf)) = all_objects.get(&tf_pid) else { break };
+            let Some((4, tf)) = all_objects.get(&tf_pid) else {
+                break;
+            };
             let go = tf.get("m_GameObject").and_then(get_path_id);
             if go.is_some_and(|g| self.spine_gos.contains(&g)) {
                 break; // reached the spine root
@@ -1021,8 +1701,15 @@ impl BgParticleHost {
                 return Some(from);
             }
             let tf = self.go_to_transform.get(&g)?;
-            let father = all_objects.get(tf).and_then(|(_, v)| v.get("m_Father")).and_then(get_path_id).filter(|&p| p != 0)?;
-            cur_go = all_objects.get(&father).and_then(|(_, v)| v.get("m_GameObject")).and_then(get_path_id);
+            let father = all_objects
+                .get(tf)
+                .and_then(|(_, v)| v.get("m_Father"))
+                .and_then(get_path_id)
+                .filter(|&p| p != 0)?;
+            cur_go = all_objects
+                .get(&father)
+                .and_then(|(_, v)| v.get("m_GameObject"))
+                .and_then(get_path_id);
         }
         None
     }
@@ -1069,7 +1756,11 @@ fn accumulate_matrix(
         };
         // Position/rotation come from the idle-pose override for this transform
         // when present, else the prefab bind pose.
-        let pos = idle.pos.get(&tf_pid).copied().unwrap_or_else(|| vec3("m_LocalPosition", 0.0));
+        let pos = idle
+            .pos
+            .get(&tf_pid)
+            .copied()
+            .unwrap_or_else(|| vec3("m_LocalPosition", 0.0));
         let quat = if let Some(&e) = idle.euler.get(&tf_pid) {
             super::anim::euler_deg_to_quat(e)
         } else {
@@ -1438,14 +2129,24 @@ pub fn export_spine_assets(
 /// independent of how much transparent atlas space its UV bbox spans. Returns
 /// `(1, 1, 1, 0)` (treated as "not dark", no correction) when too few opaque
 /// texels are sampled.
-fn opaque_luma(rgba: &[u8], w: u32, h: u32, uvs: &[[f32; 2]], indices: &[u32]) -> (f32, f32, f32, f32) {
+fn opaque_luma(
+    rgba: &[u8],
+    w: u32,
+    h: u32,
+    uvs: &[[f32; 2]],
+    indices: &[u32],
+) -> (f32, f32, f32, f32) {
     if w == 0 || h == 0 || uvs.len() < 3 || indices.len() < 3 {
         return (1.0, 1.0, 1.0, 0.0);
     }
     let mut lums: Vec<u8> = Vec::new();
     const N: usize = 8;
     for tri in indices.chunks_exact(3) {
-        let (Some(&p0), Some(&p1), Some(&p2)) = (uvs.get(tri[0] as usize), uvs.get(tri[1] as usize), uvs.get(tri[2] as usize)) else {
+        let (Some(&p0), Some(&p1), Some(&p2)) = (
+            uvs.get(tri[0] as usize),
+            uvs.get(tri[1] as usize),
+            uvs.get(tri[2] as usize),
+        ) else {
             continue;
         };
         for i in 0..=N {
@@ -1484,7 +2185,11 @@ fn opaque_luma(rgba: &[u8], w: u32, h: u32, uvs: &[[f32; 2]], indices: &[u32]) -
 /// to a `{name}[scene]/` folder (deduped by source path_id). The frontend draws
 /// these as Pixi meshes in `sort` order and inserts the animated character spine
 /// at `characterSort`. Returns the number of files written.
-fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String, Vec<u8>>) -> usize {
+fn export_scene(
+    asset: &SpineAsset,
+    spine_dir: &Path,
+    resources: &HashMap<String, Vec<u8>>,
+) -> usize {
     // A skin with no scene meshes can still need a bare `[scene].json` carrying
     // just the authored camera frame, so the frontend can align a static-art
     // backdrop for it (e.g. Siege, whose whole illustration is in the spine).
@@ -1499,7 +2204,11 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
     let inv = 1.0 / skel_scale;
     let dbg = std::env::var("SCENE_DEBUG").is_ok();
     if dbg {
-        eprintln!("[scene] {} : {} collected quad(s)", asset.name, asset.bg_quads.len());
+        eprintln!(
+            "[scene] {} : {} collected quad(s)",
+            asset.name,
+            asset.bg_quads.len()
+        );
     }
 
     let tex_dir = spine_dir.join(format!("{}[scene]", asset.name));
@@ -1574,7 +2283,9 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         stats
             .iter()
             .filter(|(pid, (count, max_ext))| {
-                particle_tex_pids.contains(pid) && *count >= 4 && frame_extent.is_some_and(|fe| fe > 0.0 && *max_ext < fe * 0.5)
+                particle_tex_pids.contains(pid)
+                    && *count >= 4
+                    && frame_extent.is_some_and(|fe| fe > 0.0 && *max_ext < fe * 0.5)
             })
             .map(|(pid, _)| *pid)
             .collect()
@@ -1582,13 +2293,30 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
 
     for quad in order {
         if burst_tex.contains(&quad.tex_pid) {
-            if dbg { eprintln!("  DROP[burst-sprite] '{}' sort={}", quad.tex_val["m_Name"].as_str().unwrap_or(""), quad.sort); }
+            if dbg {
+                eprintln!(
+                    "  DROP[burst-sprite] '{}' sort={}",
+                    quad.tex_val["m_Name"].as_str().unwrap_or(""),
+                    quad.sort
+                );
+            }
             continue;
         }
-        // Skip non-visual helper layers (coverage masks, distortion maps).
-        let name_l = quad.tex_val["m_Name"].as_str().unwrap_or("").to_ascii_lowercase();
-        if name_l.contains("mask") || name_l.ends_with("_dm") {
-            if dbg { eprintln!("  DROP[mask/_dm] '{name_l}' sort={}", quad.sort); }
+        // Skip non-visual helper layers (coverage masks, distortion maps) —
+        // UNLESS the entrance cinematic sequences the layer (it carries an
+        // active window): a clip-revealed layer is a deliberate visual beat,
+        // not a helper (Mlynar's white-transition flash samples `mask_09`).
+        let name_l = quad.tex_val["m_Name"]
+            .as_str()
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        if (name_l.contains("mask") || name_l.ends_with("_dm"))
+            && quad.active_from.is_none()
+            && quad.active_until.is_none()
+        {
+            if dbg {
+                eprintln!("  DROP[mask/_dm] '{name_l}' sort={}", quad.sort);
+            }
             continue;
         }
 
@@ -1609,7 +2337,14 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         // no image but a frozen animation keyframe can leave them as stray black
         // slivers (e.g. Ines "Melodic Flutter").
         if (xmx - xmn) < 1.0 || (ymx - ymn) < 1.0 {
-            if dbg { eprintln!("  DROP[degenerate] '{name_l}' sort={} size={:.0}x{:.0}", quad.sort, xmx - xmn, ymx - ymn); }
+            if dbg {
+                eprintln!(
+                    "  DROP[degenerate] '{name_l}' sort={} size={:.0}x{:.0}",
+                    quad.sort,
+                    xmx - xmn,
+                    ymx - ymn
+                );
+            }
             continue;
         }
         // Drop absurdly-oversized fill/fx quads (full-screen colour fills, camera-
@@ -1619,7 +2354,13 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         if let Some(fe) = frame_extent {
             let extent = (xmx - xmn).max(ymx - ymn);
             if fe > 0.0 && extent > fe * 10.0 {
-                if dbg { eprintln!("  DROP[oversize] '{name_l}' sort={} extent={extent:.0} frame={fe:.0} ({:.1}x)", quad.sort, extent / fe); }
+                if dbg {
+                    eprintln!(
+                        "  DROP[oversize] '{name_l}' sort={} extent={extent:.0} frame={fe:.0} ({:.1}x)",
+                        quad.sort,
+                        extent / fe
+                    );
+                }
                 continue;
             }
         }
@@ -1636,7 +2377,9 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
             }
             quad.mesh.indices.hash(&mut h);
             if !seen_sigs.insert(h.finish()) {
-                if dbg { eprintln!("  DROP[duplicate] '{name_l}' sort={}", quad.sort); }
+                if dbg {
+                    eprintln!("  DROP[duplicate] '{name_l}' sort={}", quad.sort);
+                }
                 continue;
             }
         }
@@ -1654,7 +2397,15 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
                 tex = alpha_merge::combine_with_alpha(&tex, &alpha);
             }
             let idx = next_idx;
-            if image::save_buffer(tex_dir.join(format!("{idx}.png")), &tex.rgba, tex.width, tex.height, image::ColorType::Rgba8).is_ok() {
+            if image::save_buffer(
+                tex_dir.join(format!("{idx}.png")),
+                &tex.rgba,
+                tex.width,
+                tex.height,
+                image::ColorType::Rgba8,
+            )
+            .is_ok()
+            {
                 saved += 1;
             }
             tex_px.insert(quad.tex_pid, (tex.rgba.clone(), tex.width, tex.height));
@@ -1669,8 +2420,18 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         // spirit-horse sheets). Emit them so the frontend can modulate; omit the
         // array entirely when every vertex is opaque white (the common case) to
         // keep the JSON small.
-        let col: Vec<f32> = quad.mesh.colors.iter().flat_map(|c| [c[0], c[1], c[2], c[3]]).collect();
-        let has_vcol = quad.mesh.colors.iter().any(|c| (c[0] - 1.0).abs() > 0.004 || (c[1] - 1.0).abs() > 0.004 || (c[2] - 1.0).abs() > 0.004 || (c[3] - 1.0).abs() > 0.004);
+        let col: Vec<f32> = quad
+            .mesh
+            .colors
+            .iter()
+            .flat_map(|c| [c[0], c[1], c[2], c[3]])
+            .collect();
+        let has_vcol = quad.mesh.colors.iter().any(|c| {
+            (c[0] - 1.0).abs() > 0.004
+                || (c[1] - 1.0).abs() > 0.004
+                || (c[2] - 1.0).abs() > 0.004
+                || (c[3] - 1.0).abs() > 0.004
+        });
 
         // Classify the layer by blend class + the luminance of the texels it
         // actually covers (mesh-sampled opaque texels: mean + 90th percentile).
@@ -1686,11 +2447,19 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         //     gramophone). Force additive so the black drops and detail glows.
         let (lum_mean, lum_p90, lum_p98, dark_frac) = tex_px
             .get(&quad.tex_pid)
-            .map_or((1.0, 1.0, 1.0, 0.0), |(px, w, h)| opaque_luma(px, *w, *h, &quad.mesh.uvs, &quad.mesh.indices));
+            .map_or((1.0, 1.0, 1.0, 0.0), |(px, w, h)| {
+                opaque_luma(px, *w, *h, &quad.mesh.uvs, &quad.mesh.indices)
+            });
         let is_opaque = (quad.src_blend - 1.0).abs() < 0.5 && quad.dst_blend < 0.5;
-        let is_premul_alpha = (quad.src_blend - 1.0).abs() < 0.5 && (quad.dst_blend - 10.0).abs() < 0.5;
+        let is_premul_alpha =
+            (quad.src_blend - 1.0).abs() < 0.5 && (quad.dst_blend - 10.0).abs() < 0.5;
         if is_opaque && lum_mean < 0.06 && lum_p90 < 0.12 {
-            if dbg { eprintln!("  DROP[grabpass] '{name_l}' sort={} lum_mean={lum_mean:.3} p90={lum_p90:.3}", quad.sort); }
+            if dbg {
+                eprintln!(
+                    "  DROP[grabpass] '{name_l}' sort={} lum_mean={lum_mean:.3} p90={lum_p90:.3}",
+                    quad.sort
+                );
+            }
             continue; // grab-pass distortion map → drop
         }
         // Glass/glow overlays authored on a black field to blend additively —
@@ -1706,7 +2475,10 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         //     majority separates a compact glow from a merely-dark backdrop (whose
         //     colour isn't pure black). Force additive so the black drops.
         let is_black_field_glow = (is_premul_alpha && lum_mean < 0.25 && lum_p90 > 0.75)
-            || ((is_premul_alpha || is_opaque) && lum_mean < 0.25 && lum_p98 > 0.9 && dark_frac > 0.6);
+            || ((is_premul_alpha || is_opaque)
+                && lum_mean < 0.25
+                && lum_p98 > 0.9
+                && dark_frac > 0.6);
         let additive = quad.additive || is_black_field_glow;
 
         let mut layer = serde_json::json!({
@@ -1730,9 +2502,49 @@ fn export_scene(asset: &SpineAsset, spine_dir: &Path, resources: &HashMap<String
         if let Some(t) = quad.active_until {
             layer["activeUntil"] = serde_json::json!(t);
         }
+        // CROSS-ROOT reveal (idle-world layers inside an entrance scene): visibility
+        // gate only — deliberately NOT `activeFrom`, so the frontend's reveal-overlay
+        // exemptions (mis-sort/veil demotion bypasses) don't treat scenery as a
+        // cinematic overlay.
+        if let Some(t) = quad.root_reveal_from {
+            layer["rootRevealFrom"] = serde_json::json!(t);
+        }
+        // ENTRANCE material-colour animation: `[t, r, g, b, a]` samples replacing the
+        // static tint while the `_Start` cinematic plays (e.g. Mlynar's white flash
+        // fading 0→0.671 instead of holding an opaque white-wash). Omitted when the
+        // material colour isn't animated.
+        if let Some(cc) = &quad.color_curve {
+            layer["colorCurve"] = serde_json::json!(
+                cc.iter()
+                    .map(|&(t, c)| [t, c[0], c[1], c[2], c[3]])
+                    .collect::<Vec<_>>()
+            );
+        }
+        // SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space)
+        // for Ram-family scene layers; the frontend offsets the layer's UVs by `t · [u,v]`
+        // each frame. Omitted for every non-scroll layer.
+        if let Some(uv) = quad.uv_scroll {
+            layer["uvScroll"] = serde_json::json!([uv[0], uv[1]]);
+        }
+        // CLIP `_MainTex_ST` curve (Capability B): `[t, sx, sy, ox, oy]` samples the frontend
+        // replays during the entrance (Skadi2's seam sweep). Omitted for static-ST layers.
+        if let Some(sc) = &quad.st_curve {
+            layer["stCurve"] = serde_json::json!(
+                sc.iter()
+                    .map(|&(t, s)| [t, s[0], s[1], s[2], s[3]])
+                    .collect::<Vec<_>>()
+            );
+        }
         if dbg {
             let ext = (xmx - xmn).max(ymx - ymn);
-            eprintln!("  KEEP '{name_l}' sort={} size={:.0}x{:.0} ext={ext:.0} add={additive} src/dst={:.0}/{:.0} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} darkf={dark_frac:.2}", quad.sort, xmx - xmn, ymx - ymn, quad.src_blend, quad.dst_blend);
+            eprintln!(
+                "  KEEP '{name_l}' sort={} size={:.0}x{:.0} ext={ext:.0} add={additive} src/dst={:.0}/{:.0} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} darkf={dark_frac:.2}",
+                quad.sort,
+                xmx - xmn,
+                ymx - ymn,
+                quad.src_blend,
+                quad.dst_blend
+            );
         }
         layers.push(layer);
     }

@@ -40,7 +40,13 @@ const SPRITE_GATE_OPAQUE_PCT: usize = 85;
 /// fully-opaque texture is a distortion / normal / dark field map (no sprite
 /// shape) — billboarded it stamps a hard box, so callers skip it.
 fn is_opaque_data_map(decoded: &DecodedTexture) -> bool {
-    let opaque = decoded.rgba.iter().skip(3).step_by(4).filter(|&&a| a > SPRITE_GATE_OPAQUE_ALPHA).count();
+    let opaque = decoded
+        .rgba
+        .iter()
+        .skip(3)
+        .step_by(4)
+        .filter(|&&a| a > SPRITE_GATE_OPAQUE_ALPHA)
+        .count();
     let total = (decoded.width * decoded.height).max(1) as usize;
     opaque * 100 / total >= SPRITE_GATE_OPAQUE_PCT
 }
@@ -69,7 +75,8 @@ pub struct FxTextures {
 ///    extraction always has it available.
 fn is_fx_bundle(path: &Path) -> bool {
     let p = path.to_string_lossy().to_ascii_lowercase();
-    p.ends_with(".ab") && (p.contains("refs/fx/") || (p.contains("dynchars/") && p.ends_with("/effect.ab")))
+    p.ends_with(".ab")
+        && (p.contains("refs/fx/") || (p.contains("dynchars/") && p.ends_with("/effect.ab")))
 }
 
 impl FxTextures {
@@ -80,36 +87,59 @@ impl FxTextures {
         let mut map = HashMap::new();
         let mut materials = HashMap::new();
         for path in files.iter().filter(|p| is_fx_bundle(p)) {
-            let Ok(bytes) = std::fs::read(path) else { continue };
-            let Ok(bundle) = BundleFile::parse(bytes) else { continue };
+            let Ok(bytes) = std::fs::read(path) else {
+                continue;
+            };
+            let Ok(bundle) = BundleFile::parse(bytes) else {
+                continue;
+            };
             for entry in &bundle.files {
                 if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
                     continue;
                 }
-                let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+                let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                    continue;
+                };
                 let cab = entry.path.clone();
                 // This SerializedFile's external dependency CAB names (for resolving a
                 // material's own further-external `_MainTex`).
-                let ext_cabs: Arc<Vec<String>> = Arc::new(sf.externals.iter().map(|d| d.cab_name().to_string()).collect());
+                let ext_cabs: Arc<Vec<String>> = Arc::new(
+                    sf.externals
+                        .iter()
+                        .map(|d| d.cab_name().to_string())
+                        .collect(),
+                );
                 // This SerializedFile's streamed resources.
                 let res: Arc<HashMap<String, Vec<u8>>> = Arc::new(
                     bundle
                         .files
                         .iter()
                         .filter(|f| f.path.ends_with(".resS") || f.path.ends_with(".resource"))
-                        .map(|f| (f.path.rsplit('/').next().unwrap_or(&f.path).to_string(), f.data.clone()))
+                        .map(|f| {
+                            (
+                                f.path.rsplit('/').next().unwrap_or(&f.path).to_string(),
+                                f.data.clone(),
+                            )
+                        })
                         .collect(),
                 );
                 for obj in &sf.objects {
                     match obj.class_id {
                         28 => {
                             if let Ok(v) = read_object(&sf, obj) {
-                                map.insert((cab.clone(), obj.path_id), FxEntry { value: v, res: Arc::clone(&res) });
+                                map.insert(
+                                    (cab.clone(), obj.path_id),
+                                    FxEntry {
+                                        value: v,
+                                        res: Arc::clone(&res),
+                                    },
+                                );
                             }
                         }
                         21 => {
                             if let Ok(v) = read_object(&sf, obj) {
-                                materials.insert((cab.clone(), obj.path_id), (v, Arc::clone(&ext_cabs)));
+                                materials
+                                    .insert((cab.clone(), obj.path_id), (v, Arc::clone(&ext_cabs)));
                             }
                         }
                         _ => {}
@@ -129,7 +159,12 @@ impl FxTextures {
     /// lets the caller decode the material's `_MainTex`, which lives in that SAME FX
     /// bundle, via {@link texture_by_cab}. `None` when in-bundle or unresolvable.
     #[must_use]
-    pub fn resolve_material_ref(&self, externals: &[FileIdentifier], file_id: i64, path_id: i64) -> Option<(String, Value, Arc<Vec<String>>)> {
+    pub fn resolve_material_ref(
+        &self,
+        externals: &[FileIdentifier],
+        file_id: i64,
+        path_id: i64,
+    ) -> Option<(String, Value, Arc<Vec<String>>)> {
         if file_id <= 0 {
             return None;
         }
@@ -145,10 +180,22 @@ impl FxTextures {
     /// `mat_ext_cabs[file_id-1]`). Gated like {@link resolve_decode} (opaque field
     /// maps stay out so they never stamp a grey box). `None` if the bundle isn't loaded.
     #[must_use]
-    pub fn material_texture(&self, mat_cab: &str, mat_ext_cabs: &[String], file_id: i64, path_id: i64) -> Option<DecodedTexture> {
-        let cab = if file_id == 0 { mat_cab.to_string() } else { mat_ext_cabs.get((file_id - 1) as usize)?.clone() };
+    pub fn material_texture(
+        &self,
+        mat_cab: &str,
+        mat_ext_cabs: &[String],
+        file_id: i64,
+        path_id: i64,
+    ) -> Option<DecodedTexture> {
+        let cab = if file_id == 0 {
+            mat_cab.to_string()
+        } else {
+            mat_ext_cabs.get((file_id - 1) as usize)?.clone()
+        };
         let entry = self.map.get(&(cab, path_id))?;
-        let decoded = decode_texture_object(&entry.value, &entry.res).ok().flatten()?;
+        let decoded = decode_texture_object(&entry.value, &entry.res)
+            .ok()
+            .flatten()?;
         if is_opaque_data_map(&decoded) {
             return None;
         }
@@ -158,19 +205,31 @@ impl FxTextures {
     /// Resolve + decode an external texture ref (`file_id`, `path_id`) via the
     /// referencing file's `externals` table, with NO content gating. Backs both
     /// the gated public entry point and the Ram-family bypass.
-    fn resolve_raw(&self, externals: &[FileIdentifier], file_id: i64, path_id: i64) -> Option<DecodedTexture> {
+    fn resolve_raw(
+        &self,
+        externals: &[FileIdentifier],
+        file_id: i64,
+        path_id: i64,
+    ) -> Option<DecodedTexture> {
         if file_id <= 0 {
             return None;
         }
         let dep = externals.get((file_id - 1) as usize)?;
         let entry = self.map.get(&(dep.cab_name().to_string(), path_id))?;
-        decode_texture_object(&entry.value, &entry.res).ok().flatten()
+        decode_texture_object(&entry.value, &entry.res)
+            .ok()
+            .flatten()
     }
 
     /// Resolve + decode an external texture ref (`file_id`, `path_id`) via the
     /// referencing file's `externals` table. Returns the decoded RGBA texture.
     #[must_use]
-    pub fn resolve_decode(&self, externals: &[FileIdentifier], file_id: i64, path_id: i64) -> Option<DecodedTexture> {
+    pub fn resolve_decode(
+        &self,
+        externals: &[FileIdentifier],
+        file_id: i64,
+        path_id: i64,
+    ) -> Option<DecodedTexture> {
         let decoded = self.resolve_raw(externals, file_id, path_id)?;
         // Gated by the sprite gate: a rejected (opaque) texture leaves the
         // emitter `tex: null` rather than stamping a hard box.
@@ -186,7 +245,12 @@ impl FxTextures {
     /// dissolve field textures, e.g. `flow_129_*`, `trail_113_2`) that the sprite
     /// gate would otherwise reject, so they must resolve regardless of opacity.
     #[must_use]
-    pub fn resolve_decode_ram(&self, externals: &[FileIdentifier], file_id: i64, path_id: i64) -> Option<DecodedTexture> {
+    pub fn resolve_decode_ram(
+        &self,
+        externals: &[FileIdentifier],
+        file_id: i64,
+        path_id: i64,
+    ) -> Option<DecodedTexture> {
         self.resolve_raw(externals, file_id, path_id)
     }
 }

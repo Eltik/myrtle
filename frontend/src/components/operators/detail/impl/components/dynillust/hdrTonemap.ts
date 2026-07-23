@@ -51,6 +51,7 @@ uniform sampler2D uSampler;
 uniform sampler2D uBloom;
 uniform float uKnee;
 uniform float uBloomIntensity;
+uniform float uVignette;
 void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
@@ -59,8 +60,32 @@ void main() {
         // soft-compress the tail [knee, +inf) -> [knee, 1)
         float e = (m - uKnee) / max(1e-4, 1.0 - uKnee);
         float t = uKnee + (1.0 - uKnee) * (e / (1.0 + e));
-        rgb *= t / m;
+        // The knee exists to preserve HUE while taming >1 additive stacks (blue flames
+        // stay blue instead of clipping to white). An ACHROMATIC highlight — a fullscreen
+        // white reveal-flash — has no hue to preserve, yet the knee still greys it (a
+        // pure-white 1.0 maps to ~0.95 = 242, never the game's opaque 255). So release the
+        // compression as the pixel approaches neutral: at low saturation it passes through
+        // (output-clamped to pure white), while any pixel with real chroma keeps the full
+        // hue-preserving compression unchanged. Saturation-gated, not per-skin.
+        float mn = min(min(rgb.r, rgb.g), rgb.b);
+        float sat = (m > 1e-4) ? (m - mn) / m : 0.0;
+        float achroma = 1.0 - smoothstep(0.05, 0.25, sat); // 1 = white/grey, 0 = coloured
+        float scale = mix(t / m, 1.0, achroma);
+        rgb *= scale;
     }
+    // Generic cinematic vignette for full-bright HDR flashes. A flat, fully-opaque
+    // white reveal plane (Mlynar's transition flash) blows out edge-to-edge in our
+    // render (corners ~252) whereas the game's screen-space camera post applies a
+    // radial corner falloff (corners ~209 vs centre 255). We have no exportable
+    // equivalent (the flash is a flat quad + flat texture), so add the falloff here.
+    // BRIGHTNESS-GATED so it only ever touches near-white pixels: a normal frame's
+    // corners (dark backdrop) are far below the gate and pass through untouched —
+    // no per-skin data, applies identically to every skin's bright beats only.
+    float r = distance(vUV, vec2(0.5));             // 0 centre .. ~0.707 corner
+    float vig = 1.0 - uVignette * smoothstep(0.35, 0.72, r);
+    float bright = max(max(rgb.r, rgb.g), rgb.b);
+    float gate = smoothstep(0.82, 1.0, bright);     // only near-white pixels darken
+    rgb *= mix(1.0, vig, gate);
     vec3 bloom = texture2D(uBloom, vUV).rgb * uBloomIntensity;
     gl_FragColor = vec4(rgb + bloom, max(c.a, 0.0));
 }
@@ -98,6 +123,11 @@ const BLOOM_BLUR = 10;
  *  regions almost intact (a pure-white 1.0 maps to ~0.95) while taming the >1
  *  additive blowouts hard. */
 const DEFAULT_KNEE = 0.9;
+
+/** Max corner darkening for the brightness-gated cinematic vignette (see TONEMAP_FRAG).
+ *  0.15 lands a full-white flash corner at ~205-210/255, matching the game's ~209
+ *  flash-corner falloff; centre and all non-near-white pixels are untouched. */
+const VIGNETTE_STRENGTH = 0.15;
 
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
@@ -172,7 +202,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: BLOOM_INTENSITY });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: BLOOM_INTENSITY, uVignette: VIGNETTE_STRENGTH });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {

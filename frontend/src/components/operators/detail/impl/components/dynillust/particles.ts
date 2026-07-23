@@ -1,4 +1,5 @@
 import * as PIXI from "pixi.js";
+import type { IAnimationBounds } from "../chibi/helpers";
 
 /**
  * Live particle simulator for a dynamic illustration's Unity ParticleSystems.
@@ -62,6 +63,15 @@ export interface IParticleSystemData {
     startRotation?: MMScalar;
     startColor?: MMColor;
     emission: { rate?: MMScalar; bursts?: { t: number; count: number }[] };
+    /** The `_Start` cinematic's ANIMATED emission rate (particles/s over absolute
+     *  cinematic seconds), when a clip drives `EmissionModule.rateOverTime` directly —
+     *  Mlynar's sword-flourish confetti/stars have serialized rates of 60–150/s that
+     *  the clips hold at 0 outside the ~7–13s flourish. Replaces the constant rate. */
+    rateCurve?: ICurvePoint[] | null;
+    /** `EmissionModule.rateOverDistance`, particles per PX of emitter travel — trail
+     *  emission for rigs riding a moving anchor (Virtuosa's falling-apple comet dust,
+     *  rate-over-TIME 0). Applied on the emitter container's per-frame movement. */
+    rateOverDistance?: MMScalar | null;
     shape?: { type: string; radius?: number; angleDeg?: number; arcDeg?: number; box?: [number, number]; posOffset?: [number, number]; rotDeg?: number };
     colorOverLife?: MMColor | null;
     sizeOverLife?: ICurvePoint[] | null;
@@ -78,6 +88,18 @@ export interface IParticleSystemData {
      *  bone (spine-unity's `SkeletonUtilityBone`, named after the bone) and its
      *  effect drifts with the character's idle sway in-game — see {@link driftWithBone}. */
     boneChain?: string[];
+    /** Explicit spine-bone attachment from a serialized spine-unity `BoneFollower`
+     *  on the effect rig's clone root (the director-instantiated `_effects`, e.g.
+     *  Virtuosa's entrance `start_apple_01(Clone)` → `L_C_Apple_F`). The rig's
+     *  baked `pos` is only an editor pose the follower overrides at runtime — the
+     *  emitter's true position is `bone(t) + followOffset`. Only used when the
+     *  `boneChain` heuristic can't attach (no ancestor names a real bone); see
+     *  {@link driftWithBone}. */
+    followBone?: string | null;
+    /** The follower's `followBoneRotation`: false = translation-only tracking. */
+    followBoneRot?: boolean;
+    /** Emitter offset (export px, Y-up) within the followed rig. */
+    followOffset?: [number, number] | null;
     noise?: INoise | null;
     trail?: ITrail | null;
     sheet?: { tilesX: number; tilesY: number; frameOverTime?: ICurvePoint[] | null; cycles?: number } | null;
@@ -87,6 +109,22 @@ export interface IParticleSystemData {
      *  plain tinted billboard — this is what makes SilverAsh the Reignfrost's
      *  crisp cyan energy rings/arcs (and any Ram effect) render faithfully. */
     ram?: IRamData;
+    /** Per-particle Ram DISSOLVE-amount curve over normalized lifetime, from the
+     *  `CustomDataModule`'s Vector stream (shader vs_TEXCOORD2.x, added to `_Amount`).
+     *  Virtuosa's entrance apples crumble away with it (−0.12 → 1 by ~30% of life). */
+    ramDissolveCurve?: ICurvePoint[] | null;
+    /** The `_Start` cinematic's animated SCALE FACTOR on an effect-host ancestor
+     *  (multiplier of the baked resting pose, keyed in absolute cinematic seconds).
+     *  Virtuosa "Diversity in Oneness": the crown host scales 1.0→0.28 over 9.4–12.43s
+     *  — a big golden halo shrinking into the small crown. Applied about {@link
+     *  scalePivot} on the emitter container, COMPOSED with any bone-follow delta. */
+    scaleCurve?: ICurvePoint[] | null;
+    /** The fixed point the {@link scaleCurve} pivots about (export px, Y-up) — the host
+     *  transform's origin in the baked (editor) frame, before the bone-follow delta. */
+    scalePivot?: [number, number] | null;
+    /** The host's animated LOCAL position as a px OFFSET of {@link scalePivot} from its
+     *  resting spot (Y-up), keyed in absolute cinematic seconds. */
+    posCurve?: { t: number; x: number; y: number }[] | null;
 }
 
 /** Exported `_MainTex_ST`-style tiling/offset: [scaleX, scaleY, offsetX, offsetY]. */
@@ -159,6 +197,12 @@ const PER_SYSTEM_CAP = 250;
 const TRAIL_POINTS = 12;
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
 const MIN_PARTICLE_LIFE = 0.05;
+
+/** M-c: opacity for a world-space ambient system (rain) promoted IN FRONT of the
+ *  character to un-occlude it (see `unoccludeOverlap`). Drawn over the body at full
+ *  strength it reads as prominent streaks; the game shows only a faint sheen there, so
+ *  the over-body copy is dimmed to this while the background rain stays untouched. */
+const FOREGROUND_SHEEN_ALPHA = 0.4;
 
 const DEG = Math.PI / 180;
 
@@ -289,6 +333,20 @@ interface IBoneAnchor {
     resolved: boolean;
     boneName: string | null;
     ref: PIXI.Matrix | null;
+    /** Rebase mode (explicit `BoneFollower`): translation-only tracking. */
+    transOnly?: boolean;
+}
+
+/** Explicit spine-bone attachment (exporter `followBone` fields), pre-digested. */
+interface IFollow {
+    bone: string;
+    rot: boolean;
+    off: [number, number] | null;
+}
+
+/** Build the {@link IFollow} for a system, or undefined when it has none. */
+function followOf(d: IParticleSystemData): IFollow | undefined {
+    return d.followBone ? { bone: d.followBone, rot: !!d.followBoneRot, off: d.followOffset ?? null } : undefined;
 }
 
 /** Longest lifetime (s) that still gets `velocityOverLifetime` drift. See below. */
@@ -298,6 +356,13 @@ const VELOCITY_MAX_LIFE = 0.8;
  *  particles — ~one 20fps frame of motion blur, so a 500px/s rain speck draws a ~25px
  *  streak. Purely visual; scales with each particle's own speed. */
 const STRETCH_LEN_PER_SPEED = 0.05;
+
+/** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
+ *  when the exporter captured one (sampled at the emitter clock — rate-curve systems
+ *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
+function emissionRate(d: IParticleSystemData, constRate: number, time: number): number {
+    return d.rateCurve?.length ? Math.max(0, sampleCurve(d.rateCurve, time)) : constRate;
+}
 
 /** velocityOverLifetime drift, applied ONLY to SHORT-lived particles.
  *
@@ -342,7 +407,43 @@ export type RestBone = ReadonlyMap<string, PIXI.Matrix>;
  *  NEAREST the emitter's spawn `pos`, i.e. the bone driving the visual the flame
  *  sits on — the named `Sword_Fx` is only an FX-anchor that may not rotate with the
  *  rendered blade. */
-function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone): void {
+/** Linear-sample a `{t,x,y}` position curve into `[x,y]` at time `t`. */
+function samplePosCurve(curve: { t: number; x: number; y: number }[], t: number): [number, number] {
+    if (curve.length === 0) return [0, 0];
+    if (t <= curve[0].t) return [curve[0].x, curve[0].y];
+    const last = curve[curve.length - 1];
+    if (t >= last.t) return [last.x, last.y];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i].t) {
+            const a = curve[i - 1];
+            const b = curve[i];
+            const f = (t - a.t) / (b.t - a.t || 1);
+            return [lerp(a.x, b.x, f), lerp(a.y, b.y, f)];
+        }
+    }
+    return [last.x, last.y];
+}
+
+/** The `_Start` cinematic scale-in matrix `H` (see {@link IParticleSystemData.scaleCurve}):
+ *  a uniform scale `m` about the host pivot plus its animated position offset, in the
+ *  emitter's SCREEN (Y-down) frame. Composed as `base · H` so it operates in the baked frame
+ *  before any bone-follow delta carries the rig to its live position. Identity at rest. */
+function haloMatrix(d: IParticleSystemData, ct: number): PIXI.Matrix {
+    const m = d.scaleCurve?.length ? sampleCurve(d.scaleCurve, ct) : 1;
+    const [cx, cy] = d.scalePivot ?? [0, 0]; // Y-up px
+    let dx = 0;
+    let dy = 0;
+    if (d.posCurve?.length) {
+        const [px, py] = samplePosCurve(d.posCurve, ct);
+        dx = px;
+        dy = py;
+    }
+    // Screen (Y-down): pivot=(cx,-cy), offset=(dx,-dy). Scale about pivot, then translate:
+    // final = m·local + [pivot·(1−m) + offset].
+    return new PIXI.Matrix(m, 0, 0, m, cx * (1 - m) + dx, -cy * (1 - m) - dy);
+}
+
+function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number): void {
     if (!st.resolved) {
         st.resolved = true;
         st.boneName = null;
@@ -363,19 +464,46 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
                 st.boneName = best;
                 st.ref = (restBone.get(best) as PIXI.Matrix).clone();
             }
+        } else if (follow && find && restBone?.has(follow.bone)) {
+            // Explicit `BoneFollower` attachment (entrance effect rigs): the chain
+            // names no real bone — the rig rides the follower's named bone, REBASED
+            // there (the baked `pos` is only an editor pose). Doctor the reference
+            // translation so the delta `T = M_now.t − ref.t` lands the emitter at
+            // `bone_now + followOffset` exactly: `ref.t := pos_ydown − off_ydown`.
+            const m = (restBone.get(follow.bone) as PIXI.Matrix).clone();
+            const off = follow.off ?? [0, 0];
+            m.tx = pos[0] - off[0];
+            m.ty = -pos[1] + off[1]; // Y-up export offsets → Y-down container space
+            st.boneName = follow.bone;
+            st.ref = m;
+            st.transOnly = !follow.rot;
         }
     }
-    if (!st.boneName || !st.ref || !find) return;
-    const now = find(st.boneName);
-    if (!now) return;
-    // pixi-spine bone matrices are already in the skeleton's Y-DOWN world space —
-    // the SAME space the particle sprites live in (each sprite draws at `-p.y`, so a
-    // sprite's container position IS Y-down). So the bone's rigid delta applies
-    // DIRECTLY to the emitter container. Conjugating it by a Y-flip (as if the bone
-    // were Y-up) double-flips the rotation: it reads as identity at idle but slides
-    // the flame off the blade the moment the Special rotates the sword.
-    const d = now.clone().append(st.ref.clone().invert());
-    container.transform.setFromMatrix(d);
+    // Base matrix `B`: the bone-follow delta (identity when the emitter follows no bone).
+    let base: PIXI.Matrix | null = null;
+    if (st.boneName && st.ref && find) {
+        const now = find(st.boneName);
+        if (now) {
+            base = st.transOnly
+                ? // `followBoneRotation` off: translate the rig, don't spin it.
+                  new PIXI.Matrix(1, 0, 0, 1, now.tx - st.ref.tx, now.ty - st.ref.ty)
+                : // pixi-spine bone matrices are already in the skeleton's Y-DOWN world
+                  // space — the SAME space the particle sprites live in — so the bone's
+                  // rigid delta applies DIRECTLY. Conjugating it by a Y-flip double-flips
+                  // the rotation (slides the flame off a rotating blade).
+                  now.clone().append(st.ref.clone().invert());
+        }
+    }
+    // Scale-in host (`scaleCurve`): compose `base · H` and apply fresh every frame — the
+    // halo scales in the baked frame, then `base` carries it to the live bone position.
+    if (halo?.scaleCurve?.length) {
+        const b = base ?? PIXI.Matrix.IDENTITY.clone();
+        container.transform.setFromMatrix(b.append(haloMatrix(halo, ct ?? 0)));
+        return;
+    }
+    // No scale-in: preserve the original behaviour exactly (untouched when no bone).
+    if (!base) return;
+    container.transform.setFromMatrix(base);
 }
 
 /** One live billboard emitter: owns a sprite pool inside a container. */
@@ -400,6 +528,16 @@ class Emitter {
     private readonly volWorld: { x: number; y: number } | null;
     /** Bone-follow state so the effect drifts with its parent bone (see {@link driftWithBone}). */
     private readonly boneAnchor: IBoneAnchor = { resolved: false, boneName: null, ref: null };
+    /** Explicit BoneFollower attachment (see {@link followOf} / {@link driftWithBone}). */
+    private readonly follow: IFollow | undefined;
+    /** `rateOverDistance` (particles per px of emitter travel) and the emitter's
+     *  last container position, for distance-based trail emission (Virtuosa's
+     *  falling-apple comet dust). */
+    private readonly rodRate: number;
+    private lastEmitterPos: { x: number; y: number } | null = null;
+    /** Live authored display box (mesh-local px, Y-down) for the current frame — see
+     *  {@link ILoadedParticles.update}. Null = no cull (e.g. no framing data yet). */
+    private displayBox: IAnimationBounds | null = null;
 
     /** Texture Sheet Animation frames (sub-rectangles of the base texture), when
      *  the emitter flipbooks through a tile grid; empty for a plain sprite. */
@@ -427,6 +565,8 @@ class Emitter {
         this.trailTexture = trailTexture;
         this.blend = blend;
         this.container.sortableChildren = false;
+        this.follow = followOf(data);
+        this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
         this.volWorld = worldVelocityOverLife(data);
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
         // Trails render behind the particle heads.
@@ -574,6 +714,48 @@ class Emitter {
         const wy = d.pos[1] + lx * sin + ly * cos;
         const wDir = dirAng + rotDeg * DEG;
 
+        // Edge-clip fix: a world-space system's static spawn position can be baked for an
+        // older, narrower framing calibration and now fall outside the live authored display
+        // box (the settled idle box, or — during the entrance — the camera's live zoom/pan
+        // box) for the whole shot, rendering as particles clipped hard at the canvas edge.
+        // Reject spawns whose position is ENTIRELY outside that box (small box-relative
+        // margin so streaks don't visibly pop at the boundary); partial/on-screen spawns are
+        // untouched — ordinary canvas clipping handles those.
+        // GATE on `!this.boneAnchor.boneName` (resolved by `driftWithBone`, called earlier
+        // this same `update()`), not just `simulationSpace`: a system can be authored
+        // `simulationSpace:"world"` (particles drift independently once spawned) while its
+        // EMITTER still rides a live bone (Virtuosa's `followBone:"L_C_Apple_F"` comet-trail
+        // dust) — `wx`/`wy` here are baked in the bone's REST frame, only becoming true
+        // screen coords after `this.container`'s live bone-follow transform is applied at
+        // render time, so testing them against a screen-space box directly would be a
+        // coordinate-space mismatch (and could wrongly thin the apple trail as it plunges).
+        // A genuinely static ambient system (no chain name resolves to a real bone, e.g.
+        // Mlynar's rain — its `boneChain` names are generic rig labels, not spine bones) has
+        // `boneAnchor.boneName === null`, so `wx,-wy` IS already the true screen position.
+        // A large-scale glow/wash (cello's crown backdrop carries several additive/normal
+        // systems sized 700–1360px, anchored FAR outside any live camera box on purpose —
+        // an off-frame "light source" whose bulk paints into frame, not a mis-clipped small
+        // effect) is a fundamentally different authored pattern than a small, localized
+        // streak/spark (Mlynar's rain tops out around 140–270px) — a flat position+margin
+        // test can't safely judge "off-frame" for the former (verified against the game
+        // recording: culling cello's panel removed real, game-matching deep-blue content —
+        // a regression, not a fix) but correctly identifies the latter. Gate the whole cull
+        // to particles small relative to the box, so it only ever touches the
+        // small/localized class the fix targets; large scene-spanning glows are untouched.
+        const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
+        if (d.simulationSpace === "world" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+            const box = this.displayBox;
+            // Add the sampled particle's own half-size on top of the box-relative margin so
+            // a moderately-sized sprite isn't hard-culled just for having an edge-adjacent
+            // centre (streaks/sparks don't visibly pop at the boundary).
+            const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
+            const sx = wx;
+            const sy = -wy;
+            if (sx < box.x - margin || sx > box.x + box.width + margin || sy < box.y - margin || sy > box.y + box.height + margin) {
+                return;
+            }
+        }
+
         let p = this.free.pop();
         if (!p) {
             const disp = this.createParticleDisp();
@@ -612,17 +794,27 @@ class Emitter {
         }
     }
 
-    update(dt: number, findBone?: FindBone, restBone?: RestBone): void {
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void {
         const d = this.data;
+        this.displayBox = displayBox ?? null;
         this.time += dt;
         // Dormant until the cinematic start delay elapses (no emission, no particles yet).
         if (this.time < 0) return;
-        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone);
+        // Cinematic time for the scale-in curves: the emitter clock counts up from
+        // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
+        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
 
         // Emission (rate + bursts), only while the system is "playing".
         const playing = d.looping || this.time <= d.duration;
+        // `rateOverDistance`: trail emission per px of emitter travel (the container
+        // moves when the rig rides a bone — Virtuosa's comet sheds dust down the
+        // shaft). Measured on the container position, whichever follow path drives it.
+        const ep = { x: this.container.position.x, y: this.container.position.y };
+        const moved = this.lastEmitterPos ? Math.hypot(ep.x - this.lastEmitterPos.x, ep.y - this.lastEmitterPos.y) : 0;
+        this.lastEmitterPos = ep;
         if (playing) {
-            this.emitAcc += this.rate * dt;
+            this.emitAcc += emissionRate(d, this.rate, this.time) * dt;
+            if (this.rodRate > 0 && moved > 0) this.emitAcc += this.rodRate * moved;
             while (this.emitAcc >= 1) {
                 this.emitAcc -= 1;
                 this.spawn();
@@ -971,6 +1163,16 @@ class RamEmitter {
     private readonly blend: "additive" | "normal";
     private readonly volWorld: { x: number; y: number } | null;
     private readonly boneAnchor: IBoneAnchor = { resolved: false, boneName: null, ref: null };
+    /** Explicit BoneFollower attachment (see {@link followOf} / {@link driftWithBone}). */
+    private readonly follow: IFollow | undefined;
+    /** `rateOverDistance` (particles per px of emitter travel) and the emitter's
+     *  last container position, for distance-based trail emission (Virtuosa's
+     *  falling-apple comet dust). */
+    private readonly rodRate: number;
+    private lastEmitterPos: { x: number; y: number } | null = null;
+    /** Live authored display box (mesh-local px, Y-down) for the current frame — see
+     *  {@link ILoadedParticles.update}. Null = no cull (e.g. no framing data yet). */
+    private displayBox: IAnimationBounds | null = null;
     private readonly mesh: PIXI.Mesh<PIXI.Shader>;
     private readonly shader: PIXI.Shader;
     private readonly posData: Float32Array;
@@ -993,6 +1195,8 @@ class RamEmitter {
         // Start dormant through the cinematic delay (see the billboard system's ctor).
         this.time = -(data.delay ?? 0);
         this.ram = ram;
+        this.follow = followOf(data);
+        this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
         this.volWorld = worldVelocityOverLife(data);
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
         this.cap = Math.max(1, Math.min(PER_SYSTEM_CAP, data.maxParticles > 0 ? data.maxParticles : PER_SYSTEM_CAP));
@@ -1113,7 +1317,41 @@ class RamEmitter {
         const wx = d.pos[0] + lx * cos - ly * sin;
         const wy = d.pos[1] + lx * sin + ly * cos;
         const speed = sampleScalar(d.startSpeed, Math.random(), nt);
+        const size = sampleScalar(d.startSize, Math.random(), nt);
         const wDir = dirAng + rotDeg * DEG;
+        // Edge-clip fix: a world-space system's static spawn position can be baked for an
+        // older, narrower framing calibration and now fall outside the live authored display
+        // box (the settled idle box, or — during the entrance — the camera's live zoom/pan
+        // box) for the whole shot, rendering as particles clipped hard at the canvas edge.
+        // Reject spawns whose position is ENTIRELY outside that box (small box-relative
+        // margin so streaks don't visibly pop at the boundary); partial/on-screen spawns are
+        // untouched — ordinary canvas clipping handles those.
+        // GATE on `!this.boneAnchor.boneName` (resolved by `driftWithBone`, called earlier
+        // this same `update()`), not just `simulationSpace`: a system can be authored
+        // `simulationSpace:"world"` (particles drift independently once spawned) while its
+        // EMITTER still rides a live bone (Virtuosa's `followBone:"L_C_Apple_F"` comet-trail
+        // dust) — `wx`/`wy` here are baked in the bone's REST frame, only becoming true
+        // screen coords after `this.container`'s live bone-follow transform is applied at
+        // render time, so testing them against a screen-space box directly would be a
+        // coordinate-space mismatch (and could wrongly thin the apple trail as it plunges).
+        // A genuinely static ambient system (no chain name resolves to a real bone, e.g.
+        // Mlynar's rain — its `boneChain` names are generic rig labels, not spine bones) has
+        // `boneAnchor.boneName === null`, so `wx,-wy` IS already the true screen position.
+        // See the Emitter.spawn() twin of this check: a large-scale glow/wash anchored far
+        // outside the box on purpose (verified regression on cello's crown backdrop) needs
+        // to stay untouched — gate the cull to particles small relative to the box.
+        const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
+        if (d.simulationSpace === "world" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+            const box = this.displayBox;
+            // A moderately-sized sprite isn't hard-culled just for having an edge-adjacent
+            // centre — widen the margin by the particle's own half-size too.
+            const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
+            const sx = wx;
+            const sy = -wy;
+            if (sx < box.x - margin || sx > box.x + box.width + margin || sy < box.y - margin || sy > box.y + box.height + margin) {
+                return;
+            }
+        }
         this.particles.push({
             x: wx,
             y: wy,
@@ -1121,7 +1359,7 @@ class RamEmitter {
             vy: Math.sin(wDir) * speed,
             age: 0,
             life: Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt)),
-            size: sampleScalar(d.startSize, Math.random(), nt),
+            size,
             rot: sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt),
             rotVel: d.rotOverLifeDegPerSec ?? 0,
             rand: Math.random(),
@@ -1129,16 +1367,26 @@ class RamEmitter {
         });
     }
 
-    update(dt: number, findBone?: FindBone, restBone?: RestBone): void {
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void {
         const d = this.data;
+        this.displayBox = displayBox ?? null;
         this.time += dt;
         // Dormant until the cinematic start delay elapses (no emission, no particles yet).
         if (this.time < 0) return;
-        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone);
+        // Cinematic time for the scale-in curves: the emitter clock counts up from
+        // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
+        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
 
         const playing = d.looping || this.time <= d.duration;
+        // `rateOverDistance`: trail emission per px of emitter travel (the container
+        // moves when the rig rides a bone — Virtuosa's comet sheds dust down the
+        // shaft). Measured on the container position, whichever follow path drives it.
+        const ep = { x: this.container.position.x, y: this.container.position.y };
+        const moved = this.lastEmitterPos ? Math.hypot(ep.x - this.lastEmitterPos.x, ep.y - this.lastEmitterPos.y) : 0;
+        this.lastEmitterPos = ep;
         if (playing) {
-            this.emitAcc += this.rate * dt;
+            this.emitAcc += emissionRate(d, this.rate, this.time) * dt;
+            if (this.rodRate > 0 && moved > 0) this.emitAcc += this.rodRate * moved;
             while (this.emitAcc >= 1) {
                 this.emitAcc -= 1;
                 this.spawn();
@@ -1228,11 +1476,13 @@ class RamEmitter {
             }
             const vk = q * 8;
             // CustomData (vs_TEXCOORD2 = per-particle dissolve amount + disturb
-            // intensity). Every svash2 Ram system that shapes itself via a dissolve
-            // mask has its CustomData module DISABLED, so the amount is a static 0
-            // and the mask (ring / star-glint / etc.) shapes the fill directly.
+            // intensity). Systems with the CustomData module DISABLED (every svash2
+            // Ram mask effect) hold a static 0 and the dissolve mask shapes the fill
+            // directly; an exported `ramDissolveCurve` (Virtuosa's crumbling apples)
+            // replays the per-particle dissolve amount over normalized lifetime.
+            const dis = d.ramDissolveCurve ? sampleCurve(d.ramDissolveCurve, lf) : 0;
             for (let k = 0; k < 4; k++) {
-                cst[vk + k * 2] = 0; // dissolve amount
+                cst[vk + k * 2] = dis; // dissolve amount
                 cst[vk + k * 2 + 1] = 0; // disturb intensity (no _DisturbTex bound here)
             }
         }
@@ -1264,7 +1514,7 @@ export interface ILoadedParticles {
     foreground: PIXI.Container;
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
      *  drift with the character; omit for no bone-following. */
-    update(dt: number, findBone?: FindBone, restBone?: RestBone): void;
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void;
     destroy(): void;
 }
 
@@ -1587,7 +1837,7 @@ function additivePileGain(sys: IParticleSystemData): number {
     return Math.max(MIN_GAIN, TARGET_STACK / density);
 }
 
-export async function loadParticles(url: string, textureBaseUrl: string, bust = ""): Promise<ILoadedParticles | null> {
+export async function loadParticles(url: string, textureBaseUrl: string, bust = "", characterBounds: IAnimationBounds | null = null): Promise<ILoadedParticles | null> {
     let data: IParticlesData;
     try {
         const res = await fetch(url);
@@ -1605,6 +1855,33 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     const emitters: Array<Emitter | RamEmitter> = [];
     let liveEstimate = 0;
     const budget = () => GLOBAL_MAX_PARTICLES - liveEstimate;
+
+    /** Does this world-space system's STATIC spawn disc substantially overlap the
+     *  character's own body bounds? A per-system geometric test (not a blanket flag) —
+     *  only systems that would render mostly/fully hidden behind the character get
+     *  promoted out of `background`; ambient background props positioned away from the
+     *  character (embers, ground mist, magic circles) are untouched. `sys.pos` is
+     *  authored export px, Y-up; negate Y to match `characterBounds`'s Y-down (Pixi
+     *  local-bounds) convention — the same negation `applyDisp`/spawn already use for
+     *  every particle's own screen position. No per-skin constant: the 0.5 threshold and
+     *  the disc-vs-box geometry are generic. */
+    const overlapsCharacter = (sys: IParticleSystemData): boolean => {
+        if (!characterBounds) return false;
+        const r = sys.shape?.radius ?? 0;
+        const cx = sys.pos[0];
+        const cy = -sys.pos[1];
+        const discW = Math.max(2 * r, 1);
+        const discH = Math.max(2 * r, 1);
+        const dx0 = cx - discW / 2;
+        const dy0 = cy - discH / 2;
+        const ix0 = Math.max(dx0, characterBounds.x);
+        const iy0 = Math.max(dy0, characterBounds.y);
+        const ix1 = Math.min(dx0 + discW, characterBounds.x + characterBounds.width);
+        const iy1 = Math.min(dy0 + discH, characterBounds.y + characterBounds.height);
+        const iw = Math.max(0, ix1 - ix0);
+        const ih = Math.max(0, iy1 - iy0);
+        return (iw * ih) / (discW * discH) >= 0.5;
+    };
 
     /** Raw (unprocessed) texture for a Ram shader slot, by [particles] index.
      *  Ram, disturb and dissolve inputs are DATA textures (ramp / flow / mask)
@@ -1742,7 +2019,21 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         emitters.push(emitter);
         if (blend === "additive") emitter.container.alpha = additivePileGain(sys);
         // bg_* / haze atmospherics are demoted behind the spine (see isBackdropParticle above).
-        (sys.sort < data.characterSort || isBackdropParticle ? background : foreground).addChild(emitter.container);
+        // A world-space system that would be bucketed background purely by sort (NOT already
+        // demoted as a deliberate backdrop atmospheric) but whose static spawn disc sits mostly
+        // ON the character's own body renders 100% hidden in our flat 2D compositor (the real
+        // Unity renderer gives it genuine depth parallax around the silhouette; ours can't) —
+        // e.g. Mlynar's dominant `rain_left_short_01` disc sits on his torso. Promote only that
+        // narrow, geometrically-overlapping case to foreground; everything else keeps the
+        // original sort-driven bucketing untouched.
+        const wouldBeBackground = sys.sort < data.characterSort || isBackdropParticle;
+        const unoccludeOverlap = wouldBeBackground && !isBackdropParticle && sys.simulationSpace === "world" && overlapsCharacter(sys);
+        // M-c: the un-occlude promotion draws this ambient system (Mlynar's torso rain) IN
+        // FRONT of the character. At full strength its streaks read as prominent/"weird" over
+        // his coat at the tight entrance zoom; the game shows only a faint sheen. Dim just the
+        // promoted over-body copy — the background rain (and every other system) is untouched.
+        if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
+        (wouldBeBackground && !unoccludeOverlap ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
 
@@ -1750,11 +2041,11 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         data,
         background,
         foreground,
-        update(dt: number, findBone?: FindBone, restBone?: RestBone) {
+        update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null) {
             // Recompute the shared live count once per frame for the budget.
             liveEstimate = 0;
             for (const e of emitters) liveEstimate += e.liveCount();
-            for (const e of emitters) e.update(dt, findBone, restBone);
+            for (const e of emitters) e.update(dt, findBone, restBone, displayBox);
         },
         destroy() {
             for (const e of emitters) e.destroy();

@@ -44,9 +44,9 @@ pub fn unit_quad() -> MeshData {
 /// Byte size of a Unity vertex-channel format code.
 const fn format_size(format: i64) -> usize {
     match format {
-        0 | 6 | 7 | 11 => 4, // Float32 / UInt32 / SInt32
+        0 | 6 | 7 | 11 => 4,         // Float32 / UInt32 / SInt32
         1 | 4 | 5 | 8 | 9 | 10 => 2, // Float16 / (U|S)Norm16 / (U|S)Int16
-        _ => 1,              // (U|S)Norm8 / (U|S)Int8
+        _ => 1,                      // (U|S)Norm8 / (U|S)Int8
     }
 }
 
@@ -80,18 +80,27 @@ fn half_to_f32(h: u16) -> f32 {
 fn read_scalar(buf: &[u8], off: usize, format: i64) -> f32 {
     match format {
         0 => {
-            let b: [u8; 4] = buf.get(off..off + 4).and_then(|s| s.try_into().ok()).unwrap_or([0; 4]);
+            let b: [u8; 4] = buf
+                .get(off..off + 4)
+                .and_then(|s| s.try_into().ok())
+                .unwrap_or([0; 4]);
             f32::from_le_bytes(b)
         }
         1 => {
-            let b: [u8; 2] = buf.get(off..off + 2).and_then(|s| s.try_into().ok()).unwrap_or([0; 2]);
+            let b: [u8; 2] = buf
+                .get(off..off + 2)
+                .and_then(|s| s.try_into().ok())
+                .unwrap_or([0; 2]);
             half_to_f32(u16::from_le_bytes(b))
         }
         // UNorm8 (vertex colours)
         2 => f32::from(buf.get(off).copied().unwrap_or(0)) / 255.0,
         // UNorm16
         4 => {
-            let b: [u8; 2] = buf.get(off..off + 2).and_then(|s| s.try_into().ok()).unwrap_or([0; 2]);
+            let b: [u8; 2] = buf
+                .get(off..off + 2)
+                .and_then(|s| s.try_into().ok())
+                .unwrap_or([0; 2]);
             f32::from(u16::from_le_bytes(b)) / 65535.0
         }
         _ => 0.0,
@@ -118,7 +127,9 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
     }
 
     let vd = mesh.get("m_VertexData")?;
-    let vertex_count = vd.get("m_VertexCount").and_then(serde_json::Value::as_u64)? as usize;
+    let vertex_count = vd
+        .get("m_VertexCount")
+        .and_then(serde_json::Value::as_u64)? as usize;
     if vertex_count == 0 {
         return None;
     }
@@ -141,13 +152,25 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
     // Per-stream stride = max(channel.offset + channel.size) over that stream.
     let mut stream_stride: HashMap<i64, usize> = HashMap::new();
     for ch in channels {
-        let dim = ch.get("dimension").and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let dim = ch
+            .get("dimension")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
         if dim <= 0 {
             continue;
         }
-        let stream = ch.get("stream").and_then(serde_json::Value::as_i64).unwrap_or(0);
-        let offset = ch.get("offset").and_then(serde_json::Value::as_i64).unwrap_or(0) as usize;
-        let format = ch.get("format").and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let stream = ch
+            .get("stream")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
+        let offset = ch
+            .get("offset")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0) as usize;
+        let format = ch
+            .get("format")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
         let end = offset + dim as usize * format_size(format);
         let e = stream_stride.entry(stream).or_insert(0);
         *e = (*e).max(end);
@@ -165,13 +188,25 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
 
     let channel = |i: usize| -> Option<(i64, usize, i64)> {
         let ch = channels.get(i)?;
-        let dim = ch.get("dimension").and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let dim = ch
+            .get("dimension")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
         if dim <= 0 {
             return None;
         }
-        let stream = ch.get("stream").and_then(serde_json::Value::as_i64).unwrap_or(0);
-        let offset = ch.get("offset").and_then(serde_json::Value::as_i64).unwrap_or(0) as usize;
-        let format = ch.get("format").and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let stream = ch
+            .get("stream")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
+        let offset = ch
+            .get("offset")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0) as usize;
+        let format = ch
+            .get("format")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
         Some((stream, offset, format))
     };
 
@@ -197,7 +232,10 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
             let start = *stream_start.get(&s)?;
             let stride = *stream_stride.get(&s)?;
             let b = start + i * stride + o;
-            Some([read_scalar(&vbuf, b, f), read_scalar(&vbuf, b + format_size(f), f)])
+            Some([
+                read_scalar(&vbuf, b, f),
+                read_scalar(&vbuf, b + format_size(f), f),
+            ])
         });
         uvs.push(uv0.unwrap_or([0.0, 0.0]));
         let col = color.and_then(|(s, o, f)| {
@@ -219,15 +257,29 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
     let ibuf: Vec<u8> = mesh
         .get("m_IndexBuffer")
         .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|x| x.as_u64().map(|n| n as u8)).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_u64().map(|n| n as u8))
+                .collect()
+        })
         .unwrap_or_default();
-    let index_16 = mesh.get("m_IndexFormat").and_then(serde_json::Value::as_i64).unwrap_or(0) == 0;
+    let index_16 = mesh
+        .get("m_IndexFormat")
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or(0)
+        == 0;
     let read_index = |byte: usize| -> u32 {
         if index_16 {
-            let b: [u8; 2] = ibuf.get(byte..byte + 2).and_then(|s| s.try_into().ok()).unwrap_or([0; 2]);
+            let b: [u8; 2] = ibuf
+                .get(byte..byte + 2)
+                .and_then(|s| s.try_into().ok())
+                .unwrap_or([0; 2]);
             u32::from(u16::from_le_bytes(b))
         } else {
-            let b: [u8; 4] = ibuf.get(byte..byte + 4).and_then(|s| s.try_into().ok()).unwrap_or([0; 4]);
+            let b: [u8; 4] = ibuf
+                .get(byte..byte + 4)
+                .and_then(|s| s.try_into().ok())
+                .unwrap_or([0; 4]);
             u32::from_le_bytes(b)
         }
     };
@@ -237,12 +289,26 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
     if let Some(submeshes) = mesh.get("m_SubMeshes").and_then(|v| v.as_array()) {
         for sm in submeshes {
             // topology 0 = triangles; skip line/point strips.
-            if sm.get("topology").and_then(serde_json::Value::as_i64).unwrap_or(0) != 0 {
+            if sm
+                .get("topology")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(0)
+                != 0
+            {
                 continue;
             }
-            let first_byte = sm.get("firstByte").and_then(serde_json::Value::as_u64).unwrap_or(0) as usize;
-            let index_count = sm.get("indexCount").and_then(serde_json::Value::as_u64).unwrap_or(0) as usize;
-            let base_vertex = sm.get("baseVertex").and_then(serde_json::Value::as_u64).unwrap_or(0) as u32;
+            let first_byte = sm
+                .get("firstByte")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0) as usize;
+            let index_count = sm
+                .get("indexCount")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0) as usize;
+            let base_vertex = sm
+                .get("baseVertex")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0) as u32;
             for k in 0..index_count {
                 let idx = read_index(first_byte + k * istep) + base_vertex;
                 if (idx as usize) < vertex_count {
@@ -265,7 +331,12 @@ pub fn parse_mesh(mesh: &Value, resources: &HashMap<String, Vec<u8>>) -> Option<
         return None;
     }
 
-    Some(MeshData { positions, uvs, colors, indices })
+    Some(MeshData {
+        positions,
+        uvs,
+        colors,
+        indices,
+    })
 }
 
 fn read_stream_data(sd: Option<&Value>, resources: &HashMap<String, Vec<u8>>) -> Option<Vec<u8>> {

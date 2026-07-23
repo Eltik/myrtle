@@ -158,7 +158,10 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let shader_map = if extract_spine {
         let map = export::shader_map::build_shader_map(&files);
         if !map.is_empty() {
-            println!("Resolved {} shader name(s) for particle classification", map.len());
+            println!(
+                "Resolved {} shader name(s) for particle classification",
+                map.len()
+            );
         }
         map
     } else {
@@ -257,8 +260,7 @@ const SPINE_CLASS_IDS: &[i32] = &[1, 114, 49, 21, 28];
 /// AnimationClip (74) to evaluate the idle pose the quads settle into, and
 /// ParticleSystem (198) + ParticleSystemRenderer (199) + Camera (20) for the
 /// `[particles]` export.
-const DYNCHAR_SPINE_CLASS_IDS: &[i32] =
-    &[1, 4, 20, 21, 23, 28, 33, 43, 49, 74, 114, 198, 199];
+const DYNCHAR_SPINE_CLASS_IDS: &[i32] = &[1, 4, 20, 21, 23, 28, 33, 43, 49, 74, 114, 198, 199];
 
 /// Map local (`m_FileID == 0`) object `path_ids` to their intended output directory,
 /// taken from the bundle's `AssetBundle` (class 142) `m_Container`.
@@ -359,7 +361,8 @@ fn process_bundle(
     // Phase 1: Spine extraction (only read spine-relevant class_ids).
     // Dynchars bundles also need the scene graph (Transform=4, MeshRenderer=23,
     // MeshFilter=33) to reach and place the standalone background layer.
-    let is_dynchar_bundle = is_spine_bundle && spine::detect_dynchar_bundle(&bundle_subdir, input_dir);
+    let is_dynchar_bundle =
+        is_spine_bundle && spine::detect_dynchar_bundle(&bundle_subdir, input_dir);
     let spine_class_ids: &[i32] = if is_dynchar_bundle {
         DYNCHAR_SPINE_CLASS_IDS
     } else {
@@ -390,7 +393,8 @@ fn process_bundle(
                 // stash it so particle classification can read it downstream.
                 if obj.class_id == 21 {
                     if let Some((fid, pid)) = val.get("m_Shader").and_then(pptr_ids)
-                        && let Some(name) = export::shader_map::resolve_shader(&sf.externals, fid, pid, shader_map)
+                        && let Some(name) =
+                            export::shader_map::resolve_shader(&sf.externals, fid, pid, shader_map)
                     {
                         val["_shaderName"] = serde_json::Value::String(name.to_string());
                     }
@@ -410,9 +414,13 @@ fn process_bundle(
                     // several of them legitimately opaque. So for Ram materials we
                     // resolve every sampled slot and bypass BOTH gates (the
                     // Disturb-name gate and the opaque gate).
-                    let shader = val.get("_shaderName").and_then(serde_json::Value::as_str).unwrap_or("");
+                    let shader = val
+                        .get("_shaderName")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("");
                     let is_ram = shader.contains("Ram/");
-                    let is_distortion = shader.contains("GrabPass") || (shader.contains("Disturb") && !shader.contains("VertexDisturb"));
+                    let is_distortion = shader.contains("GrabPass")
+                        || (shader.contains("Disturb") && !shader.contains("VertexDisturb"));
                     let slots: &[&str] = if is_ram {
                         &[
                             "_MainTex",
@@ -457,6 +465,36 @@ fn process_bundle(
                                 serde_json::json!({ "m_FileID": 0, "m_PathID": pid });
                         }
                     }
+                    // A `_MainTex` the baseline particle gates SKIP — a distortion-
+                    // shader sprite (slots = [] above) or an opaque fill rejected by
+                    // `resolve_decode`'s opacity gate — can still be the real texture
+                    // of an entrance-sequenced scene QUAD: Mlynar's white transition
+                    // flash (`mask_09`, opaque) and its wind sheets (`smoke_46`, on a
+                    // Disturb-shader material). Resolve it UNGATED and mark the
+                    // material `_meshExtResolved`; the scene exporter renders such
+                    // materials ONLY on entrance-windowed layers, so an always-on
+                    // frozen fx quad can't pollute the idle scene (see spine.rs).
+                    if let Some((fid, pid)) = val
+                        .get("m_SavedProperties")
+                        .and_then(|sp| sp.get("m_TexEnvs"))
+                        .and_then(|te| te.get("_MainTex"))
+                        .and_then(|m| m.get("m_Texture"))
+                        .and_then(pptr_ids)
+                        && fid != 0
+                        && let Some(decoded) =
+                            fx_textures.resolve_decode_ram(&sf.externals, fid, pid)
+                    {
+                        let synth = serde_json::json!({
+                            "m_Name": decoded.name,
+                            "m_Width": decoded.width,
+                            "m_Height": decoded.height,
+                            "_decodedRGBA": base64::engine::general_purpose::STANDARD.encode(&decoded.rgba),
+                        });
+                        spine_objects.insert(pid, (28, synth));
+                        val["m_SavedProperties"]["m_TexEnvs"]["_MainTex"]["m_Texture"] =
+                            serde_json::json!({ "m_FileID": 0, "m_PathID": pid });
+                        val["_meshExtResolved"] = serde_json::Value::Bool(true);
+                    }
                 }
                 // A ParticleSystemRenderer whose MATERIAL lives in another bundle
                 // (dynchar `effect.ab`) resolves to `tex: null` and renders nothing —
@@ -477,7 +515,9 @@ fn process_bundle(
                         if mfid == 0 {
                             continue; // material already in-bundle
                         }
-                        let Some((mat_cab, mut mat_json, mat_ext_cabs)) = fx_textures.resolve_material_ref(&sf.externals, mfid, mpid) else {
+                        let Some((mat_cab, mut mat_json, mat_ext_cabs)) =
+                            fx_textures.resolve_material_ref(&sf.externals, mfid, mpid)
+                        else {
                             continue;
                         };
                         // Resolve the material's own `_MainTex` — in the SAME FX bundle
@@ -488,7 +528,8 @@ fn process_bundle(
                             .and_then(|te| te.get("_MainTex"))
                             .and_then(|m| m.get("m_Texture"))
                             .and_then(pptr_ids)
-                            && let Some(decoded) = fx_textures.material_texture(&mat_cab, &mat_ext_cabs, tfid, tpid)
+                            && let Some(decoded) =
+                                fx_textures.material_texture(&mat_cab, &mat_ext_cabs, tfid, tpid)
                         {
                             let synth = serde_json::json!({
                                 "m_Name": decoded.name,
@@ -497,10 +538,12 @@ fn process_bundle(
                                 "_decodedRGBA": base64::engine::general_purpose::STANDARD.encode(&decoded.rgba),
                             });
                             spine_objects.insert(tpid, (28, synth));
-                            mat_json["m_SavedProperties"]["m_TexEnvs"]["_MainTex"]["m_Texture"] = serde_json::json!({ "m_FileID": 0, "m_PathID": tpid });
+                            mat_json["m_SavedProperties"]["m_TexEnvs"]["_MainTex"]["m_Texture"] =
+                                serde_json::json!({ "m_FileID": 0, "m_PathID": tpid });
                         }
                         spine_objects.insert(mpid, (21, mat_json));
-                        val["m_Materials"][i] = serde_json::json!({ "m_FileID": 0, "m_PathID": mpid });
+                        val["m_Materials"][i] =
+                            serde_json::json!({ "m_FileID": 0, "m_PathID": mpid });
                     }
                 }
                 spine_objects.insert(obj.path_id, (obj.class_id, val));

@@ -30,13 +30,25 @@ pub fn decode_texture_object(
         if width == 0 || height == 0 || rgba.len() != (width * height * 4) as usize {
             return Ok(None);
         }
-        return Ok(Some(DecodedTexture { name: name.to_string(), width, height, rgba }));
+        return Ok(Some(DecodedTexture {
+            name: name.to_string(),
+            width,
+            height,
+            rgba,
+        }));
     }
 
     let format = obj["m_TextureFormat"].as_i64().unwrap_or(0) as i32;
     let image_data = obj["image data"].as_str().unwrap_or("");
 
-    if width == 0 || height == 0 {
+    // Reject zero or absurd dimensions before they drive the `width * height`
+    // pixel-buffer allocations below (lines ~76/86). `m_Width`/`m_Height` come
+    // straight from the object header, so a corrupt/misread texture could claim
+    // e.g. 40000x40000 and allocate ~13 GB in one shot. Real AK textures top out
+    // well under 16384 on a side; compute the product as u64 so the check itself
+    // can't wrap (the u32 `width * height` below would).
+    const MAX_DIM: u32 = 16384;
+    if width == 0 || height == 0 || width > MAX_DIM || height > MAX_DIM {
         return Ok(None);
     }
 

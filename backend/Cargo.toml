@@ -28,6 +28,10 @@ name = "manage-permissions"
 path = "src/bin/manage_permissions.rs"
 
 [[bin]]
+name = "set-tier-list-official"
+path = "src/bin/set_tier_list_official.rs"
+
+[[bin]]
 name = "resync-gacha"
 path = "src/bin/resync_gacha.rs"
 

@@ -34,7 +34,12 @@ fn scan_shader_name(data: &[u8], start: usize, size: usize) -> Option<String> {
             let s = &seg[i..];
             let e = s.iter().position(|&b| !is_name(b)).unwrap_or(s.len());
             let run = &s[..e];
-            if run.len() >= 10 && run.contains(&b'/') && (run.starts_with(b"Torappu") || run.starts_with(b"Hidden") || run.starts_with(b"Custom")) {
+            if run.len() >= 10
+                && run.contains(&b'/')
+                && (run.starts_with(b"Torappu")
+                    || run.starts_with(b"Hidden")
+                    || run.starts_with(b"Custom"))
+            {
                 return Some(String::from_utf8_lossy(run).to_string());
             }
             i += e.max(1);
@@ -48,11 +53,20 @@ fn scan_shader_name(data: &[u8], start: usize, size: usize) -> Option<String> {
 /// True for a filename that looks like a shader bundle (`[uc]shaders.ab`,
 /// `[uc]uishaders.ab`, `shaders/other.ab`, …).
 fn is_shader_bundle(path: &Path) -> bool {
-    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_ascii_lowercase();
+    let name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
     if !name.ends_with(".ab") {
         return false;
     }
-    name.contains("shaders") || path.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).is_some_and(|d| d.eq_ignore_ascii_case("shaders"))
+    name.contains("shaders")
+        || path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .is_some_and(|d| d.eq_ignore_ascii_case("shaders"))
 }
 
 /// Build a `(CAB, path_id) -> shader_name` map from every shader bundle among
@@ -61,16 +75,24 @@ fn is_shader_bundle(path: &Path) -> bool {
 pub fn build_shader_map(files: &[PathBuf]) -> ShaderMap {
     let mut map = ShaderMap::new();
     for path in files.iter().filter(|p| is_shader_bundle(p)) {
-        let Ok(bytes) = std::fs::read(path) else { continue };
-        let Ok(bundle) = crate::unity::bundle::BundleFile::parse(bytes) else { continue };
+        let Ok(bytes) = std::fs::read(path) else {
+            continue;
+        };
+        let Ok(bundle) = crate::unity::bundle::BundleFile::parse(bytes) else {
+            continue;
+        };
         for entry in &bundle.files {
             let cab = entry.path.clone();
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             for obj in &sf.objects {
                 if obj.class_id != 48 {
                     continue;
                 }
-                if let Some(name) = scan_shader_name(&sf.data, obj.byte_start as usize, obj.byte_size as usize) {
+                if let Some(name) =
+                    scan_shader_name(&sf.data, obj.byte_start as usize, obj.byte_size as usize)
+                {
                     map.insert((cab.clone(), obj.path_id), name);
                 }
             }
@@ -83,10 +105,16 @@ pub fn build_shader_map(files: &[PathBuf]) -> ShaderMap {
 /// following the SerializedFile's `externals` table. `file_id == 0` means the
 /// shader is in this same file (dynchars never inline shaders, so unresolved).
 #[must_use]
-pub fn resolve_shader<'a>(externals: &[crate::unity::serialized_file::FileIdentifier], file_id: i64, path_id: i64, map: &'a ShaderMap) -> Option<&'a str> {
+pub fn resolve_shader<'a>(
+    externals: &[crate::unity::serialized_file::FileIdentifier],
+    file_id: i64,
+    path_id: i64,
+    map: &'a ShaderMap,
+) -> Option<&'a str> {
     if file_id <= 0 {
         return None;
     }
     let dep = externals.get((file_id - 1) as usize)?;
-    map.get(&(dep.cab_name().to_string(), path_id)).map(String::as_str)
+    map.get(&(dep.cab_name().to_string(), path_id))
+        .map(String::as_str)
 }

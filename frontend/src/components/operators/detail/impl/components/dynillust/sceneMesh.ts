@@ -44,6 +44,28 @@ export interface ISceneLayer {
      *  passes this (`m_IsActive` toggle-off — the cinematic's environment swap). Absent =
      *  never hidden. Only `_Start` scenes carry it. */
     activeUntil?: number | null;
+    /** CROSS-ROOT reveal (s): the layer is the IDLE prefab's world inside an entrance
+     *  scene — the game only activates that prefab at the director's transform beat
+     *  (Virtuosa's white mirror-world appears at 12.0, after the blue-sea reveal).
+     *  Visibility-only: unlike `activeFrom` it does NOT mark the layer as a cinematic
+     *  overlay, so the backdrop/veil demotions still apply. */
+    rootRevealFrom?: number | null;
+    /** ENTRANCE material-colour animation: `[t, r, g, b, a]` samples of the `_Start`
+     *  clip's animated material colour, resolved onto the static tint by the exporter
+     *  (e.g. Mlynar's white flash `_TintColor` alpha ramping 0→0.671 over 13→15s).
+     *  Replayed each frame at the entrance track time, REPLACING `tint`. Absent = the
+     *  material colour is static. Only `_Start` scenes carry it. */
+    colorCurve?: [number, number, number, number, number][] | null;
+    /** SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space) for
+     *  a Ram-family scene layer. The frontend offsets the layer's UVs by `t · [u, v]` each
+     *  frame (continuous scene clock), reproducing the shader's `_Time`-driven scroll. Absent
+     *  = static layer. */
+    uvScroll?: [number, number] | null;
+    /** CLIP `_MainTex_ST` curve (Capability B): absolute `[t, sx, sy, ox, oy]` texture
+     *  Scale/Offset samples animated by the `_Start` entrance clip. The frontend replays it at
+     *  the entrance track time as `uv = meshUV·[sx,sy] + [ox,oy]` (Unity UV space). When present
+     *  the exporter emits the RAW (un-ST-baked) mesh UVs. Absent = static ST. */
+    stCurve?: [number, number, number, number, number][] | null;
 }
 
 export interface ISceneData {
@@ -105,6 +127,17 @@ export interface ILoadedScene {
     background: PIXI.Container;
     /** Layers in front of the character (sort > characterSort). */
     foreground: PIXI.Container;
+    /** True when the scene owns an opaque painted backdrop that is DARKER than the studio
+     *  environment gradient (see {@link STUDIO_ENV_WHITENESS}) — a self-lit painted world
+     *  (Virtuosa's deep-blue mirror-world) rather than a float-over-studio illustration. Such
+     *  a scene supplies its own environment, so the caller must NOT composite the light-grey
+     *  studio gradient behind it: the gradient bleeds through the frame's un-covered edges
+     *  (the painted backdrop doesn't reach the top after the camera plunge) and washes the
+     *  deep colour to a flat grey — the dominant cause of Virtuosa's over-bright backdrop. A
+     *  BRIGHT opaque backdrop (Wišʼadel's white studio wall, whiteness ≥ the gradient) is NOT
+     *  flagged: the gradient can't wash a surface as bright as itself, and dropping it there
+     *  would only expose black voids where the wall doesn't reach. */
+    hasDarkBackdrop: boolean;
 }
 
 interface ISceneTex {
@@ -210,8 +243,15 @@ function loadTexture(url: string): Promise<ISceneTex> {
         img.crossOrigin = "anonymous";
         img.onload = () => {
             const raw = PIXI.BaseTexture.from(img);
+            // Scene layers bake the material's `_MainTex` Scale/Offset into their UVs
+            // (see the exporter's collect_dynchar_bg_quads). Many layers tile or mirror
+            // (negative scale) and so reference UVs OUTSIDE [0,1] — REPEAT wrap makes those
+            // sample correctly instead of edge-smearing under Pixi's default CLAMP.
+            raw.wrapMode = PIXI.WRAP_MODES.REPEAT;
+            const glow = darkDropGlow(img);
+            if (glow) glow.wrapMode = PIXI.WRAP_MODES.REPEAT;
             const { whiteness, opaqueFrac, sat } = analyzeTexture(img);
-            resolve({ raw, glow: darkDropGlow(img) ?? raw, whiteness, opaqueFrac, sat });
+            resolve({ raw, glow: glow ?? raw, whiteness, opaqueFrac, sat });
         };
         img.onerror = () => reject(new Error(`Failed to load scene texture: ${url}`));
         img.src = url;
@@ -251,9 +291,155 @@ const LIGHT_GLOW_WHITENESS = 0.7;
 const LIGHT_GLOW_SAT_MAX = 0.15;
 const LIGHT_GLOW_OPAQUE_MAX = 0.6;
 
+/** Whiteness threshold separating a self-lit DARK painted backdrop from a bright studio
+ *  wall. Derived from the studio environment gradient (see `createEnvironmentBgTexture`
+ *  in SceneIllust): its darker stop is `#bfc0c4` → luminance ≈ 0xbf/0xff ≈ 0.749. An opaque
+ *  backdrop whose whiteness falls BELOW this is darker than the studio gradient itself, so
+ *  the gradient composited behind it would only lift/wash it (a bug); one at or above it is
+ *  a bright environment the gradient can't wash. Property-derived, not per-skin. */
+const STUDIO_ENV_WHITENESS = 0.749;
+
 function tintToHex(t: [number, number, number, number]): number {
     const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
     return (c(t[0]) << 16) | (c(t[1]) << 8) | c(t[2]);
+}
+
+/** Entrance-replay state stashed on a layer mesh by {@link buildLayerMesh} and read by
+ *  the entrance tick each frame: the `m_IsActive` visibility window plus the animated
+ *  material-colour curve (and how to fold a sampled colour back onto the mesh). */
+export interface ISceneLayerRuntime {
+    __activeFrom?: number | null;
+    __activeUntil?: number | null;
+    /** The layer's authored Unity `m_SortingOrder` — used to hoist scene layers that
+     *  outsort EVERY particle emitter above the particle container (Mlynar's sort-100
+     *  white flash must cover the crystals/sparks too). */
+    __sort?: number;
+    __colorCurve?: [number, number, number, number, number][] | null;
+    /** Mirror of the static-tint folding in {@link buildLayerMesh} (additive gain rules),
+     *  so {@link applySceneLayerColor} reproduces it for every sampled colour. */
+    __colorMode?: { additive: boolean; gain: number };
+    /** Capability A: per-second UV velocity `[u, v]` (Unity UV space); the entrance/idle tick
+     *  re-scrolls this layer's UVs each frame. Absent for static layers. */
+    __uvScroll?: [number, number] | null;
+    /** Capability A: a copy of the layer's un-scrolled `aUV` buffer data (the baked base UVs),
+     *  so each frame's scroll is `base + t · [u, -v]` rather than accumulating drift. */
+    __uvBase?: Float32Array | null;
+    /** Capability B: absolute `[t, sx, sy, ox, oy]` ST curve replayed at the entrance track
+     *  time; composes with `__uvScroll` in {@link applySceneLayerSt}. Absent for static layers. */
+    __stCurve?: [number, number, number, number, number][] | null;
+    /** Capability B: a copy of the layer's RAW mesh UVs in UNITY space (un-flipped), so the ST
+     *  curve is applied in Unity space and V is flipped once at write time. */
+    __stBaseUnity?: Float32Array | null;
+}
+
+/** Linear-sample a `[t, r, g, b, a]` colour curve at time `t`, clamped to its endpoints. */
+export function sampleColorCurve(curve: [number, number, number, number, number][], t: number): [number, number, number, number] {
+    const first = curve[0];
+    if (t <= first[0]) return [first[1], first[2], first[3], first[4]];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, r0, g0, b0, a0] = curve[i - 1];
+            const [t1, r1, g1, b1, a1] = curve[i];
+            const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+            return [r0 + (r1 - r0) * f, g0 + (g1 - g0) * f, b0 + (b1 - b0) * f, a0 + (a1 - a0) * f];
+        }
+    }
+    const last = curve[curve.length - 1];
+    return [last[1], last[2], last[3], last[4]];
+}
+
+function uvBufferOf(mesh: PIXI.DisplayObject): PIXI.Buffer {
+    const geo = (mesh as unknown as PIXI.Mesh).geometry;
+    // PIXI.MeshGeometry names the UV attribute 'aTextureCoord'; the custom vcolor
+    // geometry (buildVColorMesh) uses 'aUV'. getBuffer() throws on a missing attribute,
+    // so pick whichever this geometry actually declares.
+    return geo.getBuffer(geo.getAttribute("aUV") ? "aUV" : "aTextureCoord");
+}
+
+/** Re-tint a built scene-layer mesh from a sampled entrance colour — the runtime
+ *  counterpart of the static tint set in {@link buildLayerMesh} (same additive/gain
+ *  folding), covering both the MeshMaterial path (tint/alpha) and the per-vertex-colour
+ *  shader (premultiplied `uColor` uniform). No-op for meshes built without a curve. */
+export function applySceneLayerColor(mesh: PIXI.DisplayObject, rgba: [number, number, number, number]): void {
+    const mm = mesh as unknown as ISceneLayerRuntime & { shader?: PIXI.Shader };
+    const mode = mm.__colorMode;
+    const shader = mm.shader;
+    if (!mode || !shader) return;
+    const g = mode.gain;
+    const rgb: [number, number, number, number] = mode.additive ? [rgba[0] * g, rgba[1] * g, rgba[2] * g, rgba[3]] : rgba;
+    const alpha = mode.additive ? rgba[3] : rgba[3] * g;
+    if (shader instanceof PIXI.MeshMaterial) {
+        shader.tint = tintToHex(rgb);
+        // Drive the DISPLAY-OBJECT alpha, not MeshMaterial.alpha: PIXI batches small
+        // meshes (a 4-vertex quad like Mlynar's white-flash plane), and the batch
+        // path reads `worldAlpha` while silently ignoring the material's alpha — the
+        // replayed fade was a no-op and the plane rendered at FULL opacity from its
+        // first frame. `worldAlpha` is honoured by BOTH the batch and default paths
+        // (the default path copies it into the material each render).
+        (mesh as unknown as { alpha: number }).alpha = alpha;
+    } else {
+        shader.uniforms.uColor = [rgb[0] * alpha, rgb[1] * alpha, rgb[2] * alpha, alpha];
+    }
+}
+
+/** Re-scroll a scene layer's UVs for Capability A: rewrite the `aUV` buffer as
+ *  `base + [u, -v] · t`. V is NEGATED because {@link buildLayerMesh} stores `1 - v`,
+ *  inverting Unity's V axis (Unity scrolls `_MainVSpeed` in the un-flipped space). Cheap CPU
+ *  rewrite (scene quads are a handful of verts); no-op for meshes built without a scroll. */
+export function applySceneLayerUvScroll(mesh: PIXI.DisplayObject, t: number): void {
+    const rt = mesh as unknown as ISceneLayerRuntime;
+    const scroll = rt.__uvScroll;
+    const base = rt.__uvBase;
+    if (!scroll || !base) return;
+    const buf = uvBufferOf(mesh);
+    const d = buf.data as unknown as Float32Array;
+    const du = scroll[0] * t;
+    const dv = scroll[1] * t;
+    for (let i = 0; i < base.length; i += 2) {
+        d[i] = base[i] + du;
+        d[i + 1] = base[i + 1] - dv;
+    }
+    buf.update();
+}
+
+/** Linear-sample an ST curve `[t, sx, sy, ox, oy]` at time `t` (clamped to endpoints). */
+function sampleStCurve(curve: [number, number, number, number, number][], t: number): [number, number, number, number] {
+    const first = curve[0];
+    if (t <= first[0]) return [first[1], first[2], first[3], first[4]];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, sx0, sy0, ox0, oy0] = curve[i - 1];
+            const [t1, sx1, sy1, ox1, oy1] = curve[i];
+            const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+            return [sx0 + (sx1 - sx0) * f, sy0 + (sy1 - sy0) * f, ox0 + (ox1 - ox0) * f, oy0 + (oy1 - oy0) * f];
+        }
+    }
+    const last = curve[curve.length - 1];
+    return [last[1], last[2], last[3], last[4]];
+}
+
+/** Capability B: replay a scene layer's animated `_MainTex_ST` at entrance track time `tt`,
+ *  composing with the optional continuous UV scroll (`clock`). Works in UNITY UV space —
+ *  `uv = base·[sx,sy] + [ox,oy] + [uSpeed,vSpeed]·clock` — then flips V once at write time
+ *  (`1 - v`), matching {@link buildLayerMesh}'s stored convention and Unity's shader order
+ *  (`meshUV·ST + _Time·mainSpeed`). No-op for meshes built without an ST curve. */
+export function applySceneLayerSt(mesh: PIXI.DisplayObject, tt: number, clock: number): void {
+    const rt = mesh as unknown as ISceneLayerRuntime;
+    const curve = rt.__stCurve;
+    const base = rt.__stBaseUnity;
+    if (!curve || !base) return;
+    const [sx, sy, ox, oy] = sampleStCurve(curve, tt);
+    const su = rt.__uvScroll ? rt.__uvScroll[0] * clock : 0;
+    const sv = rt.__uvScroll ? rt.__uvScroll[1] * clock : 0;
+    const buf = uvBufferOf(mesh);
+    const d = buf.data as unknown as Float32Array;
+    for (let i = 0; i < base.length; i += 2) {
+        const u = base[i] * sx + ox + su;
+        const v = base[i + 1] * sy + oy + sv;
+        d[i] = u;
+        d[i + 1] = 1 - v;
+    }
+    buf.update();
 }
 
 // Per-vertex-colour mesh shader for layers that carry `col`. PIXI's built-in
@@ -369,23 +555,48 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = fals
     const alpha = additive ? layer.tint[3] : layer.tint[3] * gain;
     // A layer whose SHAPE is a vertex-alpha gradient (soft light sheet over a
     // flat texture) needs per-vertex colour, or it stamps a hard opaque block.
+    const stashRuntime = (m: PIXI.DisplayObject) => {
+        const rt = m as unknown as ISceneLayerRuntime;
+        // Visibility window = the clip-authored reveal AND the cross-root prefab
+        // activation (whichever is later). `isRevealOverlay` above deliberately keys
+        // on the clip window alone — a root-revealed layer is scenery, not an overlay.
+        const from = layer.activeFrom ?? null;
+        const rootFrom = layer.rootRevealFrom ?? null;
+        rt.__activeFrom = from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
+        rt.__activeUntil = layer.activeUntil ?? null;
+        rt.__sort = layer.sort;
+        if (layer.colorCurve?.length) {
+            rt.__colorCurve = layer.colorCurve;
+            rt.__colorMode = { additive, gain };
+        }
+        if (layer.uvScroll && (layer.uvScroll[0] !== 0 || layer.uvScroll[1] !== 0) && !layer.stCurve?.length) {
+            rt.__uvScroll = layer.uvScroll;
+            const buf = uvBufferOf(m);
+            rt.__uvBase = Float32Array.from(buf.data as unknown as Float32Array);
+        }
+        if (layer.stCurve?.length) {
+            rt.__stCurve = layer.stCurve;
+            rt.__stBaseUnity = Float32Array.from(layer.uv);
+            if (layer.uvScroll && (layer.uvScroll[0] !== 0 || layer.uvScroll[1] !== 0)) rt.__uvScroll = layer.uvScroll;
+        }
+    };
     if (layer.col && layer.col.length >= vertexCount * 4) {
         const vmesh = buildVColorMesh(layer, base, rgb, alpha);
         if (vmesh) {
             vmesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
-            const vm = vmesh as unknown as { __activeFrom?: number | null; __activeUntil?: number | null };
-            vm.__activeFrom = layer.activeFrom ?? null;
-            vm.__activeUntil = layer.activeUntil ?? null;
+            stashRuntime(vmesh);
             return vmesh as unknown as PIXI.Mesh;
         }
     }
     const geometry = new PIXI.MeshGeometry(vertices as unknown as GeomBuf, uvs as unknown as GeomBuf, new Uint16Array(layer.idx) as unknown as GeomBuf);
-    const material = new PIXI.MeshMaterial(new PIXI.Texture(base), { tint: tintToHex(rgb), alpha });
+    // Static layer alpha lives on the DISPLAY OBJECT, not MeshMaterial.alpha — the
+    // batch path small meshes take ignores the material's alpha (see
+    // {@link applySceneLayerColor}); worldAlpha works on every path.
+    const material = new PIXI.MeshMaterial(new PIXI.Texture(base), { tint: tintToHex(rgb) });
     const mesh = new PIXI.Mesh(geometry, material);
+    mesh.alpha = alpha;
     mesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
-    const mm = mesh as unknown as { __activeFrom?: number | null; __activeUntil?: number | null };
-    mm.__activeFrom = layer.activeFrom ?? null;
-    mm.__activeUntil = layer.activeUntil ?? null;
+    stashRuntime(mesh);
     return mesh;
 }
 
@@ -492,9 +703,29 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     } catch {
         return null;
     }
-    if (!data.layers?.length || !data.cameraSizePx) return null;
+    if (!data.layers?.length || !data.cameraSizePx) {
+        // No mesh layers (the backdrop is baked into the spine atlas — e.g. Chongyue), but the
+        // scene JSON may still carry the entrance CAMERA track. Return an empty-mesh scene so that
+        // data still reaches the entrance camera (SceneIllust sources entranceCamCenterCurve etc.
+        // from scene.data); returning null here would discard the whole entrance camera move.
+        if (data.entranceCamCenterCurve?.length) return { data, background: new PIXI.Container(), foreground: new PIXI.Container(), hasDarkBackdrop: false };
+        return null;
+    }
 
     const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseUrl}${i}.png${bust}`)));
+
+    // Does this scene own a DARK opaque painted backdrop (a self-lit painted world, not a
+    // bright studio wall)? Mirrors the per-layer `isBackdrop` predicate below plus a darkness
+    // bound: a large (non-effect), near-opaque, desaturated backdrop layer whose whiteness is
+    // below the studio-gradient brightness. Returned so the caller can drop the studio
+    // gradient behind it (see {@link ILoadedScene.hasDarkBackdrop}).
+    const hasDarkBackdrop = data.layers.some((l) => {
+        const b = bases[l.tex];
+        if (!b || l.additive) return false;
+        const isRevealOverlay = l.activeFrom != null || l.activeUntil != null;
+        const isEffect = b.raw.width <= EFFECT_TEX_MAX && b.raw.height <= EFFECT_TEX_MAX;
+        return !isRevealOverlay && !isEffect && b.opaqueFrac >= 0.9 && b.whiteness >= 0.4 && b.whiteness < STUDIO_ENV_WHITENESS;
+    });
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();
@@ -506,9 +737,22 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     // first so it renders behind the rest.
     const backdropMeshes: PIXI.Mesh[] = [];
     const otherBg: PIXI.Mesh[] = [];
+    // A layer whose full geometry (texture index + vertex positions + UVs + triangle
+    // indices) is a byte-identical duplicate of an EARLIER layer already classified as
+    // background is an author-side duplicate mesh (the same backdrop baked twice — once
+    // correctly placed behind the character, once again at/above `characterSort`, e.g.
+    // Skadi2's layers[0] at sort -5 and layers[5] at sort 0, tied with characterSort=0).
+    // It inherits the earlier layer's background classification outright, regardless of
+    // its own sort or how close its own texture's saturation sits to the
+    // `isBackdropMisSorted` cutoff. Pure equality over data already read in this loop —
+    // no new constant, no per-skin value; a no-op unless two layers' geometry is
+    // literally identical (verified zero such pairs in cello's/mlynar's scene JSONs).
+    const bgGeometrySignatures = new Set<string>();
     for (const layer of [...data.layers].sort((a, b) => a.sort - b.sort)) {
         const base = bases[layer.tex];
         if (!base) continue;
+        const geomKey = `${layer.tex}|${layer.pos.join(",")}|${layer.uv.join(",")}|${layer.idx.join(",")}`;
+        const isDuplicateOfBackground = bgGeometrySignatures.has(geomKey);
         // A layer authored above the character's sort normally renders in front of
         // her. But a DESATURATED PAINTED sheet that's either fully opaque or a large
         // semi-opaque atlas is a scene BACKDROP element mis-sorted into the
@@ -523,18 +767,25 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // Hoshiguma's teal ice (sat 0.28) stay in front; additive glows are excluded
         // outright.
         const texLarge = base.raw.width >= 512 || base.raw.height >= 512;
+        // An entrance-REVEALED overlay (an `m_IsActive` window from the `_Start` clip)
+        // plays a deliberate cinematic beat at its AUTHORED sort — e.g. Mlynar's white
+        // transition flash, a solid-white plane that must white-out the frame from the
+        // FRONT. Its texture reads exactly like a mis-sorted backdrop/veil to the
+        // heuristics below (opaque, desaturated, white), so exempt windowed layers from
+        // every demotion.
+        const isRevealOverlay = layer.activeFrom != null || layer.activeUntil != null;
         // Demote when: fully opaque anywhere; OR a large semi-opaque atlas; OR a large
         // WHITISH translucent haze/light sheet (whiteness ≥ 0.45, opaqueFrac ≥ 0.25) —
         // Virtuosa's white glass-panel sheet (tex7: 1024px, opaqueFrac 0.33,
         // whiteness 0.53) hazes over her body from the front. Dark crystal shards that
         // legitimately cross her are far less white (≈0.27) and stay in front.
-        const isBackdropMisSorted = !layer.additive && base.sat < 0.25 && (base.opaqueFrac >= 0.95 || (texLarge && base.opaqueFrac >= 0.4) || (texLarge && base.opaqueFrac >= 0.25 && base.whiteness >= 0.45));
+        const isBackdropMisSorted = isDuplicateOfBackground || (!isRevealOverlay && !layer.additive && base.sat < 0.25 && (base.opaqueFrac >= 0.95 || (texLarge && base.opaqueFrac >= 0.4) || (texLarge && base.opaqueFrac >= 0.25 && base.whiteness >= 0.45)));
         const isForeground = layer.sort >= data.characterSort && !isBackdropMisSorted;
         // A bright-white foreground effect panel is a paint/flash VEIL the source art
         // keeps BEHIND the character — re-sort it to the background so her body
         // occludes it (see VEIL_WHITENESS_MIN). Coloured foreground fx stay in front.
         const isEffect = base.raw.width <= EFFECT_TEX_MAX && base.raw.height <= EFFECT_TEX_MAX;
-        const isVeil = isForeground && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN;
+        const isVeil = isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN;
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
         // ice-flame around her oni-mask "shield"). Exported as normal-blend (Unity
@@ -555,16 +806,31 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // high-key mirror-world backdrop). Applies wherever they sit (fg or demoted bg),
         // since additive light brightens from any depth. See LIGHT_GLOW_* above.
         const isLightGlowSheet = !layer.additive && isEffect && base.whiteness >= LIGHT_GLOW_WHITENESS && base.sat <= LIGHT_GLOW_SAT_MAX && base.opaqueFrac <= LIGHT_GLOW_OPAQUE_MAX;
-        const forceAdditive = (isForeground && !layer.additive && isEffect && base.sat >= GLOW_SAT_MIN && overCharacter) || isLightGlowSheet;
-        const mesh = buildLayerMesh(layer, base, forceAdditive, isLightGlowSheet);
+        // V-b: these bright, desaturated, non-solid sheets (Virtuosa's Ram lattice/
+        // cross-hatch, authored `additive:0` with TRANSPARENT fields) were force-promoted
+        // to ADDITIVE on the premise that normal blend "multiplies the backdrop down to a
+        // dim blue". That premise is inverted: the game holds a crisp DEEP-BLUE field +
+        // white diamond, and it's the additive path — ~34 overlapping copies, now also
+        // UV-scrolling (Capability A) and summed through the HDR bloom — that stacks into
+        // the milky white wash that erases the blue. Their fields are already transparent
+        // (own alpha), so NORMAL blend composites the white lines OVER the surviving blue
+        // without summing. Respect the authored blend; keep full gain so the lines stay
+        // crisp (not the 0.3 caustic attenuation). The other clause (a SATURATED fg glow
+        // over the character — Hoshiguma's blue ice-flame) is unchanged.
+        const forceAdditive = isForeground && !layer.additive && isEffect && base.sat >= GLOW_SAT_MIN && overCharacter;
+        // A layer with an authored colour curve carries its EXACT animated alpha — the
+        // effect-overlay gain (which tames caustics frozen without their animation)
+        // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
+        const mesh = buildLayerMesh(layer, base, forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length);
         if (!mesh) continue;
         if (isForeground && !isVeil) {
             foreground.addChild(mesh);
             continue;
         }
         // Large, near-fully-opaque, desaturated panel = a solid backdrop wall.
-        const isBackdrop = !layer.additive && !isEffect && base.opaqueFrac >= 0.9 && base.whiteness >= 0.4;
+        const isBackdrop = !isRevealOverlay && !layer.additive && !isEffect && base.opaqueFrac >= 0.9 && base.whiteness >= 0.4;
         (isBackdrop ? backdropMeshes : otherBg).push(mesh);
+        bgGeometrySignatures.add(geomKey);
     }
     for (const m of backdropMeshes) background.addChild(m);
     for (const m of otherBg) background.addChild(m);
@@ -580,5 +846,5 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         return null;
     }
 
-    return { data, background, foreground };
+    return { data, background, foreground, hasDarkBackdrop };
 }

@@ -7,7 +7,7 @@ import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene } from "./hdrTonemap";
 import { type FindBone, type ILoadedParticles, loadParticles } from "./particles";
-import { type ISceneFrame, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+import { applySceneLayerColor, applySceneLayerSt, applySceneLayerUvScroll, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
@@ -230,6 +230,11 @@ interface IComposite {
     /** True when `root` is a scene container (mesh layers/particles), false when it
      *  is the bare spine (spine-only art with no separate scene). */
     isScene: boolean;
+    /** True when the scene owns a DARK opaque painted backdrop (see
+     *  {@link ILoadedScene.hasDarkBackdrop}) — the scene supplies its own environment, so the
+     *  light-grey studio gradient must NOT be composited behind it (it would bleed through the
+     *  frame's un-covered edges and wash the deep colour to grey). */
+    hasDarkBackdrop: boolean;
     bounds: IAnimationBounds | null;
     /** The game's AUTHORED display frame in frontend coords (`cameraViewPx` square
      *  centred on the Y-flipped `cameraOffsetPx`) — the exact camera the in-game
@@ -260,14 +265,29 @@ interface IComposite {
      *  own camera rig (the animated camera-parent Transform) accumulated by the Rust exporter into
      *  a world-space centre curve. Drives the entrance pan/dolly directly; no measured bounds. */
     entranceCamCenterCurve: [number, number, number][] | null;
-    /** The entrance frame EXTENT in mesh px (`entranceViewPx`, the `_Start` camera's own view,
-     *  falling back to the tight `_adjustes[1]` stop) — the base frame size the live camera holds,
-     *  scaled by the ortho-size ratio each tick. Same 100 px/world-unit scale as
+    /** The entrance frame EXTENT in mesh px — the `_Start` camera's view at its ANIMATED t=0
+     *  ortho size (`2·ortho₀/skeletonScale`, falling back to the static `entranceViewPx`, then the
+     *  tight `_adjustes[1]` stop) — the base frame size the live camera holds, scaled by the
+     *  ortho-size ratio each tick. Same 100 px/world-unit scale as
      *  {@link entranceCamCenterCurve}, so they compose directly. */
     entranceFrameSize: number | null;
     /** The entrance's scene-mesh containers (background + foreground) — carry the per-layer
      *  `m_IsActive` gating meshes. Entrance-only. */
     sceneLayers: PIXI.Container[] | null;
+    /** Capability A: the scene's Ram-family UV-scroll layer meshes (flat list, collected from
+     *  the background/foreground/overlay containers). The always-running tick re-scrolls their
+     *  UVs each frame with the continuous scene clock (idle AND entrance). Empty for scenes
+     *  with no scroll layers. */
+    scrollLayers: PIXI.Mesh[];
+    /** When the authored SCENE timeline outlasts the spine's own "Start" animation
+     *  (Mlynar: the spine ends at 14.33s but the white-flash plane + camera run to the
+     *  clip stop 15.97s), the time (track seconds) the entrance actually ends — the
+     *  spine `complete` listener defers and the tick fires {@link requestEntranceEnd}
+     *  at this clock. `null` = the spine animation is the longer one (fire on
+     *  `complete` as usual). Entrance-only. */
+    entranceSceneEnd: number | null;
+    /** Idempotent trigger for the entrance→main handoff (see entranceSceneEnd). */
+    requestEntranceEnd: (() => void) | null;
     particles: ILoadedParticles | null;
     /** Setup-pose bone matrices for bone-following particle emitters (scene only). */
     boneRest: Map<string, PIXI.Matrix> | null;
@@ -427,7 +447,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         ortho: [number, number][] | null;
         camCenter: [number, number, number][];
         frameSize: number;
+        /** Steady framing (see the tick): for skins with NO authored transform beat (Mlynar), the
+         *  baked rig-centre curve swings the hero into the right third (its X excursion) and the
+         *  game instead holds him CENTRED, letting only the ortho zoom widen the shot. We HOLD the
+         *  horizontal centre at the settle-open box centre (`cx0`), KEEP the rig's vertical motion
+         *  re-based so it lands on `cy0` at the rig's end (`cy0 + (rigY − rigEndY)` — needed so the
+         *  tight t=0 frame catches the reforming head), and let the ortho zoom pull out to full body
+         *  uncapped (the wide→tight idle handoff hides behind the white flash — same settle centre).
+         *  Null = pure rig camera (cello, skadi2). */
+        centerBlend: { cx0: number; cy0: number; rigEndY: number } | null;
         sceneLayers: PIXI.Container[];
+        /** Deferred entrance end (see IComposite.entranceSceneEnd): fire `fireEnd`
+         *  when the track clock reaches `endAt`. Null when the spine's own
+         *  `complete` handles the handoff. */
+        endAt: number | null;
+        fireEnd: (() => void) | null;
     } | null>(null);
     // Crossfade the `_Start` cinematic OUT (frozen at its dissolved final frame) while the main
     // gala idle fades IN — so the character is never absent during the transformation (the game
@@ -532,10 +566,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         container.appendChild(app.view as HTMLCanvasElement);
 
         let lastTick = performance.now();
+        let sceneClock = 0;
         const tick = (now: number) => {
             if (!mountedRef.current) return;
             const dt = Math.min((now - lastTick) / 1000, 0.1);
             lastTick = now;
+            // Capability A — continuous shader UV-scroll. The Ram-family scene layers scroll
+            // their `_MainTex` UVs against Unity `_Time` (seconds since load); replay that with
+            // a monotonic scene clock for BOTH idle and entrance composites. Cheap CPU rewrite.
+            sceneClock += dt;
+            for (const comp of compositesRef.current) {
+                for (const m of comp.scrollLayers) applySceneLayerUvScroll(m, sceneClock);
+            }
             if (spineRef.current) {
                 spineRef.current.update(dt);
                 // `update` rebuilds the dark shadow slots' meshes each frame; flip them
@@ -548,6 +590,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // that camera chain into an ABSOLUTE frame-centre curve (`entranceCamCenterCurve`, mesh px)
             // and pairs it with the authored ortho-size zoom. We sample the centre and scale the frame
             // by the ortho ratio — no measured bounds, no easing, no tuning: purely the rig's motion.
+            // Live authored display box for particle edge-clip culling this frame — the
+            // entrance camera's live zoom/pan box when driving, the opening zoom-out dolly's
+            // box when THAT'S driving, else the active composite's own settled `bounds`. Same
+            // coordinate space `layoutSpine` already frames the scene with.
+            let liveDisplayBox: IAnimationBounds | null = null;
             const ef = entranceFollowRef.current;
             if (ef && appRef.current && spineRef.current === ef.spine) {
                 const tr = ef.spine.state.tracks[0] as unknown as { trackTime?: number } | null;
@@ -559,17 +606,58 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Camera SIZE: the gamedata frame extent (`_adjustes` view px) × the ortho-size ratio,
                 // so the character grows into the frame exactly as the authored zoom dictates.
                 const size = ef.frameSize * orthoZoomRatio(ef.ortho, tt);
-                layoutSpine(ef.root, sw, sh, { x: c[0] - size / 2, y: c[1] - size / 2, width: size, height: size }, fitRef.current);
+                // STEADY FRAMING (skins with no authored `_transform` beat, e.g. Mlynar "Fields of
+                // Ruination"): measured against the game recording, the baked rig-centre curve swings
+                // the character HORIZONTALLY into the right third (its X excursion reaches ~-355 off
+                // the settle centre at t≈7) and its Y curve parks the reforming form low. The in-game
+                // operator viewer instead holds the hero CENTRED the whole entrance and lets only the
+                // ortho zoom widen the shot — pulling out to a near-FULL-BODY frame (feet + campfire)
+                // by t≈12-13, then the post-flash idle settles back tighter. So we:
+                //  - HOLD the horizontal centre at the settle-open box centre (`cx = cx0`), dropping
+                //    the rig's X excursion that shoved the hero off-centre;
+                //  - KEEP the rig's VERTICAL motion re-based onto the settle centre (`cy = cy0 +
+                //    (rigY − rigEndY)`) — required, or the tight t=0 frame clips the reforming head
+                //    (the rig lifts the frame to catch the pose, which sits higher than the idle rest);
+                //  - follow the ortho zoom-out to full body (NO size cap) — the wide→tight step at the
+                //    idle handoff lands behind the white flash (both frames share the settle centre, so
+                //    it is a pure scale change) + the 0.45s crossfade, matching the game.
+                // All gamedata-derived, no magic constant. Skins WITH an authored transform beat (cello,
+                // skadi2) keep the pure rig camera — `centerBlend` is null for them (verified parity).
+                let cx = c[0];
+                let cy = c[1];
+                const cb = ef.centerBlend;
+                if (cb) {
+                    cx = cb.cx0;
+                    cy = cb.cy0 + (c[1] - cb.rigEndY);
+                }
+                liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
+                layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
                 // Per-layer `m_IsActive` window from the `_Start` clips (gamedata): a layer with
                 // `activeFrom`/`activeUntil` renders only while `activeFrom <= t < activeUntil`.
                 // Absent = always visible (Virtuosa's backdrop is entirely always-on).
                 for (const c of ef.sceneLayers) {
                     for (const m of c.children) {
-                        const mm = m as unknown as { __activeFrom?: number | null; __activeUntil?: number | null };
+                        const mm = m as unknown as ISceneLayerRuntime;
                         const af = mm.__activeFrom;
                         const au = mm.__activeUntil;
                         if (af != null || au != null) m.renderable = (af == null || tt >= af) && (au == null || tt < au);
+                        // Material-colour replay: the `_Start` clip animates some layers'
+                        // material colour (Mlynar's white flash alpha ramps 0→0.671 over
+                        // 13→15s); sample the exported curve at the track time and re-tint.
+                        if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt));
+                        if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
+                }
+                // Deferred entrance end: the spine's own "Start" animation ended before the
+                // authored scene timeline (its `complete` listener held off) — fire the
+                // handoff when the track clock reaches the scene end, a hair EARLY so the
+                // dissolve starts on the flash's final HELD frame (white→settle, matching
+                // the game's white fade-through), not on a one-frame scene pop after the
+                // flash window closes.
+                if (ef.fireEnd && ef.endAt != null && tt >= ef.endAt - 0.1) {
+                    const fire = ef.fireEnd;
+                    ef.fireEnd = null;
+                    fire();
                 }
             }
             // Hand off from the entrance to the main L2D, if its "Start" just finished.
@@ -599,6 +687,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     height: from.height + (to.height - from.height) * e,
                 };
                 const { width: sw, height: sh } = appRef.current.screen;
+                liveDisplayBox = b;
                 layoutSpine(ez.container, sw, sh, b, fitRef.current);
                 if (t >= 1) entranceZoomRef.current = null;
             }
@@ -621,6 +710,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     cf.wrapper.destroy({ children: false });
                 }
             }
+            if (!liveDisplayBox) {
+                const activeComposite = compositesRef.current.find((c) => c.spine === spineRef.current);
+                liveDisplayBox = activeComposite?.bounds ?? null;
+            }
             if (particlesRef.current) {
                 // Let bone-parented emitters drift with the character's idle sway:
                 // pass a live spine-bone lookup (spine.update above already ran, so
@@ -632,7 +725,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                           return b ? b.matrix : null;
                       }
                     : undefined;
-                particlesRef.current.update(dt, findBone, boneRestRef.current ?? undefined);
+                particlesRef.current.update(dt, findBone, boneRestRef.current ?? undefined, liveDisplayBox);
             }
             const currentApp = appRef.current;
             if (currentApp?.renderer) {
@@ -711,6 +804,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // The entrance skeleton has a single "Start" animation (the cinematic zoom-in).
             const entranceAnim = animations.includes("Start") ? "Start" : (animations[0] ?? "Start");
             let entranceEnded = false;
+            // Set (below, once the scene loads) when the authored scene timeline outlasts
+            // the spine's own "Start" animation: the `complete` listener then DEFERS the
+            // handoff and the tick fires it at this track time instead (Mlynar's spine
+            // anim ends 14.33s while the white-flash plane runs to the clip stop 15.97s —
+            // handing off on `complete` cut the white-out ~1.6s early).
+            let deferEndUntil: number | null = null;
+            const fireEntranceEnd = () => {
+                if (entranceEnded) return;
+                entranceEnded = true;
+                opts.onEntranceEnd?.();
+            };
             const play = (playOpts?: { skipStart?: boolean }) => {
                 const state = spine.state;
                 if (opts.mode === "entrance") {
@@ -722,8 +826,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         complete: (entry) => {
                             const name = (entry as unknown as { animation?: { name?: string } }).animation?.name;
                             if (name !== entranceAnim || entranceEnded) return;
-                            entranceEnded = true;
-                            opts.onEntranceEnd?.();
+                            if (deferEndUntil != null) return; // the tick fires at the scene end
+                            fireEntranceEnd();
                         },
                     });
                     return;
@@ -808,7 +912,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if (scene) {
                     const particlesUrl = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server);
                     const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server);
-                    particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust);
+                    // Union of the character's own geometry bounds across its FULL played
+                    // animation (idle loop, or the "Start" entrance clip) — used by particles.ts
+                    // to detect a world-space background particle system whose static spawn disc
+                    // sits on the character's own body (Mlynar's dominant rain system) so it can
+                    // be un-occluded. A full-clip union (not a single-frame snapshot) is needed
+                    // because the character's OWN pose/position moves substantially during the
+                    // "Start" reform — a single frame would miss most of the overlap.
+                    const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
+                    particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust, characterBounds);
                     if (aborted()) {
                         spine.destroy();
                         particles?.destroy();
@@ -818,6 +930,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 spine.scale.set(1);
                 spine.position.set(0, 0);
                 const sceneContainer = new PIXI.Container();
+                // Scene-fg layers hoisted ABOVE the particle container (sort-driven, see
+                // below); tracked so the entrance tick still replays their windows/colours.
+                let sceneOverlay: PIXI.Container | null = null;
                 // Frame to the character's visible bounds; "authored" (fullscreen) zooms
                 // OUT to reveal more of the surrounding scene, "character" (card) keeps the
                 // character prominent. Measured first (renders the spine to its own
@@ -864,6 +979,26 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 sceneContainer.addChild(spine);
                 if (scene) sceneContainer.addChild(scene.foreground);
                 if (particles) sceneContainer.addChild(particles.foreground);
+                // The container split draws ALL front-particles above ALL foreground scene
+                // layers, but Unity orders both by the same `m_SortingOrder` scale: a scene
+                // layer authored ABOVE every particle system must cover the particles too —
+                // Mlynar's white transition flash is a sort-100 plane that whites out the
+                // whole frame, crystals and sparks included, while his particle systems top
+                // out at sort 2. Hoist such above-every-emitter layers over the particle
+                // container. Purely sort-data-driven; layers below any emitter stay put.
+                if (scene && particles && particles.data.systems.length) {
+                    const maxEmitterSort = Math.max(...particles.data.systems.map((s) => s.sort));
+                    const hoisted = scene.foreground.children.filter((m) => ((m as unknown as ISceneLayerRuntime).__sort ?? Number.NEGATIVE_INFINITY) > maxEmitterSort);
+                    if (hoisted.length) {
+                        // Keep them in the SAME scene-fg container tree the entrance tick
+                        // walks (window + colour replay) by moving the container itself:
+                        // split the fg into [below-particles] + [above-particles overlay].
+                        const overlay = new PIXI.Container();
+                        for (const m of hoisted) overlay.addChild(m);
+                        sceneContainer.addChild(overlay);
+                        sceneOverlay = overlay;
+                    }
+                }
                 // Insert the static backdrop at the very back, registered centroid-to-
                 // centroid onto the character (see makeBackdropSprite).
                 if (useStatic && backdropData && backdropFrame) {
@@ -903,21 +1038,30 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `cameraViewPx` (the display controller's `_adjustes[0]` stop); the OPEN endpoint
                 // is the exact `cameraViewPx2` (`_adjustes[1]`), so the dolly MAGNITUDE the viewer
                 // animates is the game's own ratio (Virtuosa 1246/1929 = 0.646×) — no hardcoded
-                // per-skin numbers. Combined with the "height" fit (see `fitRef`), the crop's height
-                // maps to the container height, so the character fills a constant fraction of the
-                // frame height on ANY container aspect (game ~67%, measured against reference
-                // recordings). `RCAL` is a SINGLE global pipeline constant (not per-skin) that
-                // converts the game's authored `_adjustes` px into the render/vis space the mesh +
-                // spine are measured in; it was calibrated once so `cameraViewPx·RCAL` yields the
-                // game's ~67% character height. The box is CENTRED on the character body — the raw
-                // `_adjustes` OFFSET points ~650px BELOW the body in export space (verified), so it
-                // can't be used for centring; `VBIAS` corrects the residual hair/mass drag.
-                const RCAL = calibrationParam("rcal", 0.606);
+                // per-skin numbers. Skins with NO pull-out (Mlynar) hold the tight `_adjustes[1]`
+                // stop as their steady frame; skins with a pull-out (Virtuosa/Skadi2) settle on the
+                // wide `_adjustes[0]` stop — matching the game, whose steady camera frames each
+                // character at a DIFFERENT size within its own scene (Mlynar knees-up and large,
+                // Virtuosa smaller and lower, Skadi2 near-full-body), NOT at a constant character
+                // height. `RCAL` is a SINGLE global pipeline constant (not per-skin) that converts
+                // the game's authored `_adjustes` px into the render/vis space the mesh + spine are
+                // measured in. It was RE-CALIBRATED (0.606 → 0.78) against the Mlynar/Virtuosa/Skadi2
+                // settle recordings: the old value framed ~1.3× too tight (Mlynar cropped to the
+                // waist, Virtuosa waist-up), so the character now reads at the game's wider,
+                // pillar-boxed size (Mlynar knees-up, Virtuosa full-ish body low in the frame, the
+                // scene filling around them). Combined with the "height" fit (see `fitRef`), the
+                // crop height maps to the container height, so the finite scene art leaves the
+                // game's side pillar-box slack — no stretch, no distortion. The box is CENTRED on the
+                // character body — the raw `_adjustes` OFFSET points ~650px BELOW the body in export
+                // space (verified), so it can't be used for centring; `VBIAS` corrects the residual
+                // hair/mass drag.
+                const RCAL = calibrationParam("rcal", 0.78);
                 // VBIAS: shift the crop centre UP (toward the head) by this fraction of the crop
                 // size `e`. The `feetBottom`/head landmarks include the character's long trailing
                 // hair/tail, which drags the naive body midpoint DOWN, floating the character too
                 // high in-frame with dead scene below. A small upward bias re-centres so the head
-                // sits ~18% down and feet ~85% down, matching the game's roughly-centred composition.
+                // sits ~10% down and the body fills toward the bottom, matching the game's
+                // roughly-centred (Mlynar) to low-centred (Virtuosa) composition.
                 const VBIAS = calibrationParam("vbias", 0.151);
                 const bodyCx = vb?.centroid ? vb.centroid.cx : vb ? vb.x + vb.width / 2 : frameCx;
                 const bodyCy = (headY + feetY) / 2; // vertical body centre
@@ -958,10 +1102,96 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     boneRest.set(b.data.name, b.matrix.clone());
                 }
                 const hasShadow = useStatic && hasShadowSlots(spine);
+                // ENTRANCE frame extent (authored px): the `_Start` camera's view at its ANIMATED
+                // t=0 ortho size (`2·ortho₀/skeletonScale`). The exporter's `entranceViewPx` is
+                // derived from the camera's STATIC serialized ortho, which the ortho curve overrides
+                // from frame 0 — for Virtuosa that's 598 px (ortho 2.99) vs the true animated 374 px
+                // (ortho 1.87), framing the whole entrance 1.6× too wide. Measured against the game
+                // recording, the animated view matches the hold beats to <1% (the game's seated shot
+                // is a tight head-and-shoulders close-up). Fall back to the static `entranceViewPx`
+                // (then the tight `_adjustes[1]` stop) only when no ortho curve/scale shipped.
+                const entranceOrtho0 = scene?.data.entranceOrthoCurve?.[0]?.[1];
+                const entranceSkelScale = scene?.data.skeletonScale;
+                const entranceFrameSize = entranceOrtho0 && entranceSkelScale ? (2 * entranceOrtho0) / entranceSkelScale : ((authoredFrame?.entranceViewPx as number | undefined) ?? (authoredFrame?.viewPx2 as number | undefined) ?? null);
+                // Authored SCENE-timeline end: when the entrance→idle handoff (pose swap +
+                // pull-out dolly) fires, relative to the entrance track clock.
+                //
+                // Skins with an authored `entranceTransform` beat (the exported reform/
+                // pose-transition timestamp, e.g. cello 12.0, skadi2 9.5) use it as the base
+                // timing candidate INSTEAD OF the raw camera-curve tail: the ortho/cam-center
+                // curves keep being keyed almost to the end of the cinematic (baked idle-hold/
+                // sway data past the real transition), so their literal last keyframe over-
+                // defers the handoff by several seconds (cello: curve tail 19.73 vs the game's
+                // actual transition at 12.0 — she's stuck in her closed-eyes "reform" pose and
+                // the pull-out dolly gets crushed into the final second). Layer-derived signals
+                // (activeUntil windows, colour-curve reveals still visible at their own end) are
+                // ALWAYS folded in via max() regardless of transform presence — they're genuine
+                // content-completion beats, not the buggy curve-tail artifact, and Skadi2's white
+                // reveal-overlay colour curve (ending visible at 22.43, well after its own 9.5
+                // transform) depends on this to keep deferring the handoff until the flash
+                // clears (unchanged from the existing fix for that skin).
+                //
+                // Skins with NO authored transform (Mlynar) keep the original raw-tail
+                // computation and the `entAnimDur` guard, unchanged.
+                if (opts.mode === "entrance" && scene && scene.data.entranceCamCenterCurve?.length && entranceFrameSize) {
+                    const xform = scene.data.entranceTransform;
+                    let end = xform ?? 0;
+                    if (xform == null) {
+                        const oc = scene.data.entranceOrthoCurve;
+                        if (oc?.length) end = Math.max(end, oc[oc.length - 1][0]);
+                        const ccv = scene.data.entranceCamCenterCurve;
+                        if (ccv?.length) end = Math.max(end, ccv[ccv.length - 1][0]);
+                    }
+                    for (const l of scene.data.layers) {
+                        if (l.activeUntil != null && Number.isFinite(l.activeUntil)) end = Math.max(end, l.activeUntil);
+                        const cc = l.colorCurve;
+                        // Only a colour curve that ends still VISIBLE (final alpha > 0) can defer the
+                        // handoff. A curve fading to alpha 0 is a hide/fade-off with no visible payload;
+                        // letting it push the scene end out holds a peaked reveal-overlay opaque past the
+                        // cinematic. (Skadi2: its white cover-overlay peaks at 22.43s, but two invisible
+                        // fade-to-0 layers ran to 23.67s — the opaque white then held through the handoff
+                        // seam and BLANKED the frame. Mlynar/cello curves all end visible → unaffected.)
+                        if (cc?.length && cc[cc.length - 1][4] > 0.02) end = Math.max(end, cc[cc.length - 1][0]);
+                    }
+                    if (xform != null) {
+                        // The authored entrance TOTAL duration is a genuine content-completion
+                        // beat and must floor the handoff: `entranceTransform` marks the pose/
+                        // expression reform (cello 12.0), but the game holds the tight portrait
+                        // through the whole entrance and snaps wide only at `entranceDuration`
+                        // (cello 18.0 — matching her voice line to ~18.3s). Firing at the raw
+                        // transform (12.0) snaps ~6s early and cuts the line. Fold it into the
+                        // max as a floor. No-op where a later term already dominates: Skadi2's
+                        // visible colour curve ends at 22.43, past its own entranceDuration
+                        // (22.33), so its end is unchanged. (Mlynar has no transform → the else
+                        // branch below, untouched.)
+                        end = Math.max(end, scene.data.entranceDuration ?? 0);
+                        // Data-derived beat — fire the tick-driven handoff at this track time
+                        // even when it's EARLIER than the spine's own natural animation
+                        // completion. That's the whole point: the pose swap must not wait for
+                        // the baked idle-hold tail to finish playing out.
+                        deferEndUntil = end;
+                    } else {
+                        const entAnimDur = spine.spineData.animations.find((a: { name: string }) => a.name === entranceAnim)?.duration ?? 0;
+                        if (end > entAnimDur + 0.05) deferEndUntil = end;
+                    }
+                }
+                const scrollLayers: PIXI.Mesh[] = [];
+                if (scene) {
+                    const scan = (cont: PIXI.Container | null | undefined) => {
+                        if (!cont) return;
+                        for (const m of cont.children) {
+                            if ((m as unknown as ISceneLayerRuntime).__uvScroll && !(m as unknown as ISceneLayerRuntime).__stCurve) scrollLayers.push(m as PIXI.Mesh);
+                        }
+                    };
+                    scan(scene.background);
+                    scan(scene.foreground);
+                    scan(sceneOverlay);
+                }
                 return {
                     spine,
                     root: sceneContainer,
                     isScene: true,
+                    hasDarkBackdrop: scene?.hasDarkBackdrop ?? false,
                     bounds,
                     authoredDisplayBounds,
                     authoredTightBounds,
@@ -970,8 +1200,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
                     entranceCamCenterCurve: (scene?.data.entranceCamCenterCurve as [number, number, number][] | undefined) ?? null,
-                    entranceFrameSize: (authoredFrame?.entranceViewPx as number | undefined) ?? (authoredFrame?.viewPx2 as number | undefined) ?? null,
-                    sceneLayers: opts.mode === "entrance" && scene ? [scene.background, scene.foreground] : null,
+                    entranceFrameSize,
+                    sceneLayers: opts.mode === "entrance" && scene ? [scene.background, scene.foreground, ...(sceneOverlay ? [sceneOverlay] : [])] : null,
+                    scrollLayers,
+                    entranceSceneEnd: deferEndUntil,
+                    requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                     particles,
                     boneRest,
                     hasShadow,
@@ -992,6 +1225,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 spine,
                 root: spine as unknown as PIXI.Container,
                 isScene: false,
+                hasDarkBackdrop: false,
                 bounds,
                 authoredDisplayBounds: null,
                 authoredTightBounds: null,
@@ -1002,6 +1236,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 entranceCamCenterCurve: null,
                 entranceFrameSize: null,
                 sceneLayers: null,
+                scrollLayers: [],
+                entranceSceneEnd: null,
+                requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                 particles: null,
                 boneRest: null,
                 hasShadow: false,
@@ -1042,11 +1279,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // in-game viewer frames the L2D over a lit light-grey backdrop, not black. Added
                 // here (after the scene has loaded) so it appears WITH the illustration rather than
                 // covering the static load placeholder, and behind every scene layer so they
-                // composite over it at the game's brightness.
-                const envBg = new PIXI.Sprite(createEnvironmentBgTexture());
-                resizeEnvironmentBg(envBg, width, height);
-                envBgRef.current = envBg;
-                app.stage.addChildAt(envBg, 0);
+                // composite over it at the game's brightness. SKIPPED when the scene owns its own
+                // DARK painted backdrop (Virtuosa's mirror-world): that backdrop IS the environment,
+                // and the grey gradient would bleed through the frame's un-covered edges and wash the
+                // deep colour to grey (see IComposite.hasDarkBackdrop).
+                if (!main.hasDarkBackdrop) {
+                    const envBg = new PIXI.Sprite(createEnvironmentBgTexture());
+                    resizeEnvironmentBg(envBg, width, height);
+                    envBgRef.current = envBg;
+                    app.stage.addChildAt(envBg, 0);
+                }
                 // HDR bloom pass: render the scene into a half-float target so additive
                 // light/flame stacks don't clip to white, then tonemap to screen. Created
                 // once and re-pointed at whichever composite is live. Spine-only art never
@@ -1093,9 +1335,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
 
                 // Open on the standing idle at the settled frame, then dolly-out. Used both as the
                 // fallback (no `_Start`) and as the hand-off target after the `_Start` cinematic.
-                const openStandingIdle = () => {
+                const openStandingIdle = (opts?: { fromEntrance?: boolean }) => {
                     if (aborted() || !appRef.current || !gameFrame) return;
                     const { width: sw, height: sh } = appRef.current.screen;
+                    // Arriving from a `_Start` cinematic WITHOUT an authored pull-out window
+                    // (no `_transform` beat in the gamedata, e.g. Mlynar): the game HOLDS the
+                    // tight `_adjustes[1]` frame after the white-out (verified against the
+                    // recording — the steady settle is a knees-up shot, not a full-body pull-out).
+                    // A pull-out is only performed when the data authorizes one (`entrancePullOut`,
+                    // cello) or when there was no cinematic at all (the standard archive open).
+                    if (opts?.fromEntrance && !entrancePullOut && openTight) {
+                        main.bounds = openTight; // resizes keep the held tight frame
+                        layoutSpine(main.root, sw, sh, openTight, fitRef.current);
+                        boundsRef.current = openTight;
+                        return;
+                    }
                     const openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
                     const dur = entrancePullOut ? entrancePullOut.dur : 2.0;
                     if (openFrom) {
@@ -1121,7 +1375,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
                     activate(main, { skipStart: true }); // straight to standing idle (no second intro beat)
-                    openStandingIdle();
+                    openStandingIdle({ fromEntrance: true });
                     if (ent && hdr) {
                         // Crossfade: render BOTH roots in one wrapper (HDR renders it), main behind
                         // fading in, the dissolved entrance on top fading out — the character reforms
@@ -1154,13 +1408,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if (built) {
                     // The game HOLDS the entrance shot steadily through the whole transform and only
                     // pulls back to the wide frame AFTERWARD, on the settled idle (see
-                    // `entrancePullOut` → `openStandingIdle`). Frame-by-frame vs the reference
-                    // recording, the entrance opens on the `_adjustes[1]` TIGHT stop (Virtuosa
-                    // 1246px — a medium shot), NOT the camera's own ortho close-up (`entranceViewPx`
-                    // 598px), which frames ~2× too tight: the ortho→render mapping over-tightens,
-                    // while the `_adjustes` stops are RCAL-calibrated and correct.
+                    // `entrancePullOut` → `openStandingIdle`). Measured against the reference
+                    // recording, the entrance holds the `_Start` camera's OWN close-up — the ANIMATED
+                    // t=0 ortho view (`entranceFrameSize`, Virtuosa 374px: a tight head-and-shoulders
+                    // shot) — TIGHTER than both the `_adjustes[1]` stop (1246px, the settled idle's
+                    // open) and the exporter's static `entranceViewPx` (598px, pre-override ortho).
                     composites.push(built);
                     activate(built);
+                    // The idle continues the shot: open on this same `_adjustes[1]` framing and dolly
+                    // OUT to the wide `_adjustes[0]` throne over the POST-reform entrance window
+                    // (`duration − transform` = the ~6s the game takes to pull back). All gamedata.
+                    // Computed BEFORE the camera-follow below: a skin with NO authored transform
+                    // beat instead gets the late-entrance steady-camera takeover (`centerBlend`).
+                    if (built.entranceViewRatio && built.entranceDuration && built.entranceTransform) {
+                        entrancePullOut = { ratio: built.entranceViewRatio, dur: Math.max(0.5, built.entranceDuration - built.entranceTransform) };
+                    }
                     const tight = built.authoredTightBounds ?? built.authoredDisplayBounds ?? built.bounds;
                     if (tight) {
                         layoutSpine(built.root, width, height, tight, fitRef.current);
@@ -1173,21 +1435,29 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // gamedata inputs exist — otherwise the static `tight` framing already laid out
                         // above holds (spine-only / skins with no camera track).
                         if (built.entranceCamCenterCurve?.length && built.entranceFrameSize) {
+                            // Steady framing (see the tick): skins WITHOUT an authored transform beat
+                            // HOLD the horizontal centre on the settle-open box (dropping the rig's
+                            // right-swinging X excursion), keep the rig's vertical motion re-based onto
+                            // the settle centre, and follow the ortho zoom-out to full body uncapped.
+                            // Skins WITH a transform (cello, skadi2) keep the pure rig camera → null.
+                            let centerBlend: { cx0: number; cy0: number; rigEndY: number } | null = null;
+                            const settleOpen = main.authoredTightBounds ?? main.authoredDisplayBounds;
+                            const rigEnd = built.entranceCamCenterCurve[built.entranceCamCenterCurve.length - 1];
+                            if (!entrancePullOut && settleOpen && rigEnd) {
+                                centerBlend = { cx0: settleOpen.x + settleOpen.width / 2, cy0: settleOpen.y + settleOpen.height / 2, rigEndY: rigEnd[2] };
+                            }
                             entranceFollowRef.current = {
                                 spine: built.spine,
                                 root: built.root,
                                 ortho: built.entranceOrthoCurve ?? null,
                                 camCenter: built.entranceCamCenterCurve,
                                 frameSize: built.entranceFrameSize,
+                                centerBlend,
                                 sceneLayers: sl,
+                                endAt: built.entranceSceneEnd,
+                                fireEnd: built.entranceSceneEnd != null ? built.requestEntranceEnd : null,
                             };
                         }
-                    }
-                    // The idle continues the shot: open on this same `_adjustes[1]` framing and dolly
-                    // OUT to the wide `_adjustes[0]` throne over the POST-reform entrance window
-                    // (`duration − transform` = the ~6s the game takes to pull back). All gamedata.
-                    if (built.entranceViewRatio && built.entranceDuration && built.entranceTransform) {
-                        entrancePullOut = { ratio: built.entranceViewRatio, dur: Math.max(0.5, built.entranceDuration - built.entranceTransform) };
                     }
                     // The "Start" clip plays STRAIGHT THROUGH to its own end — the reform, the voice
                     // beat and the settle all live inside the clip, and the live-follow camera

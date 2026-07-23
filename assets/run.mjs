@@ -475,7 +475,7 @@ function runDownload({
  * @param {(p: {completed: number, total: number, percent: number}) => void} [opts.onProgress]
  * @returns {Promise<{exported: number}>}
  */
-function runUnpack({
+function runUnpackOnce({
 	inputDir,
 	outputDir,
 	jobs = DEFAULT_THREADS,
@@ -543,7 +543,7 @@ function runUnpack({
 			}
 		});
 
-		child.on("close", (code) => {
+		child.on("close", (code, signal) => {
 			if (code !== 0) {
 				const clean = `${stdoutTail}\n${stderrTail}`
 					.replace(ANSI_RE, "")
@@ -553,7 +553,15 @@ function runUnpack({
 					.map((l) => l.trim())
 					.filter(Boolean);
 				const errOutput = lines.slice(-10).join("\n");
-				reject(new Error(`Unpacker exited with code ${code}\n${errOutput}`));
+				// code is null when the process was killed by a signal (e.g.
+				// SIGKILL from the OOM killer) rather than exiting on its own.
+				const how =
+					code === null
+						? `killed by signal ${signal}${signal === "SIGKILL" ? " (likely out of memory — lower -j jobs)" : ""}`
+						: `exited with code ${code}`;
+				const err = new Error(`Unpacker ${how}\n${errOutput}`);
+				err.signal = signal; // null for a clean exit; set when signal-killed
+				reject(err);
 				return;
 			}
 			// Process any final line without trailing newline
@@ -566,6 +574,31 @@ function runUnpack({
 
 		child.on("error", reject);
 	});
+}
+
+/**
+ * Run the unpacker, retrying once single-threaded if the first attempt is
+ * OOM-killed (SIGKILL). Each extraction job holds whole bundles in RAM, so
+ * -j 1 roughly halves peak memory and lets a memory-starved box finish where
+ * the parallel run got killed. A crash (SIGSEGV) or a clean non-zero exit is
+ * not retried — those are not memory problems and re-running won't help.
+ *
+ * @param {Parameters<typeof runUnpackOnce>[0] & {onNotice?: (message: string) => void}} opts
+ * @returns {Promise<{exported: number}>}
+ */
+async function runUnpack(opts) {
+	try {
+		return await runUnpackOnce(opts);
+	} catch (err) {
+		const jobs = opts.jobs ?? DEFAULT_THREADS;
+		if (err?.signal === "SIGKILL" && jobs > 1) {
+			const msg = `Unpacker ran out of memory at -j ${jobs}; retrying single-threaded (-j 1)…`;
+			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] ${msg}`));
+			opts.onNotice?.(msg);
+			return await runUnpackOnce({ ...opts, jobs: 1 });
+		}
+		throw err;
+	}
 }
 
 // ─── Option 1: Setup ───────────────────────────────────────────────────────
@@ -1257,6 +1290,8 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				outputDir: config.outputDir,
 				jobs: config.threads,
 				onProgress: (p) => broadcast({ type: "unpack_progress", ...p }),
+				onNotice: (message) =>
+					broadcast({ type: "status", state: "unpacking", message }),
 			});
 
 			// Update stored version and extraction timestamp

@@ -58,6 +58,23 @@ pub async fn set_visibility(
     Ok(())
 }
 
+/// Set a tier list's `list_type` (e.g. `"official"` or `"community"`), which is
+/// what controls whether the list is presented as official. Returns the updated
+/// row, or `None` if no list has that id.
+pub async fn set_list_type(
+    pool: &PgPool,
+    tier_list_id: Uuid,
+    list_type: &str,
+) -> Result<Option<TierList>, sqlx::Error> {
+    sqlx::query_as::<_, TierList>(
+        "UPDATE tier_lists SET list_type = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
+    )
+    .bind(tier_list_id)
+    .bind(list_type)
+    .fetch_optional(pool)
+    .await
+}
+
 pub async fn create(
     pool: &PgPool,
     name: &str,

@@ -100,6 +100,27 @@ fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, 
     let size = size as usize;
     let element_node = &array_node.children[1];
 
+    // Bound the element count against the bytes left in this object. Every array
+    // element reads at least one byte, so a well-formed array of `size` elements
+    // needs at least `size` bytes remaining. If the declared count exceeds what's
+    // left, the type-tree was misread and `size` is garbage — reject it now.
+    //
+    // Without this, a bogus count (hundreds of millions) over an element type
+    // that happens to read zero bytes — e.g. an empty struct node, `read_value`'s
+    // struct fallback above — drives the loop to push that many `serde_json::Value`
+    // nodes with no EOF to stop it, allocating ~10 GB and OOM-killing the process.
+    // The self-limiting "fails on EOF if data is short" assumption below only holds
+    // when each element actually consumes input; this guard covers when it doesn't.
+    if size > r.remaining() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "array size {size} exceeds {} remaining bytes (misread type-tree)",
+                r.remaining()
+            ),
+        ));
+    }
+
     // Cap initial capacity to avoid huge allocations when size is valid but large;
     // the loop will still read exactly `size` elements (failing on EOF if data is short).
     const MAX_INITIAL_CAP: usize = 1024;

@@ -44,4 +44,16 @@ pub enum Commands {
     CheckUpdate,
     /// List available packs
     ListPacks,
+    /// Extract the IL2CPP client binary + global-metadata.dat from a user-provided
+    /// app package (APK / XAPK / APKM / OBB / IPA) and report whether a static
+    /// dump is viable. Runs fully offline (no server contact).
+    ClientExtract {
+        /// Path to the app package (.apk/.xapk/.apkm/.obb/.ipa).
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// Directory to write libil2cpp.so / the Mach-O + global-metadata.dat into.
+        #[arg(short, long, default_value = "./il2cpp-input")]
+        output: PathBuf,
+    },
 }

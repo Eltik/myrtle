@@ -6,7 +6,8 @@ use std::sync::Arc;
 use clap::Parser;
 use cli::{Cli, Commands};
 use downloader::{
-    download, hot_update, manifest, pipeline, resource_manifest, server::Server, types, version,
+    client_extract, download, hot_update, manifest, pipeline, resource_manifest, server::Server,
+    types, version,
 };
 
 #[tokio::main]
@@ -16,6 +17,14 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(if cli.verbose { "debug" } else { "info" })
         .init();
+
+    // `client-extract` is a fully offline utility — handle it before any
+    // network/version work so it never touches the update server.
+    if let Commands::ClientExtract { input, output } = &cli.command {
+        let report = client_extract::run(input, output)?;
+        client_extract::print_report(&report);
+        return Ok(());
+    }
 
     let server: Server = cli.server.parse()?;
     let client = reqwest::Client::new();
@@ -59,6 +68,9 @@ async fn main() -> anyhow::Result<()> {
             )
             .await?;
         }
+
+        // Handled offline before the version fetch above.
+        Commands::ClientExtract { .. } => unreachable!(),
     }
 
     Ok(())

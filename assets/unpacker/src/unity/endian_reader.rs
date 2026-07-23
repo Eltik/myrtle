@@ -29,7 +29,6 @@ impl<'a> EndianReader<'a> {
         self.pos = pos;
     }
 
-    #[allow(dead_code)]
     #[must_use]
     pub const fn remaining(&self) -> usize {
         self.data.len().saturating_sub(self.pos)
