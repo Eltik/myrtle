@@ -376,7 +376,7 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
  *  covering the viewport. */
 // Fresh per-app texture (the app is destroyed with `texture: true`, so a shared/cached
 // texture would be torn down under later mounts).
-function createEnvironmentBgTexture(): PIXI.Texture {
+function createEnvironmentBgTexture(dark = false): PIXI.Texture {
     const S = 512;
     const cvs = document.createElement("canvas");
     cvs.width = S;
@@ -384,8 +384,19 @@ function createEnvironmentBgTexture(): PIXI.Texture {
     const ctx = cvs.getContext("2d");
     if (ctx) {
         const g = ctx.createRadialGradient(S / 2, S * 0.3, S * 0.08, S / 2, S * 0.5, S * 0.78);
-        g.addColorStop(0, "#dddee2");
-        g.addColorStop(1, "#bfc0c4");
+        // A scene that owns its own DARK painted world (`hasDarkBackdrop`, e.g. Virtuosa's
+        // mirror-world) composites its backdrop SEMI-TRANSPARENTLY, so the bright studio grey
+        // leaks through and washes its deep-navy field to lavender. Keep the fallback present
+        // (it still fills the genuine coverage gaps at the widest camera framings — a `null`
+        // fill reopens black voids at the wide settle) but make it DARK, so it fills gaps
+        // without lifting the navy. Same radial shape/stops, darkened — no per-skin colour.
+        if (dark) {
+            g.addColorStop(0, "#1a1b22");
+            g.addColorStop(1, "#0c0d12");
+        } else {
+            g.addColorStop(0, "#dddee2");
+            g.addColorStop(1, "#bfc0c4");
+        }
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, S, S);
     }
@@ -933,7 +944,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // because the character's OWN pose/position moves substantially during the
                     // "Start" reform — a single frame would miss most of the overlap.
                     const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
-                    particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust, characterBounds);
+                    particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust, characterBounds, scene.hasDarkBackdrop);
                     if (aborted()) {
                         spine.destroy();
                         particles?.destroy();
@@ -1292,15 +1303,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // in-game viewer frames the L2D over a lit light-grey backdrop, not black. Added
                 // here (after the scene has loaded) so it appears WITH the illustration rather than
                 // covering the static load placeholder, and behind every scene layer so they
-                // composite over it at the game's brightness. ALWAYS created now — even a scene that
+                // composite over it at the game's brightness. ALWAYS created — even a scene that
                 // owns its own dark painted backdrop (Virtuosa's mirror-world, `hasDarkBackdrop`) has
                 // real coverage gaps at its widest camera framing (the opening pan, the post-handoff
-                // wide settle) where this is the ONLY fallback fill; painter's-algorithm ordering
-                // (stage index 0, strictly behind every opaque layer) means it can never show through
-                // actual backdrop coverage, only genuine gaps. The over-bright wash this gate used to
-                // prevent is now capped at its SOURCE instead (see `temperLargeAdditive` in
-                // sceneMesh's `buildLayerMesh`) rather than by removing the fallback outright.
-                const envBg = new PIXI.Sprite(createEnvironmentBgTexture());
+                // wide settle) where this is the ONLY fallback fill; a `null` fill reopens black voids
+                // there. But such a scene composites its own backdrop SEMI-TRANSPARENTLY, so the bright
+                // studio grey LEAKS THROUGH and washes its deep-navy field to lavender. So gate the
+                // fallback's COLOUR (not its existence) on the data-derived `hasDarkBackdrop`: a DARK
+                // fill for a self-lit dark-world scene (fills gaps without washing the navy), the
+                // bright studio grey otherwise. Cello-only by construction (only it flips the flag).
+                const envBg = new PIXI.Sprite(createEnvironmentBgTexture(main.hasDarkBackdrop));
                 resizeEnvironmentBg(envBg, width, height);
                 envBgRef.current = envBg;
                 app.stage.addChildAt(envBg, 0);

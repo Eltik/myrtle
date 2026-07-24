@@ -1937,7 +1937,20 @@ function additivePileGain(sys: IParticleSystemData): number {
     return Math.max(MIN_GAIN, TARGET_STACK / density);
 }
 
-export async function loadParticles(url: string, textureBaseUrl: string, bust = "", characterBounds: IAnimationBounds | null = null): Promise<ILoadedParticles | null> {
+/** Mirror of sceneMesh's `EFFECT_SCENE_GAIN` / `EFFECT_TEX_MAX` on the PARTICLE path.
+ *  On a scene that owns its own DARK painted backdrop (`hasDarkBackdrop`, cello only), a
+ *  LARGE additive billboard feeds the HDR bloom at full gain and blooms into the crown halo,
+ *  washing the white diamond lattice (Virtuosa's two 1313px `star_large` flares, tex5). The
+ *  scene-layer path already tempers a large additive layer to `EFFECT_SCENE_GAIN` on such
+ *  scenes (`sceneMesh.buildLayerMesh`); the particle path had no equivalent. Apply the same
+ *  tamed gain to a large additive billboard, ATTENUATING (not deleting — a subtle central
+ *  flare survives) and gated on the data-derived flag so every other skin is byte-identical.
+ *  "Large" = billboard bigger than the effect-overlay size (mirrors `EFFECT_TEX_MAX`), so
+ *  small additive sparks (the amber orb, comet trail, glow motes) are untouched. */
+const EFFECT_PARTICLE_GAIN = 0.3; // = sceneMesh EFFECT_SCENE_GAIN
+const EFFECT_PARTICLE_MAX = 512; // = sceneMesh EFFECT_TEX_MAX (effect-overlay vs large boundary)
+
+export async function loadParticles(url: string, textureBaseUrl: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false): Promise<ILoadedParticles | null> {
     let data: IParticlesData;
     try {
         const res = await fetch(url);
@@ -2117,7 +2130,12 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         const trailTexture = trailTex ? new PIXI.Texture(trailTex.base) : null;
         const emitter = new Emitter(sys, new PIXI.Texture(tex.base), trailTexture, blend, budget);
         emitters.push(emitter);
-        if (blend === "additive") emitter.container.alpha = additivePileGain(sys);
+        // Tame a LARGE additive billboard on a self-lit dark-backdrop scene (mirrors the
+        // scene-layer `EFFECT_SCENE_GAIN` temper — see EFFECT_PARTICLE_GAIN above). Composes
+        // with `additivePileGain`; still additive, so a subtle central flare remains. No-op
+        // for every non-`hasDarkBackdrop` skin, and for small additive sparks.
+        const temperLargeAdditive = hasDarkBackdrop && blend === "additive" && scalarMax(sys.startSize) > EFFECT_PARTICLE_MAX;
+        if (blend === "additive") emitter.container.alpha = additivePileGain(sys) * (temperLargeAdditive ? EFFECT_PARTICLE_GAIN : 1);
         // bg_* / haze atmospherics are demoted behind the spine (see isBackdropParticle above).
         // A world-space system that would be bucketed background purely by sort (NOT already
         // demoted as a deliberate backdrop atmospheric) but whose static spawn disc sits mostly
