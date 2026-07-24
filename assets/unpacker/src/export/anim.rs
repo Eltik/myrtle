@@ -1429,9 +1429,13 @@ pub fn layer_st_curve(channels: &StChannels, static_st: [f32; 4]) -> Option<Vec<
 /// `tint` came from ({@link super::spine::material_tint}). Of the animated properties,
 /// the most-keyed one is used; its keyed channels REPLACE the static tint channel when
 /// it IS the tint property (the tint already holds that property's static value), and
-/// MULTIPLY onto the tint otherwise (the shader multiplies its colour properties; an
-/// unkeyed channel contributes 1 — consistent with the static export, which ignores
-/// non-tint properties). Returns `None` when no animated property matches the material.
+/// MULTIPLY onto the tint otherwise (the shader multiplies its colour properties). For an
+/// ADDITIVE non-tint property the tint carries none of its colour, so its RGB channels are
+/// seeded from the property's OWN serialized value: a keyed channel takes the animated
+/// value, an unkeyed one the static value (both × tint) — an additive glow's colour is the
+/// colour of the light it adds, so an unkeyed warm-amber RGB behind an animated alpha must
+/// still tint the added light (`fold_static`, gated on `additive`). The ALPHA channel is
+/// exempt (it is opacity/intensity, not colour). Returns `None` when nothing matches.
 ///
 /// `tint_scale` is the shader family's tint multiplier (2.0 for the legacy `×2
 /// _TintColor` particle shaders, else 1.0 — see `legacy_tint_scale` in spine.rs): a
@@ -1446,6 +1450,7 @@ pub fn layer_color_curve(
     tint_prop: Option<&str>,
     tint: [f32; 4],
     tint_scale: f32,
+    additive: bool,
 ) -> Option<Vec<(f32, [f32; 4])>> {
     let prop_of = |crc28: u32| {
         props
@@ -1466,6 +1471,23 @@ pub fn layer_color_curve(
         .max_by_key(|&(crc, n)| (*n, *crc))
         .map(|(&crc, _)| crc)?;
     let same_prop = tint_prop == prop_of(best);
+    // Static serialized RGB of the animated property, folded onto unkeyed colour channels
+    // for ADDITIVE layers only (`fold_static`). An additive glow layer with a WHITE glow
+    // texture derives ALL its colour from the material property, so the shader's added
+    // light is `_MainColor.rgb × alpha`; when the clip keys only the alpha (Mlynar's `huan`
+    // warm-ring: `_MainColor` = (1.0,0.48,0.30) with an animated α 0→0.43→0), seeding the
+    // unkeyed RGB from 1 (the old behaviour) added pure WHITE light instead of the authored
+    // warm AMBER — the reported "too white/cool" ring. Restricted to additive layers on
+    // purpose: an additive layer's colour is unambiguously the colour of the light it adds,
+    // whereas a normal-blend layer composites OVER the scene, where folding a secondary
+    // property's colour (e.g. a blue `_MainColor` smoke sheet) tints regions the frontend
+    // can't counter-balance (an under-rendered warm campfire) and would over-cool them.
+    // Property-derived, no per-skin constant — a no-op when the property's static RGB is
+    // white or when `same_prop` (the tint already carries it).
+    let best_static: [f32; 4] = prop_of(best)
+        .and_then(|name| props.iter().find(|(n, _)| n == name).map(|(_, c)| *c))
+        .unwrap_or([1.0; 4]);
+    let fold_static = additive && !same_prop;
     let mut chans: [Option<&Vec<(f32, f32)>>; 4] = [None; 4];
     for c in channels {
         if c.prop_crc28 == best && c.channel < 4 {
@@ -1502,7 +1524,16 @@ pub fn layer_color_curve(
     };
     let mut out = Vec::with_capacity(times.len());
     for &t in &times {
+        // Seed from the static tint; for an additive non-tint animated property, fold in
+        // its static RGB (the added light's colour) so unkeyed colour channels carry the
+        // property's serialized value rather than 1. Alpha is left on the base tint — it is
+        // the layer's opacity/intensity, not a colour to fold (see `fold_static`).
         let mut rgba = tint;
+        if fold_static {
+            for i in 0..3 {
+                rgba[i] = tint[i] * best_static[i];
+            }
+        }
         for (i, ch) in chans.iter().enumerate() {
             if let Some(c) = ch {
                 let v = sample(c, t);

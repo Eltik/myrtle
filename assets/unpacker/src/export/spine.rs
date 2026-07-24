@@ -1062,6 +1062,7 @@ fn collect_dynchar_bg_quads(
                 tint_prop.as_deref(),
                 tint,
                 tint_scale,
+                additive,
             )
         });
         // The layer's animated `_MainTex_ST` curve (entrance scenes only). When present it
