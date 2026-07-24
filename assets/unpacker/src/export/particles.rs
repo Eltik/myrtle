@@ -941,6 +941,29 @@ pub(crate) fn collect_dynchar_particles(
             }
         }
 
+        // Limit velocity over lifetime (Unity `ClampVelocityModule`): a speed
+        // ceiling the particle is damped toward each step. Mlynar's `weapon_star_*`
+        // glint pops fast off the blade, then this clamp reins it into a tight,
+        // stationary cluster. `magnitude` is a curve of the speed LIMIT over
+        // normalized life, in the same px/s frame as `startSpeed` (em_inv for the
+        // common local case; inv_scale when the clamp is world-space, matching the
+        // Velocity/Force modules). Per-axis (`separateAxis`) clamps are a documented
+        // gap — we only model the uniform speed clamp (`separateAxis:false`).
+        if let Some(m) = ps.get("ClampVelocityModule")
+            && b(m, "enabled", false)
+            && !b(m, "separateAxis", false)
+        {
+            let cscale = if b(m, "inWorldSpace", false) {
+                inv_scale
+            } else {
+                em_inv
+            };
+            sys["velocityClamp"] = json!({
+                "dampen": fd(m, "dampen", 0.0),
+                "magnitude": mmscalar(m.get("magnitude").unwrap_or(&Value::Null), cscale),
+            });
+        }
+
         // Rotation over lifetime (angular velocity, radians/s → deg/s).
         if let Some(rm) = ps.get("RotationModule")
             && b(rm, "enabled", false)

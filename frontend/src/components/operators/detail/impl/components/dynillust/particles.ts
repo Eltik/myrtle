@@ -76,6 +76,13 @@ export interface IParticleSystemData {
     colorOverLife?: MMColor | null;
     sizeOverLife?: ICurvePoint[] | null;
     velocityOverLife?: { x: number; y: number; space?: string } | null;
+    /** Unity `ClampVelocityModule` ("Limit Velocity over Lifetime"): a per-step
+     *  damped speed clamp. `magnitude` is the speed LIMIT (px/s) over normalized
+     *  life; each frame a particle over the limit has its velocity lerped toward
+     *  the limit by `dampen`. Mlynar's `weapon_star_*` glint uses a huge startSpeed
+     *  reined in by this clamp into a tight stationary cluster — without it the
+     *  burst scatters into faint motes. Absent for systems with no such module. */
+    velocityClamp?: { dampen: number; magnitude: MMScalar } | null;
     rotOverLifeDegPerSec?: number | null;
     /** `_MainTex_ST` UV tiling/offset `[scaleX, scaleY, offsetX, offsetY]` from the
      *  material. When present the emitter crops its sprite to this sub-rectangle of
@@ -364,23 +371,35 @@ function emissionRate(d: IParticleSystemData, constRate: number, time: number): 
     return d.rateCurve?.length ? Math.max(0, sampleCurve(d.rateCurve, time)) : constRate;
 }
 
-/** velocityOverLifetime drift, applied ONLY to SHORT-lived particles.
+/** velocityOverLifetime drift, in WORLD space (px/s).
  *
  *  Unity's `velocityOverLifetime` here is a CONSTANT push we integrate over the
  *  particle's lifetime. Over a LONG lifetime that's a huge straight-line fly-off the
  *  in-game archive never shows (Hoshiguma the Breacher's `fire_p` systems: lifetime
- *  5–6s, ~100px/s → a 500–600px sweep across the frame; no drag/`ClampVelocity` in the
- *  data arrests it). For SHORT-lived particles the total travel is BOUNDED and the
- *  motion IS the effect: Virtuosa's rain (`velocityOverLife.y = −500`, life 0.3–0.4s →
- *  ~150–200px fall) and spark streaks. So apply it only below a short lifetime — rain
- *  falls, long-lived flames stay contained. Property-driven, no per-skin value. The
- *  velocity is in the emitter's LOCAL frame (matching each particle's container-local
- *  `p.x/p.y`), so no world rotation is needed. */
+ *  5–6s, ~100px/s → a 500–600px sweep across the frame; that particular system has no
+ *  `ClampVelocityModule` to arrest it — one that DOES (e.g. Mlynar's star glint) is now
+ *  modeled via {@link IParticleSystemData.velocityClamp}). So a plain BILLBOARD without a
+ *  clamp keeps a short-lifetime gate — its ambient flame
+ *  stays contained. But a STREAK system (`renderMode:"stretch"` or one carrying a ribbon
+ *  `trail`) is authored so the travel IS the effect (Skadi2 iteration's near-body
+ *  fish-shoal / starlight streaks, vol 750–1000px/s, life 2–8s; Virtuosa's rain), so it
+ *  keeps its drift at any lifetime. Property-driven, no per-skin value.
+ *
+ *  The exported vector lives in the emitter's frame: a `space:"local"` vector must be
+ *  rotated into world by the emitter rotation `d.rot` (the same rotation `spawn` applies
+ *  to the shape offset + startSpeed direction) — most of Skadi2's streak vectors are
+ *  local with a non-zero `d.rot`, so unrotated they point up/off-frame and never reach
+ *  her body. A `space:"world"` vector is already world-aligned and passes through raw. */
 function worldVelocityOverLife(d: IParticleSystemData): { x: number; y: number } | null {
     const vol = d.velocityOverLife;
     if (!vol || (vol.x === 0 && vol.y === 0)) return null;
-    if (scalarMax(d.lifetime) > VELOCITY_MAX_LIFE) return null;
-    return { x: vol.x, y: vol.y };
+    const isStreak = d.renderMode === "stretch" || d.trail != null;
+    if (!isStreak && scalarMax(d.lifetime) > VELOCITY_MAX_LIFE) return null;
+    if (vol.space === "world") return { x: vol.x, y: vol.y };
+    const a = (d.rot ?? 0) * DEG;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    return { x: vol.x * c - vol.y * s, y: vol.x * s + vol.y * c };
 }
 
 /** Every bone's REFERENCE-pose world matrix, keyed by bone name — captured once
@@ -759,17 +778,18 @@ class Emitter {
             const sx = wx;
             const sy = -wy;
             // Trajectory-aware: test the whole spawn→death SEGMENT against the box, not just
-            // the spawn point. A stationary particle (speed 0) degenerates to the exact same
-            // point test as before (Mlynar's static rain discs: unchanged, still culled at the
-            // widened edge). A particle that DRIFTS toward the box via its initial velocity
-            // (Skadi2's fish-shoal/thread/starlight/weapon-glint systems, authored off-crop on
-            // purpose and meant to swim/drift into view) now correctly survives if its
-            // trajectory ever crosses into the box, even though its spawn point starts outside
-            // it. Screen-space velocity: `wx`/`wy` grow by `(vx,vy)=(cos(wDir),sin(wDir))·speed`
-            // per second in world Y-up space (see the particle push below); screen Y is
-            // negated, so `sy` moves by `-vy` per second.
-            const segEndX = sx + Math.cos(wDir) * speed * life;
-            const segEndY = sy - Math.sin(wDir) * speed * life;
+            // the spawn point. A stationary particle (speed 0, no vol) degenerates to the exact
+            // same point test as before (Mlynar's static rain discs: unchanged, still culled at
+            // the widened edge). A particle that DRIFTS toward the box — via its initial velocity
+            // AND/OR its `velocityOverLife` (`this.volWorld`, already rotated into world) — now
+            // correctly survives if its trajectory ever crosses into the box, even though its
+            // spawn point starts outside it (Skadi2's fish-shoal/starlight streak systems have
+            // startSpeed 0, so ALL their travel is the vol push — omitting vol here point-culled
+            // them at their off-frame spawn). Screen-space velocity: `wx`/`wy` grow by
+            // `(cos(wDir),sin(wDir))·speed + volWorld` per second in world Y-up space (see the
+            // particle push below); screen Y is negated, so `sy` moves by the negated Y rate.
+            const segEndX = sx + (Math.cos(wDir) * speed + (this.volWorld?.x ?? 0)) * life;
+            const segEndY = sy - (Math.sin(wDir) * speed + (this.volWorld?.y ?? 0)) * life;
             const segMinX = Math.min(sx, segEndX);
             const segMaxX = Math.max(sx, segEndX);
             const segMinY = Math.min(sy, segEndY);
@@ -874,6 +894,18 @@ class Emitter {
             const lf = p.age / p.life;
             // gravity pulls -Y (down) in our Y-up space.
             p.vy -= grav * dt;
+            // Limit velocity over lifetime: damp the particle's speed toward the
+            // curve-sampled ceiling (Unity ClampVelocityModule). Reins the star
+            // glint's hot startSpeed burst into a tight stationary cluster.
+            if (d.velocityClamp) {
+                const limit = sampleScalar(d.velocityClamp.magnitude, 0.5, lf);
+                const spd = Math.hypot(p.vx, p.vy);
+                if (spd > limit && spd > 0) {
+                    const k = limit / spd;
+                    p.vx = lerp(p.vx, p.vx * k, d.velocityClamp.dampen);
+                    p.vy = lerp(p.vy, p.vy * k, d.velocityClamp.dampen);
+                }
+            }
             p.x += (p.vx + (vol?.x ?? 0)) * dt;
             p.y += (p.vy + (vol?.y ?? 0)) * dt;
             // Noise: an organic wander sampled from a time-scrolling field.
@@ -1378,10 +1410,11 @@ class RamEmitter {
             const sy = -wy;
             // See the Emitter.spawn() twin of this check: test the whole spawn→death segment,
             // so stationary particles retain the previous point-cull behavior while particles
-            // that drift toward the box survive if their trajectory crosses into it. Screen Y
-            // is negated from world Y-up, so `sy` moves by `-sin(wDir) * speed` per second.
-            const segEndX = sx + Math.cos(wDir) * speed * life;
-            const segEndY = sy - Math.sin(wDir) * speed * life;
+            // that drift toward the box (via startSpeed AND/OR `velocityOverLife`, `this.volWorld`)
+            // survive if their trajectory crosses into it. Screen Y is negated from world Y-up,
+            // so `sy` moves by the negated Y rate per second.
+            const segEndX = sx + (Math.cos(wDir) * speed + (this.volWorld?.x ?? 0)) * life;
+            const segEndY = sy - (Math.sin(wDir) * speed + (this.volWorld?.y ?? 0)) * life;
             const segMinX = Math.min(sx, segEndX);
             const segMaxX = Math.max(sx, segEndX);
             const segMinY = Math.min(sy, segEndY);
@@ -1454,6 +1487,18 @@ class RamEmitter {
             p.age += dt;
             if (p.age >= p.life) continue; // drop
             p.vy -= grav * dt;
+            // Limit velocity over lifetime (Unity ClampVelocityModule) — see the
+            // sprite Emitter loop. Damp speed toward the curve-sampled ceiling.
+            if (d.velocityClamp) {
+                const lf = p.age / p.life;
+                const limit = sampleScalar(d.velocityClamp.magnitude, 0.5, lf);
+                const spd = Math.hypot(p.vx, p.vy);
+                if (spd > limit && spd > 0) {
+                    const k = limit / spd;
+                    p.vx = lerp(p.vx, p.vx * k, d.velocityClamp.dampen);
+                    p.vy = lerp(p.vy, p.vy * k, d.velocityClamp.dampen);
+                }
+            }
             p.x += (p.vx + (vol?.x ?? 0)) * dt;
             p.y += (p.vy + (vol?.y ?? 0)) * dt;
             if (noise) {

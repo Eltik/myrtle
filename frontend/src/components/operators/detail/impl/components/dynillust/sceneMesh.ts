@@ -509,6 +509,24 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
     return new PIXI.Mesh(geometry, shader);
 }
 
+/** Pixel footprint of just THIS layer's sampled sub-rect of its (possibly shared/atlas)
+ *  texture. A layer packed into a large shared atlas page samples only a small UV sub-rect;
+ *  the raw texture dimensions then mis-describe it as a big backdrop. Provably a no-op for a
+ *  layer that samples its texture's full extent (uv spans [0,1] → returns the raw dims). */
+function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: number } {
+    let uMin = Infinity;
+    let uMax = -Infinity;
+    let vMin = Infinity;
+    let vMax = -Infinity;
+    for (let i = 0; i < layer.uv.length; i += 2) {
+        uMin = Math.min(uMin, layer.uv[i]);
+        uMax = Math.max(uMax, layer.uv[i]);
+        vMin = Math.min(vMin, layer.uv[i + 1]);
+        vMax = Math.max(vMax, layer.uv[i + 1]);
+    }
+    return { w: (uMax - uMin) * tex.raw.width, h: (vMax - vMin) * tex.raw.height };
+}
+
 /**
  * Build a Pixi mesh for one layer. Y is flipped (authored Y-up → Pixi Y-down)
  * and V is flipped (Unity → Pixi UV), matching the exporter's coordinate note.
@@ -533,7 +551,8 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = fals
     // HDR-tonemapped light; composited raw they blow out into bold swirls, so
     // attenuate. Additive is darkened via tint (reliable for ADD blend); normal via
     // alpha. Painted backdrops (large textures) are untouched.
-    const isEffect = tex.raw.width <= EFFECT_TEX_MAX && tex.raw.height <= EFFECT_TEX_MAX;
+    const effRect = layerUvRectPx(layer, tex);
+    const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX;
     // `EFFECT_SCENE_GAIN` tames small caustic overlays (they'd otherwise over-cover);
     // but an additive LIGHT-GLOW sheet (fullGain) must contribute its full energy — the
     // HDR float target + tonemap handle the peaks — else it can't lift the backdrop.
@@ -731,7 +750,8 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         const b = bases[l.tex];
         if (!b || l.additive) return false;
         const isRevealOverlay = l.activeFrom != null || l.activeUntil != null;
-        const isEffect = b.raw.width <= EFFECT_TEX_MAX && b.raw.height <= EFFECT_TEX_MAX;
+        const effRect = layerUvRectPx(l, b);
+        const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX;
         return !isRevealOverlay && !isEffect && b.opaqueFrac >= 0.9 && b.whiteness >= 0.4 && b.whiteness < STUDIO_ENV_WHITENESS;
     });
 
@@ -792,7 +812,8 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // A bright-white foreground effect panel is a paint/flash VEIL the source art
         // keeps BEHIND the character — re-sort it to the background so her body
         // occludes it (see VEIL_WHITENESS_MIN). Coloured foreground fx stay in front.
-        const isEffect = base.raw.width <= EFFECT_TEX_MAX && base.raw.height <= EFFECT_TEX_MAX;
+        const effRect = layerUvRectPx(layer, base);
+        const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX;
         const isVeil = isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN;
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
