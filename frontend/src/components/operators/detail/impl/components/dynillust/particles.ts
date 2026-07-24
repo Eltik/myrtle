@@ -78,6 +78,14 @@ export interface IParticleSystemData {
      *  `xiaoyu`/`guang` red streaks); when present the cone aims along it instead of the
      *  `rot`-derived "local +Y" direction. Absent → byte-identical legacy path. */
     emitDir?: [number, number] | null;
+    /** Unity `StretchedBillboard` renderer scales (`renderMode:"stretch"` only). The quad is
+     *  elongated along the particle's screen velocity to `|lengthScale|·size + velocityScale·speed`
+     *  px (the px unit cancels, so no world→screen conversion). `lengthScale` is the size-proportional
+     *  stretch (the dominant term for nearly every system — rain, embers), `velocityScale` the
+     *  speed-proportional one (only Angelina's skin uses it). Absent → Unity defaults (lengthScale 2,
+     *  velocityScale 0). This replaces a single invented speed factor that over-stretched fast,
+     *  tiny specks into long foreground streaks. */
+    stretch?: { lengthScale: number; velocityScale: number; cameraVelocityScale: number } | null;
     colorOverLife?: MMColor | null;
     sizeOverLife?: ICurvePoint[] | null;
     velocityOverLife?: { x: number; y: number; space?: string } | null;
@@ -363,11 +371,6 @@ function followOf(d: IParticleSystemData): IFollow | undefined {
 
 /** Longest lifetime (s) that still gets `velocityOverLifetime` drift. See below. */
 const VELOCITY_MAX_LIFE = 0.8;
-
-/** Streak length (px) added per unit screen-speed (px/s) for `renderMode:"stretch"`
- *  particles — ~one 20fps frame of motion blur, so a 500px/s rain speck draws a ~25px
- *  streak. Purely visual; scales with each particle's own speed. */
-const STRETCH_LEN_PER_SPEED = 0.05;
 
 /** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
  *  when the exporter captured one (sampled at the emitter clock — rate-curve systems
@@ -660,15 +663,20 @@ class Emitter {
         s.position.set(p.x, -p.y);
         const base = sz / this.spriteW;
         if (this.data.renderMode === "stretch") {
-            // Unity "Stretched Billboard" (rain streaks, spark trails): elongate the sprite
-            // ALONG its screen velocity, length growing with speed, so a fast 1–3px rain speck
-            // reads as a thin streak instead of an invisible dot. Gated to renderMode "stretch"
-            // so ordinary billboards are untouched; applies to any stretch system, no per-skin value.
+            // Unity "Stretched Billboard" (rain streaks, spark trails): elongate the sprite ALONG
+            // its screen velocity to the AUTHORED length `|lengthScale|·size + velocityScale·speed`
+            // (px; see IParticleSystemData.stretch). lengthScale carries the stretch for nearly
+            // every system (a fixed multiple of the sprite, speed-independent — so fast rain stays
+            // a short streak, not a long one); velocityScale adds a speed term only where authored.
+            // Gated to renderMode "stretch"; no per-skin value. Absent → Unity defaults (2, 0).
+            const st = this.data.stretch;
+            const lenScale = st ? Math.abs(st.lengthScale) : 2;
+            const velScale = st ? st.velocityScale : 0;
             const vx = p.vx + (this.volWorld?.x ?? 0);
             const vyScreen = -(p.vy + (this.volWorld?.y ?? 0)); // screen Y is -p.y
             const spd = Math.hypot(vx, vyScreen);
-            if (spd > 1) {
-                const len = sz + spd * STRETCH_LEN_PER_SPEED;
+            const len = lenScale * sz + velScale * spd;
+            if (spd > 1 && len > sz) {
                 s.rotation = Math.atan2(vyScreen, vx) - Math.PI / 2; // sprite local +Y → velocity
                 s.scale.set(base, (len / sz) * base);
             } else {

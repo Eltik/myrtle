@@ -468,6 +468,25 @@ pub(crate) fn collect_dynchar_particles(
         let render_mode =
             render_mode_name(renderer.and_then(|r| i(r, "m_RenderMode")).unwrap_or(0));
 
+        // Stretched-billboard geometry from the renderer (Unity `ParticleSystemRenderer`): the
+        // quad is elongated along the particle's screen velocity by `lengthScale·size +
+        // velocityScale·speed` (world units); `cameraVelocityScale` adds camera-relative velocity.
+        // The frontend previously invented a single speed factor (0.05) with no size term, which
+        // over-stretched fast, tiny specks (Virtuosa's `rain_01`, Mlynar's `fire_sdx`) into long
+        // foreground streaks the game never shows. Export the authored scales so the stretch length
+        // is faithful per system; absent → Unity's defaults (lengthScale 2, velocity scales 0).
+        let (stretch_len_scale, stretch_vel_scale, stretch_cam_vel_scale) = if render_mode
+            == "stretch"
+        {
+            (
+                renderer.and_then(|r| f(r, "m_LengthScale")).unwrap_or(2.0),
+                renderer.and_then(|r| f(r, "m_VelocityScale")).unwrap_or(0.0),
+                renderer.and_then(|r| f(r, "m_CameraVelocityScale")).unwrap_or(0.0),
+            )
+        } else {
+            (0.0, 0.0, 0.0)
+        };
+
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
         let (tex_val, alpha_val, tex_pid, blend, main_st) =
             resolve_renderer_texture(all_objects, renderer);
@@ -588,6 +607,14 @@ pub(crate) fn collect_dynchar_particles(
         // Cinematic start delay (omitted when 0 to keep always-on scenes lean).
         if delay > 0.0 {
             sys["delay"] = json!(delay);
+        }
+        // Faithful stretched-billboard elongation scales (see above) — only for stretch systems.
+        if render_mode == "stretch" {
+            sys["stretch"] = json!({
+                "lengthScale": stretch_len_scale,
+                "velocityScale": stretch_vel_scale,
+                "cameraVelocityScale": stretch_cam_vel_scale,
+            });
         }
         // Faithful cone emission direction for camera-facing (tilted) emitters (see above).
         if let Some(ed) = sys_emit_dir {

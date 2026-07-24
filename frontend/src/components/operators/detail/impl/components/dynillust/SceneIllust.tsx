@@ -7,7 +7,7 @@ import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene } from "./hdrTonemap";
 import { type FindBone, type ILoadedParticles, loadParticles } from "./particles";
-import { applySceneLayerColor, applySceneLayerSt, applySceneLayerUvScroll, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+import { applySceneLayerColor, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
@@ -457,6 +457,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         root: PIXI.Container;
         ortho: [number, number][] | null;
         camCenter: [number, number, number][];
+        /** Segment end-indices in `camCenter` that are HARD CUTS (Skadi the Corrupting Heart's
+         *  rig repositions) — the sampler STEPS through these instead of interpolating, so an
+         *  instant reposition isn't smeared into a visible pan. Empty for cut-free curves. */
+        camCuts: Set<number>;
         frameSize: number;
         /** Steady framing (see the tick): for skins with NO authored transform beat (Mlynar), the
          *  baked rig-centre curve swings the hero into the right third (its X excursion) and the
@@ -625,7 +629,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const { width: sw, height: sh } = appRef.current.screen;
                 // Camera CENTRE: sample the accumulated gamedata camera track at the clip time. Its
                 // keyframe timing IS the game's dolly/pan — replay it directly.
-                const c = sampleCurveXY(ef.camCenter, tt) ?? [0, 0];
+                const c = sampleCurveXY(ef.camCenter, tt, ef.camCuts) ?? [0, 0];
                 // Camera SIZE: the gamedata frame extent (`_adjustes` view px) × the ortho-size ratio,
                 // so the character grows into the frame exactly as the authored zoom dictates.
                 const size = ef.frameSize * orthoZoomRatio(ef.ortho, tt);
@@ -1519,6 +1523,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 root: built.root,
                                 ortho: built.entranceOrthoCurve ?? null,
                                 camCenter: built.entranceCamCenterCurve,
+                                camCuts: detectCurveCuts(built.entranceCamCenterCurve, built.entranceFrameSize),
                                 frameSize: built.entranceFrameSize,
                                 centerBlend,
                                 startCenter: sampleCurveXY(built.entranceCamCenterCurve, 0) ?? [0, 0],

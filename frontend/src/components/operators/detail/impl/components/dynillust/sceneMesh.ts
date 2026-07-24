@@ -673,15 +673,63 @@ export function orthoZoomRatio(curve: [number, number][] | null | undefined, t: 
     return size / base;
 }
 
+/** How many times the curve's own MEDIAN segment speed a single segment must exceed to read
+ *  as a HARD CUT rather than a smooth dolly — a scale-free outlier factor, applied identically
+ *  to every skin (never a per-skin value). Skadi the Corrupting Heart's rig repositions spike to
+ *  ~430× the median; Virtuosa's fastest genuine pan stays ~1×, so the two never overlap. */
+const CAM_CUT_SPEED_FACTOR = 8;
+
+/** Detect HARD-CUT segments in an entrance camera-centre curve. The `_Start` camera track is
+ *  baked per-frame (~30 fps); a hard cut (Skadi the Corrupting Heart's rig snaps to a new
+ *  position at t≈3.67 / 11.0 / 14.7 s) shows up as a single baked frame whose positional jump is
+ *  orders of magnitude larger than the surrounding smooth motion. Linearly interpolating across
+ *  such a segment at the viewer's (higher) render rate smears that instant cut into a visible
+ *  fast pan — the "camera doesn't move immediately, it jolts" artifact. Returning the segment's
+ *  END-index lets {@link sampleCurveXY} snap instead of lerp there.
+ *
+ *  Detection is fully data-derived: a segment qualifies when its per-second speed is at least
+ *  {@link CAM_CUT_SPEED_FACTOR}× the curve's OWN median segment speed AND its positional jump
+ *  exceeds a tenth of the frame extent (`frameSize`, so the floor scales with the shot, not an
+ *  absolute pixel constant). A smooth-but-fast pan (Virtuosa/cello: high speed, tiny per-frame
+ *  delta) clears neither test, so cut-free curves return an empty set and the sampler stays
+ *  byte-identical. */
+export function detectCurveCuts(curve: [number, number, number][] | null | undefined, frameSize: number | null | undefined): Set<number> {
+    const cuts = new Set<number>();
+    if (!curve || curve.length < 3 || !frameSize || frameSize <= 0) return cuts;
+    const seg: { i: number; speed: number; delta: number }[] = [];
+    for (let i = 1; i < curve.length; i++) {
+        const [t0, x0, y0] = curve[i - 1];
+        const [t1, x1, y1] = curve[i];
+        const dt = t1 - t0;
+        if (dt <= 0) continue;
+        const delta = Math.hypot(x1 - x0, y1 - y0);
+        seg.push({ i, speed: delta / dt, delta });
+    }
+    if (!seg.length) return cuts;
+    const sorted = seg.map((s) => s.speed).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] || 0;
+    const deltaFloor = 0.1 * frameSize;
+    for (const s of seg) {
+        if (s.speed >= CAM_CUT_SPEED_FACTOR * median && s.delta > deltaFloor) cuts.add(s.i);
+    }
+    return cuts;
+}
+
 /** Linear-sample a `[t, x, y]` keyframe curve at time `t`, clamped to the endpoints. Returns
- *  `[x, y]`, or `null` for an absent/empty curve. Used for the entrance camera frame-centre curve. */
-export function sampleCurveXY(curve: [number, number, number][] | null | undefined, t: number): [number, number] | null {
+ *  `[x, y]`, or `null` for an absent/empty curve. Used for the entrance camera frame-centre curve.
+ *  `cuts` (from {@link detectCurveCuts}) marks hard-cut segments the game snaps through: inside
+ *  one, STEP to the nearer keyframe instead of interpolating, so an instant reposition is never
+ *  smeared into a pan. Omit `cuts` (or pass an empty set) for pure linear behaviour. */
+export function sampleCurveXY(curve: [number, number, number][] | null | undefined, t: number, cuts?: Set<number>): [number, number] | null {
     if (!curve || curve.length === 0) return null;
     if (t <= curve[0][0]) return [curve[0][1], curve[0][2]];
     for (let i = 1; i < curve.length; i++) {
         if (t <= curve[i][0]) {
             const [t0, x0, y0] = curve[i - 1];
             const [t1, x1, y1] = curve[i];
+            // Hard cut: snap to the nearer endpoint (step at the segment midpoint — within half a
+            // baked frame of the true cut, so imperceptible) rather than lerp across the jump.
+            if (cuts?.has(i)) return t - t0 <= t1 - t ? [x0, y0] : [x1, y1];
             const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
             return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f];
         }
