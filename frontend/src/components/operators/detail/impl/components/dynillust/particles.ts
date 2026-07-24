@@ -73,6 +73,11 @@ export interface IParticleSystemData {
      *  rate-over-TIME 0). Applied on the emitter container's per-frame movement. */
     rateOverDistance?: MMScalar | null;
     shape?: { type: string; radius?: number; angleDeg?: number; arcDeg?: number; box?: [number, number]; posOffset?: [number, number]; rotDeg?: number };
+    /** Faithful screen-space (Y-up) cone emission direction for camera-facing (tilted)
+     *  emitters whose flat `rot` is degenerate. Exported ONLY for such cones (Skadi2's
+     *  `xiaoyu`/`guang` red streaks); when present the cone aims along it instead of the
+     *  `rot`-derived "local +Y" direction. Absent → byte-identical legacy path. */
+    emitDir?: [number, number] | null;
     colorOverLife?: MMColor | null;
     sizeOverLife?: ICurvePoint[] | null;
     velocityOverLife?: { x: number; y: number; space?: string } | null;
@@ -738,7 +743,16 @@ class Emitter {
         const ly = oy + posOff[1];
         const wx = d.pos[0] + lx * cos - ly * sin;
         const wy = d.pos[1] + lx * sin + ly * cos;
-        const wDir = dirAng + rotDeg * DEG;
+        // Cone direction: legacy path rotates the local emission angle by the emitter's flat
+        // `rot`. For camera-facing (tilted) cone emitters that `rot` is degenerate noise, so
+        // the exporter supplies a faithful screen-space `emitDir`; aim the cone along it (with
+        // the authored `angleDeg` spread), bypassing `rot`. Position offset above still uses
+        // `rot`. Systems without `emitDir` keep the exact legacy direction.
+        let wDir = dirAng + rotDeg * DEG;
+        if (d.emitDir) {
+            const spread = (shape?.angleDeg ?? 0) * DEG;
+            wDir = Math.atan2(d.emitDir[1], d.emitDir[0]) + (Math.random() - 0.5) * 2 * spread;
+        }
 
         // Edge-clip fix: a world-space system's static spawn position can be baked for an
         // older, narrower framing calibration and now fall outside the live authored display

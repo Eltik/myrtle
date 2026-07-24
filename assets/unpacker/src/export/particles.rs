@@ -538,6 +538,39 @@ pub(crate) fn collect_dynchar_particles(
                 + f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1])));
         let em_inv = wsx * inv_scale;
 
+        // Emission direction for CONE-family emitters whose local +X axis points along the
+        // camera (out of the screen plane). `rot` (= `matrix_z_deg`, the screen angle of that
+        // +X axis) is then numerically unstable noise, so the frontend's "local +Y rotated by
+        // rot" cone direction fires these streaks in an arbitrary direction (e.g. Skadi2's
+        // `xiaoyu`/`xiaoyu_r_lan` red streaks — authored to sweep INTO the entrance frame — get
+        // aimed off-screen). Unity's cone emits along the emitter's local +Z; project that
+        // through the FULL world matrix into the screen (Y-up px) frame and export it as
+        // `emitDir` so the frontend can aim the cone faithfully. Gated to genuinely tilted
+        // cones with a well-defined in-screen +Z: in-plane emitters (every currently-correct
+        // skin's cones, where `rot` is meaningful) emit NO field and keep the byte-identical
+        // `rot`-based path. Data-derived, no per-skin constant.
+        let mut sys_emit_dir: Option<[f64; 2]> = None;
+        let shape_type_int = ps.get("ShapeModule").and_then(|s| i(s, "type")).unwrap_or(-1);
+        if matches!(shape_type_int, 4 | 7 | 8 | 9) {
+            let ez = world.point([0.0, 0.0, 1.0]);
+            let axis = |p: [f32; 3]| {
+                [
+                    f64::from(p[0] - origin[0]),
+                    f64::from(p[1] - origin[1]),
+                    f64::from(p[2] - origin[2]),
+                ]
+            };
+            let xv = axis(ex);
+            let zv = axis(ez);
+            let x_len = xv[0].hypot(xv[1]).hypot(xv[2]);
+            let x_scr = xv[0].hypot(xv[1]);
+            let z_len = zv[0].hypot(zv[1]).hypot(zv[2]);
+            let z_scr = zv[0].hypot(zv[1]);
+            if x_len > 1e-6 && z_len > 1e-6 && x_scr / x_len < 0.5 && z_scr / z_len > 0.7 {
+                sys_emit_dir = Some([zv[0] / z_scr, zv[1] / z_scr]);
+            }
+        }
+
         // ---- Build the reduced system JSON ------------------------------
         let mut sys = json!({
             "name": ps.get("m_Name").and_then(Value::as_str).unwrap_or(""),
@@ -555,6 +588,10 @@ pub(crate) fn collect_dynchar_particles(
         // Cinematic start delay (omitted when 0 to keep always-on scenes lean).
         if delay > 0.0 {
             sys["delay"] = json!(delay);
+        }
+        // Faithful cone emission direction for camera-facing (tilted) emitters (see above).
+        if let Some(ed) = sys_emit_dir {
+            sys["emitDir"] = json!(ed);
         }
 
         // spine-unity `BoneFollower` in the ancestry: the followed rig's serialized
