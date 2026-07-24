@@ -401,12 +401,18 @@ export type RestBone = ReadonlyMap<string, PIXI.Matrix>;
  *  `D = identity`, so the container is untouched and the flame sits exactly where
  *  its baked `pos` placed it.
  *
- *  Follow-bone selection: only emitters whose exporter `boneChain` names a real
- *  spine bone are followed (un-parented world-fixed emitters — bg sparks, magic
- *  circles — name none and stay put). Among those, we track the bone PHYSICALLY
- *  NEAREST the emitter's spawn `pos`, i.e. the bone driving the visual the flame
- *  sits on — the named `Sword_Fx` is only an FX-anchor that may not rotate with the
- *  rendered blade. */
+ *  Follow-bone selection: emitters whose exporter `boneChain` names a real spine
+ *  bone are followed; additionally, a `simulationSpace:"local"` system (Unity's
+ *  convention for moving with its parent transform) gets the same nearest-bone
+ *  search even with no literal chain-name match. Mlynar's sword-tip sparkle burst
+ *  (`weapon_star_*`) is exactly this: authored local-space, generic FX-rig chain
+ *  names, no `followBone`; without it, the emitter stays frozen at its baked
+ *  rest-pose position while the sword swings and camera dollies, drifting hundreds
+ *  of px off-canvas by the time it fires. Un-parented world-fixed emitters — bg
+ *  sparks, magic circles — use `"world"`, name none, and stay put. Among followed
+ *  emitters, we track the bone PHYSICALLY NEAREST the emitter's spawn `pos`, i.e.
+ *  the bone driving the visual the flame sits on — the named `Sword_Fx` is only an
+ *  FX-anchor that may not rotate with the rendered blade. */
 /** Linear-sample a `{t,x,y}` position curve into `[x,y]` at time `t`. */
 function samplePosCurve(curve: { t: number; x: number; y: number }[], t: number): [number, number] {
     if (curve.length === 0) return [0, 0];
@@ -443,12 +449,25 @@ function haloMatrix(d: IParticleSystemData, ct: number): PIXI.Matrix {
     return new PIXI.Matrix(m, 0, 0, m, cx * (1 - m) + dx, -cy * (1 - m) - dy);
 }
 
-function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number): void {
+function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], simSpace: string | undefined, find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number): void {
     if (!st.resolved) {
         st.resolved = true;
         st.boneName = null;
         st.ref = null;
-        if (find && restBone && chain && chain.some((n) => restBone.has(n))) {
+        if (follow && find && restBone?.has(follow.bone)) {
+            // Explicit `BoneFollower` attachment (entrance effect rigs): the chain
+            // names no real bone — the rig rides the follower's named bone, REBASED
+            // there (the baked `pos` is only an editor pose). Doctor the reference
+            // translation so the delta `T = M_now.t − ref.t` lands the emitter at
+            // `bone_now + followOffset` exactly: `ref.t := pos_ydown − off_ydown`.
+            const m = (restBone.get(follow.bone) as PIXI.Matrix).clone();
+            const off = follow.off ?? [0, 0];
+            m.tx = pos[0] - off[0];
+            m.ty = -pos[1] + off[1]; // Y-up export offsets → Y-down container space
+            st.boneName = follow.bone;
+            st.ref = m;
+            st.transOnly = !follow.rot;
+        } else if (find && restBone && (chain?.some((n) => restBone.has(n)) || simSpace === "local")) {
             let best: string | null = null;
             let bestDist = Number.POSITIVE_INFINITY;
             for (const [name, m] of restBone) {
@@ -464,19 +483,6 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
                 st.boneName = best;
                 st.ref = (restBone.get(best) as PIXI.Matrix).clone();
             }
-        } else if (follow && find && restBone?.has(follow.bone)) {
-            // Explicit `BoneFollower` attachment (entrance effect rigs): the chain
-            // names no real bone — the rig rides the follower's named bone, REBASED
-            // there (the baked `pos` is only an editor pose). Doctor the reference
-            // translation so the delta `T = M_now.t − ref.t` lands the emitter at
-            // `bone_now + followOffset` exactly: `ref.t := pos_ydown − off_ydown`.
-            const m = (restBone.get(follow.bone) as PIXI.Matrix).clone();
-            const off = follow.off ?? [0, 0];
-            m.tx = pos[0] - off[0];
-            m.ty = -pos[1] + off[1]; // Y-up export offsets → Y-down container space
-            st.boneName = follow.bone;
-            st.ref = m;
-            st.transOnly = !follow.rot;
         }
     }
     // Base matrix `B`: the bone-follow delta (identity when the emitter follows no bone).
@@ -516,6 +522,7 @@ class Emitter {
     private time = 0;
     private emitAcc = 0;
     private firedBursts = new Set<number>();
+    private lastCycleT = -1;
     private readonly rate: number;
 
     private readonly trailTexture: PIXI.Texture | null;
@@ -751,7 +758,23 @@ class Emitter {
             const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
             const sx = wx;
             const sy = -wy;
-            if (sx < box.x - margin || sx > box.x + box.width + margin || sy < box.y - margin || sy > box.y + box.height + margin) {
+            // Trajectory-aware: test the whole spawn→death SEGMENT against the box, not just
+            // the spawn point. A stationary particle (speed 0) degenerates to the exact same
+            // point test as before (Mlynar's static rain discs: unchanged, still culled at the
+            // widened edge). A particle that DRIFTS toward the box via its initial velocity
+            // (Skadi2's fish-shoal/thread/starlight/weapon-glint systems, authored off-crop on
+            // purpose and meant to swim/drift into view) now correctly survives if its
+            // trajectory ever crosses into the box, even though its spawn point starts outside
+            // it. Screen-space velocity: `wx`/`wy` grow by `(vx,vy)=(cos(wDir),sin(wDir))·speed`
+            // per second in world Y-up space (see the particle push below); screen Y is
+            // negated, so `sy` moves by `-vy` per second.
+            const segEndX = sx + Math.cos(wDir) * speed * life;
+            const segEndY = sy - Math.sin(wDir) * speed * life;
+            const segMinX = Math.min(sx, segEndX);
+            const segMaxX = Math.max(sx, segEndX);
+            const segMinY = Math.min(sy, segEndY);
+            const segMaxY = Math.max(sy, segEndY);
+            if (segMaxX < box.x - margin || segMinX > box.x + box.width + margin || segMaxY < box.y - margin || segMinY > box.y + box.height + margin) {
                 return;
             }
         }
@@ -802,7 +825,7 @@ class Emitter {
         if (this.time < 0) return;
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
 
         // Emission (rate + bursts), only while the system is "playing".
         const playing = d.looping || this.time <= d.duration;
@@ -820,6 +843,10 @@ class Emitter {
                 this.spawn();
             }
             const cycleT = d.duration > 0 ? this.time % d.duration : this.time;
+            // A magnitude check false-fires immediately after delayed activation;
+            // only a genuine modulo wrap starts a new burst cycle.
+            if (d.duration > 0 && cycleT < this.lastCycleT) this.firedBursts.clear();
+            this.lastCycleT = cycleT;
             for (const burst of d.emission?.bursts ?? []) {
                 const key = Math.floor(this.time / (d.duration || 1)) * 1000 + burst.t;
                 if (cycleT >= burst.t && !this.firedBursts.has(key)) {
@@ -827,7 +854,6 @@ class Emitter {
                     for (let i = 0; i < Math.min(burst.count, PER_SYSTEM_CAP); i++) this.spawn();
                 }
             }
-            if (d.duration > 0 && cycleT < 0.05) this.firedBursts.clear();
         }
 
         // gravity is exported as gravityModifier×100; true accel = value×9.81 px/s², downward (−Y).
@@ -1158,6 +1184,7 @@ class RamEmitter {
     private time = 0;
     private emitAcc = 0;
     private firedBursts = new Set<number>();
+    private lastCycleT = -1;
     private readonly rate: number;
 
     private readonly blend: "additive" | "normal";
@@ -1319,13 +1346,14 @@ class RamEmitter {
         const speed = sampleScalar(d.startSpeed, Math.random(), nt);
         const size = sampleScalar(d.startSize, Math.random(), nt);
         const wDir = dirAng + rotDeg * DEG;
+        const life = Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt));
         // Edge-clip fix: a world-space system's static spawn position can be baked for an
         // older, narrower framing calibration and now fall outside the live authored display
         // box (the settled idle box, or — during the entrance — the camera's live zoom/pan
         // box) for the whole shot, rendering as particles clipped hard at the canvas edge.
-        // Reject spawns whose position is ENTIRELY outside that box (small box-relative
-        // margin so streaks don't visibly pop at the boundary); partial/on-screen spawns are
-        // untouched — ordinary canvas clipping handles those.
+        // Reject spawns whose full trajectories are ENTIRELY outside that box (small
+        // box-relative margin so streaks don't visibly pop at the boundary); particles that
+        // drift into view are untouched — ordinary canvas clipping handles those.
         // GATE on `!this.boneAnchor.boneName` (resolved by `driftWithBone`, called earlier
         // this same `update()`), not just `simulationSpace`: a system can be authored
         // `simulationSpace:"world"` (particles drift independently once spawned) while its
@@ -1348,7 +1376,17 @@ class RamEmitter {
             const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
             const sx = wx;
             const sy = -wy;
-            if (sx < box.x - margin || sx > box.x + box.width + margin || sy < box.y - margin || sy > box.y + box.height + margin) {
+            // See the Emitter.spawn() twin of this check: test the whole spawn→death segment,
+            // so stationary particles retain the previous point-cull behavior while particles
+            // that drift toward the box survive if their trajectory crosses into it. Screen Y
+            // is negated from world Y-up, so `sy` moves by `-sin(wDir) * speed` per second.
+            const segEndX = sx + Math.cos(wDir) * speed * life;
+            const segEndY = sy - Math.sin(wDir) * speed * life;
+            const segMinX = Math.min(sx, segEndX);
+            const segMaxX = Math.max(sx, segEndX);
+            const segMinY = Math.min(sy, segEndY);
+            const segMaxY = Math.max(sy, segEndY);
+            if (segMaxX < box.x - margin || segMinX > box.x + box.width + margin || segMaxY < box.y - margin || segMinY > box.y + box.height + margin) {
                 return;
             }
         }
@@ -1358,7 +1396,7 @@ class RamEmitter {
             vx: Math.cos(wDir) * speed,
             vy: Math.sin(wDir) * speed,
             age: 0,
-            life: Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt)),
+            life,
             size,
             rot: sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt),
             rotVel: d.rotOverLifeDegPerSec ?? 0,
@@ -1375,7 +1413,7 @@ class RamEmitter {
         if (this.time < 0) return;
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
 
         const playing = d.looping || this.time <= d.duration;
         // `rateOverDistance`: trail emission per px of emitter travel (the container
@@ -1392,6 +1430,10 @@ class RamEmitter {
                 this.spawn();
             }
             const cycleT = d.duration > 0 ? this.time % d.duration : this.time;
+            // A magnitude check false-fires immediately after delayed activation;
+            // only a genuine modulo wrap starts a new burst cycle.
+            if (d.duration > 0 && cycleT < this.lastCycleT) this.firedBursts.clear();
+            this.lastCycleT = cycleT;
             for (const burst of d.emission?.bursts ?? []) {
                 const key = Math.floor(this.time / (d.duration || 1)) * 1000 + burst.t;
                 if (cycleT >= burst.t && !this.firedBursts.has(key)) {
@@ -1399,7 +1441,6 @@ class RamEmitter {
                     for (let i = 0; i < Math.min(burst.count, this.cap); i++) this.spawn();
                 }
             }
-            if (d.duration > 0 && cycleT < 0.05) this.firedBursts.clear();
         }
 
         const grav = d.gravity ? sampleScalar(d.gravity, 0.5, 0) * 9.81 : 0;

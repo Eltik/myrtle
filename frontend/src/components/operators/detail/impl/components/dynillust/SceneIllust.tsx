@@ -456,6 +456,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
          *  uncapped (the wide→tight idle handoff hides behind the white flash — same settle centre).
          *  Null = pure rig camera (cello, skadi2). */
         centerBlend: { cx0: number; cy0: number; rigEndY: number } | null;
+        /** The live rig camera's `camCenter` sample at track-time 0, captured once at build
+         *  time — the reference point for `lastLiveCenter` below, so `swapToMainIdle` can
+         *  compute how far the camera panned by hand-off (see Sf handoff-continuity fix in
+         *  `openStandingIdle`). */
+        startCenter: [number, number];
+        /** The most recently sampled live camera centre (refreshed every tick, same value
+         *  used to build `liveDisplayBox`). Read by `swapToMainIdle` at the exact hand-off
+         *  instant — BEFORE this ref is nulled — so the post-handoff dolly can start from
+         *  where the entrance camera actually ended rather than a value re-derived
+         *  independently from the idle skeleton's own static bounds. Null until the first
+         *  tick runs. */
+        lastLiveCenter: [number, number] | null;
         sceneLayers: PIXI.Container[];
         /** Deferred entrance end (see IComposite.entranceSceneEnd): fire `fireEnd`
          *  when the track clock reaches `endAt`. Null when the spine's own
@@ -631,6 +643,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     cy = cb.cy0 + (c[1] - cb.rigEndY);
                 }
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
+                ef.lastLiveCenter = [cx, cy];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
                 // Per-layer `m_IsActive` window from the `_Start` clips (gamedata): a layer with
                 // `activeFrom`/`activeUntil` renders only while `activeFrom <= t < activeUntil`.
@@ -1279,16 +1292,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // in-game viewer frames the L2D over a lit light-grey backdrop, not black. Added
                 // here (after the scene has loaded) so it appears WITH the illustration rather than
                 // covering the static load placeholder, and behind every scene layer so they
-                // composite over it at the game's brightness. SKIPPED when the scene owns its own
-                // DARK painted backdrop (Virtuosa's mirror-world): that backdrop IS the environment,
-                // and the grey gradient would bleed through the frame's un-covered edges and wash the
-                // deep colour to grey (see IComposite.hasDarkBackdrop).
-                if (!main.hasDarkBackdrop) {
-                    const envBg = new PIXI.Sprite(createEnvironmentBgTexture());
-                    resizeEnvironmentBg(envBg, width, height);
-                    envBgRef.current = envBg;
-                    app.stage.addChildAt(envBg, 0);
-                }
+                // composite over it at the game's brightness. ALWAYS created now — even a scene that
+                // owns its own dark painted backdrop (Virtuosa's mirror-world, `hasDarkBackdrop`) has
+                // real coverage gaps at its widest camera framing (the opening pan, the post-handoff
+                // wide settle) where this is the ONLY fallback fill; painter's-algorithm ordering
+                // (stage index 0, strictly behind every opaque layer) means it can never show through
+                // actual backdrop coverage, only genuine gaps. The over-bright wash this gate used to
+                // prevent is now capped at its SOURCE instead (see `temperLargeAdditive` in
+                // sceneMesh's `buildLayerMesh`) rather than by removing the fallback outright.
+                const envBg = new PIXI.Sprite(createEnvironmentBgTexture());
+                resizeEnvironmentBg(envBg, width, height);
+                envBgRef.current = envBg;
+                app.stage.addChildAt(envBg, 0);
                 // HDR bloom pass: render the scene into a half-float target so additive
                 // light/flame stacks don't clip to white, then tonemap to screen. Created
                 // once and re-pointed at whichever composite is live. Spine-only art never
@@ -1335,7 +1350,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
 
                 // Open on the standing idle at the settled frame, then dolly-out. Used both as the
                 // fallback (no `_Start`) and as the hand-off target after the `_Start` cinematic.
-                const openStandingIdle = (opts?: { fromEntrance?: boolean }) => {
+                const openStandingIdle = (opts?: { fromEntrance?: boolean; handoffPanDelta?: [number, number] | null }) => {
                     if (aborted() || !appRef.current || !gameFrame) return;
                     const { width: sw, height: sh } = appRef.current.screen;
                     // Arriving from a `_Start` cinematic WITHOUT an authored pull-out window
@@ -1350,7 +1365,31 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         boundsRef.current = openTight;
                         return;
                     }
-                    const openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
+                    let openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
+                    // Hand-off continuity (Sf fix): `inflateBounds` above is a pure symmetric scale
+                    // around `gameFrame`'s OWN static centre — it has no notion of the entrance rig
+                    // camera's actual PAN over the shot. Re-base the box by the live camera's real
+                    // pan delta (hand-off centre minus its own t=0 centre, curve-space units added
+                    // directly onto `gameFrame`'s centre — the same cross-space-additive convention
+                    // `centerBlend` already uses in the tick above), so the dolly starts exactly
+                    // where the entrance camera actually ended instead of snapping to an
+                    // independently-recomputed box. Zero pan (or no captured delta — no `_Start`,
+                    // or the no-pull-out branch above) leaves this byte-identical to before.
+                    // SANITY BOUND: this cross-space add is only meaningful for a genuine "same shot,
+                    // slightly drifted" case (Skadi2: ~370-unit lateral drift). A skin whose rig camera
+                    // travels THROUGH the scene in depth (Virtuosa's shaft plunge: ~3400 authored units,
+                    // ~9× her own entrance frame size) isn't drifting off a shared reference — applying
+                    // the raw delta there blows the box off-frame entirely (verified: produced a
+                    // black/void hand-off). Gate on the delta being smaller than the target frame's own
+                    // extent — a data-derived bound (not a per-skin constant), true for every drift-style
+                    // pan and false for every plunge-style one measured so far.
+                    if (openFrom && opts?.handoffPanDelta) {
+                        const [dx, dy] = opts.handoffPanDelta;
+                        const maxDelta = Math.max(gameFrame.width, gameFrame.height);
+                        if (Math.abs(dx) < maxDelta && Math.abs(dy) < maxDelta) {
+                            openFrom = { ...openFrom, x: openFrom.x + dx, y: openFrom.y + dy };
+                        }
+                    }
                     const dur = entrancePullOut ? entrancePullOut.dur : 2.0;
                     if (openFrom) {
                         layoutSpine(main.root, sw, sh, openFrom, fitRef.current);
@@ -1372,10 +1411,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const swapToMainIdle = () => {
                     if (aborted()) return;
                     const ent = composites.find((c) => c !== main);
+                    // Capture the entrance camera's actual pan (its live centre at hand-off minus
+                    // its own t=0 centre) BEFORE `entranceFollowRef` is nulled below — this is what
+                    // lets `openStandingIdle` start the post-handoff dolly continuously from where
+                    // the eye actually was, instead of an independently-recomputed box (see the Sf
+                    // handoff-continuity fix there).
+                    const ef = entranceFollowRef.current;
+                    const handoffPanDelta: [number, number] | null = ef?.lastLiveCenter ? [ef.lastLiveCenter[0] - ef.startCenter[0], ef.lastLiveCenter[1] - ef.startCenter[1]] : null;
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
                     activate(main, { skipStart: true }); // straight to standing idle (no second intro beat)
-                    openStandingIdle({ fromEntrance: true });
+                    openStandingIdle({ fromEntrance: true, handoffPanDelta });
                     if (ent && hdr) {
                         // Crossfade: render BOTH roots in one wrapper (HDR renders it), main behind
                         // fading in, the dissolved entrance on top fading out — the character reforms
@@ -1453,6 +1499,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 camCenter: built.entranceCamCenterCurve,
                                 frameSize: built.entranceFrameSize,
                                 centerBlend,
+                                startCenter: sampleCurveXY(built.entranceCamCenterCurve, 0) ?? [0, 0],
+                                lastLiveCenter: null,
                                 sceneLayers: sl,
                                 endAt: built.entranceSceneEnd,
                                 fireEnd: built.entranceSceneEnd != null ? built.requestEntranceEnd : null,

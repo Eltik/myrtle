@@ -854,9 +854,23 @@ fn collect_dynchar_bg_quads(
         // prefab flag at runtime and the window gates visibility instead. Covers
         // both delayed reveals (Mlynar's white transition, activeFrom 13.0) and
         // shown-from-0-then-hidden overlays (activeUntil only).
-        if !go_effectively_active(all_objects, go_pid, &go_to_transform, &idle_pose.active)
-            && window == (None, None)
-        {
+        // A GO whose `_Start` clip reveals it via an ANIMATED MATERIAL COLOR/ALPHA
+        // curve (rather than an `m_IsActive` toggle) has no `window`, so the static
+        // walk + window check alone would drop it (e.g. Mlynar's warm ring `huan`,
+        // whose `_MainColor` alpha ramps 0→0.43→0 with NO `m_IsActive` binding).
+        // Admit it here when it carries an animated alpha channel that STARTS HIDDEN
+        // (alpha ≈ 0 at its first sample) — the same `color_channels` that feed
+        // `layer_color_curve` below. Layers admitted ONLY by this exception are
+        // re-validated after `color_curve` resolves (see `admitted_by_reveal` below),
+        // so a hash-collision channel that doesn't match this material can't resurrect
+        // an ungated always-on layer.
+        let has_color_reveal = color_channels.get(&go_pid).is_some_and(|chs| {
+            chs.iter()
+                .any(|c| c.channel == 3 && c.curve.first().is_some_and(|&(_, v)| v.abs() < 0.02))
+        });
+        let eff_active =
+            go_effectively_active(all_objects, go_pid, &go_to_transform, &idle_pose.active);
+        if !eff_active && window == (None, None) && !has_color_reveal {
             skipped_inactive += 1;
             continue;
         }
@@ -887,6 +901,10 @@ fn collect_dynchar_bg_quads(
             Option<[f32; 2]>,
         );
         let mut resolved: Option<ResolvedQuadMaterial> = None;
+        // Whether the chosen material's `_MainTex` came from the ungated external
+        // (`_meshExtResolved`) path — used below to re-validate a color-reveal overlay
+        // admitted past the meshExt gate.
+        let mut resolved_meshext = false;
         for mat_ref in materials {
             let Some(mat_pid) = get_path_id(mat_ref).filter(|&p| p != 0) else {
                 continue;
@@ -899,7 +917,14 @@ fn collect_dynchar_bg_quads(
             // extractor) renders only on entrance-windowed layers: the cinematic
             // deliberately sequences those (Mlynar's white flash), while an
             // always-on frozen fx quad would pollute the idle scene.
-            if mat.get("_meshExtResolved").is_some() && window == (None, None) {
+            // A color-reveal overlay whose art lives in a shared fx bundle resolves
+            // its `_MainTex` via the ungated external path (`_meshExtResolved`), same
+            // as the windowed flash plane. Keep it too (gated by its reveal curve),
+            // otherwise a warm-ring/god-ray reveal painted on an external texture is
+            // lost. Non-reveal meshExt quads without a window stay dropped (they'd be
+            // always-on frozen fx polluting the idle scene).
+            if mat.get("_meshExtResolved").is_some() && window == (None, None) && !has_color_reveal
+            {
                 continue;
             }
             // _MainTex slot: texture + its Scale/Offset (ST). Unresolvable
@@ -996,6 +1021,7 @@ fn collect_dynchar_bg_quads(
                     None
                 }
             };
+            resolved_meshext = mat.get("_meshExtResolved").is_some();
             resolved = Some((
                 tex_val,
                 alpha_val,
@@ -1046,6 +1072,27 @@ fn collect_dynchar_bg_quads(
                 [st[0] as f32, st[1] as f32, st[2] as f32, st[3] as f32],
             )
         });
+
+        // A GO that reached here ONLY because of the color-reveal exception — i.e. it
+        // has no `m_IsActive` window and would otherwise have been dropped, either as
+        // inactive (`!eff_active`) or as an unwindowed external-texture quad
+        // (`resolved_meshext`) — must actually export a reveal `color_curve` that STARTS
+        // HIDDEN (alpha ≈ 0 at t0). Otherwise a hash-collision alpha channel that didn't
+        // match this material (yielding no `color_curve`) would render as an ungated
+        // always-on layer. Layers kept for any OTHER reason (a real window, or a normal
+        // in-bundle statically-active layer) are untouched — this only re-checks the two
+        // paths the color-reveal exception newly opened.
+        let admitted_by_reveal =
+            has_color_reveal && window == (None, None) && (!eff_active || resolved_meshext);
+        if admitted_by_reveal {
+            let reveals = color_curve
+                .as_ref()
+                .is_some_and(|c| c.first().is_some_and(|&(_, rgba)| rgba[3].abs() < 0.02));
+            if !reveals {
+                skipped_inactive += 1;
+                continue;
+            }
+        }
 
         // Geometry from the GameObject's MeshFilter. An in-bundle Mesh (class
         // 43) is parsed; a null (`m_Mesh == 0`) or external/built-in reference

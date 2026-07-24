@@ -513,7 +513,7 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
  * Build a Pixi mesh for one layer. Y is flipped (authored Y-up → Pixi Y-down)
  * and V is flipped (Unity → Pixi UV), matching the exporter's coordinate note.
  */
-function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = false, fullGain = false): PIXI.Mesh | null {
+function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = false, fullGain = false, temperLargeAdditive = false): PIXI.Mesh | null {
     const vertexCount = layer.pos.length / 2;
     if (vertexCount < 3 || layer.idx.length < 3) return null;
     const additive = layer.additive || forceAdditive;
@@ -537,7 +537,15 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = fals
     // `EFFECT_SCENE_GAIN` tames small caustic overlays (they'd otherwise over-cover);
     // but an additive LIGHT-GLOW sheet (fullGain) must contribute its full energy — the
     // HDR float target + tonemap handle the peaks — else it can't lift the backdrop.
-    const gain = isEffect && !fullGain ? EFFECT_SCENE_GAIN : 1;
+    // A LARGE (non-effect) additive layer was previously always full-gain (1), uncapped
+    // even on a scene that owns its own dark backdrop (`temperLargeAdditive`, threaded from
+    // the scene-level `hasDarkBackdrop` flag below) — that's exactly the studio-gradient
+    // fallback scenario `EFFECT_SCENE_GAIN` exists to tame in the first place (a large
+    // additive sheet summing against the now-always-on grey fallback, see `loadSceneMeshes`
+    // / `hasDarkBackdrop`). Fold it into the same tamed-gain bucket, still exempting
+    // `fullGain` layers (light-glow sheets / animated colour curves) — a no-op for every
+    // scene that doesn't own a dark backdrop (every skin except Virtuosa today).
+    const gain = !fullGain && (isEffect || (additive && temperLargeAdditive)) ? EFFECT_SCENE_GAIN : 1;
 
     const vertices = new Float32Array(vertexCount * 2);
     const uvs = new Float32Array(vertexCount * 2);
@@ -821,7 +829,7 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // A layer with an authored colour curve carries its EXACT animated alpha — the
         // effect-overlay gain (which tames caustics frozen without their animation)
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
-        const mesh = buildLayerMesh(layer, base, forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length);
+        const mesh = buildLayerMesh(layer, base, forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
         if (!mesh) continue;
         if (isForeground && !isVeil) {
             foreground.addChild(mesh);
