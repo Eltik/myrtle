@@ -1365,6 +1365,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         boundsRef.current = openTight;
                         return;
                     }
+                    // Plain archive open (no `_Start` cinematic, so not an entrance hand-off) with no
+                    // authored pull-out: the skin has NO camera move at all, so it must open STATIC at
+                    // the settled game frame. The former fallback dollied `openTight` (`_adjustes[1]`)
+                    // → `gameFrame` (`_adjustes[0]`) over an invented 2s, which read as an unwanted pan
+                    // on skins that never had an entrance. A dolly is only performed for a genuine
+                    // entrance hand-off (`fromEntrance`) or a data-authored pull-out (`entrancePullOut`).
+                    if (!opts?.fromEntrance && !entrancePullOut) {
+                        layoutSpine(main.root, sw, sh, gameFrame, fitRef.current);
+                        return;
+                    }
                     let openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
                     // Hand-off continuity (Sf fix): `inflateBounds` above is a pure symmetric scale
                     // around `gameFrame`'s OWN static centre — it has no notion of the entrance rig
