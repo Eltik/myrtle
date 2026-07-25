@@ -239,6 +239,7 @@ pub(crate) fn go_effectively_active(
     go_pid: i64,
     go_to_transform: &HashMap<i64, i64>,
     idle_active: &HashMap<i64, bool>,
+    start_state_active: bool,
 ) -> bool {
     const STATE_ONLY: &[&str] = &[
         "start", "interact", "special", "skill", "attack", "die", "assist",
@@ -272,7 +273,17 @@ pub(crate) fn go_effectively_active(
                 .and_then(Value::as_str)
                 .unwrap_or("")
                 .to_ascii_lowercase();
-            if name.contains("only") && STATE_ONLY.iter().any(|s| name.contains(s)) {
+            // `<State> Only Effects` groups ship `m_IsActive = 0` and are switched on by the
+            // game only while that state plays, so they must not leak into the idle scene.
+            // The `_Start` cinematic IS the start state, though: gating "start" there drops the
+            // very effects the entrance exists to show (Mlynar "Fields of Ruination" loses the
+            // `Mlynar_EX2_L_Sword4` blade `glow_01` the game blooms as he raises and lowers the
+            // sword). Keep every OTHER state gated — we never render interact/special/skill/…
+            if name.contains("only")
+                && STATE_ONLY
+                    .iter()
+                    .any(|s| !(start_state_active && *s == "start") && name.contains(s))
+            {
                 return false;
             }
         }
@@ -869,7 +880,13 @@ fn collect_dynchar_bg_quads(
                 .any(|c| c.channel == 3 && c.curve.first().is_some_and(|&(_, v)| v.abs() < 0.02))
         });
         let eff_active =
-            go_effectively_active(all_objects, go_pid, &go_to_transform, &idle_pose.active);
+            go_effectively_active(
+                all_objects,
+                go_pid,
+                &go_to_transform,
+                &idle_pose.active,
+                is_entrance,
+            );
         if !eff_active && window == (None, None) && !has_color_reveal {
             skipped_inactive += 1;
             continue;
@@ -1556,12 +1573,14 @@ impl BgParticleHost {
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
         go_pid: i64,
+        start_state_active: bool,
     ) -> bool {
         go_effectively_active(
             all_objects,
             go_pid,
             &self.go_to_transform,
             &self.idle.active,
+            start_state_active,
         )
     }
 

@@ -422,7 +422,9 @@ pub(crate) fn collect_dynchar_particles(
         // Active up the whole hierarchy — excludes emitters under a state-gated
         // inactive group ("Start/Interact/Special Only Effects"), which otherwise
         // all play at once in the idle scene (noise).
-        if !admit_cross_root && !host.effectively_active(all_objects, go_pid) {
+        if !admit_cross_root
+            && !host.effectively_active(all_objects, go_pid, entrance.is_entrance)
+        {
             skipped += 1;
             continue;
         }
