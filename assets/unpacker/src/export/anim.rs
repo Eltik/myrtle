@@ -227,6 +227,22 @@ pub type ActiveWindow = (Option<f32>, Option<f32>);
 pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindow> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
+    // The entrance DIRECTOR's authored duration (`_params.duration` on the behaviour that
+    // owns `_mainCamera`). A clip can STOP before the state it belongs to exits — Mlynar
+    // "Fields of Ruination"'s `_Start` clip stops at 15.97 while the director runs to 16.5 —
+    // and the game holds the clip's final `m_IsActive` state for that remainder.
+    let director_duration: Option<f32> = all_objects
+        .values()
+        .find_map(|(cid, v)| {
+            (*cid == 114 && v.get("_mainCamera").is_some())
+                .then(|| {
+                    v.get("_params")
+                        .and_then(|p| p.get("duration"))
+                        .and_then(Value::as_f64)
+                })
+                .flatten()
+        })
+        .map(|d| d as f32);
     let mut out: HashMap<i64, ActiveWindow> = HashMap::new();
     for (cid, v) in all_objects.values() {
         if *cid != 74 {
@@ -249,7 +265,16 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
             // permanent white-out) into the settle. Prefab-ACTIVE GOs keep their `None`
             // hide — they stay visible after the clip on their own serialized state.
             if until.is_none() && from.is_some() && !prefab_active(all_objects, go) {
-                until = stop;
+                // Expire at the STATE's exit, not the CLIP's stop. Measured against the
+                // recording: Mlynar's white transition flash is held full-white by the game
+                // until ~16.5s (the director duration) while its clip stops at 15.97 — cutting
+                // at the clip stop exposes the bare scene for the last ~0.55s of the entrance
+                // (luminance 248 -> 97 where the game stays 248). Falls back to the clip stop
+                // when no director duration is authored, and never SHORTENS a window.
+                until = match (stop, director_duration) {
+                    (Some(s), Some(d)) if d > s => Some(d),
+                    (s, _) => s,
+                };
             }
             let e = out.entry(go).or_insert((from, until));
             // Merge across clips: LATEST reveal (entrance's delayed switch-on beats a
