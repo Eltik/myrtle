@@ -110,6 +110,36 @@ pub struct SpineAsset {
     pub particles: Vec<super::particles::ParticleData>,
 }
 
+/// A scene quad's `Torappu/Particles-L2D/<Family>/…` dissolve + disturb masking
+/// (`Ram/`, `Disturb/`, `Dissolve/` — see [`is_l2d_compositor`]). The shader carves
+/// the quad's real silhouette out of `_DissolveTex` and
+/// warps the lookup by `_DisturbTex`; a scene layer drawn as a plain tinted quad shows
+/// the mask's whole bounding rectangle instead — Mlynar's entrance wind sheets cover
+/// roughly three times the area the game gives them. The particle exporter has carried
+/// this since day one (`particles::resolve_ram`); this is the same data for a mesh quad.
+pub struct SceneRam {
+    /// `_DissolveTex` `Texture2D` + its path_id and `[sx, sy, ox, oy]`.
+    pub dissolve_pid: Option<i64>,
+    pub dissolve_val: Option<Value>,
+    pub dissolve_st: [f64; 4],
+    /// `_DisturbTex` `Texture2D` + its path_id and `[sx, sy, ox, oy]`.
+    pub disturb_pid: Option<i64>,
+    pub disturb_val: Option<Value>,
+    pub disturb_st: [f64; 4],
+    /// `_Amount` — the dissolve threshold; `_BorderWidth` — its edge softness.
+    pub amount: f32,
+    pub border_width: f32,
+    /// `_IntensityU`/`_IntensityV` — how far the disturb sample displaces the lookup.
+    pub intensity_u: f32,
+    pub intensity_v: f32,
+    /// Which lookups the disturb offset is applied to.
+    pub disturb_influence_dissolve_uv: f32,
+    pub disturb_influence_main_uv: f32,
+    /// `_DissolveUSpeed`/`_DissolveVSpeed` and the disturb pair, in UV/second.
+    pub dissolve_speed: [f32; 2],
+    pub disturb_speed: [f32; 2],
+}
+
 /// One textured mesh quad of the background scene, resolved to world geometry
 /// (in the spine root's frame) plus its draw state, ready to rasterize.
 pub struct BgQuad {
@@ -131,6 +161,12 @@ pub struct BgQuad {
     pub z: f32,
     /// `_MainTex` `Texture2D` path_id (for claiming against later phases).
     pub tex_pid: i64,
+    /// Static `_MainTex_ST` `[scaleX, scaleY, offsetX, offsetY]` — WHICH SUB-RECT of
+    /// `tex_pid` this quad samples. Already baked into `mesh.uvs` (unless an `st_curve`
+    /// supersedes it); kept here so the frozen-burst heuristic can tell a quad that
+    /// samples the SAME atlas region as a particle system (a baked copy of that burst)
+    /// from one that samples a DIFFERENT region of a shared atlas (distinct art).
+    pub st: [f64; 4],
     /// Material `_SrcBlend`/`_DstBlend` factors, for blend-class classification
     /// (distortion-drop / glass-additive) in `export_scene`.
     pub src_blend: f64,
@@ -169,6 +205,30 @@ pub struct BgQuad {
     /// components); the frontend applies `uv·[sx,sy]+[ox,oy]` per frame during the entrance.
     /// `None` = no animated ST (the static ST is baked as before).
     pub st_curve: Option<Vec<(f32, [f32; 4])>>,
+    /// DISSOLVE + DISTURB masking (see [`SceneRam`]). `None` unless the material is a
+    /// sub-namespaced `Particles-L2D` compositor that actually binds one of the two masks.
+    pub ram: Option<SceneRam>,
+    /// spine-unity `BoneFollower` in the quad's ancestry — the quad rides a SPINE BONE
+    /// at runtime, so its serialized transform (and therefore the baked `pos` above) is
+    /// only an editor pose. `None` = a world-fixed scene quad (the common case).
+    pub follow: Option<BgFollow>,
+}
+
+/// A scene quad's runtime bone attachment (spine-unity `BoneFollower`). At runtime the
+/// follower snaps its GameObject onto `bone`, so the quad's true world matrix is
+/// `bone(t) · followerWorld⁻¹ · quadWorld` — the frontend replays exactly that delta
+/// against the baked geometry.
+pub struct BgFollow {
+    /// Followed spine bone name.
+    pub bone: String,
+    /// The follower's `followBoneRotation`: false = translation-only tracking.
+    pub rot: bool,
+    /// The follower GameObject's world ORIGIN in the spine root's frame (Unity units,
+    /// Y-up); scaled to authored px at emit time.
+    pub origin: [f32; 2],
+    /// The follower GameObject's world 2×2 LINEAR basis (Y-up), row-major
+    /// `[m00, m01, m10, m11]`. Scale-invariant, so it needs no unit conversion.
+    pub basis: [f32; 4],
 }
 
 /// Everything [`collect_dynchar_bg_quads`] resolves from a dynillust prefab's
@@ -234,6 +294,56 @@ pub(crate) fn get_path_id(val: &Value) -> Option<i64> {
 /// groups stay m_IsActive=1 in the prefab (gated at runtime by the animator), so
 /// we exclude by NAME too. Descendants of a non-idle group must not appear in the
 /// idle scene/particles, else every state's effects render at once → noise.
+/// Animation states whose `<State> Only Effects` groups the prefab ships switched OFF.
+const STATE_ONLY: &[&str] = &[
+    "start", "interact", "special", "skill", "attack", "die", "assist",
+];
+
+/// Is this GameObject inside a `<State> Only Effects` group for a state that is NOT the one
+/// being exported? Such a group is switched on only while the game plays that state, so its
+/// contents belong to neither the idle scene nor the `_Start` cinematic — and unlike an
+/// ordinary inactive object, an animated colour curve must NOT be able to resurrect it
+/// (Mlynar's `Special Only Effects` blade glow carries the same colliding alpha curve as his
+/// entrance rigs, which admitted a special-attack effect into the entrance).
+pub(crate) fn state_only_blocked(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    go_pid: i64,
+    go_to_transform: &HashMap<i64, i64>,
+    start_state_active: bool,
+) -> bool {
+    let mut cur_tr = match go_to_transform.get(&go_pid) {
+        Some(&t) => t,
+        None => return false,
+    };
+    for _ in 0..256 {
+        let tf = match all_objects.get(&cur_tr) {
+            Some((4, v)) => v,
+            _ => return false,
+        };
+        if let Some(go) = tf.get("m_GameObject").and_then(get_path_id)
+            && let Some((1, gv)) = all_objects.get(&go)
+        {
+            let name = gv
+                .get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_ascii_lowercase();
+            if name.contains("only")
+                && STATE_ONLY
+                    .iter()
+                    .any(|s| !(start_state_active && *s == "start") && name.contains(s))
+            {
+                return true;
+            }
+        }
+        match tf.get("m_Father").and_then(get_path_id) {
+            Some(f) if f != 0 => cur_tr = f,
+            _ => return false,
+        }
+    }
+    false
+}
+
 pub(crate) fn go_effectively_active(
     all_objects: &HashMap<i64, (i32, Value)>,
     go_pid: i64,
@@ -241,9 +351,6 @@ pub(crate) fn go_effectively_active(
     idle_active: &HashMap<i64, bool>,
     start_state_active: bool,
 ) -> bool {
-    const STATE_ONLY: &[&str] = &[
-        "start", "interact", "special", "skill", "attack", "die", "assist",
-    ];
     let mut cur_tr = match go_to_transform.get(&go_pid) {
         Some(&t) => t,
         None => return true,
@@ -456,6 +563,14 @@ pub fn collect_spine_assets(
             } else {
                 HashMap::new()
             };
+            // Entrance-clip material-COLOUR curves for particle materials (the scene-quad
+            // path's twin, see `EntranceCtx::color_channels`). Entrance-only: the idle
+            // prefab's copies hold their serialized colour.
+            let particle_color_channels = if is_entrance {
+                super::anim::entrance_material_color_channels(all_objects)
+            } else {
+                HashMap::new()
+            };
             // Scope particle membership to THIS skeleton's prefab-instance root. A
             // dynchar bundle ships sibling roots (`dyn_illust_*` idle + `dyn_entrance_*`
             // cinematic), and every ParticleSystem of BOTH used to land in BOTH
@@ -472,6 +587,7 @@ pub fn collect_spine_assets(
                     rate_curves: &particle_rate_curves,
                     event_rate_gos: &event_rate_gos,
                     transform_curves: &entrance_transform_curves,
+                    color_channels: &particle_color_channels,
                     is_entrance,
                 },
                 &super::particles::RootScope {
@@ -479,10 +595,11 @@ pub fn collect_spine_assets(
                     skeleton_roots: &skeleton_roots,
                 },
             );
-            if !particles.is_empty() || skipped > 0 {
+            if !particles.is_empty() || skipped.total() > 0 {
                 eprintln!(
-                    "  particles: {} exported, {} skipped ({base_name})",
+                    "  particles: {} exported, {} skipped ({base_name}) [{}]",
                     particles.len(),
+                    skipped.total(),
                     skipped
                 );
             }
@@ -711,7 +828,6 @@ fn collect_dynchar_bg_quads(
     } else {
         HashMap::new()
     };
-
     // GameObjects that own a spine skeleton (SkeletonMecanim/Animation) — the
     // character itself, excluded from the background.
     let spine_gos: HashSet<i64> = all_objects
@@ -879,15 +995,17 @@ fn collect_dynchar_bg_quads(
             chs.iter()
                 .any(|c| c.channel == 3 && c.curve.first().is_some_and(|&(_, v)| v.abs() < 0.02))
         });
-        let eff_active =
-            go_effectively_active(
-                all_objects,
-                go_pid,
-                &go_to_transform,
-                &idle_pose.active,
-                is_entrance,
-            );
-        if !eff_active && window == (None, None) && !has_color_reveal {
+        let eff_active = go_effectively_active(
+            all_objects,
+            go_pid,
+            &go_to_transform,
+            &idle_pose.active,
+            is_entrance,
+        );
+        // A colour-reveal admission must not override the state gate: a group the game
+        // reserves for another state stays out no matter what its curves do.
+        let state_blocked = state_only_blocked(all_objects, go_pid, &go_to_transform, is_entrance);
+        if !eff_active && window == (None, None) && !(has_color_reveal && !state_blocked) {
             skipped_inactive += 1;
             continue;
         }
@@ -915,7 +1033,9 @@ fn collect_dynchar_bg_quads(
             [f64; 4],
             (Vec<(String, [f32; 4])>, Option<String>),
             f32,
+            bool,
             Option<[f32; 2]>,
+            Option<SceneRam>,
         );
         let mut resolved: Option<ResolvedQuadMaterial> = None;
         // Whether the chosen material's `_MainTex` came from the ungated external
@@ -980,10 +1100,31 @@ fn collect_dynchar_bg_quads(
             // would wrongly pick — rendering a soft/dim `_MainColor` as full white. So a
             // Ram layer uses `(_MainColor × 2).clamp`, with `_MainColor` as the animated
             // channels' tint source and ×2 threaded into `layer_color_curve`.
-            let legacy_scale = legacy_tint_scale(mat);
-            let ram_scale = ram_tint_scale(mat);
+            // The `Particles-L2D` port is admitted only for a layer the cinematic
+            // ANIMATES: there the clip names the colour property the shader actually
+            // modulates, so the tint source and its ×2 are established by the data
+            // rather than inferred from the shader name alone. Static layers keep the
+            // previous `_Color` reading — the corpus evidence for the family is strong
+            // (see `legacy_tint_scale`) but unverifiable against a recording, and the
+            // idle scenes are the most-viewed surface.
+            let animated_color = color_channels.contains_key(&go_pid);
+            // Peak of every animated COLOUR (rgb) channel on this GO — the value a ×2 family
+            // would have to double without clamping.
+            let animated_peak = color_channels.get(&go_pid).map(|chs| {
+                chs.iter()
+                    .filter(|c| c.channel < 3)
+                    .flat_map(|c| c.curve.iter().map(|&(_, v)| v))
+                    .fold(0.0f32, f32::max)
+            });
+            // Whether the entrance clip names `_MainColor` on THIS layer — the evidence the
+            // shader modulates by it (see the `l2d_main_color_family` branch below).
+            let animates_main_color = color_channels
+                .get(&go_pid)
+                .is_some_and(|chs| super::anim::animates_prop(chs, "_MainColor"));
+            let legacy_scale = legacy_tint_scale(mat, animated_color);
+            let (ram_scale, ram_hdr) = ram_tint_scale(mat, animated_peak);
             let mut cprops = material_color_props(mat);
-            let (tint, tint_scale) = if legacy_scale > 1.0 {
+            let (tint, tint_scale, hdr_color) = if legacy_scale > 1.0 {
                 cprops.1 = Some("_TintColor".to_string());
                 let tc = cprops
                     .0
@@ -998,6 +1139,7 @@ fn collect_dynchar_bg_quads(
                         (tc[3] * legacy_scale).clamp(0.0, 1.0),
                     ],
                     legacy_scale,
+                    false,
                 )
             } else if ram_scale > 1.0 {
                 cprops.1 = Some("_MainColor".to_string());
@@ -1006,17 +1148,48 @@ fn collect_dynchar_bg_quads(
                     .iter()
                     .find(|(n, _)| n == "_MainColor")
                     .map_or([1.0; 4], |(_, c)| *c);
+                // RGB is NOT clamped to 1: the ×2 is a real over-bright multiply and the
+                // frontend renders scene layers into a half-float HDR target
+                // (`hdrTonemap.ts`), so a doubled value above 1 is representable and gets
+                // tonemapped, not truncated. Clamping here flattened a ramp's baseline and
+                // its peak onto the same ceiling, shrinking the very brightening delta the
+                // ×2 exists to reproduce. ALPHA stays clamped: it is a coverage/blend
+                // weight, not light — a premultiplied source alpha above 1 makes the
+                // destination factor `1 - a` negative and corrupts the composite.
+                let hi = if ram_hdr { f32::INFINITY } else { 1.0 };
                 (
                     [
-                        (mc[0] * ram_scale).clamp(0.0, 1.0),
-                        (mc[1] * ram_scale).clamp(0.0, 1.0),
-                        (mc[2] * ram_scale).clamp(0.0, 1.0),
+                        (mc[0] * ram_scale).clamp(0.0, hi),
+                        (mc[1] * ram_scale).clamp(0.0, hi),
+                        (mc[2] * ram_scale).clamp(0.0, hi),
                         (mc[3] * ram_scale).clamp(0.0, 1.0),
                     ],
                     ram_scale,
+                    ram_hdr,
                 )
+            } else if animates_main_color && l2d_main_color_family(mat) {
+                // Same `_MainColor` compositor family as the Ram branch above, but WITHOUT
+                // its ×2 convention (`ram_tint_scale` rejects a `_MainColor` that already
+                // reaches full scale, which doubling could only clamp). Rejecting the
+                // DOUBLING is not a reason to fall back to `material_tint`: that reads the
+                // inert Unity `_Color` = white placeholder these materials carry, so the
+                // layer renders with `_MainColor`'s ALPHA (the clip animates it, and it is
+                // the curve we already export) over `_Color`'s WHITE rgb — one property's
+                // opacity wearing another's colour. Mlynar "Fields of Ruination"'s entrance
+                // wind sheets are authored `_MainColor` = (0.41, 0.46, 1.0) — a deep blue —
+                // and were painting a full-white haze over the whole frame for 13 s.
+                // Gated on the clip ANIMATING `_MainColor`, the same data-derived evidence
+                // the ×2 port uses: the clip naming the property proves the shader
+                // modulates by it, rather than inferring it from the shader name alone.
+                cprops.1 = Some("_MainColor".to_string());
+                let mc = cprops
+                    .0
+                    .iter()
+                    .find(|(n, _)| n == "_MainColor")
+                    .map_or([1.0; 4], |(_, c)| *c);
+                (mc, 1.0, false)
             } else {
-                (material_tint(mat), 1.0)
+                (material_tint(mat), 1.0, false)
             };
             // Capability A — Ram-family shader UV-scroll (static material floats, no clip).
             // Gate STRICTLY: only a Ram-family shader with a non-zero `_Main*Speed` carries
@@ -1038,6 +1211,92 @@ fn collect_dynchar_bg_quads(
                     None
                 }
             };
+            // DISSOLVE/DISTURB masking (see [`SceneRam`]). The mask pair is not a `Ram/`
+            // peculiarity: every sub-namespaced `Particles-L2D` compositor carves its
+            // quad's real silhouette out of `_DissolveTex` and warps the lookup by
+            // `_DisturbTex`, and the shader maths the frontend already runs is the same
+            // for all of them. Restricting it to `Ram/` left Mlynar "Fields of
+            // Ruination"'s entrance wind sheets (`Disturb/Disturb(CustomData)`,
+            // `_Amount` 0.10 / `_BorderWidth` 1.0 ⇒ ~0.37 mean coverage) drawn as full
+            // opaque rectangles across the frame.
+            //
+            // What admits a layer is the MATERIAL, not the shader name: it has to
+            // actually bind one of the two maps (the `has(…)` test below). The dissolve
+            // slot additionally answers to `_ToggleUseDissolve`, the shader's own keyword
+            // switch — masking by a slot the material has switched off would erase the
+            // layer, so that drops the dissolve while keeping any disturb. `Ram/` keeps
+            // the default-ON reading it shipped with; a newly admitted family has to
+            // DECLARE the switch, so the material itself states its dissolve is live.
+            //
+            // Strictly ADDITIVE to the shipped gate: `Ram/` stays matched wherever it
+            // lives, including the two `Torappu/Particles/Ram/…` layers (cgbird, Archetto)
+            // that are outside the `Particles-L2D` namespace entirely.
+            let ram = {
+                let shader = mat
+                    .get("_shaderName")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                if shader.contains("Ram/") || is_l2d_compositor(shader) {
+                    let (mut diss_pid, mut diss_val, diss_st) =
+                        super::particles::mat_texenv(all_objects, mat, "_DissolveTex");
+                    let toggle_default = if shader.contains("Ram/") { 1.0 } else { 0.0 };
+                    if blend("_ToggleUseDissolve", toggle_default) < 0.5 {
+                        diss_pid = None;
+                        diss_val = None;
+                    }
+                    let (dist_pid, dist_val, dist_st) =
+                        super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
+                    let has = |p: Option<i64>, v: &Option<Value>| p.is_some() && v.is_some();
+                    // What a newly admitted family must show is a LIVE DISSOLVE: the
+                    // material binds `_DissolveTex` and leaves `_ToggleUseDissolve` on
+                    // (the `diss_*` pair survived the switch above). That is the whole of
+                    // the defect — a mask cutting the quad down to its real silhouette —
+                    // and the disturb comes along because the shader warps the dissolve
+                    // lookup with it (`_DisturbInfluenceDissolveUV`).
+                    //
+                    // A material binding ONLY `_DisturbTex`, dissolve switched off, is
+                    // asking for a `_MainTex` UV WARP and no masking at all. That is a
+                    // separate capability, and porting it MEASURED WORSE: it is every one
+                    // of Virtuosa's 42 candidate layers (`_IntensityU` up to 0.10, dAlpha
+                    // 1.0 throughout), and admitting them cost her 35.322 → 37.770 MADC
+                    // while changing no coverage anywhere. `Ram/` keeps the either-map
+                    // admission it shipped and was measured with.
+                    let admit = if shader.contains("Ram/") {
+                        has(diss_pid, &diss_val) || has(dist_pid, &dist_val)
+                    } else {
+                        has(diss_pid, &diss_val)
+                    };
+                    if admit {
+                        Some(SceneRam {
+                            dissolve_pid: diss_pid,
+                            dissolve_val: diss_val,
+                            dissolve_st: diss_st,
+                            disturb_pid: dist_pid,
+                            disturb_val: dist_val,
+                            disturb_st: dist_st,
+                            amount: blend("_Amount", 0.5) as f32,
+                            border_width: blend("_BorderWidth", 0.1) as f32,
+                            intensity_u: blend("_IntensityU", 0.0) as f32,
+                            intensity_v: blend("_IntensityV", 0.0) as f32,
+                            disturb_influence_dissolve_uv: blend("_DisturbInfluenceDissolveUV", 0.0)
+                                as f32,
+                            disturb_influence_main_uv: blend("_DisturbInfluenceMainUV", 1.0) as f32,
+                            dissolve_speed: [
+                                blend("_DissolveUSpeed", 0.0) as f32,
+                                blend("_DissolveVSpeed", 0.0) as f32,
+                            ],
+                            disturb_speed: [
+                                blend("_DisturbUSpeed", 0.0) as f32,
+                                blend("_DisturbVSpeed", 0.0) as f32,
+                            ],
+                        })
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            };
             resolved_meshext = mat.get("_meshExtResolved").is_some();
             resolved = Some((
                 tex_val,
@@ -1050,7 +1309,9 @@ fn collect_dynchar_bg_quads(
                 st,
                 cprops,
                 tint_scale,
+                hdr_color,
                 uv_scroll,
+                ram,
             ));
             break;
         }
@@ -1065,7 +1326,9 @@ fn collect_dynchar_bg_quads(
             st,
             (color_props, tint_prop),
             tint_scale,
+            hdr_color,
             uv_scroll,
+            ram,
         )) = resolved
         else {
             continue;
@@ -1079,6 +1342,7 @@ fn collect_dynchar_bg_quads(
                 tint_prop.as_deref(),
                 tint,
                 tint_scale,
+                hdr_color,
                 additive,
             )
         });
@@ -1146,6 +1410,28 @@ fn collect_dynchar_bg_quads(
             .unwrap_or_else(super::mesh::Mat4::identity);
         let z = world.point([0.0, 0.0, 0.0])[2];
 
+        // spine-unity `BoneFollower` in the ancestry: at runtime the follower SNAPS its
+        // GameObject onto the named spine bone, so everything below it (this quad) rides
+        // the bone and the transform baked into `world` above is only an editor pose.
+        // Mlynar "Fields of Ruination" is the proof: his sword flare (`glow_01` under
+        // `..._Start_Mlynar_L_Sword2(Clone)`, `followBoneRotation` on) exports as a
+        // horizontal streak parked in the lower-left instead of a warm halo running along
+        // the blade. The particle exporter has honoured this since Virtuosa's falling
+        // apple; scene MESH quads never did. Capture the follower's world frame so the
+        // frontend can replay `bone(t) · followerWorld⁻¹` against the baked geometry.
+        let follow = host
+            .follower_of_go(all_objects, go_pid)
+            .map(|(bone, rot, follower_go)| {
+                let fw = host.world_of_go(all_objects, follower_go);
+                let o = fw.point([0.0, 0.0, 0.0]);
+                BgFollow {
+                    bone,
+                    rot,
+                    origin: [o[0], o[1]],
+                    basis: [fw.0[0][0], fw.0[0][1], fw.0[1][0], fw.0[1][1]],
+                }
+            });
+
         quads.push(BgQuad {
             mesh,
             tex_val,
@@ -1156,6 +1442,7 @@ fn collect_dynchar_bg_quads(
             sort,
             z,
             tex_pid: main_pid,
+            st,
             src_blend,
             dst_blend,
             active_from: window.0,
@@ -1164,6 +1451,8 @@ fn collect_dynchar_bg_quads(
             color_curve,
             uv_scroll,
             st_curve,
+            ram,
+            follow,
         });
     }
 
@@ -1203,12 +1492,27 @@ fn collect_dynchar_bg_quads(
 /// pure-white FULL white-out (2 × 0.671 clamps to 1), where a plain multiply reads
 /// half-grey. (The Ram GLSL port in particles.ts mirrors the same ×2 as `col += col`.)
 /// Returns 2.0 for that family when the material carries `_TintColor`, else 1.0.
-fn legacy_tint_scale(mat: &Value) -> f32 {
+fn legacy_tint_scale(mat: &Value, animated_color: bool) -> f32 {
     let shader = mat
         .get("_shaderName")
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    let legacy = shader.contains("/Particles/") || shader.starts_with("Particles/");
+    // `Particles-L2D` is the L2D port of the same legacy shaders and shares the
+    // convention: across the dynchar corpus 244 of 283 `Particles-L2D/AlphaBlend`
+    // materials author `_TintColor` rgb at exactly 0.5 — meaningless as a literal
+    // 50% grey veil, canonical as ×2 neutral white — matching the proven
+    // `Particles/AlphaBlend` family (16 of 17 at 0.5). Match only the PLAIN blend
+    // modes (`…/Particles-L2D/<Mode>` with nothing below it): the sub-namespaced
+    // families (`Ram/`, `Disturb/`, `Dissolve/`, `Mask/`) composite extra maps and
+    // are handled separately (`ram_tint_scale`). Purely additive — no shader the
+    // original test matched stops matching.
+    let plain_l2d = shader
+        .rfind("Particles-L2D/")
+        .map(|i| &shader[i + "Particles-L2D/".len()..])
+        .is_some_and(|rest| !rest.is_empty() && !rest.contains('/'));
+    let legacy = shader.contains("/Particles/")
+        || shader.starts_with("Particles/")
+        || (animated_color && plain_l2d);
     let has_tint_color = mat
         .get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Colors"))
@@ -1223,7 +1527,7 @@ fn legacy_tint_scale(mat: &Value) -> f32 {
 /// below that for a soft wash — while `material_tint` would read the inert Unity
 /// `_Color` default and render full white. Returns 2.0 when the shader is Ram-family
 /// AND the material carries a `_MainColor` colour property, else 1.0.
-fn ram_tint_scale(mat: &Value) -> f32 {
+fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>) -> (f32, bool) {
     let shader = mat
         .get("_shaderName")
         .and_then(|v| v.as_str())
@@ -1233,11 +1537,106 @@ fn ram_tint_scale(mat: &Value) -> f32 {
         .and_then(|sp| sp.get("m_Colors"))
         .and_then(|c| c.as_object())
         .is_some_and(|c| c.contains_key("_MainColor"));
-    if shader.contains("Ram/") && has_main_color {
-        2.0
+    // `Ram/` has always been recognised. Its sibling `Particles-L2D` compositors
+    // (`Disturb/`, `Dissolve/`) modulate by the SAME ×2 `_MainColor`: across the dynchar
+    // corpus they author it at exactly 0.502 — the ×2 neutral — in bulk (413 of 773
+    // `Disturb(CustomData)`, 80 of 167 `Dissolve(CustomData)`), the identical convention
+    // that proves the Ram family.
+    //
+    // Admitted ONLY for layers the entrance clip ANIMATES, where the clip names the
+    // property outright. That restriction is not caution for its own sake: extending the
+    // ×2 to a STATIC `Disturb(CustomData)` backdrop was tried before on Mlynar and
+    // MEASURED WORSE, because clamping a static baseline and its peak to the same ceiling
+    // shrinks the brightening delta instead of growing it. An animated curve has no such
+    // problem — Virtuosa's shaft ramps `_MainColor` 0.502 → 0.196, which is a full-white
+    // 1.004 falling to 0.392 once doubled, and rendering it undoubled left the whole frame
+    // at 0.545× the game's brightness through the entire plunge.
+    // For the newly-admitted families, require the half-neutral convention to ACTUALLY hold:
+    // a ×2 material cannot author `_MainColor` above its own neutral, because doubling would
+    // blow past white. Where the authored value is already full-scale the doubling only
+    // clamps — flattening the very ramp we are trying to reproduce, which is exactly how the
+    // earlier Mlynar backdrop attempt measured worse. Virtuosa's shaft sits at 0.502 and
+    // doubles cleanly to 1.004; Mlynar's layers sit at 0.588–1.0 and are left alone.
+    // `Ram/` keeps its unconditional doubling — shipped and verified.
+    // The neutral is authored as an 8-bit colour, so it arrives as 128/255 = 0.50196 — the
+    // bound has to admit that quantization, not a bare 0.5.
+    const NEUTRAL_MAIN_COLOR: f64 = 0.5 + 1.0 / 255.0;
+    let half_neutral = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.get("_MainColor"))
+        .is_some_and(|c| {
+            ["r", "g", "b"].iter().all(|k| {
+                c.get(*k)
+                    .and_then(serde_json::Value::as_f64)
+                    .is_none_or(|v| v <= NEUTRAL_MAIN_COLOR)
+            })
+        });
+    // Gate on the ANIMATED PEAK too, not just the serialized value: what gets doubled is the
+    // curve. The bound is "the curve never reaches FULL SCALE", not "never exceeds the
+    // neutral": a material authored at the ×2 neutral cannot ramp `_MainColor` to 1.0,
+    // because doubling would reach 2.0 — so a curve that touches exactly 1.000 is authored
+    // in the DIRECT (undoubled) convention and must be left alone, while anything strictly
+    // below full scale is consistent with the ×2 convention the static neutral declares.
+    // (The `0.5/255` margin is 8-bit quantization.) This admits Mlynar's bg01 backdrop
+    // (crest 0.588 → 1.176) and still rejects every layer that reaches 1.000: Skadi2 14/15,
+    // Virtuosa 0/78, excu2 ×5, mlyss 22/23.
+    // Re-measured after the environment-background fill was corrected (which removed ~+11.6
+    // of frame mean and could have made this doubling redundant): still ahead —
+    // Mlynar mean MAD 33.903 with vs 34.256 without, Virtuosa and Skadi2 unmoved. Be honest
+    // about WHAT it buys, though: on bg01 it is a near-constant +10.5 level lift, not the
+    // step the game shows at t≈12.8 (ours +3.3, the game +29.3). With the DC removed both
+    // sides have the same beat SHAPE, so the step is still missing somewhere else.
+    let l2d_animated = shader.contains("Particles-L2D/")
+        && half_neutral
+        && animated_peak.is_some_and(|p| f64::from(p) < 1.0 - 0.5 / 255.0);
+    if !has_main_color {
+        (1.0, false)
+    } else if l2d_animated {
+        // HDR: the gate above proved the curve stays strictly below full scale, so the
+        // doubled colour is a meaningful over-bright RAMP (Mlynar's `bg01`: 0.824 →
+        // 1.176) that the frontend's half-float target can carry. Clamping it collapses
+        // baseline and peak onto the same ceiling and erases the brightening.
+        (2.0, true)
+    } else if shader.contains("Ram/") {
+        // `Ram/` keeps the CLAMPED doubling it shipped with. Its materials sit at or near
+        // full scale (Skadi2's layers double to 1.4-2.0), so letting them through
+        // unclamped is not a ramp but a wholesale brightening — MEASURED worse
+        // (Skadi2 mean MAD 18.615 -> 20.093 over the recorded beats).
+        (2.0, false)
     } else {
-        1.0
+        (1.0, false)
     }
+}
+
+/// A SUB-NAMESPACED `Torappu/Particles-L2D/<Family>/…` shader — the compositors that
+/// sample extra maps on top of `_MainTex` (`Ram/`, `Disturb/`, `Dissolve/`, `Mask/`), as
+/// opposed to the plain blend modes (`Particles-L2D/AlphaBlend`, `…/Additive`) that have
+/// nothing below the namespace. Membership alone implies nothing about WHICH maps a given
+/// material binds — every caller pairs this with a test on the material's own properties.
+pub fn is_l2d_compositor(shader: &str) -> bool {
+    shader
+        .rfind("Particles-L2D/")
+        .map(|i| &shader[i + "Particles-L2D/".len()..])
+        .is_some_and(|rest| rest.contains('/'))
+}
+
+/// Whether a material belongs to the `Particles-L2D` compositor family that modulates by
+/// `_MainColor` (`Ram/`, `Disturb/`, `Dissolve/`, … — the sub-namespaced shaders) AND
+/// carries that property. Says nothing about the ×2 convention: that is
+/// [`ram_tint_scale`]'s question, and a material can be in the family while being authored
+/// in the DIRECT convention (`_MainColor` reaching full scale).
+fn l2d_main_color_family(mat: &Value) -> bool {
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    is_l2d_compositor(shader)
+        && mat
+            .get("m_SavedProperties")
+            .and_then(|sp| sp.get("m_Colors"))
+            .and_then(|c| c.as_object())
+            .is_some_and(|c| c.contains_key("_MainColor"))
 }
 
 /// Material colour multiply: `_Color` if present, else `_TintColor`, else white.
@@ -1272,7 +1671,7 @@ pub(crate) fn material_tint(mat: &Value) -> [f32; 4] {
 /// [`material_tint`] folded into the static tint (`_Color` first, else `_TintColor`).
 /// Feeds [`super::anim::layer_color_curve`], which matches the `_Start` clip's animated
 /// colour-channel bindings against these names.
-fn material_color_props(mat: &Value) -> (Vec<(String, [f32; 4])>, Option<String>) {
+pub(crate) fn material_color_props(mat: &Value) -> (Vec<(String, [f32; 4])>, Option<String>) {
     let comp =
         |c: &Value, k: &str| c.get(k).and_then(serde_json::Value::as_f64).unwrap_or(1.0) as f32;
     let props: Vec<(String, [f32; 4])> = mat
@@ -1300,6 +1699,33 @@ fn material_color_props(mat: &Value) -> (Vec<(String, [f32; 4])>, Option<String>
 
 /// Detect additive blending from the material's `_DstBlend` factor (`One` = 1).
 pub(crate) fn is_additive(mat: &Value) -> bool {
+    // `_DstBlend` is only a LIVE input for the shader families that declare it (the
+    // `(CustomData)` Disturb/Ram ports). The `Particles-L2D/Additive`, `AlphaBlend` and
+    // `Dissolve Add` ports fix their blend inside the shader pass and declare no blend
+    // property at all — there the material's `_DstBlend` float is inert residue from the
+    // Unity Standard shader the asset was authored against (the same block also carries
+    // `_Glossiness`, `_Metallic`, `_Parallax`… none of which the port reads).
+    //
+    // Trusting it unconditionally mis-blends 1648 of 3097 particle systems. Mlynar's
+    // ground-impact flash (`bao 1`, `Particles-L2D/Additive`, stale `_DstBlend` 0) is a
+    // near-white 2116px quad: additive it brightens the frame, which is what the game
+    // shows at t≈12.8; composited `normal` it lays a translucent grey veil that DARKENS
+    // it instead. So the shader NAME wins wherever the name fixes the blend, and
+    // `_DstBlend` is consulted only for the property-driven families.
+    let shader = mat
+        .get("_shaderName")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    // Match the last path segment so `Ram/Add` reads as additive while
+    // `Ram/Disturb(CustomData)` falls through to its declared `_DstBlend`.
+    let port = shader.rsplit('/').next().unwrap_or("");
+    if port.contains("alphablend") {
+        return false;
+    }
+    if port.contains("add") {
+        return true;
+    }
     mat.get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Floats"))
         .and_then(|f| f.get("_DstBlend"))
@@ -1335,8 +1761,47 @@ type EntranceTiming = (
 /// 2.99/10.5 ≈ 0.28, a real head-to-torso close-up on the seated cellist). The
 /// `_mainCamera` is fixed at this size; the client dollies OUT from it to the display
 /// stop as she reforms. All `None` when the prefab has no entrance director.
+/// Scan `all_objects` in ascending `path_id` order.
+///
+/// `HashMap::values()` yields an ARBITRARY order, so a `find_map` over it picks a random
+/// winner whenever more than one object matches. Cheng Wanjing "Serene Whisper" ships two
+/// class-20 Cameras in its `_Start` prefab, and the unordered pick flipped its
+/// `entranceViewPx` between 1000 and 600 across runs of identical code — a 1.67x framing
+/// swing decided by hash iteration order. Ordering by `path_id` makes the choice stable,
+/// matching the convention `build_hash_to_go` already uses for collisions.
+fn objects_by_path_id(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<(&i64, &(i32, Value))> {
+    let mut v: Vec<_> = all_objects.iter().collect();
+    v.sort_unstable_by_key(|(pid, _)| **pid);
+    v
+}
+
+/// The ENTRANCE camera's `path_id`. The director names it outright (`_mainCamera.camera`),
+/// which is the authored answer whenever a prefab ships more than one class-20 Camera;
+/// the lowest-`path_id` camera is only a deterministic last resort.
+fn entrance_camera_pid(all_objects: &HashMap<i64, (i32, Value)>) -> Option<i64> {
+    let ordered = objects_by_path_id(all_objects);
+    let named = ordered.iter().find_map(|(_, (cid, v))| {
+        (*cid == 114)
+            .then(|| {
+                v.get("_mainCamera")
+                    .and_then(|m| m.get("camera"))
+                    .and_then(get_path_id)
+                    .filter(|&p| p != 0)
+            })
+            .flatten()
+    });
+    named
+        .filter(|p| matches!(all_objects.get(p), Some((20, _))))
+        .or_else(|| {
+            ordered
+                .iter()
+                .find_map(|(pid, (cid, _))| (*cid == 20).then_some(**pid))
+        })
+}
+
 fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTiming {
-    let params = all_objects.values().find_map(|(cid, v)| {
+    let ordered = objects_by_path_id(all_objects);
+    let params = ordered.iter().find_map(|(_, (cid, v))| {
         (*cid == 114 && v.get("_mainCamera").is_some())
             .then(|| v.get("_params"))
             .flatten()
@@ -1354,11 +1819,10 @@ fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTim
         return (None, None, None, None, None);
     };
     // Orthographic size of the entrance camera (class 20). One per `_Start` prefab.
-    let cam_ortho = all_objects.values().find_map(|(cid, v)| {
-        (*cid == 20)
-            .then(|| v.get("orthographic size").and_then(Value::as_f64))
-            .flatten()
-    });
+    let cam_ortho = entrance_camera_pid(all_objects)
+        .and_then(|p| all_objects.get(&p))
+        .and_then(|(_, v)| v.get("orthographic size"))
+        .and_then(Value::as_f64);
     // Tally `_delayTime`s (rounded to 0.05s) and pick the most-shared LATE beat.
     let mut counts: HashMap<i64, usize> = HashMap::new();
     for (cid, v) in all_objects.values() {
@@ -1414,12 +1878,13 @@ fn go_world_translation(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -
 /// game frames — the close-up sits on her upper body / the halo, not the hair-dragged
 /// centroid. `None` when the prefab has no entrance camera + skeleton.
 fn find_entrance_camera_offset(all_objects: &HashMap<i64, (i32, Value)>) -> Option<(f64, f64)> {
-    let cam_go = all_objects.values().find_map(|(cid, v)| {
-        (*cid == 20)
-            .then(|| v.get("m_GameObject").and_then(get_path_id))
-            .flatten()
-    })?;
-    let skel_go = all_objects.values().find_map(|(cid, v)| {
+    // Ordered scan: two cameras / two skeletons in one prefab would otherwise be picked
+    // by hash iteration order, making `entranceCamOffsetPx` differ between runs.
+    let ordered = objects_by_path_id(all_objects);
+    let cam_go = entrance_camera_pid(all_objects)
+        .and_then(|p| all_objects.get(&p))
+        .and_then(|(_, v)| v.get("m_GameObject").and_then(get_path_id))?;
+    let skel_go = ordered.iter().find_map(|(_, (cid, v))| {
         (*cid == 114 && v.get("skeletonDataAsset").is_some())
             .then(|| v.get("m_GameObject").and_then(get_path_id))
             .flatten()
@@ -2246,6 +2711,49 @@ fn opaque_luma(
     (mean, p90, p98, dark_frac)
 }
 
+/// Decode a Ram MASK (`_DissolveTex`/`_DisturbTex`) into the scene's shared texture
+/// list, returning its index. Deduped by source path_id alongside the drawn artwork, so
+/// a mask that IS the layer's own `_MainTex` costs no extra slot. Unlike the artwork it
+/// is never alpha-merged and never enters `tex_px`: the luminance classifier reads that
+/// map to judge what a layer LOOKS like, and a noise mask is shader input, not paint.
+fn resolve_scene_mask(
+    pid: Option<i64>,
+    val: Option<&Value>,
+    resources: &HashMap<String, Vec<u8>>,
+    tex_dir: &Path,
+    tex_index: &mut HashMap<i64, usize>,
+    next_idx: &mut usize,
+    saved: &mut usize,
+) -> Option<usize> {
+    let (pid, val) = (pid?, val?);
+    if let Some(&i) = tex_index.get(&pid) {
+        return Some(i);
+    }
+    let Ok(Some(tex)) = decode_texture_object(val, resources) else {
+        return None;
+    };
+    let idx = *next_idx;
+    if image::save_buffer(
+        tex_dir.join(format!("{idx}.png")),
+        &tex.rgba,
+        tex.width,
+        tex.height,
+        image::ColorType::Rgba8,
+    )
+    .is_ok()
+    {
+        *saved += 1;
+    }
+    tex_index.insert(pid, idx);
+    *next_idx += 1;
+    Some(idx)
+}
+
+/// Two `_MainTex_ST` tuples select the same atlas sub-rect (tolerant of float noise).
+fn st_eq(a: [f64; 4], b: [f64; 4]) -> bool {
+    a.iter().zip(b.iter()).all(|(x, y)| (x - y).abs() < 1e-4)
+}
+
 /// Export the full multi-layer scene for the live renderer. Every non-character
 /// mesh quad becomes a textured 2D mesh in spine-authored pixels (Y-up, origin at
 /// the skeleton root), geometry inlined in `{name}[scene].json`, textures written
@@ -2298,6 +2806,16 @@ fn export_scene(
     // stack identical quad GameObjects, e.g. Skadi "Red Countess" — frozen they
     // just overdraw, and double-brighten when additive).
     let mut seen_sigs: std::collections::HashSet<u64> = std::collections::HashSet::new();
+    // Same artwork, minus everything time-varying: texture, depth, blend, geometry,
+    // tint. An entrance scene bundles BOTH prefab roots, so the same painted quad
+    // routinely appears twice — but only the copy the `_Start` clip actually drives
+    // carries a colour curve or a reveal window. The undriven twin would then paint
+    // at full static tint for the whole cinematic, double-exposing the frame
+    // (Mlynar's backdrop and his white `bg_glow_01` each gained such a twin once
+    // clip bindings were correctly scoped to their owning Animator). Map the bare
+    // signature to the emitted layer so an unanimated twin can yield to an animated
+    // one — in EITHER arrival order.
+    let mut bare_sigs: HashMap<u64, (usize, bool)> = HashMap::new();
 
     // Camera-frame extent in authored px (2 * cameraSize half-height), for the
     // oversize test below.
@@ -2308,12 +2826,23 @@ fn export_scene(
     // `[particles]` renderer draws; the scene mesh may ALSO carry a frozen
     // keyframe copy of them (baked particle quads) that must be dropped so they
     // don't stamp static garbage over the animated version.
-    let particle_tex_pids: std::collections::HashSet<i64> = asset
-        .particles
-        .iter()
-        .flat_map(|p| [p.tex_pid, p.trail_tex_pid])
-        .flatten()
-        .collect();
+    // Keyed by texture, the set of `_MainTex_ST` sub-rects the particle systems actually
+    // SAMPLE. Two systems (or a system and a scene quad) routinely share one atlas while
+    // reading different cells of it, so the texture alone doesn't identify the artwork.
+    let particle_tex_st: HashMap<i64, Vec<[f64; 4]>> = {
+        let mut m: HashMap<i64, Vec<[f64; 4]>> = HashMap::new();
+        for p in &asset.particles {
+            for (pid, st) in [(p.tex_pid, p.tex_st), (p.trail_tex_pid, p.trail_tex_st)] {
+                if let Some(pid) = pid {
+                    let e = m.entry(pid).or_default();
+                    if !e.iter().any(|s| st_eq(*s, st)) {
+                        e.push(st);
+                    }
+                }
+            }
+        }
+        m
+    };
 
     // Detect frozen particle-burst quads. A texture instanced as many small quads
     // COULD be an effect burst (snow flecks, sparks, an explosion's frames — e.g.
@@ -2350,7 +2879,7 @@ fn export_scene(
         stats
             .iter()
             .filter(|(pid, (count, max_ext))| {
-                particle_tex_pids.contains(pid)
+                particle_tex_st.contains_key(pid)
                     && *count >= 4
                     && frame_extent.is_some_and(|fe| fe > 0.0 && *max_ext < fe * 0.5)
             })
@@ -2359,7 +2888,17 @@ fn export_scene(
     };
 
     for quad in order {
-        if burst_tex.contains(&quad.tex_pid) {
+        // A frozen burst copy samples the SAME atlas sub-rect as the particle system it
+        // duplicates. A quad reading a DIFFERENT `_MainTex_ST` rect of a shared atlas is
+        // distinct art and must survive: Virtuosa "Diversity in Oneness"'s `window/lan_01`
+        // + `lan_add` (the white rhombus and its blue rain-streak overlay) share texture
+        // `l2d_cello_46` with a starburst emitter, but the emitter crops to the top quarter
+        // (ST y=0.25) while the meshes read the whole sheet (ST identity).
+        if burst_tex.contains(&quad.tex_pid)
+            && particle_tex_st
+                .get(&quad.tex_pid)
+                .is_some_and(|sts| sts.iter().any(|s| st_eq(*s, quad.st)))
+        {
             if dbg {
                 eprintln!(
                     "  DROP[burst-sprite] '{}' sort={}",
@@ -2433,9 +2972,20 @@ fn export_scene(
         }
         // Drop exact-duplicate layers: same texture, depth, blend, and projected
         // geometry. Hash a rounded signature so tiny float noise still collapses.
+        //
+        // The signature must cover everything that makes two co-located quads render
+        // DIFFERENTLY, not just their geometry — otherwise a pair of stacked
+        // full-screen planes that share one texture but carry different tints,
+        // colour animations or reveal windows collapses into whichever the object
+        // order happened to visit first. Skadi the Corrupting Heart stacks exactly
+        // that: `heip_01` (黑屏, the fade-to-BLACK) and `baise_01` (白色, the WHITE
+        // handoff flash) are the same `mask_09` quad at the same sort, differing only
+        // in material tint and their animated alpha windows — so the black fade was
+        // silently swallowed by the white flash.
         {
             use std::hash::{Hash, Hasher};
             let mut h = std::collections::hash_map::DefaultHasher::new();
+            let mut q = |v: f32| (f64::from(v) * 1000.0).round() as i64;
             quad.tex_pid.hash(&mut h);
             quad.sort.hash(&mut h);
             quad.additive.hash(&mut h);
@@ -2443,12 +2993,95 @@ fn export_scene(
                 (v.round() as i64).hash(&mut h);
             }
             quad.mesh.indices.hash(&mut h);
+            // Visual identity: static tint, blend factors, and the alpha texture.
+            for &c in &quad.tint {
+                q(c).hash(&mut h);
+            }
+            q(quad.src_blend as f32).hash(&mut h);
+            q(quad.dst_blend as f32).hash(&mut h);
+            // Timing identity: the clip reveal window. `root_reveal_from` is
+            // deliberately EXCLUDED — an entrance scene bundles both prefab roots, so
+            // the same painted quad routinely appears twice, once ungated (entrance
+            // root) and once cross-root-gated (idle root). Those are the same artwork
+            // and collapsing them is the whole point of this pass; keeping both would
+            // draw the layer twice from the transform beat onward.
+            quad.active_from.map(&mut q).hash(&mut h);
+            quad.active_until.map(&mut q).hash(&mut h);
+            // Animation identity: the colour and UV curves drive what the layer shows
+            // over time, so two quads running different curves are never duplicates.
+            if let Some(cc) = &quad.color_curve {
+                cc.len().hash(&mut h);
+                for &(t, rgba) in cc {
+                    q(t).hash(&mut h);
+                    for &c in &rgba {
+                        q(c).hash(&mut h);
+                    }
+                }
+            }
+            if let Some(sc) = &quad.st_curve {
+                sc.len().hash(&mut h);
+                for &(t, st) in sc {
+                    q(t).hash(&mut h);
+                    for &c in &st {
+                        q(c).hash(&mut h);
+                    }
+                }
+            }
+            if let Some([u, v]) = quad.uv_scroll {
+                q(u).hash(&mut h);
+                q(v).hash(&mut h);
+            }
             if !seen_sigs.insert(h.finish()) {
                 if dbg {
                     eprintln!("  DROP[duplicate] '{name_l}' sort={}", quad.sort);
                 }
                 continue;
             }
+        }
+        // Cross-root twin resolution (see `bare_sigs`). The bare signature stops one
+        // step short of the full one: it omits the reveal window and the colour/ST
+        // curves, so an animated layer and its undriven copy collide here even though
+        // they differ above. Two ANIMATED quads never collide this way in a harmful
+        // sense — they keep their own entries and both survive, which is what keeps
+        // Mlynar's two `xuewen24_dm_new` reveals (different windows, same artwork)
+        // distinct.
+        let bare_animated = quad.color_curve.is_some()
+            || quad.st_curve.is_some()
+            || quad.active_from.is_some()
+            || quad.active_until.is_some();
+        let bare_sig = {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            let q = |v: f32| (f64::from(v) * 1000.0).round() as i64;
+            quad.tex_pid.hash(&mut h);
+            quad.sort.hash(&mut h);
+            quad.additive.hash(&mut h);
+            for &v in &pos {
+                (v.round() as i64).hash(&mut h);
+            }
+            quad.mesh.indices.hash(&mut h);
+            for &c in &quad.tint {
+                q(c).hash(&mut h);
+            }
+            q(quad.src_blend as f32).hash(&mut h);
+            q(quad.dst_blend as f32).hash(&mut h);
+            h.finish()
+        };
+        // An unanimated twin of an already-emitted animated layer is the undriven
+        // prefab-root copy: skip it outright.
+        let mut replace_at = None;
+        match bare_sigs.get(&bare_sig) {
+            Some(&(_, true)) if !bare_animated => {
+                if dbg {
+                    eprintln!("  DROP[undriven-twin] '{name_l}' sort={}", quad.sort);
+                }
+                continue;
+            }
+            // The undriven copy was visited FIRST: overwrite it in place rather than
+            // stacking a second draw. Same texture, sort and geometry, so the slot's
+            // position in draw order is already correct.
+            Some(&(idx, false)) if bare_animated => replace_at = Some(idx),
+            _ => {}
         }
 
         // Decode + save texture once per source path_id.
@@ -2520,10 +3153,15 @@ fn export_scene(
         let is_opaque = (quad.src_blend - 1.0).abs() < 0.5 && quad.dst_blend < 0.5;
         let is_premul_alpha =
             (quad.src_blend - 1.0).abs() < 0.5 && (quad.dst_blend - 10.0).abs() < 0.5;
-        if is_opaque && lum_mean < 0.06 && lum_p90 < 0.12 {
+        // `p98` guards the claim the mean and p90 cannot make alone: FEATURELESS. A
+        // refraction map is dark all the way up its distribution (the four real ones in
+        // the corpus peak at 0.000-0.133 and are 100% pure black); a compact light streak
+        // on a black field is dark on average but keeps a bright top few percent
+        // (Mlynar's sword glow: mean 0.041, p90 0.059, p98 0.420 over 8.9% lit texels).
+        if is_opaque && lum_mean < 0.06 && lum_p90 < 0.12 && lum_p98 < 0.25 {
             if dbg {
                 eprintln!(
-                    "  DROP[grabpass] '{name_l}' sort={} lum_mean={lum_mean:.3} p90={lum_p90:.3}",
+                    "  DROP[grabpass] '{name_l}' sort={} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} dark={dark_frac:.3}",
                     quad.sort
                 );
             }
@@ -2541,10 +3179,17 @@ fn export_scene(
         //     + window sits well above it), and requiring a >0.6 pure-black
         //     majority separates a compact glow from a merely-dark backdrop (whose
         //     colour isn't pure black). Force additive so the black drops.
+        // The `p98 > 0.9` peak was too strict — it excluded dimmer streaks such as
+        // Mlynar's sword glow, which peaks at 0.420. Relax it to the same 0.25
+        // "carries light of its own" floor the grab-pass drop uses. The floor must
+        // STAY: a layer with no bright texels at all is not a glow drawn on black, it
+        // is a black CURTAIN whose whole job is to paint black (Skadi the Corrupting
+        // Heart's fade-to-black plane, pure black at dark_frac 1.000). Forcing that
+        // additive composites it to nothing and silently deletes the fade.
         let is_black_field_glow = (is_premul_alpha && lum_mean < 0.25 && lum_p90 > 0.75)
             || ((is_premul_alpha || is_opaque)
                 && lum_mean < 0.25
-                && lum_p98 > 0.9
+                && lum_p98 > 0.25
                 && dark_frac > 0.6);
         let additive = quad.additive || is_black_field_glow;
 
@@ -2593,6 +3238,44 @@ fn export_scene(
         if let Some(uv) = quad.uv_scroll {
             layer["uvScroll"] = serde_json::json!([uv[0], uv[1]]);
         }
+        // Ram DISSOLVE/DISTURB masking (see [`SceneRam`]): the mask indices join the
+        // scene's own texture list, so the frontend loader needs no new plumbing.
+        if let Some(r) = &quad.ram {
+            let diss = resolve_scene_mask(
+                r.dissolve_pid,
+                r.dissolve_val.as_ref(),
+                resources,
+                &tex_dir,
+                &mut tex_index,
+                &mut next_idx,
+                &mut saved,
+            );
+            let dist = resolve_scene_mask(
+                r.disturb_pid,
+                r.disturb_val.as_ref(),
+                resources,
+                &tex_dir,
+                &mut tex_index,
+                &mut next_idx,
+                &mut saved,
+            );
+            if diss.is_some() || dist.is_some() {
+                layer["ram"] = serde_json::json!({
+                    "dissolveTex": diss,
+                    "dissolveST": r.dissolve_st,
+                    "disturbTex": dist,
+                    "disturbST": r.disturb_st,
+                    "amount": r.amount,
+                    "borderWidth": r.border_width,
+                    "intensityU": r.intensity_u,
+                    "intensityV": r.intensity_v,
+                    "disturbInfluenceDissolveUV": r.disturb_influence_dissolve_uv,
+                    "disturbInfluenceMainUV": r.disturb_influence_main_uv,
+                    "dissolveSpeed": r.dissolve_speed,
+                    "disturbSpeed": r.disturb_speed,
+                });
+            }
+        }
         // CLIP `_MainTex_ST` curve (Capability B): `[t, sx, sy, ox, oy]` samples the frontend
         // replays during the entrance (Skadi2's seam sweep). Omitted for static-ST layers.
         if let Some(sc) = &quad.st_curve {
@@ -2602,10 +3285,20 @@ fn export_scene(
                     .collect::<Vec<_>>()
             );
         }
+        // BONE ATTACHMENT: the quad rides a spine bone (see [`BgFollow`]). `pos` above is
+        // the baked EDITOR pose; the frontend re-bases it every frame by
+        // `bone(t) · followerWorld⁻¹`, where the follower's world frame is given here in
+        // authored px (Y-up) as an origin plus its 2×2 linear basis.
+        if let Some(f) = &quad.follow {
+            layer["followBone"] = serde_json::json!(f.bone);
+            layer["followBoneRot"] = serde_json::json!(f.rot);
+            layer["followOrigin"] = serde_json::json!([f.origin[0] * inv, f.origin[1] * inv]);
+            layer["followBasis"] = serde_json::json!(f.basis);
+        }
         if dbg {
             let ext = (xmx - xmn).max(ymx - ymn);
             eprintln!(
-                "  KEEP '{name_l}' sort={} size={:.0}x{:.0} ext={ext:.0} add={additive} src/dst={:.0}/{:.0} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} darkf={dark_frac:.2}",
+                "  KEEP '{name_l}' tex={tex_idx} sort={} size={:.0}x{:.0} ext={ext:.0} add={additive} src/dst={:.0}/{:.0} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} darkf={dark_frac:.2}",
                 quad.sort,
                 xmx - xmn,
                 ymx - ymn,
@@ -2613,7 +3306,53 @@ fn export_scene(
                 quad.dst_blend
             );
         }
-        layers.push(layer);
+        if let Some(idx) = replace_at {
+            layers[idx] = layer;
+            bare_sigs.insert(bare_sig, (idx, true));
+        } else {
+            bare_sigs.insert(bare_sig, (layers.len(), bare_animated));
+            layers.push(layer);
+        }
+    }
+
+    // ENTRANCE only: drop an UNDRIVEN copy of artwork the cinematic drives elsewhere.
+    // Effect prefabs are instantiated once per animation state (Mlynar carries four
+    // `glow_01` sword flares — one per sword rig, same 128px streak texture at the same
+    // sort, each posed differently). The `_Start` clip drives only the rigs it plays;
+    // the idle/special copies get no colour curve and no reveal window, so they would
+    // paint their streak at full strength for the entire cinematic while the game shows
+    // them only during their own state. Keyed on (texture, sort) rather than geometry
+    // because the copies differ exactly in pose — which is why the bare-signature twin
+    // rule above cannot see them. Requires a driven sibling, so art that is legitimately
+    // static everywhere in the scene is untouched. Corpus-wide this removes 8 layers
+    // across 4 of the 12 entrance skins.
+    if asset.name.to_ascii_lowercase().contains("_start") {
+        let driven: std::collections::HashSet<(i64, i64)> = layers
+            .iter()
+            .filter(|l| {
+                l.get("colorCurve").is_some()
+                    || l.get("activeFrom").is_some()
+                    || l.get("activeUntil").is_some()
+            })
+            .filter_map(|l| Some((l.get("tex")?.as_i64()?, l.get("sort")?.as_i64()?)))
+            .collect();
+        layers.retain(|l| {
+            if l.get("colorCurve").is_some()
+                || l.get("activeFrom").is_some()
+                || l.get("activeUntil").is_some()
+            {
+                return true;
+            }
+            let key = l
+                .get("tex")
+                .and_then(serde_json::Value::as_i64)
+                .zip(l.get("sort").and_then(serde_json::Value::as_i64));
+            let keep = !key.is_some_and(|k| driven.contains(&k));
+            if !keep && dbg {
+                eprintln!("  DROP[undriven-sibling] tex={:?}", key);
+            }
+            keep
+        });
     }
 
     // No mesh layers AND no camera frame → nothing worth writing. With a frame but

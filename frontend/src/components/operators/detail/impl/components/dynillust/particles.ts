@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import type { IAnimationBounds } from "../chibi/helpers";
+import { sampleColorCurve } from "./sceneMesh";
 
 /**
  * Live particle simulator for a dynamic illustration's Unity ParticleSystems.
@@ -25,7 +26,11 @@ interface ICurvePoint {
     v: number;
 }
 
-export type MMColor = { mode: "color"; r: number; g: number; b: number; a: number } | { mode: "gradient"; stops: IColorStop[] };
+/** Unity `MinMaxGradient`. `twoColors` is `RandomBetweenTwoColors`: each particle
+ *  draws ONE colour uniformly between the two authored endpoints at birth (Skadi2
+ *  iteration's `xian` threads are authored red→cyan; taking only the "max" side
+ *  locked every thread cyan). Constant/gradient states are unchanged. */
+export type MMColor = { mode: "color"; r: number; g: number; b: number; a: number } | { mode: "twoColors"; min: IRGBA; max: IRGBA } | { mode: "gradient"; stops: IColorStop[] };
 
 interface IColorStop {
     t: number;
@@ -38,7 +43,10 @@ interface IColorStop {
 export interface IParticleSystemData {
     name?: string;
     sort: number;
-    tex: number;
+    /** `[particles]` texture index, or null when the material carries no `_MainTex` —
+     *  an UNTEXTURED material, which Unity draws in its own colour (see the mesh-render
+     *  handling in {@link loadParticles}). */
+    tex: number | null;
     /** Mesh-render-mode geometry (ice crystals, ribbons): flat mesh-LOCAL triangle
      *  geometry the exporter emits for `renderMode:"mesh"` systems. Each particle
      *  instances it, scaled by the particle's size. Absent for billboard/stretch. */
@@ -60,8 +68,21 @@ export interface IParticleSystemData {
     lifetime: MMScalar;
     startSpeed: MMScalar;
     startSize: MMScalar;
+    /** Unity `size3D`'s separate HEIGHT scalar (px). Exported only when the system
+     *  authors a genuinely non-uniform particle, so the quad is `startSize` wide and
+     *  `startSizeY` tall instead of square — Mlynar's `fangkuai_*` city slabs are
+     *  0.5 × 2.0 units, a 1:4 bar that a single scalar renders 4× too short. */
+    startSizeY?: MMScalar | null;
     startRotation?: MMScalar;
     startColor?: MMColor;
+    /** The material's `_TintColor`, ALREADY doubled by the exporter — Torappu's ports of
+     *  Unity's legacy particle shaders sample `2 × _TintColor × vertexColor × tex`, which
+     *  is why every one of them declares the property's default as (0.5, 0.5, 0.5, 0.5).
+     *  Exported only when the material is authored AWAY from that neutral (`null`
+     *  otherwise), so every already-faithful system is untouched. Mlynar's `bao_01`
+     *  transformation blast is (1, 1, 1, 1) — double-neutral in all four channels — so
+     *  its additive output (`rgb × a`) is 4× what an untinted draw produces. */
+    tint?: [number, number, number, number] | null;
     emission: { rate?: MMScalar; bursts?: { t: number; count: number }[] };
     /** The `_Start` cinematic's ANIMATED emission rate (particles/s over absolute
      *  cinematic seconds), when a clip drives `EmissionModule.rateOverTime` directly —
@@ -72,7 +93,7 @@ export interface IParticleSystemData {
      *  emission for rigs riding a moving anchor (Virtuosa's falling-apple comet dust,
      *  rate-over-TIME 0). Applied on the emitter container's per-frame movement. */
     rateOverDistance?: MMScalar | null;
-    shape?: { type: string; radius?: number; angleDeg?: number; arcDeg?: number; box?: [number, number]; posOffset?: [number, number]; rotDeg?: number };
+    shape?: { type: string; radius?: number; radiusThickness?: number; angleDeg?: number; arcDeg?: number; box?: [number, number]; scale?: [number, number]; posOffset?: [number, number]; rotDeg?: number };
     /** Faithful screen-space (Y-up) cone emission direction for camera-facing (tilted)
      *  emitters whose flat `rot` is degenerate. Exported ONLY for such cones (Skadi2's
      *  `xiaoyu`/`guang` red streaks); when present the cone aims along it instead of the
@@ -88,7 +109,16 @@ export interface IParticleSystemData {
     stretch?: { lengthScale: number; velocityScale: number; cameraVelocityScale: number } | null;
     colorOverLife?: MMColor | null;
     sizeOverLife?: ICurvePoint[] | null;
-    velocityOverLife?: { x: number; y: number; space?: string } | null;
+    /** Unity `velocityOverLifetime`, in px/s. `x`/`y` are the representative (largest)
+     *  vector, used where a single constant is needed (stretch length, spawn-cull
+     *  trajectory, pile-density). `space:"screen"` means the exporter already projected
+     *  the authored LOCAL 3-vector through the emitter's full world basis into the
+     *  screen (Y-up) frame — the `rot` rotation below must NOT be re-applied. `curve`
+     *  is the per-lifetime vector at normalized particle age; without it the drift is
+     *  the constant `x`/`y` (the legacy shape). Skadi2 iteration's crown ring is the
+     *  case both parts exist for: its x and z axes trace a CIRCLE over the lifetime,
+     *  which flattening to one number turned into a straight drift ("2–3 loose birds"). */
+    velocityOverLife?: { x: number; y: number; space?: string; curve?: { t: number; x: number; y: number }[] } | null;
     /** Unity `ClampVelocityModule` ("Limit Velocity over Lifetime"): a per-step
      *  damped speed clamp. `magnitude` is the speed LIMIT (px/s) over normalized
      *  life; each frame a particle over the limit has its velocity lerped toward
@@ -161,6 +191,11 @@ export interface IRamData {
     dissolveTex: number | null;
     dissolveST: RamST;
     mainColor: [number, number, number, number];
+    /** The `_Start` cinematic's animated `_MainColor`, keyed in absolute cinematic
+     *  seconds as `[t, r, g, b, a]` — the particle twin of a scene layer's
+     *  `colorCurve`. Replayed each frame, REPLACING `mainColor`; absent = the static
+     *  serialized colour holds for the whole shot. RGB is exported HDR-unclamped. */
+    mainColorCurve?: [number, number, number, number, number][] | null;
     opacity: number;
     borderWidth: number;
     amount: number;
@@ -215,6 +250,35 @@ const GLOBAL_MAX_PARTICLES = 1400;
 const PER_SYSTEM_CAP = 250;
 /** Number of ribbon points per particle trail. */
 const TRAIL_POINTS = 12;
+
+/** Spacing (px) between a trail's recorded history points.
+ *
+ *  Unity's Trails module bounds a ribbon by its point LIFETIME — each point lives
+ *  `particleLifetime × trail.lifetime` seconds — so the ribbon spans roughly
+ *  `speed × that`. `minVertexDistance` is only the SAMPLING threshold: how far the head
+ *  must travel before a new vertex is laid down. It does not bound the length.
+ *
+ *  Recording at `minVertexDistance` into a fixed {@link TRAIL_POINTS} buffer conflated the
+ *  two and capped every ribbon at `(TRAIL_POINTS − 1) × minVertexDistance`, regardless of
+ *  what was authored. Across the three reference skins that truncated **22 of 28** trail
+ *  systems, several catastrophically: the worst records a vertex every 1 px, so 12 points
+ *  spanned 11 px where Unity draws ~2137 (194×), and Skadi's crossing red threads spanned
+ *  55 px against an authored ~2000 (37×) — which is why her long red streak is missing
+ *  entirely rather than merely short.
+ *
+ *  Spread the SAME vertex budget over the authored span instead: the ribbon keeps its
+ *  length while the cost stays fixed at 12 points. Never sample finer than the authored
+ *  `minVertexDistance` (that is a real floor), and clamp the span so a pathological
+ *  speed×lifetime cannot stretch one ribbon across the whole scene. */
+function trailSpacing(spanPx: number, minVertexDistance: number): number {
+    const span = Math.min(Math.max(spanPx, 0), TRAIL_MAX_SPAN);
+    return Math.max(minVertexDistance || 1, span / (TRAIL_POINTS - 1));
+}
+
+/** Upper bound (px) on an authored trail span, in the scene's own pixel space. Guards a
+ *  degenerate `speed × lifetime` product; well above any real authored ribbon (the longest
+ *  across the reference skins is ~2400). */
+const TRAIL_MAX_SPAN = 4000;
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
 const MIN_PARTICLE_LIFE = 0.05;
 
@@ -289,8 +353,18 @@ function sampleGradient(stops: IColorStop[], t: number): IRGBA {
     return last;
 }
 
-function sampleColor(c: MMColor | undefined | null, t: number): IRGBA {
+/** Sample a `MinMaxGradient` at normalized time `t`. `rand` is the particle's own
+ *  0..1 draw, used ONLY by the `twoColors` (Unity `RandomBetweenTwoColors`) state,
+ *  which picks one colour per PARTICLE — pass the particle's stored `rand` for
+ *  per-frame sampling so its colour is stable over its life; omit it at spawn to
+ *  draw a fresh one. Every other state ignores `rand` and consumes no randomness,
+ *  so single-colour/gradient systems stay byte-identical. */
+function sampleColor(c: MMColor | undefined | null, t: number, rand?: number): IRGBA {
     if (!c) return { r: 1, g: 1, b: 1, a: 1 };
+    if (c.mode === "twoColors") {
+        const f = rand ?? Math.random();
+        return { r: lerp(c.min.r, c.max.r, f), g: lerp(c.min.g, c.max.g, f), b: lerp(c.min.b, c.max.b, f), a: lerp(c.min.a, c.max.a, f) };
+    }
     return c.mode === "color" ? c : sampleGradient(c.stops, t);
 }
 
@@ -307,6 +381,8 @@ interface IParticle {
     age: number;
     life: number;
     size: number;
+    /** Height / width of the quad — 1 unless the system authors `startSizeY`. */
+    aspectY: number;
     rot: number;
     rotVel: number;
     rand: number;
@@ -319,6 +395,9 @@ interface IParticle {
     trailPts?: PIXI.Point[];
     rope?: PIXI.SimpleRope;
     hist?: number[];
+    /** Spacing (px) between this particle's recorded history points. Derived per
+     *  particle from the AUTHORED trail lifetime — see {@link trailSpacing}. */
+    trailSpace?: number;
 }
 
 /** The follow bone's LIVE world matrix this frame (pixi-spine `bone.matrix`);
@@ -372,6 +451,30 @@ function followOf(d: IParticleSystemData): IFollow | undefined {
 /** Longest lifetime (s) that still gets `velocityOverLifetime` drift. See below. */
 const VELOCITY_MAX_LIFE = 0.8;
 
+/** The shape transform's non-uniform SCALE (Unity `ShapeModule.scale`), which stretches a
+ *  RADIAL emission volume into an ellipse around `radius`. Unity applies it to every shape
+ *  type, not just boxes (whose size it already IS — `shape.box`, in px). Ignoring it packs a
+ *  wide, thin shower into a small disc: Mlynar's rain hemispheres are radius-0.2 scaled up to
+ *  (2.0, 1.4), so unscaled they emit ~1.6x too densely over half the authored width and read
+ *  as clustered patches over the bare trees. Legacy exports (and every default (1,1) shape)
+ *  return the identity, leaving those systems byte-identical. */
+function shapeScale(shape: NonNullable<IParticleSystemData["shape"]>): [number, number] {
+    const s = shape.scale;
+    return s ? [s[0], s[1]] : [1, 1];
+}
+
+/** Unity `ShapeModule.radiusThickness`: the fraction of the radius the emission volume
+ *  occupies, measured inward from the surface — 1 fills the whole disc, 0 emits on the
+ *  SHELL only (Skadi2's `smoke_01`/`tri_weapon_01` bursts, which we scattered through the
+ *  interior instead of ringing the rim). Returns the sampled radius as a fraction of
+ *  `radius`, uniform in AREA over the annulus, consuming exactly one `Math.random()` so a
+ *  full-volume (thickness 1) shape draws the identical value it always did. */
+function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
+    const inner = 1 - Math.min(Math.max(shape.radiusThickness ?? 1, 0), 1);
+    const i2 = inner * inner;
+    return Math.sqrt(i2 + (1 - i2) * Math.random());
+}
+
 /** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
  *  when the exporter captured one (sampled at the emitter clock — rate-curve systems
  *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
@@ -403,11 +506,33 @@ function worldVelocityOverLife(d: IParticleSystemData): { x: number; y: number }
     if (!vol || (vol.x === 0 && vol.y === 0)) return null;
     const isStreak = d.renderMode === "stretch" || d.trail != null;
     if (!isStreak && scalarMax(d.lifetime) > VELOCITY_MAX_LIFE) return null;
-    if (vol.space === "world") return { x: vol.x, y: vol.y };
+    // `world` (authored in world space) and `screen` (a local vector the exporter already
+    // projected through the emitter's world basis) are both world-aligned already.
+    if (vol.space === "world" || vol.space === "screen") return { x: vol.x, y: vol.y };
     const a = (d.rot ?? 0) * DEG;
     const c = Math.cos(a);
     const s = Math.sin(a);
     return { x: vol.x * c - vol.y * s, y: vol.x * s + vol.y * c };
+}
+
+/** Linear-sample a `velocityOverLife.curve` (already world/screen-aligned px/s) at
+ *  normalized particle age. Only systems whose authored curves the exporter judged
+ *  lossy under a single constant carry one; everything else keeps the constant
+ *  {@link worldVelocityOverLife}. */
+function sampleVolCurve(curve: { t: number; x: number; y: number }[], t: number): { x: number; y: number } {
+    if (curve.length === 0) return { x: 0, y: 0 };
+    if (t <= curve[0].t) return curve[0];
+    const last = curve[curve.length - 1];
+    if (t >= last.t) return last;
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i].t) {
+            const a = curve[i - 1];
+            const b = curve[i];
+            const f = (t - a.t) / (b.t - a.t || 1);
+            return { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f) };
+        }
+    }
+    return last;
 }
 
 /** Every bone's REFERENCE-pose world matrix, keyed by bone name — captured once
@@ -494,7 +619,7 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
             st.boneName = follow.bone;
             st.ref = m;
             st.transOnly = !follow.rot;
-        } else if (find && restBone && (chain?.some((n) => restBone.has(n)) || simSpace === "local")) {
+        } else if (find && restBone && (chain?.some((n) => restBone.has(n)) || simSpace === "world")) {
             let best: string | null = null;
             let bestDist = Number.POSITIVE_INFINITY;
             for (const [name, m] of restBone) {
@@ -539,6 +664,66 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
     container.transform.setFromMatrix(base);
 }
 
+/** Mutable state {@link holdWorldSpace} keeps between frames (the emitter container's
+ *  transform as of the previous frame). One per emitter. */
+interface IWorldSpaceState {
+    prev: PIXI.Matrix | null;
+}
+
+/** The minimum a particle must expose to be carried by {@link holdWorldSpace}. */
+interface IDriftable {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    /** Flat `[x0,y0,x1,y1,…]` trail history (Y-up), when the particle ribbons. */
+    hist?: number[];
+}
+
+/** Unity `ParticleSystemSimulationSpace.World`: once emitted, a particle is INDEPENDENT
+ *  of its emitter — the emitter keeps moving and the particle stays where it was born.
+ *  (`Local` is the opposite: the whole cloud is parented to the emitter and rides along.)
+ *
+ *  Our particles are children of the emitter container, whose transform {@link driftWithBone}
+ *  drives from the followed bone — so they ride it, i.e. every system simulates LOCAL. For a
+ *  world-space system, re-express each live particle in the container's NEW frame so it holds
+ *  the screen position it already had: `p' = M_now⁻¹ · M_prev · p`. Velocities take the same
+ *  linear part, keeping their direction world-fixed as the emitter rotates.
+ *
+ *  This is what leaves a TRAIL behind a moving emitter: Virtuosa "Diversity in Oneness"'s
+ *  falling apple sheds sparks (`rateOverDistance`) all the way down its plunge instead of
+ *  dragging the whole cloud with it as a tight blob. No-op — the early return — for a static
+ *  emitter, which is most of them, and never reached by a `local` system. */
+function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particles: readonly IDriftable[]): void {
+    container.transform.updateLocalTransform();
+    const now = container.transform.localTransform;
+    const prev = st.prev;
+    st.prev = now.clone();
+    if (!prev) return;
+    // Untransformed emitter (identical frames) — nothing to compensate.
+    if (prev.a === now.a && prev.b === now.b && prev.c === now.c && prev.d === now.d && prev.tx === now.tx && prev.ty === now.ty) return;
+    const delta = now.clone().invert().append(prev);
+    for (const p of particles) {
+        // Particle coords are Y-UP; the container transform is Pixi's Y-DOWN screen frame.
+        const x = delta.a * p.x + delta.c * -p.y + delta.tx;
+        const y = delta.b * p.x + delta.d * -p.y + delta.ty;
+        p.x = x;
+        p.y = -y;
+        const vx = delta.a * p.vx + delta.c * -p.vy;
+        const vy = delta.b * p.vx + delta.d * -p.vy;
+        p.vx = vx;
+        p.vy = -vy;
+        if (p.hist) {
+            for (let i = 0; i + 1 < p.hist.length; i += 2) {
+                const hx = delta.a * p.hist[i] + delta.c * -p.hist[i + 1] + delta.tx;
+                const hy = delta.b * p.hist[i] + delta.d * -p.hist[i + 1] + delta.ty;
+                p.hist[i] = hx;
+                p.hist[i + 1] = -hy;
+            }
+        }
+    }
+}
+
 /** One live billboard emitter: owns a sprite pool inside a container. */
 class Emitter {
     protected readonly data: IParticleSystemData;
@@ -560,6 +745,11 @@ class Emitter {
 
     /** velocityOverLifetime drift, short-lived particles only (see {@link worldVelocityOverLife}). */
     private readonly volWorld: { x: number; y: number } | null;
+    /** Per-lifetime velocityOverLifetime vector (px/s, world-aligned), when the exporter
+     *  couldn't represent the authored curves as one constant — see
+     *  {@link IParticleSystemData.velocityOverLife}. Null → the constant `volWorld` is used,
+     *  exactly as before. Gated on `volWorld` so the same short-life/streak rules apply. */
+    private readonly volCurve: { t: number; x: number; y: number }[] | null;
     /** Bone-follow state so the effect drifts with its parent bone (see {@link driftWithBone}). */
     private readonly boneAnchor: IBoneAnchor = { resolved: false, boneName: null, ref: null };
     /** Explicit BoneFollower attachment (see {@link followOf} / {@link driftWithBone}). */
@@ -569,6 +759,8 @@ class Emitter {
      *  falling-apple comet dust). */
     private readonly rodRate: number;
     private lastEmitterPos: { x: number; y: number } | null = null;
+    /** World-space simulation state — see {@link holdWorldSpace}. */
+    private readonly worldSpace: IWorldSpaceState = { prev: null };
     /** Live authored display box (mesh-local px, Y-down) for the current frame — see
      *  {@link ILoadedParticles.update}. Null = no cull (e.g. no framing data yet). */
     private displayBox: IAnimationBounds | null = null;
@@ -579,6 +771,11 @@ class Emitter {
     /** Width of one sprite (a sheet frame's, else the whole texture) — the scale
      *  divisor so `startSize` maps to on-screen pixels regardless of tiling. */
     protected readonly spriteW: number;
+    /** Height of one sprite, the divisor for a `startSizeY` quad. The sprite is NOT
+     *  square in general: the material's `_MainTex_ST` crop or a sheet cell can already
+     *  carry the aspect (Virtuosa's `star_large_01` samples a 512×128 strip), so a
+     *  non-uniform size has to divide each axis by its own extent. */
+    protected readonly spriteH: number;
 
     constructor(
         data: IParticleSystemData,
@@ -602,6 +799,7 @@ class Emitter {
         this.follow = followOf(data);
         this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
         this.volWorld = worldVelocityOverLife(data);
+        this.volCurve = this.volWorld && data.velocityOverLife?.curve?.length ? data.velocityOverLife.curve : null;
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
         // Trails render behind the particle heads.
         this.trailLayer = data.trail ? new PIXI.Container() : null;
@@ -630,8 +828,10 @@ class Emitter {
                 }
             }
             this.spriteW = fw || 1;
+            this.spriteH = fh || 1;
         } else {
             this.spriteW = texture.width || 1;
+            this.spriteH = texture.height || 1;
         }
     }
 
@@ -651,6 +851,11 @@ class Emitter {
         const sprite = new PIXI.Sprite(this.frames[0] ?? this.texture);
         sprite.anchor.set(0.5);
         sprite.blendMode = this.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
+        // Unity render mode "None": the particle draws NO head sprite — only its trail
+        // ribbon (Skadi2 iteration's `xian` threads). Drawing the head anyway stamps a
+        // bright sprite at the ribbon's tip that the game never shows. The particle still
+        // simulates (and still lays its trail); only the head is invisible.
+        if (this.data.renderMode === "none") sprite.renderable = false;
         return sprite;
     }
 
@@ -662,6 +867,16 @@ class Emitter {
         if (this.frames.length) s.texture = this.frameAt(lf);
         s.position.set(p.x, -p.y);
         const base = sz / this.spriteW;
+        // A STRETCHED billboard already derives its length from `lengthScale · size`
+        // along the screen velocity (below), so Unity's per-axis `size3D` height is not
+        // a second Y scale there — only a plain billboard uses it as the quad's height.
+        // The quad is `size` wide by `size · aspectY` tall in SCENE px, so each axis
+        // divides by its own sprite extent — scaling Y by the WIDTH divisor would apply
+        // the sprite's own aspect a second time. Only a system that actually authors
+        // `startSizeY` switches to the per-axis divisor; every other system keeps the
+        // single `base` scale (which preserves the sprite's own aspect) untouched.
+        const sized3D = !!this.data.startSizeY && this.data.renderMode !== "stretch";
+        const baseY = sized3D ? (sz * p.aspectY) / this.spriteH : base;
         if (this.data.renderMode === "stretch") {
             // Unity "Stretched Billboard" (rain streaks, spark trails): elongate the sprite ALONG
             // its screen velocity to the AUTHORED length `|lengthScale|·size + velocityScale·speed`
@@ -680,11 +895,11 @@ class Emitter {
                 s.rotation = Math.atan2(vyScreen, vx) - Math.PI / 2; // sprite local +Y → velocity
                 s.scale.set(base, (len / sz) * base);
             } else {
-                s.scale.set(base);
+                s.scale.set(base, baseY);
                 s.rotation = -p.rot * DEG;
             }
         } else {
-            s.scale.set(base);
+            s.scale.set(base, baseY);
             s.rotation = -p.rot * DEG;
         }
         s.tint = hex;
@@ -706,13 +921,14 @@ class Emitter {
         if (shape) {
             const arc = (shape.arcDeg ?? 360) * DEG;
             const a = Math.random() * arc;
-            const r = (shape.radius ?? 0) * Math.sqrt(Math.random());
+            const [sx, sy] = shapeScale(shape);
+            const r = (shape.radius ?? 0) * radialFrac(shape);
             switch (shape.type) {
                 case "sphere":
                 case "hemisphere":
                 case "circle":
-                    ox = Math.cos(a) * r;
-                    oy = Math.sin(a) * r;
+                    ox = Math.cos(a) * r * sx;
+                    oy = Math.sin(a) * r * sy;
                     dirAng = Math.atan2(oy, ox);
                     break;
                 case "box":
@@ -726,10 +942,15 @@ class Emitter {
                     dirAng = 90 * DEG;
                     break;
                 default: {
-                    // cone / none: spread around up by angleDeg
+                    // cone / none: spread around up by angleDeg. A cone/edge takes NO shape
+                    // scale: Unity skews the cone's base ellipse AND the emission cone with
+                    // it in the emitter's 3-axis frame, which our flat 2D spawn can't
+                    // reproduce — applying it to the spawn offset alone measures WORSE
+                    // (Virtuosa 33.626 -> 33.640). Only the flat AREA shapes above, where
+                    // our disc IS the authored emission area, take it.
                     const spread = (shape.angleDeg ?? 0) * DEG;
                     dirAng = 90 * DEG + (Math.random() - 0.5) * 2 * spread;
-                    const rr = (shape.radius ?? 0) * Math.sqrt(Math.random());
+                    const rr = (shape.radius ?? 0) * radialFrac(shape);
                     ox = Math.cos(a) * rr;
                     oy = Math.sin(a) * rr;
                 }
@@ -742,7 +963,12 @@ class Emitter {
 
         const speed = sampleScalar(d.startSpeed, Math.random(), nt);
         const life = Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt));
-        const size = sampleScalar(d.startSize, Math.random(), nt);
+        // ONE per-particle roll drives BOTH size axes, as Unity's `size3D` does — and,
+        // just as importantly, it keeps the number of `Math.random()` draws per spawn
+        // fixed, so a system that gains a `startSizeY` does not re-phase the seeded
+        // simulation of every particle after it.
+        const sizeRand = Math.random();
+        const size = sampleScalar(d.startSize, sizeRand, nt);
         const rot = sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt);
         const startCol = sampleColor(d.startColor, nt);
 
@@ -791,7 +1017,7 @@ class Emitter {
         // to particles small relative to the box, so it only ever touches the
         // small/localized class the fix targets; large scene-spanning glows are untouched.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
-        if (d.simulationSpace === "world" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+        if (d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
             const box = this.displayBox;
             // Add the sampled particle's own half-size on top of the box-relative margin so
             // a moderately-sized sprite isn't hard-culled just for having an edge-adjacent
@@ -825,7 +1051,7 @@ class Emitter {
         if (!p) {
             const disp = this.createParticleDisp();
             this.container.addChild(disp);
-            p = { x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, size: 0, rot: 0, rotVel: 0, rand: 0, startCol, sprite: disp };
+            p = { x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, size: 0, aspectY: 1, rot: 0, rotVel: 0, rand: 0, startCol, sprite: disp };
             this.pool.push(p);
         }
         p.x = wx;
@@ -835,6 +1061,9 @@ class Emitter {
         p.age = 0;
         p.life = life;
         p.size = size;
+        // `startSizeY` (Unity size3D): the quad is TALLER than it is wide. Carried as a
+        // ratio so the sprite path can stretch only its Y scale; 1 for every uniform system.
+        p.aspectY = d.startSizeY ? sampleScalar(d.startSizeY, sizeRand, nt) / Math.max(1e-6, size) : 1;
         p.rot = rot; // degrees
         p.rotVel = d.rotOverLifeDegPerSec ?? 0; // degrees/sec (kept in degrees to match p.rot)
         p.rand = Math.random();
@@ -854,6 +1083,12 @@ class Emitter {
             for (const pt of p.trailPts) pt.set(wx, -wy);
             p.hist = [wx, wy];
             p.rope.visible = true;
+            // Span this ribbon over the AUTHORED trail length (see `trailSpacing`). Speed
+            // includes the constant drift, matching what the stretched-billboard path uses,
+            // so a system whose motion comes from `velocityOverLife` rather than
+            // `startSpeed` still gets a correctly-sized ribbon.
+            const sp0 = Math.hypot(p.vx + (this.volWorld?.x ?? 0), p.vy + (this.volWorld?.y ?? 0));
+            p.trailSpace = trailSpacing(sp0 * p.life * sampleScalar(trail.lifetime, p.rand, 0), trail.minVertexDistance);
         } else if (p.rope) {
             p.rope.visible = false;
         }
@@ -868,6 +1103,8 @@ class Emitter {
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        // World-space systems leave their particles behind as the emitter travels on.
+        if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.pool);
 
         // Emission (rate + bursts), only while the system is "playing".
         const playing = d.looping || this.time <= d.duration;
@@ -903,7 +1140,8 @@ class Emitter {
         const noise = d.noise;
         const trail = d.trail;
         const trailMinD = trail?.minVertexDistance || 1;
-        const vol = this.volWorld;
+        const volConst = this.volWorld;
+        const volCurve = this.volCurve;
         for (const p of this.pool) {
             if (!p.sprite.visible) continue;
             p.age += dt;
@@ -928,6 +1166,10 @@ class Emitter {
                     p.vy = lerp(p.vy, p.vy * k, d.velocityClamp.dampen);
                 }
             }
+            // The drift push: per-lifetime when the exporter supplied a curve (the vector
+            // TURNS over the particle's life — Skadi2 iteration's crown ring closes a
+            // circle a single constant flattened into a straight line), else the constant.
+            const vol = volCurve ? sampleVolCurve(volCurve, lf) : volConst;
             p.x += (p.vx + (vol?.x ?? 0)) * dt;
             p.y += (p.vy + (vol?.y ?? 0)) * dt;
             // Noise: an organic wander sampled from a time-scrolling field.
@@ -944,12 +1186,15 @@ class Emitter {
             // Using colorOverLife alone discards the emitter's authored tint and
             // alpha — for Logos/Pozëmka that turned dim coloured glows (startColor
             // alpha 0.2–0.68) into full-bright white, blowing out the character.
-            const lifeCol = d.colorOverLife ? sampleColor(d.colorOverLife, lf) : { r: 1, g: 1, b: 1, a: 1 };
+            const lifeCol = d.colorOverLife ? sampleColor(d.colorOverLife, lf, p.rand) : { r: 1, g: 1, b: 1, a: 1 };
+            // …and by the material's doubled `_TintColor` (see IParticleSystemData.tint);
+            // absent (the neutral) for all but a handful of systems.
+            const mt = d.tint;
             const col = {
-                r: p.startCol.r * lifeCol.r,
-                g: p.startCol.g * lifeCol.g,
-                b: p.startCol.b * lifeCol.b,
-                a: p.startCol.a * lifeCol.a,
+                r: p.startCol.r * lifeCol.r * (mt ? mt[0] : 1),
+                g: p.startCol.g * lifeCol.g * (mt ? mt[1] : 1),
+                b: p.startCol.b * lifeCol.b * (mt ? mt[2] : 1),
+                a: p.startCol.a * lifeCol.a * (mt ? mt[3] : 1),
             };
             const hex = rgbToHex(col);
             const alpha = Math.max(0, Math.min(1, col.a));
@@ -960,7 +1205,8 @@ class Emitter {
             if (trail && p.rope?.visible && p.hist && p.trailPts) {
                 const dx = p.x - p.hist[0];
                 const dy = p.y - p.hist[1];
-                if (dx * dx + dy * dy >= trailMinD * trailMinD) {
+                const step = p.trailSpace ?? trailMinD;
+                if (dx * dx + dy * dy >= step * step) {
                     p.hist.unshift(p.x, p.y);
                     if (p.hist.length > TRAIL_POINTS * 2) p.hist.length = TRAIL_POINTS * 2;
                 }
@@ -1037,10 +1283,22 @@ const ADDITIVE_MESH_BOOST = 2.5;
 class MeshEmitter extends Emitter {
     private readonly geometry: PIXI.Geometry;
     private readonly meshTexture: PIXI.Texture;
+    /** Shader-family COLOUR gain applied to a NORMAL-blend mesh — the Torappu
+     *  compositors' ×2 half-neutral convention (see `RAM_FRAG`'s `col += col`). Colour
+     *  only: the particle's own alpha stays authored, so the ribbon keeps the ~25 %
+     *  see-through the capture shows. 1 (the default) leaves every existing mesh
+     *  emitter byte-identical. */
+    private readonly gain: number;
+    /** Extra screen rotation (deg) on top of the particle's own — the emitter transform's
+     *  z-angle, which poses a LOCAL-space mesh particle. 0 (the default) for every textured
+     *  mesh emitter, whose current orientation measures correct as it stands. */
+    private readonly rotOffsetDeg: number;
 
-    constructor(data: IParticleSystemData, texture: PIXI.Texture, blend: "additive" | "normal", getBudget: () => number) {
+    constructor(data: IParticleSystemData, texture: PIXI.Texture, blend: "additive" | "normal", getBudget: () => number, gain = 1, rotOffsetDeg = 0) {
         super(data, texture, null, blend, getBudget);
         this.meshTexture = texture;
+        this.gain = gain;
+        this.rotOffsetDeg = rotOffsetDeg;
         // Build the shared geometry ONCE: mesh-local positions with Y negated and
         // UV V-flipped (authored Y-up / Unity-V → Pixi), exactly like the scene-mesh
         // layers (sceneMesh.buildLayerMesh), plus the per-vertex RGBA edge mask.
@@ -1075,7 +1333,7 @@ class MeshEmitter extends Emitter {
             uSampler: this.meshTexture,
             uTint: new Float32Array([1, 1, 1]),
             uAlpha: 1,
-            uBoost: this.blend === "additive" ? ADDITIVE_MESH_BOOST : 1,
+            uBoost: this.blend === "additive" ? ADDITIVE_MESH_BOOST : this.gain,
         });
         const mesh = new PIXI.Mesh(this.geometry, shader);
         mesh.blendMode = this.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
@@ -1088,7 +1346,7 @@ class MeshEmitter extends Emitter {
         // The geometry is raw mesh-local; Unity scales the mesh by the particle
         // size, and startSize is already emitter-scaled to px → finalPx = local × sz.
         m.scale.set(sz);
-        m.rotation = -p.rot * DEG;
+        m.rotation = (this.rotOffsetDeg - p.rot) * DEG;
         const u = (m.shader as PIXI.Shader).uniforms;
         (u.uTint as Float32Array)[0] = ((hex >> 16) & 0xff) / 255;
         (u.uTint as Float32Array)[1] = ((hex >> 8) & 0xff) / 255;
@@ -1219,6 +1477,8 @@ interface IRamParticle {
     age: number;
     life: number;
     size: number;
+    /** Quad HEIGHT (px) — differs from `size` only for a `startSizeY` system. */
+    sizeY: number;
     rot: number;
     rotVel: number;
     rand: number;
@@ -1251,6 +1511,8 @@ class RamEmitter {
      *  falling-apple comet dust). */
     private readonly rodRate: number;
     private lastEmitterPos: { x: number; y: number } | null = null;
+    /** World-space simulation state — see {@link holdWorldSpace}. */
+    private readonly worldSpace: IWorldSpaceState = { prev: null };
     /** Live authored display box (mesh-local px, Y-down) for the current frame — see
      *  {@link ILoadedParticles.update}. Null = no cull (e.g. no framing data yet). */
     private displayBox: IAnimationBounds | null = null;
@@ -1263,6 +1525,10 @@ class RamEmitter {
     private readonly posBuf: PIXI.Buffer;
     private readonly colBuf: PIXI.Buffer;
     private readonly customBuf: PIXI.Buffer;
+    /** Only rewritten (and re-uploaded) for a texture-sheet system — see `sheetTiles`. */
+    private readonly uvBuf: PIXI.Buffer;
+    /** `tilesX * tilesY` when the system drives a Texture Sheet flipbook, else 0. */
+    private readonly sheetTiles: number;
 
     constructor(
         data: IParticleSystemData,
@@ -1280,6 +1546,7 @@ class RamEmitter {
         this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
         this.volWorld = worldVelocityOverLife(data);
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
+        this.sheetTiles = data.sheet ? Math.max(0, data.sheet.tilesX * data.sheet.tilesY) : 0;
         this.cap = Math.max(1, Math.min(PER_SYSTEM_CAP, data.maxParticles > 0 ? data.maxParticles : PER_SYSTEM_CAP));
 
         // Preallocate geometry for `cap` quads (4 verts, 6 indices each).
@@ -1298,7 +1565,11 @@ class RamEmitter {
             idx[o + 3] = v;
             idx[o + 4] = v + 2;
             idx[o + 5] = v + 3;
-            // Static per-corner base UV (0..1), transformed per-slot in the shader.
+            // Base per-corner UV (0..1), transformed per-slot in the shader. A
+            // texture-sheet system overwrites this per particle each frame with the
+            // live flipbook TILE's sub-rect (see {@link writeGeometry}) — exactly
+            // Unity's order, where the Texture Sheet module rewrites the vertex UV
+            // and each sampler's `_ST` then applies on top of the tile.
             const u = v * 2;
             this.uvData[u] = 0;
             this.uvData[u + 1] = 0;
@@ -1316,9 +1587,10 @@ class RamEmitter {
         this.posBuf = new PIXI.Buffer(this.posData as unknown as BufArg);
         this.colBuf = new PIXI.Buffer(this.colData as unknown as BufArg);
         this.customBuf = new PIXI.Buffer(this.customData as unknown as BufArg);
+        this.uvBuf = new PIXI.Buffer(this.uvData as unknown as BufArg);
         const geometry = new PIXI.Geometry();
         geometry.addAttribute("aVertexPosition", this.posBuf, 2);
-        geometry.addAttribute("aUV", new PIXI.Buffer(this.uvData as unknown as BufArg), 2);
+        geometry.addAttribute("aUV", this.uvBuf, 2);
         geometry.addAttribute("aColor", this.colBuf, 4);
         geometry.addAttribute("aCustom", this.customBuf, 2);
         geometry.addIndex(new PIXI.Buffer(idx as unknown as BufArg));
@@ -1365,11 +1637,12 @@ class RamEmitter {
         let dirAng = 90 * DEG;
         const a = Math.random() * Math.PI * 2;
         if (shape) {
+            const [sx, sy] = shapeScale(shape);
             switch (shape.type) {
                 case "circle": {
-                    const rr = (shape.radius ?? 0) * Math.sqrt(Math.random());
-                    ox = Math.cos(a) * rr;
-                    oy = Math.sin(a) * rr;
+                    const rr = (shape.radius ?? 0) * radialFrac(shape);
+                    ox = Math.cos(a) * rr * sx;
+                    oy = Math.sin(a) * rr * sy;
                     dirAng = a;
                     break;
                 }
@@ -1381,9 +1654,10 @@ class RamEmitter {
                     ox = (Math.random() - 0.5) * (shape.radius ?? 0) * 2;
                     break;
                 default: {
+                    // cone / edge take no shape scale — see the billboard spawn above.
                     const spread = (shape.angleDeg ?? 0) * DEG;
                     dirAng = 90 * DEG + (Math.random() - 0.5) * 2 * spread;
-                    const rr = (shape.radius ?? 0) * Math.sqrt(Math.random());
+                    const rr = (shape.radius ?? 0) * radialFrac(shape);
                     ox = Math.cos(a) * rr;
                     oy = Math.sin(a) * rr;
                 }
@@ -1398,7 +1672,12 @@ class RamEmitter {
         const wx = d.pos[0] + lx * cos - ly * sin;
         const wy = d.pos[1] + lx * sin + ly * cos;
         const speed = sampleScalar(d.startSpeed, Math.random(), nt);
-        const size = sampleScalar(d.startSize, Math.random(), nt);
+        // ONE per-particle roll drives BOTH size axes, as Unity's `size3D` does — and,
+        // just as importantly, it keeps the number of `Math.random()` draws per spawn
+        // fixed, so a system that gains a `startSizeY` does not re-phase the seeded
+        // simulation of every particle after it.
+        const sizeRand = Math.random();
+        const size = sampleScalar(d.startSize, sizeRand, nt);
         const wDir = dirAng + rotDeg * DEG;
         const life = Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt));
         // Edge-clip fix: a world-space system's static spawn position can be baked for an
@@ -1423,7 +1702,7 @@ class RamEmitter {
         // outside the box on purpose (verified regression on cello's crown backdrop) needs
         // to stay untouched — gate the cull to particles small relative to the box.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
-        if (d.simulationSpace === "world" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+        if (d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
             const box = this.displayBox;
             // A moderately-sized sprite isn't hard-culled just for having an edge-adjacent
             // centre — widen the margin by the particle's own half-size too.
@@ -1453,6 +1732,7 @@ class RamEmitter {
             age: 0,
             life,
             size,
+            sizeY: d.startSizeY ? sampleScalar(d.startSizeY, sizeRand, nt) : size,
             rot: sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt),
             rotVel: d.rotOverLifeDegPerSec ?? 0,
             rand: Math.random(),
@@ -1469,6 +1749,8 @@ class RamEmitter {
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        // World-space systems leave their particles behind as the emitter travels on.
+        if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.particles);
 
         const playing = d.looping || this.time <= d.duration;
         // `rateOverDistance`: trail emission per px of emitter travel (the container
@@ -1534,6 +1816,15 @@ class RamEmitter {
         }
         this.particles.length = w;
 
+        // The cinematic's animated `_MainColor`, replayed at the absolute entrance time
+        // (the emitter clock counts up from `-delay`). The scene-quad path has always
+        // replayed its twin (`colorCurve`); without this a Ram emitter the `_Start` clip
+        // brightens held its static serialized colour for the whole shot.
+        const curve = this.ram.mainColorCurve;
+        if (curve?.length) {
+            this.shader.uniforms.uMainColor = sampleColorCurve(curve, this.time + (d.delay ?? 0));
+        }
+
         // Scroll offsets for the three animated UV sets (fract(time * speed)).
         const frac = (v: number) => v - Math.floor(v);
         this.shader.uniforms.uMainScroll = [frac(this.time * this.ram.mainSpeed[0]), frac(this.time * this.ram.mainSpeed[1])];
@@ -1549,31 +1840,54 @@ class RamEmitter {
         const pos = this.posData;
         const col = this.colData;
         const cst = this.customData;
+        const uv = this.uvData;
+        const sheet = d.sheet;
         const n = Math.min(this.particles.length, this.cap);
         for (let q = 0; q < n; q++) {
             const p = this.particles[q];
             const lf = p.age / p.life;
-            const sz = p.size * (d.sizeOverLife ? sampleCurve(d.sizeOverLife, lf) : 1);
-            const lifeCol = d.colorOverLife ? sampleColor(d.colorOverLife, lf) : { r: 1, g: 1, b: 1, a: 1 };
+            const grow = d.sizeOverLife ? sampleCurve(d.sizeOverLife, lf) : 1;
+            const lifeCol = d.colorOverLife ? sampleColor(d.colorOverLife, lf, p.rand) : { r: 1, g: 1, b: 1, a: 1 };
             const cr = p.col.r * lifeCol.r;
             const cg = p.col.g * lifeCol.g;
             const cb = p.col.b * lifeCol.b;
             const ca = Math.max(0, Math.min(1, p.col.a * lifeCol.a));
-            const h = sz / 2;
+            const hx = (p.size * grow) / 2;
+            const hy = (p.sizeY * grow) / 2;
             const th = -p.rot * DEG;
             const c = Math.cos(th);
             const s = Math.sin(th);
             const cx = p.x;
             const cy = -p.y;
             const vp = q * 8;
-            // 4 corners: TL(-h,-h) TR(h,-h) BR(h,h) BL(-h,h)
-            const cxs = [-h, h, h, -h];
-            const cys = [-h, -h, h, h];
+            // 4 corners: TL(-hx,-hy) TR(hx,-hy) BR(hx,hy) BL(-hx,hy)
+            const cxs = [-hx, hx, hx, -hx];
+            const cys = [-hy, -hy, hy, hy];
             for (let k = 0; k < 4; k++) {
                 const lxk = cxs[k];
                 const lyk = cys[k];
                 pos[vp + k * 2] = cx + lxk * c - lyk * s;
                 pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+            }
+            // Texture Sheet Animation: point the quad at the live flipbook TILE, in the
+            // same raster (row-major, top-down) order the sprite path slices frames in.
+            // Every `_ST` in the shader then applies ON TOP of the tile, which is Unity's
+            // own order — without it a sheet system samples the WHOLE atlas per quad and
+            // stamps the grid, which is why such systems used to be barred from this path.
+            if (sheet && this.sheetTiles > 1) {
+                const prog = sheet.frameOverTime ? sampleCurve(sheet.frameOverTime, lf) : lf;
+                const cycles = sheet.cycles && sheet.cycles > 0 ? sheet.cycles : 1;
+                const fi = Math.min(this.sheetTiles - 1, Math.max(0, Math.floor(prog * cycles * this.sheetTiles) % this.sheetTiles));
+                const cw = 1 / sheet.tilesX;
+                const ch = 1 / sheet.tilesY;
+                const u0 = (fi % sheet.tilesX) * cw;
+                const v0 = Math.floor(fi / sheet.tilesX) * ch;
+                const us = [u0, u0 + cw, u0 + cw, u0];
+                const vs = [v0, v0, v0 + ch, v0 + ch];
+                for (let k = 0; k < 4; k++) {
+                    uv[vp + k * 2] = us[k];
+                    uv[vp + k * 2 + 1] = vs[k];
+                }
             }
             const vc = q * 16;
             for (let k = 0; k < 4; k++) {
@@ -1602,6 +1916,7 @@ class RamEmitter {
         this.posBuf.update();
         this.colBuf.update();
         this.customBuf.update();
+        if (this.sheetTiles > 1) this.uvBuf.update();
     }
 
     liveCount(): number {
@@ -1931,7 +2246,15 @@ function additivePileGain(sys: IParticleSystemData): number {
     const STATIONARY_SPEED = 1; // authored-px/s; these blooms are exactly 0
     const TARGET_STACK = 0.8; // allowed overlapping-particle "brightness" at the core
     const MIN_GAIN = 0.02;
-    if (scalarMax(sys.startSpeed) > STATIONARY_SPEED) return 1; // moving → spreads, no pile
+    // Motion is not only `startSpeed`: a system can sit still at birth and drift entirely on
+    // `velocityOverLifetime`. Skadi the Corrupting Heart's crown shoal is exactly that —
+    // startSpeed 0, but 60 px/s of vol over a 4.2 s life = ~250 px of travel — so it spreads
+    // and never piles, yet the startSpeed-only test dimmed it to 9.5 % and erased the ring of
+    // fish the game draws around her crown. Both terms mean the same thing here: the particles
+    // move apart, so their brightness does not stack at a point.
+    const vol = sys.velocityOverLife;
+    const volSpeed = vol ? Math.hypot(vol.x ?? 0, vol.y ?? 0) : 0;
+    if (scalarMax(sys.startSpeed) > STATIONARY_SPEED || volSpeed > STATIONARY_SPEED) return 1; // moving → spreads, no pile
     const rate = sys.emission.rate ? scalarMax(sys.emission.rate) : 0;
     // Expected concurrent particles at the point — but the pile can NEVER exceed the system's
     // `maxParticles`, so cap by it. Virtuosa's warm ambient glows are `rate=1000` but
@@ -2016,7 +2339,14 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
      *  ILoadedTex.darkDropBase). An opaque glow main (dark starfield / bokeh,
      *  alpha=1) would otherwise keep its near-black field and, ×2-boosted, stamp a
      *  faint grey box on the black canvas; luminance-alpha drops that field while
-     *  preserving a bright fill (SilverAsh's dissolve-shaped reticle rings). */
+     *  preserving a bright fill (SilverAsh's dissolve-shaped reticle rings).
+     *
+     *  Sampling the RAW texture for a material that carries a `_DissolveTex` (which
+     *  already carves the shape, so the fill's own alpha is genuinely 1) is what the
+     *  Unity shader does, and it recovers 2.3× the light on Mlynar's city slabs — but
+     *  it measured WORSE against the game on all three reference skins, because our
+     *  render already sits well ABOVE the capture's luminance through that whole shot.
+     *  Kept as-is until that DC excess is understood; see the round-11 notes. */
     const ramMainTex = (i: number | null): PIXI.Texture | null => {
         const b = i != null ? bases[i] : null;
         return b ? new PIXI.Texture(b.darkDropBase) : null;
@@ -2024,19 +2354,65 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
 
     for (const sys of data.systems) {
         // Ram-shader emitters render via the ported ramp/dissolve/disturb shader
-        // (RamEmitter), using RAW textures. Needs a main tex. A Ram system carrying
-        // a texture-sheet flipbook (e.g. SilverAsh's purple sword flame) falls
-        // through to the sprite path, which slices the atlas into animated frames —
-        // the Ram mesh shader has no per-frame UV, so a whole-atlas sample would
-        // stamp the grid. Mesh-render-mode Ram systems are skipped (their real mesh
-        // geometry isn't exported; billboarding a large one stamps a raw quad).
-        if (sys.ram && !(sys.sheet && sys.sheet.tilesX * sys.sheet.tilesY > 1)) {
+        // (RamEmitter), using RAW textures. Needs a main tex. Mesh-render-mode Ram
+        // systems are skipped (their real mesh geometry isn't exported; billboarding
+        // a large one stamps a raw quad).
+        //
+        // A Ram system carrying a texture-sheet flipbook (SilverAsh's purple sword
+        // flame) prefers the SPRITE path: it slices the atlas into per-frame textures,
+        // and that's the shipped, tuned look. But when the sprite path would DROP the
+        // system outright — its `_MainTex` measures as a flow/cloud map (`tex.skip`),
+        // which a Ram main slot is by construction: the shape comes from `_DissolveTex`,
+        // not the main sampler — the system renders nothing at all. Mlynar's 14
+        // `fangkuai_*` city slabs are exactly that case (a bubble normal-map main, a
+        // 4-tile slab silhouette dissolve): both paths rejected them, so the whole
+        // brightening beat of his transformation was missing. Fall back to the Ram
+        // path, which now drives the flipbook tile through the vertex UVs.
+        const ramSheet = !!(sys.sheet && sys.sheet.tilesX * sys.sheet.tilesY > 1);
+        const spriteWouldDrop = sys.ram?.mainTex != null && !!bases[sys.ram.mainTex]?.skip;
+        if (sys.ram && (!ramSheet || spriteWouldDrop)) {
             if (sys.renderMode === "mesh") continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
             const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex) }, sys.blend, budget);
             emitters.push(emitter);
             (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+            continue;
+        }
+        // UNTEXTURED MESH: a `renderMode:"mesh"` system whose material has no `_MainTex`
+        // is not a missing asset — Unity draws the mesh in the material's own COLOUR,
+        // which the exporter already ships as `startColor` / `colorOverLife`. Virtuosa
+        // "Diversity in Oneness"'s `scene_02/window/quad_p` is exactly that: an untextured
+        // square RING (12 verts / 8 tris, ±0.25 outer, ±0.215 inner) spawned twice a second
+        // at 716 px, growing across a 5 s life and turning 45°/s — the nested white diamond
+        // outlines the game draws behind her head from t≈9.8. Every path below indexes
+        // `bases[sys.tex]` first, so a null texture dropped the system whole.
+        // Corpus-wide this admits that one system (plus its idle-scene twin) and nothing
+        // else: the remaining texture-less systems are billboards, which have no geometry
+        // to draw, or Ram-shader meshes the branch above already consumes.
+        if (sys.tex == null) {
+            if (sys.renderMode === "mesh" && sys.mesh && sys.mesh.idx.length >= 3) {
+                // ×2 COLOUR: a material with no `_MainTex` samples Unity's built-in white,
+                // so the draw is purely the material colour — and these Torappu compositors
+                // carry the ×2 half-neutral convention the Ram GLSL port already implements
+                // (`col += col`). Measured on the game capture at t=14/17, where the ribbons
+                // cross a mid backdrop: they read 215-236 luma, which the ×2 reaches and the
+                // plain ×1 composite (≈87) does not. ×1 measured 35.878 MADC against ×2's
+                // 35.321 on Virtuosa's seven beats.
+                // EMITTER ROTATION: `quad_p`'s square ring is authored axis-aligned and posed
+                // by its emitter transform's 160.63° z-angle, so the rings only land as the
+                // game's ~45° diamonds once that angle is applied (independently confirmed by
+                // projecting the size curve: the three visible rings sit at life 0.9/0.8/0.7,
+                // whose own 45°/s spin puts them at 22.5°/0°/67.5° — 41.9°/-19.4°/25.6° once
+                // the emitter angle is folded in, which is what the capture shows). Passed
+                // only here: applying it to the TEXTURED mesh emitters as well measured worse
+                // (Virtuosa t=2 32.19 → 34.75, her `window_bg_01` backdrop panel carries a
+                // 180° emitter angle the game plainly does not draw it with).
+                const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, 2, sys.rot ?? 0);
+                emitters.push(emitter);
+                emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
+                (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+            }
             continue;
         }
         const tex = bases[sys.tex];
@@ -2098,7 +2474,19 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             // stamps a grey rectangle — those stay skipped. (Skipping ALL normal-blend
             // mesh instead would throw out the real lightning bolt and leave only its
             // additive glow halo.)
-            const meshOK = meshBlend === "additive" || !tex.desatPanel;
+            // …EXCEPT a painted BACKDROP PANEL faked as a mesh particle. Same authored
+            // shape `isStaticProp` recognises (rate 0, one or two bursts, a lifetime
+            // spanning the whole cinematic — set dressing, not a live effect) but sorted
+            // BEHIND the character, so it is scenery the game does show, not a prop that
+            // would poke out around her. Virtuosa "Diversity in Oneness"'s
+            // `scene_01/little/window_bg_01` (634px, one 17.5s burst, sort −2) paints the
+            // soft grey window light behind her halo; the scene mesh is transparent there,
+            // so skipping it leaves the dark environment backdrop showing through as a flat
+            // BLACK rectangle. Such a panel measures `desatPanel` (soft, low-saturation
+            // wash) exactly like the flow maps the skip targets — sort + burst shape is what
+            // separates them.
+            const isBackdropPanel = !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && sys.sort < data.characterSort;
+            const meshOK = meshBlend === "additive" || !tex.desatPanel || isBackdropPanel;
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
                 emitters.push(emitter);

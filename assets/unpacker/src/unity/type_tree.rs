@@ -24,7 +24,14 @@ struct FlatNode {
     meta_flag: u32,
 }
 
-pub fn read_type_tree_blob(r: &mut EndianReader) -> Result<TypeTreeNode, io::Error> {
+/// Read one serialized type's type-tree blob. An EMPTY blob (zero nodes) is legal —
+/// a stripped type carries no tree — and yields `Ok(None)` rather than an error: the
+/// blob's bytes are still consumed, so the rest of the file parses. Failing it aborted
+/// the WHOLE SerializedFile, which silently dropped every object in
+/// `refs/fx/sharedbattle.ab` — the shared FX materials some dynchar emitters reference
+/// externally (Skadi2 iteration's `crossStar_01 (2)` star-sparkles exported `tex: null`
+/// and the frontend dropped the system).
+pub fn read_type_tree_blob(r: &mut EndianReader) -> Result<Option<TypeTreeNode>, io::Error> {
     let node_count = r.read_i32()?;
     let string_buffer_size = r.read_i32()?;
 
@@ -72,10 +79,7 @@ pub fn read_type_tree_blob(r: &mut EndianReader) -> Result<TypeTreeNode, io::Err
         }
     }
 
-    nodes
-        .into_iter()
-        .next()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "empty type tree"))
+    Ok(nodes.into_iter().next())
 }
 
 fn resolve_string(offset: u32, string_buffer: &[u8]) -> String {

@@ -133,6 +133,18 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+    // `/dyntest` is the dynchar parity MEASUREMENT harness — its canvas is scored
+    // pixel-for-pixel against in-game captures. The devtools launcher paints a 56×56
+    // badge over the bottom-right of that canvas, and hiding it from the DOM does not
+    // work: `visibility: hidden !important` over every element, a second pass after a
+    // settle, and hiding whatever `elementsFromPoint` reports painting there all left
+    // the frame byte-identical, with the button still computing `visibility: visible`.
+    // It therefore reached scored frames (Virtuosa t=2, Mlynar t=4, Skadi t=3), lifting
+    // the affected beat by 0.34–0.79 MAD and each skin's mean by 0.043–0.113 MADC. Not
+    // mounting it on that one route is the only reliable fix and costs nothing — the
+    // page has no UI to inspect, and every other route keeps its devtools.
+    const devtoolsPath = useRouterState({ select: (s) => s.location.pathname });
+    const showDevtools = TanStackDevtoolsRoot !== null && !devtoolsPath.startsWith("/dyntest");
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
@@ -145,7 +157,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <CommandProvider>
                     <SiteChrome>{children}</SiteChrome>
                 </CommandProvider>
-                {TanStackDevtoolsRoot ? (
+                {showDevtools && TanStackDevtoolsRoot ? (
                     <Suspense fallback={null}>
                         <TanStackDevtoolsRoot />
                     </Suspense>

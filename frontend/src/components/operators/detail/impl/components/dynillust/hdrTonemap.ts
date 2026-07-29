@@ -51,7 +51,6 @@ uniform sampler2D uSampler;
 uniform sampler2D uBloom;
 uniform float uKnee;
 uniform float uBloomIntensity;
-uniform float uVignette;
 void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
@@ -73,19 +72,15 @@ void main() {
         float scale = mix(t / m, 1.0, achroma);
         rgb *= scale;
     }
-    // Generic cinematic vignette for full-bright HDR flashes. A flat, fully-opaque
-    // white reveal plane (Mlynar's transition flash) blows out edge-to-edge in our
-    // render (corners ~252) whereas the game's screen-space camera post applies a
-    // radial corner falloff (corners ~209 vs centre 255). We have no exportable
-    // equivalent (the flash is a flat quad + flat texture), so add the falloff here.
-    // BRIGHTNESS-GATED so it only ever touches near-white pixels: a normal frame's
-    // corners (dark backdrop) are far below the gate and pass through untouched —
-    // no per-skin data, applies identically to every skin's bright beats only.
-    float r = distance(vUV, vec2(0.5));             // 0 centre .. ~0.707 corner
-    float vig = 1.0 - uVignette * smoothstep(0.35, 0.72, r);
-    float bright = max(max(rgb.r, rgb.g), rgb.b);
-    float gate = smoothstep(0.82, 1.0, bright);     // only near-white pixels darken
-    rgb *= mix(1.0, vig, gate);
+    // NO cinematic vignette. A brightness-gated radial falloff used to live here, added to
+    // match a believed "~209 corner vs 255 centre" falloff on the game's white transition
+    // flash. That falloff does not exist: measured on the held flash frames (t = 14.5, 15.0,
+    // 15.5, 16.0) the game is pure 255 in all four corners, at the centre, and everywhere
+    // between — min 254 over the whole inner window, 0.0% of pixels below 250. The 209 was
+    // almost certainly read off a RAMP frame, where the entire frame is uniformly dim
+    // (~202 at t = 14) rather than dim only at the corners. The vignette cost us the flash:
+    // it held our margins at a flat 237 for the full hold. Do not reintroduce it without
+    // re-measuring the HELD frames, not the ramp.
     vec3 bloom = texture2D(uBloom, vUV).rgb * uBloomIntensity;
     gl_FragColor = vec4(rgb + bloom, max(c.a, 0.0));
 }
@@ -123,11 +118,6 @@ const BLOOM_BLUR = 10;
  *  regions almost intact (a pure-white 1.0 maps to ~0.95) while taming the >1
  *  additive blowouts hard. */
 const DEFAULT_KNEE = 0.9;
-
-/** Max corner darkening for the brightness-gated cinematic vignette (see TONEMAP_FRAG).
- *  0.15 lands a full-white flash corner at ~205-210/255, matching the game's ~209
- *  flash-corner falloff; centre and all non-near-white pixels are untouched. */
-const VIGNETTE_STRENGTH = 0.15;
 
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
@@ -202,7 +192,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: BLOOM_INTENSITY, uVignette: VIGNETTE_STRENGTH });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: BLOOM_INTENSITY });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {

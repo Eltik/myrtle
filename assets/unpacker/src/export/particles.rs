@@ -23,6 +23,18 @@ use super::texture::decode_texture_object;
 
 const RAD_TO_DEG: f64 = 180.0 / PI;
 
+/// Resample resolution (intervals over the particle lifetime) for a
+/// `velocityOverLifetime` module whose authored curves can't be flattened to one
+/// constant — 20 intervals resolves an orbit closely enough for the frontend's linear
+/// read while keeping the exported array small.
+const VELOCITY_CURVE_SAMPLES: u32 = 20;
+
+/// How far a `velocityOverLifetime` sample must OPPOSE the representative vector
+/// (as a fraction of its magnitude) before the drift counts as reversing — i.e. as
+/// motion no single constant can stand in for. See the reversal gate in
+/// [`collect_dynchar_particles`].
+const VELOCITY_REVERSAL_FRAC: f64 = 0.05;
+
 /// Identity `_MainTex_ST` tuple: `[scaleX, scaleY, offsetX, offsetY]`.
 pub(super) const ST_IDENTITY: [f64; 4] = [1.0, 1.0, 0.0, 0.0];
 
@@ -38,11 +50,17 @@ pub struct ParticleData {
     pub alpha_val: Option<Value>,
     /// Source texture `path_id`, the dedup key across systems.
     pub tex_pid: Option<i64>,
+    /// The material's `_MainTex_ST` — WHICH sub-rect of `tex_pid` this system samples.
+    /// Consumed by the scene exporter's frozen-burst heuristic (a baked copy of a burst
+    /// reads the same rect; a different rect of a shared atlas is different artwork).
+    pub tex_st: [f64; 4],
     /// Trail material texture (renderer's 2nd material), deduped into the same
     /// `[particles]/<i>.png` set; index written to `trail.tex`.
     pub trail_tex_val: Option<Value>,
     pub trail_alpha_val: Option<Value>,
     pub trail_tex_pid: Option<i64>,
+    /// The trail material's `_MainTex_ST` (see [`ParticleData::tex_st`]).
+    pub trail_tex_st: [f64; 4],
     /// Ram-shader-family material data (params + the extra texture slots), when
     /// the material's `_shaderName` contains `"Ram/"`. Its texture slots dedup
     /// into the same `[particles]/<i>.png` set as `tex`.
@@ -77,23 +95,64 @@ fn b(v: &Value, k: &str, d: bool) -> bool {
     v.get(k).and_then(Value::as_bool).unwrap_or(d)
 }
 
+/// Interior samples emitted across a curve segment that carries real tangents. A cubic
+/// resolved at eighths is within a fraction of a percent of itself under the linear
+/// interpolation the frontend applies between samples — an accuracy figure, not a look.
+const CURVE_SUBDIV: usize = 8;
+
 /// Sample a Unity `AnimationCurve` (`m_Curve` keyframe array) into `[{t,v}]`,
-/// applying `scale` to the value. Linear sample of the keyframe times/values
-/// (Bezier in/out tangents are ignored — an accepted approximation).
+/// applying `scale` to the value.
+///
+/// The frontend interpolates these samples LINEARLY, so a segment carrying real Bezier
+/// tangents has to be RESOLVED here or its authored shape is silently replaced by the
+/// chord. Virtuosa "Diversity in Oneness"'s `scene_02/window/quad_p` shows what that
+/// costs: its size-over-lifetime is two keys, (0, 0) and (1, 1), with out/in slopes
+/// -0.02 and 3.24 — a hard ease-IN, so the expanding diamond rings it emits stay tiny
+/// for most of their life and only open up at the end. Read as the straight line those
+/// two keys describe, the rings spread EVENLY instead and ten of them fill the frame as
+/// a solid wash where the game shows three or four with wide gaps.
+///
+/// Segments Unity authored as linear (both tangents equal the chord slope) or as a
+/// constant hold are emitted exactly as before, so every already-correct curve in the
+/// corpus stays byte-identical.
 fn sample_curve(curve: &Value, mul: f64, scale: f64) -> Vec<Value> {
-    curve
-        .get("m_Curve")
-        .and_then(Value::as_array)
-        .map(|kfs| {
-            kfs.iter()
-                .map(|kf| {
-                    let t = fd(kf, "time", 0.0);
-                    let val = fd(kf, "value", 0.0) * mul * scale;
-                    json!({ "t": t, "v": val })
-                })
-                .collect()
-        })
-        .unwrap_or_default()
+    let Some(kfs) = curve.get("m_Curve").and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    let key = |kf: &Value| {
+        (
+            fd(kf, "time", 0.0),
+            fd(kf, "value", 0.0),
+            fd(kf, "inSlope", 0.0),
+            fd(kf, "outSlope", 0.0),
+        )
+    };
+    let mut out: Vec<Value> = Vec::with_capacity(kfs.len());
+    for (n, kf) in kfs.iter().enumerate() {
+        let (t0, v0, _, out0) = key(kf);
+        out.push(json!({ "t": t0, "v": v0 * mul * scale }));
+        let Some(next) = kfs.get(n + 1) else { continue };
+        let (t1, v1, in1, _) = key(next);
+        let span = t1 - t0;
+        if span <= 0.0 {
+            continue;
+        }
+        let chord = (v1 - v0) / span;
+        let tol = 1e-6 * chord.abs().max(1.0);
+        if (out0 - chord).abs() <= tol && (in1 - chord).abs() <= tol {
+            continue; // straight line: the frontend's own lerp already draws it
+        }
+        for k in 1..CURVE_SUBDIV {
+            let u = k as f64 / CURVE_SUBDIV as f64;
+            let (u2, u3) = (u * u, u * u * u);
+            let v = (2.0 * u3 - 3.0 * u2 + 1.0) * v0
+                + (u3 - 2.0 * u2 + u) * span * out0
+                + (-2.0 * u3 + 3.0 * u2) * v1
+                + (u3 - u2) * span * in1;
+            out.push(json!({ "t": t0 + u * span, "v": v * mul * scale }));
+        }
+    }
+    out
 }
 
 /// Reduce a Unity `MinMaxCurve` to the schema's `MMScalar`.
@@ -137,6 +196,82 @@ fn mmscalar_is_zero(v: &Value) -> bool {
 /// angular velocity, burst counts).
 fn mmscalar_repr(v: &Value, scale: f64) -> f64 {
     fd(v, "scalar", 0.0) * scale
+}
+
+/// Evaluate a Unity `AnimationCurve` (`m_Curve` keyframes) at `t` with cubic HERMITE
+/// interpolation, honouring the keys' in/out tangents. Unlike [`sample_curve`] (which
+/// exports the raw key points for the frontend to lerp), this is used where the
+/// exporter must resample a curve onto its own grid — a linear read of 3–4 sparse keys
+/// visibly flattens the authored shape (Skadi2 iteration's orbiting crown ring).
+fn curve_eval(curve: &Value, t: f64) -> f64 {
+    let Some(keys) = curve.get("m_Curve").and_then(Value::as_array) else {
+        return 0.0;
+    };
+    let read = |k: &Value| {
+        (
+            fd(k, "time", 0.0),
+            fd(k, "value", 0.0),
+            fd(k, "inSlope", 0.0),
+            fd(k, "outSlope", 0.0),
+        )
+    };
+    let Some(first) = keys.first().map(&read) else {
+        return 0.0;
+    };
+    if t <= first.0 {
+        return first.1;
+    }
+    let last = keys.last().map(&read).unwrap_or(first);
+    if t >= last.0 {
+        return last.1;
+    }
+    for w in keys.windows(2) {
+        let (t0, v0, _, out0) = read(&w[0]);
+        let (t1, v1, in1, _) = read(&w[1]);
+        if t <= t1 {
+            let span = t1 - t0;
+            if span <= 0.0 {
+                return v1;
+            }
+            let u = (t - t0) / span;
+            let u2 = u * u;
+            let u3 = u2 * u;
+            return (2.0 * u3 - 3.0 * u2 + 1.0) * v0
+                + (u3 - 2.0 * u2 + u) * span * out0
+                + (-2.0 * u3 + 3.0 * u2) * v1
+                + (u3 - u2) * span * in1;
+        }
+    }
+    last.1
+}
+
+/// Evaluate a `MinMaxCurve` at normalized particle age `t`, ×`scale`. The curve states
+/// are the authored shape over the lifetime; the constant states are flat. Two-sided
+/// states take the "max" side, matching [`mmscalar_repr`].
+fn mmscalar_eval(v: &Value, t: f64, scale: f64) -> f64 {
+    let scalar = fd(v, "scalar", 0.0);
+    match i(v, "minMaxState").unwrap_or(0) {
+        1 | 2 => curve_eval(v.get("maxCurve").unwrap_or(&Value::Null), t) * scalar * scale,
+        _ => scalar * scale,
+    }
+}
+
+/// Whether a `MinMaxCurve` holds the same value at every `t` — i.e. the schema's
+/// single-number flattening loses nothing. Constant states are flat by definition; a
+/// curve state is flat only when every keyframe carries the same value.
+fn mmscalar_is_flat(v: &Value) -> bool {
+    match i(v, "minMaxState").unwrap_or(0) {
+        1 | 2 => v
+            .get("maxCurve")
+            .and_then(|c| c.get("m_Curve"))
+            .and_then(Value::as_array)
+            .is_none_or(|keys| {
+                let first = keys.first().map_or(0.0, |k| fd(k, "value", 0.0));
+                keys.iter()
+                    .all(|k| (fd(k, "value", 0.0) - first).abs() < 1e-9)
+            }),
+        _ => true,
+    }
 }
 
 /// Read an rgba color object → `[r,g,b,a]` (0..1).
@@ -241,11 +376,25 @@ fn decode_gradient(g: &Value) -> Vec<Value> {
 fn mmgradient(v: &Value) -> Value {
     // MinMaxGradient states: 0 Color, 1 Gradient, 2 TwoColors, 3 TwoGradients,
     // 4 RandomColor. Constant-color states use maxColor; gradient states use
-    // maxGradient. (For the random/two-sided states we take the "max" side.)
+    // maxGradient. (For the two-GRADIENT state we still take the "max" side.)
     match i(v, "minMaxState").unwrap_or(0) {
-        0 | 2 => {
+        0 => {
             let c = v.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
             json!({ "mode": "color", "r": c[0], "g": c[1], "b": c[2], "a": c[3] })
+        }
+        // RandomBetweenTwoColors: Unity draws ONE colour per particle uniformly between
+        // `minColor` and `maxColor`. Collapsing to `maxColor` throws the other endpoint
+        // away — Skadi2 iteration's four `xian` threads author min = pure RED and
+        // max = cyan, so every thread we drew was locked cyan. Export BOTH endpoints and
+        // let the frontend pick per particle.
+        2 => {
+            let mx = v.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
+            let mn = v.get("minColor").map(read_color).unwrap_or(mx);
+            json!({
+                "mode": "twoColors",
+                "min": { "r": mn[0], "g": mn[1], "b": mn[2], "a": mn[3] },
+                "max": { "r": mx[0], "g": mx[1], "b": mx[2], "a": mx[3] },
+            })
         }
         _ => {
             let stops = v
@@ -275,6 +424,11 @@ fn render_mode_name(m: i64) -> &'static str {
     match m {
         1 => "stretch",
         4 => "mesh",
+        // 5 = None: the particle draws NO head sprite at all — the system is a pure
+        // TRAIL emitter (Skadi2 iteration's `xian` threads). Billboarding it stamps a
+        // bright sprite at every ribbon tip the game never draws, which is what made
+        // our threads read thick and glowy.
+        5 => "none",
         _ => "billboard", // 0 Billboard, 2/3 axis-billboards
     }
 }
@@ -302,6 +456,12 @@ pub(crate) struct EntranceCtx<'a> {
     pub rate_curves: &'a HashMap<i64, Vec<(f32, f32)>>,
     pub event_rate_gos: &'a std::collections::HashSet<i64>,
     pub transform_curves: &'a HashMap<i64, super::anim::EntranceTransform>,
+    /// GO → the `_Start` clip's animated material-colour channels. The scene-quad
+    /// exporter has always replayed these (`layer_color_curve`); the particle path
+    /// never did, so a Ram emitter whose `_MainColor` the cinematic drives (Mlynar's
+    /// `fangkuai_*` city slabs brightening through the transformation beat) rendered
+    /// at its static serialized colour for the whole shot. Empty on the idle path.
+    pub color_channels: &'a HashMap<i64, Vec<super::anim::MaterialColorChannel>>,
     /// Whether this pass is the `_Start` cinematic (vs. the idle/main scene).
     /// Gates [`apply_followbone_reveal_inheritance`] — a bone-follower rig
     /// "sibling reveal" is a cinematic reveal-window (`m_IsActive`) concept;
@@ -365,13 +525,75 @@ fn apply_followbone_reveal_inheritance(out: &mut [ParticleData]) {
 /// disabled, the emitter GameObject is inactive, the renderer is disabled, or the
 /// EmissionModule is disabled with no bursts (nothing is emitted).
 #[must_use]
+/// Per-reason tally of `ParticleSystem`s dropped by [`collect_dynchar_particles`].
+///
+/// The collector used to report one opaque total, which is useless when an effect is missing
+/// from a render: two thirds of a skin's systems being "skipped" is normal (state-gated
+/// Start/Interact/Special-Only groups, sibling-root effects), so the total cannot distinguish
+/// a correct drop from a lost one. Breaking it out by gate makes a missing element
+/// attributable to the exact rule that removed it.
+#[derive(Default, Clone, Copy)]
+pub(crate) struct ParticleSkips {
+    /// System component with no owning `m_GameObject`.
+    pub no_gameobject: usize,
+    /// Under a state-gated inactive group ("Start/Interact/Special Only Effects").
+    pub inactive_group: usize,
+    /// Belongs to a sibling skeleton's prefab root.
+    pub cross_root: usize,
+    /// `InitialModule.enabled == false`.
+    pub initial_disabled: usize,
+    /// Emission disabled AND no bursts — nothing would ever spawn.
+    pub never_emits: usize,
+    /// Event-clip-driven rate with no bursts — quiet at the steady state.
+    pub event_rate_no_burst: usize,
+    /// `ParticleSystemRenderer.m_Enabled == false`.
+    pub renderer_disabled: usize,
+}
+
+impl ParticleSkips {
+    pub(crate) fn total(&self) -> usize {
+        self.no_gameobject
+            + self.inactive_group
+            + self.cross_root
+            + self.initial_disabled
+            + self.never_emits
+            + self.event_rate_no_burst
+            + self.renderer_disabled
+    }
+}
+
+impl std::fmt::Display for ParticleSkips {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut first = true;
+        for (label, n) in [
+            ("no-gameobject", self.no_gameobject),
+            ("inactive-group", self.inactive_group),
+            ("cross-root", self.cross_root),
+            ("initial-disabled", self.initial_disabled),
+            ("never-emits", self.never_emits),
+            ("event-rate-no-burst", self.event_rate_no_burst),
+            ("renderer-disabled", self.renderer_disabled),
+        ] {
+            if n == 0 {
+                continue;
+            }
+            if !first {
+                write!(f, ", ")?;
+            }
+            write!(f, "{label} {n}")?;
+            first = false;
+        }
+        Ok(())
+    }
+}
+
 pub(crate) fn collect_dynchar_particles(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
     host: &BgParticleHost,
     entrance: &EntranceCtx<'_>,
     scope: &RootScope<'_>,
-) -> (Vec<ParticleData>, usize) {
+) -> (Vec<ParticleData>, ParticleSkips) {
     let entrance_windows = entrance.windows;
     let entrance_rate_curves = entrance.rate_curves;
     let event_rate_gos = entrance.event_rate_gos;
@@ -395,11 +617,11 @@ pub(crate) fn collect_dynchar_particles(
     systems.sort_unstable_by_key(|(pid, _)| *pid);
 
     let mut out = Vec::new();
-    let mut skipped = 0usize;
+    let mut skipped = ParticleSkips::default();
 
     for (_, ps) in systems {
         let Some(go_pid) = ps.get("m_GameObject").and_then(get_path_id) else {
-            skipped += 1;
+            skipped.no_gameobject += 1;
             continue;
         };
 
@@ -422,20 +644,19 @@ pub(crate) fn collect_dynchar_particles(
         // Active up the whole hierarchy — excludes emitters under a state-gated
         // inactive group ("Start/Interact/Special Only Effects"), which otherwise
         // all play at once in the idle scene (noise).
-        if !admit_cross_root
-            && !host.effectively_active(all_objects, go_pid, entrance.is_entrance)
+        if !admit_cross_root && !host.effectively_active(all_objects, go_pid, entrance.is_entrance)
         {
-            skipped += 1;
+            skipped.inactive_group += 1;
             continue;
         }
         if cross_root && !admit_cross_root {
-            skipped += 1;
+            skipped.cross_root += 1;
             continue;
         }
 
         let initial = ps.get("InitialModule").cloned().unwrap_or(Value::Null);
         if !b(&initial, "enabled", false) {
-            skipped += 1;
+            skipped.initial_disabled += 1;
             continue;
         }
 
@@ -447,13 +668,13 @@ pub(crate) fn collect_dynchar_particles(
             .unwrap_or_default();
         let emission_enabled = b(&emission, "enabled", false);
         if !emission_enabled && bursts_raw.is_empty() {
-            skipped += 1; // nothing is ever emitted
+            skipped.never_emits += 1; // nothing is ever emitted
             continue;
         }
         // Event-clip-driven rate with no bursts: quiet at the steady state (the rate
         // is exported as 0 below) — nothing would ever spawn, so drop the system.
         if event_rate_gos.contains(&go_pid) && bursts_raw.is_empty() {
-            skipped += 1;
+            skipped.event_rate_no_burst += 1;
             continue;
         }
 
@@ -462,7 +683,7 @@ pub(crate) fn collect_dynchar_particles(
         if let Some(r) = renderer
             && !b(r, "m_Enabled", true)
         {
-            skipped += 1;
+            skipped.renderer_disabled += 1;
             continue;
         }
 
@@ -477,27 +698,35 @@ pub(crate) fn collect_dynchar_particles(
         // over-stretched fast, tiny specks (Virtuosa's `rain_01`, Mlynar's `fire_sdx`) into long
         // foreground streaks the game never shows. Export the authored scales so the stretch length
         // is faithful per system; absent → Unity's defaults (lengthScale 2, velocity scales 0).
-        let (stretch_len_scale, stretch_vel_scale, stretch_cam_vel_scale) = if render_mode
-            == "stretch"
-        {
-            (
-                renderer.and_then(|r| f(r, "m_LengthScale")).unwrap_or(2.0),
-                renderer.and_then(|r| f(r, "m_VelocityScale")).unwrap_or(0.0),
-                renderer.and_then(|r| f(r, "m_CameraVelocityScale")).unwrap_or(0.0),
-            )
-        } else {
-            (0.0, 0.0, 0.0)
-        };
+        let (stretch_len_scale, stretch_vel_scale, stretch_cam_vel_scale) =
+            if render_mode == "stretch" {
+                (
+                    renderer.and_then(|r| f(r, "m_LengthScale")).unwrap_or(2.0),
+                    renderer
+                        .and_then(|r| f(r, "m_VelocityScale"))
+                        .unwrap_or(0.0),
+                    renderer
+                        .and_then(|r| f(r, "m_CameraVelocityScale"))
+                        .unwrap_or(0.0),
+                )
+            } else {
+                (0.0, 0.0, 0.0)
+            };
 
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
-        let (tex_val, alpha_val, tex_pid, blend, main_st) =
+        let (tex_val, alpha_val, tex_pid, blend, main_st, tint) =
             resolve_renderer_texture(all_objects, renderer);
 
         // Ram shader family (`Ram/Disturb` / `Ram/VertexDisturb`): a ramp-tint +
         // dissolve + UV-disturb compositor sampling 4–6 textures. Its params +
         // extra texture slots are exported in a `"ram"` block; the textures share
         // the same `[particles]/<i>.png` dedup set as `tex`.
-        let ram = resolve_ram(all_objects, renderer);
+        let ram = resolve_ram(
+            all_objects,
+            renderer,
+            entrance.color_channels.get(&go_pid).map(Vec::as_slice),
+            blend,
+        );
 
         // Emitter world transform (spine-root frame) → position (px) + Z rot.
         let world = host.world_of_go(all_objects, go_pid);
@@ -571,7 +800,10 @@ pub(crate) fn collect_dynchar_particles(
         // skin's cones, where `rot` is meaningful) emit NO field and keep the byte-identical
         // `rot`-based path. Data-derived, no per-skin constant.
         let mut sys_emit_dir: Option<[f64; 2]> = None;
-        let shape_type_int = ps.get("ShapeModule").and_then(|s| i(s, "type")).unwrap_or(-1);
+        let shape_type_int = ps
+            .get("ShapeModule")
+            .and_then(|s| i(s, "type"))
+            .unwrap_or(-1);
         if matches!(shape_type_int, 4 | 7 | 8 | 9) {
             let ez = world.point([0.0, 0.0, 1.0]);
             let axis = |p: [f32; 3]| {
@@ -597,12 +829,19 @@ pub(crate) fn collect_dynchar_particles(
             "name": ps.get("m_Name").and_then(Value::as_str).unwrap_or(""),
             "sort": sort,
             "blend": if blend { "additive" } else { "normal" },
+            // The material's ×2 `_TintColor`, or null at the neutral — see `particle_tint`.
+            "tint": tint.map_or(Value::Null, |t| json!(t)),
             "renderMode": render_mode,
             "pos": pos,
             "rot": rot,
             "duration": fd(ps, "lengthInSec", 1.0),
             "looping": b(ps, "looping", false),
-            "simulationSpace": if i(ps, "moveWithTransform").unwrap_or(1) == 1 { "local" } else { "world" },
+            // `moveWithTransform` stores the `ParticleSystemSimulationSpace` enum, whose
+            // members are Local = 0 and World = 1 — NOT a "does it move with the transform"
+            // boolean, despite the name. Reading it as one inverted every system's
+            // simulation space; it stayed invisible because almost every emitter is
+            // static, where the two are indistinguishable.
+            "simulationSpace": if i(ps, "moveWithTransform").unwrap_or(0) == 1 { "world" } else { "local" },
             "maxParticles": i(&initial, "maxNumParticles").unwrap_or(1000),
             "boneChain": bone_chain,
         });
@@ -750,6 +989,19 @@ pub(crate) fn collect_dynchar_particles(
         }
         if let Some(s) = initial.get("startSize") {
             sys["startSize"] = mmscalar(s, em_inv);
+            // Unity `size3D`: the particle quad is a RECTANGLE, its height authored
+            // separately in `startSizeY`. Exporting only `startSize` renders such a
+            // system SQUARE — Mlynar's 14 `fangkuai_*` city slabs are 0.5 × 2.0 units,
+            // a 1:4 tall bar that comes out 4× too short. Emitted only when the two
+            // axes genuinely differ, so every uniform system stays byte-identical.
+            if b(&initial, "size3D", false)
+                && let Some(sy) = initial.get("startSizeY")
+            {
+                let size_y = mmscalar(sy, em_inv);
+                if size_y != sys["startSize"] {
+                    sys["startSizeY"] = size_y;
+                }
+            }
         }
         // startRotation is authored in radians → degrees.
         if let Some(r) = initial.get("startRotation") {
@@ -896,11 +1148,21 @@ pub(crate) fn collect_dynchar_particles(
                 .get("arc")
                 .and_then(|a| f(a, "value"))
                 .unwrap_or(360.0);
+            // `m_Scale` is the shape TRANSFORM's scale (Unity 2017.2+ gave every shape
+            // type a position/rotation/scale), not a box-only field. For a BOX it IS the
+            // box size, so `box` keeps carrying it in px. For every RADIAL shape
+            // (sphere/hemisphere/circle/cone/edge) it stretches the emission volume into
+            // an ellipse around `radius` — Mlynar's `rain_left_short_01` is a radius-0.2
+            // hemisphere scaled (2.0, 1.4), i.e. a 182x128px patch, and dropping the scale
+            // packs the whole shower into a 91px disc (the clustered rain the archive
+            // never shows). Export the raw multiplier so the frontend can widen the
+            // radius; a default (1,1) scale leaves every other system byte-identical.
             let scale = shape.get("m_Scale");
-            let box_wh = [
-                scale.and_then(|s| f(s, "x")).unwrap_or(1.0) * em_inv,
-                scale.and_then(|s| f(s, "y")).unwrap_or(1.0) * em_inv,
+            let scale_xy = [
+                scale.and_then(|s| f(s, "x")).unwrap_or(1.0),
+                scale.and_then(|s| f(s, "y")).unwrap_or(1.0),
             ];
+            let box_wh = [scale_xy[0] * em_inv, scale_xy[1] * em_inv];
             let posv = shape.get("m_Position");
             let pos_off = [
                 posv.and_then(|p| f(p, "x")).unwrap_or(0.0) * em_inv,
@@ -916,6 +1178,7 @@ pub(crate) fn collect_dynchar_particles(
                 "angleDeg": fd(shape, "angle", 25.0),
                 "arcDeg": arc,
                 "box": box_wh,
+                "scale": scale_xy,
                 "posOffset": pos_off,
                 "rotDeg": rot_deg,
                 "radiusThickness": fd(shape, "radiusThickness", 1.0),
@@ -954,29 +1217,121 @@ pub(crate) fn collect_dynchar_particles(
             sys["sizeOverLife"] = Value::Null;
         }
 
-        // Velocity over lifetime (flattened to representative x/y in px/s).
+        // Velocity over lifetime.
+        //
+        // The schema's legacy shape is one constant `{x, y}` in px/s, which drops TWO
+        // things Unity authors: the `z` axis (never read at all) and the per-lifetime
+        // CURVE of each axis (flattened to its multiplier). Both matter as soon as an
+        // emitter is tilted out of the screen plane: Skadi2 iteration's crown ring
+        // (`fish_01`) authors x and z as curves that, traced against each other through
+        // the emitter's basis, close a CIRCLE in screen space — flattened, it became a
+        // straight 60px/s drift ("2–3 loose birds" instead of a ring).
+        //
+        // So when the legacy flattening is LOSSY (a non-zero `z`, or any axis authored
+        // as a non-flat curve) a local-space vector is projected through the emitter's
+        // FULL world basis — not the flat `matrix_z_deg`, which is a meaningless
+        // Z-decomposition for a non-planar matrix — and resampled over the lifetime.
+        // `space:"screen"` tells the frontend the vector is already world-aligned.
+        // Everything the flattening represented faithfully keeps the byte-identical
+        // legacy output.
         if let Some(vm) = ps.get("VelocityModule")
             && b(vm, "enabled", false)
         {
             let vx = vm.get("x");
             let vy = vm.get("y");
-            let nonzero = vx.is_some_and(|v| !mmscalar_is_zero(v))
+            let vz = vm.get("z");
+            let nonzero = [vx, vy, vz]
+                .iter()
+                .any(|a| a.is_some_and(|v| !mmscalar_is_zero(v)));
+            // The legacy branch reads only x/y, so it must also GATE on only x/y —
+            // a world-space z-only module keeps exporting null, as it always did.
+            let nonzero_xy = vx.is_some_and(|v| !mmscalar_is_zero(v))
                 || vy.is_some_and(|v| !mmscalar_is_zero(v));
-            if nonzero {
-                // World-space velocity is already in the skeleton world frame
-                // (inv_scale); local-space velocity is in the emitter frame (em_inv).
-                let vscale = if b(vm, "inWorldSpace", false) {
-                    inv_scale
-                } else {
-                    em_inv
+            let in_world = b(vm, "inWorldSpace", false);
+            let flat = |a: Option<&Value>| a.is_none_or(mmscalar_is_flat);
+            let lossy = !in_world
+                && (vz.is_some_and(|v| !mmscalar_is_zero(v))
+                    || !flat(vx)
+                    || !flat(vy)
+                    || !flat(vz));
+            let mut emitted = false;
+            if nonzero && lossy {
+                // Emitter world basis (spine-root frame, Y-up px): the columns are where
+                // local +X/+Y/+Z land, so a local 3-vector projects straight to screen —
+                // including the foreshortening of an axis tilted toward the camera.
+                let ez = world.point([0.0, 0.0, 1.0]);
+                let col = |p: [f32; 3]| {
+                    [
+                        f64::from(p[0] - origin[0]) * inv_scale,
+                        f64::from(p[1] - origin[1]) * inv_scale,
+                    ]
                 };
-                sys["velocityOverLife"] = json!({
-                    "x": vx.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
-                    "y": vy.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
-                    "space": if b(vm, "inWorldSpace", false) { "world" } else { "local" },
+                let (bx, by, bz) = (col(ex), col(ey), col(ez));
+                let samples: Vec<(f64, f64, f64)> = (0..=VELOCITY_CURVE_SAMPLES)
+                    .map(|k| {
+                        let t = f64::from(k) / f64::from(VELOCITY_CURVE_SAMPLES);
+                        let lx = vx.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        let ly = vy.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        let lz = vz.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        (
+                            t,
+                            bx[0] * lx + by[0] * ly + bz[0] * lz,
+                            bx[1] * lx + by[1] * ly + bz[1] * lz,
+                        )
+                    })
+                    .collect();
+                // Representative constant = the largest vector over the lifetime; the
+                // frontend still uses it wherever one number is needed (streak length,
+                // spawn-cull trajectory, additive pile density).
+                let rep = samples
+                    .iter()
+                    .max_by(|a, b| a.1.hypot(a.2).total_cmp(&b.1.hypot(b.2)))
+                    .copied()
+                    .unwrap_or((0.0, 0.0, 0.0));
+                let varies = samples.iter().any(|s| {
+                    (s.1 - samples[0].1).abs() > 1e-6 || (s.2 - samples[0].2).abs() > 1e-6
                 });
-            } else {
-                sys["velocityOverLife"] = Value::Null;
+                // Take the per-lifetime path ONLY for a velocity that REVERSES in screen
+                // space — some sample opposes the representative one. That is the case a
+                // single vector cannot express at all: the particle orbits (or doubles
+                // back) and its mean travel is nowhere near the constant, so flattening
+                // turns a ring into a straight line. When the direction is instead
+                // CONSTANT and only the magnitude modulates (Skadi2's `xian` threads:
+                // their curve never changes sign), the flattened constant is already a
+                // faithful direction, and measuring showed replacing it costs more than
+                // it gains — so those keep the byte-identical legacy vector.
+                let mag = rep.1.hypot(rep.2);
+                let reverses = varies
+                    && mag > 1e-9
+                    && samples
+                        .iter()
+                        .any(|s| (s.1 * rep.1 + s.2 * rep.2) / mag < -VELOCITY_REVERSAL_FRAC * mag);
+                if reverses {
+                    sys["velocityOverLife"] = json!({
+                        "x": rep.1,
+                        "y": rep.2,
+                        "space": "screen",
+                        "curve": samples
+                            .iter()
+                            .map(|(t, x, y)| json!({ "t": t, "x": x, "y": y }))
+                            .collect::<Vec<_>>(),
+                    });
+                    emitted = true;
+                }
+            }
+            if !emitted {
+                if nonzero_xy {
+                    // World-space velocity is already in the skeleton world frame
+                    // (inv_scale); local-space velocity is in the emitter frame (em_inv).
+                    let vscale = if in_world { inv_scale } else { em_inv };
+                    sys["velocityOverLife"] = json!({
+                        "x": vx.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
+                        "y": vy.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
+                        "space": if in_world { "world" } else { "local" },
+                    });
+                } else {
+                    sys["velocityOverLife"] = Value::Null;
+                }
             }
         } else {
             sys["velocityOverLife"] = Value::Null;
@@ -1075,17 +1430,17 @@ pub(crate) fn collect_dynchar_particles(
 
         // Trail (PerParticle mode only; Ribbon mode 1 is skipped → null). The
         // trail texture is the renderer's 2nd material, deduped in export.
-        let (trail_tex_val, trail_alpha_val, trail_tex_pid) = if let Some(tm) =
+        let (trail_tex_val, trail_alpha_val, trail_tex_pid, trail_tex_st) = if let Some(tm) =
             ps.get("TrailModule")
             && b(tm, "enabled", false)
             && i(tm, "mode").unwrap_or(0) == 0
         {
-            let (tv, ta, tpid, tadd) = resolve_trail_material(all_objects, renderer);
+            let (tv, ta, tpid, tadd, tst) = resolve_trail_material(all_objects, renderer);
             sys["trail"] = parse_trail(tm, em_inv, tadd);
-            (tv, ta, tpid)
+            (tv, ta, tpid, tst)
         } else {
             sys["trail"] = Value::Null;
-            (None, None, None)
+            (None, None, None, ST_IDENTITY)
         };
 
         out.push(ParticleData {
@@ -1093,9 +1448,11 @@ pub(crate) fn collect_dynchar_particles(
             tex_val,
             alpha_val,
             tex_pid,
+            tex_st: main_st,
             trail_tex_val,
             trail_alpha_val,
             trail_tex_pid,
+            trail_tex_st,
             ram,
         });
     }
@@ -1107,8 +1464,69 @@ pub(crate) fn collect_dynchar_particles(
     (out, skipped)
 }
 
-/// `(main_tex, alpha_tex, main_pid, additive, main_st)` of a resolved material.
-type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4]);
+/// `(main_tex, alpha_tex, main_pid, additive, main_st, tint)` of a resolved material.
+type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64; 4]>);
+
+/// The ×2 `_TintColor` the material multiplies its sprite by, or `None` when the
+/// material is at (or has no) neutral tint and the draw is already faithful.
+///
+/// Torappu's ports of Unity's legacy particle shaders — the plain blend modes
+/// `Torappu/Particles/<Mode>` and `Torappu/Particles-L2D/<Mode>` — sample
+/// `2 × _TintColor × vertexColor × tex`, which is why every one of them declares
+/// `_TintColor`'s DEFAULT as (0.5, 0.5, 0.5, 0.5): half is the neutral, doubling
+/// restores white. (The same convention the sub-namespaced compositors carry under
+/// `_MainColor`, mirrored in the frontend Ram GLSL as `col += col`, and already
+/// applied on the scene-quad path by `spine::legacy_tint_scale`.)
+///
+/// The particle path multiplied by nothing at all, i.e. it assumed every material sat
+/// at the neutral. Materials authored AWAY from it were then drawn at the wrong
+/// amplitude — Mlynar's `bao 1` transformation blast is `_TintColor` (1, 1, 1, 1),
+/// double-neutral in all four channels, so the game's additive output (`rgb × a`) is
+/// 4× what we drew, which is why its full-frame white veil read as a faint haze.
+///
+/// Returning `None` at the neutral keeps every already-correct system byte-identical.
+/// The sub-namespaced compositors (`Ram/`, `Disturb/`, `Dissolve/`, `Mask/`) are
+/// excluded: they modulate by `_MainColor` and carry `_TintColor` only as an inert
+/// leftover of the shader they were authored under.
+///
+/// ADDITIVE materials only. Under `Blend SrcAlpha One` both halves of `_TintColor` are
+/// pure light scale — the sprite's contribution is `rgb × a`, so the doubling is a
+/// straight amplitude correction that the half-float target carries linearly. Under
+/// `Blend SrcAlpha OneMinusSrcAlpha` the alpha is COVERAGE instead: doubling it does not
+/// brighten the sprite, it replaces more of the backdrop with it, and since these
+/// materials are overwhelmingly authored at plain white (α 1.0 → ×2) it pins every
+/// particle fully opaque for its whole life, flattening the authored `colorOverLifetime`
+/// fade. Measured, not assumed: Skadi the Corrupting Heart's entrance touches ONLY
+/// alpha-blend tinted systems and doubling them cost her 19.396 → 19.415 MADC, while
+/// Mlynar's win came entirely from the additive side.
+fn particle_tint(mat: &Value) -> Option<[f64; 4]> {
+    if !is_additive(mat) {
+        return None;
+    }
+    let shader = mat.get("_shaderName").and_then(Value::as_str)?;
+    let plain_mode = |ns: &str| {
+        shader
+            .rfind(ns)
+            .map(|i| &shader[i + ns.len()..])
+            .is_some_and(|rest| !rest.is_empty() && !rest.contains('/'))
+    };
+    if !plain_mode("Particles-L2D/") && !plain_mode("Particles/") {
+        return None;
+    }
+    let tint = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.get("_TintColor"))?;
+    let v = [
+        fd(tint, "r", 0.5),
+        fd(tint, "g", 0.5),
+        fd(tint, "b", 0.5),
+        fd(tint, "a", 0.5),
+    ];
+    // The neutral is authored as an 8-bit colour, so it arrives as 128/255 = 0.50196.
+    let neutral = v.iter().all(|c| (c - 0.5).abs() <= 1.5 / 255.0);
+    (!neutral).then(|| v.map(|c| c * 2.0))
+}
 
 /// Resolve one material reference into [`ResolvedMaterial`].
 /// Returns `None` when the ref is null, not a Material(21), or its `_MainTex`
@@ -1152,27 +1570,39 @@ fn resolve_material(
         main_pid,
         is_additive(mat),
         main_st,
+        particle_tint(mat),
     ))
 }
 
+/// `(main_texture, alpha_texture, main_pid, additive, main_st, tint)` of a renderer's
+/// first usable material, with every optional slot unresolved.
+type RendererTexture = (
+    Option<Value>,
+    Option<Value>,
+    Option<i64>,
+    bool,
+    [f64; 4],
+    Option<[f64; 4]>,
+);
+
 /// Resolve the renderer's first usable material (the particle's own texture)
-/// into `(main_texture, alpha_texture, main_pid, additive, main_st)`.
+/// into a [`RendererTexture`].
 fn resolve_renderer_texture(
     all_objects: &HashMap<i64, (i32, Value)>,
     renderer: Option<&Value>,
-) -> (Option<Value>, Option<Value>, Option<i64>, bool, [f64; 4]) {
+) -> RendererTexture {
     let Some(materials) = renderer
         .and_then(|r| r.get("m_Materials"))
         .and_then(Value::as_array)
     else {
-        return (None, None, None, false, ST_IDENTITY);
+        return (None, None, None, false, ST_IDENTITY, None);
     };
     for mat_ref in materials {
-        if let Some((tv, ta, pid, add, st)) = resolve_material(all_objects, mat_ref) {
-            return (Some(tv), ta, Some(pid), add, st);
+        if let Some((tv, ta, pid, add, st, tint)) = resolve_material(all_objects, mat_ref) {
+            return (Some(tv), ta, Some(pid), add, st, tint);
         }
     }
-    (None, None, None, false, ST_IDENTITY)
+    (None, None, None, false, ST_IDENTITY, None)
 }
 
 // ---------------------------------------------------------------------------
@@ -1252,6 +1682,8 @@ pub(super) fn mat_texenv(
 fn resolve_ram(
     all_objects: &HashMap<i64, (i32, Value)>,
     renderer: Option<&Value>,
+    color_channels: Option<&[super::anim::MaterialColorChannel]>,
+    additive: bool,
 ) -> Option<RamData> {
     let materials = renderer?.get("m_Materials")?.as_array()?;
     let (mat, shader) = materials.iter().find_map(|mat_ref| {
@@ -1282,13 +1714,42 @@ fn resolve_ram(
 
     let vd_intensity = mat_color(mat, "_VertexDisturbIntensity", [0.0, 0.0, 0.0, 0.0]);
 
+    let main_color = mat_color(mat, "_MainColor", [0.5, 0.5, 0.5, 0.5]);
+    // The `_Start` clip's animated `_MainColor`, resolved onto the static colour exactly
+    // as the scene-quad path resolves a layer's tint (`layer_color_curve`). `tint_scale`
+    // is 1 — the Ram fragment applies the family's own `col += col` at draw time, so the
+    // ×2 must NOT be baked in here — and RGB stays HDR-unclamped so an over-bright ramp
+    // survives to the frontend's half-float target instead of collapsing onto a ceiling.
+    let main_color_curve = color_channels.and_then(|chs| {
+        let (props, _) = super::spine::material_color_props(mat);
+        super::anim::layer_color_curve(
+            chs,
+            &props,
+            Some("_MainColor"),
+            [
+                main_color[0] as f32,
+                main_color[1] as f32,
+                main_color[2] as f32,
+                main_color[3] as f32,
+            ],
+            1.0,
+            true,
+            additive,
+        )
+    });
+
     let json = json!({
         "kind": if is_vertex { "vertexDisturb" } else { "disturb" },
         "mainTex": Value::Null,     "mainST": main_st,
         "ramTex": Value::Null,      "ramST": ram_st,
         "disturbTex": Value::Null,  "disturbST": dist_st,
         "dissolveTex": Value::Null, "dissolveST": diss_st,
-        "mainColor": mat_color(mat, "_MainColor", [0.5, 0.5, 0.5, 0.5]),
+        "mainColor": main_color,
+        "mainColorCurve": main_color_curve.map(|c| {
+            c.into_iter()
+                .map(|(t, v)| json!([t, v[0], v[1], v[2], v[3]]))
+                .collect::<Vec<_>>()
+        }),
         "opacity": mat_float(mat, "_Opacity", 1.0),
         "borderWidth": mat_float(mat, "_BorderWidth", 0.1),
         "amount": mat_float(mat, "_Amount", 0.5),
@@ -1324,14 +1785,14 @@ fn resolve_ram(
 fn resolve_trail_material(
     all_objects: &HashMap<i64, (i32, Value)>,
     renderer: Option<&Value>,
-) -> (Option<Value>, Option<Value>, Option<i64>, bool) {
+) -> (Option<Value>, Option<Value>, Option<i64>, bool, [f64; 4]) {
     let mat_ref = renderer
         .and_then(|r| r.get("m_Materials"))
         .and_then(Value::as_array)
         .and_then(|m| m.get(1));
     match mat_ref.and_then(|mr| resolve_material(all_objects, mr)) {
-        Some((tv, ta, pid, add, _st)) => (Some(tv), ta, Some(pid), add),
-        None => (None, None, None, false),
+        Some((tv, ta, pid, add, st, _)) => (Some(tv), ta, Some(pid), add, st),
+        None => (None, None, None, false, ST_IDENTITY),
     }
 }
 

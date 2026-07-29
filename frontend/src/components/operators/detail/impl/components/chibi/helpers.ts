@@ -57,6 +57,22 @@ export function chibiAssetURL(path: string, server?: "en" | "cn"): string {
     return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
 }
 
+/** Atlas pages are MINIFIED heavily — a dynchar page is 2280x2280 drawn into a viewport a
+ *  few hundred px tall — and PIXI's default `MIPMAP_MODES.POW2` builds no mipmap chain for a
+ *  non-power-of-two page, so every such page is sampled with bilinear-only minification. Fine
+ *  detail in the art then aliases into shimmering vertical slivers that read as spurious
+ *  "rain": measured on Virtuosa's seated set, our vertically-coherent high-frequency energy is
+ *  1.57x the game's, and that excess survives both downscaling from a 1280x624 render (8.55)
+ *  and an h264 crf23 round trip (8.65) against a native 8.71, so it is not a capture artifact.
+ *  WebGL2 supports NPOT mipmaps, and PIXI falls back to no mipmap where it cannot build one.
+ *  Measured over the three reference skins this is worth -1.40 / -0.53 / -0.39 MADC (interior).
+ *  It did NOT move the vertical-streak metric (1.57x -> 1.55x), so the aliasing it removes is
+ *  general minification shimmer across the whole illustration, not those streaks, which remain
+ *  unexplained. Applying the same to the SCENE textures is a measured no-op — those pages are
+ *  128/256/512/1024, i.e. power-of-two, so PIXI's default POW2 mode already mipmaps them; this
+ *  matters only because the dynchar ATLAS pages are 2280 and fall outside that default. */
+const ATLAS_MIPMAP = PIXI.MIPMAP_MODES.ON;
+
 /**
  * Build a BaseTexture from an image. If the actual PNG is smaller than the
  * atlas-declared size, the image is upscaled onto a canvas so atlas UV
@@ -65,7 +81,7 @@ export function chibiAssetURL(path: string, server?: "en" | "cn"): string {
  */
 function buildPageTexture(img: HTMLImageElement, declaredW: number, declaredH: number): PIXI.BaseTexture {
     if (img.naturalWidth >= declaredW && img.naturalHeight >= declaredH) {
-        return PIXI.BaseTexture.from(img);
+        return PIXI.BaseTexture.from(img, { mipmap: ATLAS_MIPMAP });
     }
 
     const canvas = document.createElement("canvas");
@@ -77,7 +93,7 @@ function buildPageTexture(img: HTMLImageElement, declaredW: number, declaredH: n
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, declaredW, declaredH);
     }
-    return PIXI.BaseTexture.from(canvas);
+    return PIXI.BaseTexture.from(canvas, { mipmap: ATLAS_MIPMAP });
 }
 
 /**
@@ -322,6 +338,26 @@ export function layoutSpine(target: PIXI.Container, canvasWidth: number, canvasH
         default:
             target.y = canvasHeight / 2 - (bounds.y + bounds.height / 2) * scale;
     }
+}
+
+/**
+ * The region actually VISIBLE once {@link layoutSpine} has fitted `bounds` into the canvas.
+ *
+ * `contain`/`height` fit by ONE axis, so the other axis shows strictly MORE than `bounds`:
+ * a square framing box in a 2.16∶1 viewport reveals ~2.16× its width. Anything asking "is
+ * this on screen?" — particle culling above all — must test against this rect, never the
+ * framing box, or it discards content the viewer can plainly see.
+ */
+export function visibleRect(bounds: IAnimationBounds, canvasWidth: number, canvasHeight: number, fit: ISpineFit = DEFAULT_SPINE_FIT): IAnimationBounds {
+    const scale = fit.mode === "cover" ? Math.max(canvasWidth / bounds.width, canvasHeight / bounds.height) : fit.mode === "height" ? canvasHeight / bounds.height : Math.min(canvasWidth / bounds.width, canvasHeight / bounds.height) * DYNAMIC_FIT_MARGIN;
+    if (!(scale > 0) || !Number.isFinite(scale)) return bounds;
+    const width = canvasWidth / scale;
+    const height = canvasHeight / scale;
+    // Mirror layoutSpine's placement: it always centres horizontally on the box centre,
+    // while the vertical anchor follows `fit.align`.
+    const x = bounds.x + bounds.width / 2 - width / 2;
+    const y = fit.align === "top" ? bounds.y : fit.align === "bottom" ? bounds.y + bounds.height - height : bounds.y + bounds.height / 2 - height / 2;
+    return { x, y, width, height };
 }
 
 export interface IExportLayout {

@@ -18,7 +18,7 @@
 //! regardless of active-state, and none of the observed scenes animate scale.
 
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::spine::get_path_id;
 
@@ -145,6 +145,45 @@ fn is_entrance_clip(clip: &Value) -> bool {
     name.contains("start") || name.contains("entrance") || name.contains("enter")
 }
 
+/// Clips that run on the ENTRANCE's clock but whose NAME does not say so: the clips played
+/// by an Animator living inside a `<start> only …` group.
+///
+/// Those groups ship `m_IsActive = 0` and the game switches them on exactly while the start
+/// state plays — the rule `go_effectively_active` already relies on to keep them in the
+/// entrance scene at all. Their contents carry their OWN Animator, and the effect prefab
+/// inside is named for the effect rather than the state (Mlynar "Fields of Ruination" holds
+/// `char_4064_Mlynar_epoque#28_weisheng(Clone)` in `Start Only Effects`, driven by clip
+/// `char_4064_Mlynar_##_weisheng`). Name-matching the clip therefore misses it, and the
+/// layer exports as an unmodulated always-on fog sheet across the whole 16.5 s cinematic
+/// instead of the ~10 s fade its clip actually paints.
+///
+/// Scoped to material-COLOUR reading (`entrance_material_color_channels`): every channel it
+/// yields is matched against the owning layer's own material properties and restricted to
+/// the playing Animator's subtree, so an admitted clip can only ever modulate art inside
+/// its own group. The camera/pan/ortho tracks stay name-gated to the main entrance clip.
+fn start_only_effect_clips(all_objects: &HashMap<i64, (i32, Value)>) -> HashSet<i64> {
+    let go_parent = build_go_parent(all_objects);
+    let name_of = |go: i64| -> String {
+        all_objects
+            .get(&go)
+            .and_then(|(_, v)| v.get("m_Name"))
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_ascii_lowercase()
+    };
+    let in_start_only_group = |go: i64| -> bool {
+        root_path(go, &go_parent).iter().any(|&a| {
+            let n = name_of(a);
+            n.contains("only") && n.contains("start")
+        })
+    };
+    build_clip_animator_gos(all_objects)
+        .into_iter()
+        .filter(|(_, animators)| animators.iter().copied().any(in_start_only_group))
+        .map(|(clip, _)| clip)
+        .collect()
+}
+
 /// One streamed frame: a time plus a set of `(global curve index, value)` keys.
 struct StreamedKey {
     index: usize,
@@ -227,6 +266,17 @@ pub type ActiveWindow = (Option<f32>, Option<f32>);
 pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindow> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
+    let go_parent = build_go_parent(all_objects);
+    let go_name: HashMap<i64, String> = all_objects
+        .iter()
+        .filter(|(_, (cid, _))| *cid == 1)
+        .filter_map(|(p, (_, v))| {
+            v.get("m_Name")
+                .and_then(Value::as_str)
+                .map(|n| (*p, n.to_string()))
+        })
+        .collect();
     // The entrance DIRECTOR's authored duration (`_params.duration` on the behaviour that
     // owns `_mainCamera`). A clip can STOP before the state it belongs to exits — Mlynar
     // "Fields of Ruination"'s `_Start` clip stops at 15.97 while the director runs to 16.5 —
@@ -244,7 +294,7 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
         })
         .map(|d| d as f32);
     let mut out: HashMap<i64, ActiveWindow> = HashMap::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 {
             continue;
         }
@@ -256,7 +306,14 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
             continue;
         }
         let stop = clip_stop_time(v);
-        for (go, (from, mut until)) in active_timeline(v, &hash_to_gos, &is_ancestor) {
+        for (go, (from, mut until)) in active_timeline(
+            v,
+            &hash_to_gos,
+            &is_ancestor,
+            clip_animators.get(clip_pid).map(Vec::as_slice),
+            &go_parent,
+            &go_name,
+        ) {
             // A clip's `m_IsActive` override EXPIRES when the entrance state exits at the
             // clip's end (`m_StopTime`): a GO the prefab keeps INACTIVE (an entrance-only
             // overlay, e.g. Mlynar's white transition flash — revealed at 13.0s, clip stop
@@ -326,12 +383,14 @@ pub fn entrance_ps_rate_curves(
     type StoppedCurve = (Vec<(f32, f32)>, f32);
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
     let want = i64::from(crc32(b"EmissionModule.rateOverTime.scalar"));
     let mut per_go: HashMap<i64, Vec<StoppedCurve>> = HashMap::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
         }
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         let Some(bindings) = generic_bindings(v) else {
             continue;
         };
@@ -355,8 +414,9 @@ pub fn entrance_ps_rate_curves(
             let Some(candidates) = hash_to_gos.get(&path) else {
                 continue;
             };
+            let candidates = scope_to_animator(candidates, animator_gos, &is_ancestor);
             let other_hashes = all_hashes.iter().copied().filter(|&h| h != path);
-            match disambiguate_owner(candidates, other_hashes, &hash_to_gos, &is_ancestor) {
+            match disambiguate_owner(&candidates, other_hashes, &hash_to_gos, &is_ancestor) {
                 Some(go) => per_go.entry(go).or_default().push((curve, stop)),
                 // Ambiguous: this clip proves EVERY colliding candidate's system is
                 // curve-gated, just not which one it belongs to. Contribute an
@@ -364,7 +424,7 @@ pub fn entrance_ps_rate_curves(
                 // the binding out entirely (which would fall back to the far louder
                 // serialized constant rate).
                 None => {
-                    for &go in candidates {
+                    for &go in candidates.iter() {
                         per_go.entry(go).or_default().push((vec![(0.0, 0.0)], stop));
                     }
                 }
@@ -420,9 +480,10 @@ pub fn entrance_transform_curves(
 ) -> HashMap<i64, EntranceTransform> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
 
     let mut out: HashMap<i64, EntranceTransform> = HashMap::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
         }
@@ -468,8 +529,13 @@ pub fn entrance_transform_curves(
         let Some(candidates) = hash_to_gos.get(&scale_path) else {
             continue;
         };
+        let candidates = scope_to_animator(
+            candidates,
+            clip_animators.get(clip_pid).map(Vec::as_slice),
+            &is_ancestor,
+        );
         let other_hashes = all_hashes.iter().copied().filter(|&h| h != scale_path);
-        let Some(ctrl) = disambiguate_owner(candidates, other_hashes, &hash_to_gos, &is_ancestor)
+        let Some(ctrl) = disambiguate_owner(&candidates, other_hashes, &hash_to_gos, &is_ancestor)
         else {
             continue;
         };
@@ -485,10 +551,8 @@ pub fn entrance_transform_curves(
 
 /// Build a predicate that reports whether its first GameObject is an ancestor of
 /// (or equal to) its second, following Transform `m_Father` links.
-fn build_ancestor_check(
-    all_objects: &HashMap<i64, (i32, Value)>,
-) -> impl Fn(i64, i64) -> bool + '_ {
-    // GameObject → parent GameObject (via the transform `m_Father` chain).
+/// GameObject → parent GameObject, via the transform `m_Father` chain.
+fn build_go_parent(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, i64> {
     let mut go_parent: HashMap<i64, i64> = HashMap::new();
     let mut tr_go: HashMap<i64, i64> = HashMap::new();
     for (pid, (cid, v)) in all_objects {
@@ -507,6 +571,26 @@ fn build_ancestor_check(
             go_parent.insert(go, father_go);
         }
     }
+    go_parent
+}
+
+/// A GameObject's ancestor chain, root first, ending at the object itself.
+fn root_path(go: i64, go_parent: &HashMap<i64, i64>) -> Vec<i64> {
+    let mut chain = vec![go];
+    let mut cur = go;
+    for _ in 0..256 {
+        let Some(&p) = go_parent.get(&cur) else { break };
+        chain.push(p);
+        cur = p;
+    }
+    chain.reverse();
+    chain
+}
+
+fn build_ancestor_check(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> impl Fn(i64, i64) -> bool + '_ {
+    let go_parent = build_go_parent(all_objects);
     move |g: i64, d: i64| -> bool {
         let mut cur = Some(d);
         for _ in 0..256 {
@@ -517,6 +601,92 @@ fn build_ancestor_check(
             cur = go_parent.get(&c).copied();
         }
         false
+    }
+}
+
+/// Map every AnimationClip (`path_id`) to the GameObject(s) whose Animator plays it.
+///
+/// A clip's binding path hashes are relative to the GameObject carrying the **Animator**
+/// that plays the clip — so that GameObject's subtree is the only scope in which a hash
+/// may be resolved. The linkage is serialized in full: Animator (class 95) `m_Controller`
+/// → AnimatorController (class 91) `m_AnimationClips`, an array of `{m_FileID, m_PathID}`
+/// references to clips (class 74).
+///
+/// Mlynar "Fields of Ruination" is the case this exists for: the bundle ships twelve
+/// Animators, one per sword/idle rig clone, each with its own controller listing only that
+/// rig's clips. Six identically-pathed `static_offset/fixed/scale_01/scale02/glow_01`
+/// blade quads collide on one hash, and the animator that plays the clip is what tells
+/// them apart — no name matching involved.
+///
+/// A clip may legitimately be listed by SEVERAL Animators (a controller reused across rig
+/// clones), hence a `Vec` per clip. `m_PathID == 0` and references that don't resolve to a
+/// clip in this file (external `m_FileID` targets) are skipped.
+fn build_clip_animator_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, Vec<i64>> {
+    let mut out: HashMap<i64, Vec<i64>> = HashMap::new();
+    for (cid, v) in all_objects.values() {
+        if *cid != 95 {
+            continue;
+        }
+        let Some(go) = v
+            .get("m_GameObject")
+            .and_then(get_path_id)
+            .filter(|&p| p != 0)
+        else {
+            continue;
+        };
+        let Some(ctrl) = v
+            .get("m_Controller")
+            .and_then(get_path_id)
+            .filter(|&p| p != 0)
+        else {
+            continue;
+        };
+        let Some((91, controller)) = all_objects.get(&ctrl) else {
+            continue;
+        };
+        let clips = controller
+            .get("m_AnimationClips")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten();
+        for r in clips {
+            if let Some(clip) = get_path_id(r).filter(|&p| p != 0)
+                && all_objects.get(&clip).is_some_and(|(c, _)| *c == 74)
+            {
+                let owners = out.entry(clip).or_default();
+                if !owners.contains(&go) {
+                    owners.push(go);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// Narrow a binding hash's colliding candidates to the Animator subtree(s) that play the
+/// clip: keep only candidates that ARE an animator GameObject or a descendant of one.
+///
+/// This can only ever shrink an ambiguous set. It falls back to the untouched candidate
+/// list when the clip is listed by no Animator (an externally-referenced controller, or a
+/// bundle that ships clips without their state machine) or when the restriction would
+/// leave nothing — a binding that resolves today must keep resolving.
+fn scope_to_animator<'a>(
+    candidates: &'a [i64],
+    animator_gos: Option<&[i64]>,
+    is_ancestor: &impl Fn(i64, i64) -> bool,
+) -> std::borrow::Cow<'a, [i64]> {
+    let Some(roots) = animator_gos.filter(|r| !r.is_empty()) else {
+        return std::borrow::Cow::Borrowed(candidates);
+    };
+    let kept: Vec<i64> = candidates
+        .iter()
+        .copied()
+        .filter(|&c| roots.iter().any(|&root| is_ancestor(root, c)))
+        .collect();
+    if kept.is_empty() {
+        std::borrow::Cow::Borrowed(candidates)
+    } else {
+        std::borrow::Cow::Owned(kept)
     }
 }
 
@@ -558,6 +728,96 @@ fn disambiguate_owner(
         .map(|(candidate, _)| candidate)
 }
 
+/// [`disambiguate_owner`], with fallbacks for LEAF targets.
+///
+/// The descendant score only resolves a candidate that CONTAINS the clip's other targets —
+/// the shape a `ctrl` node with animated children has. A leaf resolves nothing: Mlynar
+/// "Fields of Ruination" ships six identically-pathed `.../scale_01/scale02/glow_01` blade
+/// quads, one per sword rig, so each sword clip's `m_IsActive` binding collides six ways,
+/// scores zero everywhere, and the window is dropped — leaving every rig's glow ungated
+/// instead of only the one the clip drives.
+///
+/// Two fallbacks, cheapest first:
+/// 1. **Hierarchy proximity** — the candidate sharing the DEEPEST common ancestor with any
+///    other target. Resolves a leaf whose siblings live under different parents.
+/// 2. **Clip-name ↔ rig-root name** — identical rig instances defeat proximity too (their
+///    subtrees are byte-identical, so every candidate ties). Unity names the instance after
+///    the clip that drives it (`<clip>(Clone)`), which is the one signal that separates them.
+///
+/// Both require a STRICT winner, so a genuinely ambiguous binding stays dropped as before.
+fn disambiguate_owner_near(
+    candidates: &[i64],
+    other_hashes: impl Iterator<Item = u32> + Clone,
+    hash_to_gos: &HashMap<u32, Vec<i64>>,
+    is_ancestor: &impl Fn(i64, i64) -> bool,
+    go_parent: &HashMap<i64, i64>,
+    clip_name: &str,
+    go_name: &HashMap<i64, String>,
+) -> Option<i64> {
+    if let Some(go) = disambiguate_owner(candidates, other_hashes.clone(), hash_to_gos, is_ancestor)
+    {
+        return Some(go);
+    }
+    if candidates.len() < 2 {
+        return None;
+    }
+    if !clip_name.is_empty() {
+        let owned: Vec<i64> = candidates
+            .iter()
+            .copied()
+            .filter(|&c| {
+                root_path(c, go_parent).iter().any(|g| {
+                    go_name.get(g).is_some_and(|n| {
+                        n == clip_name
+                            || n.strip_suffix("(Clone)")
+                                .is_some_and(|b| b.trim_end() == clip_name)
+                    })
+                })
+            })
+            .collect();
+        if owned.len() == 1 {
+            return Some(owned[0]);
+        }
+    }
+    let others: Vec<i64> = other_hashes
+        .flat_map(|h| hash_to_gos.get(&h).into_iter().flatten().copied())
+        .collect();
+    if others.is_empty() {
+        return None;
+    }
+    let mut best: Option<(i64, usize)> = None;
+    let mut runner_up = 0usize;
+    for &candidate in candidates {
+        let cpath = root_path(candidate, go_parent);
+        let score = others
+            .iter()
+            .filter(|&&o| o != candidate && !candidates.contains(&o))
+            .map(|&o| {
+                let opath = root_path(o, go_parent);
+                cpath
+                    .iter()
+                    .zip(opath.iter())
+                    .take_while(|(a, b)| a == b)
+                    .count()
+            })
+            .max()
+            .unwrap_or(0);
+        match best {
+            Some((_, b)) if score > b => {
+                runner_up = b;
+                best = Some((candidate, score));
+            }
+            Some((_, _)) if score > runner_up => runner_up = score,
+            None => best = Some((candidate, score)),
+            _ => {}
+        }
+    }
+    // A win only counts when strictly deeper than every rival: an equal-depth tie means the
+    // clip's targets sit above the fork and cannot distinguish the candidates.
+    best.filter(|&(_, score)| score > runner_up && score > 1)
+        .map(|(candidate, _)| candidate)
+}
+
 /// GameObjects whose ParticleSystem `EmissionModule.rateOverTime` is ANIMATED by a
 /// state/transition clip other than the steady idle loop. In the MAIN (idle) scene
 /// such emitters are QUIET at the steady state: the binding clips are one-shot
@@ -572,9 +832,11 @@ pub fn event_driven_rate_gos(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> std::collections::HashSet<i64> {
     let hash_to_gos = build_hash_to_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
     let want = i64::from(crc32(b"EmissionModule.rateOverTime.scalar"));
     let mut out = std::collections::HashSet::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 {
             continue;
         }
@@ -594,13 +856,20 @@ pub fn event_driven_rate_gos(
         let Some(bindings) = generic_bindings(v) else {
             continue;
         };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         for b in bindings {
             let (tid, attr, path) = binding_fields(b);
             if tid == 198
                 && attr == want
                 && let Some(gos) = hash_to_gos.get(&path)
             {
-                out.extend(gos.iter().copied());
+                // Only the rig this clip's Animator drives is proven event-gated; the
+                // identically-pathed emitters in sibling rigs keep their own verdict.
+                out.extend(
+                    scope_to_animator(gos, animator_gos, &is_ancestor)
+                        .iter()
+                        .copied(),
+                );
             }
         }
     }
@@ -829,26 +1098,32 @@ pub fn entrance_camera_track(
         })
         .collect();
     let hash_to_gos = build_hash_to_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
     let mut animated: HashMap<i64, [Vec<(f32, f32)>; 3]> = HashMap::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
         }
         let Some(bindings) = generic_bindings(v) else {
             continue;
         };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         let mut gidx = 0usize;
         for b in bindings {
             let (type_id, attr, path) = binding_fields(b);
             let count = binding_curve_count(type_id, attr);
-            // On a subpath-hash collision (same-named twin rigs), pick the candidate
-            // that is actually on the camera chain — an arbitrary pick could name the
-            // wrong twin and drop the camera move entirely.
-            if type_id == 4
-                && attr == 1
-                && let Some(&go) = hash_to_gos
-                    .get(&path)
-                    .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
+            // On a subpath-hash collision (same-named twin rigs), scope to the Animator
+            // that plays this clip and then pick the candidate that is actually on the
+            // camera chain — an arbitrary pick could name the wrong twin and drop the
+            // camera move entirely.
+            let scoped = (type_id == 4 && attr == 1)
+                .then(|| hash_to_gos.get(&path))
+                .flatten()
+                .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
+            if let Some(&go) = scoped
+                .as_deref()
+                .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
                 && let Some(&tf) = go_to_tf.get(&go)
             {
                 let cs = [
@@ -986,22 +1261,28 @@ pub fn entrance_pan_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Ve
         return None;
     }
     let hash_to_gos = build_hash_to_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
     let mut best: Option<Vec<(f32, f32)>> = None; // the largest-range component curve
     let mut best_range = 0.0f32;
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
         }
         let Some(bindings) = generic_bindings(v) else {
             continue;
         };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         let mut gidx = 0usize;
         for b in bindings {
             let (type_id, attr, path) = binding_fields(b);
             let count = binding_curve_count(type_id, attr);
-            // Collision-robust: pick the candidate GO on the camera chain (see above).
+            // Collision-robust: scope to the Animator playing this clip, then pick the
+            // candidate GO on the camera chain (see above).
             let go = hash_to_gos
                 .get(&path)
+                .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor))
+                .as_deref()
                 .and_then(|gos| gos.iter().find(|g| chain.contains(g)))
                 .copied()
                 .unwrap_or(0);
@@ -1240,6 +1521,14 @@ pub struct MaterialColorChannel {
     pub curve: Vec<(f32, f32)>,
 }
 
+/// Whether the entrance clip animates the named colour property on this layer — i.e.
+/// whether the clip itself NAMES the property the shader modulates by.
+#[must_use]
+pub fn animates_prop(channels: &[MaterialColorChannel], prop: &str) -> bool {
+    let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
+    channels.iter().any(|c| c.prop_crc28 == crc28)
+}
+
 /// Every ANIMATED material-colour channel in the `_Start` entrance clip(s), keyed by the
 /// renderer's GameObject `path_id`. Only genuinely-varying curves are kept (a constant
 /// channel adds nothing over the static tint). Drives per-layer colour/alpha replay —
@@ -1250,14 +1539,18 @@ pub fn entrance_material_color_channels(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> HashMap<i64, Vec<MaterialColorChannel>> {
     let hash_to_gos = build_hash_to_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
+    let start_only = start_only_effect_clips(all_objects);
     let mut out: HashMap<i64, Vec<MaterialColorChannel>> = HashMap::new();
-    for (cid, v) in all_objects.values() {
-        if *cid != 74 || !is_entrance_clip(v) {
+    for (clip_pid, (cid, v)) in all_objects {
+        if *cid != 74 || !(is_entrance_clip(v) || start_only.contains(clip_pid)) {
             continue;
         }
         let Some(bindings) = generic_bindings(v) else {
             continue;
         };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         let mut gidx = 0usize;
         for b in bindings {
             let (type_id, attr, path) = binding_fields(b);
@@ -1284,11 +1577,14 @@ pub fn entrance_material_color_channels(
                     let channel = (nibble - 4) as usize;
                     // A subpath hash matching several same-named GOs (twin rigs across
                     // the entrance/idle prefabs, e.g. Mlynar's `bg01_Idle`) applies to
-                    // ALL of them — the consumer only uses a channel whose property
-                    // matches the layer material's own colour props, so a wrong twin
-                    // simply ignores it. (Picking one arbitrary GO dropped the bg
-                    // flicker curves from the twin the scene actually exports.)
-                    for &go in gos {
+                    // ALL of them WITHIN the playing Animator's subtree — the consumer
+                    // only uses a channel whose property matches the layer material's own
+                    // colour props, so a wrong twin simply ignores it. (Picking one
+                    // arbitrary GO dropped the bg flicker curves from the twin the scene
+                    // actually exports.) Outside that subtree it is a different rig
+                    // entirely: without the animator scope Mlynar's six blade glows each
+                    // inherited every sword clip's colour curve.
+                    for &go in scope_to_animator(gos, animator_gos, &is_ancestor).iter() {
                         let entry = out.entry(go).or_default();
                         // Same channel keyed in several entrance clips: keep the richer curve.
                         if let Some(existing) = entry
@@ -1333,8 +1629,9 @@ type StChannels = [Option<Vec<(f32, f32)>>; 4];
 pub fn entrance_st_curves(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, StChannels> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
     let mut out: HashMap<i64, StChannels> = HashMap::new();
-    for (cid, v) in all_objects.values() {
+    for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
         }
@@ -1370,9 +1667,14 @@ pub fn entrance_st_curves(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i
             let Some(candidates) = hash_to_gos.get(&path) else {
                 continue;
             };
+            let candidates = scope_to_animator(
+                candidates,
+                clip_animators.get(clip_pid).map(Vec::as_slice),
+                &is_ancestor,
+            );
             let other_hashes = all_hashes.iter().copied().filter(|&h| h != path);
             let Some(owner) =
-                disambiguate_owner(candidates, other_hashes, &hash_to_gos, &is_ancestor)
+                disambiguate_owner(&candidates, other_hashes, &hash_to_gos, &is_ancestor)
             else {
                 continue;
             };
@@ -1475,6 +1777,12 @@ pub fn layer_color_curve(
     tint_prop: Option<&str>,
     tint: [f32; 4],
     tint_scale: f32,
+    // The layer's scaled colour is HDR (see `ram_tint_scale`): keep the scaled RGB
+    // UNCLAMPED so an over-bright ramp survives to the frontend's half-float target,
+    // instead of collapsing baseline and peak onto the same ceiling. Alpha is always
+    // clamped — it is a coverage weight, and a premultiplied source alpha above 1
+    // makes the destination factor `1 - a` negative and corrupts the composite.
+    hdr_color: bool,
     additive: bool,
 ) -> Option<Vec<(f32, [f32; 4])>> {
     let prop_of = |crc28: u32| {
@@ -1563,7 +1871,12 @@ pub fn layer_color_curve(
             if let Some(c) = ch {
                 let v = sample(c, t);
                 rgba[i] = if same_prop {
-                    (v * tint_scale).clamp(0.0, 1.0)
+                    let scaled = v * tint_scale;
+                    if hdr_color && i < 3 {
+                        scaled
+                    } else {
+                        scaled.clamp(0.0, 1.0)
+                    }
                 } else {
                     tint[i] * v
                 };
@@ -1576,13 +1889,18 @@ pub fn layer_color_curve(
 
 /// One clip's `m_IsActive` transitions per GO: `(first off→on time, first on→off time)`.
 /// Only records genuinely-toggled objects (skips always-on/always-off). A subpath hash
-/// matching several same-named GOs is disambiguated from the other paths bound by the
-/// same clip; ambiguous bindings are conservatively dropped.
+/// matching several same-named GOs is first restricted to the subtree of the Animator
+/// playing this clip, then disambiguated from the other paths bound by the same clip;
+/// ambiguous bindings are conservatively dropped.
 fn active_timeline(
     clip: &Value,
     hash_to_gos: &HashMap<u32, Vec<i64>>,
     is_ancestor: &impl Fn(i64, i64) -> bool,
+    animator_gos: Option<&[i64]>,
+    go_parent: &HashMap<i64, i64>,
+    go_name: &HashMap<i64, String>,
 ) -> HashMap<i64, ActiveWindow> {
+    let clip_name = clip.get("m_Name").and_then(Value::as_str).unwrap_or("");
     let mut out = HashMap::new();
     let Some(bindings) = generic_bindings(clip) else {
         return out;
@@ -1648,8 +1966,17 @@ fn active_timeline(
         let Some(candidates) = hash_to_gos.get(&path) else {
             continue;
         };
+        let candidates = scope_to_animator(candidates, animator_gos, is_ancestor);
         let other_hashes = all_hashes.iter().copied().filter(|&h| h != path);
-        if let Some(go) = disambiguate_owner(candidates, other_hashes, hash_to_gos, is_ancestor) {
+        if let Some(go) = disambiguate_owner_near(
+            &candidates,
+            other_hashes,
+            hash_to_gos,
+            is_ancestor,
+            go_parent,
+            clip_name,
+            go_name,
+        ) {
             out.insert(go, (reveal, hide));
         }
     }

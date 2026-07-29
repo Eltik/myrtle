@@ -78,15 +78,25 @@ impl SerializedFile {
         for _ in 0..type_count {
             let class_id = r.read_i32()?;
 
-            let is_stripped = if version >= 16 { r.read_bool()? } else { false };
-            let script_type_index = if version >= 17 { r.read_i16()? } else { -1 };
+            let _is_stripped = if version >= 16 { r.read_bool()? } else { false };
+            let _script_type_index = if version >= 17 { r.read_i16()? } else { -1 };
 
-            if is_stripped || script_type_index >= 0 {
-                r.read_bytes(16)?;
+            // `m_ScriptID` (16 bytes) is present for SCRIPT types only: MonoBehaviour
+            // (class 114) since v16, negative class ids before that. Keying it off
+            // `is_stripped`/`script_type_index` instead desynchronizes the reader on any
+            // file carrying STRIPPED non-script types — every subsequent type blob is then
+            // read from the wrong offset and the whole SerializedFile is discarded
+            // (`refs/fx/sharedbattle.ab`, which holds shared FX materials dynchar emitters
+            // reference externally). Matches AssetStudio's `ReadSerializedType`.
+            if (version >= 16 && class_id == 114) || (version < 16 && class_id < 0) {
+                r.read_bytes(16)?; // m_ScriptID
             }
-            r.read_bytes(16)?;
+            r.read_bytes(16)?; // m_OldTypeHash
 
             let type_tree = if enable_type_tree {
+                // A stripped type serializes an EMPTY tree; that's not a file-level
+                // error, only a type whose objects can't be deserialized (`read_object`
+                // already reports "no type tree" per object).
                 let tree = read_type_tree_blob(&mut r)?;
                 if version >= 21 {
                     // Type dependencies array: count (i32) + count * i32
@@ -95,7 +105,7 @@ impl SerializedFile {
                         r.read_bytes((dep_count as usize) * 4)?;
                     }
                 }
-                Some(tree)
+                tree
             } else {
                 None
             };

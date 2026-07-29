@@ -260,7 +260,15 @@ const SPINE_CLASS_IDS: &[i32] = &[1, 114, 49, 21, 28];
 /// AnimationClip (74) to evaluate the idle pose the quads settle into, and
 /// ParticleSystem (198) + ParticleSystemRenderer (199) + Camera (20) for the
 /// `[particles]` export.
-const DYNCHAR_SPINE_CLASS_IDS: &[i32] = &[1, 4, 20, 21, 23, 28, 33, 43, 49, 74, 114, 198, 199];
+///
+/// Animator (95) + AnimatorController (91) carry the clip→rig linkage: a clip's
+/// binding path hashes are relative to the GameObject holding the Animator that
+/// plays it (`m_Controller` → `m_AnimationClips`). Without them a hash that
+/// collides across identical sibling rigs — Mlynar "Fields of Ruination" ships six
+/// `static_offset/fixed/scale_01/scale02/glow_01` blade quads — cannot be scoped to
+/// the one rig its clip actually drives (see `anim::build_clip_animator_gos`).
+const DYNCHAR_SPINE_CLASS_IDS: &[i32] =
+    &[1, 4, 20, 21, 23, 28, 33, 43, 49, 74, 91, 95, 114, 198, 199];
 
 /// Map local (`m_FileID == 0`) object `path_ids` to their intended output directory,
 /// taken from the bundle's `AssetBundle` (class 142) `m_Container`.
@@ -421,7 +429,7 @@ fn process_bundle(
                     let is_ram = shader.contains("Ram/");
                     let is_distortion = shader.contains("GrabPass")
                         || (shader.contains("Disturb") && !shader.contains("VertexDisturb"));
-                    let slots: &[&str] = if is_ram {
+                    let base_slots: &[&str] = if is_ram {
                         &[
                             "_MainTex",
                             "_RamTex",
@@ -435,7 +443,25 @@ fn process_bundle(
                     } else {
                         &["_MainTex"]
                     };
-                    for slot in slots {
+                    // The dissolve/disturb MASK pair is not a `Ram/` peculiarity — every
+                    // sub-namespaced `Particles-L2D` compositor binds the same two data
+                    // maps and cuts its quad down to their silhouette. Resolving them
+                    // only for `Ram/` starved the rest of the family: a
+                    // `Disturb/Disturb(CustomData)` material falls in the `is_distortion`
+                    // branch above, which resolves NOTHING, so Mlynar's entrance wind
+                    // sheets reached the renderer with no mask at all and covered their
+                    // whole bounding rectangle. Add the pair (never `_MainTex`, which
+                    // keeps its ungated `_meshExtResolved` path below) and let the slot
+                    // lookup itself decide: a material that doesn't bind them skips.
+                    let mut slots: Vec<&str> = base_slots.to_vec();
+                    if export::spine::is_l2d_compositor(shader) {
+                        for mask in ["_DissolveTex", "_DisturbTex"] {
+                            if !slots.contains(&mask) {
+                                slots.push(mask);
+                            }
+                        }
+                    }
+                    for slot in &slots {
                         let Some((fid, pid)) = val
                             .get("m_SavedProperties")
                             .and_then(|sp| sp.get("m_TexEnvs"))
@@ -448,7 +474,10 @@ fn process_bundle(
                         if fid == 0 {
                             continue; // already in-bundle
                         }
-                        let decoded = if is_ram {
+                        // Masks are DATA maps, not sprites: a dissolve/disturb texture is
+                        // legitimately opaque and would be thrown out by the sprite
+                        // opacity gate, so it takes the raw path like the Ram slots do.
+                        let decoded = if is_ram || matches!(*slot, "_DissolveTex" | "_DisturbTex") {
                             fx_textures.resolve_decode_ram(&sf.externals, fid, pid)
                         } else {
                             fx_textures.resolve_decode(&sf.externals, fid, pid)

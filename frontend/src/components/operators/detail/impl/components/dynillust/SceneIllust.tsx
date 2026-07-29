@@ -4,10 +4,10 @@ import { Spinner } from "#/components/ui/spinner";
 import type { IChibiSpineFiles } from "#/lib/api/chibis";
 import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
-import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds } from "../chibi/helpers";
+import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene } from "./hdrTonemap";
 import { type FindBone, type ILoadedParticles, loadParticles } from "./particles";
-import { applySceneLayerColor, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
@@ -279,6 +279,14 @@ interface IComposite {
      *  UVs each frame with the continuous scene clock (idle AND entrance). Empty for scenes
      *  with no scroll layers. */
     scrollLayers: PIXI.Mesh[];
+    /** The scene's RAM-MASKED layer meshes (a `_DissolveTex`/`_DisturbTex` silhouette). The
+     *  always-running tick drifts their mask lookups with the same scene clock. Empty for
+     *  scenes with no masked layers. */
+    ramLayers: PIXI.Mesh[];
+    /** The scene's BONE-FOLLOWING layer meshes (spine-unity `BoneFollower` in their Unity
+     *  ancestry — Mlynar's sword flare). The always-running tick rebases them onto their
+     *  live bone each frame, after the spine update. Empty for scenes with none. */
+    followLayers: PIXI.Mesh[];
     /** When the authored SCENE timeline outlasts the spine's own "Start" animation
      *  (Mlynar: the spine ends at 14.33s but the white-flash plane + camera run to the
      *  clip stop 15.97s), the time (track seconds) the entrance actually ends — the
@@ -367,15 +375,49 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
     return sprite;
 }
 
-/** The in-game L2D viewer frames the illustration over a bright STUDIO ENVIRONMENT — a
- *  light-grey backdrop lit from above — NOT black. That environment is a generic viewer
- *  asset, not part of any skin's extracted scene, so without it the illustration reads far
- *  too dark against the page. We reproduce it as a full-viewport radial gradient (brighter
- *  toward the top, where the studio light falls) rendered BEHIND the scene, so the mesh
- *  layers composite over it at the game's brightness. `resizeEnvironmentBg` keeps it
- *  covering the viewport. */
+/** The in-game viewer composites the illustration over its OWN backdrop, and that backdrop
+ *  is a flat NEUTRAL DARK GREY. Every skin's dynchar camera clears with `m_ClearFlags: 2`
+ *  (solid colour) and `m_BackGroundColor.a = 0` — the skin renders into a TRANSPARENT
+ *  target, so nothing in the scene fills the frame its art doesn't reach; whatever shows
+ *  there belongs to the viewer, not to the skin. Measured on the in-game captures of three
+ *  skins with three completely different worlds (Mlynar "Fields of Ruination", Virtuosa
+ *  "Diversity Oneness", Skadi2 "Iteration") across ten beats: every uncovered corner reads
+ *  32–39 in ALL channels — one neutral tone, the same for every skin at every time.
+ *
+ *  This supersedes two earlier guesses. A bright studio gradient (`#dddee2`) was ~3× too
+ *  bright. Deriving the tone from the SCENE (the mean colour of its largest painted
+ *  backdrop) made Mlynar's frame edges a light blue-GREY (73,81,95) — wrong in hue as well as
+ *  level, because his backdrop bakes its vignette INTO the texture, so an alpha-weighted mean
+ *  reports the lit painted INTERIOR. Any per-scene derivation is wrong in principle here: the
+ *  tone is not the scene's to supply. `resizeEnvironmentBg` keeps it covering the viewport.
+ *
+ *  CORRECTED 2026-07-28: the level was `#232324` (35,35,36), taken from "every uncovered
+ *  corner reads 32–39". Those corners were not uncovered. At almost every beat the art reaches
+ *  the frame edge — sampled across all three captures, the margins are strongly coloured and
+ *  vary 43→208 with the camera, i.e. they are painted scenery, and a dark corner of scenery
+ *  reads ~35 exactly like a dark fill. The fill is genuinely exposed only at Mlynar's widest
+ *  entrance framing, and there it is unambiguous: flat, neutral, and 76–83 down the FULL height
+ *  of both margins and in all four corners. Sampling only the pre-flash window matters — from
+ *  t≈13.2 his white transition flash ramps those same margins 79 → 125 → 202 → 255, so a
+ *  sample taken a few frames later reads the flash, not the fill.
+ *
+ *  Measured over the frame INTERIOR this is a clean win with no cost anywhere: Mlynar 20.878 →
+ *  19.733 (t=13 −5.57, t=12.4 −3.41, every other beat flat to ±0.02) and Skadi bit-identical,
+ *  since his fill is never exposed. Virtuosa is untouched — she takes the `dark` branch.
+ *
+ *  Scored over the FULL frame it instead reads −0.12/+0.03, with apparent ~0.5 regressions at
+ *  t=7 and t=11.8. That is an artifact of the metric, not of this constant: the default window
+ *  includes columns 0–35 and 864–899, which are the CAPTURE'S OWN dark UI chrome (temporal SD
+ *  ~1.0 vs ~70 in the interior — no renderer signal at all), so raising the fill is scored as a
+ *  growing mismatch against a black border that is not ours to match. Confirmed by measuring the
+ *  art's transmittance to this fill directly, from two renders that differ only in its value:
+ *  it is 0 or 1 and never in between (≥99.5% of interior pixels fully opaque at t=4…11, the
+ *  remainder fully uncovered), so no semi-transparent leak exists to trade against. An earlier
+ *  note here claimed one and blamed thin layer alphas; that was reading the chrome. */
 // Fresh per-app texture (the app is destroyed with `texture: true`, so a shared/cached
 // texture would be torn down under later mounts).
+const VIEWER_BACKDROP = "#4d4d4e";
+
 function createEnvironmentBgTexture(dark = false): PIXI.Texture {
     const S = 512;
     const cvs = document.createElement("canvas");
@@ -383,21 +425,20 @@ function createEnvironmentBgTexture(dark = false): PIXI.Texture {
     cvs.height = S;
     const ctx = cvs.getContext("2d");
     if (ctx) {
-        const g = ctx.createRadialGradient(S / 2, S * 0.3, S * 0.08, S / 2, S * 0.5, S * 0.78);
-        // A scene that owns its own DARK painted world (`hasDarkBackdrop`, e.g. Virtuosa's
-        // mirror-world) composites its backdrop SEMI-TRANSPARENTLY, so the bright studio grey
-        // leaks through and washes its deep-navy field to lavender. Keep the fallback present
-        // (it still fills the genuine coverage gaps at the widest camera framings — a `null`
-        // fill reopens black voids at the wide settle) but make it DARK, so it fills gaps
-        // without lifting the navy. Same radial shape/stops, darkened — no per-skin colour.
         if (dark) {
+            // A scene that owns a self-lit DARK painted world (`hasDarkBackdrop`, Virtuosa's
+            // mirror-world) composites that world SEMI-TRANSPARENTLY over this fill, so here the
+            // fill is not only the frame surround but also a light LEAK through the art — and our
+            // layer alphas run thinner than the game's. Its measured optimum therefore sits below
+            // the viewer's own grey (Virtuosa MAD 31.89 with this dark gradient vs 32.01 with the
+            // viewer grey), so that family keeps the fill as measured.
+            const g = ctx.createRadialGradient(S / 2, S * 0.3, S * 0.08, S / 2, S * 0.5, S * 0.78);
             g.addColorStop(0, "#1a1b22");
             g.addColorStop(1, "#0c0d12");
+            ctx.fillStyle = g;
         } else {
-            g.addColorStop(0, "#dddee2");
-            g.addColorStop(1, "#bfc0c4");
+            ctx.fillStyle = VIEWER_BACKDROP;
         }
-        ctx.fillStyle = g;
         ctx.fillRect(0, 0, S, S);
     }
     return PIXI.Texture.from(cvs);
@@ -604,12 +645,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             sceneClock += dt;
             for (const comp of compositesRef.current) {
                 for (const m of comp.scrollLayers) applySceneLayerUvScroll(m, sceneClock);
+                for (const m of comp.ramLayers) applySceneLayerRamScroll(m, sceneClock);
             }
             if (spineRef.current) {
                 spineRef.current.update(dt);
                 // `update` rebuilds the dark shadow slots' meshes each frame; flip them
                 // back to non-renderable so the static backdrop's version shows instead.
                 if (hideShadowsRef.current) hideRedundantShadowSlots(spineRef.current);
+                // BONE-FOLLOWING scene layers: a spine-unity `BoneFollower` snaps these
+                // quads onto a bone at runtime, so their baked geometry is only an editor
+                // pose (Mlynar's sword flare bakes as a streak in the lower-left instead
+                // of a halo riding the blade). Rebase them onto the live bone now that
+                // the skeleton's world transforms are current for this frame. Only the
+                // composite currently being ticked has fresh bones.
+                const followSpine = spineRef.current;
+                for (const comp of compositesRef.current) {
+                    if (comp.spine !== followSpine || !comp.followLayers.length) continue;
+                    const find = (name: string) => (followSpine.skeleton.findBone(name) as unknown as { matrix: PIXI.Matrix } | null)?.matrix ?? null;
+                    for (const m of comp.followLayers) applySceneLayerFollow(m, find);
+                }
             }
             // ENTRANCE camera = the game's OWN camera rig, replayed straight from gamedata.
             // The `_Start` prefab animates the camera's parent Transform (a position curve) as the
@@ -640,21 +694,30 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // operator viewer instead holds the hero CENTRED the whole entrance and lets only the
                 // ortho zoom widen the shot — pulling out to a near-FULL-BODY frame (feet + campfire)
                 // by t≈12-13, then the post-flash idle settles back tighter. So we:
-                //  - HOLD the horizontal centre at the settle-open box centre (`cx = cx0`), dropping
-                //    the rig's X excursion that shoved the hero off-centre;
+                //  - FOLLOW the rig's horizontal curve RAW (`cx = rigX`). Measured against the
+                //    recording at nine beats spanning t=7→14, the game's horizontal framing tracks
+                //    the baked curve exactly: converting each frame's best-fit shift back into mesh
+                //    px reproduces `rigX` to within ~5 % over offsets from 441 px down to 39 px
+                //    (t=7 predicts 441, measures 450; t=9.5 predicts 89, measures 85; t=13 predicts
+                //    39, measures 40). Two earlier readings were wrong in opposite directions: the
+                //    RE-BASED form `cx0 + (rigX − rigEndX)` added a constant ~+81 px (`cx0` sits
+                //    that far from `rigEndX`) and threw the hero right, and the reaction to that —
+                //    holding `cx0` — discarded a real authored pan. The raw curve is the one the
+                //    game replays;
                 //  - KEEP the rig's VERTICAL motion re-based onto the settle centre (`cy = cy0 +
                 //    (rigY − rigEndY)`) — required, or the tight t=0 frame clips the reforming head
-                //    (the rig lifts the frame to catch the pose, which sits higher than the idle rest);
+                //    (the rig lifts the frame to catch the pose, which sits higher than the idle rest).
+                //    Y is NOT raw: raw `rigY` mispredicts by ~250 px where the re-based form is
+                //    within ~20;
                 //  - follow the ortho zoom-out to full body (NO size cap) — the wide→tight step at the
                 //    idle handoff lands behind the white flash (both frames share the settle centre, so
                 //    it is a pure scale change) + the 0.45s crossfade, matching the game.
                 // All gamedata-derived, no magic constant. Skins WITH an authored transform beat (cello,
                 // skadi2) keep the pure rig camera — `centerBlend` is null for them (verified parity).
-                let cx = c[0];
+                const cx = c[0];
                 let cy = c[1];
                 const cb = ef.centerBlend;
                 if (cb) {
-                    cx = cb.cx0;
                     cy = cb.cy0 + (c[1] - cb.rigEndY);
                 }
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
@@ -741,6 +804,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             if (!liveDisplayBox) {
                 const activeComposite = compositesRef.current.find((c) => c.spine === spineRef.current);
                 liveDisplayBox = activeComposite?.bounds ?? null;
+            }
+            // The particle off-screen cull must test what is actually VISIBLE, not the FRAMING
+            // box. `layoutSpine` fits that box by its smaller axis, so the 2.16:1 viewport shows
+            // ~2.16x its width — culling against the box itself throws away particles sitting
+            // plainly on screen. Skadi the Corrupting Heart's crown fish are the proof: 30 of her
+            // 36 fish systems never spawned a SINGLE particle across the whole entrance, because
+            // the square framing box rejected their spawn->death segment before it was created.
+            if (liveDisplayBox && appRef.current) {
+                const scr = appRef.current.screen;
+                liveDisplayBox = visibleRect(liveDisplayBox, scr.width, scr.height, fitRef.current);
             }
             if (particlesRef.current) {
                 // Let bone-parented emitters drift with the character's idle sway:
@@ -1090,7 +1163,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // high in-frame with dead scene below. A small upward bias re-centres so the head
                 // sits ~10% down and the body fills toward the bottom, matching the game's
                 // roughly-centred (Mlynar) to low-centred (Virtuosa) composition.
-                const VBIAS = calibrationParam("vbias", 0.151);
+                //
+                // 0.180 is MEASURED, not tuned by eye. Mlynar's entrance is the only phase-locked
+                // surface that exposes this constant (his `centerBlend.cy0` is the settle-open box
+                // centre, so a wrong VBIAS offsets the whole late entrance): sweeping it against the
+                // recording gives a clean optimum where the residual best-fit vertical shift crosses
+                // zero — 0.151 leaves +26 px, 0.180 leaves +1 px, 0.190 overshoots to −7 px, and mean
+                // MAD bottoms out at exactly 0.180 (47.20 → 40.05). The old 0.151 was calibrated when
+                // `RCAL` was 0.606; widening the frame to 0.78 left the bias over-correcting.
+                // Verified at the real operator-card aspect (640×440) across Mlynar / Virtuosa /
+                // Skadi2 / Wiš'adel: the shift is small and every head keeps its headroom.
+                const VBIAS = calibrationParam("vbias", 0.18);
                 const bodyCx = vb?.centroid ? vb.centroid.cx : vb ? vb.x + vb.width / 2 : frameCx;
                 const bodyCy = (headY + feetY) / 2; // vertical body centre
                 /** A body-centred square crop of authored extent `viewPx`, in render/vis space. */
@@ -1204,11 +1287,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     }
                 }
                 const scrollLayers: PIXI.Mesh[] = [];
+                const ramLayers: PIXI.Mesh[] = [];
+                const followLayers: PIXI.Mesh[] = [];
                 if (scene) {
                     const scan = (cont: PIXI.Container | null | undefined) => {
                         if (!cont) return;
                         for (const m of cont.children) {
-                            if ((m as unknown as ISceneLayerRuntime).__uvScroll && !(m as unknown as ISceneLayerRuntime).__stCurve) scrollLayers.push(m as PIXI.Mesh);
+                            const rt = m as unknown as ISceneLayerRuntime;
+                            if (rt.__uvScroll && !rt.__stCurve) scrollLayers.push(m as PIXI.Mesh);
+                            if (rt.__ramSpeed) ramLayers.push(m as PIXI.Mesh);
+                            if (rt.__follow) followLayers.push(m as PIXI.Mesh);
                         }
                     };
                     scan(scene.background);
@@ -1231,6 +1319,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     entranceFrameSize,
                     sceneLayers: opts.mode === "entrance" && scene ? [scene.background, scene.foreground, ...(sceneOverlay ? [sceneOverlay] : [])] : null,
                     scrollLayers,
+                    ramLayers,
+                    followLayers,
                     entranceSceneEnd: deferEndUntil,
                     requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                     particles,
@@ -1265,6 +1355,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 entranceFrameSize: null,
                 sceneLayers: null,
                 scrollLayers: [],
+                ramLayers: [],
+                followLayers: [],
                 entranceSceneEnd: null,
                 requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                 particles: null,
@@ -1303,19 +1395,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 compositesRef.current = composites;
 
                 const { width, height } = app.screen;
-                // Bright studio environment at the BACK of the stage (see createEnvironmentBgTexture): the
-                // in-game viewer frames the L2D over a lit light-grey backdrop, not black. Added
-                // here (after the scene has loaded) so it appears WITH the illustration rather than
-                // covering the static load placeholder, and behind every scene layer so they
-                // composite over it at the game's brightness. ALWAYS created — even a scene that
-                // owns its own dark painted backdrop (Virtuosa's mirror-world, `hasDarkBackdrop`) has
-                // real coverage gaps at its widest camera framing (the opening pan, the post-handoff
-                // wide settle) where this is the ONLY fallback fill; a `null` fill reopens black voids
-                // there. But such a scene composites its own backdrop SEMI-TRANSPARENTLY, so the bright
-                // studio grey LEAKS THROUGH and washes its deep-navy field to lavender. So gate the
-                // fallback's COLOUR (not its existence) on the data-derived `hasDarkBackdrop`: a DARK
-                // fill for a self-lit dark-world scene (fills gaps without washing the navy), the
-                // bright studio grey otherwise. Cello-only by construction (only it flips the flag).
+                // The viewer's own backdrop at the BACK of the stage (see createEnvironmentBgTexture):
+                // the skin's camera clears to alpha 0, so this is what the game shows wherever the art
+                // doesn't reach. Added here (after the scene has loaded) so it appears WITH the
+                // illustration rather than covering the static load placeholder, and behind every
+                // scene layer so they composite over it as they do in game. ALWAYS created — even a
+                // scene that owns its own dark painted backdrop has real coverage gaps at its widest
+                // camera framing (the opening pan, the post-handoff wide settle) where this is the
+                // ONLY fill; omitting it reopens black voids there. Only the fill's COLOUR is gated,
+                // on the data-derived `hasDarkBackdrop` (cello-only by construction).
                 const envBg = new PIXI.Sprite(createEnvironmentBgTexture(main.hasDarkBackdrop));
                 resizeEnvironmentBg(envBg, width, height);
                 envBgRef.current = envBg;

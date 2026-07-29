@@ -16,6 +16,29 @@ import * as PIXI from "pixi.js";
  * align directly once both are framed to the authored camera (`cameraSizePx`).
  */
 
+/** A scene layer's Ram-family (`Torappu/Particles-L2D/Ram/…`) dissolve + disturb masking,
+ *  the mesh-quad twin of the particle emitter's `IRamData`. The shader carves the layer's
+ *  real silhouette out of `_DissolveTex` and warps the lookups by `_DisturbTex`; drawn as a
+ *  plain tinted quad the layer instead covers its mask's whole bounding rectangle. Texture
+ *  fields index the scene's shared texture list; null = the slot is unbound. */
+export interface ISceneRam {
+    dissolveTex?: number | null;
+    dissolveST: [number, number, number, number];
+    disturbTex?: number | null;
+    disturbST: [number, number, number, number];
+    /** Dissolve threshold and the softness of its edge. */
+    amount: number;
+    borderWidth: number;
+    /** How far a disturb sample displaces the lookups, and which lookups it reaches. */
+    intensityU: number;
+    intensityV: number;
+    disturbInfluenceDissolveUV: number;
+    disturbInfluenceMainUV: number;
+    /** UV/second scroll of each mask (Unity UV space). */
+    dissolveSpeed: [number, number];
+    disturbSpeed: [number, number];
+}
+
 export interface ISceneLayer {
     /** Index into the scene's texture set. */
     tex: number;
@@ -66,6 +89,21 @@ export interface ISceneLayer {
      *  the entrance track time as `uv = meshUV·[sx,sy] + [ox,oy]` (Unity UV space). When present
      *  the exporter emits the RAW (un-ST-baked) mesh UVs. Absent = static ST. */
     stCurve?: [number, number, number, number, number][] | null;
+    /** Ram-family DISSOLVE/DISTURB masking (see {@link ISceneRam}). Absent = the layer is a
+     *  plain tinted quad. */
+    ram?: ISceneRam | null;
+    /** BONE ATTACHMENT: a spine-unity `BoneFollower` in the layer's Unity ancestry snaps
+     *  it onto this bone at runtime, so the baked `pos` above is only an editor pose
+     *  (Mlynar's sword flare bakes as a streak in the lower-left instead of a halo along
+     *  the blade). Absent = a world-fixed scene quad. */
+    followBone?: string | null;
+    /** The follower's `followBoneRotation`: false = translation-only tracking. */
+    followBoneRot?: boolean;
+    /** The follower GameObject's world ORIGIN in authored px (Y-up). */
+    followOrigin?: [number, number] | null;
+    /** The follower GameObject's world 2×2 LINEAR basis (Y-up), row-major
+     *  `[m00, m01, m10, m11]`. */
+    followBasis?: [number, number, number, number] | null;
 }
 
 export interface ISceneData {
@@ -158,6 +196,16 @@ interface ISceneTex {
     sat: number;
 }
 
+/** A Ram-masked layer's mask textures, resolved from the scene's shared texture list.
+ *  These are DATA textures (a noise field, a flow map), so they sample the RAW image —
+ *  the dark-drop/whiteness processing is silhouette guesswork for artwork and would
+ *  corrupt a mask. `white` stands in for an unbound slot (1.0 everywhere = no effect). */
+interface IRamSceneTex {
+    dissolve: PIXI.Texture | null;
+    disturb: PIXI.Texture | null;
+    white: PIXI.Texture;
+}
+
 /** Rebuild an opaque additive texture with alpha = luminance (black-point) so its
  *  dark/grey field premultiplies to ~nothing; returns null for real-alpha sprites
  *  (nothing to drop) or on any canvas failure. */
@@ -231,7 +279,11 @@ function analyzeTexture(img: HTMLImageElement): { whiteness: number; opaqueFrac:
             satSum += a * sat;
             aw += a;
         }
-        return { whiteness: aw > 0 ? wsum / aw : 0, opaqueFrac: n > 0 ? opaque / n : 0, sat: aw > 0 ? satSum / aw : 0 };
+        return {
+            whiteness: aw > 0 ? wsum / aw : 0,
+            opaqueFrac: n > 0 ? opaque / n : 0,
+            sat: aw > 0 ? satSum / aw : 0,
+        };
     } catch {
         return { whiteness: 0, opaqueFrac: 0, sat: 0 };
     }
@@ -264,6 +316,18 @@ function loadTexture(url: string): Promise<ISceneTex> {
 const EFFECT_SCENE_GAIN = 0.3;
 /** Max texture size treated as an effect overlay; painted backdrops are large atlases. */
 const EFFECT_TEX_MAX = 512;
+/** {@link EFFECT_TEX_MAX} keys on SIZE alone, and size alone cannot tell a caustic from
+ *  paint. The overlays the gain exists to tame are LIGHT — bright, desaturated and
+ *  translucent (see LIGHT_GLOW_*). A near-opaque, strongly COLOURED normal-blend sheet is
+ *  the opposite: painted surface. Fading paint does not dim a light, it punches a hole and
+ *  lets the void behind show through — which is what bleached Virtuosa's 128px deep-blue
+ *  ground plane (opaqueFrac 0.81, sat 0.85, whiteness 0.05) from the game's indigo to a
+ *  flat grey. Across the 82 shipped skins these two bounds isolate 15 layers in 7 skins,
+ *  all saturated painted surfaces, and the opacity cut sits in a real gap in the data
+ *  (0.81 → 0.67 with nothing between). White flash/veil panels (sat ≈ 0, a 4×4 white quad
+ *  stretched over the frame) stay attenuated, as do translucent coloured caustics. */
+const SURFACE_OPAQUE_MIN = 0.75;
+const SURFACE_SAT_MIN = 0.4;
 /** A foreground normal-blend effect panel whose whiteness exceeds this is a bright
  *  paint/flash VEIL (not a coloured comic-fx). The source art keeps that white burst
  *  BEHIND the character, so we re-sort these behind the spine — her opaque body then
@@ -330,6 +394,45 @@ export interface ISceneLayerRuntime {
     /** Capability B: a copy of the layer's RAW mesh UVs in UNITY space (un-flipped), so the ST
      *  curve is applied in Unity space and V is flipped once at write time. */
     __stBaseUnity?: Float32Array | null;
+    /** Ram masking: each mask's UV/second scroll, re-applied to the shader every frame
+     *  by {@link applySceneLayerRamScroll}. Absent unless the layer carries {@link ISceneRam}. */
+    __ramSpeed?: { dissolve: [number, number]; disturb: [number, number] } | null;
+    /** Bone attachment (see {@link ISceneLayer.followBone}): the followed bone name, its
+     *  `followBoneRotation` flag, and the follower's BAKED world pose (origin + rotation
+     *  angle) in the mesh's own Y-DOWN space — the reference {@link applySceneLayerFollow}
+     *  measures the live bone against. Absent for world-fixed layers. */
+    __follow?: { bone: string; rot: boolean; x: number; y: number; angle: number } | null;
+}
+
+/** Rebase a bone-following scene layer onto its live bone.
+ *
+ *  spine-unity's `BoneFollower` snaps its GameObject to the bone's world POSITION each
+ *  frame, plus the bone's world ROTATION when `followBoneRotation` is set; it leaves the
+ *  follower's own SCALE alone. So the runtime motion of everything beneath it — this
+ *  layer's baked geometry included — is the RIGID delta from the follower's baked editor
+ *  pose to the bone's live pose. Applying the bone's full matrix instead would drag the
+ *  bone's scale in and drop the follower's own (Mlynar's flare rigs carry a ~10%
+ *  non-uniform scale), so take position and angle only.
+ *
+ *  pixi-spine bone matrices are already in the skeleton's Y-DOWN world space — the same
+ *  space the baked vertices live in after the exporter's Y flip — so the delta applies
+ *  directly (conjugating it by a Y-flip would double-flip the rotation and slide the
+ *  effect off its bone). No-op for layers built without a `followBone`. */
+export function applySceneLayerFollow(mesh: PIXI.DisplayObject, findBone: (name: string) => PIXI.Matrix | null): void {
+    const f = (mesh as unknown as ISceneLayerRuntime).__follow;
+    if (!f) return;
+    const now = findBone(f.bone);
+    if (!now) return;
+    // `followBoneRotation` off: the follower tracks the bone's POSITION only.
+    if (!f.rot) {
+        mesh.transform.setFromMatrix(new PIXI.Matrix(1, 0, 0, 1, now.tx - f.x, now.ty - f.y));
+        return;
+    }
+    // Spine's `WorldRotationX` is the angle of the bone matrix's first column.
+    const d = Math.atan2(now.b, now.a) - f.angle;
+    const [c, s] = [Math.cos(d), Math.sin(d)];
+    // Rotate about the follower's baked origin, then translate it onto the bone.
+    mesh.transform.setFromMatrix(new PIXI.Matrix(c, s, -s, c, now.tx - (c * f.x - s * f.y), now.ty - (s * f.x + c * f.y)));
 }
 
 /** Linear-sample a `[t, r, g, b, a]` colour curve at time `t`, clamped to its endpoints. */
@@ -402,6 +505,18 @@ export function applySceneLayerUvScroll(mesh: PIXI.DisplayObject, t: number): vo
     buf.update();
 }
 
+/** Scroll a Ram-masked scene layer's dissolve/disturb lookups to the scene clock, the
+ *  shader's `_Time`-driven mask drift. Uniform-only (the masks are sampled from a static
+ *  attribute), so it composes with the CPU `_MainTex` scroll without touching it. No-op for
+ *  a layer built without {@link ISceneRam}. */
+export function applySceneLayerRamScroll(mesh: PIXI.DisplayObject, t: number): void {
+    const rt = mesh as unknown as ISceneLayerRuntime & { shader?: PIXI.Shader };
+    const sp = rt.__ramSpeed;
+    if (!sp || !rt.shader) return;
+    rt.shader.uniforms.uDissolveScroll = [sp.dissolve[0] * t, sp.dissolve[1] * t];
+    rt.shader.uniforms.uDisturbScroll = [sp.disturb[0] * t, sp.disturb[1] * t];
+}
+
 /** Linear-sample an ST curve `[t, sx, sy, ox, oy]` at time `t` (clamped to endpoints). */
 function sampleStCurve(curve: [number, number, number, number, number][], t: number): [number, number, number, number] {
     const first = curve[0];
@@ -442,15 +557,17 @@ export function applySceneLayerSt(mesh: PIXI.DisplayObject, tt: number, clock: n
     buf.update();
 }
 
-// Per-vertex-colour mesh shader for layers that carry `col`. PIXI's built-in
-// MeshMaterial only applies a uniform tint, so a light sheet whose SHAPE is
-// authored as a vertex-alpha gradient (opaque core → transparent edges over a
-// flat-white texture) renders as a hard opaque block (e.g. Blaze "Wildfire"'s
-// white light wedge stamped a solid triangle). This program multiplies the
-// (premultiplied) texture by the premultiplied per-layer tint AND the
-// premultiplied per-vertex colour — a faithful extension of MeshMaterial, so a
-// pure-white vertex colour reduces to the exact same result. Only used when
-// `layer.col` is present; the common path keeps MeshMaterial untouched.
+// Per-vertex-colour mesh shader for layers that carry `col`, and for OVER-BRIGHT
+// layers (see {@link isOverbrightLayer}). PIXI's built-in MeshMaterial only applies
+// a uniform tint, so a light sheet whose SHAPE is authored as a vertex-alpha gradient
+// (opaque core → transparent edges over a flat-white texture) renders as a hard opaque
+// block (e.g. Blaze "Wildfire"'s white light wedge stamped a solid triangle) — and its
+// `tint` is an 8-bit RGB word, so a colour above 1.0 is silently truncated to white.
+// This program multiplies the (premultiplied) texture by the premultiplied per-layer
+// tint AND the premultiplied per-vertex colour — a faithful extension of MeshMaterial,
+// so a pure-white vertex colour reduces to the exact same result — while carrying the
+// tint as a float `uColor` uniform that keeps values above 1 intact all the way to the
+// half-float HDR target. The common LDR path keeps MeshMaterial untouched.
 const VCOLOR_VERT = `
 precision highp float;
 attribute vec2 aVertexPosition;
@@ -472,30 +589,120 @@ varying vec2 vUV;
 varying vec4 vColor;
 uniform sampler2D uSampler;
 uniform vec4 uColor; // premultiplied tint*alpha
+uniform float uWorldAlpha; // scene-graph alpha (MeshMaterial gets this for free)
 void main() {
     vec4 tex = texture2D(uSampler, vUV); // premultiplied
     vec4 vc = vec4(vColor.rgb * vColor.a, vColor.a); // premultiply the straight vertex colour
-    gl_FragColor = tex * uColor * vc;
+    gl_FragColor = tex * uColor * vc * uWorldAlpha;
 }
 `;
 
-/** Build a per-vertex-colour mesh (see {@link VCOLOR_FRAG}). */
-function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [number, number, number, number], alpha: number): PIXI.Mesh<PIXI.Shader> | null {
+// Ram-family compositor for SCENE layers (see {@link ISceneRam}) — the mesh-quad port of
+// the particle `RAM_FRAG`, minus the parts a mesh quad has no source for. There is no
+// per-particle custom data, so the dissolve threshold is the material's `_Amount` alone and
+// the disturb intensity is the material's `_IntensityU/V`; and the family's `col += col` is
+// already baked into the exported tint (`ram_tint_scale` in the scene exporter), so doubling
+// again here would blow the layer out.
+//
+// The masks are sampled from `aBaseUV`, the layer's UNTOUCHED authored UVs, not from `aUV`:
+// `aUV` is rewritten CPU-side each frame by the `_MainTex` scroll / ST curve, and Unity
+// derives each mask's lookup from the raw mesh UV with that mask's OWN ST and speed. Reading
+// `aUV` would leak the main texture's scroll into the mask and make the silhouette crawl.
+const RAM_SCENE_VERT = `
+precision highp float;
+attribute vec2 aVertexPosition;
+attribute vec2 aUV;
+attribute vec2 aBaseUV;
+attribute vec4 aColor;
+uniform mat3 translationMatrix;
+uniform mat3 projectionMatrix;
+uniform vec4 uDissolveST;
+uniform vec4 uDisturbST;
+uniform vec2 uDissolveScroll;
+uniform vec2 uDisturbScroll;
+varying vec2 vUV;
+varying vec2 vDissolveUV;
+varying vec2 vDisturbUV;
+varying vec4 vColor;
+void main() {
+    gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+    vUV = aUV;
+    vColor = aColor;
+    // aBaseUV carries Unity's V already flipped (see buildLayerMesh); undo the flip, apply
+    // the mask's ST + scroll in Unity space, then flip once more to sample.
+    vec2 unity = vec2(aBaseUV.x, 1.0 - aBaseUV.y);
+    vec2 ds = unity * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
+    vec2 dt = unity * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
+    vDissolveUV = vec2(ds.x, 1.0 - ds.y);
+    vDisturbUV = vec2(dt.x, 1.0 - dt.y);
+}
+`;
+const RAM_SCENE_FRAG = `
+precision highp float;
+varying vec2 vUV;
+varying vec2 vDissolveUV;
+varying vec2 vDisturbUV;
+varying vec4 vColor;
+uniform sampler2D uSampler;
+uniform sampler2D uDissolveTex;
+uniform sampler2D uDisturbTex;
+uniform vec4 uColor; // premultiplied tint*alpha
+uniform float uWorldAlpha;
+uniform float uAmount;
+uniform float uBorderWidth;
+uniform float uIntensityU;
+uniform float uIntensityV;
+uniform float uDisturbInfluenceDissolveUV;
+uniform float uDisturbInfluenceMainUV;
+uniform float uHasDissolve;
+uniform float uHasDisturb;
+void main() {
+    float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
+    vec2 dOff = vec2(uIntensityU, uIntensityV) * disturbSample;
+    vec4 tex = texture2D(uSampler, dOff * uDisturbInfluenceMainUV + vUV); // premultiplied
+    float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dOff * uDisturbInfluenceDissolveUV + vDissolveUV).x : 1.0;
+    // Game shader: sw = 1 - roundEven(_Amount + 0.5), i.e. floor(_Amount + 1.0). Porting
+    // this as floor(t + 0.5) disables the dissolve for low thresholds and the whole quad
+    // shows as a block instead of the mask's shape.
+    float sw = 1.0 - floor(uAmount + 1.0);
+    float bw = max(uBorderWidth, 1e-4);
+    float dAlpha = clamp((bw * sw + (dissolveTex - uAmount)) / bw, 0.0, 1.0);
+    vec4 vc = vec4(vColor.rgb * vColor.a, vColor.a);
+    gl_FragColor = tex * uColor * vc * uWorldAlpha * dAlpha;
+}
+`;
+
+/** A Mesh on a CUSTOM shader: PIXI only folds `worldAlpha` into `MeshMaterial`, so a
+ *  custom-shader layer would ignore every container fade above it (the entrance→idle
+ *  cross-dissolve ramps the whole entrance root's alpha to 0). Feed it to the shader
+ *  instead. Premultiplied throughout, so a scalar multiply IS the fade. */
+class VColorMesh extends PIXI.Mesh<PIXI.Shader> {
+    protected override _renderDefault(renderer: PIXI.Renderer): void {
+        this.shader.uniforms.uWorldAlpha = this.worldAlpha;
+        super._renderDefault(renderer);
+    }
+}
+
+/** Build a per-vertex-colour mesh (see {@link VCOLOR_FRAG}). `col` is the layer's
+ *  straight per-vertex colour, or null for an over-bright layer that has none (every
+ *  vertex is opaque white, so the vertex term is the identity). */
+function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [number, number, number, number], alpha: number, col: number[] | null, ramTex: IRamSceneTex | null): PIXI.Mesh<PIXI.Shader> | null {
     const vertexCount = layer.pos.length / 2;
-    const col = layer.col;
-    if (!col || col.length < vertexCount * 4) return null;
+    if (col && col.length < vertexCount * 4) return null;
     const vertices = new Float32Array(vertexCount * 2);
     const uvs = new Float32Array(vertexCount * 2);
-    const colors = new Float32Array(vertexCount * 4);
+    const colors = new Float32Array(vertexCount * 4).fill(1);
     for (let i = 0; i < vertexCount; i++) {
         vertices[i * 2] = layer.pos[i * 2];
         vertices[i * 2 + 1] = -layer.pos[i * 2 + 1];
         uvs[i * 2] = layer.uv[i * 2];
         uvs[i * 2 + 1] = 1 - layer.uv[i * 2 + 1];
-        colors[i * 4] = col[i * 4];
-        colors[i * 4 + 1] = col[i * 4 + 1];
-        colors[i * 4 + 2] = col[i * 4 + 2];
-        colors[i * 4 + 3] = col[i * 4 + 3];
+        if (col) {
+            colors[i * 4] = col[i * 4];
+            colors[i * 4 + 1] = col[i * 4 + 1];
+            colors[i * 4 + 2] = col[i * 4 + 2];
+            colors[i * 4 + 3] = col[i * 4 + 3];
+        }
     }
     type BufArg = ConstructorParameters<typeof PIXI.Buffer>[0];
     const geometry = new PIXI.Geometry();
@@ -505,8 +712,45 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
     geometry.addIndex(new PIXI.Buffer(new Uint16Array(layer.idx) as unknown as BufArg));
     // uColor: premultiplied per-layer tint*alpha (matches MeshMaterial's uniform).
     const uColor = [rgb[0] * alpha, rgb[1] * alpha, rgb[2] * alpha, alpha];
-    const shader = PIXI.Shader.from(VCOLOR_VERT, VCOLOR_FRAG, { uSampler: new PIXI.Texture(base), uColor });
-    return new PIXI.Mesh(geometry, shader);
+    if (ramTex && layer.ram) {
+        const r = layer.ram;
+        // Untouched authored UVs for the mask lookups (see {@link RAM_SCENE_VERT}).
+        geometry.addAttribute("aBaseUV", new PIXI.Buffer(Float32Array.from(uvs) as unknown as BufArg), 2);
+        const shader = PIXI.Shader.from(RAM_SCENE_VERT, RAM_SCENE_FRAG, {
+            uSampler: new PIXI.Texture(base),
+            uDissolveTex: ramTex.dissolve ?? ramTex.white,
+            uDisturbTex: ramTex.disturb ?? ramTex.white,
+            uColor,
+            uWorldAlpha: 1,
+            uAmount: r.amount,
+            uBorderWidth: r.borderWidth,
+            uIntensityU: r.intensityU,
+            uIntensityV: r.intensityV,
+            uDisturbInfluenceDissolveUV: r.disturbInfluenceDissolveUV,
+            uDisturbInfluenceMainUV: r.disturbInfluenceMainUV,
+            uHasDissolve: ramTex.dissolve ? 1 : 0,
+            uHasDisturb: ramTex.disturb ? 1 : 0,
+            uDissolveST: r.dissolveST,
+            uDisturbST: r.disturbST,
+            uDissolveScroll: [0, 0],
+            uDisturbScroll: [0, 0],
+        });
+        return new VColorMesh(geometry, shader);
+    }
+    const shader = PIXI.Shader.from(VCOLOR_VERT, VCOLOR_FRAG, { uSampler: new PIXI.Texture(base), uColor, uWorldAlpha: 1 });
+    return new VColorMesh(geometry, shader);
+}
+
+/** True when the layer's exported colour leaves the 0..1 LDR range. The Ram /
+ *  `Particles-L2D` compositors sample `2 × _MainColor × tex`, so the exporter bakes
+ *  that ×2 into the tint/colour curve — Mlynar's `bg01` entrance backdrop ramps
+ *  0.824 → 1.176. `MeshMaterial.tint` is an 8-bit RGB word and truncates anything
+ *  above 1.0, which flattens that whole ramp onto white; such a layer has to take the
+ *  float-uniform shader path so the over-bright energy survives into the half-float
+ *  HDR target (see `hdrTonemap.ts`). Purely value-driven: an LDR layer never matches. */
+function isOverbrightLayer(layer: ISceneLayer): boolean {
+    if (layer.tint[0] > 1 || layer.tint[1] > 1 || layer.tint[2] > 1) return true;
+    return !!layer.colorCurve?.some((c) => c[1] > 1 || c[2] > 1 || c[3] > 1);
 }
 
 /** Pixel footprint of just THIS layer's sampled sub-rect of its (possibly shared/atlas)
@@ -531,7 +775,7 @@ function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: numb
  * Build a Pixi mesh for one layer. Y is flipped (authored Y-up → Pixi Y-down)
  * and V is flipped (Unity → Pixi UV), matching the exporter's coordinate note.
  */
-function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = false, fullGain = false, temperLargeAdditive = false): PIXI.Mesh | null {
+function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex | null, forceAdditive = false, fullGain = false, temperLargeAdditive = false): PIXI.Mesh | null {
     const vertexCount = layer.pos.length / 2;
     if (vertexCount < 3 || layer.idx.length < 3) return null;
     const additive = layer.additive || forceAdditive;
@@ -564,7 +808,11 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = fals
     // / `hasDarkBackdrop`). Fold it into the same tamed-gain bucket, still exempting
     // `fullGain` layers (light-glow sheets / animated colour curves) — a no-op for every
     // scene that doesn't own a dark backdrop (every skin except Virtuosa today).
-    const gain = !fullGain && (isEffect || (additive && temperLargeAdditive)) ? EFFECT_SCENE_GAIN : 1;
+    // A painted SURFACE is never an overlay, whatever its texture measures (see
+    // SURFACE_OPAQUE_MIN): its alpha carries coverage, not intensity, so scaling it only
+    // reveals the void behind.
+    const isPaintedSurface = !additive && tex.opaqueFrac >= SURFACE_OPAQUE_MIN && tex.sat >= SURFACE_SAT_MIN;
+    const gain = !fullGain && !isPaintedSurface && (isEffect || (additive && temperLargeAdditive)) ? EFFECT_SCENE_GAIN : 1;
 
     const vertices = new Float32Array(vertexCount * 2);
     const uvs = new Float32Array(vertexCount * 2);
@@ -606,9 +854,19 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, forceAdditive = fals
             rt.__stBaseUnity = Float32Array.from(layer.uv);
             if (layer.uvScroll && (layer.uvScroll[0] !== 0 || layer.uvScroll[1] !== 0)) rt.__uvScroll = layer.uvScroll;
         }
+        // Bone attachment: reduce the follower's baked world frame to a Y-DOWN origin and
+        // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
+        // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
+        if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed };
+        if (layer.followBone && layer.followOrigin && layer.followBasis) {
+            const [m00, , m10] = layer.followBasis;
+            const [ox, oy] = layer.followOrigin;
+            rt.__follow = { bone: layer.followBone, rot: layer.followBoneRot !== false, x: ox, y: -oy, angle: -Math.atan2(m10, m00) };
+        }
     };
-    if (layer.col && layer.col.length >= vertexCount * 4) {
-        const vmesh = buildVColorMesh(layer, base, rgb, alpha);
+    const hasVertexColor = !!layer.col && layer.col.length >= vertexCount * 4;
+    if (hasVertexColor || isOverbrightLayer(layer) || ramTex) {
+        const vmesh = buildVColorMesh(layer, base, rgb, alpha, hasVertexColor ? (layer.col ?? null) : null, ramTex);
         if (vmesh) {
             vmesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
             stashRuntime(vmesh);
@@ -789,6 +1047,17 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
 
     const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseUrl}${i}.png${bust}`)));
 
+    // Ram mask lookup (see {@link IRamSceneTex}). Null unless the layer carries a mask that
+    // actually loaded, which is what switches it onto the Ram compositor at all.
+    const ramTexOf = (layer: ISceneLayer): IRamSceneTex | null => {
+        const r = layer.ram;
+        if (!r) return null;
+        const slot = (i: number | null | undefined) => (i != null && bases[i] ? new PIXI.Texture(bases[i].raw) : null);
+        const dissolve = slot(r.dissolveTex);
+        const disturb = slot(r.disturbTex);
+        return dissolve || disturb ? { dissolve, disturb, white: PIXI.Texture.WHITE } : null;
+    };
+
     // Does this scene own a DARK opaque painted backdrop (a self-lit painted world, not a
     // bright studio wall)? Mirrors the per-layer `isBackdrop` predicate below plus a darkness
     // bound: a large (non-effect), near-opaque, desaturated backdrop layer whose whiteness is
@@ -898,7 +1167,7 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // A layer with an authored colour curve carries its EXACT animated alpha — the
         // effect-overlay gain (which tames caustics frozen without their animation)
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
-        const mesh = buildLayerMesh(layer, base, forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
+        const mesh = buildLayerMesh(layer, base, ramTexOf(layer), forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
         if (!mesh) continue;
         if (isForeground && !isVeil) {
             foreground.addChild(mesh);
