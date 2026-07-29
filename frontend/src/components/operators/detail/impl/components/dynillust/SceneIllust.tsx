@@ -1393,6 +1393,35 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
 
                 const composites: IComposite[] = [main];
                 compositesRef.current = composites;
+                // Live per-emitter state for the parity harness (see ILoadedParticles.probe).
+                // DEV-only and read-only: a missing effect cannot be diagnosed from the exported
+                // JSON, because "emitted nothing" and "emitted off-frame" look identical there and
+                // need opposite fixes. Call it from puppeteer after pumping the virtual clock.
+                if (import.meta.env.DEV && typeof window !== "undefined") {
+                    const w = window as unknown as { __dynProbe?: () => unknown; __dynXform?: () => unknown };
+                    w.__dynProbe = () => particlesRef.current?.probe(app.screen.width, app.screen.height) ?? null;
+                    // Resolved world transforms, for locating a placement divergence. The SCENE
+                    // layers align to the capture within 0.10 px at every beat, so `root` is the
+                    // known-good reference: any beat where the particle containers' matrix departs
+                    // from it is where particle placement goes wrong. `paintedPx` shows Skadi's
+                    // particle layer collapsing 1.69M -> 5.3K px^2 between t=9 and t=13 while the
+                    // scene stays aligned, so the two are expected to diverge somewhere after t~11.
+                    const m = (d: PIXI.Container | null | undefined) => {
+                        if (!d) return null;
+                        const t = d.worldTransform;
+                        return { a: t.a, b: t.b, c: t.c, d: t.d, tx: t.tx, ty: t.ty };
+                    };
+                    w.__dynXform = () => {
+                        const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;
+                        return {
+                            sceneRoot: m(c?.root),
+                            spine: m(c?.spine as unknown as PIXI.Container),
+                            particlesBg: m(particlesRef.current?.background),
+                            particlesFg: m(particlesRef.current?.foreground),
+                            screen: { w: app.screen.width, h: app.screen.height },
+                        };
+                    };
+                }
 
                 const { width, height } = app.screen;
                 // The viewer's own backdrop at the BACK of the stage (see createEnvironmentBgTexture):

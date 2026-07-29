@@ -1929,6 +1929,49 @@ class RamEmitter {
     }
 }
 
+/** Per-emitter diagnostic snapshot from {@link ILoadedParticles.probe}.
+ *
+ *  Exists because "this effect is missing" is not answerable from the JSON: a system can be
+ *  authored, exported, pass every activation gate, sit inside the particle budget and still put
+ *  nothing on screen — because it emitted nothing, or because it emitted off-frame. Those need
+ *  opposite fixes and only live state distinguishes them. Colour masks cannot: they measure the
+ *  composite, not the emitter. */
+export interface IEmitterProbe {
+    /** Index into {@link IParticlesData.systems}. Systems the loader skipped are absent. */
+    sys: number;
+    /** Live (non-recycled) particles this frame. 0 means it is emitting nothing at all. */
+    live: number;
+    /** Emitter container position in the scene's local space (Pixi Y-down). */
+    x: number;
+    y: number;
+    /** Container ORIGIN in global/screen px. Note `pos` is baked into each particle's spawn
+     *  position rather than the container, so this is the emitter's anchor, NOT where its
+     *  particles are — use {@link box} for that. Null when the emitter is not on the stage. */
+    sx: number | null;
+    sy: number | null;
+    /** Screen-space bounding box of the emitter's LIVE, VISIBLE particles (`getBounds`, which
+     *  asks the renderer rather than re-deriving the transform chain). This is what localises a
+     *  missing effect: a box wholly outside 0..w / 0..h means the particles exist but are drawn
+     *  off-frame. Null when nothing is currently drawn. */
+    box: { x: number; y: number; w: number; h: number } | null;
+    /** How many of this emitter's live, drawable children have their ORIGIN inside the viewport.
+     *  This is the measure {@link box} cannot give: a union bbox spanning the canvas says nothing
+     *  about whether any particle is actually in view — 13 particles at opposite corners produce a
+     *  box covering everything between them. "34 live, 0 onScreen" is unambiguous.
+     *  Counts child origins, so a particle straddling an edge may read as outside, and a trail's
+     *  rope counts once at the emitter origin rather than along its length. */
+    onScreen: number;
+    /** Total canvas area (px^2) this emitter's live children actually cover, summed as each
+     *  child's DRAWN rect intersected with the viewport.
+     *
+     *  This is the measure that settles "is the effect visible": unlike {@link onScreen} it
+     *  accounts for a particle whose origin is off-canvas but whose sprite still paints inside it
+     *  (large stretched billboards routinely do), and unlike {@link box} it cannot be inflated by
+     *  two distant particles bounding an empty middle. **0 means genuinely nothing is drawn.**
+     *  Overlapping particles are counted twice — it is coverage, not distinct pixels. */
+    paintedPx: number;
+}
+
 export interface ILoadedParticles {
     data: IParticlesData;
     /** Emitters whose sort is behind the character. */
@@ -1938,6 +1981,10 @@ export interface ILoadedParticles {
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
      *  drift with the character; omit for no bone-following. */
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void;
+    /** Live per-emitter state for parity diagnosis — see {@link IEmitterProbe}. Read-only and
+     *  side-effect free; call it after `update` from a harness, never from the render path.
+     *  Pass the viewport size so `onScreen` can be counted. */
+    probe(viewW?: number, viewH?: number): IEmitterProbe[];
     destroy(): void;
 }
 
@@ -2297,6 +2344,8 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();
     const emitters: Array<Emitter | RamEmitter> = [];
+    /** `emitters[i]` came from `data.systems[emitterSys[i]]` — skipped systems leave no entry. */
+    const emitterSys: number[] = [];
     let liveEstimate = 0;
     const budget = () => GLOBAL_MAX_PARTICLES - liveEstimate;
 
@@ -2352,7 +2401,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         return b ? new PIXI.Texture(b.darkDropBase) : null;
     };
 
-    for (const sys of data.systems) {
+    for (const [sysIndex, sys] of data.systems.entries()) {
         // Ram-shader emitters render via the ported ramp/dissolve/disturb shader
         // (RamEmitter), using RAW textures. Needs a main tex. Mesh-render-mode Ram
         // systems are skipped (their real mesh geometry isn't exported; billboarding
@@ -2376,6 +2425,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             if (!main) continue;
             const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex) }, sys.blend, budget);
             emitters.push(emitter);
+            emitterSys.push(sysIndex);
             (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
             continue;
         }
@@ -2410,6 +2460,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // 180° emitter angle the game plainly does not draw it with).
                 const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, 2, sys.rot ?? 0);
                 emitters.push(emitter);
+            emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
                 (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
             }
@@ -2490,6 +2541,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
                 emitters.push(emitter);
+            emitterSys.push(sysIndex);
                 // A LARGE additive glow mesh (Hoshiguma the Breacher's lightning-bolt
                 // halos, startSize≈476) spreads a lot of additive light, and several
                 // co-fire on the same burst — through the HDR bloom they stack into one
@@ -2526,6 +2578,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         const trailTexture = trailTex ? new PIXI.Texture(trailTex.base) : null;
         const emitter = new Emitter(sys, new PIXI.Texture(tex.base), trailTexture, blend, budget);
         emitters.push(emitter);
+            emitterSys.push(sysIndex);
         // Tame a LARGE additive billboard on a self-lit dark-backdrop scene (mirrors the
         // scene-layer `EFFECT_SCENE_GAIN` temper — see EFFECT_PARTICLE_GAIN above). Composes
         // with `additivePileGain`; still additive, so a subtle central flare remains. No-op
@@ -2560,6 +2613,34 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             liveEstimate = 0;
             for (const e of emitters) liveEstimate += e.liveCount();
             for (const e of emitters) e.update(dt, findBone, restBone, displayBox);
+        },
+        probe(viewW = 0, viewH = 0): IEmitterProbe[] {
+            const gp = new PIXI.Point();
+            return emitters.map((e, i) => {
+                const pos = e.container.position;
+                const g = e.container.parent ? e.container.getGlobalPosition(new PIXI.Point()) : null;
+                // getBounds() reflects what the renderer will actually draw (visibility,
+                // transforms, culling) — cheaper to trust than rebuilding the chain by hand.
+                const b = e.container.getBounds();
+                const box = Number.isFinite(b.width) && b.width > 0 && b.height > 0 ? { x: b.x, y: b.y, w: b.width, h: b.height } : null;
+                let onScreen = 0;
+                let paintedPx = 0;
+                if (viewW > 0 && viewH > 0) {
+                    for (const ch of e.container.children) {
+                        if (!ch.visible || !ch.renderable) continue;
+                        ch.getGlobalPosition(gp);
+                        if (gp.x >= 0 && gp.x <= viewW && gp.y >= 0 && gp.y <= viewH) onScreen++;
+                        // Drawn rect ∩ viewport. getBounds() is the child's world AABB, so size,
+                        // scale and the stretched-billboard rotation are already folded in.
+                        const cb = ch.getBounds();
+                        if (!Number.isFinite(cb.width) || !Number.isFinite(cb.height)) continue;
+                        const iw = Math.min(viewW, cb.x + cb.width) - Math.max(0, cb.x);
+                        const ih = Math.min(viewH, cb.y + cb.height) - Math.max(0, cb.y);
+                        if (iw > 0 && ih > 0) paintedPx += iw * ih;
+                    }
+                }
+                return { sys: emitterSys[i] ?? -1, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx };
+            });
         },
         destroy() {
             for (const e of emitters) e.destroy();
