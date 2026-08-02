@@ -634,6 +634,30 @@ pub(crate) fn collect_dynchar_particles(
     // Env-gated attribution — see the twin in `collect_dynchar_bg_quads`. Output-neutral.
     let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
 
+    // EXPERIMENT (`DYNCHAR_CROSSROOT_UNIQUE=1`, default OFF): world origins of every
+    // SAME-ROOT particle system, so a cross-root candidate can be tested for a positional
+    // twin. See `admit_positional_unique` below for what this is for and why.
+    let crossroot_unique = std::env::var("DYNCHAR_CROSSROOT_UNIQUE").is_ok();
+    let own_positions: Vec<(f32, f32)> = if crossroot_unique {
+        systems
+            .iter()
+            .filter_map(|(_, ps)| {
+                let go = ps.get("m_GameObject").and_then(get_path_id)?;
+                let same = matches!(
+                    (scope.own, host.prefab_root_of_go(all_objects, go)),
+                    (Some(own), Some(root)) if root == own
+                );
+                if !same {
+                    return None;
+                }
+                let o = host.world_of_go(all_objects, go).point([0.0, 0.0, 0.0]);
+                Some((o[0], o[1]))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+
     for (_, ps) in systems {
         let Some(go_pid) = ps.get("m_GameObject").and_then(get_path_id) else {
             skipped.no_gameobject += 1;
@@ -696,9 +720,46 @@ pub(crate) fn collect_dynchar_particles(
             && cross_root
             && entrance.is_entrance
             && host.has_start_only_ancestor(all_objects, go_pid);
+        // Admit a cross-root system only when NO same-root system sits at the same world
+        // origin? **MEASURED AND REJECTED — the FOURTH refutation of cross-root admission.**
+        //
+        // The premise was the best one yet, and the observation behind it is real: matching
+        // every dropped cross-root system's world origin against the systems the entrance
+        // DOES export, 24 of Mlynar's 46 are positional twins. So blanket admission
+        // double-draws half the set — for additive emitters a straight doubling of light,
+        // matching the sign and rough size of the +1.84 blanket cost on Virtuosa. That
+        // explains the earlier failures, and de-duplicating geometrically looked like the
+        // missing discriminator. It is not:
+        //
+        //     baseline                mly 17.721   cel 19.422   ska 10.505
+        //     positional de-dup       mly 17.721   cel 29.881   ska 10.530
+        //
+        // Virtuosa loses TEN POINTS. The gate adds 18 systems to her entrance (58 -> 76) and
+        // 4 to Skadi's; Mlynar gains ZERO and is bit-identical, so it could never have
+        // addressed the t=4 warm deficit that motivated the search.
+        //
+        // Note the twin set here is every SAME-ROOT system, not only the exported ones —
+        // strictly wider than the analysis that suggested 22 unique candidates for Mlynar,
+        // which is why he gains none: the entrance owns systems at those positions that are
+        // themselves dropped for other reasons. A narrower twin set would admit MORE, not
+        // less, so relaxing it only moves further in the direction that already fails.
+        //
+        // **Cross-root admission is now refuted four ways** (blanket, swap, set-completion,
+        // positional de-dup). The idle rig's emitters are not what the entrance is missing.
+        // Kept behind `DYNCHAR_CROSSROOT_UNIQUE=1`, default OFF.
+        let admit_positional_unique = crossroot_unique
+            && cross_root
+            && entrance.is_entrance
+            && {
+                let o = host.world_of_go(all_objects, go_pid).point([0.0, 0.0, 0.0]);
+                !own_positions
+                    .iter()
+                    .any(|(x, y)| (x - o[0]).abs() <= 3.0f32 && (y - o[1]).abs() <= 3.0f32)
+            };
         let admit_cross_root = (cross_root && transform_host.is_some())
             || admit_entrance_root
-            || admit_start_only_cross_root;
+            || admit_start_only_cross_root
+            || admit_positional_unique;
         // A cross-root system is NOT admitted by the entrance's cross-root REVEAL beat,
         // even though the scene-quad path admits cross-root MESH layers exactly that way
         // (`cross_root_reveal` in `spine.rs` → a layer's `rootRevealFrom`). Both readings
