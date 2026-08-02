@@ -67,6 +67,16 @@ export interface IParticleSystemData {
      *  effect groups (`_delayTime` activators + `m_IsActive` switch-ons) — e.g. the apple's
      *  golden sparks fire at ~6–7s when it falls, not at t=0. Absent/0 = emit immediately. */
     delay?: number;
+    /** Unity's main-module `simulationSpeed`: the multiple of REAL time this system's own
+     *  clock advances at. It scales everything downstream of the clock — the emission
+     *  interval, particle age, every over-lifetime curve, rotation and velocity — so a
+     *  system authored at 0.3 ran 3.3x too fast while we ignored it. Absent = 1 (Unity's
+     *  default), which is the overwhelming majority. */
+    simSpeed?: number;
+    /** Unity's main-module `prewarm`: a LOOPING system opens already in steady state, as if
+     *  it had run one full `duration` before t=0, instead of building up from empty.
+     *  Absent = false. */
+    prewarm?: boolean;
     simulationSpace?: "local" | "world";
     maxParticles: number;
     gravity?: MMScalar;
@@ -417,6 +427,61 @@ class RopeMesh extends PIXI.Mesh<PIXI.MeshMaterial> {
         g._width = w;
         g.updateVertices();
     }
+}
+
+/** Fixed step (s) the prewarm pre-roll simulates at — fine enough that a 2/s emitter lands
+ *  its particles on the right ages, coarse enough that a 5 s pre-roll is 150 steps. */
+const PREWARM_STEP = 1 / 30;
+/** Hard cap on pre-roll steps, so a pathological `duration` cannot stall the load. */
+const PREWARM_MAX_STEPS = 300;
+
+/** Honour Unity's `simulationSpeed` / `prewarm`? **DISABLED — MEASURED AND REJECTED.**
+ *
+ *  The gap is real and large: `simulationSpeed` scales a system's whole clock and `prewarm`
+ *  opens a looping system in steady state, and NEITHER was ever read. Corpus census
+ *  (`probe_simspeed`, 13069 systems / 83 bundles): **1700 systems below 1x, 403 above, 3057
+ *  prewarmed** (963 both), touching **80 of 83 skins**. So a system authored at 0.3x was
+ *  running 3.3x too fast, and this is the one mechanism that can set a particle system's
+ *  emission PHASE from the data rather than from an unknowable runtime start.
+ *
+ *  Implemented faithfully (clock scaling below; a one-shot pre-roll of `duration` in system
+ *  time that restores the playback clock, since Unity's prewarm populates particles without
+ *  advancing time). Measured over the three references:
+ *
+ *      variant            mly       cel       ska       sum
+ *      baseline (off)   17.721    19.422    10.505    47.648
+ *      simSpeed only    17.722    19.486    10.479    47.687
+ *      prewarm only     17.701    19.681    10.496    47.878
+ *      BOTH             17.718    19.629    10.475    47.822
+ *
+ *  Mlynar and Skadi both improve slightly; Virtuosa regresses, and ALL of it is one beat —
+ *  her t=10 goes 24.94 -> 26.67 while every other beat of hers improves or is neutral. Split
+ *  by direction at that beat (control 24.869): `simSpeed > 1` only 24.863 (neutral),
+ *  `simSpeed < 1` only 26.188. **Slowing systems down is what costs her**, and it is not one
+ *  rogue system — removing the diamonds (sys55) or the three delayed prewarm systems each
+ *  leaves the regression essentially intact (+1.72 of +1.76).
+ *
+ *  NOT gated on the start delay, though three of her prewarmed systems carry one: the raw
+ *  `startDelay` is **0.000 on every prewarmed system in the bundle**, so that delay is
+ *  director/`m_IsActive` gating, not the system's own — Unity's "prewarm needs no start
+ *  delay" rule does not apply, and gating on it would be metric-driven tuning.
+ *
+ *  Kept behind flags because the fields ARE authored and the exporter now emits them; the
+ *  honest reading is that our per-system ACTIVATION timing interacts with the slowed clock,
+ *  not that Unity's semantics are wrong. Re-enable with `?simspeed=1` / `?prewarm=1` — note
+ *  the corpus must be re-extracted first, since only the three reference skins carry the
+ *  fields today. */
+function simSpeedOf(d: IParticleSystemData): number {
+    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("simspeed") !== "1") return 1;
+    const s = d.simSpeed;
+    return typeof s === "number" && Number.isFinite(s) && s > 0 ? s : 1;
+}
+
+/** See {@link simSpeedOf} — disabled by default; `?prewarm=1` re-enables. Only LOOPING
+ *  systems prewarm; Unity ignores the flag on one-shots. */
+function prewarmOf(d: IParticleSystemData): boolean {
+    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("prewarm") !== "1") return false;
+    return !!d.prewarm && d.looping && d.duration > 0;
 }
 
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
@@ -974,6 +1039,8 @@ class Emitter {
     private readonly free: IParticle[] = [];
     private time = 0;
     private emitAcc = 0;
+    /** One-shot latch for the {@link prewarmOf} pre-roll. */
+    private prewarmed = false;
     private firedBursts = new Set<number>();
     private lastCycleT = -1;
     private readonly rate: number;
@@ -1354,9 +1421,44 @@ class Emitter {
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
+        // MAIN-MODULE CLOCK (`simulationSpeed` + `prewarm`).
+        //
+        // `simulationSpeed` scales the system's OWN clock, so everything keyed on it — the
+        // emission accumulator, particle age, the over-lifetime curves, rotation and velocity —
+        // slows or speeds together. The cinematic `delay` deliberately stays on the REAL clock:
+        // it is sequencing handed to us by the director/`_Start` gating, not part of the
+        // system's simulation, so scaling it would re-time the whole cinematic.
+        const speed = simSpeedOf(d);
+        if (speed !== 1) {
+            if (this.time < 0) {
+                this.time += dt;
+                if (this.time < 0) return;
+                dt = this.time; // the slice of this frame left after the delay elapsed
+                this.time = 0;
+            }
+            dt *= speed;
+        }
         this.time += dt;
         // Dormant until the cinematic start delay elapses (no emission, no particles yet).
         if (this.time < 0) return;
+        // A prewarmed LOOPING system opens in steady state. Pre-roll one full `duration`
+        // ONCE, the first frame it is live; `duration` is a whole number of loops, so the
+        // emission phase and every `time % duration` curve land exactly where they would
+        // have, while the particle ages become the steady-state spread instead of empty.
+        if (!this.prewarmed && prewarmOf(d)) {
+            this.prewarmed = true;
+            // Pre-roll in SYSTEM time: the recursive call re-applies `speed`, so hand it a
+            // real-time step that scales back to PREWARM_STEP of system time.
+            const steps = Math.min(PREWARM_MAX_STEPS, Math.ceil(d.duration / PREWARM_STEP));
+            const realStep = PREWARM_STEP / speed;
+            // Unity's prewarm populates particles WITHOUT advancing playback time — the system
+            // still reports t=0 when the cinematic starts. Restore the clock afterwards, or
+            // every curve keyed on absolute cinematic seconds (the `scaleCurve` fed through
+            // `driftWithBone`) runs a whole `duration` late.
+            const clock = this.time;
+            for (let i = 0; i < steps; i++) this.update(realStep, findBone, restBone, displayBox, restAtt);
+            this.time = clock;
+        }
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);
@@ -2140,6 +2242,8 @@ class RamEmitter {
     private readonly cap: number;
     private time = 0;
     private emitAcc = 0;
+    /** One-shot latch for the {@link prewarmOf} pre-roll. */
+    private prewarmed = false;
     private firedBursts = new Set<number>();
     private lastCycleT = -1;
     private readonly rate: number;
@@ -2386,9 +2490,44 @@ class RamEmitter {
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
+        // MAIN-MODULE CLOCK (`simulationSpeed` + `prewarm`).
+        //
+        // `simulationSpeed` scales the system's OWN clock, so everything keyed on it — the
+        // emission accumulator, particle age, the over-lifetime curves, rotation and velocity —
+        // slows or speeds together. The cinematic `delay` deliberately stays on the REAL clock:
+        // it is sequencing handed to us by the director/`_Start` gating, not part of the
+        // system's simulation, so scaling it would re-time the whole cinematic.
+        const speed = simSpeedOf(d);
+        if (speed !== 1) {
+            if (this.time < 0) {
+                this.time += dt;
+                if (this.time < 0) return;
+                dt = this.time; // the slice of this frame left after the delay elapsed
+                this.time = 0;
+            }
+            dt *= speed;
+        }
         this.time += dt;
         // Dormant until the cinematic start delay elapses (no emission, no particles yet).
         if (this.time < 0) return;
+        // A prewarmed LOOPING system opens in steady state. Pre-roll one full `duration`
+        // ONCE, the first frame it is live; `duration` is a whole number of loops, so the
+        // emission phase and every `time % duration` curve land exactly where they would
+        // have, while the particle ages become the steady-state spread instead of empty.
+        if (!this.prewarmed && prewarmOf(d)) {
+            this.prewarmed = true;
+            // Pre-roll in SYSTEM time: the recursive call re-applies `speed`, so hand it a
+            // real-time step that scales back to PREWARM_STEP of system time.
+            const steps = Math.min(PREWARM_MAX_STEPS, Math.ceil(d.duration / PREWARM_STEP));
+            const realStep = PREWARM_STEP / speed;
+            // Unity's prewarm populates particles WITHOUT advancing playback time — the system
+            // still reports t=0 when the cinematic starts. Restore the clock afterwards, or
+            // every curve keyed on absolute cinematic seconds (the `scaleCurve` fed through
+            // `driftWithBone`) runs a whole `duration` late.
+            const clock = this.time;
+            for (let i = 0; i < steps; i++) this.update(realStep, findBone, restBone, displayBox, restAtt);
+            this.time = clock;
+        }
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
         driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);

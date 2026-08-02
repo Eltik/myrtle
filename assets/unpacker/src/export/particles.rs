@@ -1058,6 +1058,22 @@ pub(crate) fn collect_dynchar_particles(
         if delay > 0.0 {
             sys["delay"] = json!(delay);
         }
+        // MAIN-MODULE CLOCK. Unity's `simulationSpeed` scales the system's ENTIRE clock —
+        // emission interval, particle age, every over-lifetime curve, rotation and velocity all
+        // advance at this multiple of real time — and `prewarm` pre-simulates one full
+        // `duration` at t=0 so a looping system opens in steady state instead of building up
+        // from empty. Neither was ever read, so a system authored at 0.3x ran 3.3x fast and a
+        // prewarmed one opened empty. Corpus: 1700 systems below 1x, 403 above, 3057 prewarmed
+        // (963 both) of 13069, across 80 of 83 bundles.
+        //
+        // Both are omitted at their Unity defaults so an unaffected system's JSON is unchanged.
+        let sim_speed = fd(ps, "simulationSpeed", 1.0);
+        if (sim_speed - 1.0).abs() > 1e-3 && sim_speed > 0.0 {
+            sys["simSpeed"] = json!(sim_speed);
+        }
+        if b(ps, "prewarm", false) {
+            sys["prewarm"] = json!(true);
+        }
         // Faithful stretched-billboard elongation scales (see above) — only for stretch systems.
         if render_mode == "stretch" {
             sys["stretch"] = json!({
