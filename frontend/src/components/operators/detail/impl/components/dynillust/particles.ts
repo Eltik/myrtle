@@ -957,7 +957,9 @@ function ropeStats(pool: IParticle[]): IEmitterProbe["rope"] {
         span: span / n,
         pts: distinct / n,
         alpha: asum / n,
-        tint: Math.round(tints / n).toString(16).padStart(6, "0"),
+        tint: Math.round(tints / n)
+            .toString(16)
+            .padStart(6, "0"),
         tex: texRes ? `${texRes.width}x${texRes.height}${texRes.baseTexture.valid ? "" : " INVALID"}` : "none",
         blend: first ? first.blendMode : -1,
     };
@@ -1655,10 +1657,14 @@ function combineAdditiveGains(pile: number, temper: boolean): number {
     const mode = typeof window === "undefined" ? "compound" : (new URLSearchParams(window.location.search).get("gainmode") ?? "compound");
     if (!temper) return pile;
     switch (mode) {
-        case "min": return Math.min(pile, EFFECT_PARTICLE_GAIN);
-        case "effect": return EFFECT_PARTICLE_GAIN;
-        case "pile": return pile;
-        default: return pile * EFFECT_PARTICLE_GAIN;
+        case "min":
+            return Math.min(pile, EFFECT_PARTICLE_GAIN);
+        case "effect":
+            return EFFECT_PARTICLE_GAIN;
+        case "pile":
+            return pile;
+        default:
+            return pile * EFFECT_PARTICLE_GAIN;
     }
 }
 
@@ -1677,7 +1683,7 @@ function applyPsDiag(data: IParticlesData, sys: IParticleSystemData, container: 
     if (!only && !off) return;
     const idx = data.systems.indexOf(sys);
     if (only && !only.split(",").map(Number).includes(idx)) container.renderable = false;
-    if (off && off.split(",").map(Number).includes(idx)) container.renderable = false;
+    if (off?.split(",").map(Number).includes(idx)) container.renderable = false;
 }
 
 /** Batch plugin name for ADDITIVE particle SPRITES (see {@link ensureAdditiveSpriteBoost}). */
@@ -1738,10 +1744,7 @@ export function ensureAdditiveSpriteBoost(): void {
     additiveBoostReady = true;
     const boost = additiveSpriteBoost();
     if (boost === 1) return; // inert: leave every sprite on the stock batch plugin
-    const frag = PIXI.BatchRenderer.defaultFragmentTemplate.replace(
-        "gl_FragColor = color * vColor;",
-        `vec4 c = color * vColor;\n    gl_FragColor = vec4(c.rgb * ${boost.toFixed(4)}, c.a);`,
-    );
+    const frag = PIXI.BatchRenderer.defaultFragmentTemplate.replace("gl_FragColor = color * vColor;", `vec4 c = color * vColor;\n    gl_FragColor = vec4(c.rgb * ${boost.toFixed(4)}, c.a);`);
     class AdditiveBoostRenderer extends PIXI.BatchRenderer {
         constructor(renderer: PIXI.Renderer) {
             super(renderer);
@@ -3131,7 +3134,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // 180° emitter angle the game plainly does not draw it with).
                 const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, 2, sys.rot ?? 0);
                 emitters.push(emitter);
-            emitterSys.push(sysIndex);
+                emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
                 applyPsDiag(data, sys, emitter.container);
                 (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
@@ -3213,7 +3216,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
                 emitters.push(emitter);
-            emitterSys.push(sysIndex);
+                emitterSys.push(sysIndex);
                 // A LARGE additive glow mesh (Hoshiguma the Breacher's lightning-bolt
                 // halos, startSize≈476) spreads a lot of additive light, and several
                 // co-fire on the same burst — through the HDR bloom they stack into one
@@ -3251,7 +3254,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         const trailTexture = trailTex ? new PIXI.Texture(trailTex.base) : null;
         const emitter = new Emitter(sys, new PIXI.Texture(tex.base), trailTexture, blend, budget);
         emitters.push(emitter);
-            emitterSys.push(sysIndex);
+        emitterSys.push(sysIndex);
         // Tame a LARGE additive billboard on a self-lit dark-backdrop scene (mirrors the
         // scene-layer `EFFECT_SCENE_GAIN` temper — see EFFECT_PARTICLE_GAIN above). Composes
         // with `additivePileGain`; still additive, so a subtle central flare remains. No-op

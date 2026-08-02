@@ -441,10 +441,15 @@ function isTiledLayer(layer: ISceneLayer): boolean {
 
 /** Linear stretch of a layer's mesh relative to its source texture rect. */
 function layerStretch(layer: ISceneLayer, effRect: { w: number; h: number }): number {
-    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    let minx = Infinity,
+        maxx = -Infinity,
+        miny = Infinity,
+        maxy = -Infinity;
     for (let i = 0; i < layer.pos.length; i += 2) {
-        minx = Math.min(minx, layer.pos[i]); maxx = Math.max(maxx, layer.pos[i]);
-        miny = Math.min(miny, layer.pos[i + 1]); maxy = Math.max(maxy, layer.pos[i + 1]);
+        minx = Math.min(minx, layer.pos[i]);
+        maxx = Math.max(maxx, layer.pos[i]);
+        miny = Math.min(miny, layer.pos[i + 1]);
+        maxy = Math.max(maxy, layer.pos[i + 1]);
     }
     const texA = Math.max(1, effRect.w * effRect.h);
     const meshA = Math.max(1, (maxx - minx) * (maxy - miny));
@@ -990,23 +995,37 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // Collected into a global rather than logged: the dev server rewrites `console.log` into
     // a styled "Go to Source" message, which destroys the payload.
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dumpclass")) {
-        let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+        let minx = Infinity,
+            maxx = -Infinity,
+            miny = Infinity,
+            maxy = -Infinity;
         for (let i = 0; i < layer.pos.length; i += 2) {
-            minx = Math.min(minx, layer.pos[i]); maxx = Math.max(maxx, layer.pos[i]);
-            miny = Math.min(miny, layer.pos[i + 1]); maxy = Math.max(maxy, layer.pos[i + 1]);
+            minx = Math.min(minx, layer.pos[i]);
+            maxx = Math.max(maxx, layer.pos[i]);
+            miny = Math.min(miny, layer.pos[i + 1]);
+            maxy = Math.max(maxy, layer.pos[i + 1]);
         }
-        const meshW = maxx - minx, meshH = maxy - miny;
-        const texA = Math.max(1, effRect.w * effRect.h), meshA = Math.max(1, meshW * meshH);
+        const meshW = maxx - minx,
+            meshH = maxy - miny;
+        const texA = Math.max(1, effRect.w * effRect.h),
+            meshA = Math.max(1, meshW * meshH);
         const w = window as unknown as { __classDump?: unknown[] };
-        (w.__classDump ??= []).push({
-            sort: layer.sort, add: additive ? 1 : 0,
-            texW: Math.round(effRect.w), texH: Math.round(effRect.h),
-            meshW: Math.round(meshW), meshH: Math.round(meshH),
+        w.__classDump ??= [];
+        w.__classDump.push({
+            sort: layer.sort,
+            add: additive ? 1 : 0,
+            texW: Math.round(effRect.w),
+            texH: Math.round(effRect.h),
+            meshW: Math.round(meshW),
+            meshH: Math.round(meshH),
             stretch: Number(Math.sqrt(meshA / texA).toFixed(2)),
-            opaque: Number(tex.opaqueFrac.toFixed(3)), sat: Number(tex.sat.toFixed(3)),
+            opaque: Number(tex.opaqueFrac.toFixed(3)),
+            sat: Number(tex.sat.toFixed(3)),
             white: Number(tex.whiteness.toFixed(3)),
-            isEffect: isEffect ? 1 : 0, painted: isPaintedSurface ? 1 : 0,
-            fullGain: fullGain ? 1 : 0, gain: Number(gain.toFixed(2)),
+            isEffect: isEffect ? 1 : 0,
+            painted: isPaintedSurface ? 1 : 0,
+            fullGain: fullGain ? 1 : 0,
+            gain: Number(gain.toFixed(2)),
         });
     }
 

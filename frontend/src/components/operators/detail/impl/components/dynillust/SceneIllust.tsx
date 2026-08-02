@@ -1373,7 +1373,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             mm.__activeUntil = undefined;
                             c.renderable = true;
                         }
-                        if (off.has("bgcount") && scene) console.log("[abl] bgchildren=" + scene.background.children.length);
+                        if (off.has("bgcount") && scene) console.log(`[abl] bgchildren=${scene.background.children.length}`);
                         if (sceneOverlay && (off.has("scenefg") || off.has("overlay"))) sceneOverlay.renderable = false;
                     }
                 }
@@ -1422,9 +1422,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             }
                             const tex = m.texture;
                             return {
-                                name, verts: gp, uvs: Array.from(uv), idx,
-                                tint: m.tint, alpha: m.worldAlpha, blend: m.blendMode,
-                                renderable: m.renderable, visible: m.visible,
+                                name,
+                                verts: gp,
+                                uvs: Array.from(uv),
+                                idx,
+                                tint: m.tint,
+                                alpha: m.worldAlpha,
+                                blend: m.blendMode,
+                                renderable: m.renderable,
+                                visible: m.visible,
                                 slotColor: [sl.color.r, sl.color.g, sl.color.b, sl.color.a],
                                 baseSize: [tex.baseTexture.realWidth, tex.baseTexture.realHeight],
                                 frame: [tex.frame.x, tex.frame.y, tex.frame.width, tex.frame.height],
@@ -1481,7 +1487,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 const r = m as unknown as ISceneLayerRuntime & { alpha: number; visible: boolean; renderable: boolean; shader?: { uniforms?: Record<string, unknown> } };
                                 const b = m.getBounds();
                                 rows.push({
-                                    side, i, sort: r.__sort, vis: r.visible, rend: r.renderable,
+                                    side,
+                                    i,
+                                    sort: r.__sort,
+                                    vis: r.visible,
+                                    rend: r.renderable,
                                     alpha: Number(r.alpha.toFixed(3)),
                                     tint: (m as unknown as { tint?: number }).tint,
                                     blend: (m as unknown as { blendMode?: number }).blendMode,
