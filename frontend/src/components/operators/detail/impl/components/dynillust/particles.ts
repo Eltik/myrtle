@@ -471,17 +471,47 @@ const PREWARM_MAX_STEPS = 300;
  *  not that Unity's semantics are wrong. Re-enable with `?simspeed=1` / `?prewarm=1` — note
  *  the corpus must be re-extracted first, since only the three reference skins carry the
  *  fields today. */
+const SIM_SPEED_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("simspeed") === "1";
 function simSpeedOf(d: IParticleSystemData): number {
-    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("simspeed") !== "1") return 1;
+    if (!SIM_SPEED_ON) return 1;
     const s = d.simSpeed;
     return typeof s === "number" && Number.isFinite(s) && s > 0 ? s : 1;
 }
 
 /** See {@link simSpeedOf} — disabled by default; `?prewarm=1` re-enables. Only LOOPING
  *  systems prewarm; Unity ignores the flag on one-shots. */
+const PREWARM_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("prewarm") === "1";
 function prewarmOf(d: IParticleSystemData): boolean {
-    if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("prewarm") !== "1") return false;
+    if (!PREWARM_ON) return false;
     return !!d.prewarm && d.looping && d.duration > 0;
+}
+
+/** Restart the emission accumulator at each loop wrap? **DISABLED — MEASURED AND REJECTED.**
+ *
+ *  The question was well posed: we carry the fractional `emitAcc` remainder across a looping
+ *  system's duration boundary, so emission times are `k / rate` from t=0 — a GLOBAL phase. If
+ *  Unity instead restarts the accumulator each cycle the times are `cycleStart + k / rate`, a
+ *  phase pinned to the loop. The two differ by `duration mod (1/rate)`, which is 1.0 s on
+ *  Virtuosa's `rainbow_large_01` (duration 5, rate 0.5) — the single system that carries her
+ *  whole `prewarm` regression, so a loop-pinned phase was the natural explanation.
+ *
+ *  It is wrong, and the test is unambiguous: the reset moves that system to the SAME phase
+ *  `prewarm` does, not back to the game's.
+ *
+ *      cel t=10        control 24.936   loopacc alone 26.708   prewarm alone 26.624
+ *      cel whole       control 19.422   loopacc alone 19.617   loopacc+simSpeed+prewarm 19.559
+ *      mly / ska       17.721 / 10.505  ->  17.720 / 10.514  (untouched)
+ *
+ *  So the GLOBAL phase we already ship is the one the game matches, and Unity carries the
+ *  accumulator across loop boundaries exactly as we do. That also settles the open question
+ *  left by [[simSpeedOf]]: `prewarm`'s cost is not a phase-pinning difference we could correct,
+ *  it is that adding one `duration` of emission history genuinely re-phases any system whose
+ *  duration is not a whole number of emission intervals.
+ *
+ *  `?loopacc=1` re-enables it for a re-test. */
+const LOOP_ACC_RESET = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("loopacc") === "1";
+function loopAccReset(): boolean {
+    return LOOP_ACC_RESET;
 }
 
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
@@ -1500,6 +1530,10 @@ class Emitter {
         const moved = this.lastEmitterPos ? Math.hypot(ep.x - this.lastEmitterPos.x, ep.y - this.lastEmitterPos.y) : 0;
         this.lastEmitterPos = ep;
         if (playing) {
+            // Loop-wrap accumulator restart (see loopAccReset). Compared against the PREVIOUS
+            // frame's cycle position, so it fires exactly once per wrap, before this frame's
+            // contribution is added.
+            if (loopAccReset() && d.looping && d.duration > 0 && this.time % d.duration < this.lastCycleT) this.emitAcc = 0;
             this.emitAcc += emissionRate(d, this.rate, this.time) * dt;
             if (this.rodRate > 0 && moved > 0) this.emitAcc += this.rodRate * moved;
             while (this.emitAcc >= 1) {
@@ -2553,6 +2587,10 @@ class RamEmitter {
             this.particles.length = keep;
         }
         if (playing) {
+            // Loop-wrap accumulator restart (see loopAccReset). Compared against the PREVIOUS
+            // frame's cycle position, so it fires exactly once per wrap, before this frame's
+            // contribution is added.
+            if (loopAccReset() && d.looping && d.duration > 0 && this.time % d.duration < this.lastCycleT) this.emitAcc = 0;
             this.emitAcc += emissionRate(d, this.rate, this.time) * dt;
             if (this.rodRate > 0 && moved > 0) this.emitAcc += this.rodRate * moved;
             while (this.emitAcc >= 1) {
