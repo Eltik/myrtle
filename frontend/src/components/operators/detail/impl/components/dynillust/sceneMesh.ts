@@ -496,11 +496,39 @@ function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
     return hi > lo ? hi - lo : 0;
 }
 
-/** DIAGNOSTIC (`?veilcover=0`): restore the old behaviour, demoting full-frame hazes behind
- *  the character along with localised bursts. Lets the change be A/B'd in one build. */
+/** Exempt full-frame layers from the `isVeil` demotion? **DISABLED — MEASURED AND REJECTED.**
+ *
+ *  The reasoning was sound and the mis-classification is real: `isEffect` measures a layer's
+ *  TEXTURE RESOLUTION, which says nothing about how much of the shot it covers, so a small
+ *  white quad stretched across the camera view — the ordinary way atmosphere is authored —
+ *  reads as a localised burst and is pushed behind the spine. Mlynar's L14 is exactly that (a
+ *  256 px texture at 2192x1893 against a 2222 px view) and the demotion does cost him: his
+ *  coat stays crisp and black where the game washes it out.
+ *
+ *  It still measures WORSE, and catastrophically so on skins with no capture to warn us. The
+ *  corpus scan said this touches only 8 layers in 6 skins, which read as reassuringly narrow;
+ *  what it could not say is HOW STRONG those layers are. Spot-rendering all six at t=2/5/8/12:
+ *
+ *      char_113_cqbw_epoque#7    frame mean 177.2 -> 218.5   (+41, peak +52)
+ *      char_003_kalts_boc#6      frame mean 103.0 -> 125.0   (+22 at every beat)
+ *      char_2023_ling_2          +1.5     char_4080_lin_nian#10  -0.6
+ *      char_4134_cetsyr_epoque#50 0.00 (its layer is never drawn)
+ *
+ *  Rendered, the first two are unmistakable: the CHARACTER DISAPPEARS under a white sheet.
+ *  These layers are opaque flashes, not haze, and the demotion is what keeps a body in front
+ *  of them. Against that, Mlynar gained 0.020 MADC (17.721 -> 17.701) — and only that little
+ *  because his one scored beat inside the layer's fade window is t=4, where its authored alpha
+ *  is already 0.06.
+ *
+ *  Coverage alone therefore cannot separate atmosphere from a full-frame flash. A future
+ *  attempt needs a strength/opacity term as well (Mlynar's peaks at alpha 0.92 and FADES to 0;
+ *  the two that broke are effectively opaque), and it needs a capture for at least one of the
+ *  affected skins to calibrate against — the corpus scan counts layers, not consequences.
+ *
+ *  `?veilcover=1` re-enables it for a re-test. */
 function veilFrameCoverExempt(): boolean {
-    if (typeof window === "undefined") return true;
-    return new URLSearchParams(window.location.search).get("veilcover") !== "0";
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("veilcover") === "1";
 }
 /** Half-width (spine-authored px) of the character's central column. A saturated
  *  foreground glow centred within it is energy over the character (additive); one
