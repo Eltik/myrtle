@@ -5,9 +5,16 @@ import type { IChibiSpineFiles } from "#/lib/api/chibis";
 import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
-import { createHDRScene, type IHDRScene } from "./hdrTonemap";
-import { type FindBone, type ILoadedParticles, loadParticles } from "./particles";
+import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
+import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
 import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+
+/** Minimal shape of a spine attachment we can measure at the setup pose. */
+interface AttachmentLike {
+    name: string;
+    worldVerticesLength?: number;
+    computeWorldVertices?: (slot: never, start: number, count: number, out: Float32Array, offset: number, stride: number) => void;
+}
 
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
@@ -156,6 +163,133 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
  * a fixed 2× camera-height framed her too small at ~35%). */
 const SCENE_ZOOM_OUT = 1.7;
 
+/** DIAGNOSTIC (`?framebox=x,y,w,h`): pin the settled camera to an EXPLICIT box, in the same
+ *  space as {@link IComposite.bounds}.
+ *
+ *  Exists because the two other framings are each unusable for per-layer attribution. The
+ *  authored `_adjustes` camera sits INSIDE the art on most skins (Ch'en's sky quad fills
+ *  99.94% of it), so anything at the art's edge is off-frame entirely; and the whole-art
+ *  framing is derived from PAINTED content, so every `?abl=` ablation silently re-frames the
+ *  shot and an ablated render cannot be compared with an unablated one. A fixed box is
+ *  independent of both — identical across every ablation, and wide enough to include the
+ *  silhouette boundary. Rendered with a `contain` fit so the whole box is visible.
+ *
+ *  Returns null when absent or malformed, leaving the normal framing untouched. */
+function frameBoxParam(): IAnimationBounds | null {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("framebox");
+    if (!raw) return null;
+    const p = raw.split(",").map(Number);
+    if (p.length !== 4 || p.some((n) => !Number.isFinite(n)) || p[2] <= 0 || p[3] <= 0) return null;
+    return { x: p[0], y: p[1], width: p[2], height: p[3] };
+}
+
+/** Frame a no-entrance skin to everything it PAINTS rather than to its authored `_adjustes`
+ *  camera. **DISABLED by default — the target is real but only ONE reference exists.**
+ *
+ *  The observation is solid. 70 of the 82 dynchar skins have no `_Start`, and for those the
+ *  game's viewer shows the whole cut-out with margins while the authored `_adjustes[0]` box
+ *  crops well inside it — content exceeds the authored view on 61 of 80 skins (Ch'en the
+ *  Holungday 2690x1789 against a 1171 px view; Virtuosa 2.7x; Ch'en Wei 3.8x). Against the
+ *  in-game recording of Ch'en, framing the painted content is plainly the better match.
+ *
+ *  It is off because ONE reference cannot calibrate 70 skins, and two concrete problems
+ *  remain:
+ *    • `fitRef` is `mode: "height"` for authored framing, which CROPS the width — so a
+ *      content box wider than the viewport still does not show the whole art. Needs a
+ *      "contain" fit, which changes layout for every skin.
+ *    • `paintedLocalBounds`' alpha floor is a tuned constant. At >8/255 it catches faint
+ *      haze that extends far past the visible composition: Nian's painted box comes out
+ *      3037x2267 against a 1640 px authored view, dropping her art from 45% of the frame to
+ *      25%. Her authored crop already showed the whole composition — but that judgement is
+ *      aesthetic, not measured, because there is no recording of her to check against.
+ *
+ *  TO ENABLE: capture 2-3 in-game recordings of no-entrance skins with DIFFERENT content
+ *  ratios (a tight one and a sprawling one), fix the fit mode to "contain", and calibrate the
+ *  alpha floor against them. `?wholeart=1` turns it on now for inspection. */
+function fitWholeArt(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("wholeart") !== "0";
+}
+
+/** Alpha floor (0-255) for {@link paintedLocalBounds}. Calibrated against the one in-game
+ *  recording available (Ch'en the Holungday); `?paintalpha=<n>` sweeps it. */
+const PAINTED_ALPHA_MIN = 8;
+function paintedAlphaMin(): number {
+    if (typeof window === "undefined") return PAINTED_ALPHA_MIN;
+    const v = parseInt(new URLSearchParams(window.location.search).get("paintalpha") ?? "", 10);
+    return Number.isFinite(v) && v >= 0 && v < 255 ? v : PAINTED_ALPHA_MIN;
+}
+
+/** Bounding box of the pixels a container actually PAINTS, in its own local space.
+ *
+ *  `getLocalBounds()` is the union of child GEOMETRY, which is not the same thing: a scene
+ *  routinely carries oversized or fully-transparent quads, so the geometric box can be far
+ *  larger than the visible art. Framing to it zooms a skin out into empty margin (Nian's
+ *  archive art fell from 45% of the frame to 19%, while her authored crop had already shown
+ *  the whole composition).
+ *
+ *  So render the container once into a small offscreen target and measure where the alpha
+ *  actually is. Model-free and fully general — no per-skin data, no assumptions about which
+ *  layers matter. Done once at load; the readback is a few tens of KB at this size.
+ *
+ *  Returns null when nothing is painted or the renderer cannot do the pass. */
+function paintedLocalBounds(renderer: PIXI.IRenderer, target: PIXI.Container, maxSide = 192): IAnimationBounds | null {
+    const lb = target.getLocalBounds();
+    if (!Number.isFinite(lb.width) || lb.width <= 1 || lb.height <= 1) return null;
+    const s = Math.min(1, maxSide / Math.max(lb.width, lb.height));
+    const w = Math.max(1, Math.ceil(lb.width * s));
+    const h = Math.max(1, Math.ceil(lb.height * s));
+    let rt: PIXI.RenderTexture | null = null;
+    // The container is laid out on the stage; render it from its own local space so the
+    // measurement is independent of whatever camera is currently applied.
+    const saved = target.transform.localTransform.clone();
+    const savedX = target.x;
+    const savedY = target.y;
+    const savedSX = target.scale.x;
+    const savedSY = target.scale.y;
+    // NOTE FOR DIAGNOSTICS: this box is measured from what is currently drawable, so a `?abl=`
+    // ablation shrinks it and silently RE-FRAMES the shot. An ablated render compared against
+    // a full one then measures the ZOOM CHANGE, not the ablated element — which inverted a
+    // real result once: Ch'en's foreground read as DARKENING the art by 11.2 when, framed
+    // identically, it BRIGHTENS it by 11.4 (verified by bounding box: the content-fit pair was
+    // framed differently, the authored pair identically). **Always pass `wholeart=0` on BOTH
+    // sides of an ablation comparison.** Forcing children renderable here was tried and does
+    // NOT fix it — the ablation is applied before this runs, through more than one flag.
+    try {
+        rt = PIXI.RenderTexture.create({ width: w, height: h, resolution: 1 });
+        target.position.set(0, 0);
+        target.scale.set(1, 1);
+        const m = new PIXI.Matrix().translate(-lb.x, -lb.y).scale(s, s);
+        renderer.render(target, { renderTexture: rt, clear: true, transform: m });
+        const px = renderer.extract.pixels(rt);
+        const aMin = paintedAlphaMin();
+        let minX = w;
+        let minY = h;
+        let maxX = -1;
+        let maxY = -1;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                if (px[(y * w + x) * 4 + 3] > aMin) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) return null;
+        return { x: lb.x + minX / s, y: lb.y + minY / s, width: (maxX - minX + 1) / s, height: (maxY - minY + 1) / s };
+    } catch {
+        return null;
+    } finally {
+        rt?.destroy(true);
+        target.position.set(savedX, savedY);
+        target.scale.set(savedSX, savedSY);
+        target.transform.setFromMatrix(saved);
+    }
+}
+
 /** Expand a bounds box around its centre by `factor` (>1 zooms the framing out). */
 function inflateBounds(bounds: IAnimationBounds | null, factor: number): IAnimationBounds | null {
     if (!bounds) return null;
@@ -176,7 +310,19 @@ function calibrationParam(name: string, fallback: number): number {
 
 /** A spine BACKDROP element that is a dark shadow / smoke silhouette (named as
  *  such and behind the character). */
-const DARK_BACKDROP_SLOT = /^bg_.*(shadow|smoke|somke|silhou|black|hei|ying)/i;
+/** Unambiguous ENGLISH markers may appear anywhere in the name. */
+const DARK_BACKDROP_WORD = /^bg_.*(shadow|smoke|somke|silhou|black)/i;
+/** The PINYIN markers `hei` (黑, black) and `ying` (影, shadow) are only three or four
+ *  letters, so they must match a WHOLE underscore-delimited segment. As bare substrings
+ *  they swallow unrelated art: Skadi the Corrupting Heart's 59 `BG_Heir_*` background
+ *  figures all contain "hei" inside "**Heir**", which made `hasShadowSlots` true for her
+ *  and would cull every one of them the moment she composited against a static backdrop.
+ *  Corpus-wide this is the only collision (18 skins match the rule; 59 of the 108 matched
+ *  attachments were hers, and every one a false positive). */
+const DARK_BACKDROP_PINYIN = /^bg_(?:.*_)?(hei|ying)(?:_|\d|$)/i;
+function isDarkBackdropSlot(name: string): boolean {
+    return DARK_BACKDROP_WORD.test(name) || DARK_BACKDROP_PINYIN.test(name);
+}
 
 /** When a static illustration is composited behind the spine, the static art
  *  already contains every backdrop element, PROPERLY layered by the game (e.g.
@@ -190,7 +336,28 @@ const DARK_BACKDROP_SLOT = /^bg_.*(shadow|smoke|somke|silhou|black|hei|ying)/i;
  *  they're untouched. (Verified harmless on Hoshiguma-alter, whose `BG_Door_*_shadow`
  *  mirror-panel shadows are re-supplied identically by the static art.) */
 function hasShadowSlots(spine: import("pixi-spine").Spine): boolean {
-    return spine.skeleton.slots.some((s) => DARK_BACKDROP_SLOT.test((s as unknown as { data: { name: string } }).data.name));
+    return spine.skeleton.slots.some((s) => isDarkBackdropSlot((s as unknown as { data: { name: string } }).data.name));
+}
+
+/** DIAGNOSTIC (`?hideslots=<regex>` / `?keepslots=<regex>`): suppress or isolate spine
+ *  slots by name so a residual can be attributed to a subset of the skeleton. Runs
+ *  UNCONDITIONALLY (the shadow cull below is gated per-skin) and, like it, must run in the
+ *  post-`update` pass because pixi-spine rebuilds the meshes every frame. */
+function applySlotDiagnostic(spine: import("pixi-spine").Spine): void {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const hide = q.get("hideslots");
+    const keep = q.get("keepslots");
+    if (!hide && !keep) return;
+    const re = new RegExp((hide ?? keep) as string);
+    for (const slotU of spine.skeleton.slots) {
+        const slot = slotU as unknown as { data: { name: string }; currentMesh?: { renderable: boolean }; currentSprite?: { renderable: boolean }; currentGraphics?: { renderable: boolean } };
+        if (re.test(slot.data.name) !== !!keep) {
+            if (slot.currentMesh) slot.currentMesh.renderable = false;
+            if (slot.currentSprite) slot.currentSprite.renderable = false;
+            if (slot.currentGraphics) slot.currentGraphics.renderable = false;
+        }
+    }
 }
 
 /** Make the matched slots' per-slot display objects non-renderable. pixi-spine
@@ -200,7 +367,7 @@ function hasShadowSlots(spine: import("pixi-spine").Spine): boolean {
 function hideRedundantShadowSlots(spine: import("pixi-spine").Spine): void {
     for (const slotU of spine.skeleton.slots) {
         const slot = slotU as unknown as { data: { name: string }; currentMesh?: { renderable: boolean }; currentSprite?: { renderable: boolean }; currentGraphics?: { renderable: boolean } };
-        if (!DARK_BACKDROP_SLOT.test(slot.data.name)) continue;
+        if (!isDarkBackdropSlot(slot.data.name)) continue;
         if (slot.currentMesh) slot.currentMesh.renderable = false;
         if (slot.currentSprite) slot.currentSprite.renderable = false;
         if (slot.currentGraphics) slot.currentGraphics.renderable = false;
@@ -230,6 +397,15 @@ interface IComposite {
     /** True when `root` is a scene container (mesh layers/particles), false when it
      *  is the bare spine (spine-only art with no separate scene). */
     isScene: boolean;
+    /** The scene's authored orthographic camera size in px (`cameraSize × 100`). Drives the
+     *  composite transfer — see {@link sceneCompositeGamma}. Null for spine-only art. */
+    cameraSizePx: number | null;
+    /** Union of everything the composite actually draws (all mesh layers + the skeleton), in
+     *  the same space as {@link bounds}. The authored `_adjustes` camera CROPS INTO this for
+     *  most skins — content is larger than the authored view on 61 of 80 — which is right for
+     *  a skin whose entrance cinematic frames a shot, and wrong for one that has none, where
+     *  the game's viewer fits the whole cut-out. Null for spine-only art. */
+    contentBounds: IAnimationBounds | null;
     /** True when the scene owns a DARK opaque painted backdrop (see
      *  {@link ILoadedScene.hasDarkBackdrop}) — the scene supplies its own environment, so the
      *  light-grey studio gradient must NOT be composited behind it (it would bleed through the
@@ -256,6 +432,9 @@ interface IComposite {
      *  and the `transform` reform beat. Non-null only for a "_Start" entrance composite;
      *  drives the tight→wide camera dolly length and the hand-off time. */
     entranceDuration: number | null;
+    /** Straight RGBA of the director's end-of-entrance screen fade (`_params.fadeColor`), or
+     *  null when the skin ships no entrance director. See {@link ENTRANCE_FADE_IN}. */
+    entranceFade: [number, number, number, number] | null;
     entranceTransform: number | null;
     /** The `_Start` camera dolly ZOOM curve (`[t_s, ortho]` keyframes) — the game's actual
      *  data-driven camera motion (extracted from the clip animating the Main Camera's orthographic
@@ -472,6 +651,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // their `pos` is baked at the bind/setup pose, so the follow-delta must be
     // measured from setup, not the first animated frame.
     const boneRestRef = useRef<Map<string, PIXI.Matrix> | null>(null);
+    const attachRestRef = useRef<Map<string, { x: number; y: number }> | null>(null);
     // HDR bloom pass: when float render targets are available, the scene is drawn
     // into `hdr.target` (half-float, additive stacks don't clip) and tonemapped to
     // screen via `hdr.mesh`. `hdrSceneRef` is the container rendered into it.
@@ -535,6 +715,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // gala idle fades IN — so the character is never absent during the transformation (the game
     // overlaps the reform with the dissolve). Both roots are wrapped in one container the HDR
     // pass renders; the tick ramps their alphas, then detaches the main and frees the entrance.
+    // END-OF-ENTRANCE SCREEN FADE. The director carries the COLOUR (`_params.fadeColor`) and the
+    // END TIME (`_params.duration`) as data; only the ramp lengths are client behaviour, and they
+    // are measured, not guessed. Virtuosa is the one reference where the fade is unconfounded —
+    // Mlynar's own white-transition plane already holds the frame white from t=15.0, and Skadi
+    // reaches white through her authored fade LAYERS — and her recording runs
+    // 134 → 146 → 178 → 211 → 240 → 254 over `duration - 1.0s` → `duration - 0.2s`.
+    /** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`. */
+    const ENTRANCE_FADE_IN = 0.85;
+    /** Seconds the fade holds at full before lifting (covers the idle swap). */
+    const ENTRANCE_FADE_HOLD = 0.2;
+    /** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
+     *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
+    const ENTRANCE_FADE_OUT = 0.35;
+    const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null } | null>(null);
     const crossfadeRef = useRef<{ wrapper: PIXI.Container; mainRoot: PIXI.Container; entRoot: PIXI.Container; ent: IComposite; elapsed: number; duration: number } | null>(null);
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
     // and zooms OUT to the steady framing over a fraction of a second, then holds. This
@@ -622,6 +816,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         setError(null);
         setUnsupported(false);
 
+        ensureAdditiveSpriteBoost(); // MUST precede Renderer construction (plugins bind at build)
         const app = new PIXI.Application({
             width: container.clientWidth || 600,
             height: container.clientHeight || 450,
@@ -629,7 +824,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             antialias: true,
             resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
             autoDensity: true,
+            // The tick below drives EVERYTHING — clock, spine, particles, and both render
+            // passes — so PIXI's own ticker must not render as well. Left on it did two
+            // things: it drew `app.stage` a second time every frame (double the GPU work for
+            // the whole viewer), and it could draw the stage BEFORE the frame's scene pass
+            // had written the HDR target, so the tonemap quad sampled a render target that
+            // nothing had filled in yet.
+            autoStart: false,
         });
+        app.ticker.stop();
         appRef.current = app;
         container.appendChild(app.view as HTMLCanvasElement);
 
@@ -652,6 +855,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `update` rebuilds the dark shadow slots' meshes each frame; flip them
                 // back to non-renderable so the static backdrop's version shows instead.
                 if (hideShadowsRef.current) hideRedundantShadowSlots(spineRef.current);
+                applySlotDiagnostic(spineRef.current);
                 // BONE-FOLLOWING scene layers: a spine-unity `BoneFollower` snaps these
                 // quads onto a bone at runtime, so their baked geometry is only an editor
                 // pose (Mlynar's sword flare bakes as a streak in the lower-left instead
@@ -686,7 +890,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const c = sampleCurveXY(ef.camCenter, tt, ef.camCuts) ?? [0, 0];
                 // Camera SIZE: the gamedata frame extent (`_adjustes` view px) × the ortho-size ratio,
                 // so the character grows into the frame exactly as the authored zoom dictates.
-                const size = ef.frameSize * orthoZoomRatio(ef.ortho, tt);
+                // DIAGNOSTIC (`?ortholead=<seconds>`): sample the ZOOM curve at `tt + lead` only,
+                // leaving the pan/centre on `tt`. Isolates a zoom-specific timing error from a
+                // global clock error (which would move the centre too). Inert at 0.
+                const orthoLead = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("ortholead") ?? "0") || 0 : 0;
+                const size = ef.frameSize * orthoZoomRatio(ef.ortho, tt + orthoLead);
                 // STEADY FRAMING (skins with no authored `_transform` beat, e.g. Mlynar "Fields of
                 // Ruination"): measured against the game recording, the baked rig-centre curve swings
                 // the character HORIZONTALLY into the right third (its X excursion reaches ~-355 off
@@ -763,6 +971,30 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // Opening zoom-out (matches the in-game viewer, measured from the reference
             // recording): open TIGHT on the character, hold for `delay`s, then dolly OUT to
             // the steady framing over `duration`s of real time, then clear so it holds.
+            // End-of-entrance screen fade: ramp to the director's `fadeColor` so the last second
+            // of the cinematic whites out exactly as the game's does, hold through the idle swap,
+            // then lift. `out` is set by the hand-off; until then the ramp is driven purely by the
+            // entrance clock against the authored `duration`.
+            const efd = entranceFadeRef.current;
+            if (efd) {
+                efd.elapsed += dt;
+                let a = 0;
+                if (efd.out !== null) {
+                    efd.out += dt;
+                    a = efd.out <= ENTRANCE_FADE_HOLD ? 1 : Math.max(0, 1 - (efd.out - ENTRANCE_FADE_HOLD) / ENTRANCE_FADE_OUT);
+                    if (a <= 0) {
+                        efd.sprite.parent?.removeChild(efd.sprite);
+                        efd.sprite.destroy();
+                        entranceFadeRef.current = null;
+                    }
+                } else {
+                    // The ramp COMPLETES at `duration - HOLD`, not at `duration`: the capture is
+                    // already pure white 0.2s before the authored end and holds there.
+                    const end = efd.duration - ENTRANCE_FADE_HOLD;
+                    a = Math.max(0, Math.min(1, (efd.elapsed - (end - ENTRANCE_FADE_IN)) / ENTRANCE_FADE_IN));
+                }
+                efd.sprite.alpha = a;
+            }
             const ez = entranceZoomRef.current;
             if (ez && appRef.current) {
                 ez.elapsed += dt;
@@ -826,7 +1058,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                           return b ? b.matrix : null;
                       }
                     : undefined;
-                particlesRef.current.update(dt, findBone, boneRestRef.current ?? undefined, liveDisplayBox);
+                particlesRef.current.update(dt, findBone, boneRestRef.current ?? undefined, liveDisplayBox, attachRestRef.current ?? undefined);
             }
             const currentApp = appRef.current;
             if (currentApp?.renderer) {
@@ -1100,10 +1332,176 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         sceneOverlay = overlay;
                     }
                 }
+                // DIAGNOSTIC (`?abl=`): drop whole draw groups to attribute a residual to one
+                // of them. `renderable` (not `visible`) because the entrance tick rewrites
+                // per-mesh `visible` every frame from the clip's `m_IsActive` window.
+                {
+                    const abl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("abl") : null;
+                    if (abl) {
+                        const off = new Set(abl.split(","));
+                        if (scene && off.has("scenebg")) scene.background.renderable = false;
+                        if (scene && off.has("scenefg")) scene.foreground.renderable = false;
+                        if (particles && off.has("partbg")) particles.background.renderable = false;
+                        if (particles && off.has("partfg")) particles.foreground.renderable = false;
+                        if (off.has("spine")) spine.renderable = false;
+                        // `bg:<i>` drops one background layer, `bgonly:<i>` keeps only that one;
+                        // `fg:` / `fgonly:` do the same for the foreground. Ranges allowed
+                        // (`bgonly:4-7`). Per-layer isolation is the only way to attribute a
+                        // symptom to ONE layer — see the Ch'en silhouette hunt.
+                        for (const tok of off) {
+                            const m = /^(bg|fg)(only)?:(\d+)(?:-(\d+))?$/.exec(tok);
+                            if (!m || !scene) continue;
+                            const side = m[1] === "bg" ? scene.background : scene.foreground;
+                            if (!side) continue;
+                            const lo = Number(m[3]);
+                            const hi = m[4] ? Number(m[4]) : lo;
+                            side.children.forEach((c, i) => {
+                                const inRange = i >= lo && i <= hi;
+                                if (m[2]) c.renderable = inRange;
+                                else if (inRange) c.renderable = false;
+                            });
+                        }
+                        // `on:bg<i>` / `on:fg<i>` clears a layer's `m_IsActive` window so it
+                        // stays drawn — tests whether missing content is a mis-timed window.
+                        for (const tok of off) {
+                            const m = /^on:(bg|fg):(\d+)$/.exec(tok);
+                            if (!m || !scene) continue;
+                            const c = (m[1] === "bg" ? scene.background : scene.foreground).children[Number(m[2])];
+                            if (!c) continue;
+                            const mm = c as unknown as ISceneLayerRuntime;
+                            mm.__activeFrom = undefined;
+                            mm.__activeUntil = undefined;
+                            c.renderable = true;
+                        }
+                        if (off.has("bgcount") && scene) console.log("[abl] bgchildren=" + scene.background.children.length);
+                        if (sceneOverlay && (off.has("scenefg") || off.has("overlay"))) sceneOverlay.renderable = false;
+                    }
+                }
+                // DIAGNOSTIC (`?dumplayers=1`): expose live per-layer draw state so a
+                // residual can be matched against what each scene layer actually contributes.
+                if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dumplayers")) {
+                    (window as unknown as { __dumpEmitters?: () => unknown }).__dumpEmitters = () => {
+                        const lp = particlesRef.current;
+                        const r = appRef.current?.renderer;
+                        return lp ? lp.probe(r ? r.width : 0, r ? r.height : 0) : null;
+                    };
+                    // Per-slot MESH geometry in CANVAS space + atlas UVs, so a rendered pixel can
+                    // be reconstructed analytically from the shipped atlas and compared against
+                    // both our render and the game.
+                    (window as unknown as { __dumpSkins?: () => unknown }).__dumpSkins = () => {
+                        const sp = spine as unknown as {
+                            skeleton: { data: { skins: { name: string }[] }; skin?: { name: string } | null };
+                            state: { tracks: ({ animation?: { name: string; duration: number }; trackTime: number; alpha: number; mixDuration?: number } | null)[] };
+                        };
+                        return {
+                            skins: sp.skeleton.data.skins.map((k) => k.name),
+                            active: sp.skeleton.skin ? sp.skeleton.skin.name : null,
+                            tracks: (sp.state.tracks || []).filter(Boolean).map((t) => ({
+                                anim: t?.animation?.name ?? null,
+                                dur: t?.animation?.duration ?? null,
+                                time: Number((t?.trackTime ?? 0).toFixed(3)),
+                                alpha: t?.alpha ?? null,
+                            })),
+                        };
+                    };
+                    (window as unknown as { __dumpMesh?: (n: string) => unknown }).__dumpMesh = (name: string) => {
+                        const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
+                        for (const slotU of sk.slots) {
+                            const sl = slotU as { data: { name: string }; color: { r: number; g: number; b: number; a: number }; currentMesh?: PIXI.Mesh; currentSprite?: PIXI.Sprite };
+                            if (sl.data.name !== name) continue;
+                            const m = sl.currentMesh;
+                            if (!m) return { name, err: "no currentMesh" };
+                            const g = m.geometry;
+                            const pos = g.getBuffer("aVertexPosition").data as unknown as Float32Array;
+                            const uv = g.getBuffer("aTextureCoord").data as unknown as Float32Array;
+                            const idx = Array.from(g.getIndex().data as unknown as Uint16Array);
+                            const wt = m.worldTransform;
+                            const gp: number[] = [];
+                            for (let i = 0; i < pos.length; i += 2) {
+                                gp.push(wt.a * pos[i] + wt.c * pos[i + 1] + wt.tx, wt.b * pos[i] + wt.d * pos[i + 1] + wt.ty);
+                            }
+                            const tex = m.texture;
+                            return {
+                                name, verts: gp, uvs: Array.from(uv), idx,
+                                tint: m.tint, alpha: m.worldAlpha, blend: m.blendMode,
+                                renderable: m.renderable, visible: m.visible,
+                                slotColor: [sl.color.r, sl.color.g, sl.color.b, sl.color.a],
+                                baseSize: [tex.baseTexture.realWidth, tex.baseTexture.realHeight],
+                                frame: [tex.frame.x, tex.frame.y, tex.frame.width, tex.frame.height],
+                                orig: [tex.orig.x, tex.orig.y, tex.orig.width, tex.orig.height],
+                                rotate: (tex as unknown as { rotate?: number }).rotate ?? 0,
+                                uvMatrix: (() => {
+                                    const um = (m.shader as unknown as { uvMatrix?: { mapCoord?: PIXI.Matrix } }).uvMatrix?.mapCoord;
+                                    return um ? [um.a, um.b, um.c, um.d, um.tx, um.ty] : null;
+                                })(),
+                            };
+                        }
+                        return { name, err: "slot not found" };
+                    };
+                    (window as unknown as { __dumpSlots?: () => unknown }).__dumpSlots = () => {
+                        const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
+                        return sk.slots.map((slotU) => {
+                            const sl = slotU as {
+                                data: { name: string; blendMode: number; darkColor?: unknown };
+                                color: { r: number; g: number; b: number; a: number };
+                                darkColor?: { r: number; g: number; b: number };
+                                getAttachment?: () => { name?: string } | null;
+                                currentMesh?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
+                                currentSprite?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
+                            };
+                            const disp = sl.currentMesh ?? sl.currentSprite;
+                            const d2 = disp as unknown as { renderable?: boolean; visible?: boolean; worldAlpha?: number } | undefined;
+                            return {
+                                name: sl.data.name,
+                                dataBlend: sl.data.blendMode,
+                                drawnBlend: disp ? disp.blendMode : null,
+                                col: [sl.color.r, sl.color.g, sl.color.b, sl.color.a].map((x) => Number(x.toFixed(3))),
+                                dark: sl.darkColor ? [sl.darkColor.r, sl.darkColor.g, sl.darkColor.b].map((x) => Number(x.toFixed(3))) : null,
+                                att: sl.getAttachment ? (sl.getAttachment()?.name ?? null) : null,
+                                rend: d2 ? !!d2.renderable : null,
+                                vis: d2 ? !!d2.visible : null,
+                                wa: d2 && typeof d2.worldAlpha === "number" ? Number(d2.worldAlpha.toFixed(3)) : null,
+                            };
+                        });
+                    };
+                    (window as unknown as { __dumpTex?: () => unknown }).__dumpTex = () => {
+                        const cache = (PIXI.utils as unknown as { BaseTextureCache: Record<string, PIXI.BaseTexture> }).BaseTextureCache;
+                        return Object.entries(cache).map(([k, b]) => ({
+                            url: k.slice(-58),
+                            alphaMode: b.alphaMode,
+                            mipmap: b.mipmap,
+                            size: [b.realWidth, b.realHeight],
+                        }));
+                    };
+                    (window as unknown as { __dumpLayers?: () => unknown }).__dumpLayers = () => {
+                        const rows: unknown[] = [];
+                        const walk = (c: PIXI.Container | null, side: string) => {
+                            if (!c) return;
+                            c.children.forEach((m, i) => {
+                                const r = m as unknown as ISceneLayerRuntime & { alpha: number; visible: boolean; renderable: boolean; shader?: { uniforms?: Record<string, unknown> } };
+                                const b = m.getBounds();
+                                rows.push({
+                                    side, i, sort: r.__sort, vis: r.visible, rend: r.renderable,
+                                    alpha: Number(r.alpha.toFixed(3)),
+                                    tint: (m as unknown as { tint?: number }).tint,
+                                    blend: (m as unknown as { blendMode?: number }).blendMode,
+                                    box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
+                                    dbg: (m as unknown as { __blendDbg?: unknown }).__blendDbg,
+                                });
+                            });
+                        };
+                        walk(scene ? scene.background : null, "bg");
+                        walk(scene ? scene.foreground : null, "fg");
+                        walk(sceneOverlay, "ov");
+                        return rows;
+                    };
+                }
                 // Insert the static backdrop at the very back, registered centroid-to-
                 // centroid onto the character (see makeBackdropSprite).
                 if (useStatic && backdropData && backdropFrame) {
-                    sceneContainer.addChildAt(makeBackdropSprite(backdropData, backdropFrame, spineCentroid), 0);
+                    const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
+                    if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
+                    sceneContainer.addChildAt(bd, 0);
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
@@ -1156,7 +1554,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // character body — the raw `_adjustes` OFFSET points ~650px BELOW the body in export
                 // space (verified), so it can't be used for centring; `VBIAS` corrects the residual
                 // hair/mass drag.
-                const RCAL = calibrationParam("rcal", 0.78);
+                //
+                // Re-swept by the same method as `VBIAS` after that constant was corrected (the
+                // two interact: `cy0 = bodyCy - VBIAS*e` with `e = viewPx*RCAL`). Mlynar is again
+                // the only surface that moves — Virtuosa and Skadi2 are BIT-IDENTICAL at every
+                // value tried, since they keep the pure rig camera:
+                //
+                //     rcal   0.74    0.76    0.772   0.776   0.780   0.781   0.782   0.784   0.80
+                //     MADC   29.697  25.814  22.085  20.534  19.352  19.278  19.364  19.820  24.999
+                //
+                // 0.78 was already right to ~0.1%; 0.781 is the reproducible optimum and is worth
+                // only 0.074 MADC — kept because it IS the measured minimum, but do not read it as
+                // a meaningful parity gain the way the VBIAS correction was (-2.13).
+                const RCAL = calibrationParam("rcal", 0.781);
                 // VBIAS: shift the crop centre UP (toward the head) by this fraction of the crop
                 // size `e`. The `feetBottom`/head landmarks include the character's long trailing
                 // hair/tail, which drags the naive body midpoint DOWN, floating the character too
@@ -1164,16 +1574,26 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // sits ~10% down and the body fills toward the bottom, matching the game's
                 // roughly-centred (Mlynar) to low-centred (Virtuosa) composition.
                 //
-                // 0.180 is MEASURED, not tuned by eye. Mlynar's entrance is the only phase-locked
-                // surface that exposes this constant (his `centerBlend.cy0` is the settle-open box
-                // centre, so a wrong VBIAS offsets the whole late entrance): sweeping it against the
-                // recording gives a clean optimum where the residual best-fit vertical shift crosses
-                // zero — 0.151 leaves +26 px, 0.180 leaves +1 px, 0.190 overshoots to −7 px, and mean
-                // MAD bottoms out at exactly 0.180 (47.20 → 40.05). The old 0.151 was calibrated when
-                // `RCAL` was 0.606; widening the frame to 0.78 left the bias over-correcting.
-                // Verified at the real operator-card aspect (640×440) across Mlynar / Virtuosa /
-                // Skadi2 / Wiš'adel: the shift is small and every head keeps its headroom.
-                const VBIAS = calibrationParam("vbias", 0.18);
+                // MEASURED, not tuned by eye. Mlynar's entrance is the only phase-locked surface
+                // that exposes this constant (his `centerBlend.cy0` is the settle-open box centre,
+                // so a wrong VBIAS offsets the whole late entrance): sweep it against the recording
+                // and take the value where the residual best-fit vertical shift crosses zero.
+                //
+                // History: 0.151 (calibrated when `RCAL` was 0.606) left +26 px once the frame
+                // widened to 0.78; 0.180 cut that to +1 px and was kept. That +1 px was a real
+                // residual, not noise — it held at +1.1 px on EVERY scored beat and cost ~16% of
+                // his interior luma error. Re-swept at finer resolution against the current
+                // pipeline (frames decoded and INDEXED, never `ffmpeg -ss`, which is a frame late):
+                //
+                //     vbias    0.1805   0.1810   0.1815   0.1820   0.1825   0.184
+                //     MADC     20.649   19.863   19.352   19.387   19.902   22.226
+                //
+                // 0.1815 is the optimum and drops the residual shift +1.08 px → +0.18 px
+                // (per-beat +1.2,+1.3,+1.1,+1.1,+1.1,+0.7 → +0.2,+0.2,+0.2,+0.2,+0.2,+0.1).
+                // Virtuosa and Skadi2 are BIT-IDENTICAL across the change (29.904 / 18.671 at both
+                // values) — they carry an authored transform beat, so they keep the pure rig camera
+                // and never enter the `centerBlend` branch this constant feeds.
+                const VBIAS = calibrationParam("vbias", 0.1815);
                 const bodyCx = vb?.centroid ? vb.centroid.cx : vb ? vb.x + vb.width / 2 : frameCx;
                 const bodyCy = (headY + feetY) / 2; // vertical body centre
                 /** A body-centred square crop of authored extent `viewPx`, in render/vis space. */
@@ -1181,10 +1601,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const e = viewPx * RCAL;
                     return { x: bodyCx - e / 2, y: bodyCy - VBIAS * e - e / 2, width: e, height: e };
                 };
-                const authoredDisplayBounds: IAnimationBounds | null = authoredFrame?.viewPx && vis ? bodyFrameBox(authoredFrame.viewPx) : null;
+                /** An authored `_adjustes` extent is only usable if it is a POSITIVE FINITE
+                 *  number. Unity writes an uninitialised stop as `-FLT_MAX`
+                 *  (-3.4028235e38), which the exporter carries through verbatim — and a
+                 *  plain truthiness test accepts it, because it is non-zero. `bodyFrameBox`
+                 *  then builds a crop 3e38 px wide, `tight` prefers it over the sane
+                 *  `cameraSizePx` fallback, and the skin renders as an EMPTY frame.
+                 *  Nearl the Radiant Knight "Epoque" is the one such skin in the corpus
+                 *  (both of her stops are -FLT_MAX); she rendered blank. Property-driven —
+                 *  a no-op for every skin whose stops are real numbers. */
+                const usableExtent = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
+                const authoredDisplayBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx) && vis ? bodyFrameBox(authoredFrame.viewPx as number) : null;
                 // The TIGHT open endpoint: the exact `cameraViewPx2` box (2nd `_adjustes` stop),
                 // same centre — the viewer dollies OUT from here. Null unless a 2nd camera stop.
-                const authoredTightBounds: IAnimationBounds | null = authoredFrame?.viewPx2 && vis ? bodyFrameBox(authoredFrame.viewPx2 as number) : null;
+                const authoredTightBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx2) && vis ? bodyFrameBox(authoredFrame.viewPx2 as number) : null;
                 let bounds: IAnimationBounds | null;
                 if (opts.framingOverride) {
                     bounds = opts.framingOverride;
@@ -1212,6 +1642,37 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 for (const b of spine.skeleton.bones as unknown as { data: { name: string }; matrix: PIXI.Matrix }[]) {
                     boneRest.set(b.data.name, b.matrix.clone());
                 }
+                // Setup-pose CENTRE of every attachment, keyed by attachment name. A
+                // `BoneFollower` rig that CONTINUES a spine prop (Virtuosa's falling apple:
+                // bone `L_C_Apple_F` carries the attachment of the same name, which the
+                // entrance fades out exactly as the particle copy spawns) must hand off from
+                // where the ART is, not from the bone ORIGIN — the authored `followOffset` is
+                // measured to the origin and lands the particle low by the art's own offset.
+                // Same space as `boneRest` (skeleton world, Y-down).
+                const attachRest = new Map<string, { x: number; y: number }>();
+                for (const slot of spine.skeleton.slots as unknown as { attachment: AttachmentLike | null }[]) {
+                    const att = slot.attachment;
+                    if (!att || typeof att.computeWorldVertices !== "function" || !att.worldVerticesLength) continue;
+                    const n = att.worldVerticesLength;
+                    const w = new Float32Array(n);
+                    try {
+                        att.computeWorldVertices(slot as never, 0, n, w, 0, 2);
+                    } catch {
+                        continue;
+                    }
+                    let mnx = Infinity;
+                    let mxx = -Infinity;
+                    let mny = Infinity;
+                    let mxy = -Infinity;
+                    for (let i = 0; i < n; i += 2) {
+                        mnx = Math.min(mnx, w[i]);
+                        mxx = Math.max(mxx, w[i]);
+                        mny = Math.min(mny, w[i + 1]);
+                        mxy = Math.max(mxy, w[i + 1]);
+                    }
+                    if (Number.isFinite(mnx)) attachRest.set(att.name, { x: (mnx + mxx) / 2, y: (mny + mxy) / 2 });
+                }
+                attachRestRef.current = attachRest;
                 const hasShadow = useStatic && hasShadowSlots(spine);
                 // ENTRANCE frame extent (authored px): the `_Start` camera's view at its ANIMATED
                 // t=0 ortho size (`2·ortho₀/skeletonScale`). The exporter's `entranceViewPx` is
@@ -1307,12 +1768,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     spine,
                     root: sceneContainer,
                     isScene: true,
+                    cameraSizePx: scene?.data.cameraSizePx ?? null,
+                    contentBounds: appRef.current?.renderer ? paintedLocalBounds(appRef.current.renderer, sceneContainer) : null,
                     hasDarkBackdrop: scene?.hasDarkBackdrop ?? false,
                     bounds,
                     authoredDisplayBounds,
                     authoredTightBounds,
                     entranceViewRatio: authoredFrame?.viewPx2 && authoredFrame?.viewPx ? (authoredFrame.viewPx2 as number) / authoredFrame.viewPx : null,
                     entranceDuration: scene?.data.entranceDuration ?? null,
+                    entranceFade: scene?.data.entranceFade ?? null,
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
                     entranceCamCenterCurve: (scene?.data.entranceCamCenterCurve as [number, number, number][] | undefined) ?? null,
@@ -1343,12 +1807,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 spine,
                 root: spine as unknown as PIXI.Container,
                 isScene: false,
+                cameraSizePx: null,
+                contentBounds: null,
                 hasDarkBackdrop: false,
                 bounds,
                 authoredDisplayBounds: null,
                 authoredTightBounds: null,
                 entranceViewRatio: null,
                 entranceDuration: null,
+                entranceFade: null,
                 entranceTransform: null,
                 entranceOrthoCurve: null,
                 entranceCamCenterCurve: null,
@@ -1434,6 +1901,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // ONLY fill; omitting it reopens black voids there. Only the fill's COLOUR is gated,
                 // on the data-derived `hasDarkBackdrop` (cello-only by construction).
                 const envBg = new PIXI.Sprite(createEnvironmentBgTexture(main.hasDarkBackdrop));
+                // DIAGNOSTIC (`?fill=RRGGBB`): repaint the viewer fill so the spine's EFFECTIVE
+                // transparency can be measured — the mean shifts by (fillDelta x uncovered area).
+                if (typeof window !== "undefined") {
+                    const f = new URLSearchParams(window.location.search).get("fill");
+                    if (f) envBg.tint = parseInt(f, 16);
+                }
                 resizeEnvironmentBg(envBg, width, height);
                 envBgRef.current = envBg;
                 app.stage.addChildAt(envBg, 0);
@@ -1443,7 +1916,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // used HDR, so gate on the main being a scene composite. Falls back to plain
                 // 8-bit compositing (add the live composite straight to the stage) when
                 // float targets aren't available.
-                const hdr = main.isScene ? createHDRScene(app.renderer, width, height, app.renderer.resolution) : null;
+                // DIAGNOSTIC (`?nohdr=1`): bypass the HDR float target + tonemap entirely and
+                // draw straight to the canvas, so a residual can be attributed to (or cleared
+                // of) that pass. The non-HDR path already exists for non-scene composites.
+                const noHdr = typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("nohdr");
+                // The composite transfer rides on this pass because it IS the final assembly
+                // of the frame — the stage it was measured on. Derived per scene from the
+                // authored camera size; `?gamma=1` disables it, `?gamma=<f>` forces a value.
+                const hdr = main.isScene && !noHdr ? createHDRScene(app.renderer, width, height, app.renderer.resolution, undefined, sceneCompositeGamma(main.cameraSizePx)) : null;
                 if (hdr) {
                     hdrRef.current = hdr;
                     app.stage.addChild(hdr.mesh);
@@ -1452,6 +1932,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Make `c` the live composite: point the tick loop at it, attach it (under
                 // the HDR pass, or straight onto the stage), and start its playback.
                 const activate = (c: IComposite, playOpts?: { skipStart?: boolean }) => {
+                    // Arm the end-of-entrance screen fade. Colour and end time both come from the
+                    // director (`fadeColor`, `duration`); the sprite sits ABOVE the tonemap so it
+                    // covers the assembled frame exactly as a client-side screen fade would, and
+                    // is disabled by `?entfade=0`.
+                    if (c.entranceFade && c.entranceDuration && entranceFadeRef.current === null) {
+                        const off = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("entfade") === "0";
+                        if (!off) {
+                            const [fr, fg, fb] = c.entranceFade;
+                            const sp = new PIXI.Sprite(PIXI.Texture.WHITE);
+                            sp.tint = ((Math.round(fr * 255) << 16) | (Math.round(fg * 255) << 8) | Math.round(fb * 255)) >>> 0;
+                            sp.width = width;
+                            sp.height = height;
+                            sp.alpha = 0;
+                            app.stage.addChild(sp);
+                            entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceDuration, out: null };
+                        }
+                    }
                     spineRef.current = c.spine;
                     particlesRef.current = c.particles;
                     boneRestRef.current = c.boneRest;
@@ -1486,6 +1983,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const openStandingIdle = (opts?: { fromEntrance?: boolean; handoffPanDelta?: [number, number] | null }) => {
                     if (aborted() || !appRef.current || !gameFrame) return;
                     const { width: sw, height: sh } = appRef.current.screen;
+                    // An explicit `?framebox=` wins over every other framing, and over any
+                    // dolly — the point is a camera that CANNOT move between renders.
+                    const pinned = frameBoxParam();
+                    if (pinned) {
+                        main.bounds = pinned;
+                        boundsRef.current = pinned;
+                        layoutSpine(main.root, sw, sh, pinned, { mode: "contain", align: fitRef.current.align });
+                        return;
+                    }
                     // Arriving from a `_Start` cinematic WITHOUT an authored pull-out window
                     // (no `_transform` beat in the gamedata, e.g. Mlynar): the game HOLDS the
                     // tight `_adjustes[1]` frame after the white-out (verified against the
@@ -1505,7 +2011,22 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // on skins that never had an entrance. A dolly is only performed for a genuine
                     // entrance hand-off (`fromEntrance`) or a data-authored pull-out (`entrancePullOut`).
                     if (!opts?.fromEntrance && !entrancePullOut) {
-                        layoutSpine(main.root, sw, sh, gameFrame, fitRef.current);
+                        // A skin with NO `_Start` has no authored shot to hold — the game's viewer
+                        // shows the whole cut-out with margins, and the `_adjustes[0]` box crops
+                        // well inside it (Ch'en the Holungday: 2704x1804 of content against a
+                        // 1500 px view). Frame the drawn CONTENT instead. 70 of the 82 dynchar
+                        // skins take this path; the 12 with an entrance are untouched, which is
+                        // why the three measured reference skins cannot move.
+                        const whole = fitWholeArt() ? main.contentBounds : null;
+                        const settle = whole ?? gameFrame;
+                        // The authored framing fits by HEIGHT, which crops the width — fine for a
+                        // shot composed around the character, wrong for "show the whole picture".
+                        // A content box is only meaningful CONTAINED, which is also what the game's
+                        // viewer does (it letterboxes the cut-out with margins).
+                        const settleFit: ISpineFit = whole ? { mode: "contain", align: fitRef.current.align } : fitRef.current;
+                        main.bounds = settle;
+                        boundsRef.current = settle;
+                        layoutSpine(main.root, sw, sh, settle, settleFit);
                         return;
                     }
                     let openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
@@ -1563,6 +2084,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const handoffPanDelta: [number, number] | null = ef?.lastLiveCenter ? [ef.lastLiveCenter[0] - ef.startCenter[0], ef.lastLiveCenter[1] - ef.startCenter[1]] : null;
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
+                    // The fade is at (or near) full here — hold it briefly so the swap happens
+                    // UNDER it, then lift, which is what the recordings show.
+                    if (entranceFadeRef.current) entranceFadeRef.current.out = 0;
                     activate(main, { skipStart: true }); // straight to standing idle (no second intro beat)
                     openStandingIdle({ fromEntrance: true, handoffPanDelta });
                     if (ent && hdr) {

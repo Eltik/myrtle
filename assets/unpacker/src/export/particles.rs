@@ -35,6 +35,19 @@ const VELOCITY_CURVE_SAMPLES: u32 = 20;
 /// [`collect_dynchar_particles`].
 const VELOCITY_REVERSAL_FRAC: f64 = 0.05;
 
+/// How far a `velocityOverLifetime` sample's DIRECTION must swing from the representative
+/// vector before the drift stops being expressible as one constant. A stretched billboard is
+/// drawn along its velocity, so an angle error is a visible slope error for the whole
+/// lifetime — and it smears the streak's light across more rows than the game's, which reads
+/// as under-brightness per row rather than as a rotation. 20 deg is well outside the few
+/// degrees of numerical wobble a magnitude-only curve produces (those samples are exactly
+/// parallel and deviate 0), and well inside the 56 deg swing that motivated the gate.
+const VELOCITY_TURN_DEG: f64 = 20.0;
+
+/// Samples slower than this fraction of the representative speed are ignored by the turn
+/// test: near a standstill the direction is numerically unstable and displaces nothing.
+const VELOCITY_TURN_MIN_FRAC: f64 = 0.1;
+
 /// Identity `_MainTex_ST` tuple: `[scaleX, scaleY, offsetX, offsetY]`.
 pub(super) const ST_IDENTITY: [f64; 4] = [1.0, 1.0, 0.0, 0.0];
 
@@ -618,6 +631,8 @@ pub(crate) fn collect_dynchar_particles(
 
     let mut out = Vec::new();
     let mut skipped = ParticleSkips::default();
+    // Env-gated attribution — see the twin in `collect_dynchar_bg_quads`. Output-neutral.
+    let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
 
     for (_, ps) in systems {
         let Some(go_pid) = ps.get("m_GameObject").and_then(get_path_id) else {
@@ -639,18 +654,123 @@ pub(crate) fn collect_dynchar_particles(
             (scope.own, host.prefab_root_of_go(all_objects, go_pid)),
             (Some(own), Some(root)) if root != own && scope.skeleton_roots.contains(&root)
         );
-        let admit_cross_root = cross_root && transform_host.is_some();
+        // EXPERIMENT (`DYNCHAR_ADMIT_ENTRANCE_ROOT=1`, default OFF): admit cross-root systems
+        // that live on the sibling `dyn_entrance_*` prefab specifically.
+        //
+        // Narrower than either variant measured below: those admitted the IDLE rig wholesale.
+        // The motivation is Skadi the Corrupting Heart's t=7 red transient — the game spikes
+        // red-excess to +39.1 there while we reach +4.4, and no `_Start` system starts emitting
+        // in 6.0-7.6s. The entrance rig holds unexported candidates that fit, notably
+        // `xiaoyu (2)` (pure red 1,0,0 at full alpha, 1000 particles, 2s).
+        let admit_entrance_root = std::env::var("DYNCHAR_ADMIT_ENTRANCE_ROOT").is_ok()
+            && cross_root
+            && host
+                .root_name_of_go(all_objects, go_pid)
+                .starts_with("dyn_entrance");
+        // A `Start Only Effects` system reaches the ENTRANCE scene even across roots.
+        //
+        // Those groups are authored on the IDLE prefab, so a start-only emitter is dropped by the
+        // idle export (`inactive-group`, correctly — it must not play in the idle loop) AND by the
+        // `_Start` export (`cross-root`, since its prefab root is the idle one). It therefore
+        // lands in NO export, even though the entrance is the one state it exists for. This is
+        // the cross-root partner of the already-shipped rule that keeps start-only groups in the
+        // entrance scene, and it is deliberately narrow: only the entrance export, only groups the
+        // game reserves for the START state. Blanket cross-root admission is a different change
+        // and is measured-worse twice over (see the note below).
+        //
+        // Found via Skadi the Corrupting Heart's pure-red `xiaoyu` (start colour 1.00,0.05,0.05 at
+        // full alpha): at t=7 every red line in the frame matched the game except one at row 234,
+        // three times stronger than any other, which nothing we exported could draw.
+        // MEASURED AND REJECTED (2026-08-01) — kept behind `DYNCHAR_START_ONLY_CROSS_ROOT=1`,
+        // default OFF.
+        //
+        // The reasoning still looks right (a start-only system authored on the IDLE prefab root
+        // reaches NEITHER export), and on Skadi it helps slightly: 13.795 -> 13.789. But it adds
+        // 10 systems to Mlynar's entrance (50 -> 60) and costs him **30.816 -> 31.306**, so it is
+        // net-negative across the corpus.
+        //
+        // I originally scored it having installed only SKADI's re-export, saw mly/cel unchanged,
+        // and reported it as a win — the other two simply had stale assets. ALWAYS re-export and
+        // install EVERY reference skin before attributing a delta.
+        let admit_start_only_cross_root = std::env::var("DYNCHAR_START_ONLY_CROSS_ROOT").is_ok()
+            && cross_root
+            && entrance.is_entrance
+            && host.has_start_only_ancestor(all_objects, go_pid);
+        let admit_cross_root = (cross_root && transform_host.is_some())
+            || admit_entrance_root
+            || admit_start_only_cross_root;
+        // A cross-root system is NOT admitted by the entrance's cross-root REVEAL beat,
+        // even though the scene-quad path admits cross-root MESH layers exactly that way
+        // (`cross_root_reveal` in `spine.rs` → a layer's `rootRevealFrom`). Both readings
+        // of that beat were built and measured against the three reference captures, and
+        // both are worse than dropping these systems:
+        //
+        //   drop (this behaviour)           Mlynar 21.482  Virtuosa 30.105  Skadi 18.608
+        //   admit the idle rig at the beat         21.482           31.946         18.634
+        //   …and retire the entrance rig too       21.482           31.714         18.696
+        //
+        // The first says the two rigs do not both run — density doubles after the beat and
+        // Virtuosa's whole loss is in her post-beat frames. The second says the entrance
+        // rig is not retired either — removing it costs Skadi at t=13 and t=19. So the game
+        // composites the two prefabs' EMITTERS by some rule the mesh-layer beat does not
+        // describe, and guessing it renders worse than not guessing. The known casualty is
+        // Skadi the Corrupting Heart's `hongxian_01` coral ribbon, which lives only in the
+        // idle root and so is still absent from her `_Start` render at t=13.
 
         // Active up the whole hierarchy — excludes emitters under a state-gated
         // inactive group ("Start/Interact/Special Only Effects"), which otherwise
         // all play at once in the idle scene (noise).
+        // Emitter position (spine-root px, Y-up) and start colour on the drop lines — without
+        // them a drop list cannot answer "which dropped system paints the red line at y~400?",
+        // which is exactly the question a missing effect poses.
+        let drop_where = |all_objects: &HashMap<i64, (i32, Value)>| -> String {
+            let w = host.world_of_go(all_objects, go_pid);
+            let o = w.point([0.0, 0.0, 0.0]);
+            let c = ps
+                .get("InitialModule")
+                .and_then(|m| m.get("startColor"))
+                .and_then(|c| c.get("maxColor").or_else(|| c.get("minColor")).or(Some(c)))
+                .map_or_else(
+                    || "-".to_string(),
+                    |c| {
+                        let g = |k: &str| c.get(k).and_then(Value::as_f64).unwrap_or(f64::NAN);
+                        format!("({:.2},{:.2},{:.2},{:.2})", g("r"), g("g"), g("b"), g("a"))
+                    },
+                );
+            format!(
+                "pos=({:.0},{:.0}) col={c}",
+                f64::from(o[0]) * inv_scale,
+                f64::from(o[1]) * inv_scale
+            )
+        };
         if !admit_cross_root && !host.effectively_active(all_objects, go_pid, entrance.is_entrance)
         {
             skipped.inactive_group += 1;
+            if attrib_dbg {
+                // Name the ANCESTOR that blocked it, not just the bundle root: a legitimate
+                // "<State> Only Effects" gate and a wrongly-blocked ordinary group look
+                // identical otherwise, and they need opposite fixes.
+                let (by, why) = host
+                    .blocking_ancestor(all_objects, go_pid, entrance.is_entrance)
+                    .unwrap_or_else(|| ("?".to_string(), "?"));
+                eprintln!(
+                    "    [ptcl] DROP inactive-group  {:<26} {} blocked_by='{by}' ({why})",
+                    host.go_name(all_objects, go_pid),
+                    drop_where(all_objects),
+                );
+            }
             continue;
         }
         if cross_root && !admit_cross_root {
             skipped.cross_root += 1;
+            if attrib_dbg {
+                eprintln!(
+                    "    [ptcl] DROP cross-root      {:<26} {} root={}",
+                    host.go_name(all_objects, go_pid),
+                    drop_where(all_objects),
+                    host.root_name_of_go(all_objects, go_pid)
+                );
+            }
             continue;
         }
 
@@ -783,9 +903,98 @@ pub(crate) fn collect_dynchar_particles(
         // and every currently-correct skin) are unchanged (× 1.0).
         let ex = world.point([1.0, 0.0, 0.0]);
         let ey = world.point([0.0, 1.0, 0.0]);
-        let wsx = 0.5
+        // Axis lengths measured in the SCREEN PLANE.
+        //
+        // REFUTED, do not "fix" this to 3D lengths. An emitter axis rotated to point along
+        // the view direction projects to ~0 length and drags the mean down, so `em_inv`
+        // comes out at half the emitter's true uniform scale — Skadi the Corrupting Heart's
+        // entrance emitters are exactly that (3D |X| = |Y| = 100 px, screen |X| = 0.00). The
+        // billboard argument says a camera-facing particle's size should not foreshorten, so
+        // substituting the 3D length looks obviously right. It measures WORSE, every way it
+        // has been tried:
+        //
+        //     3D length unconditionally        mly 21.481 → 21.659   ska 18.669 → 18.964
+        //     3D for SIZE quantities only      mly 21.481 → 21.659   ska 18.669 → 18.897
+        //     3D only when the projection has
+        //       collapsed (< 0.5 of 3D)        mly 21.481 → 21.638   ska 18.669 → 18.964
+        //     …same rule at < 0.05             mly 21.481 → 21.638   ska 18.669 → 18.964
+        //
+        // Narrowing the rule cannot rescue it: these axes project to ~0.00, so every
+        // threshold catches them and Skadi lands on the identical 18.964. Cello is untouched
+        // throughout (0 systems changed).
+        //
+        // 2026-07-31 — the ANSWER is now known: the halving IS wrong, but it cannot be fixed
+        // on its own. Re-measured at today's baseline, SIZE-only 3D reproduces the historic
+        // number (mly 19.278 → 19.447, cel 29.904 → 29.908, ska 18.671 → 18.896), and the
+        // 3D size is nonetheless demonstrably CORRECT: Skadi's crown shoal (`_Start` sys23,
+        // `followBone Skadi_Head_Fh`) draws 5x7 px fish where the game draws 12-18 px, and
+        // texture 7's bright core is 25.8% x 42.2% of its page — so the exported startSize
+        // predicts exactly the 5x7 we render. Doubling it makes the fish MATCH the game's
+        // size and ring positions on screen.
+        //
+        // It scores worse because a SECOND fault is still in place: additive BILLBOARD
+        // particles never receive the ×2 Unity additive factor that the MESH path applies as
+        // `ADDITIVE_MESH_BOOST`, so the fish stay warm-orange where the game's are white
+        // (their authored `startColor` really is warm — both `minMaxState 2` endpoints — and
+        // texture 7 is white, so only intensity can neutralise them). Doubling the size while
+        // the colour is still wrong just paints 4x the area in the wrong colour.
+        //
+        // With BOTH corrections applied the halo matches the game almost exactly. So: do not
+        // re-attempt this alone — land it together with a ×2 additive path for sprites.
+        // See memory `dynchar-skadi-crown-fish`.
+        //
+        // ...but WHICH scale Unity applies is authored, and we were ignoring it.
+        // `ParticleSystemScalingMode` (`scalingMode`): 0 Hierarchy — particles scale with the
+        // whole transform chain, which is what the world basis below gives; 1 Local — the system
+        // scales particles by its OWN transform only and IGNORES ancestors; 2 Shape — only the
+        // shape module is scaled and particle SIZE is not.
+        //
+        // Reading the world basis unconditionally therefore shrinks (or inflates) every Local
+        // system by whatever its ancestors contribute. Skadi the Corrupting Heart's crown shoal
+        // is exactly that: `scalingMode = 1` with an ancestor at 0.5, so her fish exported at
+        // half size and drew ~5x7px where the game draws 12-18px, leaving her halo effectively
+        // invisible. Across the three reference skins 96 of 276 kept systems are Local WITH a
+        // non-unit world basis, so this is a corpus-wide correction, not a one-skin patch.
+        // MEASURED AND REJECTED as written (2026-08-01) — kept behind
+        // `DYNCHAR_SCALING_MODE=1`, default OFF. Honouring the mode corpus-wide regresses every
+        // reference skin: with the sprite additive boost also on, mly 30.816 -> 32.536,
+        // cel 23.367 -> 24.139, ska 13.789 -> 13.994; size-only, mly -> 31.305, ska -> 13.945.
+        //
+        // The mechanism is real (Skadi's fish DO double to the game's size) but the application
+        // is too broad: it changed 178 of 266 systems while only 96 are Local WITH a non-unit
+        // world basis, so it also rewrites systems whose accumulated basis was already 1.0 and
+        // which were therefore already correct. Narrow it to that population before retrying.
+        let scaling_mode = if std::env::var("DYNCHAR_SCALING_MODE").is_ok() {
+            i(ps, "scalingMode").unwrap_or(0)
+        } else {
+            0
+        };
+        let world_axis_mean = 0.5
             * (f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1]))
                 + f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1])));
+        // NARROWED variant (`DYNCHAR_SCALING_MODE=narrow`): only strip ANCESTOR contamination,
+        // i.e. apply Local semantics solely where the system's OWN scale is already 1.0. That is
+        // the conservative subset — it can only ever REMOVE a parent's contribution, never
+        // introduce the system's own scale — and it is exactly the shape of Skadi's fish case
+        // (own 1.0 under a 0.5 ancestor).
+        let narrow = std::env::var("DYNCHAR_SCALING_MODE").is_ok_and(|v| v == "narrow");
+        let wsx = match scaling_mode {
+            // Local: the system's OWN local scale, ancestors excluded.
+            1 => host
+                .local_scale_pos_of_go(all_objects, go_pid)
+                .map_or(world_axis_mean, |(sc, _)| {
+                    let own = 0.5 * (f64::from(sc[0].abs()) + f64::from(sc[1].abs()));
+                    if narrow && (own - 1.0).abs() > 0.02 {
+                        world_axis_mean
+                    } else {
+                        own
+                    }
+                }),
+            // Shape: particle size is not scaled by the transform at all.
+            2 => 1.0,
+            // Hierarchy (and anything unrecognised): the accumulated world basis.
+            _ => world_axis_mean,
+        };
         let em_inv = wsx * inv_scale;
 
         // Emission direction for CONE-family emitters whose local +X axis points along the
@@ -856,6 +1065,21 @@ pub(crate) fn collect_dynchar_particles(
                 "velocityScale": stretch_vel_scale,
                 "cameraVelocityScale": stretch_cam_vel_scale,
             });
+        }
+        // `ParticleSystemRenderer.pivot` — the quad's pivot point, as a MULTIPLIER of the
+        // particle size. Unity keeps the pivot at the particle's position and rotates the
+        // quad about it, so a non-zero pivot both OFFSETS the sprite and moves its rotation
+        // centre. 1202 of 13069 renderers in this corpus set one (values up to 1.0), which
+        // at a 64 px particle is a 64 px displacement — so ignoring it silently misplaced
+        // ~9% of the corpus's systems. Z is dropped: it only separates depth, which a 2D
+        // renderer has no use for. Omitted when zero so every unaffected system stays
+        // byte-identical.
+        if let Some(pv) = renderer.and_then(|r| r.get("m_Pivot")) {
+            let px = fd(pv, "x", 0.0);
+            let py = fd(pv, "y", 0.0);
+            if px.abs() > 1e-6 || py.abs() > 1e-6 {
+                sys["pivot"] = json!([px, py]);
+            }
         }
         // Faithful cone emission direction for camera-facing (tilted) emitters (see above).
         if let Some(ed) = sys_emit_dir {
@@ -1267,6 +1491,49 @@ pub(crate) fn collect_dynchar_particles(
                     ]
                 };
                 let (bx, by, bz) = (col(ex), col(ey), col(ez));
+                // How much of each local axis SURVIVES into the screen plane. An axis pointing
+                // along the camera has a short screen projection relative to its 3D length:
+                // motion along it is pure DEPTH in Unity and moves nothing on screen, so
+                // projecting it injects drift the game never shows. Same ratio the `emitDir`
+                // gate uses.
+                if std::env::var("SCENE_ATTRIB").is_ok() {
+                    let len3 = |p: [f32; 3]| {
+                        let d = [
+                            f64::from(p[0] - origin[0]),
+                            f64::from(p[1] - origin[1]),
+                            f64::from(p[2] - origin[2]),
+                        ];
+                        d[0].hypot(d[1]).hypot(d[2]) * inv_scale
+                    };
+                    let r = |b: [f64; 2], l: f64| if l > 1e-9 { b[0].hypot(b[1]) / l } else { 0.0 };
+                    eprintln!(
+                        "    [vel] {:<24} bx=({:.1},{:.1}) rx={:.3}  by=({:.1},{:.1}) ry={:.3}  bz=({:.1},{:.1}) rz={:.3}",
+                        host.go_name(all_objects, go_pid),
+                        bx[0], bx[1], r(bx, len3(ex)),
+                        by[0], by[1], r(by, len3(ey)),
+                        bz[0], bz[1], r(bz, len3(ez)),
+                    );
+                    // Does the DIRECTION turn over the lifetime, or only the magnitude? The
+                    // flattening below keeps a single vector whenever the motion never
+                    // REVERSES — but a direction that swings without reversing is flattened to
+                    // the angle at peak speed, which is not the angle early in life.
+                    let ang = |t: f64| {
+                        let lx = vx.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        let ly = vy.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        let lz = vz.map_or(0.0, |v| mmscalar_eval(v, t, 1.0));
+                        let sx = bx[0] * lx + by[0] * ly + bz[0] * lz;
+                        let sy = bx[1] * lx + by[1] * ly + bz[1] * lz;
+                        (sy.atan2(sx) * RAD_TO_DEG, sx.hypot(sy))
+                    };
+                    let a: Vec<String> = [0.0, 0.25, 0.5, 0.75, 1.0]
+                        .iter()
+                        .map(|&t| {
+                            let (d, m) = ang(t);
+                            format!("t{t:.2}:{d:+.1}deg|{m:.0}")
+                        })
+                        .collect();
+                    eprintln!("          dir over life: {}", a.join("  "));
+                }
                 let samples: Vec<(f64, f64, f64)> = (0..=VELOCITY_CURVE_SAMPLES)
                     .map(|k| {
                         let t = f64::from(k) / f64::from(VELOCITY_CURVE_SAMPLES);
@@ -1306,7 +1573,49 @@ pub(crate) fn collect_dynchar_particles(
                     && samples
                         .iter()
                         .any(|s| (s.1 * rep.1 + s.2 * rep.2) / mag < -VELOCITY_REVERSAL_FRAC * mag);
-                if reverses {
+                // ...and for one that TURNS far enough that no single angle stands in for it.
+                //
+                // Reversal is not the only motion a constant cannot express. A direction that
+                // swings wide without ever opposing itself is flattened to its angle at PEAK
+                // SPEED, which is not its angle early in life — the particle is drawn on a
+                // straight line at the wrong slope for most of its lifetime, and a stretched
+                // billboard (aligned to velocity) is drawn at that wrong slope too.
+                //
+                // Skadi the Corrupting Heart's sweeping streak turns from -8 deg to -64 deg over
+                // its life while the game's beam crosses the frame level; we drew it tilted for
+                // the whole crossing, smearing its light down 30 rows where the game's occupies
+                // 12 and so reading ~3x too faint per row.
+                //
+                // Magnitude-only systems are unaffected by construction: their samples are all
+                // parallel, so the deviation is 0 and they keep the byte-identical constant
+                // (that is the case the paragraph above measured as not worth replacing).
+                let turns = varies
+                    && mag > 1e-9
+                    && samples.iter().any(|s| {
+                        let m = s.1.hypot(s.2);
+                        // Ignore samples too slow to displace the particle: their angle is
+                        // numerically unstable and contributes no visible travel.
+                        m > VELOCITY_TURN_MIN_FRAC * mag && {
+                            let cos = (s.1 * rep.1 + s.2 * rep.2) / (m * mag);
+                            cos.clamp(-1.0, 1.0).acos() * RAD_TO_DEG > VELOCITY_TURN_DEG
+                        }
+                    });
+                if std::env::var("SCENE_ATTRIB").is_ok() {
+                    let maxdev = samples
+                        .iter()
+                        .filter(|s| s.1.hypot(s.2) > VELOCITY_TURN_MIN_FRAC * mag)
+                        .map(|s| {
+                            let m = s.1.hypot(s.2);
+                            ((s.1 * rep.1 + s.2 * rep.2) / (m * mag)).clamp(-1.0, 1.0).acos() * RAD_TO_DEG
+                        })
+                        .fold(0.0f64, f64::max);
+                    eprintln!(
+                        "    [vel2] {:<24} rep=({:.1},{:.1}) |rep|={mag:.1} maxdev={maxdev:.1}deg reverses={reverses} turns={turns}",
+                        host.go_name(all_objects, go_pid),
+                        rep.1, rep.2
+                    );
+                }
+                if reverses || turns {
                     sys["velocityOverLife"] = json!({
                         "x": rep.1,
                         "y": rep.2,
@@ -1320,14 +1629,49 @@ pub(crate) fn collect_dynchar_particles(
                 }
             }
             if !emitted {
-                if nonzero_xy {
-                    // World-space velocity is already in the skeleton world frame
-                    // (inv_scale); local-space velocity is in the emitter frame (em_inv).
-                    let vscale = if in_world { inv_scale } else { em_inv };
+                if nonzero_xy && in_world {
+                    // Already in the skeleton world frame.
                     sys["velocityOverLife"] = json!({
-                        "x": vx.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
-                        "y": vy.map(|v| mmscalar_repr(v, vscale)).unwrap_or(0.0),
-                        "space": if in_world { "world" } else { "local" },
+                        "x": vx.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "y": vy.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "space": "world",
+                    });
+                } else if nonzero_xy {
+                    // LOCAL-space velocity: project through the emitter's world BASIS, the
+                    // same way the reversing-curve branch above does, and ship it
+                    // pre-projected as "screen".
+                    //
+                    // It used to ship raw local x/y for the frontend to rotate by `rot`
+                    // (`matrix_z_deg`) — a single Z angle recovered from the world matrix.
+                    // That is the value already documented as unreliable for cone emission
+                    // (hence `emitDir`), and it is wrong here for the same reason: it throws
+                    // away non-uniform scale and any tilt, so it is only correct when the
+                    // emitter is a pure Z rotation at uniform scale. Skadi the Corrupting
+                    // Heart's `xian` threads are the visible casualty — authored local
+                    // (1, 20), `rot` 153.43°:
+                    //
+                    //     rotate by `rot` -> ( -491.9, -872.1)   mostly DOWN  (what we drew)
+                    //     world basis     -> (-1913.6, +581.4)   mostly LEFT  (the game)
+                    //
+                    // a 77.5° error, which is why her red threads swept vertically off-frame
+                    // instead of crossing it horizontally at ~1000 px/s like the capture's.
+                    // The basis also carries the emitter's NON-UNIFORM scale, which `em_inv`
+                    // (a mean of the two axis lengths) had been averaging away.
+                    let ez = world.point([0.0, 0.0, 1.0]);
+                    let col = |q: [f32; 3]| {
+                        [
+                            f64::from(q[0] - origin[0]) * inv_scale,
+                            f64::from(q[1] - origin[1]) * inv_scale,
+                        ]
+                    };
+                    let (bx, by, bz) = (col(ex), col(ey), col(ez));
+                    let lx = vx.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    let ly = vy.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    let lz = vz.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    sys["velocityOverLife"] = json!({
+                        "x": bx[0] * lx + by[0] * ly + bz[0] * lz,
+                        "y": bx[1] * lx + by[1] * ly + bz[1] * lz,
+                        "space": "screen",
                     });
                 } else {
                     sys["velocityOverLife"] = Value::Null;
@@ -1348,17 +1692,39 @@ pub(crate) fn collect_dynchar_particles(
             let fy = fm.get("y");
             let nonzero = fx.is_some_and(|v| !mmscalar_is_zero(v))
                 || fy.is_some_and(|v| !mmscalar_is_zero(v));
+            let fz = fm.get("z");
+            let nonzero = nonzero || fz.is_some_and(|v| !mmscalar_is_zero(v));
             if nonzero {
-                let fscale = if b(fm, "inWorldSpace", false) {
-                    inv_scale
+                if b(fm, "inWorldSpace", false) {
+                    sys["forceOverLife"] = json!({
+                        "x": fx.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "y": fy.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "space": "world",
+                    });
                 } else {
-                    em_inv
-                };
-                sys["forceOverLife"] = json!({
-                    "x": fx.map(|v| mmscalar_repr(v, fscale)).unwrap_or(0.0),
-                    "y": fy.map(|v| mmscalar_repr(v, fscale)).unwrap_or(0.0),
-                    "space": if b(fm, "inWorldSpace", false) { "world" } else { "local" },
-                });
+                    // A LOCAL force is authored in the emitter's own frame, so it must be
+                    // projected through the emitter's WORLD BASIS — exactly as
+                    // `velocityOverLifetime` is a few lines above, and for the same reason:
+                    // `rot` (`matrix_z_deg`) discards non-uniform scale and tilt, and
+                    // `em_inv` averages the two axis lengths away. Shipping it pre-projected
+                    // as `space:"screen"` also means the frontend needs no basis of its own.
+                    let ez = world.point([0.0, 0.0, 1.0]);
+                    let col = |q: [f32; 3]| {
+                        [
+                            f64::from(q[0] - origin[0]) * inv_scale,
+                            f64::from(q[1] - origin[1]) * inv_scale,
+                        ]
+                    };
+                    let (bx, by, bz) = (col(ex), col(ey), col(ez));
+                    let lx = fx.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    let ly = fy.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    let lz = fz.map_or(0.0, |v| mmscalar_repr(v, 1.0));
+                    sys["forceOverLife"] = json!({
+                        "x": bx[0] * lx + by[0] * ly + bz[0] * lz,
+                        "y": bx[1] * lx + by[1] * ly + bz[1] * lz,
+                        "space": "screen",
+                    });
+                }
             }
         }
 
@@ -1386,11 +1752,21 @@ pub(crate) fn collect_dynchar_particles(
         }
 
         // Rotation over lifetime (angular velocity, radians/s → deg/s).
+        //
+        // Exported as a full `MMScalar` — Unity authors this as a CURVE over normalized
+        // particle life far more often than as a constant, and flattening it to the curve's
+        // range top (`mmscalar_repr`) spins every such system at its PEAK rate from birth.
+        // Virtuosa "Diversity in Oneness"'s falling apple is the clearest case: its curve is
+        // 0 until 3% of life and only reaches 0.93 at 38%, so over the visible fall the game
+        // turns it ~4°, while a flat 45–90°/s turned ours 50–100° and the apple visibly
+        // tumbled. The error is worst for LONG lifetimes, where normalized life stays near
+        // the curve's low end for the whole time on screen. A genuinely constant rotation
+        // (`minMaxState` 0) still exports as `{mode:"const"}` with the identical value.
         if let Some(rm) = ps.get("RotationModule")
             && b(rm, "enabled", false)
             && let Some(curve) = rm.get("curve")
         {
-            sys["rotOverLifeDegPerSec"] = json!(mmscalar_repr(curve, RAD_TO_DEG));
+            sys["rotOverLifeDegPerSec"] = mmscalar(curve, RAD_TO_DEG);
         } else {
             sys["rotOverLifeDegPerSec"] = Value::Null;
         }
@@ -1428,12 +1804,11 @@ pub(crate) fn collect_dynchar_particles(
             sys["noise"] = Value::Null;
         }
 
-        // Trail (PerParticle mode only; Ribbon mode 1 is skipped → null). The
-        // trail texture is the renderer's 2nd material, deduped in export.
+        // Trail (both modes — see `parse_trail`). The trail texture is the renderer's
+        // 2nd material, deduped in export.
         let (trail_tex_val, trail_alpha_val, trail_tex_pid, trail_tex_st) = if let Some(tm) =
             ps.get("TrailModule")
             && b(tm, "enabled", false)
-            && i(tm, "mode").unwrap_or(0) == 0
         {
             let (tv, ta, tpid, tadd, tst) = resolve_trail_material(all_objects, renderer);
             sys["trail"] = parse_trail(tm, em_inv, tadd);
@@ -1443,6 +1818,28 @@ pub(crate) fn collect_dynchar_particles(
             (None, None, None, ST_IDENTITY)
         };
 
+        if attrib_dbg {
+            // Unity `ParticleSystemScalingMode`: 0 Hierarchy, 1 Local, 2 Shape. We currently
+            // scale particle SIZE by the emitter's accumulated WORLD basis (`wsx`) regardless,
+            // which is only correct for Hierarchy. Print both so the mismatch is countable.
+            let own = host
+                .local_scale_pos_of_go(all_objects, go_pid)
+                .map_or(f64::NAN, |(sc, _)| {
+                    0.5 * (f64::from(sc[0].abs()) + f64::from(sc[1].abs()))
+                });
+            eprintln!(
+                "    [ptcl] SCALE mode={} world={world_axis_mean:.4} own={own:.4} ratio={:.4} {}",
+                i(ps, "scalingMode").unwrap_or(-1),
+                own / world_axis_mean,
+                host.go_name(all_objects, go_pid),
+            );
+            eprintln!(
+                "    [ptcl] KEEP  render={render_mode:<9} trail={:<4} {:<28} root={}",
+                if sys["trail"].is_null() { "-" } else { "yes" },
+                host.go_name(all_objects, go_pid),
+                host.root_name_of_go(all_objects, go_pid)
+            );
+        }
         out.push(ParticleData {
             json: sys,
             tex_val,
@@ -1815,42 +2212,61 @@ fn parse_noise(nm: &Value, inv_scale: f64) -> Value {
     })
 }
 
-/// Reduce a Unity `TrailModule` (PerParticle mode only) to the schema's `trail`
-/// object. `blend` is the trail material's blend class. The `tex` index is left
-/// null here and filled by [`export_particles`] after texture dedup.
+/// Reduce a Unity `TrailModule` to the schema's `trail` object. `blend` is the trail
+/// material's blend class. The `tex` index is left null here and filled by
+/// [`export_particles`] after texture dedup.
+///
+/// Both `ParticleSystemTrailMode`s are exported. **PerParticle** (0) drags one ribbon
+/// behind each particle. **Ribbon** (1) is a different primitive: ONE polyline threaded
+/// through the system's live particles ordered by age, `ribbonCount` of them interleaved.
+/// Mode 1 used to be dropped to `trail: null`, which silently deleted every emitter whose
+/// renderer is also `RenderMode.None` — the head is suppressed AND the only thing that
+/// would have drawn is gone, so the system is exported, gated, budgeted and simulated
+/// while painting nothing. Skadi the Corrupting Heart's `hongxian_01` (红线, "red thread")
+/// is one: a `colorOverTrail` coral ribbon that is the whole of her missing t=13 line.
 fn parse_trail(tm: &Value, inv_scale: f64, blend: bool) -> Value {
-    // widthOverTrail: a multiplier of particle size. Emit null for the default
-    // const 1.0 (→ "use particle size"), else the representative scalar ×scale.
+    // widthOverTrail multiplies the trail's width ALONG the ribbon (0 = start, 1 = end),
+    // on top of the particle size when `sizeAffectsWidth`. It is a ratio, so it takes no
+    // px scaling. Null for the default const 1.0 (→ "just use the particle size").
     let width = tm.get("widthOverTrail").map_or(Value::Null, |v| {
         if i(v, "minMaxState").unwrap_or(0) == 0 && (fd(v, "scalar", 1.0) - 1.0).abs() < 1e-6 {
             Value::Null
         } else {
-            json!(mmscalar_repr(v, inv_scale))
+            mmscalar(v, 1.0)
         }
     });
-    // colorOverLifetime: null when it's the default white constant (trail then
-    // inherits the particle colour), else the reduced gradient / colour.
-    let color = tm.get("colorOverLifetime").map_or(Value::Null, |g| {
-        match i(g, "minMaxState").unwrap_or(0) {
-            0 | 2 => {
-                let c = g.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
-                if c.iter().all(|x| (*x - 1.0).abs() < 1e-6) {
-                    Value::Null
-                } else {
-                    json!({ "mode": "color", "r": c[0], "g": c[1], "b": c[2], "a": c[3] })
-                }
+    // A gradient/colour module reduced to the schema's colour, or null when it is the
+    // default white constant (the trail then inherits the particle's own colour).
+    let reduce_color = |g: &Value| match i(g, "minMaxState").unwrap_or(0) {
+        0 | 2 => {
+            let c = g.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
+            if c.iter().all(|x| (*x - 1.0).abs() < 1e-6) {
+                Value::Null
+            } else {
+                json!({ "mode": "color", "r": c[0], "g": c[1], "b": c[2], "a": c[3] })
             }
-            _ => mmgradient(g),
         }
-    });
+        _ => mmgradient(g),
+    };
     json!({
         "tex": Value::Null, // resolved in export_particles
+        "mode": if i(tm, "mode").unwrap_or(0) == 1 { "ribbon" } else { "perParticle" },
+        // How many interleaved ribbons the live particles are split across (ribbon mode).
+        "ribbonCount": i(tm, "ribbonCount").unwrap_or(1).max(1),
         "blend": if blend { "additive" } else { "normal" },
         "ratio": fd(tm, "ratio", 1.0),
         "lifetime": tm.get("lifetime").map_or(1.0, |v| mmscalar_repr(v, 1.0)),
         "minVertexDistance": fd(tm, "minVertexDistance", 0.0) * inv_scale,
         "widthOverTrail": width,
-        "colorOverLifetime": color,
+        // Along the PARTICLE's life…
+        "colorOverLifetime": tm.get("colorOverLifetime").map_or(Value::Null, reduce_color),
+        // …and along the RIBBON. Distinct modules: a ribbon can be banded head-to-tail
+        // while every particle feeding it is white, which is exactly how the coral is
+        // authored — neither the texture (grey) nor the material (`_TintColor` white)
+        // carries it, so dropping this module loses the colour entirely.
+        "colorOverTrail": tm.get("colorOverTrail").map_or(Value::Null, reduce_color),
+        "sizeAffectsWidth": b(tm, "sizeAffectsWidth", true),
+        "inheritParticleColor": b(tm, "inheritParticleColor", false),
         "dieWithParticles": b(tm, "dieWithParticles", true),
         "worldSpace": b(tm, "worldSpace", false),
     })

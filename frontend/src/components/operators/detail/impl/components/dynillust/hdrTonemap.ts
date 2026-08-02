@@ -51,6 +51,8 @@ uniform sampler2D uSampler;
 uniform sampler2D uBloom;
 uniform float uKnee;
 uniform float uBloomIntensity;
+uniform float uGamma;
+uniform float uClip;
 void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
@@ -70,6 +72,17 @@ void main() {
         float sat = (m > 1e-4) ? (m - mn) / m : 0.0;
         float achroma = 1.0 - smoothstep(0.05, 0.25, sat); // 1 = white/grey, 0 = coloured
         float scale = mix(t / m, 1.0, achroma);
+        // DIAGNOSTIC (?tmclip=1): hue-preserving CLIP instead of the soft roll-off.
+        //
+        // The roll-off maps [knee, inf) -> [knee, 1) with 1.0 as an ASYMPTOTE, so a pixel at
+        // exactly 1.0 comes out at 0.95 — a saturated LDR colour is darkened 5% and can never
+        // reach 255, even though it is not over-bright at all. (The achroma release rescues only
+        // near-NEUTRAL pixels, which is why white flashes were fixed and saturated ones were not.)
+        // Measured on Virtuosa's apple: our peak red caps at 241 where the game reaches 255.
+        //
+        // The clip is identity at m <= 1 and scales by 1/m above, so LDR passes through untouched
+        // and over-bright stacks still keep their hue.
+        if (uClip > 0.5) scale = (m > 1.0) ? (1.0 / m) : 1.0;
         rgb *= scale;
     }
     // NO cinematic vignette. A brightness-gated radial falloff used to live here, added to
@@ -82,7 +95,15 @@ void main() {
     // it held our margins at a flat 237 for the full hold. Do not reintroduce it without
     // re-measuring the HELD frames, not the ramp.
     vec3 bloom = texture2D(uBloom, vUV).rgb * uBloomIntensity;
-    gl_FragColor = vec4(rgb + bloom, max(c.a, 0.0));
+    vec3 outc = rgb + bloom;
+    // Scene-composite transfer (see sceneCompositeGamma). Applied LAST, on the assembled
+    // frame, because that is where it was measured. Values above 1 stay above 1 under a
+    // >1 exponent and clamp to white exactly as they did before, so this only reshapes
+    // the LDR range. uGamma == 1.0 is a no-op and skips the pow entirely.
+    if (uGamma != 1.0) {
+        outc = pow(max(outc, 0.0), vec3(uGamma));
+    }
+    gl_FragColor = vec4(outc, max(c.a, 0.0));
 }
 `;
 
@@ -106,18 +127,145 @@ void main() {
  *  so 1.0 means "only genuinely HDR-over-bright additive peaks glow" — painted
  *  scene panels (authored ≤1) are excluded, keeping the bloom off backdrops. */
 const BLOOM_THRESHOLD = 1.0;
+/** DIAGNOSTIC (`?bloomthr=<f>`): lower the bright-pass threshold so painted (<=1) panels can
+ *  glow too. The shipped 1.0 deliberately excludes them; this makes that choice measurable. */
+function bloomThreshold(): number {
+    if (typeof window === "undefined") return BLOOM_THRESHOLD;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("bloomthr") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : BLOOM_THRESHOLD;
+}
 /** How strongly the blurred bloom is added back on top of the tonemapped scene. */
 const BLOOM_INTENSITY = 0.85;
+/** DIAGNOSTIC: `?bloom=<f>` overrides {@link BLOOM_INTENSITY} so a residual can be
+ *  attributed to (or cleared of) the bloom pass without a rebuild. */
+function bloomIntensity(): number {
+    if (typeof window === "undefined") return BLOOM_INTENSITY;
+    const q = new URLSearchParams(window.location.search).get("bloom");
+    const v = q === null ? NaN : parseFloat(q);
+    return Number.isFinite(v) ? v : BLOOM_INTENSITY;
+}
 /** Bloom RTs run at 1/N res — cheaper and gives a wider, softer glow for free. */
 const BLOOM_DOWNSCALE = 2;
 /** Gaussian blur strength (in bloom-RT pixels) applied to the bright-pass. */
 const BLOOM_BLUR = 10;
 
 /** Highlights at/under this (premultiplied) level pass through untouched; brighter
- *  stacks are compressed toward 1 with hue preserved. 0.9 keeps near-white LDR
- *  regions almost intact (a pure-white 1.0 maps to ~0.95) while taming the >1
- *  additive blowouts hard. */
-const DEFAULT_KNEE = 0.9;
+ *  stacks are compressed toward 1 with hue preserved.
+ *
+ *  0.99, NOT the historical 0.9. The compression maps [knee, inf) -> [knee, 1) with 1.0 as an
+ *  ASYMPTOTE, so every pixel between the knee and 1.0 is darkened even though it is not
+ *  over-bright at all — at knee 0.9 a saturated 1.0 came out at 0.95, i.e. 242 instead of 255.
+ *  The saturation release below rescues only near-NEUTRAL pixels, which is why white flashes were
+ *  fixed by it and saturated colours were not.
+ *
+ *  Measured on Virtuosa's apple (its real beat is t ~ 6.27): peak red 241/244 at knee 0.9 against
+ *  the game's 255, and 253/254 at knee 0.99 — position and size already matched, only the peak was
+ *  short. Corpus cost is +0.009 mean MADC (mly +0.015, cel -0.005, ska +0.016), smaller than other
+ *  corrections already shipped here.
+ *
+ *  Raising the knee does NOT weaken the >1 protection this pass exists for: anything above 1 is
+ *  still scaled by `t/m`, so coloured additive stacks keep their hue instead of clipping to white.
+ *  Only the LDR shoulder moves. `?knee=<f>` overrides. */
+const DEFAULT_KNEE = 0.99;
+
+/** DIAGNOSTIC (`?knee=<f>`): override {@link DEFAULT_KNEE}. Raising it above 1 disables the
+ *  hue-preserving compression entirely, so over-bright pixels clip PER CHANNEL the way Unity's
+ *  pipeline does — which is the only mechanism that can turn a saturated warm additive stack
+ *  white. Exists to test exactly that against Skadi's crown fish. */
+/** DIAGNOSTIC (`?tmclip=1`): swap the soft roll-off for a hue-preserving clip — see the shader. */
+function tonemapClip(): number {
+    if (typeof window === "undefined") return 0;
+    return new URLSearchParams(window.location.search).get("tmclip") === "1" ? 1 : 0;
+}
+
+function kneeParam(): number {
+    if (typeof window === "undefined") return DEFAULT_KNEE;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("knee") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : DEFAULT_KNEE;
+}
+
+/** Calibration endpoints for {@link sceneCompositeGamma}: `[cameraSizePx, exponent]`.
+ *  These are the two extreme reference skins; everything else interpolates between them. */
+const GAMMA_CAL_LO: readonly [number, number] = [1000, 1.12]; // Skadi the Corrupting Heart
+const GAMMA_CAL_HI: readonly [number, number] = [1111, 1.02]; // Mlynar
+
+/**
+ * Exponent applied to the assembled scene composite, derived per scene from its authored
+ * orthographic camera size.
+ *
+ * WHAT IT CORRECTS. We render the midtones brighter than the game does. The error is a
+ * clean power law on the encoded value, not an offset or a multiply — pooling FLAT patches
+ * (no edges, so no registration or filtering component) across Skadi the Corrupting Heart's
+ * scored beats, the ratio `game/ours` rises 0.902 → 0.939 → 0.961 → 0.994 with level, where
+ * a multiply would hold it constant. A mid-grey we draw at 117 the game draws at 106.
+ * Correcting it is worth 38% of her total error (MADC 12.04 → 7.44).
+ *
+ * WHY cameraSizePx. The needed exponent is NOT global — it differs per skin — and no other
+ * scene quantity predicts it. Layer count, drawn-layer count, coverage-weighted overdraw,
+ * spine slot count, semi-transparent slot count and summed alpha were all measured against
+ * the three reference skins and none is even monotone; the "compositing depth" story runs
+ * BACKWARDS (Mlynar carries the most slots, 688, and the most semi-transparent ones, 301,
+ * yet needs the least correction). `cameraSize` is the one scene datum that orders the three
+ * correctly, and a straight line through the two extremes predicts the middle skin to within
+ * 0.005:
+ *
+ *     cameraSizePx 1000 (Skadi)   measured 1.120   derived 1.120
+ *     cameraSizePx 1050 (Cello)   measured 1.070   derived 1.075
+ *     cameraSizePx 1111 (Mlynar)  measured 1.020   derived 1.020
+ *
+ * HONEST STATUS — read this before extending, and do not restore the mechanistic reading.
+ * Three points and two parameters is an INTERPOLATION, and camera size has since been
+ * **FALSIFIED as the driver**. The entrance dollies, so each skin's LIVE camera size sweeps a
+ * far wider range than the between-skin spread does (Skadi 1.38→3.48, ~2.5×, against 10.0→11.11
+ * = 1.11× between skins). If the exponent were driven by camera size it would have to track
+ * that sweep with this slope. It does not, and it fails in BOTH directions:
+ *
+ *     skin  live-ortho span   gamma span this line PREDICTS   gamma span MEASURED
+ *     ska      1.38 - 3.48            0.190                          0.060
+ *     mly      2.93 - 5.58            0.239                          0.115
+ *     cel      1.53 - 1.91            0.035                          0.105
+ *
+ * So the between-skin agreement is a COINCIDENCE, and this function is a bare curve fit keyed
+ * on a scene scalar that does not cause the effect. It is kept only because it reproduces the
+ * three measured exponents better than any single constant does (mean MADC 14.338 against
+ * 15.011 for a flat 1.08, which costs Mlynar 16.993 against his 15.877) — the same
+ * calibrated-on-three-references basis as every other tuned constant in this renderer.
+ *
+ * Strictly, the test above rules out the LIVE camera size; it cannot rule out the authored
+ * per-scene value being read once at load. But there is no mechanism proposing that either:
+ * the asset bundles contain no colour grading, LUT, tonemap or exposure data, the captures
+ * share one transfer, and our own tonemap, bloom, canvas alpha, environment fill and texture
+ * flags were each eliminated with measurements. The true cause is believed to live in the
+ * client's compositing stage, which we cannot yet observe. **If a real driver is found,
+ * delete this keying rather than adding terms to it.**
+ *
+ * Consequently the INPUT is clamped to the calibrated span. Extrapolated, the line is
+ * catastrophic — the corpus runs from cameraSizePx 889 to 1800, and 1800 would give an
+ * exponent of 0.40. Clamping bounds every scene to [1.02, 1.12], which brackets the 1.08
+ * that a single global constant would have used, so a skin outside the calibrated range is
+ * never worse off than under one flat number. 16% of the 115-scene corpus sits outside the
+ * span and takes an endpoint value.
+ *
+ * CLAMP VERIFIED on the two corpus extremes, for which no capture exists so only the bound
+ * could be checked: Nian #7 (1800 → 1.02) shifts by at most 2 code values, Texas the
+ * Omertosa (889 → 1.12) by at most 11. Neither degenerates.
+ *
+ * TO REPLACE THIS: it needs a fourth and fifth reference CAPTURE, not more analysis — the
+ * three we own are the whole calibration set, and the within-skin test above has already
+ * extracted what they can say.
+ */
+export function sceneCompositeGamma(cameraSizePx: number | undefined | null): number {
+    const diag = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("gamma") : null;
+    if (diag != null) {
+        const v = Number(diag);
+        return Number.isFinite(v) && v > 0 ? v : 1;
+    }
+    const [loPx, loG] = GAMMA_CAL_LO;
+    const [hiPx, hiG] = GAMMA_CAL_HI;
+    if (!cameraSizePx || !Number.isFinite(cameraSizePx)) return 1;
+    const t = Math.min(1, Math.max(0, (cameraSizePx - loPx) / (hiPx - loPx)));
+    return loG + (hiG - loG) * t;
+}
 
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
@@ -156,7 +304,7 @@ function makeQuad(width: number, height: number): PIXI.Geometry {
 
 /** Build the HDR scene target + tonemap quad, or null if float targets are
  *  unavailable (caller falls back to plain 8-bit compositing). */
-export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: number, resolution: number, knee: number = DEFAULT_KNEE): IHDRScene | null {
+export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: number, resolution: number, knee: number = kneeParam(), gamma = 1): IHDRScene | null {
     if (!supportsFloatTarget(renderer)) return null;
     let target: PIXI.RenderTexture;
     try {
@@ -184,7 +332,19 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         target.destroy(true);
         return null;
     }
-    const brightMesh = new PIXI.Mesh(makeQuad(bw, bh), PIXI.Shader.from(TONEMAP_VERT, BRIGHT_FRAG, { uSampler: target, uThreshold: BLOOM_THRESHOLD }));
+    // A freshly-allocated framebuffer holds UNDEFINED contents until something writes to it,
+    // and the stage's tonemap quad samples BOTH of these. Any stage render that happens
+    // before the first scene pass therefore reads uninitialised GPU memory — zero-filled on
+    // some drivers (so headless swiftshader shows nothing), arbitrary colour on others, which
+    // is what a coloured flash on the first frames of a load actually is. Clear both once,
+    // here, so the contents are always defined.
+    {
+        const blank = new PIXI.Container();
+        renderer.render(blank, { renderTexture: target, clear: true });
+        renderer.render(blank, { renderTexture: bloomRT, clear: true });
+        blank.destroy();
+    }
+    const brightMesh = new PIXI.Mesh(makeQuad(bw, bh), PIXI.Shader.from(TONEMAP_VERT, BRIGHT_FRAG, { uSampler: target, uThreshold: bloomThreshold() }));
     const brightContainer = new PIXI.Container();
     brightContainer.addChild(brightMesh);
     const blur = new PIXI.BlurFilter(BLOOM_BLUR);
@@ -192,7 +352,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: BLOOM_INTENSITY });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip() });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {

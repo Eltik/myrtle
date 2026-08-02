@@ -124,6 +124,11 @@ export interface ISceneData {
     /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
      *  Present only on `_Start` scenes. */
     entranceDuration?: number | null;
+    /** Straight RGBA (0..1) of the director's end-of-entrance screen fade (`_params.fadeColor`).
+     *  The client fades the whole view to this colour as the entrance ends, swaps to the settled
+     *  idle underneath it, and lifts it again. Authored white at full alpha on every skin
+     *  measured, but read from the data. Absent on non-entrance scenes. */
+    entranceFade?: [number, number, number, number] | null;
     /** ENTRANCE transform/reform beat in seconds (the dominant late `_delayTime` cluster) —
      *  the camera has dollied to the wide stop and the character has reformed by here, so it's
      *  the entrance→idle hand-off point AND the target time of the tight→wide camera dolly. */
@@ -314,8 +319,137 @@ function loadTexture(url: string): Promise<ISceneTex> {
  *  over a large mesh) — approximates the engine's absent HDR tonemap so they read
  *  as a faint ripple, not a bold white swirl over the scene. */
 const EFFECT_SCENE_GAIN = 0.3;
+/** DIAGNOSTIC (`?scenegain=<f>`): override {@link EFFECT_SCENE_GAIN} so the taming applied to
+ *  effect-classified scene layers can be measured rather than assumed. 1 = no taming. */
+function effectSceneGain(): number {
+    if (typeof window === "undefined") return EFFECT_SCENE_GAIN;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("scenegain") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : EFFECT_SCENE_GAIN;
+}
 /** Max texture size treated as an effect overlay; painted backdrops are large atlases. */
 const EFFECT_TEX_MAX = 512;
+/** Min linear STRETCH (sqrt(meshArea / texArea)) for a small texture to count as an effect
+ *  overlay. **DISABLED (0) — MEASURED AND REJECTED.**
+ *
+ *  The rule's stated intent is "a SMALL texture STRETCHED over a large mesh", but the test
+ *  keys on texture size ALONE, so a modest texture drawn near native scale is tamed like a
+ *  caustic. The stretch values do look bimodal with a gap at 2.94 → 3.99:
+ *      genuine caustics   3.99, 4.87, 5.65, 5.94, 6.73, 6.78, 7.62, 7.94, 8.12, 11.25, 21.50
+ *      near-native panels 1.42, 1.69 (Virtuosa's starfield sheet), 1.80, 2.94
+ *  but gating on it is a NET LOSS. Applied to the gain decision alone (interior MADC):
+ *      stretchmin 0 → 3.5 :  mly 15.839 → 17.105   cel 20.405 → 20.130   ska 12.056 → 12.056
+ *  Virtuosa gains 0.275, Mlynar loses 1.266. The populations cannot be separated by stretch
+ *  either: her starfield sheet sits at 1.69 while a Mlynar layer that genuinely NEEDS taming
+ *  sits at 1.42, so any threshold that exempts hers also exempts his. Separating them would
+ *  need extra properties fitted to three skins — overfitting.
+ *
+ *  ALSO NOTE: `isEffect` feeds THREE decisions (this gain, `hasDarkBackdrop` detection, and
+ *  the `isVeil` re-sort). Gating all three at once made Virtuosa far WORSE (25.294) because
+ *  flipping `hasDarkBackdrop` reconfigures the whole scene. Any future change here must be
+ *  applied to ONE decision at a time. `?stretchmin=<f>` keeps it measurable. */
+const EFFECT_STRETCH_MIN = 0;
+function effectStretchMin(): number {
+    if (typeof window === "undefined") return EFFECT_STRETCH_MIN;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("stretchmin") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : EFFECT_STRETCH_MIN;
+}
+/** Does this layer TILE its texture — i.e. do its UVs span more than one full repeat on
+ *  either axis?
+ *
+ *  This separates the two populations `isEffect` currently conflates. That rule's stated
+ *  intent is "a SMALL texture STRETCHED over a large mesh" (a caustic / light dome), but it
+ *  tests texture size ALONE, so a repeating PATTERN drawn at native scale — a striped light
+ *  curtain, a rain sheet, a music-staff overlay — is tamed like a caustic even though it is
+ *  ordinary painted coverage. A tiled layer is by construction NOT stretched: it repeats to
+ *  fill the mesh at its authored density.
+ *
+ *  Measured on Virtuosa, whose backdrop is a tiled vertical curtain: the game's stripe
+ *  pattern is in exact horizontal PHASE with ours (0 px shift at every scored beat) and at
+ *  the same frequency, but 1.4x-5x our amplitude — right pattern, right place, too weak.
+ *  53 of her 98 layers are tiled. */
+/** Exempt tiled layers from `EFFECT_SCENE_GAIN`? **DISABLED — MEASURED AND REJECTED.**
+ *
+ *  The reasoning was sound and the symptom is real: Virtuosa's backdrop stripes are in exact
+ *  horizontal phase with the game's and at the same frequency, but 1.4x-5x too weak (worst at
+ *  her t=10, ratio 2.89 — near enough to 1/0.3 to look like the gain was the culprit), and a
+ *  tiled texture genuinely is not "a small texture stretched over a large mesh". It still
+ *  measures WORSE, and only on the skin it touches:
+ *
+ *      exemption ON   mly 30.809   cel 24.861   ska 13.754
+ *      exemption OFF  mly 30.809   cel 24.583   ska 13.754
+ *
+ *  (Salvaged-oracle scale — A/B sign only, see scratchpad/opcheck/score3.sh.) Mlynar and
+ *  Skadi are untouched, so the +0.278 is entirely Virtuosa's: un-taming her other ~50 tiled
+ *  layers costs more than the stripes gain. The stripe deficit is therefore NOT the scene
+ *  gain, and the next attempt should isolate WHICH layer draws the stripes (binary-search
+ *  `?bg:<lo>-<hi>`) rather than reclassifying a whole population.
+ *
+ *  `?tiled=1` re-enables it for a re-test. */
+function tiledExemptEnabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("tiled") === "1";
+}
+
+/** A painted light SHEET is exempt from `EFFECT_SCENE_GAIN`: whitish, non-additive, and
+ *  carrying essentially NO opaque pixels, so its coverage is alpha rather than paint.
+ *
+ *  This is the symmetric partner of `isPaintedSurface` (see SURFACE_OPAQUE_MIN): a fully
+ *  OPAQUE layer is exempt because its alpha is coverage, not intensity — and a fully
+ *  TRANSPARENT whitish layer is exempt because it is painted light, not a caustic overlay
+ *  stretched from a small texture. Only the middle — partly-opaque effect textures — is what
+ *  the gain exists to tame.
+ *
+ *  Found via Virtuosa's backdrop stripe curtain, which carries essentially all of her stripe
+ *  energy (isolating it reproduces 2860 of the full frame's 2809 amplitude) and measures as
+ *  wanting gain ~0.86, i.e. untamed. Her stripes sit in exact horizontal phase with the
+ *  game's and at the same frequency, but 1.4x-5x too weak.
+ *
+ *  BOTH bounds are load-bearing, and the opacity one is what makes this safe. On whiteness
+ *  alone the rule is not surgical at all — over a 6-skin corpus sample it re-classifies
+ *  **53% of all tamed layers** (one skin loses 99 of 141, including opaque pure-white walls
+ *  the gain exists to tame). Adding the opacity cap drops that to **1.5% (3 of 205)** while
+ *  still catching the target. The whiteness threshold's own safe plateau is (0.27, 0.47]:
+ *  measured on Virtuosa, 0.30/0.35/0.45 all give 23.608 and 0.50 reverts to the 24.583
+ *  baseline, so 0.40 sits clear of both edges. */
+const PAINTED_SHEET_WHITENESS_MIN = 0.4;
+const PAINTED_SHEET_OPAQUE_MAX = 0.02;
+
+/** DIAGNOSTIC (`?sheet=<f>`): override the whiteness floor; `?sheet=0` disables the exemption. */
+function paintedSheetWhitenessMin(): number {
+    if (typeof window === "undefined") return PAINTED_SHEET_WHITENESS_MIN;
+    const raw = new URLSearchParams(window.location.search).get("sheet");
+    if (raw == null) return PAINTED_SHEET_WHITENESS_MIN;
+    const v = parseFloat(raw);
+    return Number.isFinite(v) && v >= 0 ? v : PAINTED_SHEET_WHITENESS_MIN;
+}
+
+function isTiledLayer(layer: ISceneLayer): boolean {
+    const uv = layer.uv;
+    if (!uv || uv.length < 4) return false;
+    let minU = Infinity;
+    let maxU = -Infinity;
+    let minV = Infinity;
+    let maxV = -Infinity;
+    for (let i = 0; i < uv.length; i += 2) {
+        minU = Math.min(minU, uv[i]);
+        maxU = Math.max(maxU, uv[i]);
+        minV = Math.min(minV, uv[i + 1]);
+        maxV = Math.max(maxV, uv[i + 1]);
+    }
+    return maxU - minU > 1.001 || maxV - minV > 1.001;
+}
+
+/** Linear stretch of a layer's mesh relative to its source texture rect. */
+function layerStretch(layer: ISceneLayer, effRect: { w: number; h: number }): number {
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    for (let i = 0; i < layer.pos.length; i += 2) {
+        minx = Math.min(minx, layer.pos[i]); maxx = Math.max(maxx, layer.pos[i]);
+        miny = Math.min(miny, layer.pos[i + 1]); maxy = Math.max(maxy, layer.pos[i + 1]);
+    }
+    const texA = Math.max(1, effRect.w * effRect.h);
+    const meshA = Math.max(1, (maxx - minx) * (maxy - miny));
+    return Math.sqrt(meshA / texA);
+}
 /** {@link EFFECT_TEX_MAX} keys on SIZE alone, and size alone cannot tell a caustic from
  *  paint. The overlays the gain exists to tame are LIGHT — bright, desaturated and
  *  translucent (see LIGHT_GLOW_*). A near-opaque, strongly COLOURED normal-blend sheet is
@@ -334,9 +468,35 @@ const SURFACE_SAT_MIN = 0.4;
  *  occludes the veil over her face while the burst still shows around her. Coloured
  *  foreground fx (red halftones/slashes, whiteness≈0.2-0.5) stay in front. */
 const VEIL_WHITENESS_MIN = 0.65;
+/** Fraction of the authored camera view a white foreground layer must span, on BOTH axes,
+ *  to count as full-frame ATMOSPHERE rather than a localised burst — and so be exempt from
+ *  the {@link VEIL_WHITENESS_MIN} demotion. 0.8 rather than 1.0 because an authored haze is
+ *  sized to the shot, not to the camera box: Mlynar's covers 0.99 x 0.85 of his view. The
+ *  cut is not sensitive: of the 360 layers the veil rule demotes corpus-wide, the 8 that
+ *  qualify sit at coverage 0.852-2.357 and the next candidate below them is at 0.677, so
+ *  every threshold in 0.70-0.85 selects exactly the same set. */
+const VEIL_FRAME_COVER = 0.8;
 /** Min alpha-weighted saturation for a foreground effect to count as glowing energy
  *  (→ additive over the character). White veils (~0) and pale panels fall below it. */
 const GLOW_SAT_MIN = 0.4;
+
+/** On-screen extent of a layer's quad along one axis (0 = x, 1 = y), in scene px. */
+function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let i = axis; i < layer.pos.length; i += 2) {
+        lo = Math.min(lo, layer.pos[i]);
+        hi = Math.max(hi, layer.pos[i]);
+    }
+    return hi > lo ? hi - lo : 0;
+}
+
+/** DIAGNOSTIC (`?veilcover=0`): restore the old behaviour, demoting full-frame hazes behind
+ *  the character along with localised bursts. Lets the change be A/B'd in one build. */
+function veilFrameCoverExempt(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("veilcover") !== "0";
+}
 /** Half-width (spine-authored px) of the character's central column. A saturated
  *  foreground glow centred within it is energy over the character (additive); one
  *  outside it is side comic-fx (left normal). Spine root is at x=0. */
@@ -796,7 +956,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // attenuate. Additive is darkened via tint (reliable for ADD blend); normal via
     // alpha. Painted backdrops (large textures) are untouched.
     const effRect = layerUvRectPx(layer, tex);
-    const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX;
+    const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX && layerStretch(layer, effRect) >= effectStretchMin();
     // `EFFECT_SCENE_GAIN` tames small caustic overlays (they'd otherwise over-cover);
     // but an additive LIGHT-GLOW sheet (fullGain) must contribute its full energy — the
     // HDR float target + tonemap handle the peaks — else it can't lift the backdrop.
@@ -812,7 +972,43 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // SURFACE_OPAQUE_MIN): its alpha carries coverage, not intensity, so scaling it only
     // reveals the void behind.
     const isPaintedSurface = !additive && tex.opaqueFrac >= SURFACE_OPAQUE_MIN && tex.sat >= SURFACE_SAT_MIN;
-    const gain = !fullGain && !isPaintedSurface && (isEffect || (additive && temperLargeAdditive)) ? EFFECT_SCENE_GAIN : 1;
+    // A TILED layer is exempt from the taming (see isTiledLayer): it is repeating painted
+    // coverage, not a small texture stretched into a caustic, so scaling it only dims art the
+    // game draws at full strength. Applied to the GAIN decision ONLY — `isEffect` also feeds
+    // `hasDarkBackdrop` detection and the `isVeil` re-sort, and gating all three at once
+    // reconfigures the whole scene (it previously drove Virtuosa to 25.294). `?tiled=0`
+    // restores the old behaviour for an A/B.
+    const tiledExempt = isTiledLayer(layer) && tiledExemptEnabled();
+    // A painted light SHEET keeps its full energy — see PAINTED_SHEET_WHITENESS_MIN. Distinct
+    // from `isLightGlowSheet`, which needs >=0.70 whiteness and <=0.15 sat and deliberately
+    // excludes the mid-white veils that must stay demoted.
+    const sheetMin = paintedSheetWhitenessMin();
+    const sheetExempt = sheetMin > 0 && !additive && tex.whiteness >= sheetMin && tex.opaqueFrac <= PAINTED_SHEET_OPAQUE_MAX;
+    const gain = !fullGain && !isPaintedSurface && ((isEffect && !tiledExempt && !sheetExempt) || (additive && temperLargeAdditive)) ? effectSceneGain() : 1;
+    // DIAGNOSTIC (`?dumpclass=1`): record every input the effect/gain classifier uses, so a
+    // mis-classified layer can be separated from correctly-tamed ones on real properties.
+    // Collected into a global rather than logged: the dev server rewrites `console.log` into
+    // a styled "Go to Source" message, which destroys the payload.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dumpclass")) {
+        let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+        for (let i = 0; i < layer.pos.length; i += 2) {
+            minx = Math.min(minx, layer.pos[i]); maxx = Math.max(maxx, layer.pos[i]);
+            miny = Math.min(miny, layer.pos[i + 1]); maxy = Math.max(maxy, layer.pos[i + 1]);
+        }
+        const meshW = maxx - minx, meshH = maxy - miny;
+        const texA = Math.max(1, effRect.w * effRect.h), meshA = Math.max(1, meshW * meshH);
+        const w = window as unknown as { __classDump?: unknown[] };
+        (w.__classDump ??= []).push({
+            sort: layer.sort, add: additive ? 1 : 0,
+            texW: Math.round(effRect.w), texH: Math.round(effRect.h),
+            meshW: Math.round(meshW), meshH: Math.round(meshH),
+            stretch: Number(Math.sqrt(meshA / texA).toFixed(2)),
+            opaque: Number(tex.opaqueFrac.toFixed(3)), sat: Number(tex.sat.toFixed(3)),
+            white: Number(tex.whiteness.toFixed(3)),
+            isEffect: isEffect ? 1 : 0, painted: isPaintedSurface ? 1 : 0,
+            fullGain: fullGain ? 1 : 0, gain: Number(gain.toFixed(2)),
+        });
+    }
 
     const vertices = new Float32Array(vertexCount * 2);
     const uvs = new Float32Array(vertexCount * 2);
@@ -881,6 +1077,19 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     const mesh = new PIXI.Mesh(geometry, material);
     mesh.alpha = alpha;
     mesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
+    // DIAGNOSTIC: record what this layer actually resolved to, so a dump can tell a true additive
+    // layer from one that merely carries the data flag, and whether it sampled the
+    // dark-field-dropped `glow` texture or the raw one.
+    (mesh as unknown as { __blendDbg?: unknown }).__blendDbg = {
+        additive,
+        dataAdditive: !!layer.additive,
+        forced: !!forceAdditive,
+        usedGlow: base === tex.glow,
+        glowIsRaw: tex.glow === tex.raw,
+        gain: Number(gain.toFixed(3)),
+        texWhite: Number(tex.whiteness.toFixed(3)),
+        texOpaque: Number(tex.opaqueFrac.toFixed(3)),
+    };
     stashRuntime(mesh);
     return mesh;
 }
@@ -1131,7 +1340,23 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // occludes it (see VEIL_WHITENESS_MIN). Coloured foreground fx stay in front.
         const effRect = layerUvRectPx(layer, base);
         const isEffect = effRect.w <= EFFECT_TEX_MAX && effRect.h <= EFFECT_TEX_MAX;
-        const isVeil = isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN;
+        // ...unless it covers the WHOLE FRAME, in which case it is atmosphere, not a panel.
+        // `isEffect` measures the layer's TEXTURE resolution, which says nothing about how
+        // much of the shot the layer occupies: a 4x4 or 256px white quad stretched across the
+        // camera view reads as a small "effect" and gets demoted behind the spine. That is
+        // right for a burst that should sit behind a face and wrong for a full-frame haze,
+        // which must tint the character along with everything else. Mlynar's L14 is the case
+        // in point — a 256px quad stretched to 2192x1893 against a 2222px view, holding an
+        // authored fade from alpha 0.92 down to 0. Demoted, his coat stays crisp and black
+        // while the game veils it: the frame runs ~10 luma dark through t=3-6, peaking at
+        // -11.7 at t=4 (his worst beat, MADC 22.80), and the deficit tracks this layer's
+        // fade exactly — we are too BRIGHT while it is up (t<=2) and too DARK once it lands.
+        // Coverage is the discriminator the texture size cannot provide. Corpus-wide this
+        // exempts 8 layers in 6 skins out of the 360 the veil rule demotes, and touches
+        // neither of the other two reference skins.
+        const camExtent = 2 * (data.cameraSizePx || 0);
+        const coversFrame = camExtent > 0 && spanOf(layer, 0) >= VEIL_FRAME_COVER * camExtent && spanOf(layer, 1) >= VEIL_FRAME_COVER * camExtent;
+        const isVeil = isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(coversFrame && veilFrameCoverExempt());
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
         // ice-flame around her oni-mask "shield"). Exported as normal-blend (Unity

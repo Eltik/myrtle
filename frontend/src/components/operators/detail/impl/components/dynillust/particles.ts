@@ -53,6 +53,11 @@ export interface IParticleSystemData {
     mesh?: { pos: number[]; uv: number[]; idx: number[]; col?: number[] };
     blend: "additive" | "normal";
     renderMode?: string;
+    /** Unity `ParticleSystemRenderer.pivot` — the quad's pivot as a MULTIPLIER of particle
+     *  size, `[x, y]` in Unity's Y-UP frame. Unity holds the pivot at the particle's position
+     *  and rotates the quad about it, so this both offsets the sprite and moves its rotation
+     *  centre. Absent (the overwhelming majority) means the centred default. */
+    pivot?: [number, number] | null;
     pos: [number, number];
     rot?: number;
     duration: number;
@@ -119,6 +124,12 @@ export interface IParticleSystemData {
      *  case both parts exist for: its x and z axes trace a CIRCLE over the lifetime,
      *  which flattening to one number turned into a straight drift ("2–3 loose birds"). */
     velocityOverLife?: { x: number; y: number; space?: string; curve?: { t: number; x: number; y: number }[] } | null;
+    /** Unity `ForceModule` — a constant ACCELERATION in px/s², integrated into the
+     *  particle's velocity every frame (unlike {@link velocityOverLife}, which is a
+     *  velocity offset). `space:"screen"` is a local force the exporter already projected
+     *  through the emitter's world basis; `space:"world"` is world-aligned already. Drives
+     *  the slow lateral drift on Skadi the Corrupting Heart's thread/fish systems. */
+    forceOverLife?: { x: number; y: number; space?: string } | null;
     /** Unity `ClampVelocityModule` ("Limit Velocity over Lifetime"): a per-step
      *  damped speed clamp. `magnitude` is the speed LIMIT (px/s) over normalized
      *  life; each frame a particle over the limit has its velocity lerped toward
@@ -126,7 +137,12 @@ export interface IParticleSystemData {
      *  reined in by this clamp into a tight stationary cluster — without it the
      *  burst scatters into faint motes. Absent for systems with no such module. */
     velocityClamp?: { dampen: number; magnitude: MMScalar } | null;
-    rotOverLifeDegPerSec?: number | null;
+    /** Unity `rotationOverLifetime`, ANGULAR VELOCITY in deg/s, sampled at normalized life.
+     *  Usually a CURVE (0 at birth, ramping later), so it must be integrated per frame — a
+     *  constant at the curve's peak spins the particle from birth and visibly tumbles
+     *  long-lived sprites (Virtuosa's falling apple). Older exports emit a bare number;
+     *  {@link rotRateAt} accepts both. */
+    rotOverLifeDegPerSec?: number | MMScalar | null;
     /** `_MainTex_ST` UV tiling/offset `[scaleX, scaleY, offsetX, offsetY]` from the
      *  material. When present the emitter crops its sprite to this sub-rectangle of
      *  the (flipbook-atlas) texture — the material's way of selecting ONE cell
@@ -224,12 +240,28 @@ interface INoise {
 
 interface ITrail {
     tex: number | null;
+    /** Unity `ParticleSystemTrailMode`. `perParticle` drags a ribbon behind EACH
+     *  particle; `ribbon` threads ONE polyline through the system's live particles
+     *  ordered by age (see {@link RibbonTrail}). Absent in older exports → perParticle. */
+    mode?: "perParticle" | "ribbon";
+    /** Interleaved ribbon count (ribbon mode): particle `i` belongs to ribbon `i % n`. */
+    ribbonCount?: number;
     blend: "additive" | "normal";
     ratio: number;
-    lifetime: MMScalar;
+    /** Point lifetime as a FRACTION of the particle's lifetime. Emitted by the exporter as a
+     *  bare number; older exports of `widthOverTrail` are bare numbers too. Read both through
+     *  {@link scalarOf} — never `sampleScalar`, which switches on `.mode` and returns
+     *  `undefined` for a plain number. */
+    lifetime: number | MMScalar;
     minVertexDistance: number;
-    widthOverTrail?: MMScalar | null;
+    /** Width multiplier ALONG the trail (0 = tail end, 1 = head), on top of the
+     *  particle size when {@link sizeAffectsWidth}. */
+    widthOverTrail?: number | MMScalar | null;
     colorOverLifetime?: MMColor | null;
+    /** Colour banded along the trail — independent of the particle's own colour. */
+    colorOverTrail?: MMColor | null;
+    sizeAffectsWidth?: boolean;
+    inheritParticleColor?: boolean;
     dieWithParticles: boolean;
     worldSpace: boolean;
 }
@@ -275,10 +307,118 @@ function trailSpacing(spanPx: number, minVertexDistance: number): number {
     return Math.max(minVertexDistance || 1, span / (TRAIL_POINTS - 1));
 }
 
+/** Raw trail-history slots per particle, as `[x, y, age]` triples newest-first. Unity
+ *  expires a trail vertex by AGE, so the history has to retain every sample inside the
+ *  authored window — at a 33 ms tick, 96 slots cover ~3.2 s, past every authored trail
+ *  lifetime in the corpus. Beyond that the oldest samples are dropped and the ribbon is
+ *  simply shorter than authored. */
+const TRAIL_HIST_MAX = 96;
+
+/** Resample the retained history polyline into a FIXED ribbon-point budget, evenly by
+ *  arclength, head first.
+ *
+ *  The two are independent: history length is set by the authored vertex lifetime (which
+ *  varies per particle and per frame rate), while the rope has {@link TRAIL_POINTS} slots.
+ *  Walking the polyline decouples them, so a ribbon keeps its authored LENGTH whether that
+ *  window holds 3 samples or 60, and the cost per particle stays constant.
+ *
+ *  `hist` is `[x, y, age]` newest-first and `n` is the count of live triples. Fewer than two
+ *  live samples means the particle has not moved yet: every output collapses onto the head,
+ *  which `RopeGeometry` renders as a zero-area strip (invisible) — the correct look for a
+ *  trail with no history, and not a width problem. */
+/** Scratch polyline (flat `[x,y,…]`, head first) reused across particles and frames so the
+ *  per-frame resample allocates nothing. */
+const TRAIL_LINE: number[] = [];
+
+function resampleTrail(line: number[], n: number, out: PIXI.Point[]): void {
+    if (n < 2) {
+        for (const q of out) q.set(line[0], -line[1]);
+        return;
+    }
+    let total = 0;
+    for (let i = 1; i < n; i++) {
+        total += Math.hypot(line[i * 2] - line[(i - 1) * 2], line[i * 2 + 1] - line[(i - 1) * 2 + 1]);
+    }
+    if (total < 1e-6) {
+        for (const q of out) q.set(line[0], -line[1]);
+        return;
+    }
+    const step = total / (out.length - 1);
+    let seg = 1;
+    let segStart = 0;
+    let segLen = Math.hypot(line[2] - line[0], line[3] - line[1]);
+    for (let k = 0; k < out.length; k++) {
+        const target = k * step;
+        while (target > segStart + segLen && seg < n - 1) {
+            segStart += segLen;
+            seg++;
+            segLen = Math.hypot(line[seg * 2] - line[(seg - 1) * 2], line[seg * 2 + 1] - line[(seg - 1) * 2 + 1]);
+        }
+        const f = segLen > 1e-6 ? Math.min(1, Math.max(0, (target - segStart) / segLen)) : 0;
+        const ax = line[(seg - 1) * 2];
+        const ay = line[(seg - 1) * 2 + 1];
+        out[k].set(ax + (line[seg * 2] - ax) * f, -(ay + (line[seg * 2 + 1] - ay) * f));
+    }
+}
+
 /** Upper bound (px) on an authored trail span, in the scene's own pixel space. Guards a
  *  degenerate `speed × lifetime` product; well above any real authored ribbon (the longest
  *  across the reference skins is ~2400). */
 const TRAIL_MAX_SPAN = 4000;
+/** Floor (scene px) on a trail's thickness — a ribbon thinner than a pixel cannot be
+ *  rasterised, and vanishing is further from the game than a hairline. */
+const MIN_TRAIL_WIDTH = 1;
+
+/** Authored thickness (scene px) of a per-particle trail at the particle's CURRENT size.
+ *
+ *  Unity's width is `widthOverTrail × particle size` (when `sizeAffectsWidth`).
+ *  `PIXI.SimpleRope` cannot express it: `_render` reassigns the geometry width to
+ *  `texture.height` every frame, and its guard fires for ANY custom width — so every ribbon
+ *  drew at whatever its trail atlas page happened to be. Skadi's `xian` threads authored
+ *  1.0–1.25 px drew at 64 px, a median 6.3× too wide across 129 systems in 23 skins. Hence
+ *  {@link RopeMesh}. `widthOverTrail` sampled mid-trail: a range is a per-particle random
+ *  (Unity RandomBetweenTwoConstants, hence `rand`); a curve varies along the ribbon and one
+ *  rope has a single width, so its midpoint is the representative. */
+/** Angular velocity (deg/s) at normalized life `lf`. Accepts the legacy bare number
+ *  (a true constant) and the `MMScalar` the exporter emits now. */
+function rotRateAt(v: number | MMScalar | undefined | null, rand: number, lf: number): number {
+    if (v == null) return 0;
+    return typeof v === "number" ? v : sampleScalar(v, rand, lf);
+}
+
+/** Diagnostic-only scale on every per-particle ribbon width (`?trailw=<f>`), and an
+ *  absolute override (`?trailwabs=<f>`). Both are inert unless the query param is present;
+ *  they exist so a width A/B can be run without editing the source out from under a
+ *  comparison. Read once — the query string cannot change within a recording. */
+const TRAIL_W_DIAG: { scale: number; abs: number | null; spanModel: boolean } = (() => {
+    if (typeof window === "undefined") return { scale: 1, abs: null, spanModel: false };
+    const q = new URLSearchParams(window.location.search);
+    const s = Number(q.get("trailw"));
+    const a = Number(q.get("trailwabs"));
+    return { scale: Number.isFinite(s) && s > 0 ? s : 1, abs: Number.isFinite(a) && a > 0 ? a : null, spanModel: q.get("trailmodel") === "span" };
+})();
+
+function trailWidth(trail: ITrail, size: number, rand: number): number {
+    if (TRAIL_W_DIAG.abs != null) return TRAIL_W_DIAG.abs;
+    const mul = trail.widthOverTrail ? scalarOf(trail.widthOverTrail, rand, 0.5) : 1;
+    const base = (trail.sizeAffectsWidth ?? true) ? size : 1;
+    return Math.max(MIN_TRAIL_WIDTH, base * mul) * TRAIL_W_DIAG.scale;
+}
+
+/** A rope whose width is ours to set — `PIXI.SimpleRope` minus the one line that forces
+ *  `width = texture.height`. `updateVertices()` is driven from the emitter update instead of
+ *  PIXI's autoUpdate, so the width can track `sizeOverLife`. */
+class RopeMesh extends PIXI.Mesh<PIXI.MeshMaterial> {
+    constructor(texture: PIXI.Texture, points: PIXI.Point[], width: number) {
+        super(new PIXI.RopeGeometry(width, points, 0), new PIXI.MeshMaterial(texture));
+    }
+    setWidth(w: number): void {
+        const g = this.geometry as PIXI.RopeGeometry;
+        g._width = w;
+        g.updateVertices();
+    }
+}
+
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
 const MIN_PARTICLE_LIFE = 0.05;
 
@@ -316,6 +456,21 @@ function sampleCurve(curve: ICurvePoint[], t: number): number {
 }
 
 /** Evaluate a MinMaxCurve. `rand` in [0,1) picks within ranges; `t` in [0,1] samples curves. */
+/** Read a value the exporter may emit either as a bare number or as an `MMScalar`.
+ *
+ *  `sampleScalar` switches on `s.mode`; handed a plain number it matches no case and returns
+ *  `undefined`. That silently poisoned every per-particle trail: `trail.lifetime` is emitted
+ *  as a bare number, so the ribbon span went `speed × life × undefined` = NaN, `trailSpacing`
+ *  returned NaN, and the "has the head moved far enough for a new history point" test
+ *  (`d² >= step²`) is FALSE against NaN forever. No history ever accumulated, all
+ *  {@link TRAIL_POINTS} collapsed onto the particle, and the rope drew zero-area geometry —
+ *  invisible, while still reporting a large bounding box because the emitters are spread out.
+ *  That is why Skadi the Corrupting Heart's `xian` threads never appeared. */
+function scalarOf(v: number | MMScalar | undefined | null, rand: number, t: number): number {
+    if (v == null) return 0;
+    return typeof v === "number" ? v : sampleScalar(v, rand, t);
+}
+
 function sampleScalar(s: MMScalar | undefined, rand: number, t: number): number {
     if (!s) return 0;
     switch (s.mode) {
@@ -393,11 +548,14 @@ interface IParticle {
     // Trail (only for particles that draw one): the rope, its points, and a
     // distance-gated position history (flat [x,y,…], newest first, Y-up).
     trailPts?: PIXI.Point[];
-    rope?: PIXI.SimpleRope;
+    rope?: RopeMesh;
     hist?: number[];
     /** Spacing (px) between this particle's recorded history points. Derived per
      *  particle from the AUTHORED trail lifetime — see {@link trailSpacing}. */
     trailSpace?: number;
+    /** Seconds a trail vertex survives for THIS particle: `particleLifetime ×
+     *  trail.lifetime`. This — not vertex spacing — is what bounds a Unity trail. */
+    trailLife?: number;
 }
 
 /** The follow bone's LIVE world matrix this frame (pixi-spine `bone.matrix`);
@@ -515,6 +673,20 @@ function worldVelocityOverLife(d: IParticleSystemData): { x: number; y: number }
     return { x: vol.x * c - vol.y * s, y: vol.x * s + vol.y * c };
 }
 
+/** `forceOverLifetime` as a world-aligned acceleration (px/s²), or null when absent/zero.
+ *  Both exported spaces are already world-aligned: `screen` was projected through the
+ *  emitter basis by the exporter, `world` was authored that way. */
+function worldForceOverLife(d: IParticleSystemData): { x: number; y: number } | null {
+    const f = d.forceOverLife;
+    if (!f || (f.x === 0 && f.y === 0)) return null;
+    // Only the world-aligned spaces are usable. A legacy `space:"local"` export shipped the
+    // RAW emitter-local axes with no basis to interpret them, so consuming it would apply an
+    // arbitrarily rotated acceleration; those exports stay inert (exactly as before this
+    // module was read at all) until the skin is re-extracted.
+    if (f.space !== "screen" && f.space !== "world") return null;
+    return { x: f.x, y: f.y };
+}
+
 /** Linear-sample a `velocityOverLife.curve` (already world/screen-aligned px/s) at
  *  normalized particle age. Only systems whose authored curves the exporter judged
  *  lossy under a single constant carry one; everything else keeps the constant
@@ -540,6 +712,10 @@ function sampleVolCurve(curve: { t: number; x: number; y: number }[], t: number)
  *  follow bone (nearest to the emitter's spawn point) and as the delta reference.
  *  See {@link driftWithBone}. */
 export type RestBone = ReadonlyMap<string, PIXI.Matrix>;
+/** Setup-pose CENTRE of each spine attachment, keyed by attachment name (skeleton world,
+ *  Y-down — the same frame as {@link RestBone}). Used to hand a `BoneFollower` prop off from
+ *  the ART rather than the bone ORIGIN; see {@link driftWithBone}. */
+export type RestAttachment = ReadonlyMap<string, { x: number; y: number }>;
 
 /** Rigidly bond a bone-parented emitter's whole effect to the character bone it
  *  rides, so it tracks that bone through Idle AND Special animations — SilverAsh
@@ -601,7 +777,7 @@ function haloMatrix(d: IParticleSystemData, ct: number): PIXI.Matrix {
     return new PIXI.Matrix(m, 0, 0, m, cx * (1 - m) + dx, -cy * (1 - m) - dy);
 }
 
-function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], simSpace: string | undefined, find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number): void {
+function driftWithBone(container: PIXI.Container, chain: string[] | undefined, pos: readonly [number, number], simSpace: string | undefined, find: FindBone | undefined, st: IBoneAnchor, restBone?: RestBone, follow?: IFollow, halo?: IParticleSystemData, ct?: number, restAtt?: RestAttachment): void {
     if (!st.resolved) {
         st.resolved = true;
         st.boneName = null;
@@ -614,8 +790,19 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
             // `bone_now + followOffset` exactly: `ref.t := pos_ydown − off_ydown`.
             const m = (restBone.get(follow.bone) as PIXI.Matrix).clone();
             const off = follow.off ?? [0, 0];
-            m.tx = pos[0] - off[0];
-            m.ty = -pos[1] + off[1]; // Y-up export offsets → Y-down container space
+            // PROP HANDOFF. `followOffset` is measured to the bone's ORIGIN, but when the
+            // followed bone also names an ATTACHMENT the rig is continuing that piece of
+            // spine art (Virtuosa's apple: the entrance fades attachment `L_C_Apple_F` out
+            // at the exact beat the particle copy spawns). The art sits off its bone origin,
+            // so anchoring to the origin drops the particle by that offset — measured +15.1
+            // screen px, constant, for the whole fall. Re-anchor onto the ART's setup centre;
+            // derived from the skeleton, so it carries no per-skin constant and is a no-op
+            // for every follower whose bone names no attachment.
+            const art = restAtt?.get(follow.bone);
+            const dax = art ? art.x - m.tx : 0;
+            const day = art ? art.y - m.ty : 0;
+            m.tx = pos[0] - off[0] - dax;
+            m.ty = -pos[1] + off[1] - day; // Y-up export offsets → Y-down container space
             st.boneName = follow.bone;
             st.ref = m;
             st.transOnly = !follow.rot;
@@ -724,12 +911,64 @@ function holdWorldSpace(container: PIXI.Container, st: IWorldSpaceState, particl
     }
 }
 
+/** Aggregate ribbon state over an emitter's pool — see {@link IEmitterProbe.rope}. */
+function ropeStats(pool: IParticle[]): IEmitterProbe["rope"] {
+    let n = 0;
+    let vis = 0;
+    let wsum = 0;
+    let span = 0;
+    let distinct = 0;
+    for (const p of pool) {
+        if (!p.rope || !p.trailPts) continue;
+        n++;
+        if (p.rope.visible) vis++;
+        wsum += (p.rope.geometry as PIXI.RopeGeometry & { _width: number })._width;
+        const pts = p.trailPts;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        let d = pts.length > 0 ? 1 : 0;
+        for (let i = 0; i < pts.length; i++) {
+            const q = pts[i];
+            minX = Math.min(minX, q.x);
+            maxX = Math.max(maxX, q.x);
+            minY = Math.min(minY, q.y);
+            maxY = Math.max(maxY, q.y);
+            if (i > 0 && (Math.abs(q.x - pts[i - 1].x) > 1e-6 || Math.abs(q.y - pts[i - 1].y) > 1e-6)) d++;
+        }
+        if (pts.length > 0) span += Math.max(maxX - minX, maxY - minY);
+        distinct += d;
+    }
+    if (n === 0) return null;
+    const first = pool.find((p) => p.rope)?.rope;
+    const texRes = first ? (first.shader.texture as PIXI.Texture) : null;
+    let asum = 0;
+    let tints = 0;
+    for (const p of pool) {
+        if (!p.rope) continue;
+        asum += p.rope.alpha;
+        tints += typeof p.rope.tint === "number" ? p.rope.tint : 0;
+    }
+    return {
+        n,
+        vis,
+        w: wsum / n,
+        span: span / n,
+        pts: distinct / n,
+        alpha: asum / n,
+        tint: Math.round(tints / n).toString(16).padStart(6, "0"),
+        tex: texRes ? `${texRes.width}x${texRes.height}${texRes.baseTexture.valid ? "" : " INVALID"}` : "none",
+        blend: first ? first.blendMode : -1,
+    };
+}
+
 /** One live billboard emitter: owns a sprite pool inside a container. */
 class Emitter {
     protected readonly data: IParticleSystemData;
     protected readonly texture: PIXI.Texture;
     readonly container = new PIXI.Container();
-    private readonly pool: IParticle[] = [];
+    readonly pool: IParticle[] = [];
     private readonly free: IParticle[] = [];
     private time = 0;
     private emitAcc = 0;
@@ -739,6 +978,8 @@ class Emitter {
 
     private readonly trailTexture: PIXI.Texture | null;
     private readonly trailLayer: PIXI.Container | null;
+    /** Ribbon-mode trail (see {@link RibbonTrail}); null for per-particle trails. */
+    private readonly ribbon: RibbonTrail | null;
 
     /** Effective blend for particle sprites (may differ from data.blend). */
     protected readonly blend: "additive" | "normal";
@@ -804,6 +1045,9 @@ class Emitter {
         // Trails render behind the particle heads.
         this.trailLayer = data.trail ? new PIXI.Container() : null;
         if (this.trailLayer) this.container.addChild(this.trailLayer);
+        // Ribbon mode is one polyline through the whole system, not a ribbon per
+        // particle, so it replaces the per-particle rope path entirely.
+        this.ribbon = data.trail?.mode === "ribbon" && this.trailLayer ? new RibbonTrail(data.trail, trailTexture ?? this.texture, this.trailLayer, Math.min(data.maxParticles || PER_SYSTEM_CAP, PER_SYSTEM_CAP)) : null;
 
         // Texture Sheet Animation: slice the atlas into tile frames so each
         // particle shows one animating cell, not the whole grid stamped at once
@@ -849,8 +1093,15 @@ class Emitter {
      *  to instance a mesh instead of a billboard sprite. */
     protected createParticleDisp(): PIXI.Sprite | PIXI.Mesh {
         const sprite = new PIXI.Sprite(this.frames[0] ?? this.texture);
-        sprite.anchor.set(0.5);
+        // PIXI's anchor is the texture point pinned to the sprite's position AND the point it
+        // rotates about — precisely Unity's particle pivot. Unity's +Y is up, PIXI's is down,
+        // hence the sign flip on y. Default (0.5, 0.5) is the centred quad.
+        const pv = this.data.pivot;
+        sprite.anchor.set(0.5 + (pv ? pv[0] : 0), 0.5 - (pv ? pv[1] : 0));
         sprite.blendMode = this.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
+        // Additive billboards carry Unity's ×2 additive factor via a boosted batch plugin;
+        // `tint` cannot express it (it clamps at 1.0). No-op while the boost is 1.
+        if (this.blend === "additive" && additiveSpriteBoost() !== 1) sprite.pluginName = ADDITIVE_BOOST_PLUGIN;
         // Unity render mode "None": the particle draws NO head sprite — only its trail
         // ribbon (Skadi2 iteration's `xian` threads). Drawing the head anyway stamps a
         // bright sprite at the ribbon's tip that the game never shows. The particle still
@@ -1065,7 +1316,7 @@ class Emitter {
         // ratio so the sprite path can stretch only its Y scale; 1 for every uniform system.
         p.aspectY = d.startSizeY ? sampleScalar(d.startSizeY, sizeRand, nt) / Math.max(1e-6, size) : 1;
         p.rot = rot; // degrees
-        p.rotVel = d.rotOverLifeDegPerSec ?? 0; // degrees/sec (kept in degrees to match p.rot)
+        p.rotVel = typeof d.rotOverLifeDegPerSec === "number" ? d.rotOverLifeDegPerSec : 0; // legacy const
         p.rand = Math.random();
         p.startCol = startCol;
         p.sprite.visible = true;
@@ -1073,28 +1324,32 @@ class Emitter {
         // Trail: give this particle a ribbon if the system trails and the ratio
         // roll passes; otherwise ensure any pooled rope stays hidden.
         const trail = d.trail;
-        if (trail && this.trailLayer && Math.random() < (trail.ratio ?? 1)) {
+        if (trail && trail.mode !== "ribbon" && this.trailLayer && Math.random() < (trail.ratio ?? 1)) {
             if (!p.trailPts || !p.rope) {
                 p.trailPts = Array.from({ length: TRAIL_POINTS }, () => new PIXI.Point(wx, -wy));
-                p.rope = new PIXI.SimpleRope(this.trailTexture ?? this.texture, p.trailPts);
+                p.rope = new RopeMesh(this.trailTexture ?? this.texture, p.trailPts, trailWidth(trail, p.size, p.rand));
                 p.rope.blendMode = trail.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
                 this.trailLayer.addChild(p.rope);
             }
             for (const pt of p.trailPts) pt.set(wx, -wy);
-            p.hist = [wx, wy];
+            p.hist = [wx, wy, 0];
             p.rope.visible = true;
+            // Unity's Trails module bounds a ribbon by how long each VERTEX lives:
+            // `particleLifetime × trail.lifetime` seconds. Sampled per particle because
+            // `trail.lifetime` may be a random range.
+            p.trailLife = Math.max(1e-4, p.life * scalarOf(trail.lifetime, p.rand, 0));
             // Span this ribbon over the AUTHORED trail length (see `trailSpacing`). Speed
             // includes the constant drift, matching what the stretched-billboard path uses,
             // so a system whose motion comes from `velocityOverLife` rather than
             // `startSpeed` still gets a correctly-sized ribbon.
             const sp0 = Math.hypot(p.vx + (this.volWorld?.x ?? 0), p.vy + (this.volWorld?.y ?? 0));
-            p.trailSpace = trailSpacing(sp0 * p.life * sampleScalar(trail.lifetime, p.rand, 0), trail.minVertexDistance);
+            p.trailSpace = trailSpacing(sp0 * p.life * scalarOf(trail.lifetime, p.rand, 0), trail.minVertexDistance);
         } else if (p.rope) {
             p.rope.visible = false;
         }
     }
 
-    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void {
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
         this.time += dt;
@@ -1102,9 +1357,35 @@ class Emitter {
         if (this.time < 0) return;
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.pool);
+
+        // Retire particles that expire THIS frame, before emitting.
+        //
+        // Unity's ParticleSystem ages and retires particles ahead of emission, so a slot
+        // freed this frame is refillable the same frame. Our step loop runs AFTER emission
+        // (it has to — it applies the frame's forces), which meant a system sitting at
+        // `maxParticles` saw its cap still occupied by a corpse: `spawn()` refused, the
+        // accumulator had already been consumed, and the system waited a WHOLE accumulator
+        // period. At `rate = 1/s` that is a one-second late respawn.
+        //
+        // For a sparse emitter the lag is the entire cadence, not a detail. Skadi the
+        // Corrupting Heart's sweeping streak is `maxParticles:1`, rate 1/s, lifetime 4s: its
+        // particle dies at t≈5 and the replacement should be born the same instant, but we
+        // deferred it to t≈6 — so at t=6 the streak is still off the right edge while the
+        // game already has it crossing mid-frame, and every later cycle inherits the drift.
+        //
+        // Emission that arrives while the cap is genuinely full is still DROPPED, not
+        // queued (`spawn()` returns early and the accumulator stays spent) — that is Unity's
+        // behaviour and the reason this is an ordering fix rather than a queueing one.
+        for (const p of RETIRE_BEFORE_EMIT ? this.pool : []) {
+            if (!p.sprite.visible || p.age + dt < p.life) continue;
+            p.sprite.visible = false;
+            if (p.rope) p.rope.visible = false;
+            p.age = p.life;
+            this.free.push(p);
+        }
 
         // Emission (rate + bursts), only while the system is "playing".
         const playing = d.looping || this.time <= d.duration;
@@ -1137,6 +1418,7 @@ class Emitter {
 
         // gravity is exported as gravityModifier×100; true accel = value×9.81 px/s², downward (−Y).
         const grav = d.gravity ? sampleScalar(d.gravity, 0.5, 0) * 9.81 : 0;
+        const force = worldForceOverLife(d);
         const noise = d.noise;
         const trail = d.trail;
         const trailMinD = trail?.minVertexDistance || 1;
@@ -1154,6 +1436,10 @@ class Emitter {
             const lf = p.age / p.life;
             // gravity pulls -Y (down) in our Y-up space.
             p.vy -= grav * dt;
+            if (force) {
+                p.vx += force.x * dt;
+                p.vy += force.y * dt;
+            }
             // Limit velocity over lifetime: damp the particle's speed toward the
             // curve-sampled ceiling (Unity ClampVelocityModule). Reins the star
             // glint's hot startSpeed burst into a tight stationary cluster.
@@ -1179,7 +1465,9 @@ class Emitter {
                 p.x += fbmNoise(p.x * f + ph, p.y * f + p.rand * 17) * noise.strength * dt;
                 p.y += fbmNoise(p.y * f + ph + 3.1, p.x * f + p.rand * 17 + 9.3) * noise.strength * dt;
             }
-            p.rot += p.rotVel * dt;
+            // Integrate the authored angular-velocity curve; `rotVel` carries the legacy
+            // bare-number constant so old exports are bit-for-bit unchanged.
+            p.rot += (p.rotVel || rotRateAt(d.rotOverLifeDegPerSec, p.rand, lf)) * dt;
 
             const sz = p.size * (d.sizeOverLife ? sampleCurve(d.sizeOverLife, lf) : 1);
             // Unity multiplies startColor × colorOverLifetime (both RGB and alpha).
@@ -1200,25 +1488,94 @@ class Emitter {
             const alpha = Math.max(0, Math.min(1, col.a));
             this.applyDisp(p.sprite, p, sz, hex, alpha, lf);
 
-            // Trail: record a new point once the head has moved far enough, then
-            // lay the fixed ribbon points along the recent history (head first).
-            if (trail && p.rope?.visible && p.hist && p.trailPts) {
+            // Trail: lay down a vertex once the head has moved `minVertexDistance` (Unity's
+            // SAMPLING threshold), drop vertices older than the authored vertex lifetime
+            // (Unity's LENGTH bound), then resample what survives into the fixed rope budget.
+            //
+            // Spacing alone cannot express this. With one sample per frame max, a ribbon
+            // recorded at a fixed spacing always spans TRAIL_POINTS FRAMES once the particle
+            // outruns that spacing — 0.4 s at a 33 ms tick, whatever was authored. Skadi's
+            // `xian` threads author 2.0 s × 0.05 = 0.1 s and so drew 4× too long, and the
+            // error scaled with frame rate rather than with the data.
+            // (Ribbon mode has no per-particle history — see the rebuild below.)
+            if (trail && trail.mode !== "ribbon" && p.rope?.visible && p.hist && p.trailPts) {
                 const dx = p.x - p.hist[0];
                 const dy = p.y - p.hist[1];
-                const step = p.trailSpace ?? trailMinD;
+                // `?trailmodel=span` restores the superseded frame-bounded model for a same-batch
+                // A/B. Diagnostic only; the age model is the shipped default.
+                const spanMode = TRAIL_W_DIAG.spanModel;
+                const step = spanMode ? (p.trailSpace ?? trailMinD) : trailMinD;
                 if (dx * dx + dy * dy >= step * step) {
-                    p.hist.unshift(p.x, p.y);
-                    if (p.hist.length > TRAIL_POINTS * 2) p.hist.length = TRAIL_POINTS * 2;
+                    p.hist.unshift(p.x, p.y, p.age);
+                    if (p.hist.length > (spanMode ? TRAIL_POINTS : TRAIL_HIST_MAX) * 3) p.hist.length = (spanMode ? TRAIL_POINTS : TRAIL_HIST_MAX) * 3;
                 }
-                p.trailPts[0].set(p.x, -p.y);
-                for (let i = 1; i < TRAIL_POINTS; i++) {
-                    const hi = i * 2;
-                    if (hi + 1 < p.hist.length) p.trailPts[i].set(p.hist[hi], -p.hist[hi + 1]);
-                    else p.trailPts[i].copyFrom(p.trailPts[i - 1]);
+                // Polyline = the LIVE head, then every committed vertex still inside its
+                // lifetime. The head is kept separate from `hist` so the distance test above
+                // keeps measuring against the last COMMITTED vertex; folding it in would
+                // re-arm the test every frame and defeat `minVertexDistance`. One expired
+                // vertex is retained so the tail interpolates to where it is rather than
+                // snapping back a whole sample interval.
+                if (spanMode) {
+                    p.trailPts[0].set(p.x, -p.y);
+                    for (let i = 1; i < TRAIL_POINTS; i++) {
+                        const hi = i * 3;
+                        if (hi + 1 < p.hist.length) p.trailPts[i].set(p.hist[hi], -p.hist[hi + 1]);
+                        else p.trailPts[i].copyFrom(p.trailPts[i - 1]);
+                    }
+                } else {
+                    const cutoff = p.age - (p.trailLife ?? 0);
+                    const committed = p.hist.length / 3;
+                    TRAIL_LINE[0] = p.x;
+                    TRAIL_LINE[1] = p.y;
+                    let n = 1;
+                    for (let i = 0; i < committed; i++) {
+                        TRAIL_LINE[n * 2] = p.hist[i * 3];
+                        TRAIL_LINE[n * 2 + 1] = p.hist[i * 3 + 1];
+                        n++;
+                        if (p.hist[i * 3 + 2] < cutoff) break;
+                    }
+                    resampleTrail(TRAIL_LINE, n, p.trailPts);
                 }
-                p.rope.tint = hex;
-                p.rope.alpha = alpha;
+                // Width follows the particle's CURRENT size so a ribbon grows and fades with
+                // `sizeOverLife`, and drives the geometry rebuild SimpleRope's autoUpdate did.
+                p.rope.setWidth(trailWidth(trail, sz, p.rand));
+                // The ribbon takes the particle's START colour, NOT its faded current colour.
+                //
+                // Unity's trail carries its OWN colour (`colorOverLifetime` / `colorOverTrail`);
+                // `inheritParticleColor` multiplies in the emitter's particle colour, not the
+                // head's `colorOverLifetime` fade. Handing the rope the sprite's current `hex`/
+                // `alpha` instead makes the whole ribbon vanish the moment the head fades out —
+                // even while metres of it are still on screen.
+                //
+                // Skadi the Corrupting Heart's red beam is exactly that: a ~3000px ribbon whose
+                // head has faded (its gradient hits alpha 0 at 69% of life and stays there), so
+                // we drew the entire streak at alpha 0.000 through t=6..7 while the game shows
+                // two bright red beams crossing the full frame. The other trail implementation
+                // in this file already does the right thing — `inheritParticleColor ? p.startCol
+                // : white` — so this was an inconsistency between the two, not a design choice.
+                const towned = (trail.inheritParticleColor ?? true) && TRAIL_START_COLOR;
+                const tlife = trail.colorOverLifetime ? sampleColor(trail.colorOverLifetime, lf, p.rand) : null;
+                const tcol = TRAIL_START_COLOR
+                    ? {
+                          r: (towned ? p.startCol.r : 1) * (tlife ? tlife.r : 1) * (mt ? mt[0] : 1),
+                          g: (towned ? p.startCol.g : 1) * (tlife ? tlife.g : 1) * (mt ? mt[1] : 1),
+                          b: (towned ? p.startCol.b : 1) * (tlife ? tlife.b : 1) * (mt ? mt[2] : 1),
+                          a: (towned ? p.startCol.a : 1) * (tlife ? tlife.a : 1) * (mt ? mt[3] : 1),
+                      }
+                    : { r: col.r, g: col.g, b: col.b, a: col.a };
+                p.rope.tint = rgbToHex(tcol);
+                p.rope.alpha = Math.max(0, Math.min(1, tcol.a));
             }
+        }
+
+        // Ribbon mode: one polyline through the system's live particles, OLDEST first
+        // (Unity's threading order, and the direction `colorOverTrail`/`widthOverTrail`
+        // are sampled along). Rebuilt from scratch each frame — the control points are
+        // the particles themselves, so there is no history to keep.
+        if (this.ribbon) {
+            const live = this.pool.filter((q) => q.sprite.visible);
+            live.sort((q1, q2) => q2.age - q1.age);
+            this.ribbon.rebuild(live);
         }
     }
 
@@ -1279,6 +1636,289 @@ void main() {
 /** HDR boost for ADDITIVE mesh particles: Unity's ×2 additive particle shader plus
  *  headroom so thin glowing shards survive the tonemap. */
 const ADDITIVE_MESH_BOOST = 2.5;
+
+/** How the two independent additive attenuations combine.
+ *
+ *  `additivePileGain` corrects OVER-PILING (many coincident particles counted many times);
+ *  `EFFECT_PARTICLE_GAIN` tames a LARGE additive sheet on a self-lit dark backdrop. They
+ *  answer different questions, and the shipped behaviour MULTIPLIES them — which on cello
+ *  (the only skin where the second fires) leaves her 1313px `star_large` flares at
+ *  0.16-0.24 of their authored energy. `?gainmode=` selects the rule so the choice can be
+ *  measured instead of assumed:
+ *    compound (default, shipped)  pile x effect
+ *    min                          the STRONGER single attenuation, never their product
+ *    effect                       effect supersedes pile where it applies
+ *    pile                         pile only (no large-sheet taming)
+ *  Only systems where `temperLargeAdditive` fires differ between modes, so every other skin
+ *  is byte-identical in all four. */
+function combineAdditiveGains(pile: number, temper: boolean): number {
+    const mode = typeof window === "undefined" ? "compound" : (new URLSearchParams(window.location.search).get("gainmode") ?? "compound");
+    if (!temper) return pile;
+    switch (mode) {
+        case "min": return Math.min(pile, EFFECT_PARTICLE_GAIN);
+        case "effect": return EFFECT_PARTICLE_GAIN;
+        case "pile": return pile;
+        default: return pile * EFFECT_PARTICLE_GAIN;
+    }
+}
+
+/** DIAGNOSTIC (`?psonly=<i>` / `?psoff=<i>`, comma lists): isolate or drop individual
+ *  particle SYSTEMS by their index in `data.systems`.
+ *
+ *  MUST be called at EVERY emitter-construction path. There are FOUR (RamEmitter, the two
+ *  MeshEmitter branches, and the sprite Emitter), each with its own `addChild` and its own
+ *  `continue`s — wiring only the sprite path silently leaves mesh/ram systems unfilterable,
+ *  which reads as "the filter does nothing" and invalidates any conclusion drawn from it. */
+function applyPsDiag(data: IParticlesData, sys: IParticleSystemData, container: PIXI.Container): void {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const only = q.get("psonly");
+    const off = q.get("psoff");
+    if (!only && !off) return;
+    const idx = data.systems.indexOf(sys);
+    if (only && !only.split(",").map(Number).includes(idx)) container.renderable = false;
+    if (off && off.split(",").map(Number).includes(idx)) container.renderable = false;
+}
+
+/** Batch plugin name for ADDITIVE particle SPRITES (see {@link ensureAdditiveSpriteBoost}). */
+const ADDITIVE_BOOST_PLUGIN = "dynAdditiveBoost";
+
+/** The same ×2 Unity additive factor {@link ADDITIVE_MESH_BOOST} applies on the MESH path,
+ *  but for BILLBOARD sprites — which had no equivalent because PIXI's `Sprite.tint` clamps
+ *  at 1.0, so an additive billboard could never contribute more than its authored colour.
+ *  The asymmetry is visible: Skadi's crown shoal is a `renderMode:"billboard"` additive
+ *  emitter whose white texture and warm authored tint render warm-orange, where the game's
+ *  same fish read white because a ×2 contribution clips R and lifts G/B toward neutral.
+ *
+ *  MEASURED AND REJECTED as a default (2026-08-01): enabling it together with the exporter's
+ *  `scalingMode` size fix regressed every reference skin (mly 30.816 -> 32.536,
+ *  cel 23.367 -> 24.139, ska 13.789 -> 13.994). Kept OFF; `?spriteboost=<f>` turns it on. */
+function additiveSpriteBoost(): number {
+    if (typeof window === "undefined") return 1;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("spriteboost") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : 1;
+}
+
+/** Unity retires expired particles BEFORE emitting, so a slot freed this frame is refillable
+ *  the same frame — see the retirement pre-pass in `Emitter.update` for why that matters.
+ *
+ *  `?retire=0` restores the previous emit-then-age order. It exists so the change can be A/B'd
+ *  in ONE build: `particles.ts` carries a large uncommitted delta, so reverting it with
+ *  `git checkout` to measure a baseline destroys unrelated work and renders garbage. */
+function retireBeforeEmit(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("retire") !== "0";
+}
+
+/** Resolved once: the query string cannot change without a reload. */
+const RETIRE_BEFORE_EMIT = retireBeforeEmit();
+
+/** A per-particle ribbon takes the particle's START colour rather than its faded CURRENT colour
+ *  (`?trailcol=0` restores the old behaviour).
+ *
+ *  Unity stores each trail vertex's colour AS IT WAS LAID, so an old vertex stays bright while
+ *  the head fades. A PIXI rope carries ONE tint+alpha for the whole ribbon, so neither extreme is
+ *  exact — but "start colour" is far closer than "current colour", which zeroes the entire ribbon
+ *  the instant the head's `colorOverLifetime` reaches 0 and made Skadi's ~3000px red beam vanish
+ *  outright. True per-vertex colour would need a vertex-coloured rope.
+ *
+ *  DEFAULT OFF, opt in with `?trailcol=1`. The mechanism is right and the restored ribbon is
+ *  real content the game shows — but it currently lands ~70 rows BELOW the game's beam, so
+ *  enabling it measures WORSE (mly 30.816→30.826, ska 13.795→13.830) by adding correct content
+ *  in the wrong place. It should become the default once the streak's position/tilt is fixed;
+ *  until then this stays off rather than trading a visible defect for a measured regression. */
+const TRAIL_START_COLOR = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("trailcol") === "1";
+
+let additiveBoostReady = false;
+/** Register a batch plugin identical to PIXI's default except that it scales RGB by the
+ *  additive factor. MUST run before the `Renderer` is constructed — renderer plugins are
+ *  instantiated with the renderer, so a later `extensions.add` never reaches it. */
+export function ensureAdditiveSpriteBoost(): void {
+    if (additiveBoostReady) return;
+    additiveBoostReady = true;
+    const boost = additiveSpriteBoost();
+    if (boost === 1) return; // inert: leave every sprite on the stock batch plugin
+    const frag = PIXI.BatchRenderer.defaultFragmentTemplate.replace(
+        "gl_FragColor = color * vColor;",
+        `vec4 c = color * vColor;\n    gl_FragColor = vec4(c.rgb * ${boost.toFixed(4)}, c.a);`,
+    );
+    class AdditiveBoostRenderer extends PIXI.BatchRenderer {
+        constructor(renderer: PIXI.Renderer) {
+            super(renderer);
+            this.shaderGenerator = new PIXI.BatchShaderGenerator(PIXI.BatchRenderer.defaultVertexSrc, frag);
+        }
+    }
+    PIXI.extensions.add({
+        name: ADDITIVE_BOOST_PLUGIN,
+        type: PIXI.ExtensionType.RendererPlugin,
+        ref: AdditiveBoostRenderer,
+    });
+}
+
+/**
+ * Unity Trails in **Ribbon** mode: not one ribbon per particle, but ONE polyline
+ * threaded through all of the system's live particles ordered by age, `ribbonCount`
+ * of them interleaved (particle `i` → ribbon `i % ribbonCount`). The emitter becomes
+ * a way of laying down a moving LINE rather than a spray of sprites — which is why
+ * such a system is usually paired with `RenderMode.None`: the particles themselves
+ * are invisible control points and the ribbon is the entire visible effect.
+ *
+ * Rendered as a triangle strip so width and colour can vary along the ribbon, which
+ * `PIXI.SimpleRope` (uniform width, single tint) cannot express — and the variation is
+ * the whole look: Skadi the Corrupting Heart's `hongxian_01` is banded coral by
+ * `colorOverTrail` over a GREY texture and a white material, so a single-tint rope
+ * would draw it grey.
+ */
+class RibbonTrail {
+    private readonly meshes: PIXI.Mesh<PIXI.Shader>[] = [];
+    private readonly pos: Float32Array[] = [];
+    private readonly uv: Float32Array[] = [];
+    private readonly col: Float32Array[] = [];
+    private readonly posBuf: PIXI.Buffer[] = [];
+    private readonly uvBuf: PIXI.Buffer[] = [];
+    private readonly colBuf: PIXI.Buffer[] = [];
+    private readonly count: number;
+
+    /** `cap` is the emitter's per-system particle ceiling — the most control points a
+     *  single ribbon can ever have, so the geometry is allocated once and never grows. */
+    constructor(
+        private readonly trail: ITrail,
+        texture: PIXI.Texture,
+        layer: PIXI.Container,
+        private readonly cap: number,
+    ) {
+        this.count = Math.max(1, Math.min(8, trail.ribbonCount ?? 1));
+        type BufArg = ConstructorParameters<typeof PIXI.Buffer>[0];
+        for (let r = 0; r < this.count; r++) {
+            // Two vertices (±half-width across the ribbon) per control point.
+            const nv = this.cap * 2;
+            const pos = new Float32Array(nv * 2);
+            const uv = new Float32Array(nv * 2);
+            const col = new Float32Array(nv * 4);
+            const idx = new Uint16Array(Math.max(0, this.cap - 1) * 6);
+            for (let s = 0; s + 1 < this.cap; s++) {
+                const v = s * 2;
+                const o = s * 6;
+                idx[o] = v;
+                idx[o + 1] = v + 1;
+                idx[o + 2] = v + 2;
+                idx[o + 3] = v + 1;
+                idx[o + 4] = v + 3;
+                idx[o + 5] = v + 2;
+            }
+            const pb = new PIXI.Buffer(pos as unknown as BufArg);
+            const ub = new PIXI.Buffer(uv as unknown as BufArg);
+            const cb = new PIXI.Buffer(col as unknown as BufArg);
+            const geo = new PIXI.Geometry();
+            geo.addAttribute("aVertexPosition", pb, 2);
+            geo.addAttribute("aUV", ub, 2);
+            geo.addAttribute("aColor", cb, 4);
+            geo.addIndex(new PIXI.Buffer(idx as unknown as BufArg));
+            const additive = trail.blend === "additive";
+            const shader = PIXI.Shader.from(MESH_VERT, MESH_FRAG, {
+                uSampler: texture,
+                uTint: [1, 1, 1],
+                uAlpha: 1,
+                uBoost: additive ? ADDITIVE_MESH_BOOST : 1,
+            });
+            const mesh = new PIXI.Mesh(geo, shader as unknown as PIXI.MeshMaterial);
+            mesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
+            mesh.visible = false;
+            layer.addChild(mesh);
+            this.meshes.push(mesh as unknown as PIXI.Mesh<PIXI.Shader>);
+            this.pos.push(pos);
+            this.uv.push(uv);
+            this.col.push(col);
+            this.posBuf.push(pb);
+            this.uvBuf.push(ub);
+            this.colBuf.push(cb);
+        }
+    }
+
+    /** Rewrite every ribbon's geometry from the emitter's live particles.
+     *  `live` must be ordered OLDEST first — that is the direction Unity threads the
+     *  ribbon, and `colorOverTrail`/`widthOverTrail` are sampled along it. */
+    rebuild(live: IParticle[]): void {
+        const t = this.trail;
+        const sizeAffects = t.sizeAffectsWidth ?? true;
+        for (let r = 0; r < this.count; r++) {
+            const mesh = this.meshes[r];
+            // Interleave: this ribbon takes every `count`-th particle.
+            const pts: IParticle[] = [];
+            for (let i = r; i < live.length && pts.length < this.cap; i += this.count) pts.push(live[i]);
+            // A single point has no segment to draw across.
+            if (pts.length < 2) {
+                mesh.visible = false;
+                continue;
+            }
+            mesh.visible = true;
+            const pos = this.pos[r];
+            const uv = this.uv[r];
+            const col = this.col[r];
+            const n = pts.length;
+            for (let i = 0; i < n; i++) {
+                const p = pts[i];
+                const u = i / (n - 1);
+                // Tangent from the neighbours (one-sided at the ends), then the
+                // across-ribbon normal. Coincident neighbours would give a zero
+                // tangent and collapse the quad, so fall back to +X.
+                const a = pts[Math.max(0, i - 1)];
+                const b = pts[Math.min(n - 1, i + 1)];
+                let tx = b.x - a.x;
+                let ty = -b.y - -a.y;
+                const len = Math.hypot(tx, ty);
+                if (len > 1e-6) {
+                    tx /= len;
+                    ty /= len;
+                } else {
+                    tx = 1;
+                    ty = 0;
+                }
+                const half = 0.5 * (sizeAffects ? p.size : 1) * (t.widthOverTrail ? scalarOf(t.widthOverTrail, p.rand, u) : 1);
+                const nx = -ty * half;
+                const ny = tx * half;
+                const x = p.x;
+                const y = -p.y;
+                const v = i * 4;
+                pos[v] = x + nx;
+                pos[v + 1] = y + ny;
+                pos[v + 2] = x - nx;
+                pos[v + 3] = y - ny;
+                uv[v] = u;
+                uv[v + 1] = 0;
+                uv[v + 2] = u;
+                uv[v + 3] = 1;
+                // Unity multiplies the along-RIBBON band by the along-LIFETIME colour,
+                // and by the particle's own colour only when `inheritParticleColor`.
+                const band = t.colorOverTrail ? sampleColor(t.colorOverTrail, u, p.rand) : { r: 1, g: 1, b: 1, a: 1 };
+                const lifeCol = t.colorOverLifetime ? sampleColor(t.colorOverLifetime, Math.min(1, p.age / p.life), p.rand) : { r: 1, g: 1, b: 1, a: 1 };
+                const own = t.inheritParticleColor ? p.startCol : { r: 1, g: 1, b: 1, a: 1 };
+                const cr = band.r * lifeCol.r * own.r;
+                const cg = band.g * lifeCol.g * own.g;
+                const cb2 = band.b * lifeCol.b * own.b;
+                const ca = Math.max(0, Math.min(1, band.a * lifeCol.a * own.a));
+                const c = i * 8;
+                for (let k = 0; k < 2; k++) {
+                    col[c + k * 4] = cr;
+                    col[c + k * 4 + 1] = cg;
+                    col[c + k * 4 + 2] = cb2;
+                    col[c + k * 4 + 3] = ca;
+                }
+            }
+            // Degenerate the unused tail so stale points from a longer previous frame
+            // cannot leave a stray quad hanging across the scene.
+            for (let i = n; i < this.cap; i++) {
+                const v = i * 4;
+                pos[v] = pos[v + 1] = pos[v + 2] = pos[v + 3] = 0;
+                const c = i * 8;
+                for (let k = 0; k < 8; k++) col[c + k] = 0;
+            }
+            this.posBuf[r].update();
+            this.uvBuf[r].update();
+            this.colBuf[r].update();
+        }
+    }
+}
 
 class MeshEmitter extends Emitter {
     private readonly geometry: PIXI.Geometry;
@@ -1734,13 +2374,13 @@ class RamEmitter {
             size,
             sizeY: d.startSizeY ? sampleScalar(d.startSizeY, sizeRand, nt) : size,
             rot: sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt),
-            rotVel: d.rotOverLifeDegPerSec ?? 0,
+            rotVel: typeof d.rotOverLifeDegPerSec === "number" ? d.rotOverLifeDegPerSec : 0, // legacy const
             rand: Math.random(),
             col: sampleColor(d.startColor, nt),
         });
     }
 
-    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void {
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
         this.time += dt;
@@ -1748,7 +2388,7 @@ class RamEmitter {
         if (this.time < 0) return;
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0));
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.particles);
 
@@ -1759,6 +2399,17 @@ class RamEmitter {
         const ep = { x: this.container.position.x, y: this.container.position.y };
         const moved = this.lastEmitterPos ? Math.hypot(ep.x - this.lastEmitterPos.x, ep.y - this.lastEmitterPos.y) : 0;
         this.lastEmitterPos = ep;
+        // Retire this frame's expiring particles before emitting — same Unity ordering fix
+        // as `Emitter.update`, where the reasoning is written out in full.
+        if (RETIRE_BEFORE_EMIT && this.particles.length > 0) {
+            let keep = 0;
+            for (let r = 0; r < this.particles.length; r++) {
+                const p = this.particles[r];
+                if (p.age + dt >= p.life) continue;
+                this.particles[keep++] = p;
+            }
+            this.particles.length = keep;
+        }
         if (playing) {
             this.emitAcc += emissionRate(d, this.rate, this.time) * dt;
             if (this.rodRate > 0 && moved > 0) this.emitAcc += this.rodRate * moved;
@@ -1781,6 +2432,7 @@ class RamEmitter {
         }
 
         const grav = d.gravity ? sampleScalar(d.gravity, 0.5, 0) * 9.81 : 0;
+        const force = worldForceOverLife(d);
         const noise = d.noise;
         const vol = this.volWorld;
 
@@ -1791,6 +2443,10 @@ class RamEmitter {
             p.age += dt;
             if (p.age >= p.life) continue; // drop
             p.vy -= grav * dt;
+            if (force) {
+                p.vx += force.x * dt;
+                p.vy += force.y * dt;
+            }
             // Limit velocity over lifetime (Unity ClampVelocityModule) — see the
             // sprite Emitter loop. Damp speed toward the curve-sampled ceiling.
             if (d.velocityClamp) {
@@ -1811,7 +2467,8 @@ class RamEmitter {
                 p.x += fbmNoise(p.x * f + ph, p.y * f + p.rand * 17) * noise.strength * dt;
                 p.y += fbmNoise(p.y * f + ph + 3.1, p.x * f + p.rand * 17 + 9.3) * noise.strength * dt;
             }
-            p.rot += p.rotVel * dt;
+            // See the sprite Emitter loop: integrate the authored angular-velocity curve.
+            p.rot += (p.rotVel || rotRateAt(d.rotOverLifeDegPerSec, p.rand, p.age / p.life)) * dt;
             this.particles[w++] = p;
         }
         this.particles.length = w;
@@ -1860,9 +2517,16 @@ class RamEmitter {
             const cx = p.x;
             const cy = -p.y;
             const vp = q * 8;
-            // 4 corners: TL(-hx,-hy) TR(hx,-hy) BR(hx,hy) BL(-hx,hy)
-            const cxs = [-hx, hx, hx, -hx];
-            const cys = [-hy, -hy, hy, hy];
+            // 4 corners: TL(-hx,-hy) TR(hx,-hy) BR(hx,hy) BL(-hx,hy), shifted so the Unity
+            // PIVOT lands on the particle's position — the corner offsets are what the
+            // rotation below is applied to, so shifting them here also makes the quad rotate
+            // ABOUT the pivot, matching Unity. `hx`/`hy` are half-extents, so a pivot of 1.0
+            // displaces by the full size. Unity's +Y is up, this buffer is Y-down.
+            const pv = d.pivot;
+            const ppx = pv ? pv[0] * 2 * hx : 0;
+            const ppy = pv ? pv[1] * 2 * hy : 0;
+            const cxs = [-hx - ppx, hx - ppx, hx - ppx, -hx - ppx];
+            const cys = [-hy + ppy, -hy + ppy, hy + ppy, hy + ppy];
             for (let k = 0; k < 4; k++) {
                 const lxk = cxs[k];
                 const lyk = cys[k];
@@ -1970,6 +2634,12 @@ export interface IEmitterProbe {
      *  two distant particles bounding an empty middle. **0 means genuinely nothing is drawn.**
      *  Overlapping particles are counted twice — it is coverage, not distinct pixels. */
     paintedPx: number;
+    /** Per-particle trail ribbon state, or null when the system has no per-particle trail.
+     *  `span` is the mean bounding extent of a ribbon's control points: a ribbon whose points
+     *  have collapsed onto the head has span 0, and `RopeGeometry.updateVertices` then zeroes
+     *  the perpendicular (`perpLength < 1e-6`), producing a zero-AREA strip that is invisible
+     *  **at every width**. That is the signature to check before blaming ribbon width. */
+    rope?: { n: number; vis: number; w: number; span: number; pts: number; alpha: number; tint: string; tex: string; blend: number } | null;
 }
 
 export interface ILoadedParticles {
@@ -1980,7 +2650,7 @@ export interface ILoadedParticles {
     foreground: PIXI.Container;
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
      *  drift with the character; omit for no bone-following. */
-    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null): void;
+    update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void;
     /** Live per-emitter state for parity diagnosis — see {@link IEmitterProbe}. Read-only and
      *  side-effect free; call it after `update` from a harness, never from the render path.
      *  Pass the viewport size so `onScreen` can be counted. */
@@ -2426,6 +3096,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex) }, sys.blend, budget);
             emitters.push(emitter);
             emitterSys.push(sysIndex);
+            applyPsDiag(data, sys, emitter.container);
             (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
             continue;
         }
@@ -2462,6 +3133,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 emitters.push(emitter);
             emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
+                applyPsDiag(data, sys, emitter.container);
                 (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
             }
             continue;
@@ -2557,6 +3229,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // effect panel to ~2% and it vanishes (Virtuosa's mirror-world/chevron overlay was
                 // invisible through the whole reform because of this). Normal-blend → full alpha.
                 emitter.container.alpha = (meshBlend === "additive" ? additivePileGain(sys) : 1) * (bigGlow ? 0.4 : 1);
+                applyPsDiag(data, sys, emitter.container);
                 (sys.sort < data.characterSort || isBackdropParticle ? background : foreground).addChild(emitter.container);
             }
             continue;
@@ -2584,7 +3257,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // with `additivePileGain`; still additive, so a subtle central flare remains. No-op
         // for every non-`hasDarkBackdrop` skin, and for small additive sparks.
         const temperLargeAdditive = hasDarkBackdrop && blend === "additive" && scalarMax(sys.startSize) > EFFECT_PARTICLE_MAX;
-        if (blend === "additive") emitter.container.alpha = additivePileGain(sys) * (temperLargeAdditive ? EFFECT_PARTICLE_GAIN : 1);
+        if (blend === "additive") emitter.container.alpha = combineAdditiveGains(additivePileGain(sys), temperLargeAdditive);
         // bg_* / haze atmospherics are demoted behind the spine (see isBackdropParticle above).
         // A world-space system that would be bucketed background purely by sort (NOT already
         // demoted as a deliberate backdrop atmospheric) but whose static spawn disc sits mostly
@@ -2600,6 +3273,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // his coat at the tight entrance zoom; the game shows only a faint sheen. Dim just the
         // promoted over-body copy — the background rain (and every other system) is untouched.
         if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
+        applyPsDiag(data, sys, emitter.container);
         (wouldBeBackground && !unoccludeOverlap ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
@@ -2608,11 +3282,11 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         data,
         background,
         foreground,
-        update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null) {
+        update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment) {
             // Recompute the shared live count once per frame for the budget.
             liveEstimate = 0;
             for (const e of emitters) liveEstimate += e.liveCount();
-            for (const e of emitters) e.update(dt, findBone, restBone, displayBox);
+            for (const e of emitters) e.update(dt, findBone, restBone, displayBox, restAtt);
         },
         probe(viewW = 0, viewH = 0): IEmitterProbe[] {
             const gp = new PIXI.Point();
@@ -2639,7 +3313,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                         if (iw > 0 && ih > 0) paintedPx += iw * ih;
                     }
                 }
-                return { sys: emitterSys[i] ?? -1, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx };
+                return { sys: emitterSys[i] ?? -1, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx, rope: "pool" in e ? ropeStats(e.pool) : null };
             });
         },
         destroy() {

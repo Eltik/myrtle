@@ -76,6 +76,12 @@ pub struct SpineAsset {
     /// `_Start` set over this span, then hands off to the settled idle). `None`
     /// for the main set or a skin without an entrance director.
     pub bg_entrance_duration: Option<f64>,
+    /// ENTRANCE screen-fade colour, from the director's `_params.fadeColor` (premultiplied
+    /// straight RGBA, 0..1). The client fades the whole view to this colour as the entrance
+    /// ends and then cuts to the settled idle — the recordings show Virtuosa reaching pure
+    /// white by `duration - 0.2s`. Authored white at full alpha on every skin measured, but
+    /// read from the data rather than assumed. `None` without an entrance director.
+    pub bg_entrance_fade: Option<[f64; 4]>,
     /// ENTRANCE transform beat in seconds — the time of the dominant late cluster
     /// of per-object `_delayTime`s (the reform/gala burst; Virtuosa: 12.0s). The
     /// camera has dollied to the wide stop and the character has reformed by here,
@@ -402,6 +408,99 @@ pub(crate) fn go_effectively_active(
     true
 }
 
+/// Does this GameObject sit under a `Start Only Effects` group?
+///
+/// The `<State> Only Effects` groups are authored on the IDLE prefab and switched on by the game
+/// only while that state plays. A start-only system therefore falls through BOTH particle gates:
+/// the idle export drops it as `inactive-group` (correct — it must not play in the idle loop),
+/// and the `_Start` export drops it as `cross-root` (its prefab root is the idle one, not
+/// `..._Start`), so it is exported NOWHERE despite being exactly what the entrance exists to show.
+///
+/// Skadi the Corrupting Heart's pure-red `xiaoyu` emitter (start colour 1.00,0.05,0.05 at full
+/// alpha) is the case that surfaced this: the game paints it as a bright red beam at t=7 that we
+/// did not draw at all, while every other red line in that frame already matched.
+pub(crate) fn has_start_only_ancestor(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    go_pid: i64,
+    go_to_transform: &HashMap<i64, i64>,
+) -> bool {
+    let Some(&mut_tr) = go_to_transform.get(&go_pid) else { return false };
+    let mut cur_tr = mut_tr;
+    for _ in 0..256 {
+        let tf = match all_objects.get(&cur_tr) {
+            Some((4, v)) => v,
+            _ => return false,
+        };
+        if let Some(go) = tf.get("m_GameObject").and_then(get_path_id)
+            && let Some((1, gv)) = all_objects.get(&go)
+        {
+            let name = gv
+                .get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_ascii_lowercase();
+            if name.contains("only") && name.contains("start") {
+                return true;
+            }
+        }
+        match tf.get("m_Father").and_then(get_path_id) {
+            Some(f) if f != 0 => cur_tr = f,
+            _ => return false,
+        }
+    }
+    false
+}
+
+/// DIAGNOSTIC twin of [`go_effectively_active`]: when that returns `false`, report WHICH
+/// ancestor blocked it and why.
+///
+/// The drop logs name the object and its bundle ROOT, which cannot distinguish a legitimate
+/// state gate ("Start Only Effects", switched on by the game only during that state) from a
+/// wrongly-blocked ordinary group — and those need opposite fixes. Returns
+/// `(ancestor_name, reason)`; `None` when the object is active.
+pub(crate) fn blocking_ancestor(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    go_pid: i64,
+    go_to_transform: &HashMap<i64, i64>,
+    idle_active: &HashMap<i64, bool>,
+    start_state_active: bool,
+) -> Option<(String, &'static str)> {
+    let mut cur_tr = *go_to_transform.get(&go_pid)?;
+    for _ in 0..256 {
+        let tf = match all_objects.get(&cur_tr) {
+            Some((4, v)) => v,
+            _ => return None,
+        };
+        if let Some(go) = tf.get("m_GameObject").and_then(get_path_id)
+            && let Some((1, gv)) = all_objects.get(&go)
+        {
+            let name = gv.get("m_Name").and_then(Value::as_str).unwrap_or("").to_string();
+            let lower = name.to_ascii_lowercase();
+            match idle_active.get(&go) {
+                Some(false) => return Some((name, "idle-clip switches it OFF")),
+                Some(true) => {}
+                None => {
+                    if gv.get("m_IsActive").and_then(Value::as_i64).unwrap_or(1) == 0 {
+                        return Some((name, "prefab m_IsActive=0, no clip drives it"));
+                    }
+                }
+            }
+            if lower.contains("only")
+                && STATE_ONLY
+                    .iter()
+                    .any(|s| !(start_state_active && *s == "start") && lower.contains(s))
+            {
+                return Some((name, "<State> Only Effects group"));
+            }
+        }
+        match tf.get("m_Father").and_then(get_path_id) {
+            Some(f) if f != 0 => cur_tr = f,
+            _ => return None,
+        }
+    }
+    None
+}
+
 /// Collect spine assets using `MonoBehaviour` reference graph traversal.
 ///
 /// Reference chain:
@@ -611,6 +710,7 @@ pub fn collect_spine_assets(
         // ENTRANCE (`_Start`) director timing + camera — only the `_Start` prefab has them.
         let (
             bg_entrance_duration,
+            bg_entrance_fade,
             bg_entrance_transform,
             bg_entrance_view,
             bg_entrance_cam_offset,
@@ -620,6 +720,7 @@ pub fn collect_spine_assets(
             bg_entrance_cam_center,
         ) = if category == SpineCategory::DynIllust && base_name.to_lowercase().contains("_start") {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
+            let fade = find_entrance_fade(all_objects);
             // Entrance camera ortho size (world units) → authored-px full view (2·ortho·invScale),
             // the tight close-up the cinematic opens on before dollying out to the display frame.
             let inv = 1.0 / skel_scale.unwrap_or(0.01);
@@ -631,6 +732,7 @@ pub fn collect_spine_assets(
             let cam_center = super::anim::entrance_camera_track(all_objects, inv);
             (
                 dur,
+                fade,
                 tr,
                 ortho.map(|o| 2.0 * o * inv),
                 cam_off,
@@ -640,7 +742,7 @@ pub fn collect_spine_assets(
                 cam_center,
             )
         } else {
-            (None, None, None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None, None)
         };
 
         assets.push(SpineAsset {
@@ -659,6 +761,7 @@ pub fn collect_spine_assets(
             bg_camera_view2: scene.camera_view2,
             bg_character_sort: scene.char_sort,
             bg_entrance_duration,
+            bg_entrance_fade,
             bg_entrance_transform,
             bg_entrance_view,
             bg_entrance_cam_offset,
@@ -937,6 +1040,10 @@ fn collect_dynchar_bg_quads(
     renderers.sort_unstable_by_key(|(pid, _)| *pid);
 
     let mut skipped_inactive = 0usize;
+    // Env-gated attribution: the exported layers are anonymous, so tracing a missing
+    // element back to its authored node (and to WHICH prefab root) otherwise means
+    // re-deriving the walk by hand. Output-neutral.
+    let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
     for (_, renderer) in renderers {
         let Some(go_pid) = renderer.get("m_GameObject").and_then(get_path_id) else {
             continue;
@@ -1007,6 +1114,21 @@ fn collect_dynchar_bg_quads(
         let state_blocked = state_only_blocked(all_objects, go_pid, &go_to_transform, is_entrance);
         if !eff_active && window == (None, None) && !(has_color_reveal && !state_blocked) {
             skipped_inactive += 1;
+            if attrib_dbg {
+                let (by, why) = blocking_ancestor(
+                    all_objects,
+                    go_pid,
+                    &go_to_transform,
+                    &idle_pose.active,
+                    is_entrance,
+                )
+                .unwrap_or_else(|| ("?".to_string(), "?"));
+                eprintln!(
+                    "    [scene] DROP inactive-group  {:<26} blocked_by='{by}' ({why}) root={}",
+                    host.go_name(all_objects, go_pid),
+                    host.root_name_of_go(all_objects, go_pid)
+                );
+            }
             continue;
         }
 
@@ -1380,6 +1502,16 @@ fn collect_dynchar_bg_quads(
         // 43) is parsed; a null (`m_Mesh == 0`) or external/built-in reference
         // (e.g. Unity's Quad primitive, path_id 10210, in default resources)
         // falls back to the unit quad — dynchar scene layers are flat quads.
+        //
+        // NOTE (2026-08-01): skipping the NULL case instead — on the theory that a null
+        // `m_Mesh` renders nothing in Unity, so substituting a quad paints a rectangle the
+        // game never draws — was built, exported and MEASURED. It is a NO-OP here: Ch'en's
+        // scene came out byte-identical at 26 layers, because the one null-mesh object
+        // ("wave") is already excluded by a later gate. Her rectangular sky is NOT this: her
+        // bundle has ZERO external mesh refs and genuine 4-vertex meshes in-bundle, so that
+        // quad is authored geometry, and her only `_AlphaTex` belongs to the spine atlas, not
+        // a scene quad. Do not re-attempt without a skin where the null case actually reaches
+        // the output.
         let mut mesh = match go_to_mesh.get(&go_pid).copied() {
             Some(mp) if mp != 0 => match all_objects.get(&mp) {
                 Some((43, mesh_val)) => match super::mesh::parse_mesh(mesh_val, &HashMap::new()) {
@@ -1432,6 +1564,14 @@ fn collect_dynchar_bg_quads(
                 }
             });
 
+        if attrib_dbg {
+            eprintln!(
+                "    [scene] KEEP  sort={sort:<4} reveal={:<6} {:<28} root={}",
+                cross_from.map_or_else(|| "-".to_string(), |t| format!("{t:.2}")),
+                host.go_name(all_objects, go_pid),
+                host.root_name_of_go(all_objects, go_pid)
+            );
+        }
         quads.push(BgQuad {
             mesh,
             tex_val,
@@ -1510,9 +1650,21 @@ fn legacy_tint_scale(mat: &Value, animated_color: bool) -> f32 {
         .rfind("Particles-L2D/")
         .map(|i| &shader[i + "Particles-L2D/".len()..])
         .is_some_and(|rest| !rest.is_empty() && !rest.contains('/'));
+    // EXPERIMENT (`DYNCHAR_DISSOLVE_TINT=1`): admit the `Dissolve/` sub-family for STATIC
+    // layers too. It shares the ×2 `_TintColor` convention, but `ram_tint_scale` only lets the
+    // sub-namespaced families through when the entrance clip ANIMATES the layer — so a skin
+    // with no entrance never gets it. Ch'en the Holungday's wedge layers are the visible cost:
+    // `Torappu/Particles-L2D/Dissolve/Dissolve Add UVTween` with `_TintColor`
+    // [0.244,0.290,0.294,0.366] exports a WHITE tint, so they render neutral grey where the
+    // game draws them blue. Env-gated because the twin extension for a STATIC
+    // `Disturb(CustomData)` backdrop measured WORSE on Mlynar (clamping a static baseline and
+    // its peak to one ceiling shrinks the delta) — this must be measured, not assumed.
+    let dissolve_static = std::env::var("DYNCHAR_DISSOLVE_TINT").is_ok()
+        && shader.to_ascii_lowercase().contains("/particles-l2d/dissolve/");
     let legacy = shader.contains("/Particles/")
         || shader.starts_with("Particles/")
-        || (animated_color && plain_l2d);
+        || (animated_color && plain_l2d)
+        || dissolve_static;
     let has_tint_color = mat
         .get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Colors"))
@@ -1799,6 +1951,22 @@ fn entrance_camera_pid(all_objects: &HashMap<i64, (i32, Value)>) -> Option<i64> 
         })
 }
 
+/// The entrance director's `_params.fadeColor` as straight RGBA in 0..1.
+///
+/// Documented in [`find_entrance_timing`]'s doc comment for a long time but never read: the
+/// screen fade that ends every entrance was simply absent from our render. Virtuosa's recording
+/// fades to pure white over roughly the last second and holds it until `duration`.
+fn find_entrance_fade(all_objects: &HashMap<i64, (i32, Value)>) -> Option<[f64; 4]> {
+    let ordered = objects_by_path_id(all_objects);
+    let c = ordered.iter().find_map(|(_, (cid, v))| {
+        (*cid == 114 && v.get("_mainCamera").is_some())
+            .then(|| v.get("_params").and_then(|p| p.get("fadeColor")))
+            .flatten()
+    })?;
+    let g = |k: &str| c.get(k).and_then(Value::as_f64);
+    Some([g("r")?, g("g")?, g("b")?, g("a")?])
+}
+
 fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTiming {
     let ordered = objects_by_path_id(all_objects);
     let params = ordered.iter().find_map(|(_, (cid, v))| {
@@ -2049,6 +2217,31 @@ impl BgParticleHost {
         )
     }
 
+    /// Is this GameObject under a `Start Only Effects` group? See [`has_start_only_ancestor`].
+    pub(crate) fn has_start_only_ancestor(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> bool {
+        has_start_only_ancestor(all_objects, go_pid, &self.go_to_transform)
+    }
+
+    /// DIAGNOSTIC: which ancestor blocked [`Self::effectively_active`], and why.
+    pub(crate) fn blocking_ancestor(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+        start_state_active: bool,
+    ) -> Option<(String, &'static str)> {
+        blocking_ancestor(
+            all_objects,
+            go_pid,
+            &self.go_to_transform,
+            &self.idle.active,
+            start_state_active,
+        )
+    }
+
     /// World matrix of a GameObject's Transform, in the spine root's local frame.
     pub(crate) fn world_of_go(
         &self,
@@ -2137,6 +2330,28 @@ impl BgParticleHost {
                 .and_then(get_path_id);
         }
         None
+    }
+
+    /// The GameObject's own `m_Name`, or `"?"`. Diagnostics only: the exported JSONs
+    /// are anonymous, so attributing a layer/system back to an authored node needs this.
+    pub(crate) fn go_name(&self, all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> String {
+        all_objects
+            .get(&go_pid)
+            .and_then(|(_, v)| v.get("m_Name"))
+            .and_then(Value::as_str)
+            .unwrap_or("?")
+            .to_string()
+    }
+
+    /// `go_name` of the GameObject's prefab-INSTANCE root — which of a dynchar bundle's
+    /// sibling roots (`dyn_illust_*` idle / `dyn_entrance_*` cinematic) it belongs to.
+    pub(crate) fn root_name_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> String {
+        self.prefab_root_of_go(all_objects, go_pid)
+            .map_or_else(|| "?".to_string(), |r| self.go_name(all_objects, r))
     }
 
     /// The GameObject `m_Name` of every ancestor of `go_pid`, nearest-first,
@@ -2367,6 +2582,7 @@ pub fn collect_enemy_spine_assets(
             bg_camera_view2: None,
             bg_character_sort: None,
             bg_entrance_duration: None,
+            bg_entrance_fade: None,
             bg_entrance_transform: None,
             bg_entrance_view: None,
             bg_entrance_cam_offset: None,
@@ -2961,10 +3177,29 @@ fn export_scene(
             let extent = (xmx - xmn).max(ymx - ymn);
             if fe > 0.0 && extent > fe * 10.0 {
                 if dbg {
+                    // The full bbox is an OUTLIER-SENSITIVE statistic: a mesh whose art
+                    // sits in frame but that carries a few stray/degenerate vertices
+                    // parked far off-origin measures as "62x the frame" and is dropped
+                    // as a fill. Report the 2nd..98th percentile extent alongside it —
+                    // if the core is small, the bbox is lying and this drop is a bug.
+                    let pct = |mut v: Vec<f32>| -> (f32, f32) {
+                        v.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                        let n = v.len();
+                        if n == 0 {
+                            return (0.0, 0.0);
+                        }
+                        (v[(n as f32 * 0.02) as usize], v[((n - 1) as f32 * 0.98) as usize])
+                    };
+                    let (xlo, xhi) = pct(pos.iter().step_by(2).copied().collect());
+                    let (ylo, yhi) = pct(pos.iter().skip(1).step_by(2).copied().collect());
+                    let core = (xhi - xlo).max(yhi - ylo);
                     eprintln!(
-                        "  DROP[oversize] '{name_l}' sort={} extent={extent:.0} frame={fe:.0} ({:.1}x)",
+                        "  DROP[oversize] '{name_l}' sort={} extent={extent:.0} frame={fe:.0} ({:.1}x)  \
+                         verts={} core_p2_p98={core:.0} ({:.1}x frame)",
                         quad.sort,
-                        extent / fe
+                        extent / fe,
+                        pos.len() / 2,
+                        core / fe
                     );
                 }
                 continue;
@@ -3031,7 +3266,37 @@ fn export_scene(
                 q(u).hash(&mut h);
                 q(v).hash(&mut h);
             }
-            if !seen_sigs.insert(h.finish()) {
+            // EXPERIMENT (`DYNCHAR_KEEP_DUPLICATES=1`, default OFF): keep exact-duplicate quads.
+            //
+            // Unity draws BOTH copies, so for a semi-transparent or ADDITIVE plane the pair
+            // accumulates — collapsing them to one halves the wash. Mlynar stacks a pure-white
+            // additive `bg_02` at sort 2 with a dropped twin, and the game's frame at t=13 is
+            // heavily washed where ours is clean. This gate makes that measurable without
+            // rebuilding.
+            // Exact-duplicate quads are dropped only when ADDITIVE.
+            //
+            // Unity draws every copy, so a duplicate is not free: an ADDITIVE quad drawn twice
+            // doubles its light, which is visibly wrong, while an alpha-blend quad drawn twice is
+            // genuinely stacked art (two passes at alpha a give 1-(1-a)^2 coverage, not a).
+            // Collapsing both was costing real stacking.
+            //
+            // The corpus splits exactly along that line: Virtuosa's 66 duplicates and Skadi's 22
+            // are ALL alpha-blend, while Mlynar's 12 are half additive. Measured against the
+            // (re-aligned) oracle, keeping ALL duplicates gave cel -0.448 but mly +2.165 — the
+            // gain is entirely on the alpha-blend side and the loss entirely on the additive side.
+            //
+            // `DYNCHAR_KEEP_DUPLICATES=1` keeps every duplicate (the blanket variant, for A/B);
+            // `DYNCHAR_DROP_ALL_DUPLICATES=1` restores the old drop-everything behaviour.
+            let keep_dupes = std::env::var("DYNCHAR_KEEP_DUPLICATES").is_ok();
+            let drop_all_dupes = std::env::var("DYNCHAR_DROP_ALL_DUPLICATES").is_ok();
+            let dedup_this = if keep_dupes {
+                false
+            } else if drop_all_dupes {
+                true
+            } else {
+                quad.additive
+            };
+            if !seen_sigs.insert(h.finish()) && dedup_this {
                 if dbg {
                     eprintln!("  DROP[duplicate] '{name_l}' sort={}", quad.sort);
                 }
@@ -3370,11 +3635,17 @@ fn export_scene(
         // Authored display frame (spine-authored px): centre + square extent from
         // the display controller's `_adjustes[0]` — how the game frames the scene.
         "cameraOffsetPx": asset.bg_camera_offset.map(|(x, y)| [x as f32, y as f32]),
-        "cameraViewPx": asset.bg_camera_view.map(|v| v as f32),
+        // Unity writes an UNINITIALISED `_adjustes` stop as `-FLT_MAX`. Carried through
+        // verbatim it is a non-zero number, so a consumer's truthiness check accepts it and
+        // builds a ~3e38 px crop — Nearl the Radiant Knight "Epoque" has both stops unset and
+        // rendered as an EMPTY frame. Emit null unless the extent is finite and positive, so
+        // the consumer falls back to the `cameraSizePx` framing it already has for skins with
+        // no authored stop at all.
+        "cameraViewPx": asset.bg_camera_view.filter(|v| v.is_finite() && *v > 0.0).map(|v| v as f32),
         // The TIGHT/zoomed-in endpoint from `_adjustes[1]` (present only on special-entry
         // skins whose viewer dollies out from a close-up at open). Null when absent.
         "cameraOffsetPx2": asset.bg_camera_offset2.map(|(x, y)| [x as f32, y as f32]),
-        "cameraViewPx2": asset.bg_camera_view2.map(|v| v as f32),
+        "cameraViewPx2": asset.bg_camera_view2.filter(|v| v.is_finite() && *v > 0.0).map(|v| v as f32),
         "aspect": asset.bg_max_aspect,
         "characterSort": asset.bg_character_sort,
         // ENTRANCE (`_Start`) cinematic timing (seconds), from the entrance director's
@@ -3382,6 +3653,8 @@ fn export_scene(
         // scenes; drives the client entrance camera dolly (tight→wide across `_adjustes`)
         // and the hand-off to the settled idle — so those are gamedata, not guessed.
         "entranceDuration": asset.bg_entrance_duration.map(|v| v as f32),
+        // Straight RGBA of the director's end-of-entrance screen fade (see `bg_entrance_fade`).
+        "entranceFade": asset.bg_entrance_fade.map(|c| Value::from(vec![c[0], c[1], c[2], c[3]])),
         "entranceTransform": asset.bg_entrance_transform.map(|v| v as f32),
         // Tight entrance close-up view (authored px) from the entrance camera's ortho size.
         "entranceViewPx": asset.bg_entrance_view.map(|v| v as f32),
