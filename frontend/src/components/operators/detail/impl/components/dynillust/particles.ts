@@ -466,11 +466,33 @@ const PREWARM_MAX_STEPS = 300;
  *  director/`m_IsActive` gating, not the system's own — Unity's "prewarm needs no start
  *  delay" rule does not apply, and gating on it would be metric-driven tuning.
  *
- *  Kept behind flags because the fields ARE authored and the exporter now emits them; the
- *  honest reading is that our per-system ACTIVATION timing interacts with the slowed clock,
- *  not that Unity's semantics are wrong. Re-enable with `?simspeed=1` / `?prewarm=1` — note
- *  the corpus must be re-extracted first, since only the three reference skins carry the
- *  fields today. */
+ *  **BOTH FIELDS ARE INERT IN THE CLIENT — established, not assumed.**
+ *
+ *  `prewarm`: Virtuosa's `rainbow_large_01` is the only system in her skin whose phase can
+ *  tell "prewarmed" from "long-running" (a 1.0 s offset; every other prewarmed system there
+ *  shifts by 0.000). All four models of when it starts x whether it prewarms, at her t=10:
+ *
+ *      starts at 0,  NO prewarm (shipped)  24.87   <- BEST by ~1.6
+ *      starts at 0,  prewarmed             26.54
+ *      starts at the transition, no pre.   26.44
+ *      starts at the transition, prewarmed 26.47
+ *      (deleting the system outright       26.39)
+ *
+ *  `simulationSpeed`: her diamond system is authored at 0.3, so at t=10 its clock reads 3.0 s
+ *  against a 5 s lifetime — it never reaches steady state. Applied, its rings collapse from
+ *  **507x365 px to a 49x45 speck** (38390 painted px -> 283) where the game plainly draws them
+ *  full size; MAD inside that footprint goes 51.9 -> 62.6.
+ *
+ *  Both point the same way, and one mechanism explains both: Unity applies `simulationSpeed`
+ *  and `prewarm` when a system PLAYS, and an L2D player that drives its emitters from a
+ *  director clock (`Simulate(dt)` rather than `Play()`) triggers neither. Our shipped emission
+ *  model — global phase from t=0, accumulator carried across loop wraps, no prewarm, no speed
+ *  scaling — is therefore correct on every count.
+ *
+ *  The exporter still emits the fields (data is strictly better held than dropped). Re-enable
+ *  with `?simspeed=1` / `?prewarm=1`, but note the corpus needs a re-extract first — only the
+ *  three reference skins carry them today. **Do not re-open from the Unity-semantics argument;
+ *  the next evidence has to come from the client binary.** */
 const SIM_SPEED_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("simspeed") === "1";
 function simSpeedOf(d: IParticleSystemData): number {
     if (!SIM_SPEED_ON) return 1;
