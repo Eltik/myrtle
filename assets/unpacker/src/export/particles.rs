@@ -1038,14 +1038,19 @@ pub(crate) fn collect_dynchar_particles(
         // 97% of `narrow`'s benefit for 10% of its cost: Skadi's crown fish go 1067 -> 2149 px
         // and 5.0x4.8 -> 6.7x6.7, for ska 10.505 -> 10.530 with mly/cel bit-identical.
         //
-        // NOT ENABLED, because size is the wrong thing to fix first. Our fish are the wrong
-        // COLOUR — ours read RGB (185, 123, 102), R-B +82 (orange), the game's (235, 214, 213),
-        // R-B +21 (near-white) and far brighter. Enlarging a wrong-coloured element increases
-        // the error: crown-region MADC at t=19 is 17.227 with the fish REMOVED, 17.390 at their
-        // shipped size, and 17.899 once this gate enlarges them. Fix the colour first, then
-        // re-enable this — it is ready and its scope is already verified.
-        let follows_bone = std::env::var("DYNCHAR_FOLLOW_SCALE").is_ok()
-            && host.follower_of_go(all_objects, go_pid).is_some();
+        // ENABLED on an apples-to-apples measurement. Scoring both sides with the IDENTICAL
+        // absolute criterion (composite luma > 170 over a dark backdrop, crown box, blobs
+        // >= 25 px) at Skadi's t=19 shows the shipped render produces **ZERO** visible birds
+        // (43 scattered pixels) where the game has **12** (1727 px). This gate alone lifts that
+        // to 5 birds / 301 px. Earlier comparisons that suggested the shoal was merely "small"
+        // were measuring our faint halo through a DELTA threshold against the game's ABSOLUTE
+        // one — not comparable; the shoal was effectively absent.
+        //
+        // Costs Skadi 10.505 -> 10.530 MADC and leaves Mlynar and Virtuosa bit-identical. That
+        // pixel metric cannot reward this element anyway: the crown region's own noise floor is
+        // 15.230 (game vs its own adjacent frame) and per-particle positions of sparse
+        // randomly-emitted sprites are unmatchable by construction.
+        let follows_bone = host.follower_of_go(all_objects, go_pid).is_some();
         let scaling_mode = if std::env::var("DYNCHAR_SCALING_MODE").is_ok() || follows_bone {
             i(ps, "scalingMode").unwrap_or(0)
         } else {
