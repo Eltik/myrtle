@@ -196,10 +196,24 @@ const SCENE_ZOOM_OUT = 1.7;
  *  misregistered. That is precisely what the `sceneLayerCount === 0` gate on `useStatic` has
  *  always been guarding against, and a coverage test does not substitute for it.
  *
- *  **The fix direction:** the backdrop must fill ONLY pixels nothing else covers. Drawing it
- *  first (index 0) cannot do that — anything translucent above it lets it through. It needs
- *  destination-over compositing (render the scene to an RT, then put the static UNDER it where
- *  alpha is still 0), which is a real compositor change rather than a draw-order tweak.
+ *  **DESTINATION-OVER IS NOT THE FIX — measured (`?gapmode=dstover`).** I expected DST_OVER
+ *  drawn last to be algebraically identical to drawing first (`dst + src*(1-dstA)` vs
+ *  `scene + backdrop*(1-sceneA)`). It is NOT identical in practice — the scene carries ADDITIVE
+ *  layers, which add colour without accumulating alpha, so destination alpha does not track
+ *  coverage. And it is WORSE on both counts:
+ *
+ *      cel MADC     baseline 19.422   draw-first 19.361   DST_OVER 19.404
+ *      lin_nian     off mean 140.58 std 65.41
+ *                   draw-first 134.14 std 66.81   DST_OVER 127.13 std 58.80  <- MORE washed
+ *
+ *  Less parity gain and a bigger washout (falling std = falling contrast).
+ *
+ *  **What is actually required:** fill only pixels where NOTHING is drawn — a HARD threshold at
+ *  accumulated alpha ~0, not a proportional blend. Fixed-function blending cannot express that;
+ *  it needs a shader step on the scene's alpha, which means making the backdrop available as a
+ *  texture to the tonemap (an extra RT pass with the same camera transform). Note the additive
+ *  problem persists there too: an additive glow leaves alpha low, so an alpha-only test would
+ *  let the static through under glows. The threshold likely has to consider luminance as well.
  *
  *  `?gapfill=1` re-enables it. NOTE: `rec.js` must also be given `&backdrop=<url>` or the whole
  *  backdrop path is inert — see the harness note in the parity memory. */
@@ -1572,7 +1586,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
-                    sceneContainer.addChildAt(bd, 0);
+                    // `?gapmode=dstover`: draw it LAST with destination-over instead of first.
+                    // Kept only to demonstrate that the two are the SAME operation — see the
+                    // note on gapFillOn.
+                    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "dstover") {
+                        bd.blendMode = PIXI.BLEND_MODES.DST_OVER;
+                        sceneContainer.addChild(bd);
+                    } else {
+                        sceneContainer.addChildAt(bd, 0);
+                    }
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
