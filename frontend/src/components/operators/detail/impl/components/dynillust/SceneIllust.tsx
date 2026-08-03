@@ -175,8 +175,34 @@ const SCENE_ZOOM_OUT = 1.7;
  *  silhouette boundary. Rendered with a `contain` fit so the whole box is visible.
  *
  *  Returns null when absent or malformed, leaving the normal framing untouched. */
-/** DIAGNOSTIC (`?gapfill=1`): draw the static illustration BEHIND a scene that does not span
- *  the camera view, to fill the bare canvas the game fills with vista. Default OFF. */
+/** Draw the static illustration BEHIND a scene that does not span the camera view, to fill the
+ *  bare canvas the game fills with vista? **MEASURED — a REAL WIN on the only skin that can be
+ *  scored, but BLOCKED by double-draw. Default OFF.**
+ *
+ *  The diagnosis is solid: Virtuosa's scene genuinely does not reach the frame (0 of 132 layers
+ *  span the view, largest 0.88) and nothing is dropped, so the uncovered margin falls through to
+ *  a near-black canvas where the game shows vista. Filling it does exactly what it should:
+ *
+ *      cel  19.422 -> 19.361     t=2 -0.235, t=5 -0.230, every other beat EXACTLY 0.000
+ *      mly  17.721 -> 17.721     bit-identical
+ *      ska  10.505 -> 10.505     bit-identical
+ *
+ *  A clean, targeted win — only the two beats with the gap move.
+ *
+ *  **Why it cannot ship as written.** The gate is geometric (no layer spans the view), which is
+ *  77% of the corpus — 72 of 93 scenes. Spot-rendering eight of them found no blank and no
+ *  blow-out, but `char_4080_lin_nian#10` is visibly WASHED OUT: the static illustration CONTAINS
+ *  THE CHARACTER, so drawing it behind a scene with translucent layers double-draws her,
+ *  misregistered. That is precisely what the `sceneLayerCount === 0` gate on `useStatic` has
+ *  always been guarding against, and a coverage test does not substitute for it.
+ *
+ *  **The fix direction:** the backdrop must fill ONLY pixels nothing else covers. Drawing it
+ *  first (index 0) cannot do that — anything translucent above it lets it through. It needs
+ *  destination-over compositing (render the scene to an RT, then put the static UNDER it where
+ *  alpha is still 0), which is a real compositor change rather than a draw-order tweak.
+ *
+ *  `?gapfill=1` re-enables it. NOTE: `rec.js` must also be given `&backdrop=<url>` or the whole
+ *  backdrop path is inert — see the harness note in the parity memory. */
 function gapFillOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("gapfill") === "1";
