@@ -1932,7 +1932,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // even when it's EARLIER than the spine's own natural animation
                         // completion. That's the whole point: the pose swap must not wait for
                         // the baked idle-hold tail to finish playing out.
-                        deferEndUntil = end;
+                        //
+                        // ...but never LATER than the director's own `duration`. The layer terms
+                        // above exist to let a late REVEAL finish; a curve that merely happens to
+                        // end still-visible past the authored end is baked idle-hold tail, the
+                        // same artifact this block already discounts for the camera curves. The
+                        // handoff carries the white screen fade with it, so over-deferring holds
+                        // the frame pure white long after the game has cut back.
+                        //
+                        // Measured on the two captures that cover the transition, both settle to
+                        // the idle at `duration + 0.35`: Mlynar (duration 16.5) is back at 16.87,
+                        // Muelsyse (duration 20.0) at 20.35. Muelsyse is the skin this fixes —
+                        // her `end` runs to 20.93, deferred +0.93s by an ordinary sort-1 layer
+                        // sitting at alpha 0.69, and we held pure white until 21.08 where the game
+                        // was live at 20.35. Every other benchmark already lands within 0.1s of
+                        // `duration` (Mlynar 16.50, Virtuosa 18.00, Skadi 2 22.43 → 22.33), so
+                        // this is a no-op for them.
+                        deferEndUntil = Math.min(end, scene.data.entranceDuration ?? end);
                     } else {
                         const entAnimDur = spine.spineData.animations.find((a: { name: string }) => a.name === entranceAnim)?.duration ?? 0;
                         if (end > entAnimDur + 0.05) deferEndUntil = end;
