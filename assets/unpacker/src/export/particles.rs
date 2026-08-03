@@ -1025,7 +1025,28 @@ pub(crate) fn collect_dynchar_particles(
         // is too broad: it changed 178 of 266 systems while only 96 are Local WITH a non-unit
         // world basis, so it also rewrites systems whose accumulated basis was already 1.0 and
         // which were therefore already correct. Narrow it to that population before retrying.
-        let scaling_mode = if std::env::var("DYNCHAR_SCALING_MODE").is_ok() {
+        // THE PER-SYSTEM DISCRIMINATOR, found and then shelved (2026-08-03). A BONE-FOLLOWING
+        // emitter is the one case where the accumulated world basis is provably the wrong basis
+        // for particle SIZE: its POSITION comes from the live spine bone at runtime (see the
+        // `followBone` export below) and that bone already carries the skeleton's own scale, so
+        // baking the same ancestor scale into the size applies it TWICE. A baked-position
+        // emitter has no such split — `pos` and size share one basis and stay self-consistent —
+        // which is why honouring Local semantics for them measured worse (see below).
+        //
+        // It is a GOOD discriminator: on the benchmarks it touches 3 of Skadi's 90 systems
+        // (vs `narrow`'s 74), 0 of Mlynar's, and 23 of Virtuosa's — all wing rigs. It captures
+        // 97% of `narrow`'s benefit for 10% of its cost: Skadi's crown fish go 1067 -> 2149 px
+        // and 5.0x4.8 -> 6.7x6.7, for ska 10.505 -> 10.530 with mly/cel bit-identical.
+        //
+        // NOT ENABLED, because size is the wrong thing to fix first. Our fish are the wrong
+        // COLOUR — ours read RGB (185, 123, 102), R-B +82 (orange), the game's (235, 214, 213),
+        // R-B +21 (near-white) and far brighter. Enlarging a wrong-coloured element increases
+        // the error: crown-region MADC at t=19 is 17.227 with the fish REMOVED, 17.390 at their
+        // shipped size, and 17.899 once this gate enlarges them. Fix the colour first, then
+        // re-enable this — it is ready and its scope is already verified.
+        let follows_bone = std::env::var("DYNCHAR_FOLLOW_SCALE").is_ok()
+            && host.follower_of_go(all_objects, go_pid).is_some();
+        let scaling_mode = if std::env::var("DYNCHAR_SCALING_MODE").is_ok() || follows_bone {
             i(ps, "scalingMode").unwrap_or(0)
         } else {
             0
@@ -1038,7 +1059,9 @@ pub(crate) fn collect_dynchar_particles(
         // the conservative subset — it can only ever REMOVE a parent's contribution, never
         // introduce the system's own scale — and it is exactly the shape of Skadi's fish case
         // (own 1.0 under a 0.5 ancestor).
-        let narrow = std::env::var("DYNCHAR_SCALING_MODE").is_ok_and(|v| v == "narrow");
+        // The `narrow` bound also guards the bone-follower path: it can only ever REMOVE an
+        // ancestor's contribution, never introduce the system's own scale.
+        let narrow = follows_bone || std::env::var("DYNCHAR_SCALING_MODE").is_ok_and(|v| v == "narrow");
         let wsx = match scaling_mode {
             // Local: the system's OWN local scale, ancestors excluded.
             1 => host
