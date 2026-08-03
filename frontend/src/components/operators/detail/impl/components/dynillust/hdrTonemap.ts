@@ -54,6 +54,10 @@ uniform float uBloomIntensity;
 uniform float uGamma;
 uniform float uClip;
 uniform float uProbe;
+uniform sampler2D uCov;
+uniform float uCovOn;
+uniform float uCovLo;
+uniform float uCovHi;
 void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
@@ -81,6 +85,20 @@ void main() {
         float mn = min(min(rgb.r, rgb.g), rgb.b);
         float sat = (m > 1e-4) ? (m - mn) / m : 0.0;
         float achroma = 1.0 - smoothstep(0.05, 0.25, sat); // 1 = white/grey, 0 = coloured
+        // COVERAGE GATE (?cov=1). The achroma release above exists so a full-frame white
+        // REVEAL FLASH reaches an opaque 255 instead of the knee's ~242. But it fires for any
+        // near-neutral pixel at/above the knee, so ordinary bright white ART clips too:
+        // Virtuosa blows 11.03% of her t=2 frame to pure white where the game blows 1.10%.
+        //
+        // Magnitude cannot separate the two — measured, Mlynar's HELD FLASH sits at exactly
+        // 1.0 just as her interior does, and there the game DOES want 255. The only property
+        // that differs is how much of the neighbourhood is white: ~12% scattered vs 100%.
+        // uCov is a blurred near-white mask, so it reads ~1 inside a genuine white-out and
+        // low around isolated highlights; release only where it is high.
+        if (uCovOn > 0.5) {
+            float cov = texture2D(uCov, vUV).r;
+            achroma *= smoothstep(uCovLo, uCovHi, cov);
+        }
         float scale = mix(t / m, 1.0, achroma);
         // DIAGNOSTIC (?tmclip=1): hue-preserving CLIP instead of the soft roll-off.
         //
@@ -144,6 +162,33 @@ function bloomThreshold(): number {
     const v = parseFloat(new URLSearchParams(window.location.search).get("bloomthr") ?? "");
     return Number.isFinite(v) && v > 0 ? v : BLOOM_THRESHOLD;
 }
+// Coverage pass: a NEAR-white mask, blurred, used to tell a full-frame white-out from
+// scattered highlights. See `uCovOn` in the tonemap for why this is needed and why the
+// bloom's own bright-pass cannot supply it (it thresholds at 1.0 and both cases sit at
+// exactly 1.0, so it is identically zero in precisely the frames that must be told apart).
+const COVERAGE_FRAG = `
+precision highp float;
+varying vec2 vUV;
+uniform sampler2D uSampler;
+uniform float uCovThreshold;
+void main() {
+    vec3 rgb = texture2D(uSampler, vUV).rgb;
+    float m = max(max(rgb.r, rgb.g), rgb.b);
+    // Binary mask; the blur below turns it into a local "fraction of my neighbourhood
+    // that is near-white", which is exactly the coverage signal.
+    gl_FragColor = vec4(vec3(step(uCovThreshold, m)), 1.0);
+}
+`;
+/** Near-white cut for the coverage mask. Below 1.0 on purpose: the pixels this exists to
+ *  classify sit at EXACTLY 1.0, so a >=1.0 test (the bloom's) returns nothing. */
+const COVERAGE_THRESHOLD = 0.97;
+/** Coverage pass runs coarser than the bloom — it is a low-frequency signal and the wide
+ *  blur below is what gives it reach. */
+const COVERAGE_DOWNSCALE = 8;
+/** Blur radius (in coverage-RT px) that defines "large region". At downscale 8 this reaches
+ *  roughly 100 source px. */
+const COVERAGE_BLUR = 12;
+
 /** How strongly the blurred bloom is added back on top of the tonemapped scene. */
 const BLOOM_INTENSITY = 0.85;
 /** DIAGNOSTIC: `?bloom=<f>` overrides {@link BLOOM_INTENSITY} so a residual can be
@@ -284,6 +329,57 @@ function hdrProbe(): number {
     return Number.isFinite(v) && v > 0 ? v : 0;
 }
 
+/** Enable the coverage gate on the achroma release? **DISABLED — MEASURED AND REJECTED.**
+ *
+ *  The diagnosis is right and the gate demonstrably works. The achroma release lets any
+ *  near-neutral pixel at/above the knee pass through to an opaque 255 — needed so a white
+ *  reveal FLASH reaches 255 instead of the knee's ~242, but it also clips ordinary bright
+ *  white ART. Coverage is the only property separating the two (magnitude cannot: Mlynar's
+ *  held flash sits at exactly 1.0 just as Virtuosa's interior does). Gating the release on a
+ *  blurred near-white mask does exactly what it should:
+ *
+ *      clipped fraction (luma >= 254)      OFF       ON      game
+ *        cel t=2                         11.03%    0.91%    1.10%
+ *        cel t=5                          6.71%    0.00%    0.21%
+ *        mly t=15 (HELD FLASH)          100.00%   92.68%   99.29%
+ *        mly t=16 (HELD FLASH)          100.00%  100.00%   99.29%
+ *
+ *  Virtuosa's spurious blow-out is essentially eliminated and the flash is preserved. And it
+ *  still does not improve parity:
+ *
+ *      baseline (off)        mly 17.721  cel 19.422  ska 10.505   sum 47.648
+ *      cov, knee 0.99            17.726      19.471      10.500       47.697
+ *      cov, knee 0.97            17.727      19.449      10.494       47.670
+ *      cov, knee 0.94            17.732      19.489      10.517       47.738
+ *      cov, knee 0.90            17.747      19.647      10.656       48.050
+ *
+ *  Rolling the whites further DOWN — toward the game's p90 of 242 — is monotonically worse,
+ *  which is the tell: the metric is PIXELWISE while the clipping census is DISTRIBUTIONAL.
+ *  Part of the game's lower p90 is the salvaged reference's own peak suppression (degrading
+ *  our own frame takes 11.03% to 4.91%), so matching its distribution moves us AWAY from its
+ *  pixel values where the game is still bright. A distributional win that costs pixelwise
+ *  error is not a parity win.
+ *
+ *  Kept because the mechanism is established and the gate is correct — if the ORIGINAL
+ *  captures are ever restored, this is the first thing to re-measure, since the peak
+ *  suppression that defeats it is an artifact of the salvage. `?cov=1`, plus `?covlo=`,
+ *  `?covhi=`, `?covthr=`. */
+function coverageOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("cov") === "1";
+}
+function covParam(name: string, dflt: number): number {
+    if (typeof window === "undefined") return dflt;
+    const v = parseFloat(new URLSearchParams(window.location.search).get(name) ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : dflt;
+}
+/** Blurred-coverage values below this get the FULL hue-preserving roll-off (scattered
+ *  highlights); above `coverageHi` the release passes through (a genuine white-out). */
+const COVERAGE_LO = 0.35;
+const COVERAGE_HI = 0.75;
+const coverageLo = () => covParam("covlo", COVERAGE_LO);
+const coverageHi = () => covParam("covhi", COVERAGE_HI);
+
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
     target: PIXI.RenderTexture;
@@ -361,6 +457,33 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         renderer.render(blank, { renderTexture: bloomRT, clear: true });
         blank.destroy();
     }
+    const cw = Math.max(1, Math.round(width / COVERAGE_DOWNSCALE));
+    const ch = Math.max(1, Math.round(height / COVERAGE_DOWNSCALE));
+    let covRT: PIXI.RenderTexture;
+    try {
+        covRT = PIXI.RenderTexture.create({ width: cw, height: ch, resolution, scaleMode: PIXI.SCALE_MODES.LINEAR });
+    } catch {
+        bloomRT.destroy(true);
+        target.destroy(true);
+        return null;
+    }
+    {
+        const blank2 = new PIXI.Container();
+        renderer.render(blank2, { renderTexture: covRT, clear: true });
+        blank2.destroy();
+    }
+    const covMesh = new PIXI.Mesh(makeQuad(cw, ch), PIXI.Shader.from(TONEMAP_VERT, COVERAGE_FRAG, { uSampler: target, uCovThreshold: covParam("covthr", COVERAGE_THRESHOLD) }));
+    const covContainer = new PIXI.Container();
+    covContainer.addChild(covMesh);
+    const covBlur = new PIXI.BlurFilter(COVERAGE_BLUR);
+    covBlur.quality = 4;
+    covContainer.filters = [covBlur];
+    const setCovQuad = (w: number, h: number) => {
+        const p = covMesh.geometry.getBuffer("aVertexPosition");
+        p.data = new Float32Array([0, 0, w, 0, w, h, 0, h]) as unknown as typeof p.data;
+        p.update();
+    };
+
     const brightMesh = new PIXI.Mesh(makeQuad(bw, bh), PIXI.Shader.from(TONEMAP_VERT, BRIGHT_FRAG, { uSampler: target, uThreshold: bloomThreshold() }));
     const brightContainer = new PIXI.Container();
     brightContainer.addChild(brightMesh);
@@ -369,7 +492,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip(), uProbe: hdrProbe() });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip(), uProbe: hdrProbe(), uCov: covRT, uCovOn: coverageOn() ? 1 : 0, uCovLo: coverageLo(), uCovHi: coverageHi() });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {
@@ -383,6 +506,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         mesh,
         prepare(renderer: PIXI.IRenderer) {
             renderer.render(brightContainer, { renderTexture: bloomRT, clear: true });
+            if (coverageOn()) renderer.render(covContainer, { renderTexture: covRT, clear: true });
         },
         resize(w: number, h: number, res: number) {
             target.resize(w, h, true);
@@ -395,6 +519,11 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             bloomRT.resize(nbw, nbh, true);
             bloomRT.baseTexture.setResolution(res);
             setBrightQuad(nbw, nbh);
+            const ncw = Math.max(1, Math.round(w / COVERAGE_DOWNSCALE));
+            const nch = Math.max(1, Math.round(h / COVERAGE_DOWNSCALE));
+            covRT.resize(ncw, nch, true);
+            covRT.baseTexture.setResolution(res);
+            setCovQuad(ncw, nch);
         },
         destroy() {
             mesh.destroy();
@@ -402,6 +531,10 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             brightContainer.destroy();
             blur.destroy();
             bloomRT.destroy(true);
+            covMesh.destroy();
+            covContainer.destroy();
+            covBlur.destroy();
+            covRT.destroy(true);
             target.destroy(true);
         },
     };
