@@ -372,6 +372,15 @@ pub(crate) fn go_effectively_active(
             // The idle-loop animation's `m_IsActive` overrides the prefab default:
             // an object the loop switches off is hidden even if statically active,
             // and one it switches on is shown even if statically inactive.
+            // NOTE: `m_IsActive` deserialises as a JSON **bool**, so `as_i64()` always yields
+            // `None` and this static check is DEAD — every statically-disabled object reads as
+            // active. That is a real reader bug, and it is also LOAD-BEARING: do not "fix" it.
+            // Entrance rigs legitimately ship `m_IsActive = 0` on their `..._start(Clone)`
+            // instances and are activated at runtime, so honouring the flag drops the whole
+            // cinematic — measured on cello, the entrance export falls from 58 particle systems
+            // to ZERO and 59 scene renderers vanish. Making it live needs a rule that separates
+            // "disabled in the prefab, spawned by the game" from "disabled and left that way";
+            // the flag alone cannot. See [[dynchar-virtuosa-pink-wings]].
             match idle_active.get(&go) {
                 Some(false) => return false,
                 Some(true) => {}
