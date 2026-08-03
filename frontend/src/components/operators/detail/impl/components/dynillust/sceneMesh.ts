@@ -526,6 +526,10 @@ function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
  *  affected skins to calibrate against — the corpus scan counts layers, not consequences.
  *
  *  `?veilcover=1` re-enables it for a re-test. */
+function veilDisabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("noveil") === "1";
+}
 function veilFrameCoverExempt(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("veilcover") === "1";
@@ -1403,7 +1407,13 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // neither of the other two reference skins.
         const camExtent = 2 * (data.cameraSizePx || 0);
         const coversFrame = camExtent > 0 && spanOf(layer, 0) >= VEIL_FRAME_COVER * camExtent && spanOf(layer, 1) >= VEIL_FRAME_COVER * camExtent;
-        const isVeil = isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(coversFrame && veilFrameCoverExempt());
+        // DIAGNOSTIC (`?noveil=1`): disable the demotion outright, so "should this layer be in
+        // FRONT of the character at all?" can be measured on its own. Distinct from
+        // `?veilcover=1`, which only exempts layers whose span beats `VEIL_FRAME_COVER` of the
+        // AUTHORED camera box — an extent the entrance plunge is much wider than, which is why
+        // that flag is bit-identical on cello even though her veil manifestly fills the shot.
+        // Touches ONLY the re-sort, never `isEffect`'s other two consumers (see the note above).
+        const isVeil = !veilDisabled() && isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(coversFrame && veilFrameCoverExempt());
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
         // ice-flame around her oni-mask "shield"). Exported as normal-blend (Unity
