@@ -5,7 +5,7 @@ import type { IChibiSpineFiles } from "#/lib/api/chibis";
 import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
-import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
+import { createHDRScene, gapThresholdOn, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
 import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
@@ -703,6 +703,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // into `hdr.target` (half-float, additive stacks don't clip) and tonemapped to
     // screen via `hdr.mesh`. `hdrSceneRef` is the container rendered into it.
     const hdrRef = useRef<IHDRScene | null>(null);
+    /** The gap-fill backdrop sprite, when it is composited by the tonemap threshold rather than
+     *  drawn inline — rendered alone into `hdr.bdTarget` each frame (see the tick). */
+    const gapBdRef = useRef<PIXI.Sprite | null>(null);
     const hdrSceneRef = useRef<PIXI.Container | null>(null);
     const envBgRef = useRef<PIXI.Sprite | null>(null);
     // Every composite built for the current skin (usually one; two while a "_Start"
@@ -1113,6 +1116,34 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // accumulate past 1 without clipping), then let the stage's tonemap quad
                 // blit it to screen. Otherwise render the stage straight (8-bit).
                 if (hdrRef.current && hdrSceneRef.current) {
+                    // Gap fill, thresholded: render the backdrop ALONE into its own target
+                    // first, through this very container so it inherits the identical camera
+                    // transform, then restore. Cheap — the container holds ~7 children, not
+                    // the layer list.
+                    const gapBd = gapBdRef.current;
+                    if (gapBd) {
+                        // Hide everything that is NOT on the backdrop's ancestor path. A flat
+                        // sibling toggle is wrong: during the entrance `hdrSceneRef` is the
+                        // CROSSFADE WRAPPER, so the sprite is a grandchild and a `=== gapBd`
+                        // test matches nothing, hiding the whole tree and rendering a blank
+                        // target (measured: the fill silently did nothing).
+                        const saved: Array<[PIXI.DisplayObject, boolean]> = [];
+                        const keep = new Set<PIXI.DisplayObject>();
+                        for (let n: PIXI.DisplayObject | null = gapBd; n; n = n.parent) keep.add(n);
+                        const walk = (c: PIXI.Container) => {
+                            for (const k of c.children) {
+                                if (k === gapBd) continue;
+                                saved.push([k, k.renderable]);
+                                if (keep.has(k)) walk(k as PIXI.Container);
+                                else k.renderable = false;
+                            }
+                        };
+                        walk(hdrSceneRef.current as PIXI.Container);
+                        gapBd.renderable = true;
+                        currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: true });
+                        for (const [k, v] of saved) k.renderable = v;
+                        gapBd.renderable = false;
+                    }
                     currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear: true });
                     // Update the bloom texture from the freshly-drawn target before the
                     // stage's tonemap quad (which samples both) blits to screen.
@@ -1589,7 +1620,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // `?gapmode=dstover`: draw it LAST with destination-over instead of first.
                     // Kept only to demonstrate that the two are the SAME operation — see the
                     // note on gapFillOn.
-                    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "dstover") {
+                    if (gapFill && gapThresholdOn()) {
+                        // Composited by the tonemap, not drawn inline. It still lives in the
+                        // scene container so the backdrop-only pass inherits the SAME transform.
+                        bd.renderable = false;
+                        gapBdRef.current = bd;
+                        sceneContainer.addChildAt(bd, 0);
+                    } else if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "dstover") {
                         bd.blendMode = PIXI.BLEND_MODES.DST_OVER;
                         sceneContainer.addChild(bd);
                     } else {

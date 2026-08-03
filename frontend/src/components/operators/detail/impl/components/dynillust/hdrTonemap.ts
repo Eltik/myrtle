@@ -54,6 +54,8 @@ uniform float uBloomIntensity;
 uniform float uGamma;
 uniform float uClip;
 uniform float uProbe;
+uniform sampler2D uBd;
+uniform float uBdOn;
 uniform sampler2D uCov;
 uniform float uCovOn;
 uniform float uCovLo;
@@ -62,6 +64,20 @@ void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
     float m = max(max(rgb.r, rgb.g), rgb.b);
+    // GAP FILL, thresholded (?gapfill=1&gapmode=threshold). The scene target is cleared to
+    // transparent black, so a pixel nothing drew into is exactly (0,0,0,0). Fill ONLY those
+    // with the static art. A HARD step, not a proportional blend: the static illustration
+    // contains the CHARACTER, so letting it through in proportion to transparency ghosts her
+    // wherever the scene is translucent (measured on lin_nian#10). Tests LUMINANCE as well as
+    // alpha because an ADDITIVE layer adds colour without alpha — an alpha-only test would let
+    // the static through underneath every glow.
+    if (uBdOn > 0.5) {
+        float covered = step(0.004, max(c.a, m));
+        vec4 bd = texture2D(uBd, vUV);
+        rgb = mix(bd.rgb, rgb, covered);
+        c.a = mix(bd.a, c.a, covered);
+        m = max(max(rgb.r, rgb.g), rgb.b);
+    }
     // DIAGNOSTIC (?hdrprobe=<scale>): bypass the tonemap and output the RAW half-float
     // target divided by <scale>, so the captured PNG can be read back as HDR magnitude
     // (pixel/255*scale). Answers "does anything actually exceed 1 before the knee?" —
@@ -380,9 +396,41 @@ const COVERAGE_HI = 0.75;
 const coverageLo = () => covParam("covlo", COVERAGE_LO);
 const coverageHi = () => covParam("covhi", COVERAGE_HI);
 
+/** Gap fill composited by a HARD alpha/luminance threshold in the tonemap?
+ *  `?gapfill=1&gapmode=threshold`.
+ *
+ *  **INCOMPLETE — the plumbing is in and correct, but it does not fill yet.** Measured on
+ *  Virtuosa: base 19.422, draw-first 19.361, threshold **19.421** (i.e. no effect). Two faults
+ *  were found and one is still open:
+ *
+ *   1. FIXED: the backdrop-only pass toggled `renderable` on the RENDERED CONTAINER'S DIRECT
+ *      CHILDREN. During the entrance `hdrSceneRef` is the CROSSFADE WRAPPER, so the sprite is a
+ *      grandchild, `k === gapBd` matched nothing, the whole tree was hidden and the pass wrote a
+ *      BLANK target. Now walks the sprite's ancestor path instead.
+ *   2. OPEN: it still does not fill after that fix. Next things to check, in order — is
+ *      `gapBdRef` actually set (i.e. does `gapFill && gapThresholdOn()` hold at build time)?
+ *      does `bdTarget` contain the art (dump it)? and is `covered` 1 everywhere because the
+ *      scene target's alpha is non-zero across the frame?
+ *
+ *  Everything is behind the flag and the default path is bit-identical (17.721 / 19.422 /
+ *  10.505), so this is inert unless explicitly enabled.
+ *
+ *  **NOTE the finding that outlives this attempt:** `envBg` lives on `app.stage`, OUTSIDE the
+ *  HDR target, so the HDR target's untouched pixels genuinely are (0,0,0,0) — a hard
+ *  "nothing drawn" test is well-defined here. And draw-first (19.361) remains the only variant
+ *  that actually wins; its blocker is character ghosting on translucent scenes, which is a
+ *  MASKING problem in the static art, not a compositing one. */
+export function gapThresholdOn(): boolean {
+    if (typeof window === "undefined") return false;
+    const q = new URLSearchParams(window.location.search);
+    return q.get("gapfill") === "1" && q.get("gapmode") === "threshold";
+}
+
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
     target: PIXI.RenderTexture;
+    /** Full-res target holding ONLY the gap-fill backdrop, drawn through the same transform. */
+    bdTarget: PIXI.RenderTexture;
     /** Full-screen quad that tonemaps `target` (+bloom) to the screen — add to the stage. */
     mesh: PIXI.Mesh<PIXI.Shader>;
     /** Update the bloom texture from the current `target`. Call each frame AFTER
@@ -457,6 +505,22 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         renderer.render(blank, { renderTexture: bloomRT, clear: true });
         blank.destroy();
     }
+    // Full-res target for the gap-fill backdrop pass — it is composited per pixel against the
+    // scene's own alpha, so it cannot be downscaled.
+    let bdRT: PIXI.RenderTexture;
+    try {
+        bdRT = PIXI.RenderTexture.create({ width, height, resolution, scaleMode: PIXI.SCALE_MODES.LINEAR });
+    } catch {
+        bloomRT.destroy(true);
+        target.destroy(true);
+        return null;
+    }
+    {
+        const blank3 = new PIXI.Container();
+        renderer.render(blank3, { renderTexture: bdRT, clear: true });
+        blank3.destroy();
+    }
+
     const cw = Math.max(1, Math.round(width / COVERAGE_DOWNSCALE));
     const ch = Math.max(1, Math.round(height / COVERAGE_DOWNSCALE));
     let covRT: PIXI.RenderTexture;
@@ -492,7 +556,21 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip(), uProbe: hdrProbe(), uCov: covRT, uCovOn: coverageOn() ? 1 : 0, uCovLo: coverageLo(), uCovHi: coverageHi() });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, {
+        uSampler: target,
+        uBloom: bloomRT,
+        uKnee: knee,
+        uBloomIntensity: bloomIntensity(),
+        uGamma: gamma,
+        uClip: tonemapClip(),
+        uProbe: hdrProbe(),
+        uBd: bdRT,
+        uBdOn: gapThresholdOn() ? 1 : 0,
+        uCov: covRT,
+        uCovOn: coverageOn() ? 1 : 0,
+        uCovLo: coverageLo(),
+        uCovHi: coverageHi(),
+    });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {
@@ -503,6 +581,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
 
     return {
         target,
+        bdTarget: bdRT,
         mesh,
         prepare(renderer: PIXI.IRenderer) {
             renderer.render(brightContainer, { renderTexture: bloomRT, clear: true });
@@ -521,6 +600,8 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             setBrightQuad(nbw, nbh);
             const ncw = Math.max(1, Math.round(w / COVERAGE_DOWNSCALE));
             const nch = Math.max(1, Math.round(h / COVERAGE_DOWNSCALE));
+            bdRT.resize(w, h, true);
+            bdRT.baseTexture.setResolution(res);
             covRT.resize(ncw, nch, true);
             covRT.baseTexture.setResolution(res);
             setCovQuad(ncw, nch);
@@ -535,6 +616,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             covContainer.destroy();
             covBlur.destroy();
             covRT.destroy(true);
+            bdRT.destroy(true);
             target.destroy(true);
         },
     };
