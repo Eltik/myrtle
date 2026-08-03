@@ -1822,6 +1822,9 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>) -> (f32, bool) {
         // full scale (Skadi2's layers double to 1.4-2.0), so letting them through
         // unclamped is not a ramp but a wholesale brightening — MEASURED worse
         // (Skadi2 mean MAD 18.615 -> 20.093 over the recorded beats).
+        // RE-MEASURED 2026-08-03 on the current baseline and REFUTED AGAIN, harder: unclamping
+        // costs Skadi 10.505 -> 26.953 and does NOT move Mlynar at all (17.525 either way), so it
+        // is not the reason his city lights fail to glare. Do not retry.
         (2.0, false)
     } else {
         (1.0, false)

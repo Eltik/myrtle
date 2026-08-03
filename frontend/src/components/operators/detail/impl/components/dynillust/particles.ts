@@ -1646,6 +1646,17 @@ class Emitter {
                 b: p.startCol.b * lifeCol.b * (mt ? mt[2] : 1),
                 a: p.startCol.a * lifeCol.a * (mt ? mt[3] : 1),
             };
+            // NOTE — "over-bright rescue" MEASURED AND REJECTED (2026-08-03). `rgbToHex` feeds
+            // PIXI's `Sprite.tint`, an 8-bit RGB word, so any channel the material's ×2
+            // `_TintColor` pushes past 1.0 is truncated: Mlynar's campfire emitters are
+            // startColor (1.00, 0.25, 0.12) × tint 2.0 = (2.0, 0.5, 0.24) and draw as
+            // (1.0, 0.5, 0.24), losing the whole red doubling. Under ADDITIVE blending that
+            // excess can be moved into the float alpha with no change to the product
+            // (`rgb /= max`, `alpha *= max`, applied only where `a × max` still fits so the
+            // trade stays an identity). It works exactly as intended and is still WRONG:
+            // recovering that energy costs Mlynar 17.525 → 17.687. The clamp is not what stops
+            // his lights glaring — the game simply does not show the extra energy, which is the
+            // same over-saturation these glare items keep showing. Don't re-derive it.
             const hex = rgbToHex(col);
             const alpha = Math.max(0, Math.min(1, col.a));
             this.applyDisp(p.sprite, p, sz, hex, alpha, lf);
