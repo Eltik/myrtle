@@ -1540,12 +1540,29 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     };
                     (window as unknown as { __dumpTex?: () => unknown }).__dumpTex = () => {
                         const cache = (PIXI.utils as unknown as { BaseTextureCache: Record<string, PIXI.BaseTexture> }).BaseTextureCache;
-                        return Object.entries(cache).map(([k, b]) => ({
-                            url: k.slice(-58),
-                            alphaMode: b.alphaMode,
-                            mipmap: b.mipmap,
-                            size: [b.realWidth, b.realHeight],
-                        }));
+                        // `b.mipmap` is only the REQUESTED mode. PIXI silently falls back to no
+                        // mipmap chain where GL cannot build one (an NPOT page on WebGL1), so
+                        // also report what actually reached the GPU and the context version —
+                        // an unmipmapped 2280px atlas minified ~3x at the widest camera aliases
+                        // thin line art into over-dark pixels.
+                        const r = appRef.current?.renderer as unknown as {
+                            CONTEXT_UID?: number;
+                            context?: { webGLVersion?: number };
+                        } | null;
+                        const uid = r?.CONTEXT_UID ?? -1;
+                        return {
+                            webGLVersion: r?.context?.webGLVersion ?? null,
+                            textures: Object.entries(cache).map(([k, b]) => {
+                                const gl = (b as unknown as { _glTextures?: Record<number, { mipmap?: boolean }> })._glTextures?.[uid];
+                                return {
+                                    url: k.slice(-58),
+                                    alphaMode: b.alphaMode,
+                                    mipmapRequested: b.mipmap,
+                                    mipmapUploaded: gl ? !!gl.mipmap : null,
+                                    size: [b.realWidth, b.realHeight],
+                                };
+                            }),
+                        };
                     };
                     (window as unknown as { __dumpLayers?: () => unknown }).__dumpLayers = () => {
                         const rows: unknown[] = [];
