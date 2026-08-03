@@ -1882,6 +1882,24 @@ const ADDITIVE_BOOST_PLUGIN = "dynAdditiveBoost";
  *  MEASURED AND REJECTED as a default (2026-08-01): enabling it together with the exporter's
  *  `scalingMode` size fix regressed every reference skin (mly 30.816 -> 32.536,
  *  cel 23.367 -> 24.139, ska 13.789 -> 13.994). Kept OFF; `?spriteboost=<f>` turns it on. */
+/* REAL BUG, MEASURED NEGLIGIBLE (2026-08-03) — recorded so it is not re-derived.
+ * PIXI's batcher packs tint x alpha into an 8-bit word, so a particle alpha above 1 is silently
+ * clamped. Unity clamps the PRODUCT instead: the Additive fragment writes
+ * `SV_Target0.w = clamp(tex.a x 2 x startColor.a x _TintColor.a, 0, 1)`, per texel. So a system
+ * with `startColor.a x tint[3] > 1` is drawn up to 2x too dim by us — and that is 517 of the 887
+ * tinted additive systems, across 54 skins.
+ *
+ * An exact fix exists and was built: the CONSTANT excess (`startColor.a x tint[3]`) rides the
+ * boost plugin, which multiplies AFTER the texture sample and lets the framebuffer clamp, while
+ * `sprite.alpha` carries only the per-particle `colorOverLifetime` factor. The split is an
+ * identity: `min(tex x tint x excess x lifeAlpha, 1)`.
+ *
+ * NOT SHIPPED because it is visually inert: the affected systems are small and sparse. On
+ * `char_2023_ling_2` (39 affected systems, one of the worst in the corpus) it moves 14-20 PIXELS,
+ * and all three benchmarks are bit-identical (17.525 / 19.270 / 10.530). A complete version would
+ * need a plugin per quantised excess (the corpus spreads 1.0-2.0, with 208 systems at exactly
+ * 2.0) — machinery that buys nothing measurable. */
+
 function additiveSpriteBoost(): number {
     if (typeof window === "undefined") return 1;
     const v = parseFloat(new URLSearchParams(window.location.search).get("spriteboost") ?? "");
