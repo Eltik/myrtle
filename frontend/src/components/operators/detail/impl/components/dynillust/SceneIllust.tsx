@@ -5,7 +5,7 @@ import type { IChibiSpineFiles } from "#/lib/api/chibis";
 import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
-import { createHDRScene, gapThresholdOn, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
+import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
 import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
@@ -175,51 +175,50 @@ const SCENE_ZOOM_OUT = 1.7;
  *  silhouette boundary. Rendered with a `contain` fit so the whole box is visible.
  *
  *  Returns null when absent or malformed, leaving the normal framing untouched. */
-/** Draw the static illustration BEHIND a scene that does not span the camera view, to fill the
- *  bare canvas the game fills with vista? **MEASURED — a REAL WIN on the only skin that can be
- *  scored, but BLOCKED by double-draw. Default OFF.**
+/** Draw the skin's static illustration, DEFOCUSED, behind a scene that does not span the camera
+ *  view — filling the bare canvas the game fills with vista. **SHIPPED, default ON; `?gapfill=0`
+ *  disables.**
  *
- *  The diagnosis is solid: Virtuosa's scene genuinely does not reach the frame (0 of 132 layers
- *  span the view, largest 0.88) and nothing is dropped, so the uncovered margin falls through to
- *  a near-black canvas where the game shows vista. Filling it does exactly what it should:
+ *  Virtuosa's entrance scene genuinely does not reach the frame (0 of 132 layers span the view,
+ *  the largest reaches 0.88) and nothing is dropped by the exporter, so the uncovered margin falls
+ *  through to bare canvas — a hard-edged near-black wedge where the game shows misty vista. What
+ *  fell through was our own invention: a flat neutral #4d4d4e studio fill, a colour the game never
+ *  shows. Replacing it with the skin's own art, blurred, does exactly what it should:
  *
- *      cel  19.422 -> 19.361     t=2 -0.235, t=5 -0.230, every other beat EXACTLY 0.000
+ *      cel  19.422 -> 19.270     t=2 -0.678, t=5 -0.387, every other beat EXACTLY 0.000
  *      mly  17.721 -> 17.721     bit-identical
  *      ska  10.505 -> 10.505     bit-identical
  *
- *  A clean, targeted win — only the two beats with the gap move.
+ *  The two beats that move are the two with the camera at its widest — exactly where the scene
+ *  leaves the most frame unfilled. Everything else is untouched to the bit.
  *
- *  **Why it cannot ship as written.** The gate is geometric (no layer spans the view), which is
- *  77% of the corpus — 72 of 93 scenes. Spot-rendering eight of them found no blank and no
- *  blow-out, but `char_4080_lin_nian#10` is visibly WASHED OUT: the static illustration CONTAINS
- *  THE CHARACTER, so drawing it behind a scene with translucent layers double-draws her,
- *  misregistered. That is precisely what the `sceneLayerCount === 0` gate on `useStatic` has
- *  always been guarding against, and a coverage test does not substitute for it.
+ *  **Why blurred.** The static illustration contains the CHARACTER, so drawn sharp behind a
+ *  translucent scene it can ghost her, misregistered. That cannot be masked away: the art sits at
+ *  index 0 and the spine draws in FRONT of it, so a spine-shaped mask can only remove pixels that
+ *  were already hidden — built and measured, it moved 786 px of 374400 on `lin_nian#10`, all of
+ *  them antialiasing at the spine's edge. The ghost lives precisely where the spine ISN'T. But the
+ *  art is only here to be a distant vista, and a vista needs its low-frequency colour and
+ *  luminance, not its detail. Defocusing keeps the fill and destroys the recognisable second
+ *  character.
  *
- *  **DESTINATION-OVER IS NOT THE FIX — measured (`?gapmode=dstover`).** I expected DST_OVER
- *  drawn last to be algebraically identical to drawing first (`dst + src*(1-dstA)` vs
- *  `scene + backdrop*(1-sceneA)`). It is NOT identical in practice — the scene carries ADDITIVE
- *  layers, which add colour without accumulating alpha, so destination alpha does not track
- *  coverage. And it is WORSE on both counts:
+ *  The radius is a fraction of the art's own on-screen height, so it is a spatial-frequency cutoff
+ *  rather than a pixel constant, and it is not a fitted one — the parity win is a broad plateau,
+ *  19.270 to 19.284 over the whole range 1/48 to 1/6, and every value from 1/96 to 1/3 beats the
+ *  unblurred 19.361.
  *
- *      cel MADC     baseline 19.422   draw-first 19.361   DST_OVER 19.404
- *      lin_nian     off mean 140.58 std 65.41
- *                   draw-first 134.14 std 66.81   DST_OVER 127.13 std 58.80  <- MORE washed
- *
- *  Less parity gain and a bigger washout (falling std = falling contrast).
- *
- *  **What is actually required:** fill only pixels where NOTHING is drawn — a HARD threshold at
- *  accumulated alpha ~0, not a proportional blend. Fixed-function blending cannot express that;
- *  it needs a shader step on the scene's alpha, which means making the backdrop available as a
- *  texture to the tonemap (an extra RT pass with the same camera transform). Note the additive
- *  problem persists there too: an additive glow leaves alpha low, so an alpha-only test would
- *  let the static through under glows. The threshold likely has to consider luminance as well.
- *
- *  `?gapfill=1` re-enables it. NOTE: `rec.js` must also be given `&backdrop=<url>` or the whole
- *  backdrop path is inert — see the harness note in the parity memory. */
+ *  Refuted variants are recorded in `hdrTonemap.ts` so none is retried. NOTE for the harness:
+ *  `rec.js` must be given `&backdrop=<url>` or this whole path is inert — the production viewer
+ *  always passes it (`SkinsContent.tsx`), the recorder does not. */
 function gapFillOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("gapfill") === "1";
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("gapfill") !== "0";
+}
+/** Blur radius as a fraction of the backdrop's on-screen height. `?gapblur=<f>` sweeps it. */
+const GAP_BLUR_FRACTION = 1 / 24;
+function gapBlurFraction(): number {
+    if (typeof window === "undefined") return GAP_BLUR_FRACTION;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("gapblur") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : GAP_BLUR_FRACTION;
 }
 
 function frameBoxParam(): IAnimationBounds | null {
@@ -705,7 +704,6 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     const hdrRef = useRef<IHDRScene | null>(null);
     /** The gap-fill backdrop sprite, when it is composited by the tonemap threshold rather than
      *  drawn inline — rendered alone into `hdr.bdTarget` each frame (see the tick). */
-    const gapBdRef = useRef<PIXI.Sprite | null>(null);
     const hdrSceneRef = useRef<PIXI.Container | null>(null);
     const envBgRef = useRef<PIXI.Sprite | null>(null);
     // Every composite built for the current skin (usually one; two while a "_Start"
@@ -1116,62 +1114,6 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // accumulate past 1 without clipping), then let the stage's tonemap quad
                 // blit it to screen. Otherwise render the stage straight (8-bit).
                 if (hdrRef.current && hdrSceneRef.current) {
-                    // Gap fill, thresholded: render the backdrop ALONE into its own target
-                    // first, through this very container so it inherits the identical camera
-                    // transform, then restore. Cheap — the container holds ~7 children, not
-                    // the layer list.
-                    const gapBd = gapBdRef.current;
-                    if (gapBd) {
-                        // Hide everything that is NOT on the backdrop's ancestor path. A flat
-                        // sibling toggle is wrong: during the entrance `hdrSceneRef` is the
-                        // CROSSFADE WRAPPER, so the sprite is a grandchild and a `=== gapBd`
-                        // test matches nothing, hiding the whole tree and rendering a blank
-                        // target (measured: the fill silently did nothing).
-                        const saved: Array<[PIXI.DisplayObject, boolean]> = [];
-                        const keep = new Set<PIXI.DisplayObject>();
-                        for (let n: PIXI.DisplayObject | null = gapBd; n; n = n.parent) keep.add(n);
-                        const walk = (c: PIXI.Container) => {
-                            for (const k of c.children) {
-                                if (k === gapBd) continue;
-                                saved.push([k, k.renderable]);
-                                if (keep.has(k)) walk(k as PIXI.Container);
-                                else k.renderable = false;
-                            }
-                        };
-                        const eraseMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "erase";
-                        const sp = spineRef.current as unknown as PIXI.DisplayObject | null;
-                        if (eraseMode && sp) {
-                            // Pass 1: the SPINE alone into bdTarget, so the target holds the
-                            // character's silhouette.
-                            const keepS = new Set<PIXI.DisplayObject>();
-                            for (let n: PIXI.DisplayObject | null = sp; n; n = n.parent) keepS.add(n);
-                            const savedS: Array<[PIXI.DisplayObject, boolean]> = [];
-                            const walkS = (c: PIXI.Container) => {
-                                for (const k of c.children) {
-                                    if (k === sp) continue;
-                                    savedS.push([k, k.renderable]);
-                                    if (keepS.has(k)) walkS(k as PIXI.Container);
-                                    else k.renderable = false;
-                                }
-                            };
-                            walkS(hdrSceneRef.current as PIXI.Container);
-                            sp.renderable = true;
-                            currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: true });
-                            for (const [k, v] of savedS) k.renderable = v;
-                        }
-                        walk(hdrSceneRef.current as PIXI.Container);
-                        gapBd.renderable = true;
-                        // Pass 2. In erase mode the backdrop goes over the silhouette with
-                        // SRC_OUT — `src * (1 - dstAlpha)` — leaving backdrop x (1 - spineAlpha),
-                        // i.e. the static art with the character punched out. Otherwise it is a
-                        // plain cleared draw.
-                        const prevBlend = gapBd.blendMode;
-                        if (eraseMode && sp) gapBd.blendMode = PIXI.BLEND_MODES.SRC_OUT;
-                        currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: !(eraseMode && sp) });
-                        gapBd.blendMode = prevBlend;
-                        for (const [k, v] of saved) k.renderable = v;
-                        gapBd.renderable = false;
-                    }
                     currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear: true });
                     // Update the bloom texture from the freshly-drawn target before the
                     // stage's tonemap quad (which samples both) blits to screen.
@@ -1645,21 +1587,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
-                    // `?gapmode=dstover`: draw it LAST with destination-over instead of first.
-                    // Kept only to demonstrate that the two are the SAME operation — see the
-                    // note on gapFillOn.
-                    if (gapFill && gapThresholdOn()) {
-                        // Composited by the tonemap, not drawn inline. It still lives in the
-                        // scene container so the backdrop-only pass inherits the SAME transform.
-                        bd.renderable = false;
-                        gapBdRef.current = bd;
-                        sceneContainer.addChildAt(bd, 0);
-                    } else if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "dstover") {
-                        bd.blendMode = PIXI.BLEND_MODES.DST_OVER;
-                        sceneContainer.addChild(bd);
-                    } else {
-                        sceneContainer.addChildAt(bd, 0);
+                    if (gapFill) {
+                        // Defocused vista fill. Radius follows the art's own height so the cutoff
+                        // is a spatial frequency, not a pixel count (see gapFillOn).
+                        const blur = new PIXI.BlurFilter();
+                        blur.blur = Math.max(1, bd.height * gapBlurFraction());
+                        // The art is drawn far outside the camera box; without padding the filter
+                        // crops it to its own bounds and leaves a hard seam at the frame edge.
+                        blur.padding = blur.blur * 2;
+                        bd.filters = [blur];
                     }
+                    sceneContainer.addChildAt(bd, 0);
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main

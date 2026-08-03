@@ -54,9 +54,6 @@ uniform float uBloomIntensity;
 uniform float uGamma;
 uniform float uClip;
 uniform float uProbe;
-uniform sampler2D uBd;
-uniform float uBdOn;
-uniform float uBdCut;
 uniform sampler2D uCov;
 uniform float uCovOn;
 uniform float uCovLo;
@@ -65,39 +62,6 @@ void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
     float m = max(max(rgb.r, rgb.g), rgb.b);
-    // GAP FILL, thresholded (?gapfill=1&gapmode=threshold). The scene target is cleared to
-    // transparent black, so a pixel nothing drew into is exactly (0,0,0,0). Fill ONLY those
-    // with the static art. A HARD step, not a proportional blend: the static illustration
-    // contains the CHARACTER, so letting it through in proportion to transparency ghosts her
-    // wherever the scene is translucent (measured on lin_nian#10). Tests LUMINANCE as well as
-    // alpha because an ADDITIVE layer adds colour without alpha — an alpha-only test would let
-    // the static through underneath every glow.
-    // ERASE mode: uBd already holds the backdrop with the CHARACTER PUNCHED OUT (the spine is
-    // rendered into it first, then the backdrop over it with SRC_OUT). Composite it plainly
-    // UNDER the scene — draw-first behaviour, which is the variant that measures best — but with
-    // nothing left in it that could ghost against the spine.
-    if (uBdOn > 3.5) {
-        vec4 bd = texture2D(uBd, vUV);
-        rgb = rgb + bd.rgb * (1.0 - c.a);
-        c.a = c.a + bd.a * (1.0 - c.a);
-        m = max(max(rgb.r, rgb.g), rgb.b);
-    }
-    if (uBdOn > 2.5 && uBdOn < 3.5) {
-        // DEBUG: white where the scene is considered COVERED, black where the gap fill applies.
-        gl_FragColor = vec4(vec3(step(uBdCut, max(c.a, m))), 1.0);
-        return;
-    }
-    if (uBdOn > 1.5 && uBdOn < 2.5) {
-        gl_FragColor = vec4(texture2D(uBd, vUV).rgb, 1.0);
-        return;
-    }
-    if (uBdOn > 0.5) {
-        float covered = step(uBdCut, max(c.a, m));
-        vec4 bd = texture2D(uBd, vUV);
-        rgb = mix(bd.rgb, rgb, covered);
-        c.a = mix(bd.a, c.a, covered);
-        m = max(max(rgb.r, rgb.g), rgb.b);
-    }
     // DIAGNOSTIC (?hdrprobe=<scale>): bypass the tonemap and output the RAW half-float
     // target divided by <scale>, so the captured PNG can be read back as HDR magnitude
     // (pixel/255*scale). Answers "does anything actually exceed 1 before the knee?" —
@@ -416,57 +380,29 @@ const COVERAGE_HI = 0.75;
 const coverageLo = () => covParam("covlo", COVERAGE_LO);
 const coverageHi = () => covParam("covhi", COVERAGE_HI);
 
-/** Gap fill composited by a HARD alpha/luminance threshold in the tonemap?
- *  `?gapfill=1&gapmode=threshold`.
+/** GAP FILL IS NOT COMPOSITED HERE — the whole tonemap-side machinery was removed after every
+ *  variant it existed to serve was refuted with numbers. Kept as a record so none is retried:
  *
- *  **INCOMPLETE — the plumbing is in and correct, but it does not fill yet.** Measured on
- *  Virtuosa: base 19.422, draw-first 19.361, threshold **19.421** (i.e. no effect). Two faults
- *  were found and one is still open:
+ *      draw-first (a plain sprite at index 0)        cel 19.422 -> 19.361   the only winner
+ *      DST_OVER (draw last, destination-over)        19.404, and washes MORE than draw-first;
+ *                                                    NOT algebraically equal to draw-first,
+ *                                                    because additive layers add colour with
+ *                                                    no alpha
+ *      hard alpha/luminance threshold in this pass   19.421 (no effect) — the scene target's
+ *                                                    alpha is non-zero across the frame, so
+ *                                                    "covered" is 1 nearly everywhere
+ *      spine-shaped ERASE mask on the static art     a NO-OP by construction: the art sits at
+ *                                                    index 0 and the spine draws in FRONT of
+ *                                                    it, so the mask can only remove pixels
+ *                                                    that were already hidden (786 px of
+ *                                                    374400 on lin_nian#10, all antialiasing)
  *
- *   1. FIXED: the backdrop-only pass toggled `renderable` on the RENDERED CONTAINER'S DIRECT
- *      CHILDREN. During the entrance `hdrSceneRef` is the CROSSFADE WRAPPER, so the sprite is a
- *      grandchild, `k === gapBd` matched nothing, the whole tree was hidden and the pass wrote a
- *      BLANK target. Now walks the sprite's ancestor path instead.
- *   2. OPEN: it still does not fill after that fix. Next things to check, in order — is
- *      `gapBdRef` actually set (i.e. does `gapFill && gapThresholdOn()` hold at build time)?
- *      does `bdTarget` contain the art (dump it)? and is `covered` 1 everywhere because the
- *      scene target's alpha is non-zero across the frame?
- *
- *  Everything is behind the flag and the default path is bit-identical (17.721 / 19.422 /
- *  10.505), so this is inert unless explicitly enabled.
- *
- *  **NOTE the finding that outlives this attempt:** `envBg` lives on `app.stage`, OUTSIDE the
- *  HDR target, so the HDR target's untouched pixels genuinely are (0,0,0,0) — a hard
- *  "nothing drawn" test is well-defined here. And draw-first (19.361) remains the only variant
- *  that actually wins; its blocker is character ghosting on translucent scenes, which is a
- *  MASKING problem in the static art, not a compositing one. */
-export function gapThresholdOn(): boolean {
-    return gapBdMode() > 0;
-}
-/** How much scene contribution counts as "something is drawn here". 0.004 (1/255) was far too
- *  strict: Virtuosa's visible gap is covered by a NEARLY-TRANSPARENT layer, so a 1/255 trace
- *  marked 99.87% of the frame covered and only 439 px filled. `?covcut=<f>` sweeps it. */
-const GAP_COVER_CUT = 0.05;
-function gapBdCut(): number {
-    if (typeof window === "undefined") return GAP_COVER_CUT;
-    const v = parseFloat(new URLSearchParams(window.location.search).get("covcut") ?? "");
-    return Number.isFinite(v) && v >= 0 ? v : GAP_COVER_CUT;
-}
-/** 0 = off, 1 = thresholded composite, 2 = DEBUG, output `bdTarget` straight to screen so the
- *  backdrop-only pass can be verified independently of the threshold. */
-function gapBdMode(): number {
-    if (typeof window === "undefined") return 0;
-    const q = new URLSearchParams(window.location.search);
-    if (q.get("gapfill") !== "1") return 0;
-    const m = q.get("gapmode");
-    return m === "threshold" ? 1 : m === "bdonly" ? 2 : m === "cover" ? 3 : m === "erase" ? 4 : 0;
-}
+ *  What ships instead is in `SceneIllust.tsx`: the static art drawn first, DEFOCUSED, so it
+ *  fills as a vista without contributing recognisable detail. See `gapBlurOn` there. */
 
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
     target: PIXI.RenderTexture;
-    /** Full-res target holding ONLY the gap-fill backdrop, drawn through the same transform. */
-    bdTarget: PIXI.RenderTexture;
     /** Full-screen quad that tonemaps `target` (+bloom) to the screen — add to the stage. */
     mesh: PIXI.Mesh<PIXI.Shader>;
     /** Update the bloom texture from the current `target`. Call each frame AFTER
@@ -541,22 +477,6 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         renderer.render(blank, { renderTexture: bloomRT, clear: true });
         blank.destroy();
     }
-    // Full-res target for the gap-fill backdrop pass — it is composited per pixel against the
-    // scene's own alpha, so it cannot be downscaled.
-    let bdRT: PIXI.RenderTexture;
-    try {
-        bdRT = PIXI.RenderTexture.create({ width, height, resolution, scaleMode: PIXI.SCALE_MODES.LINEAR });
-    } catch {
-        bloomRT.destroy(true);
-        target.destroy(true);
-        return null;
-    }
-    {
-        const blank3 = new PIXI.Container();
-        renderer.render(blank3, { renderTexture: bdRT, clear: true });
-        blank3.destroy();
-    }
-
     const cw = Math.max(1, Math.round(width / COVERAGE_DOWNSCALE));
     const ch = Math.max(1, Math.round(height / COVERAGE_DOWNSCALE));
     let covRT: PIXI.RenderTexture;
@@ -600,9 +520,6 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         uGamma: gamma,
         uClip: tonemapClip(),
         uProbe: hdrProbe(),
-        uBd: bdRT,
-        uBdOn: gapBdMode(),
-        uBdCut: gapBdCut(),
         uCov: covRT,
         uCovOn: coverageOn() ? 1 : 0,
         uCovLo: coverageLo(),
@@ -618,7 +535,6 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
 
     return {
         target,
-        bdTarget: bdRT,
         mesh,
         prepare(renderer: PIXI.IRenderer) {
             renderer.render(brightContainer, { renderTexture: bloomRT, clear: true });
@@ -637,8 +553,6 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             setBrightQuad(nbw, nbh);
             const ncw = Math.max(1, Math.round(w / COVERAGE_DOWNSCALE));
             const nch = Math.max(1, Math.round(h / COVERAGE_DOWNSCALE));
-            bdRT.resize(w, h, true);
-            bdRT.baseTexture.setResolution(res);
             covRT.resize(ncw, nch, true);
             covRT.baseTexture.setResolution(res);
             setCovQuad(ncw, nch);
@@ -653,7 +567,6 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             covContainer.destroy();
             covBlur.destroy();
             covRT.destroy(true);
-            bdRT.destroy(true);
             target.destroy(true);
         },
     };
