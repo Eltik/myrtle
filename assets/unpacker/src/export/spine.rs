@@ -1252,7 +1252,7 @@ fn collect_dynchar_bg_quads(
             let animates_main_color = color_channels
                 .get(&go_pid)
                 .is_some_and(|chs| super::anim::animates_prop(chs, "_MainColor"));
-            let legacy_scale = legacy_tint_scale(mat, animated_color);
+            let (legacy_scale, legacy_hdr) = legacy_tint_scale(mat, animated_color);
             let (ram_scale, ram_hdr) = ram_tint_scale(mat, animated_peak);
             let mut cprops = material_color_props(mat);
             let (tint, tint_scale, hdr_color) = if legacy_scale > 1.0 {
@@ -1262,15 +1262,20 @@ fn collect_dynchar_bg_quads(
                     .iter()
                     .find(|(n, _)| n == "_TintColor")
                     .map_or([1.0; 4], |(_, c)| *c);
+                // RGB ceiling is INFINITY only for the newly-admitted sub-namespaced families
+                // (see `legacy_tint_scale`); the long-shipped ones keep the 1.0 clamp. Alpha is
+                // always clamped: it is a coverage/blend weight, not light — a premultiplied
+                // source alpha above 1 makes the destination factor `1 - a` negative.
+                let hi = if legacy_hdr { f32::INFINITY } else { 1.0 };
                 (
                     [
-                        (tc[0] * legacy_scale).clamp(0.0, 1.0),
-                        (tc[1] * legacy_scale).clamp(0.0, 1.0),
-                        (tc[2] * legacy_scale).clamp(0.0, 1.0),
+                        (tc[0] * legacy_scale).clamp(0.0, hi),
+                        (tc[1] * legacy_scale).clamp(0.0, hi),
+                        (tc[2] * legacy_scale).clamp(0.0, hi),
                         (tc[3] * legacy_scale).clamp(0.0, 1.0),
                     ],
                     legacy_scale,
-                    false,
+                    legacy_hdr,
                 )
             } else if ram_scale > 1.0 {
                 cprops.1 = Some("_MainColor".to_string());
@@ -1641,7 +1646,7 @@ fn collect_dynchar_bg_quads(
 /// pure-white FULL white-out (2 × 0.671 clamps to 1), where a plain multiply reads
 /// half-grey. (The Ram GLSL port in particles.ts mirrors the same ×2 as `col += col`.)
 /// Returns 2.0 for that family when the material carries `_TintColor`, else 1.0.
-fn legacy_tint_scale(mat: &Value, animated_color: bool) -> f32 {
+fn legacy_tint_scale(mat: &Value, animated_color: bool) -> (f32, bool) {
     let shader = mat
         .get("_shaderName")
         .and_then(|v| v.as_str())
@@ -1655,31 +1660,84 @@ fn legacy_tint_scale(mat: &Value, animated_color: bool) -> f32 {
     // families (`Ram/`, `Disturb/`, `Dissolve/`, `Mask/`) composite extra maps and
     // are handled separately (`ram_tint_scale`). Purely additive — no shader the
     // original test matched stops matching.
-    let plain_l2d = shader
+    let l2d_rest = shader
         .rfind("Particles-L2D/")
-        .map(|i| &shader[i + "Particles-L2D/".len()..])
-        .is_some_and(|rest| !rest.is_empty() && !rest.contains('/'));
-    // EXPERIMENT (`DYNCHAR_DISSOLVE_TINT=1`): admit the `Dissolve/` sub-family for STATIC
-    // layers too. It shares the ×2 `_TintColor` convention, but `ram_tint_scale` only lets the
-    // sub-namespaced families through when the entrance clip ANIMATES the layer — so a skin
-    // with no entrance never gets it. Ch'en the Holungday's wedge layers are the visible cost:
-    // `Torappu/Particles-L2D/Dissolve/Dissolve Add UVTween` with `_TintColor`
-    // [0.244,0.290,0.294,0.366] exports a WHITE tint, so they render neutral grey where the
-    // game draws them blue. Env-gated because the twin extension for a STATIC
-    // `Disturb(CustomData)` backdrop measured WORSE on Mlynar (clamping a static baseline and
-    // its peak to one ceiling shrinks the delta) — this must be measured, not assumed.
-    let dissolve_static = std::env::var("DYNCHAR_DISSOLVE_TINT").is_ok()
-        && shader.to_ascii_lowercase().contains("/particles-l2d/dissolve/");
+        .map(|i| &shader[i + "Particles-L2D/".len()..]);
+    let plain_l2d = l2d_rest.is_some_and(|rest| !rest.is_empty() && !rest.contains('/'));
+    // SUB-NAMESPACED L2D families (`Dissolve/`, `Disturb/`, `Mask/`, `3D/`) carry the SAME
+    // convention, and the exclusion above was an accident of the name test rather than a
+    // finding. Two independent lines of evidence:
+    //
+    //  1. The PROGRAM. `Torappu/Particles-L2D/Dissolve/Dissolve Add UVTween`, decompressed out
+    //     of `[uc]shaders.ab`, builds `vs_COLOR0 = in_COLOR0 * _TintColor` in the vertex stage
+    //     and then `u_xlat1 = vs_COLOR0 + vs_COLOR0; SV_Target0.xyz = (tex * u_xlat1).xyz` in
+    //     the fragment — a literal ×2 on `_TintColor`, identical to the plain ports. Every
+    //     Torappu particle shader read so far (AlphaBlend, Additive, Dissolve, Dissolve Add
+    //     UVTween, Disturb, Disturb(CustomData), Ram/Disturb) doubles the same way.
+    //  2. The NON-L2D TWIN ALREADY MATCHES. `Torappu/Particles/Dissolve/*` and
+    //     `Torappu/Particles/Disturb/*` are admitted today by the `/Particles/` test above —
+    //     the very same sub-namespaces, doubled. Only the L2D port was excluded, purely
+    //     because its name has a slash below `Particles-L2D/`.
+    //
+    // `Ram/` stays out: `ram_tint_scale` handles that family through `_MainColor`, and letting
+    // it match here would double it twice (this branch is tested first).
+    //
+    // Gated on `_TintColor` being the modulator this shader ACTUALLY reads, evidenced by the
+    // material carrying no `_MainColor`. In these families the two are mutually exclusive by
+    // construction: `Dissolve Add UVTween` declares only `_TintColor` (its vertex stage is
+    // `vs_COLOR0 = in_COLOR0 * _TintColor`) and its materials carry no `_MainColor` at all,
+    // while `Disturb(CustomData)` modulates by `_MainColor` (`2 * tex * _MainColor *
+    // vs_COLOR0`) and leaves `_TintColor` as inert residue — pinned at exactly 0.500 on
+    // material after material of Mlynar's backdrop (`bg_02`, `bg_03`, `bg_04`, `yun_01`,
+    // `bg_tree_01..03`, …), the signature of a never-authored default. Doubling that residue
+    // would be meaningless, and worse, this branch is tested BEFORE the `_MainColor` ones, so
+    // matching it would steal those layers away from the tint they are actually drawn with.
+    //
+    // Deliberately NOT gated on the half-neutral bound `ram_tint_scale` applies. That bound
+    // exists to avoid CLAMPING damage — "a ×2 material cannot author above its neutral because
+    // doubling would blow past white" only holds where white is a ceiling. This branch emits
+    // HDR, so it is not: Mlynar's blade is authored `_TintColor` (1.000, 0.753, 0.489), which
+    // doubles to (2.0, 1.51, 0.98) — an over-bright amber that saturates white-hot at the core
+    // and bleeds gold at the edges, which is precisely the flare the game draws. The value
+    // being above the neutral is the AUTHOR ASKING for over-bright, not evidence against the
+    // convention.
+    let sub_l2d = l2d_rest.is_some_and(|rest| rest.contains('/') && !rest.starts_with("Ram/"))
+        && !has_color_prop(mat, "_MainColor");
     let legacy = shader.contains("/Particles/")
         || shader.starts_with("Particles/")
         || (animated_color && plain_l2d)
-        || dissolve_static;
+        || sub_l2d;
     let has_tint_color = mat
         .get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Colors"))
         .and_then(|c| c.as_object())
         .is_some_and(|c| c.contains_key("_TintColor"));
-    if legacy && has_tint_color { 2.0 } else { 1.0 }
+    // HDR only for the newly-admitted sub-namespaced families. Their gate PROVED the authored
+    // tint sits at or below the ×2 neutral, so the doubled colour is a real over-bright value
+    // the frontend's half-float scene target can carry — and on an animated layer that is the
+    // whole point: Mlynar's blade ramps `_TintColor` r to 1.0, which doubles to 2.0 and blooms
+    // past `BLOOM_THRESHOLD`, drawing the broad white flare the game shows and we do not.
+    // Clamping it to 1.0 collapses that flare onto flat white with no bloom headroom, the same
+    // baseline-and-peak-share-a-ceiling failure documented on the Ram branch. The families
+    // matched BEFORE this change keep their clamped behaviour untouched: they are shipped and
+    // measured, and widening them is a separate question from admitting a family at all.
+    if legacy && has_tint_color {
+        (2.0, sub_l2d)
+    } else {
+        (1.0, false)
+    }
+}
+
+/// Does this material declare the given colour property at all?
+///
+/// Presence is the discriminator between the two modulation conventions in the
+/// `Particles-L2D` sub-families: a shader reads either `_TintColor` or `_MainColor`, never
+/// both, and a material only carries the one its shader declares. See `legacy_tint_scale`.
+fn has_color_prop(mat: &Value, key: &str) -> bool {
+    mat.get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.as_object())
+        .is_some_and(|c| c.contains_key(key))
 }
 
 /// Ram-family (`Torappu/Particles-L2D/Ram/*`) scene-layer tint multiplier. These
