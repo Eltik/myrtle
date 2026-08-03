@@ -221,6 +221,16 @@ function gapBlurFraction(): number {
     return Number.isFinite(v) && v > 0 ? v : GAP_BLUR_FRACTION;
 }
 
+/** `?matlead=<seconds>` — offset applied to material colour-curve sampling only. Inert (0) by
+ *  default; exists to test whether those curves run on the camera's clock rather than the
+ *  spine's. Parsed once per frame at most, which is why it is a plain function rather than a
+ *  per-layer lookup inside the loop. */
+function matLead(): number {
+    if (typeof window === "undefined") return 0;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("matlead") ?? "");
+    return Number.isFinite(v) ? v : 0;
+}
+
 function frameBoxParam(): IAnimationBounds | null {
     if (typeof window === "undefined") return null;
     const raw = new URLSearchParams(window.location.search).get("framebox");
@@ -991,7 +1001,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // Material-colour replay: the `_Start` clip animates some layers'
                         // material colour (Mlynar's white flash alpha ramps 0→0.671 over
                         // 13→15s); sample the exported curve at the track time and re-tint.
-                        if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt));
+                        // DIAGNOSTIC (?matlead=<s>): sample the material curves at `tt + s`
+                        // instead of `tt`. These curves are authored on the CAMERA's clip
+                        // (`probe_bind`: the entrance clip's 28 bindings are 20 MeshRenderer
+                        // material properties alongside the 4 Transform and 1 Camera ones), and
+                        // that clip is the one measured to run ~0.165 s out of step with the
+                        // spine. We nevertheless sample it at the SPINE's track time. If the
+                        // curves are genuinely on the camera's clock, their error should
+                        // minimise away from 0 — and if it minimises AT 0, that is a clean kill.
+                        if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
                 }
