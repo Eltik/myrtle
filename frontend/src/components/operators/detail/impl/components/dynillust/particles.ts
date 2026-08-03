@@ -1149,7 +1149,9 @@ class Emitter {
         this.data = data;
         // Start dormant through the cinematic delay: `time` counts up from `-delay` to 0,
         // so once active all the `time`-based emission logic below sees time starting at 0.
-        this.time = -(data.delay ?? 0);
+        // `?psdt=<s>` shifts ONLY this clock (see psDt) — the camera and spine keep their own,
+        // which is what makes it a phase measurement rather than a retime of the whole shot.
+        this.time = -(data.delay ?? 0) + psDt();
         // Crop to the material's `_MainTex_ST` cell first, so both the whole-sprite
         // path and the sheet-slicing below operate on the selected atlas region
         // (systems that use ST-cropping carry no Texture Sheet, so the two don't mix).
@@ -1826,6 +1828,18 @@ function combineAdditiveGains(pile: number, temper: boolean): number {
     }
 }
 
+/** DIAGNOSTIC (`?psdt=<seconds>`): offset every particle system's own clock, leaving the camera
+ *  and the spine on theirs. Virtuosa's diamond rings (sys55) are emitted at a constant 2/s with a
+ *  5 s lifetime, so ten rings are alive at once, 0.5 s apart in age, and their radii follow
+ *  `sizeOverLife(age/5)`. Their PHASE is therefore `(t - t0) mod 0.5` — and a phase error cannot
+ *  be measured by re-rendering at a different time, because at t=10 cello pans at 435 px/s and
+ *  the whole frame moves with it. This moves the rings alone. Inert (0) by default. */
+function psDt(): number {
+    if (typeof window === "undefined") return 0;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("psdt") ?? "");
+    return Number.isFinite(v) ? v : 0;
+}
+
 /** DIAGNOSTIC (`?psonly=<i>` / `?psoff=<i>`, comma lists): isolate or drop individual
  *  particle SYSTEMS by their index in `data.systems`.
  *
@@ -2343,7 +2357,7 @@ class RamEmitter {
         this.blend = blend;
         this.data = data;
         // Start dormant through the cinematic delay (see the billboard system's ctor).
-        this.time = -(data.delay ?? 0);
+        this.time = -(data.delay ?? 0) + psDt();
         this.ram = ram;
         this.follow = followOf(data);
         this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
