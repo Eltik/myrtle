@@ -1138,9 +1138,37 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 else k.renderable = false;
                             }
                         };
+                        const eraseMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapmode") === "erase";
+                        const sp = spineRef.current as unknown as PIXI.DisplayObject | null;
+                        if (eraseMode && sp) {
+                            // Pass 1: the SPINE alone into bdTarget, so the target holds the
+                            // character's silhouette.
+                            const keepS = new Set<PIXI.DisplayObject>();
+                            for (let n: PIXI.DisplayObject | null = sp; n; n = n.parent) keepS.add(n);
+                            const savedS: Array<[PIXI.DisplayObject, boolean]> = [];
+                            const walkS = (c: PIXI.Container) => {
+                                for (const k of c.children) {
+                                    if (k === sp) continue;
+                                    savedS.push([k, k.renderable]);
+                                    if (keepS.has(k)) walkS(k as PIXI.Container);
+                                    else k.renderable = false;
+                                }
+                            };
+                            walkS(hdrSceneRef.current as PIXI.Container);
+                            sp.renderable = true;
+                            currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: true });
+                            for (const [k, v] of savedS) k.renderable = v;
+                        }
                         walk(hdrSceneRef.current as PIXI.Container);
                         gapBd.renderable = true;
-                        currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: true });
+                        // Pass 2. In erase mode the backdrop goes over the silhouette with
+                        // SRC_OUT — `src * (1 - dstAlpha)` — leaving backdrop x (1 - spineAlpha),
+                        // i.e. the static art with the character punched out. Otherwise it is a
+                        // plain cleared draw.
+                        const prevBlend = gapBd.blendMode;
+                        if (eraseMode && sp) gapBd.blendMode = PIXI.BLEND_MODES.SRC_OUT;
+                        currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.bdTarget, clear: !(eraseMode && sp) });
+                        gapBd.blendMode = prevBlend;
                         for (const [k, v] of saved) k.renderable = v;
                         gapBd.renderable = false;
                     }

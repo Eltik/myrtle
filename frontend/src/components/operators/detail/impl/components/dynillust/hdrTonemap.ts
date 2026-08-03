@@ -72,12 +72,22 @@ void main() {
     // wherever the scene is translucent (measured on lin_nian#10). Tests LUMINANCE as well as
     // alpha because an ADDITIVE layer adds colour without alpha — an alpha-only test would let
     // the static through underneath every glow.
-    if (uBdOn > 2.5) {
+    // ERASE mode: uBd already holds the backdrop with the CHARACTER PUNCHED OUT (the spine is
+    // rendered into it first, then the backdrop over it with SRC_OUT). Composite it plainly
+    // UNDER the scene — draw-first behaviour, which is the variant that measures best — but with
+    // nothing left in it that could ghost against the spine.
+    if (uBdOn > 3.5) {
+        vec4 bd = texture2D(uBd, vUV);
+        rgb = rgb + bd.rgb * (1.0 - c.a);
+        c.a = c.a + bd.a * (1.0 - c.a);
+        m = max(max(rgb.r, rgb.g), rgb.b);
+    }
+    if (uBdOn > 2.5 && uBdOn < 3.5) {
         // DEBUG: white where the scene is considered COVERED, black where the gap fill applies.
         gl_FragColor = vec4(vec3(step(uBdCut, max(c.a, m))), 1.0);
         return;
     }
-    if (uBdOn > 1.5) {
+    if (uBdOn > 1.5 && uBdOn < 2.5) {
         gl_FragColor = vec4(texture2D(uBd, vUV).rgb, 1.0);
         return;
     }
@@ -449,7 +459,7 @@ function gapBdMode(): number {
     const q = new URLSearchParams(window.location.search);
     if (q.get("gapfill") !== "1") return 0;
     const m = q.get("gapmode");
-    return m === "threshold" ? 1 : m === "bdonly" ? 2 : m === "cover" ? 3 : 0;
+    return m === "threshold" ? 1 : m === "bdonly" ? 2 : m === "cover" ? 3 : m === "erase" ? 4 : 0;
 }
 
 export interface IHDRScene {
