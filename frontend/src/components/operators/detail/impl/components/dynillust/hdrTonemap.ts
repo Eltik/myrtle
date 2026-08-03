@@ -56,6 +56,7 @@ uniform float uClip;
 uniform float uProbe;
 uniform sampler2D uBd;
 uniform float uBdOn;
+uniform float uBdCut;
 uniform sampler2D uCov;
 uniform float uCovOn;
 uniform float uCovLo;
@@ -71,8 +72,17 @@ void main() {
     // wherever the scene is translucent (measured on lin_nian#10). Tests LUMINANCE as well as
     // alpha because an ADDITIVE layer adds colour without alpha — an alpha-only test would let
     // the static through underneath every glow.
+    if (uBdOn > 2.5) {
+        // DEBUG: white where the scene is considered COVERED, black where the gap fill applies.
+        gl_FragColor = vec4(vec3(step(uBdCut, max(c.a, m))), 1.0);
+        return;
+    }
+    if (uBdOn > 1.5) {
+        gl_FragColor = vec4(texture2D(uBd, vUV).rgb, 1.0);
+        return;
+    }
     if (uBdOn > 0.5) {
-        float covered = step(0.004, max(c.a, m));
+        float covered = step(uBdCut, max(c.a, m));
         vec4 bd = texture2D(uBd, vUV);
         rgb = mix(bd.rgb, rgb, covered);
         c.a = mix(bd.a, c.a, covered);
@@ -421,9 +431,25 @@ const coverageHi = () => covParam("covhi", COVERAGE_HI);
  *  that actually wins; its blocker is character ghosting on translucent scenes, which is a
  *  MASKING problem in the static art, not a compositing one. */
 export function gapThresholdOn(): boolean {
-    if (typeof window === "undefined") return false;
+    return gapBdMode() > 0;
+}
+/** How much scene contribution counts as "something is drawn here". 0.004 (1/255) was far too
+ *  strict: Virtuosa's visible gap is covered by a NEARLY-TRANSPARENT layer, so a 1/255 trace
+ *  marked 99.87% of the frame covered and only 439 px filled. `?covcut=<f>` sweeps it. */
+const GAP_COVER_CUT = 0.05;
+function gapBdCut(): number {
+    if (typeof window === "undefined") return GAP_COVER_CUT;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("covcut") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : GAP_COVER_CUT;
+}
+/** 0 = off, 1 = thresholded composite, 2 = DEBUG, output `bdTarget` straight to screen so the
+ *  backdrop-only pass can be verified independently of the threshold. */
+function gapBdMode(): number {
+    if (typeof window === "undefined") return 0;
     const q = new URLSearchParams(window.location.search);
-    return q.get("gapfill") === "1" && q.get("gapmode") === "threshold";
+    if (q.get("gapfill") !== "1") return 0;
+    const m = q.get("gapmode");
+    return m === "threshold" ? 1 : m === "bdonly" ? 2 : m === "cover" ? 3 : 0;
 }
 
 export interface IHDRScene {
@@ -565,7 +591,8 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         uClip: tonemapClip(),
         uProbe: hdrProbe(),
         uBd: bdRT,
-        uBdOn: gapThresholdOn() ? 1 : 0,
+        uBdOn: gapBdMode(),
+        uBdCut: gapBdCut(),
         uCov: covRT,
         uCovOn: coverageOn() ? 1 : 0,
         uCovLo: coverageLo(),
