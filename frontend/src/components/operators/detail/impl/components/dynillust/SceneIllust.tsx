@@ -1535,6 +1535,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 rend: d2 ? !!d2.renderable : null,
                                 vis: d2 ? !!d2.visible : null,
                                 wa: d2 && typeof d2.worldAlpha === "number" ? Number(d2.worldAlpha.toFixed(3)) : null,
+                                // Canvas-space bounds, so a slot can be matched to a REGION of
+                                // the residual instead of guessed at from its name.
+                                box: (() => {
+                                    const b = (disp as unknown as { getBounds?: () => { x: number; y: number; width: number; height: number } } | undefined)?.getBounds?.();
+                                    return b ? [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)] : null;
+                                })(),
                             };
                         });
                     };
