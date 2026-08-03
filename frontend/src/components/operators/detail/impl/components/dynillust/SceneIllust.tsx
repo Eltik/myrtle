@@ -605,6 +605,11 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
     // register it onto the spine's centroid so the two illustrations overlap by
     // mass (robust where a bounding-box centre is skewed by an arch/railing).
     sprite.anchor.set(centroid.nx, centroid.ny);
+    // CONTAIN, not cover. Covering the visible rect was tried to kill the neutral fill showing
+    // beyond a contained backdrop (Muelsyse's settled frame is mostly bare canvas on a 2.16:1
+    // viewport) and is REFUTED: the game's surround there is a flat NEUTRAL grey/gradient, while
+    // the blurred art is coloured — a cover fill puts (84,142,161) blue where the game holds
+    // neutral. The surround is the viewer's own chrome, not the skin's art scaled up.
     sprite.scale.set((2 * frame.cameraSizePx) / Math.max(texture.width || 1, texture.height || 1));
     sprite.position.set(spineCentroid.x, spineCentroid.y);
     return sprite;

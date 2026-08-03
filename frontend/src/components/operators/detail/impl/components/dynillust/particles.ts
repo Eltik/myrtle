@@ -3109,7 +3109,33 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         // flow map is UNIFORM mid-grey: no concentrated peak (its max luminance is close to its
         // mean). So exempt textures whose peak far exceeds the mean AND is genuinely bright —
         // that's a drawable sparkle, not a shader warp-input. Property-driven, no per-skin value.
-        const brightCore = maxLum > 200 && maxLum > meanLum * 4;
+        // ...and a DARK glow sprite is the same idea one stop down. Mlynar's sword glow is a
+        // 128px near-black sheet (meanLum 10.1) whose core peaks at **189** — a concentrated
+        // flare by any reading, but 11 levels short of the absolute 200 above, so it was
+        // classified as a flow map and skipped.
+        //
+        // NOT the sword-shine fix, despite being written while chasing it: that turned out to be
+        // the exporter halving `_TintColor` on sub-namespaced `Particles-L2D` families, and it is
+        // fixed there. This rule is metric-NEUTRAL on all three reference skins (bit-identical
+        // mly 17.525 / cel 19.270 / ska 10.505) because it governs textures none of them draw.
+        // It is kept on its own merits — the population split below is real — not on a measured
+        // win, and it is strictly additive, so the downside is bounded.
+        //
+        // The property that actually separates the two populations is the PEAK-TO-MEAN RATIO:
+        // a flow map is uniform, a glow is concentrated. Measured over every opaque grey/dark
+        // scene texture in the corpus that this rule can reach (320 textures, 246 currently
+        // skipped), the ratio splits them with a wide empty gap:
+        //
+        //     peak/mean  <2 : 101 skipped      4-8 :   1 skipped
+        //                2-4: 138 skipped     >=8 :   6 skipped   <- all genuine glow sprites
+        //
+        // Nothing sits between 4.4 and 18.6. The six are Mlynar's sword glow (x2, ratio 18.6),
+        // Ines' boc#8 (x2), Hoshiguma Alter (39.5) and Ling nian#9 (27.0).
+        //
+        // Written as an OR so it can only ever UN-skip: the original clause is untouched, so no
+        // texture that draws today can start being dropped. The `maxLum >= 64` floor keeps
+        // near-black noise (where a huge ratio is meaningless) out.
+        const brightCore = (maxLum > 200 && maxLum > meanLum * 4) || (maxLum >= 64 && maxLum > meanLum * 8);
         const skip = meanLum < 150 && meanSat < 0.2 && !brightCore;
         const cx = (w - 1) / 2;
         const cy = (h - 1) / 2;
