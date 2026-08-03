@@ -7,7 +7,7 @@ import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
-import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneFrame, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneData, type ISceneFrame, type ISceneLayer, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
 
 /** Minimal shape of a spine attachment we can measure at the setup pose. */
 interface AttachmentLike {
@@ -598,6 +598,62 @@ function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
  *  it to that and centre it on the animated character's visible bounds (the focal
  *  point both the static art and the spine are composed around). This aligns the
  *  spine over its own static counterpart so the missing backdrop fills in behind. */
+/** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`. */
+const ENTRANCE_FADE_IN = 0.85;
+/** Seconds the fade holds at full before lifting (covers the idle swap). */
+const ENTRANCE_FADE_HOLD = 0.2;
+/** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
+ *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
+const ENTRANCE_FADE_OUT = 0.35;
+
+/** Does the SCENE already perform the end-of-entrance fade itself, making the client-side
+ *  director fade a double-count?
+ *
+ *  Every skin authors a white overlay for the transition, so "has a fade layer" cannot be the
+ *  test — all four benchmarks have one. What separates them is whether that layer SPANS THE
+ *  CAMERA VIEW, i.e. whether it can white out the frame on its own:
+ *
+ *    Mlynar   L17  1.73x view, alpha already 1.000 when the director ramp starts
+ *    Skadi 2  L29  2.78x view, alpha 0.350 at ramp start, rising to 1.0 inside the window
+ *    Virtuosa L131 0.41x view  -> cannot cover; the director fade is what whites her frame
+ *    Muelsyse L66  1.05 x 0.85 -> does not cover BOTH axes; she needs the director fade too
+ *
+ *  Where the layer does span the view the two ramps run simultaneously and compose as
+ *  `1-(1-a1)(1-a2)`, which reaches white early and steeply. Measured on Skadi, whose authored
+ *  ramp and the director ramp overlap almost exactly (20.4-22.4 vs 21.28-22.13): stacking put us
+ *  +32.7 luma over the capture at t=21.6 and saturated at 21.87 while the game was still at
+ *  236.5 — the user-visible "the glow is instant instead of fading". Mlynar is unaffected either
+ *  way (his layer is already opaque white through the whole ramp, so the director fade adds
+ *  nothing to add), which is what makes this safe to apply by rule rather than per skin.
+ *
+ *  Colour is compared to the director's own `fadeColor` rather than assumed white. */
+function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
+    const fade = data?.entranceFade;
+    const dur = data?.entranceDuration;
+    if (!data || !fade || !dur || !data.cameraSizePx) return false;
+    const ext = 2 * data.cameraSizePx;
+    const rampStart = dur - ENTRANCE_FADE_HOLD - ENTRANCE_FADE_IN;
+    const rampEnd = dur - ENTRANCE_FADE_HOLD;
+    return data.layers.some((l: ISceneLayer) => {
+        const cc = l.colorCurve;
+        if (!cc?.length) return false;
+        // Spans the camera view on BOTH axes — only then can it white out the frame alone.
+        let x0 = Infinity;
+        let x1 = -Infinity;
+        let y0 = Infinity;
+        let y1 = -Infinity;
+        for (let i = 0; i < l.pos.length; i += 2) {
+            x0 = Math.min(x0, l.pos[i]);
+            x1 = Math.max(x1, l.pos[i]);
+            y0 = Math.min(y0, l.pos[i + 1]);
+            y1 = Math.max(y1, l.pos[i + 1]);
+        }
+        if (x1 - x0 < ext || y1 - y0 < ext) return false;
+        // Reaches the fade colour, opaque, by the time the director ramp would finish.
+        return cc.some((k: number[]) => k[0] <= rampEnd + 1e-3 && k[0] >= Math.min(rampStart, cc[cc.length - 1][0]) - 1e-3 && k[4] >= 0.99 && Math.abs(k[1] - fade[0]) < 0.06 && Math.abs(k[2] - fade[1]) < 0.06 && Math.abs(k[3] - fade[2]) < 0.06);
+    });
+}
+
 function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }): PIXI.Sprite {
     const { texture, centroid } = backdrop;
     const sprite = new PIXI.Sprite(texture);
@@ -784,13 +840,6 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // Mlynar's own white-transition plane already holds the frame white from t=15.0, and Skadi
     // reaches white through her authored fade LAYERS — and her recording runs
     // 134 → 146 → 178 → 211 → 240 → 254 over `duration - 1.0s` → `duration - 0.2s`.
-    /** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`. */
-    const ENTRANCE_FADE_IN = 0.85;
-    /** Seconds the fade holds at full before lifting (covers the idle swap). */
-    const ENTRANCE_FADE_HOLD = 0.2;
-    /** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
-     *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
-    const ENTRANCE_FADE_OUT = 0.35;
     const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null } | null>(null);
     const crossfadeRef = useRef<{ wrapper: PIXI.Container; mainRoot: PIXI.Container; entRoot: PIXI.Container; ent: IComposite; elapsed: number; duration: number } | null>(null);
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
@@ -1918,7 +1967,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     authoredTightBounds,
                     entranceViewRatio: authoredFrame?.viewPx2 && authoredFrame?.viewPx ? (authoredFrame.viewPx2 as number) / authoredFrame.viewPx : null,
                     entranceDuration: scene?.data.entranceDuration ?? null,
-                    entranceFade: scene?.data.entranceFade ?? null,
+                    entranceFade: sceneDrivesEntranceFade(scene?.data ?? null) ? null : (scene?.data.entranceFade ?? null),
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
                     entranceCamCenterCurve: (scene?.data.entranceCamCenterCurve as [number, number, number][] | undefined) ?? null,
