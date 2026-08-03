@@ -83,7 +83,16 @@ fn main() {
                             .and_then(|(_, gv)| gv.get("m_IsActive"))
                             .map(|x| x.as_bool().map(i64::from).or_else(|| x.as_i64()).unwrap_or(-1))
                             .unwrap_or(-1);
-                        println!("    '{}'  pathID={g}  m_IsActive={act}", name_of(g));
+                        // walk to the topmost ancestor: is this entry on the ENTRANCE root or
+                        // the IDLE root? That is exactly the cross-root admission question.
+                        let mut r = g;
+                        for _ in 0..64 {
+                            match parent_go(r) {
+                                Some(p2) => r = p2,
+                                None => break,
+                            }
+                        }
+                        println!("    '{}'  pathID={g}  m_IsActive={act}  ROOT='{}'", name_of(g), name_of(r));
                     }
                     _ => println!("    (unresolved: {})", serde_json::to_string(e).unwrap_or_default()),
                 }
