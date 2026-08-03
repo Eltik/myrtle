@@ -175,6 +175,13 @@ const SCENE_ZOOM_OUT = 1.7;
  *  silhouette boundary. Rendered with a `contain` fit so the whole box is visible.
  *
  *  Returns null when absent or malformed, leaving the normal framing untouched. */
+/** DIAGNOSTIC (`?gapfill=1`): draw the static illustration BEHIND a scene that does not span
+ *  the camera view, to fill the bare canvas the game fills with vista. Default OFF. */
+function gapFillOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("gapfill") === "1";
+}
+
 function frameBoxParam(): IAnimationBounds | null {
     if (typeof window === "undefined") return null;
     const raw = new URLSearchParams(window.location.search).get("framebox");
@@ -1219,7 +1226,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // bare frame JSON (spine-only skins, e.g. Siege).
             let backdropData: ILoadedBackdrop | null = null;
             let backdropFrame: ISceneFrame | null = null;
-            if (backdrop && opts.mode === "main") {
+            // GAP FILL (?gapfill=1): also load it for the ENTRANCE, where a scene that does
+            // not span the camera view leaves bare canvas the game fills with vista.
+            if (backdrop && (opts.mode === "main" || gapFillOn())) {
                 backdropFrame = (scene && sceneFrameOf(scene.data)) || (await loadSceneFrame(sceneUrl + bust));
                 if (backdropFrame) {
                     try {
@@ -1508,7 +1517,33 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
                 // Insert the static backdrop at the very back, registered centroid-to-
                 // centroid onto the character (see makeBackdropSprite).
-                if (useStatic && backdropData && backdropFrame) {
+                // GAP FILL (?gapfill=1). Distinct from `useStatic`, which REPLACES a missing
+                // scene; this keeps the scene and puts the static art BEHIND it purely to fill
+                // the frame where the scene does not reach. Virtuosa's entrance is the case:
+                // NO layer spans her camera view (largest reaches 0.88 of it, 0 of 132 cover
+                // both axes), so the uncovered margin and the gaps between art pieces fall
+                // through to bare canvas — a hard-edged near-black wedge where the game shows
+                // misty vista. Gated on the geometry, not on a skin: only when no layer spans
+                // the view, so a scene that already fills the frame is untouched.
+                const viewExt = 2 * (scene?.data.cameraSizePx ?? 0);
+                const sceneCoversFrame =
+                    !!scene &&
+                    viewExt > 0 &&
+                    scene.data.layers.some((l) => {
+                        let x0 = Infinity;
+                        let x1 = -Infinity;
+                        let y0 = Infinity;
+                        let y1 = -Infinity;
+                        for (let i = 0; i < l.pos.length; i += 2) {
+                            x0 = Math.min(x0, l.pos[i]);
+                            x1 = Math.max(x1, l.pos[i]);
+                            y0 = Math.min(y0, l.pos[i + 1]);
+                            y1 = Math.max(y1, l.pos[i + 1]);
+                        }
+                        return x1 - x0 >= viewExt && y1 - y0 >= viewExt;
+                    });
+                const gapFill = !useStatic && gapFillOn() && !sceneCoversFrame && !!backdropData && !!backdropFrame;
+                if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
                     sceneContainer.addChildAt(bd, 0);
