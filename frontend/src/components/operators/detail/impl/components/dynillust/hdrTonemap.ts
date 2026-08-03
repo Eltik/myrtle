@@ -53,10 +53,20 @@ uniform float uKnee;
 uniform float uBloomIntensity;
 uniform float uGamma;
 uniform float uClip;
+uniform float uProbe;
 void main() {
     vec4 c = texture2D(uSampler, vUV);
     vec3 rgb = c.rgb;
     float m = max(max(rgb.r, rgb.g), rgb.b);
+    // DIAGNOSTIC (?hdrprobe=<scale>): bypass the tonemap and output the RAW half-float
+    // target divided by <scale>, so the captured PNG can be read back as HDR magnitude
+    // (pixel/255*scale). Answers "does anything actually exceed 1 before the knee?" —
+    // which decides whether a clipped highlight is an over-bright stack or already-LDR
+    // white passing through the achroma release.
+    if (uProbe > 0.0) {
+        gl_FragColor = vec4(rgb / uProbe, 1.0);
+        return;
+    }
     if (m > uKnee) {
         // soft-compress the tail [knee, +inf) -> [knee, 1)
         float e = (m - uKnee) / max(1e-4, 1.0 - uKnee);
@@ -267,6 +277,13 @@ export function sceneCompositeGamma(cameraSizePx: number | undefined | null): nu
     return loG + (hiG - loG) * t;
 }
 
+/** DIAGNOSTIC (`?hdrprobe=<scale>`): see the shader. 0 (default) = normal tonemap. */
+function hdrProbe(): number {
+    if (typeof window === "undefined") return 0;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("hdrprobe") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
     target: PIXI.RenderTexture;
@@ -352,7 +369,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     brightContainer.filters = [blur];
 
     const geometry = makeQuad(width, height);
-    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip() });
+    const shader = PIXI.Shader.from(TONEMAP_VERT, TONEMAP_FRAG, { uSampler: target, uBloom: bloomRT, uKnee: knee, uBloomIntensity: bloomIntensity(), uGamma: gamma, uClip: tonemapClip(), uProbe: hdrProbe() });
     const mesh = new PIXI.Mesh(geometry, shader);
 
     const setBrightQuad = (w: number, h: number) => {
