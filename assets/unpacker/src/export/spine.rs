@@ -1922,7 +1922,7 @@ fn collect_dynchar_bg_quads(
 
         if attrib_dbg {
             eprintln!(
-                "    [scene] KEEP  sort={sort:<4} reveal={:<6} {:<28} root={}",
+                "    [scene] KEEP  sort={sort:<4} z={z:<10.4} reveal={:<6} {:<28} root={}",
                 cross_from.map_or_else(|| "-".to_string(), |t| format!("{t:.2}")),
                 host.go_name(all_objects, go_pid),
                 host.root_name_of_go(all_objects, go_pid)
@@ -2485,6 +2485,21 @@ fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTim
         .and_then(|p| all_objects.get(&p))
         .and_then(|(_, v)| v.get("orthographic size"))
         .and_then(Value::as_f64);
+    // DIAGNOSTIC (`DYNCHAR_TFCHAIN=1`): is the entrance camera actually ORTHOGRAPHIC? A
+    // perspective camera would make each layer's Z a real parallax term, which flat 2D
+    // compositing cannot express; an orthographic one makes Z pure sort order.
+    if std::env::var("DYNCHAR_TFCHAIN").is_ok()
+        && let Some(cam) = entrance_camera_pid(all_objects).and_then(|p| all_objects.get(&p))
+    {
+        eprintln!(
+            "  [camera] orthographic={:?} ortho_size={:?} fov={:?} near={:?} far={:?}",
+            cam.1.get("orthographic"),
+            cam_ortho,
+            cam.1.get("field of view"),
+            cam.1.get("near clip plane"),
+            cam.1.get("far clip plane"),
+        );
+    }
     // Tally `_delayTime`s (rounded to 0.05s) and pick the most-shared LATE beat.
     let mut counts: HashMap<i64, usize> = HashMap::new();
     for (cid, v) in all_objects.values() {
