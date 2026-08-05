@@ -1244,10 +1244,11 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
  *  `[scene].json` carrying only the frame), so the static-art backdrop can be
  *  aligned for spine-only skins too. */
 export interface ISceneFrame {
-    /** Display-frame centre in spine-authored px (Y-up). */
-    offsetPx: [number, number];
-    /** Display-frame square full extent in spine-authored px. */
-    viewPx: number;
+    /** Display-frame centre in spine-authored px (Y-up). NULL when the controller's
+     *  `_adjustes` stop is uninitialised — see {@link sceneFrameOf}. */
+    offsetPx: [number, number] | null;
+    /** Display-frame square full extent in spine-authored px. Null on the same skins. */
+    viewPx: number | null;
     /** Camera half-height in spine-authored px — the static illustration spans
      *  `2 × cameraSizePx` of the scene, so this sets the backdrop's scale. */
     cameraSizePx: number;
@@ -1352,10 +1353,18 @@ export function sampleCurveXY(curve: [number, number, number][] | null | undefin
 
 /** Frame data taken directly from a loaded {@link ISceneData}. */
 export function sceneFrameOf(data: ISceneData): ISceneFrame | null {
-    if (!data.cameraOffsetPx || !data.cameraViewPx || !data.cameraSizePx) return null;
+    // Only `cameraSizePx` is REQUIRED. It is the camera's own half-height and every scene
+    // authors it; the other two come from the controller's `_adjustes` display stops, which a
+    // skin may ship uninitialised. Demanding all three threw the authored camera away whenever a
+    // stop was missing and fell back to inflating the character's measured bounds — which framed
+    // Nearl "Epoque" (a valid cameraSizePx of 1300, both stops unset) entirely off-screen: she
+    // rendered as bare environment fill with one corner of cloud, no character at all. Every
+    // consumer of `offsetPx`/`viewPx` already guards for absence (`?.`, `usableExtent`), so the
+    // authored camera extent survives on its own.
+    if (!data.cameraSizePx) return null;
     return {
-        offsetPx: data.cameraOffsetPx,
-        viewPx: data.cameraViewPx,
+        offsetPx: data.cameraOffsetPx ?? null,
+        viewPx: data.cameraViewPx ?? null,
         cameraSizePx: data.cameraSizePx,
         offsetPx2: data.cameraOffsetPx2 ?? null,
         viewPx2: data.cameraViewPx2 ?? null,

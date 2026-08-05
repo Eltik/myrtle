@@ -1053,17 +1053,29 @@ fn collect_dynchar_bg_quads(
     // Parse ONE `_adjustes` entry → (offset, size). Used for both the wide adjust[0]
     // (idle framing) and the tight adjust[1] (the zoomed-in open the viewer dollies out from).
     let parse_adjust = |a: &Value| -> (Option<(f64, f64)>, Option<f64>) {
+        // An UNSET Unity `Vector2` in these controllers holds `float.MinValue`
+        // (-3.4028235e38), not zero, and it must be read as ABSENT. Nearl "Evolved Art"
+        // ships exactly that for both of its adjust offsets: passed through as a real frame
+        // centre it laid the whole scene ~1500 px above the viewport and the skin rendered as
+        // bare environment fill with one corner of cloud — the character never appeared.
+        // Reject the sentinel by magnitude against the f32 extremum rather than by a chosen
+        // limit: every genuine offset is a few hundred authored px, and nothing legitimate
+        // comes within astronomical distance of FLT_MAX.
+        let sane = |v: f64| v.is_finite() && v.abs() < f64::from(f32::MAX) * 0.5;
         let off = a.get("offset");
         let ox = off
             .and_then(|o| o.get("x"))
-            .and_then(serde_json::Value::as_f64);
+            .and_then(serde_json::Value::as_f64)
+            .filter(|v| sane(*v));
         let oy = off
             .and_then(|o| o.get("y"))
-            .and_then(serde_json::Value::as_f64);
+            .and_then(serde_json::Value::as_f64)
+            .filter(|v| sane(*v));
         let size = a
             .get("size")
             .and_then(|s| s.get("x"))
-            .and_then(serde_json::Value::as_f64);
+            .and_then(serde_json::Value::as_f64)
+            .filter(|v| sane(*v));
         (ox.zip(oy), size)
     };
     let (camera_offset, camera_view, camera_offset2, camera_view2) = controller_mbs

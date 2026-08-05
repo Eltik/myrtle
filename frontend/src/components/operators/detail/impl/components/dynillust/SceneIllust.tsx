@@ -2256,7 +2256,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (c.hasShadow) hideRedundantShadowSlots(c.spine);
                 };
 
-                const gameFrame = main.authoredDisplayBounds;
+                // `authoredDisplayBounds` is null whenever the skin's `_adjustes[0]` extent is
+                // unusable — Unity writes an uninitialised stop as -FLT_MAX, which `usableExtent`
+                // (above) correctly rejects. That guard was necessary but not sufficient: EVERY
+                // path below runs through `openStandingIdle`, which bailed on a null `gameFrame`
+                // BEFORE calling `attach()`, so the composite root was never added to the stage
+                // and the skin rendered as a completely EMPTY frame — a healthy skeleton with 205
+                // renderable meshes and valid textures, simply never drawn. The composite has
+                // already computed a sane framing box for exactly this case (the authored
+                // `cameraSizePx` square centred on the visible art), so fall back to it. Same
+                // `?? bounds` chain the entrance paths below already use; a no-op for every skin
+                // whose `_adjustes[0]` is a real number.
+                const gameFrame = main.authoredDisplayBounds ?? main.bounds;
                 const openTight = main.authoredTightBounds; // the game's `_adjustes[1]`, else null
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
