@@ -493,7 +493,7 @@ interface IComposite {
      *  Null for spine-only art with no authored camera. */
     /** The backdrop wash's seat inside this composite's spine, when the game splits the
      *  skeleton. Null when the skin ships no `separatorSlots`. */
-    separatorWash: ISeparatorWash | null;
+    separatorWash: ISeparatorWash[];
     authoredDisplayBounds: IAnimationBounds | null;
     /** The game's TIGHT/zoomed-in display frame (`_adjustes[1]`, e.g. Virtuosa 1246 vs
      *  the 1929 wide) in frontend coords — the close-up the in-game viewer opens on and
@@ -800,16 +800,21 @@ interface ISeparatorWash {
  *  which puts bg_ref/bg_tint_01/air_01 in the gap and leaves bg_rain_01 genuinely in front.
  *  cel 18.844 -> 17.167, ska 10.500 -> 10.465, mly bit-identical (ships no separator).
  */
-function reseatSeparatorWash(spine: unknown, sep: ISeparatorWash | null): void {
-    if (!sep) return;
+function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
+    if (!seps.length) return;
     const sp = spine as unknown as { children: PIXI.DisplayObject[]; addChildAt(c: PIXI.DisplayObject, i: number): unknown; slotContainers?: PIXI.DisplayObject[] };
     const conts = sp.slotContainers;
-    if (!conts || sep.slotIndex <= 0 || sep.slotIndex >= conts.length) return;
-    const target = conts[sep.slotIndex];
-    const at = sp.children.indexOf(target);
-    if (at < 0) return;
-    if (sp.children[at - 1] === sep.wash) return; // already seated
-    sp.addChildAt(sep.wash, at);
+    if (!conts) return;
+    // Deepest gap first: seating a shallower one shifts every index after it, and walking from
+    // the back keeps the remaining targets where they were.
+    for (let k = seps.length - 1; k >= 0; k--) {
+        const sep = seps[k];
+        if (sep.slotIndex <= 0 || sep.slotIndex >= conts.length) continue;
+        const at = sp.children.indexOf(conts[sep.slotIndex]);
+        if (at < 0) continue;
+        if (sp.children[at - 1] === sep.wash) continue; // already seated
+        sp.addChildAt(sep.wash, at);
+    }
 }
 
 export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = "character", backdrop, onReady }: ISceneIllustProps) {
@@ -837,7 +842,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  drawn inline — rendered alone into `hdr.bdTarget` each frame (see the tick). */
     const hdrSceneRef = useRef<PIXI.Container | null>(null);
     /** The backdrop wash re-parented inside the spine (see {@link reseatSeparatorWash}). */
-    const separatorWashRef = useRef<ISeparatorWash | null>(null);
+    const separatorWashRef = useRef<ISeparatorWash[]>([]);
     const envBgRef = useRef<PIXI.Sprite | null>(null);
     // Every composite built for the current skin (usually one; two while a "_Start"
     // entrance is playing before it hands off to the settled main L2D). Tracked so
@@ -1518,14 +1523,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if (particles) sceneContainer.addChild(particles.background);
                 // Sibling by default (drawn exactly where it used to be, inside `background`);
                 // moved INSIDE the spine below when the game splits the skeleton.
-                if (particles) sceneContainer.addChild(particles.backdropWash);
+                if (particles) for (const w of particles.backdropWashes) sceneContainer.addChild(w);
                 sceneContainer.addChild(spine);
                 // The GAME splits this skeleton and interleaves the backdrop wash between the
                 // parts (`separatorSlots`, from Spine-Unity's `separatorSlotNames`). Resolve the
                 // split slot to a draw index here; `reseatSeparatorWash` does the per-frame
                 // move. Null when the skin ships no separator, which keeps the wash a plain
                 // sibling and the render byte-identical.
-                let separatorWash: ISeparatorWash | null = null;
+                let separatorWash: ISeparatorWash[] = [];
                 {
                     const sepNames = scene?.data.separatorSlots;
                     // ON by default; `?sepwash=0` disables. Data-gated — a skin with no
@@ -1533,10 +1538,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") !== "0" : true;
                     if (on && particles && sepNames && sepNames.length > 0) {
                         const slots = (spine as unknown as { skeleton: { slots: { data: { name: string } }[] } }).skeleton.slots;
-                        const idx = slots.findIndex((sl) => sepNames.includes(sl.data.name));
-                        // Index 0 would put the wash behind everything — that is what the plain
-                        // demotion already does, so leave it alone rather than churn the tree.
-                        if (idx > 0) separatorWash = { wash: particles.backdropWash, slotIndex: idx };
+                        // Draw indices of the split slots, ASCENDING — gap k sits at the k-th
+                        // separator in draw order, which is the same ordering as the ascending
+                        // `separatorPartSorts` (a lower sort draws earlier). Index 0 would put a
+                        // wash behind everything, which the plain demotion already does.
+                        const idx = sepNames
+                            .map((n) => slots.findIndex((sl) => sl.data.name === n))
+                            .filter((i) => i > 0)
+                            .sort((a, b) => a - b);
+                        separatorWash = idx
+                            .map((slotIndex, k) => ({ wash: particles.backdropWashes[k], slotIndex }))
+                            .filter((w): w is ISeparatorWash => !!w.wash);
                     }
                 }
                 if (scene) sceneContainer.addChild(scene.foreground);
@@ -2187,7 +2199,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 contentBounds: null,
                 hasDarkBackdrop: false,
                 bounds,
-                separatorWash: null,
+                separatorWash: [],
                 authoredDisplayBounds: null,
                 authoredTightBounds: null,
                 entranceViewRatio: null,
@@ -2328,7 +2340,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     }
                     spineRef.current = c.spine;
                     particlesRef.current = c.particles;
-                    separatorWashRef.current = c.separatorWash ?? null;
+                    separatorWashRef.current = c.separatorWash ?? [];
                     boneRestRef.current = c.boneRest;
                     sceneContainerRef.current = c.isScene ? c.root : null;
                     boundsRef.current = c.bounds;

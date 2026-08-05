@@ -3084,9 +3084,11 @@ export interface ILoadedParticles {
     data: IParticlesData;
     /** Emitters whose sort is behind the character. */
     background: PIXI.Container;
-    /** `isBackdropParticle` haze/tint sheets, kept separate so they can be seated between a
-     *  split skeleton's parts. See {@link ISceneData.separatorSlots}. */
-    backdropWash: PIXI.Container;
+    /** `isBackdropParticle` haze/tint sheets, one container per GAP between the skeleton's
+     *  separator parts, so each can be seated at the gap its own sort selects. Length 1 (and
+     *  drawn as a plain sibling) when the skin has no separator.
+     *  See {@link ISceneData.separatorSlots}. */
+    backdropWashes: PIXI.Container[];
     /** Emitters whose sort is in front of the character. */
     foreground: PIXI.Container;
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
@@ -3499,11 +3501,15 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();
-    // The `isBackdropParticle` sheets get their OWN container rather than sharing `background`,
-    // so the consumer can seat them BETWEEN a split skeleton's parts (see the scene data's
-    // `separatorSlots`). Drawn immediately before `background`'s successor it is byte-identical
-    // to the old single-container behaviour, which is what skins without a separator keep.
-    const backdropWash = new PIXI.Container();
+    // One wash container PER GAP between the skeleton's separator parts, so each sheet can be
+    // seated at the gap its own sort selects (see the scene data's `separatorSlots`). Nearly
+    // half the corpus has a separator and several have SIX slots / SEVEN parts, so a single
+    // container cannot express it. With no separator this is one container drawn exactly where
+    // the sheets used to be, i.e. byte-identical to the previous behaviour.
+    const backdropWashes: PIXI.Container[] = Array.from(
+        { length: Math.max(1, (data.separatorPartSorts?.length ?? 0) - 1) },
+        () => new PIXI.Container(),
+    );
     const emitters: Array<Emitter | RamEmitter> = [];
     /** `emitters[i]` came from `data.systems[emitterSys[i]]` — skipped systems leave no entry. */
     const emitterSys: number[] = [];
@@ -3670,15 +3676,19 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // Only sheets the heuristic already flagged are re-routed, so nothing else moves.
         const partSorts = data.separatorPartSorts ?? [];
         const hasParts = partSorts.length >= 2;
-        const gapLo = hasParts ? partSorts[0] : 0;
-        const gapHi = hasParts ? partSorts[partSorts.length - 1] : 0;
         const sheetTarget = (): PIXI.Container => {
             if (isBackdropParticle && hasParts) {
-                if (sys.sort > gapLo && sys.sort < gapHi) return backdropWash;
-                if (sys.sort >= gapHi) return foreground;
-                return background;
+                // The last part drawn at or below this sheet's own depth; the sheet goes in the
+                // gap immediately after it.
+                let j = -1;
+                for (let i = 0; i < partSorts.length; i++) {
+                    if (partSorts[i] <= sys.sort) j = i;
+                }
+                if (j < 0) return background; // below every part
+                if (j >= partSorts.length - 1) return foreground; // at/above the last part
+                return backdropWashes[j] ?? background;
             }
-            return isBackdropParticle ? backdropWash : sys.sort < data.characterSort ? background : foreground;
+            return isBackdropParticle ? backdropWashes[0] : sys.sort < data.characterSort ? background : foreground;
         };
         const isStaticProp = effBlend === "normal" && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && scalarMax(sys.startSize) > 0.4 * (data.cameraSizePx || 1050);
         // The SECOND spelling of the same "static geometry faked as a particle system" idea,
@@ -3840,7 +3850,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     return {
         data,
         background,
-        backdropWash,
+        backdropWashes,
         foreground,
         update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment) {
             // Recompute the shared live count once per frame for the budget.

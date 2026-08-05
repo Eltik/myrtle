@@ -1067,31 +1067,42 @@ fn collect_dynchar_bg_quads(
         })
         .unwrap_or_default();
 
-    // The separator PARTS' own depths: each `SkeletonPartsRenderer` in
-    // `SkeletonRenderSeparator.partsRenderers` sits on a GameObject whose MeshRenderer carries a
-    // sortingOrder. Virtuosa's are [0, 20], and her sheets sort 3 / 10 / 12 / 25 — so three fall
-    // in the gap and the rain genuinely belongs in front. Ascending, deduped.
-    let mut separator_part_sorts: Vec<i64> = Vec::new();
-    if !separator_slots.is_empty() {
-        for (_, v) in all_objects.values() {
-            let Some(parts) = v.get("partsRenderers").and_then(serde_json::Value::as_array) else { continue };
-            for e in parts {
-                let Some(rp) = e.get("m_PathID").and_then(serde_json::Value::as_i64) else { continue };
-                let Some((_, rv)) = all_objects.get(&rp) else { continue };
-                let Some(go) = rv.get("m_GameObject").and_then(get_path_id) else { continue };
-                for (cid2, v2) in all_objects.values() {
-                    if *cid2 == 23
-                        && v2.get("m_GameObject").and_then(get_path_id) == Some(go)
-                        && let Some(o) = v2.get("m_SortingOrder").and_then(serde_json::Value::as_i64)
-                    {
-                        separator_part_sorts.push(o);
+    // The separator PARTS' own depths, taken from the `SkeletonRenderSeparator` on the SAME
+    // GameObject as the skeleton — the separator component and the SkeletonRenderer are
+    // siblings (verified on Skadi: go -846..302 carries `Skadi_glow` + parts [0,5], go
+    // 506..246 carries `Skadi_crown_back` + parts [0,8]).
+    //
+    // Scanning `partsRenderers` bundle-wide instead unions the parts of EVERY skeleton in the
+    // bundle, which breaks the `parts.len() == slots.len() + 1` invariant the consumer needs to
+    // map a gap to a split slot — Skadi came out [0, 5, 8] for two 2-part skeletons.
+    let separator_part_sorts: Vec<i64> = spine_renderers
+        .first()
+        .map(|(_, skel_go, _)| {
+            let mut sorts: Vec<i64> = Vec::new();
+            for (_, v) in all_objects.values() {
+                if v.get("m_GameObject").and_then(get_path_id) != Some(*skel_go) {
+                    continue;
+                }
+                let Some(parts) = v.get("partsRenderers").and_then(serde_json::Value::as_array) else { continue };
+                for e in parts {
+                    let Some(rp) = e.get("m_PathID").and_then(serde_json::Value::as_i64) else { continue };
+                    let Some((_, rv)) = all_objects.get(&rp) else { continue };
+                    let Some(go) = rv.get("m_GameObject").and_then(get_path_id) else { continue };
+                    for (cid2, v2) in all_objects.values() {
+                        if *cid2 == 23
+                            && v2.get("m_GameObject").and_then(get_path_id) == Some(go)
+                            && let Some(o) = v2.get("m_SortingOrder").and_then(serde_json::Value::as_i64)
+                        {
+                            sorts.push(o);
+                        }
                     }
                 }
             }
-        }
-        separator_part_sorts.sort_unstable();
-        separator_part_sorts.dedup();
-    }
+            sorts.sort_unstable();
+            sorts.dedup();
+            sorts
+        })
+        .unwrap_or_default();
 
     // Display-controller MonoBehaviours in a DETERMINISTIC order: the OWN prefab
     // root's controller first, then ascending path_id. A bundle can ship several
