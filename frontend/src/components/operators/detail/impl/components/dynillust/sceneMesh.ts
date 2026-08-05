@@ -350,6 +350,20 @@ function gapLayersEnabled(): boolean {
     return new URLSearchParams(window.location.search).get("gaplayers") === "1";
 }
 
+/** `?fgalpha=<f>` scales FOREGROUND scene-layer opacity (diagnostic, default 1 = no-op). */
+function fgAlphaScale(): number {
+    if (typeof window === "undefined") return 1;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("fgalpha") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
+/** `?ccgain=<f>` scales replayed colour-curve alpha (diagnostic, default 1 = no-op). */
+function ccGain(): number {
+    if (typeof window === "undefined") return 1;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("ccgain") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
 const EFFECT_SCENE_GAIN = 0.3;
 /** DIAGNOSTIC (`?scenegain=<f>`): override {@link EFFECT_SCENE_GAIN} so the taming applied to
  *  effect-classified scene layers can be measured rather than assumed. 1 = no taming. */
@@ -708,6 +722,18 @@ function uvBufferOf(mesh: PIXI.DisplayObject): PIXI.Buffer {
 export function applySceneLayerColor(mesh: PIXI.DisplayObject, rgba: [number, number, number, number]): void {
     const mm = mesh as unknown as ISceneLayerRuntime & { shader?: PIXI.Shader };
     const mode = mm.__colorMode;
+    // DIAGNOSTIC (`?ccgain=<f>`): scale the REPLAYED colour-curve alpha. A build-time knob
+    // cannot reach these layers — the entrance tick rewrites their colour every frame from the
+    // curve, clobbering it — which is why an `?fgalpha=` sweep reads inert on exactly the
+    // layers that carry a curve. Mlynar's uniform +1.98 Cb blue cast comes entirely from ONE
+    // such layer (sort 10, tint [0.41, 0.46, 1.00], alpha 0.294): ablating it takes the cast to
+    // -0.20 but costs 0.55 MADC, so it belongs and only its strength is in question.
+    // MEASURED: too blunt to isolate one layer — it scales EVERY curve-driven layer, including
+    // Mlynar's white flash, so mly reads 17.405 -> 21.232 (0.75) -> 28.000 (0.5). Useful only as
+    // a whole-family probe. Note it scales the ALPHA component; where `uColor` is premultiplied
+    // the rgb does not follow, so this is not a clean opacity scale either.
+    const cg = ccGain();
+    if (cg !== 1) rgba = [rgba[0], rgba[1], rgba[2], rgba[3] * cg];
     const shader = mm.shader;
     if (!mode || !shader) return;
     const g = mode.gain;
@@ -1610,6 +1636,12 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
         const mesh = buildLayerMesh(layer, base, ramTexOf(layer), forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
         if (!mesh) continue;
+        // DIAGNOSTIC (`?fgalpha=<f>`): scale the opacity of FOREGROUND scene layers, to ask
+        // whether they are drawn too strongly. Mlynar's render is a uniform +1.98 Cb too blue at
+        // every beat, and ablating the foreground removes ALL of it (+1.98 -> +0.01) while costing
+        // MADC (17.405 -> 18.436) — so the layers belong, but their blue contribution may not.
+        // His are three non-additive sort-10 sheets tinted [0.41, 0.46, 1.00] and [0.72, 0.82, 0.94].
+        if (isForeground && fgAlphaScale() !== 1) mesh.alpha *= fgAlphaScale();
         (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
         const box = boundsOf(layer.pos);
         if (isForeground && !isVeil) {

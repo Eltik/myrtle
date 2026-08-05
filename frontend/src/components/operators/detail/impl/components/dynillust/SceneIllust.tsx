@@ -1585,6 +1585,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // split the fg into [below-particles] + [above-particles overlay].
                         const overlay = new PIXI.Container();
                         for (const m of hoisted) overlay.addChild(m);
+                        // NOTE: a container-alpha knob here does NOT work, and the reason is worth
+                        // recording. These hoisted layers draw through a CUSTOM shader whose
+                        // `uColor` is PREMULTIPLIED (Mlynar's blue sheet dumps
+                        // `uColor=[0.121, 0.137, 0.294]`, `tint=None` — i.e. tint x alpha), and
+                        // that shader never reads `worldAlpha`. Setting `overlay.alpha` changed
+                        // exactly 0 pixels while ablating the same container changed 511,028.
+                        // Scaling one of these layers means scaling its `uColor`, not any alpha.
                         sceneContainer.addChild(overlay);
                         sceneOverlay = overlay;
                     }
