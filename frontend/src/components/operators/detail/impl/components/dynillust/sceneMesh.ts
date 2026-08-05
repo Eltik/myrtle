@@ -364,6 +364,67 @@ function ccGain(): number {
     return Number.isFinite(v) && v >= 0 ? v : 1;
 }
 
+/** `?lcolor=<srcIndex>:<f>,...` scales ONE scene layer's premultiplied colour.
+ *
+ *  The only knob that can reach a curve-driven custom-shader layer. Alpha knobs cannot: the
+ *  entrance tick rewrites these every frame (so a build-time set is clobbered), and the shader
+ *  reads a `uWorldAlpha` UNIFORM pinned to 1 rather than PIXI's `worldAlpha` (so container alpha
+ *  is a no-op — measured at 0 pixels changed). Scaling the premultiplied `uColor` as a whole
+ *  keeps rgb and alpha consistent, which scaling the alpha component alone does not. */
+function layerColorScales(): Map<number, [number, number, number]> {
+    const m = new Map<number, [number, number, number]>();
+    if (typeof window === "undefined") return m;
+    const raw = new URLSearchParams(window.location.search).get("lcolor");
+    if (!raw) return m;
+    // `i:f` scales all three channels; `i:r:g:b` scales them independently, which is what
+    // separates "this layer is too STRONG" from "this layer is the wrong HUE".
+    for (const part of raw.split(",")) {
+        const bits = part.split(":");
+        const idx = Number.parseInt(bits[0], 10);
+        if (!Number.isInteger(idx)) continue;
+        const num = (x: string | undefined, d: number) => {
+            const v = Number.parseFloat(x ?? "");
+            return Number.isFinite(v) && v >= 0 ? v : d;
+        };
+        if (bits.length >= 4) m.set(idx, [num(bits[1], 1), num(bits[2], 1), num(bits[3], 1)]);
+        else {
+            const f = num(bits[1], 1);
+            m.set(idx, [f, f, f]);
+        }
+    }
+    return m;
+}
+
+/** `?tintgamma=<g>` re-encodes NON-NEUTRAL scene-layer tints as `tint^(1/g)` (diagnostic).
+ *
+ *  Mlynar's uniform +1.98 Cb blue cast comes from ONE sort-10 sheet tinted
+ *  [0.4118, 0.4645, 1.0000]; correcting that layer's HUE (rather than its strength or opacity)
+ *  is worth 0.211 MADC, and the winning ratio is exactly what gamma-encoding that tint gives
+ *  (R x1.62, G x1.52, B x1.00). A neutral tint is a fixed point under any exponent, so this
+ *  only moves layers the author actually coloured. Distinct from the REFUTED linear-space
+ *  COMPOSITE (see memory `dynchar-linear-compositing-refuted`) — that changed every blend;
+ *  this changes only how an authored tint is interpreted. 1 = no-op.
+ *
+ *  MEASURED AND REFUTED as a general rule. Optimum sits at ~1.4, NOT the 2.2 a real sRGB/linear
+ *  mismatch would imply, and it is two-signed across skins:
+ *      mly 17.405 -> 17.268 (1.4)      cel 17.167 -> 17.232 (1.4)      ska unchanged
+ *  So it is a fitted constant that helps one skin and hurts another, not a colour-space fix.
+ *  Kept inert as the probe that establishes this. */
+function tintGamma(): number {
+    if (typeof window === "undefined") return 1;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("tintgamma") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : 1;
+}
+
+/** Apply {@link tintGamma} to an authored tint. Values above 1 are re-encoded too — the
+ *  exponent is monotone there, so a >1 warm tint stays >1. */
+function encodeTint(t: readonly number[]): [number, number, number, number] {
+    const g = tintGamma();
+    if (g === 1) return [t[0], t[1], t[2], t[3]];
+    const e = 1 / g;
+    return [Math.pow(t[0], e), Math.pow(t[1], e), Math.pow(t[2], e), t[3]];
+}
+
 const EFFECT_SCENE_GAIN = 0.3;
 /** DIAGNOSTIC (`?scenegain=<f>`): override {@link EFFECT_SCENE_GAIN} so the taming applied to
  *  effect-classified scene layers can be measured rather than assumed. 1 = no taming. */
@@ -734,11 +795,21 @@ export function applySceneLayerColor(mesh: PIXI.DisplayObject, rgba: [number, nu
     // the rgb does not follow, so this is not a clean opacity scale either.
     const cg = ccGain();
     if (cg !== 1) rgba = [rgba[0], rgba[1], rgba[2], rgba[3] * cg];
+    // `?tintgamma=` must be applied HERE as well as in buildLayerMesh: a curve-driven layer has
+    // its colour rewritten from the sampled curve every frame, so a build-time re-encode never
+    // survives. Mlynar's blue sheet is exactly such a layer, and the build-only version of this
+    // knob read completely inert (17.405 / 17.404 / 17.405) for that reason alone.
+    rgba = encodeTint(rgba);
     const shader = mm.shader;
     if (!mode || !shader) return;
     const g = mode.gain;
     const rgb: [number, number, number, number] = mode.additive ? [rgba[0] * g, rgba[1] * g, rgba[2] * g, rgba[3]] : rgba;
     const alpha = mode.additive ? rgba[3] : rgba[3] * g;
+    // `?lcolor=` — scale THIS layer's colour, keyed on its source index (see layerColorScales).
+    const ls = layerColorScales().get(mm.__srcIndex ?? -1);
+    if (ls !== undefined) {
+        rgb[0] *= ls[0]; rgb[1] *= ls[1]; rgb[2] *= ls[2];
+    }
     if (shader instanceof PIXI.MeshMaterial) {
         shader.tint = tintToHex(rgb);
         // Drive the DISPLAY-OBJECT alpha, not MeshMaterial.alpha: PIXI batches small
@@ -749,7 +820,9 @@ export function applySceneLayerColor(mesh: PIXI.DisplayObject, rgba: [number, nu
         // (the default path copies it into the material each render).
         (mesh as unknown as { alpha: number }).alpha = alpha;
     } else {
-        shader.uniforms.uColor = [rgb[0] * alpha, rgb[1] * alpha, rgb[2] * alpha, alpha];
+        const uniform = ls !== undefined && ls[0] === ls[1] && ls[1] === ls[2];
+        const a2 = uniform && ls ? alpha * ls[0] : alpha;
+        shader.uniforms.uColor = [rgb[0] * alpha, rgb[1] * alpha, rgb[2] * alpha, a2];
     }
 }
 
@@ -1211,8 +1284,9 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // PIXI's MeshGeometry expects its own IArrayBuffer; TS 5.7's generic typed
     // arrays don't structurally match, so cast to the constructor's param type.
     type GeomBuf = ConstructorParameters<typeof PIXI.MeshGeometry>[0];
-    const rgb: [number, number, number, number] = additive ? [layer.tint[0] * gain, layer.tint[1] * gain, layer.tint[2] * gain, layer.tint[3]] : layer.tint;
-    const alpha = additive ? layer.tint[3] : layer.tint[3] * gain;
+    const et = encodeTint(layer.tint);
+    const rgb: [number, number, number, number] = additive ? [et[0] * gain, et[1] * gain, et[2] * gain, et[3]] : et;
+    const alpha = additive ? et[3] : et[3] * gain;
     // A layer whose SHAPE is a vertex-alpha gradient (soft light sheet over a
     // flat texture) needs per-vertex colour, or it stamps a hard opaque block.
     const stashRuntime = (m: PIXI.DisplayObject) => {
@@ -1643,6 +1717,18 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // His are three non-additive sort-10 sheets tinted [0.41, 0.46, 1.00] and [0.72, 0.82, 0.94].
         if (isForeground && fgAlphaScale() !== 1) mesh.alpha *= fgAlphaScale();
         (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
+        // Same knob for layers with NO colour curve, which the runtime replay never visits.
+        {
+            const ls = layerColorScales().get(srcIndexOf.get(layer) ?? -1);
+            const sh = (mesh as unknown as { shader?: PIXI.Shader }).shader;
+            if (ls !== undefined && sh && !(sh instanceof PIXI.MeshMaterial)) {
+                const u = sh.uniforms.uColor as number[] | undefined;
+                const uni = ls[0] === ls[1] && ls[1] === ls[2];
+                if (u) sh.uniforms.uColor = [u[0] * ls[0], u[1] * ls[1], u[2] * ls[2], uni ? u[3] * ls[0] : u[3]];
+            } else if (ls !== undefined && sh instanceof PIXI.MeshMaterial) {
+                if (ls[0] === ls[1] && ls[1] === ls[2]) (mesh as unknown as { alpha: number }).alpha *= ls[0];
+            }
+        }
         const box = boundsOf(layer.pos);
         if (isForeground && !isVeil) {
             // Deferred: whether this can STAY in front depends on which layers the veil
