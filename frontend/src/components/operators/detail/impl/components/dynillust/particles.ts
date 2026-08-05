@@ -825,6 +825,12 @@ function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
 /** An emitter's LIVE emission rate (particles/s): the cinematic's animated rate curve
  *  when the exporter captured one (sampled at the emitter clock — rate-curve systems
  *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
+/** `?bdp=0` disables the {@link isBackdropParticle} demotion (diagnostic). */
+function backdropDemoteEnabled(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("bdp") !== "0";
+}
+
 function emissionRate(d: IParticleSystemData, constRate: number, time: number): number {
     // A clip-driven `rateCurve` (absolute cinematic seconds) wins wherever one exists.
     if (d.rateCurve?.length) return Math.max(0, sampleCurve(d.rateCurve, time));
@@ -3629,7 +3635,11 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // Additive glows (flames, light motes) and small crisp effects are untouched.
         const effBlend: "additive" | "normal" = tex.glow ? "additive" : sys.blend;
         const bgNamed = (sys.boneChain ?? []).some((n) => /^bg[_ -]/i.test(n));
-        const isBackdropParticle = effBlend === "normal" && (bgNamed || (tex.hazePanel && scalarMax(sys.startSize) > 400));
+        // DIAGNOSTIC `?bdp=0`: keep these sheets at their AUTHORED depth instead of demoting
+        // them. Every one of them is authored ABOVE `characterSort` (cello: bg_tint_01 sort 10,
+        // bg_rain_01 25, bg_ref 3, air_01 12, against characterSort 0), so Unity draws them in
+        // FRONT of the spine — the demotion is the deviation, not the fidelity.
+        const isBackdropParticle = effBlend === "normal" && (bgNamed || (tex.hazePanel && scalarMax(sys.startSize) > 400)) && backdropDemoteEnabled();
         // A large STATIC PROP faked as a particle: a single burst that persists ~the whole
         // cinematic (not a live emitting effect), large enough to span much of the frame.
         // Virtuosa's draped `chair` pedestal is one such (tex 447px ≈ 0.43× the 1050px camera

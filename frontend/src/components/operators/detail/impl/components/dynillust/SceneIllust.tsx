@@ -1630,6 +1630,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             const d2 = disp as unknown as { renderable?: boolean; visible?: boolean; worldAlpha?: number } | undefined;
                             return {
                                 name: sl.data.name,
+                                // Bone + its ROOT ancestor: the only structural handle for
+                                // splitting scenery slots from character slots.
+                                bone: (sl as unknown as { bone?: { data?: { name?: string } } }).bone?.data?.name ?? null,
+                                root: (() => {
+                                    let b = (sl as unknown as { bone?: { parent?: unknown; data?: { name?: string } } }).bone as
+                                        | { parent?: { parent?: unknown; data?: { name?: string } } | null; data?: { name?: string } }
+                                        | undefined;
+                                    let guard = 0;
+                                    while (b?.parent && guard++ < 64) b = b.parent as typeof b;
+                                    return b?.data?.name ?? null;
+                                })(),
                                 dataBlend: sl.data.blendMode,
                                 drawnBlend: disp ? disp.blendMode : null,
                                 col: [sl.color.r, sl.color.g, sl.color.b, sl.color.a].map((x) => Number(x.toFixed(3))),
