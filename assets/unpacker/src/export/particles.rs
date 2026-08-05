@@ -2344,6 +2344,26 @@ fn resolve_ram(
         (None, None, ST_IDENTITY)
     };
 
+    // DIAGNOSTIC (`SCENE_ATTRIB=1`): a particle system that resolves NO `_MainTex` draws its
+    // geometry untextured — for a MESH renderer that means flat bars instead of the authored
+    // strip, i.e. the right total energy in the wrong profile. Report the material, its shader
+    // and which slots did resolve, so an unresolved texture can be told from a material that
+    // genuinely binds none.
+    if main_pid.is_none() && std::env::var("SCENE_ATTRIB").is_ok() {
+        eprintln!(
+            "  [ptcl-notex] mat='{}' shader='{}' ram={} dist={} diss={} | m_TexEnvs keys: {:?}",
+            mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+            mat.get("_shaderName").and_then(Value::as_str).unwrap_or("?"),
+            ram_pid.is_some(),
+            dist_pid.is_some(),
+            diss_pid.is_some(),
+            mat.get("m_SavedProperties")
+                .and_then(|sp| sp.get("m_TexEnvs"))
+                .and_then(|t| t.as_object())
+                .map(|o| o.keys().cloned().collect::<Vec<_>>()),
+        );
+    }
+
     let vd_intensity = mat_color(mat, "_VertexDisturbIntensity", [0.0, 0.0, 0.0, 0.0]);
 
     // `Dissolve/` multiplies `_TintColor` into the vertex colour where `Ram/` uses
@@ -2553,11 +2573,29 @@ pub fn export_particles(
     // share one `[particles]/<i>.png` dedup set.
     let mut resolve_tex =
         |pid: Option<i64>, tex_val: &Option<Value>, alpha_val: &Option<Value>| -> Option<usize> {
+            // DIAGNOSTIC (`SCENE_ATTRIB=1`): distinguish the three ways this returns None —
+            // no PPtr at all, a PPtr that did not dereference (external bundle not staged), and
+            // a decode failure. A system that loses its texture draws untextured, which for a
+            // MESH renderer is flat bars instead of the authored strip.
+            let dbg_notex = std::env::var("SCENE_ATTRIB").is_ok();
+            if dbg_notex && (pid.is_none() || tex_val.is_none()) {
+                eprintln!(
+                    "  [ptcl-tex] MISS pid={pid:?} deref={}",
+                    tex_val.is_some()
+                );
+            }
             let (pid, tex_val) = (pid?, tex_val.as_ref()?);
             if let Some(&idx) = tex_index.get(&pid) {
                 return Some(idx);
             }
-            let Ok(Some(mut tex)) = decode_texture_object(tex_val, resources) else {
+            let decoded = decode_texture_object(tex_val, resources);
+            if dbg_notex && !matches!(decoded, Ok(Some(_))) {
+                eprintln!(
+                    "  [ptcl-tex] DECODE-FAIL pid={pid} name={:?}",
+                    tex_val.get("m_Name").and_then(Value::as_str)
+                );
+            }
+            let Ok(Some(mut tex)) = decoded else {
                 return None;
             };
             if let Some(alpha_val) = alpha_val
@@ -2582,9 +2620,17 @@ pub fn export_particles(
             Some(idx)
         };
 
-    for p in particles {
+    for (sys_i, p) in particles.iter().enumerate() {
         let mut sys = p.json.clone();
         let tex_idx = resolve_tex(p.tex_pid, &p.tex_val, &p.alpha_val);
+        if tex_idx.is_none() && std::env::var("SCENE_ATTRIB").is_ok() {
+            eprintln!(
+                "  [ptcl-tex] SYSTEM {sys_i} HAS NO TEXTURE  mode={:?} pid={:?} deref={}",
+                sys.get("renderMode").and_then(Value::as_str),
+                p.tex_pid,
+                p.tex_val.is_some()
+            );
+        }
         sys["tex"] = match tex_idx {
             Some(idx) => json!(idx),
             None => Value::Null,
