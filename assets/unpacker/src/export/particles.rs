@@ -2240,6 +2240,36 @@ fn resolve_ram(
             return None;
         };
         let shader = mat.get("_shaderName").and_then(Value::as_str)?;
+        // MEASURED — the two-map dissolve does NOT need porting to the particle path.
+        //
+        // The scene path was fixed to read the `Dissolve/` family's real mask names
+        // (`_DissolveTex_01/_02`), because reading the inert single-name residue made those
+        // layers draw their full bounding RECTANGLE. This path admits only `Ram/`, so the
+        // `Dissolve/` family never reaches it, and the obvious follow-up is to widen the gate.
+        //
+        // Corpus scan (this diagnostic, SCENE_ATTRIB=1, over all 93 dynchar bundles): exactly
+        // TWO materials carry a live two-map dissolve — `4087_ines_boc#8_star_02` and
+        // `char_2015_dusk_nian#7_72` — and BOTH are `Dissolve/Dissolve Add Double`, i.e.
+        // ADDITIVE. A missing mask on an additive layer adds the texture's dark field, which
+        // contributes ~nothing; the rectangle artifact on the scene path came from NORMAL-blend
+        // layers stamping a translucent quad. Ines (the only one whose thresholds could bite —
+        // dusk's 0.030/0.085 collapse the mask to ~1) renders with no artifact of any kind.
+        // ZERO `Ram/` materials carry the two-map names, so there is no narrow fix available
+        // either: widening the gate would route a `Dissolve/` program through a path that
+        // implements `Disturb` (ram tint, `_Opacity`, UV warp), which is misrouting, not fixing.
+        //
+        // Left as a diagnostic so the scan is one env var away if the corpus ever changes.
+        if std::env::var("SCENE_ATTRIB").is_ok()
+            && mat_float(mat, "_Amount_01", -1.0) > 0.0
+            && mat_texenv(all_objects, mat, "_DissolveTex_01").0.is_some()
+        {
+            eprintln!(
+                "    [ptcl] DISSOLVE-TWOMAP '{}' shader={shader} amount_01={:.3} amount_02={:.3}",
+                mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                mat_float(mat, "_Amount_01", -1.0),
+                mat_float(mat, "_Amount_02", -1.0)
+            );
+        }
         shader.contains("Ram/").then_some((mat, shader))
     })?;
 
