@@ -834,6 +834,12 @@ function backdropDemoteEnabled(): boolean {
     return new URLSearchParams(window.location.search).get("bdp") !== "0";
 }
 
+/** `?nocull=1` disables the off-screen spawn cull (diagnostic). */
+function cullDisabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("nocull") === "1";
+}
+
 function emissionRate(d: IParticleSystemData, constRate: number, time: number): number {
     // A clip-driven `rateCurve` (absolute cinematic seconds) wins wherever one exists.
     if (d.rateCurve?.length) return Math.max(0, sampleCurve(d.rateCurve, time));
@@ -1496,7 +1502,13 @@ class Emitter {
         // to particles small relative to the box, so it only ever touches the
         // small/localized class the fix targets; large scene-spanning glows are untouched.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
-        if (d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+        // DIAGNOSTIC (`?nocull=1`): disable the off-screen spawn cull, so "is this silent system
+        // silent because it is genuinely OFF-FRAME, or because we are wrongly clipping it?" can
+        // be answered directly. A system that is truly off-frame changes no pixel when un-culled.
+        // MEASURED: mly 17.405 -> 17.387, cel 17.167 -> 17.177, ska 10.404 -> 10.451 — two-signed
+        // and net WORSE, so the cull stays. The corpus census's 56 demanded-but-silent systems
+        // are therefore mostly off-frame by authoring, not mis-clipped.
+        if (!cullDisabled() && d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
             const box = this.displayBox;
             // Add the sampled particle's own half-size on top of the box-relative margin so
             // a moderately-sized sprite isn't hard-culled just for having an edge-adjacent
@@ -2728,7 +2740,13 @@ class RamEmitter {
         // outside the box on purpose (verified regression on cello's crown backdrop) needs
         // to stay untouched — gate the cull to particles small relative to the box.
         const smallEnoughToClip = this.displayBox ? size < 0.5 * Math.min(this.displayBox.width, this.displayBox.height) : false;
-        if (d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
+        // DIAGNOSTIC (`?nocull=1`): disable the off-screen spawn cull, so "is this silent system
+        // silent because it is genuinely OFF-FRAME, or because we are wrongly clipping it?" can
+        // be answered directly. A system that is truly off-frame changes no pixel when un-culled.
+        // MEASURED: mly 17.405 -> 17.387, cel 17.167 -> 17.177, ska 10.404 -> 10.451 — two-signed
+        // and net WORSE, so the cull stays. The corpus census's 56 demanded-but-silent systems
+        // are therefore mostly off-frame by authoring, not mis-clipped.
+        if (!cullDisabled() && d.simulationSpace === "local" && this.displayBox && !this.boneAnchor.boneName && smallEnoughToClip) {
             const box = this.displayBox;
             // A moderately-sized sprite isn't hard-culled just for having an edge-adjacent
             // centre — widen the margin by the particle's own half-size too.
