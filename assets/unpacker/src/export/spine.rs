@@ -1564,6 +1564,27 @@ fn collect_dynchar_bg_quads(
                     .get("_shaderName")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
+                // Does THIS shader carry its UV pan in `_UVTween` rather than the
+                // `_Dissolve*Speed`/`_Disturb*Speed` pairs? See the note on `dissolve_speed`
+                // below: the two families are mutually exclusive in the decompiled uniform
+                // lists, so the shader name selects which property is live and which is
+                // serialized residue.
+                // Gated for measurement (`DYNCHAR_UVTWEEN=1`, default OFF).
+                let uvtween_family = std::env::var("DYNCHAR_UVTWEEN").is_ok()
+                    && (shader.contains("UVTween") || shader.contains("Disturb Anchor"));
+                let uvtween = {
+                    let c = super::particles::mat_color(mat, "_UVTween", [0.0; 4]);
+                    [c[0] as f32, c[1] as f32, c[2] as f32, c[3] as f32]
+                };
+                if std::env::var("DYNCHAR_SHADER_DEBUG").is_ok() {
+                    eprintln!(
+                        "  [shader] {:<52} uvtween={:?} dissSpeed=({:.3},{:.3})",
+                        shader,
+                        uvtween,
+                        blend("_DissolveUSpeed", 0.0),
+                        blend("_DissolveVSpeed", 0.0)
+                    );
+                }
                 if shader.contains("Ram/") || is_l2d_compositor(shader) {
                     // TWO-MAP NAMES FIRST. The `Dissolve/Dissolve` family reads
                     // `_DissolveTex_01`/`_02` with `_Amount_01/_02` and `_BorderWidth_01/_02`;
@@ -1660,10 +1681,38 @@ fn collect_dynchar_bg_quads(
                             disturb_influence_dissolve_uv: blend("_DisturbInfluenceDissolveUV", 0.0)
                                 as f32,
                             disturb_influence_main_uv: blend("_DisturbInfluenceMainUV", 1.0) as f32,
-                            dissolve_speed: [
-                                blend("_DissolveUSpeed", 0.0) as f32,
-                                blend("_DissolveVSpeed", 0.0) as f32,
-                            ],
+                            // Mask pan. Which property carries it is a property of the
+                            // SHADER, and the two families are mutually exclusive — verified
+                            // by decompiling every `Particles*` shader in `[uc]shaders.ab`
+                            // and listing its declared uniforms:
+                            //
+                            //   `*UVTween`, `Disturb Anchor*`  declare `_UVTween`, and NOT
+                            //                                  `_Dissolve*Speed`/`_Disturb*Speed`
+                            //   `*(CustomData)`, `Ram/*`       declare the Speed pairs, and
+                            //                                  NOT `_UVTween`
+                            //
+                            // So on a UVTween-family material the Speed pair is INERT RESIDUE
+                            // (the same trap as `_DstBlend`, see `particle-blend-shader-name`),
+                            // and reading it pans the mask at the wrong rate. Their GLSL is
+                            // explicit about what `_UVTween` means:
+                            //
+                            //   vs_TEXCOORD1 = _Time.y * _UVTween;
+                            //   u_xlat1 = vs_TEXCOORD0.zwxy + vs_TEXCOORD1.zwxy;
+                            //     -> dissolveUV += t * _UVTween.zw ;  mainUV += t * _UVTween.xy
+                            //
+                            // Mlynar's clouds (`bg02_yun_01/02`, Disturb Anchor) are the case
+                            // that found this: authored `_UVTween` z/w = 0.200/-0.050 and
+                            // 0.300/-0.050 while their residual `_DissolveUSpeed` reads
+                            // 0.120 / 0.200 — so we evolved their dissolve mask ~1.5-1.7x too
+                            // slowly and their silhouette drifted out of step with the game.
+                            dissolve_speed: if uvtween_family {
+                                [uvtween[2], uvtween[3]]
+                            } else {
+                                [
+                                    blend("_DissolveUSpeed", 0.0) as f32,
+                                    blend("_DissolveVSpeed", 0.0) as f32,
+                                ]
+                            },
                             disturb_speed: [
                                 blend("_DisturbUSpeed", 0.0) as f32,
                                 blend("_DisturbVSpeed", 0.0) as f32,
