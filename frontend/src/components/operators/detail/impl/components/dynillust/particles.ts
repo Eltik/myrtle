@@ -3802,7 +3802,31 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             // BLACK rectangle. Such a panel measures `desatPanel` (soft, low-saturation
             // wash) exactly like the flow maps the skip targets — sort + burst shape is what
             // separates them.
-            const isBackdropPanel = !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && sys.sort < data.characterSort;
+            // **RETIRED 2026-08-05 — inert by default; `?bdpanel=1` restores it.**
+            //
+            // The exemption above was added so a `desatPanel` of this shape kept drawing, on the
+            // grounds that skipping it "leaves the dark environment backdrop showing through as
+            // a flat BLACK rectangle". That reasoning predates the gap-fill / static-art vista,
+            // and it no longer holds: Virtuosa's `window_bg_01` (the case it was written for) is
+            // measurably HARMFUL inside its own footprint —
+            //
+            //     beat  footprint   MAE with panel   MAE without
+            //     t=2     10.2%        44.90            42.10
+            //     t=5      4.5%        45.64            27.00
+            //
+            // — and the black-rectangle fear does not survive checking: without it only 2.0%
+            // (t=2) / 4.5% (t=5) of the footprint falls below luma 60, and the GAME averages
+            // 42.7 / 45.0 in exactly those pixels. It is dark there too.
+            //
+            //     cel 15.342 -> 15.190 (-0.152)    mly 17.360 and ska 10.353 bit-identical
+            //     20-skin corpus render: ALL bit-identical (the one apparent outlier, Nian at
+            //     t=9, was a recorder BLACK-FRAME dropout — re-rendering it gives meanDiff 0.000)
+            //
+            // ⚠️ Do not "fix" this back by looking at a side-by-side: the ablated frame LOOKS
+            // like it has a dark wedge top-left, which is what the original comment describes.
+            // Measure the footprint against the game instead.
+            const bdPanelExempt = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("bdpanel") === "1";
+            const isBackdropPanel = bdPanelExempt && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && sys.sort < data.characterSort;
             const meshOK = (meshBlend === "additive" || !tex.desatPanel || isBackdropPanel) && !isStaticMeshProp;
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
