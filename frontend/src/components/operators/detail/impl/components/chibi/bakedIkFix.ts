@@ -4,6 +4,12 @@ import type { Spine } from "pixi-spine";
  * Drop REDUNDANT IK constraints back to the baked FK pose (dynamic-illustration
  * L2D only).
  *
+ * ⚠️ **INERT BY DEFAULT — see `bakedIkEnabled` below.** The "safe by construction"
+ * reasoning in this header was measured and is FALSE: Spine applies constraints at
+ * runtime, so an animation's keys are the PRE-constraint local transforms and the IK
+ * is load-bearing even when every bone it poses is keyed. Disabling this is worth
+ * 1.825 MADC on cello alone. The text below is preserved as the original rationale.
+ *
  * Arknights dyn_illust skeletons ship FULLY-BAKED animations: every bone is keyed
  * every frame (rotate/translate/scale/shear timelines for all 800+ bones), so the
  * FK pose alone fully defines the illustration. On top of that they ALSO carry IK
@@ -84,9 +90,44 @@ function animatedIkMixIndices(anim: AnimLike): Set<number> {
     return s;
 }
 
+/** **DEFAULT OFF since 2026-08-05 — the premise below was MEASURED FALSE.** Opt in with
+ *  `?bakedik=1`.
+ *
+ *  The argument for the drop was that it is LOSSLESS: dynchar animations are fully baked, every
+ *  bone the IK poses is already FK-keyed, so re-applying the constraint should be a no-op and
+ *  zeroing its mix can only remove a wrong override. If that held, toggling this would change
+ *  NOTHING.
+ *
+ *  It changes cello by 1.8 MADC. Spine applies constraints at RUNTIME and an animation's keys
+ *  are the authored LOCAL transforms — so when an animator poses through IK, the keys are the
+ *  PRE-constraint values and the constraint is load-bearing. "Every bone it poses is keyed" is
+ *  not evidence of redundancy; on these rigs it is the normal case.
+ *
+ *      cel  17.167 -> 15.342  (-1.825; t14 -3.91, t17 -3.11, t12 -2.14, no beat regresses)
+ *      mly  17.405 -> 17.360      ska  10.404 -> 10.353
+ *
+ *  Found by symmetric block matching, which localised cello's late-beat error to her INSTRUMENT
+ *  swinging 6-8px sideways (sign flipping per beat) while her body stayed pixel-aligned. With
+ *  the patch off the leftover displacement collapses from 2.06-2.72 MAE to 0.47-0.77 — the
+ *  mechanism, not just the score.
+ *
+ *  Archetto, the skin this was written for, does NOT regress: rendered both ways at t=6..30 she
+ *  is praying in every frame either way, differing only across a small patch at her hands. An
+ *  18-skin render sweep (both variants, 4 beats each) found no blow-out — the largest mover is
+ *  1.5 mean / 3.3% of pixels, localised to a hand or held prop, with two skins bit-identical.
+ *
+ *  Kept rather than deleted: if a skin ever does hit a genuine pixi-spine mis-solve, this is the
+ *  workaround, and the right gate would be the PATHOLOGY of the solve (Archetto's controller
+ *  landed at worldY ~= -805), never "are the bones keyed". */
+function bakedIkEnabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("bakedik") === "1";
+}
+
 export function patchBakedIkRedundancy(spine: Spine): void {
     const skeleton = spine.skeleton as unknown as SkelLike;
     const state = spine.state as unknown as StateLike;
+    if (!bakedIkEnabled()) return;
     if (skeleton.__myrtleBakedIkFix) return;
     skeleton.__myrtleBakedIkFix = true;
 
