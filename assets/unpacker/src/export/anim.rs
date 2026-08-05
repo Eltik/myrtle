@@ -495,6 +495,7 @@ pub fn entrance_transform_curves(
         let mut scale = Vec::new();
         let mut pos_x = Vec::new();
         let mut pos_y = Vec::new();
+        let mut pos_path: Option<u32> = None;
         let mut all_hashes: std::collections::HashSet<u32> = std::collections::HashSet::new();
         let mut gidx = 0usize;
         for b in bindings {
@@ -509,6 +510,7 @@ pub fn entrance_transform_curves(
                     scale_path = Some(path);
                 }
             } else if tid == 4 && attr == 1 {
+                pos_path = Some(path);
                 if let Some(c) = decode_curve_any(v, gidx) {
                     pos_x = c;
                 }
@@ -517,6 +519,41 @@ pub fn entrance_transform_curves(
                 }
             }
             gidx += binding_curve_count(tid, attr);
+        }
+        // DIAGNOSTIC (`DYNCHAR_POSCURVE_DEBUG=1`): report every POSITION curve in the clip
+        // BEFORE the scale filter below discards the pure-position ones. Scene mesh quads
+        // consume no transform curve at all, so a pure-position host is invisible to them —
+        // which is the shape of Mlynar's left-half displacement.
+        if std::env::var("DYNCHAR_POSCURVE_DEBUG").is_ok() && (!pos_x.is_empty() || !pos_y.is_empty()) {
+            let rng = |c: &Vec<(f32, f32)>| {
+                let mn = c.iter().map(|&(_, v)| v).fold(f32::MAX, f32::min);
+                let mx = c.iter().map(|&(_, v)| v).fold(f32::MIN, f32::max);
+                (mn, mx, mx - mn)
+            };
+            let (xn, xx, xs) = rng(&pos_x);
+            let (yn, yx, ys) = rng(&pos_y);
+            let names: Vec<String> = hash_to_gos
+                .get(&pos_path.unwrap_or(0))
+                .map(|gos| {
+                    gos.iter()
+                        .take(4)
+                        .map(|&g| {
+                            all_objects
+                                .get(&g)
+                                .and_then(|(_, o)| o.get("m_Name"))
+                                .and_then(Value::as_str)
+                                .unwrap_or("?")
+                                .to_string()
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            eprintln!(
+                "  [poscurve] scaleAnimated={} keys={}/{} x[{xn:.2}..{xx:.2}] span {xs:.2}  y[{yn:.2}..{yx:.2}] span {ys:.2}  gos={names:?}",
+                scale.len() >= 2,
+                pos_x.len(),
+                pos_y.len(),
+            );
         }
         let Some(scale_path) = scale_path.filter(|_| scale.len() >= 2) else {
             continue;
