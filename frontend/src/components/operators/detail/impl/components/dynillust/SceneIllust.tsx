@@ -816,7 +816,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  three skins (Kalt'sits "boc#6", Cetsyr, Chongyue "epoque#7") replaying their entrance
      *  with EVERY layer at its static tint. For Kalt'sits that means the closing full-frame
      *  white flash — authored white at full alpha — paints the whole cinematic pure white. */
-    const entranceSeqRef = useRef<{ spine: import("pixi-spine").Spine; sceneLayers: PIXI.Container[] } | null>(null);
+    const entranceSeqRef = useRef<{ spine: import("pixi-spine").Spine; sceneLayers: PIXI.Container[]; endAt: number | null; fireEnd: (() => void) | null } | null>(null);
     const entranceFollowRef = useRef<{
         spine: import("pixi-spine").Spine;
         root: PIXI.Container;
@@ -1068,17 +1068,6 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
                 ef.lastLiveCenter = [cx, cy];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
-                // Deferred entrance end: the spine's own "Start" animation ended before the
-                // authored scene timeline (its `complete` listener held off) — fire the
-                // handoff when the track clock reaches the scene end, a hair EARLY so the
-                // dissolve starts on the flash's final HELD frame (white→settle, matching
-                // the game's white fade-through), not on a one-frame scene pop after the
-                // flash window closes.
-                if (ef.fireEnd && ef.endAt != null && tt >= ef.endAt - 0.1) {
-                    const fire = ef.fireEnd;
-                    ef.fireEnd = null;
-                    fire();
-                }
             }
             // ENTRANCE LAYER SEQUENCING. Runs for ANY live entrance composite, independent of
             // whether the skin ships a camera track — see `entranceSeqRef`.
@@ -1109,6 +1098,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
+                }
+                // Deferred entrance end: the spine's own "Start" animation ended before the
+                // authored scene timeline, so its `complete` listener held off and the handoff
+                // waits on the track clock instead — a hair EARLY so the dissolve starts on the
+                // flash's final HELD frame rather than a one-frame scene pop after it closes.
+                //
+                // This MUST live here rather than in the camera-follow tick. Gated on the camera
+                // it never fired for a skin that defers its end AND ships no camera track:
+                // Wiš'adel "sale#15" held PURE WHITE from 14.5s to past 18s, because the
+                // `complete` listener returns early when a deferral is set and nothing else was
+                // left to fire it. Same coupling that stranded Kalt'sits's layer sequencing.
+                if (eseq.fireEnd && eseq.endAt != null && tt >= eseq.endAt - 0.1) {
+                    const fire = eseq.fireEnd;
+                    eseq.fireEnd = null;
+                    fire();
                 }
             }
             // Hand off from the entrance to the main L2D, if its "Start" just finished.
@@ -2016,6 +2020,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (end > entAnimDur + 0.05) deferEndUntil = end;
                     }
                 }
+                // THE DIRECTOR'S `duration` IS THE AUTHORED END, whatever the spine does — and
+                // whether or not the skin ships a camera track. The block above is gated on the
+                // camera curve, so for a skin without one nothing sets a deferral at all and the
+                // handoff falls back to the spine's own `complete`. When the baked `Start`
+                // animation outlasts the authored duration that strands the cinematic: the white
+                // screen fade has already ramped to FULL at `duration − HOLD` and then holds,
+                // waiting for a handoff that will not come until the animation tail finishes.
+                // Wiš'adel "sale#15" (duration 14.5) held PURE WHITE from 14.5s to past 18s for
+                // exactly this reason. Firing at `duration` puts the handoff back on the same
+                // schedule the fade already runs on.
+                //
+                // Never moves an EARLIER deferral later (the min below), and engages only when
+                // the animation actually outlasts the duration — otherwise `complete` already
+                // lands at or before it and this is a no-op.
+                if (opts.mode === "entrance" && scene?.data.entranceDuration != null) {
+                    const dur = scene.data.entranceDuration;
+                    const animDur = spine.spineData.animations.find((a: { name: string }) => a.name === entranceAnim)?.duration ?? 0;
+                    if (animDur > dur + 0.05) deferEndUntil = Math.min(deferEndUntil ?? dur, dur);
+                }
                 const scrollLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];
                 const followLayers: PIXI.Mesh[] = [];
@@ -2413,7 +2436,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         for (const c of sl) c.alpha = 1;
                         // Sequence this entrance's layers regardless of whether it also has a
                         // camera track (see `entranceSeqRef`).
-                        entranceSeqRef.current = { spine: built.spine, sceneLayers: sl };
+                        entranceSeqRef.current = {
+                            spine: built.spine,
+                            sceneLayers: sl,
+                            endAt: built.entranceSceneEnd,
+                            fireEnd: built.entranceSceneEnd != null ? built.requestEntranceEnd : null,
+                        };
                         // Drive the entrance camera PURELY from gamedata: the exporter-accumulated camera
                         // rig track (`entranceCamCenterCurve`, absolute mesh-px frame centre) for the
                         // pan/dolly, and the `_adjustes[1]` view extent (`entranceFrameSize`) × the ortho
