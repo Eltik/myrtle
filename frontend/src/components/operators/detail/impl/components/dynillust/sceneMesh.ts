@@ -136,6 +136,10 @@ export interface ISceneData {
      *  this skeleton's draw into separate submeshes so other renderers sit BETWEEN the parts.
      *  Empty/absent on skins that do not use the feature. See {@link ISceneData.characterSort}. */
     separatorSlots?: string[] | null;
+    /** Sorting orders of the separator PARTS, ascending (length = separatorSlots + 1). The
+     *  depth the game gives each submesh; a layer sorted BETWEEN two parts is drawn in that
+     *  gap rather than over the whole skeleton. */
+    separatorPartSorts?: number[] | null;
     /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
      *  Present only on `_Start` scenes. */
     entranceDuration?: number | null;
@@ -185,6 +189,11 @@ export interface ILoadedScene {
     background: PIXI.Container;
     /** Layers in front of the character (sort > characterSort). */
     foreground: PIXI.Container;
+    /** One container per GAP between the split skeleton's parts — layers the game draws over
+     *  one part and under the next. Empty unless the skin ships `separatorSlots` AND
+     *  `?gaplayers=1` is set. The caller seats these inside the spine, like the particle
+     *  backdrop washes. */
+    gaps: PIXI.Container[];
     /** True when the scene owns an opaque painted backdrop that is DARKER than the studio
      *  environment gradient (see {@link STUDIO_ENV_WHITENESS}) — a self-lit painted world
      *  (Virtuosa's deep-blue mirror-world) rather than a float-over-studio illustration. Such
@@ -335,6 +344,12 @@ function loadTexture(url: string): Promise<ISceneTex> {
 /** Attenuation for caustic / light-dome OVERLAY layers (a small texture stretched
  *  over a large mesh) — approximates the engine's absent HDR tonemap so they read
  *  as a faint ripple, not a bold white swirl over the scene. */
+/** `?gaplayers=1` seats scene layers between a split skeleton's parts (diagnostic, default OFF). */
+function gapLayersEnabled(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("gaplayers") === "1";
+}
+
 const EFFECT_SCENE_GAIN = 0.3;
 /** DIAGNOSTIC (`?scenegain=<f>`): override {@link EFFECT_SCENE_GAIN} so the taming applied to
  *  effect-classified scene layers can be measured rather than assumed. 1 = no taming. */
@@ -1408,7 +1423,7 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // scene JSON may still carry the entrance CAMERA track. Return an empty-mesh scene so that
         // data still reaches the entrance camera (SceneIllust sources entranceCamCenterCurve etc.
         // from scene.data); returning null here would discard the whole entrance camera move.
-        if (data.entranceCamCenterCurve?.length) return { data, background: new PIXI.Container(), foreground: new PIXI.Container(), hasDarkBackdrop: false };
+        if (data.entranceCamCenterCurve?.length) return { data, background: new PIXI.Container(), foreground: new PIXI.Container(), gaps: [], hasDarkBackdrop: false };
         return null;
     }
 
@@ -1450,6 +1465,31 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     // first so it renders behind the rest.
     /** Background-bound meshes carry their authored sort so the final order can be rebuilt
      *  after the order-preserving demotion pass below. */
+    // GAP CONTAINERS. The game splits the skeleton at `separatorSlots` and gives each part its
+    // own sorting order, so a scene layer sorted BETWEEN two parts is drawn in that gap — over
+    // the earlier part, under the later one. Drawing it in `foreground` puts it over the whole
+    // character; drawing it in `background` puts it behind the scenery it should cover. The
+    // particle sheets already got this treatment; these are the scene layers, 516 of them
+    // across 33 composites.
+    //
+    // MEASURED AND REFUTED (`?gaplayers=1`, kept inert so the idea is not re-derived):
+    //     ska 10.404 -> 49.922      cel 17.167 -> 19.795      mly 17.405 (no separator)
+    // Decisive. The lesson is what separates this from the wash: seating the `isBackdropParticle`
+    // sheets WORKED because it RESTORED layers our own heuristic had force-demoted behind the
+    // whole spine to the depth the data already gave them. These scene layers were never
+    // displaced — they are where the author put them — so re-sorting them by the part depths
+    // moves correct geometry. A part's sortingOrder is evidently not comparable to a scene
+    // layer's in the way it is to a particle system's. Do not retry without first establishing
+    // that the two sorts live in the same space.
+    const partSorts = data.separatorPartSorts ?? [];
+    const gapsOn = partSorts.length >= 2 && gapLayersEnabled();
+    const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
+    /** Which gap does this sort fall in? -1 = behind every part, gaps.length = in front of all. */
+    const gapOf = (sort: number): number => {
+        let j = -1;
+        for (let i = 0; i < partSorts.length; i++) if (partSorts[i] <= sort) j = i;
+        return j;
+    };
     const backdropMeshes: { mesh: PIXI.Mesh; sort: number }[] = [];
     const otherBg: { mesh: PIXI.Mesh; sort: number }[] = [];
     /** Foreground candidates, bucketed only once the demoted set is known. */
@@ -1590,7 +1630,11 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // neighbours, and that ordering is worth preserving.
         const spansView = Math.max(box[2] - box[0], box[3] - box[1]) >= (data.cameraSizePx ?? Number.POSITIVE_INFINITY);
         if (isForeground && !spansView) demotedFg.push({ sort: layer.sort, box });
-        (isBackdrop ? backdropMeshes : otherBg).push({ mesh, sort: layer.sort });
+        // A solid backdrop WALL stays at the very back whatever its sort — it is the scenery
+        // every part is drawn against, not something to interleave.
+        const gj = gapsOn && !isBackdrop ? gapOf(layer.sort) : -1;
+        if (gj >= 0 && gj < gapMeshes.length) gapMeshes[gj].push({ mesh, sort: layer.sort });
+        else (isBackdrop ? backdropMeshes : otherBg).push({ mesh, sort: layer.sort });
         bgGeometrySignatures.add(geomKey);
     }
     // ORDER-PRESERVING DEMOTION. Moving a layer behind the character does not only change
@@ -1626,8 +1670,17 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     for (const m of backdropMeshes) background.addChild(m.mesh);
     for (const m of otherBg) background.addChild(m.mesh);
     for (const p of fgPending) {
-        if (!otherBg.includes(p)) foreground.addChild(p.mesh);
+        if (otherBg.includes(p)) continue;
+        const gj = gapsOn ? gapOf(p.sort) : -1;
+        if (gj >= 0 && gj < gapMeshes.length) gapMeshes[gj].push(p);
+        else foreground.addChild(p.mesh);
     }
+    for (const g of gapMeshes) g.sort((a, b) => a.sort - b.sort);
+    const gaps = gapMeshes.map((g) => {
+        const c = new PIXI.Container();
+        for (const m of g) c.addChild(m.mesh);
+        return c;
+    });
 
     // A scene with no background layer isn't a backdrop — it's a foreground-only
     // fx overlay. Those layers are static snapshots of animated Unity effects and
@@ -1640,5 +1693,5 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         return null;
     }
 
-    return { data, background, foreground, hasDarkBackdrop };
+    return { data, background, foreground, gaps, hasDarkBackdrop };
 }

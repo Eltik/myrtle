@@ -805,9 +805,10 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     const sp = spine as unknown as { children: PIXI.DisplayObject[]; addChildAt(c: PIXI.DisplayObject, i: number): unknown; slotContainers?: PIXI.DisplayObject[] };
     const conts = sp.slotContainers;
     if (!conts) return;
-    // Deepest gap first: seating a shallower one shifts every index after it, and walking from
-    // the back keeps the remaining targets where they were.
-    for (let k = seps.length - 1; k >= 0; k--) {
+    // `seps` arrives sorted deepest-slot-first, and each insert goes immediately BEFORE its
+    // slot container, so walking forward preserves both the slot order and the order within
+    // a gap. The index is re-read every time rather than cached, because each insert shifts it.
+    for (let k = 0; k < seps.length; k++) {
         const sep = seps[k];
         if (sep.slotIndex <= 0 || sep.slotIndex >= conts.length) continue;
         const at = sp.children.indexOf(conts[sep.slotIndex]);
@@ -1520,6 +1521,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // frame by the tick (see entranceFollowRef), so layers show exactly when the
                 // game toggles them.
                 if (scene && !useStatic) sceneContainer.addChild(scene.background);
+                // Fallback position when the skin has no separator (or the seat is off): the
+                // gap containers are empty then, so this is a no-op.
+                if (scene && !useStatic) for (const g of scene.gaps) sceneContainer.addChild(g);
                 if (particles) sceneContainer.addChild(particles.background);
                 // Sibling by default (drawn exactly where it used to be, inside `background`);
                 // moved INSIDE the spine below when the game splits the skeleton.
@@ -1546,9 +1550,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             .map((n) => slots.findIndex((sl) => sl.data.name === n))
                             .filter((i) => i > 0)
                             .sort((a, b) => a - b);
-                        separatorWash = idx
-                            .map((slotIndex, k) => ({ wash: particles.backdropWashes[k], slotIndex }))
-                            .filter((w): w is ISeparatorWash => !!w.wash);
+                        // Within one gap the scene layer sits UNDER the particle sheet, matching
+                        // the sibling order they have when nothing is seated.
+                        const seats: ISeparatorWash[] = [];
+                        idx.forEach((slotIndex, k) => {
+                            const sceneGap = scene?.gaps[k];
+                            if (sceneGap) seats.push({ wash: sceneGap, slotIndex });
+                            const w = particles.backdropWashes[k];
+                            if (w) seats.push({ wash: w, slotIndex });
+                        });
+                        // Deepest slot FIRST: inserting before a deeper slot cannot move a
+                        // shallower one, and within a slot the array order is preserved.
+                        seats.sort((a, b) => b.slotIndex - a.slotIndex);
+                        separatorWash = seats;
                     }
                 }
                 if (scene) sceneContainer.addChild(scene.foreground);
