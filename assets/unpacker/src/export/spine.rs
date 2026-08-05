@@ -1384,6 +1384,19 @@ fn collect_dynchar_bg_quads(
             let animated_color = color_channels.contains_key(&go_pid);
             // Peak of every animated COLOUR (rgb) channel on this GO — the value a ×2 family
             // would have to double without clamping.
+            // Does the animated colour RAMP in rgb, or only in ALPHA? Both gates inside
+            // `ram_tint_scale` exist to stop the clamp flattening a RAMP; a curve whose rgb is
+            // CONSTANT has no ramp to protect, so the clamp costs nothing there. Data-derived —
+            // it reads the curve, not the skin.
+            let rgb_constant = color_channels
+                .get(&go_pid)
+                .map(|chs| {
+                    chs.iter().filter(|c| c.channel < 3).all(|c| {
+                        let mut it = c.curve.iter().map(|&(_, v)| v);
+                        it.next().is_none_or(|f| it.all(|v| (v - f).abs() <= 0.5 / 255.0))
+                    })
+                })
+                .unwrap_or(false);
             let animated_peak = color_channels.get(&go_pid).map(|chs| {
                 chs.iter()
                     .filter(|c| c.channel < 3)
@@ -1396,7 +1409,7 @@ fn collect_dynchar_bg_quads(
                 .get(&go_pid)
                 .is_some_and(|chs| super::anim::animates_prop(chs, "_MainColor"));
             let (legacy_scale, legacy_hdr) = legacy_tint_scale(mat, animated_color);
-            let (ram_scale, ram_hdr) = ram_tint_scale(mat, animated_peak);
+            let (ram_scale, ram_hdr) = ram_tint_scale(mat, animated_peak, rgb_constant);
             let mut cprops = material_color_props(mat);
             let (tint, tint_scale, hdr_color) = if legacy_scale > 1.0 {
                 cprops.1 = Some("_TintColor".to_string());
@@ -1942,7 +1955,7 @@ fn has_color_prop(mat: &Value, key: &str) -> bool {
 /// below that for a soft wash — while `material_tint` would read the inert Unity
 /// `_Color` default and render full white. Returns 2.0 when the shader is Ram-family
 /// AND the material carries a `_MainColor` colour property, else 1.0.
-fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>) -> (f32, bool) {
+fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -> (f32, bool) {
     let shader = mat
         .get("_shaderName")
         .and_then(|v| v.as_str())
@@ -2013,6 +2026,28 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>) -> (f32, bool) {
         // 1.176) that the frontend's half-float target can carry. Clamping it collapses
         // baseline and peak onto the same ceiling and erases the brightening.
         (2.0, true)
+    } else if std::env::var("DYNCHAR_RAM_X2_CONST").is_ok()
+        && shader.contains("Particles-L2D/")
+        && rgb_constant
+    {
+        // EXPERIMENT (`DYNCHAR_RAM_X2_CONST=1`, default OFF) — **MEASURED AND REFUTED**.
+        //
+        // The idea: both gates above exist to protect a RAMP from the clamp, so a curve that
+        // animates only its ALPHA has no rgb ramp and could be admitted with a CLAMPED doubling
+        // for free. Mlynar's three sort-10 layers are that shape, and scaling their rgb by
+        // 2:2:1 is worth 0.349 MADC — the x2-with-blue-clamped ratio to 3 significant figures.
+        //
+        // Enabling it costs mly 17.405 -> 18.501 (cel/ska unmoved), because the x2 doubles the
+        // ALPHA too (0.294 -> 0.588) and that layer's coverage is already right. Which is the
+        // discriminator the whole investigation was missing: **a x2 material authors its values
+        // AT the half-neutral, alpha included** — Virtuosa's admitted layers carry
+        // `_MainColor` alpha ~0.502, Mlynar's carries 0.294. His layer is not in this
+        // convention at all, so the gates above are RIGHT to exclude it and the 0.349 is a
+        // fitted hue change that the x2 merely approximates in rgb.
+        //
+        // Kept inert as the evidence. Do not re-derive: the tempting "no ramp, so clamping is
+        // free" argument is sound and still gives the wrong answer, because alpha is the tell.
+        (2.0, false)
     } else if shader.contains("Ram/") {
         // `Ram/` keeps the CLAMPED doubling it shipped with. Its materials sit at or near
         // full scale (Skadi2's layers double to 1.4-2.0), so letting them through
