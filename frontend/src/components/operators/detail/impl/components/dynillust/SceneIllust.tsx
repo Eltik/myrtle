@@ -793,13 +793,12 @@ interface ISeparatorWash {
  *  `spine.update()` rebuilds `children` from `skeleton.drawOrder` each frame, so the wash is
  *  re-seated every tick rather than parented once.
  *
- *  GATED OFF (`?sepwash=1`). The mechanism is verified — at cello t=2 the deficit region goes
- *  114.0 -> 173.8 against the game's 193.8, with NO ghosting (her darks 26.8 vs the game's
- *  25.5, where undemoting gives 151.9) — but whole-frame MADC still regresses 21.969 ->
- *  24.671, because ALL four `isBackdropParticle` sheets (bg_tint_01, bg_rain_01, bg_ref,
- *  air_01) get seated, and they over-brighten door pixels outside the deficit region. The
- *  game's `SkeletonRenderSeparator` carries TWO `partsRenderers`, so only the sheets bound to
- *  those specific renderers belong in the gap. Resolve that binding before enabling.
+ *  SHIPPED (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
+ *  against the game's 193.8 with NO ghosting (her darks 26.8 vs the game's 25.5; undemoting
+ *  gives 151.9). Seating all four sheets regressed the frame (21.969 -> 24.671) — the fix was
+ *  to bind each sheet by SORT to the parts' own depths (see `sheetTarget` in particles.ts),
+ *  which puts bg_ref/bg_tint_01/air_01 in the gap and leaves bg_rain_01 genuinely in front.
+ *  cel 18.844 -> 17.167, ska 10.500 -> 10.465, mly bit-identical (ships no separator).
  */
 function reseatSeparatorWash(spine: unknown, sep: ISeparatorWash | null): void {
     if (!sep) return;
@@ -1529,9 +1528,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 let separatorWash: ISeparatorWash | null = null;
                 {
                     const sepNames = scene?.data.separatorSlots;
-                    // OFF by default pending sheet selection — see the note on
-                    // `reseatSeparatorWash`. `?sepwash=1` enables it.
-                    const on = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepwash") === "1";
+                    // ON by default; `?sepwash=0` disables. Data-gated — a skin with no
+                    // `separatorSlots` is untouched (Mlynar ships none and is bit-identical).
+                    const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") !== "0" : true;
                     if (on && particles && sepNames && sepNames.length > 0) {
                         const slots = (spine as unknown as { skeleton: { slots: { data: { name: string } }[] } }).skeleton.slots;
                         const idx = slots.findIndex((sl) => sepNames.includes(sl.data.name));

@@ -2529,6 +2529,10 @@ pub fn export_particles(
     skel_scale: f64,
     camera_size: Option<f64>,
     character_sort: Option<i64>,
+    // Sorting orders of the skeleton's SEPARATOR PARTS, ascending. A sheet whose own sort falls
+    // BETWEEN two consecutive parts is drawn in that gap by the game; one above the last part is
+    // genuinely in front of everything. Empty when the skin has no separator.
+    separator_part_sorts: &[i64],
     resources: &HashMap<String, Vec<u8>>,
 ) -> usize {
     if particles.is_empty() || skel_scale == 0.0 {
@@ -2616,6 +2620,7 @@ pub fn export_particles(
         "cameraSize": camera_size,
         "cameraSizePx": camera_size.map(|c| c * inv),
         "characterSort": character_sort,
+        "separatorPartSorts": separator_part_sorts,
         "textureCount": next_idx,
         "systems": systems,
     });

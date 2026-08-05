@@ -289,6 +289,9 @@ export interface IParticlesData {
     cameraSizePx: number;
     skeletonScale: number;
     characterSort: number;
+    /** Sorting orders of the skeleton's SEPARATOR PARTS, ascending (see the scene data's
+     *  `separatorSlots`). Virtuosa: [0, 20]. Empty when the skin has no separator. */
+    separatorPartSorts?: number[] | null;
     textureCount: number;
     systems: IParticleSystemData[];
 }
@@ -3657,6 +3660,26 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // the mesh path's own layering is untouched.
         const emRate = sys.emission?.rate ? scalarMax(sys.emission.rate) : 0;
         const burstTotal = (sys.emission?.bursts ?? []).reduce((a, b) => a + b.count, 0);
+        // WHERE this sheet draws, decided by the GAME's own part depths rather than a blanket
+        // demotion. `SkeletonRenderSeparator` gives each submesh a sortingOrder (Virtuosa:
+        // [0, 20]); a sheet whose own sort lands BETWEEN two parts is drawn in that gap — over
+        // the background submesh, under the character one — and one ABOVE the last part is
+        // genuinely in front of everything. Virtuosa's four sheets are bg_ref 3, bg_tint_01 10,
+        // air_01 12 (all in the gap) and bg_rain_01 25 (her rain, in front). The blanket
+        // demotion put all four behind the whole spine, which is wrong in both directions.
+        // Only sheets the heuristic already flagged are re-routed, so nothing else moves.
+        const partSorts = data.separatorPartSorts ?? [];
+        const hasParts = partSorts.length >= 2;
+        const gapLo = hasParts ? partSorts[0] : 0;
+        const gapHi = hasParts ? partSorts[partSorts.length - 1] : 0;
+        const sheetTarget = (): PIXI.Container => {
+            if (isBackdropParticle && hasParts) {
+                if (sys.sort > gapLo && sys.sort < gapHi) return backdropWash;
+                if (sys.sort >= gapHi) return foreground;
+                return background;
+            }
+            return isBackdropParticle ? backdropWash : sys.sort < data.characterSort ? background : foreground;
+        };
         const isStaticProp = effBlend === "normal" && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && scalarMax(sys.startSize) > 0.4 * (data.cameraSizePx || 1050);
         // The SECOND spelling of the same "static geometry faked as a particle system" idea,
         // for a MESH emitter. Where `isStaticProp` above recognises the BURST spelling (rate 0,
@@ -3762,7 +3785,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // invisible through the whole reform because of this). Normal-blend → full alpha.
                 emitter.container.alpha = (meshBlend === "additive" ? additivePileGain(sys) : 1) * (bigGlow ? 0.4 : 1);
                 applyPsDiag(data, sys, emitter.container);
-                (isBackdropParticle ? backdropWash : sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+                sheetTarget().addChild(emitter.container);
             }
             continue;
         }
@@ -3806,7 +3829,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // promoted over-body copy — the background rain (and every other system) is untouched.
         if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
         applyPsDiag(data, sys, emitter.container);
-        (isBackdropParticle && !unoccludeOverlap ? backdropWash : wouldBeBackground && !unoccludeOverlap ? background : foreground).addChild(emitter.container);
+        (unoccludeOverlap ? foreground : isBackdropParticle ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
 

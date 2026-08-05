@@ -83,6 +83,12 @@ pub struct SpineAsset {
     /// Empty on skins that do not use the feature (`char_245_cello_2`), which must stay
     /// byte-identical.
     pub separator_slots: Vec<String>,
+    /// Sorting orders of this skeleton's separator PARTS, ascending — the depths the game gives
+    /// the submeshes. Virtuosa: [0, 20]. A `bg_*` sheet whose own sort lands between two parts
+    /// belongs in that gap (bg_ref 3, bg_tint_01 10, air_01 12); one above the last part is
+    /// genuinely in front of the character (bg_rain_01 25, her rain). The blanket
+    /// `isBackdropParticle` demotion gets BOTH of those wrong.
+    pub separator_part_sorts: Vec<i64>,
     /// ENTRANCE (`_Start`) cinematic total length in seconds, from the entrance
     /// director MonoBehaviour's `_params.duration` (the client plays the whole
     /// `_Start` set over this span, then hands off to the settled idle). `None`
@@ -280,6 +286,7 @@ struct BgScene {
     claimed_tex: Vec<i64>,
     char_sort: Option<i64>,
     separator_slots: Vec<String>,
+    separator_part_sorts: Vec<i64>,
 }
 
 /// Check if a bundle path is eligible for spine extraction.
@@ -828,6 +835,7 @@ pub fn collect_spine_assets(
             bg_camera_view2: scene.camera_view2,
             bg_character_sort: scene.char_sort,
             separator_slots: scene.separator_slots.clone(),
+            separator_part_sorts: scene.separator_part_sorts.clone(),
             bg_entrance_duration,
             bg_entrance_fade,
             bg_entrance_transform,
@@ -1058,6 +1066,32 @@ fn collect_dynchar_bg_quads(
             })
         })
         .unwrap_or_default();
+
+    // The separator PARTS' own depths: each `SkeletonPartsRenderer` in
+    // `SkeletonRenderSeparator.partsRenderers` sits on a GameObject whose MeshRenderer carries a
+    // sortingOrder. Virtuosa's are [0, 20], and her sheets sort 3 / 10 / 12 / 25 — so three fall
+    // in the gap and the rain genuinely belongs in front. Ascending, deduped.
+    let mut separator_part_sorts: Vec<i64> = Vec::new();
+    if !separator_slots.is_empty() {
+        for (_, v) in all_objects.values() {
+            let Some(parts) = v.get("partsRenderers").and_then(serde_json::Value::as_array) else { continue };
+            for e in parts {
+                let Some(rp) = e.get("m_PathID").and_then(serde_json::Value::as_i64) else { continue };
+                let Some((_, rv)) = all_objects.get(&rp) else { continue };
+                let Some(go) = rv.get("m_GameObject").and_then(get_path_id) else { continue };
+                for (cid2, v2) in all_objects.values() {
+                    if *cid2 == 23
+                        && v2.get("m_GameObject").and_then(get_path_id) == Some(go)
+                        && let Some(o) = v2.get("m_SortingOrder").and_then(serde_json::Value::as_i64)
+                    {
+                        separator_part_sorts.push(o);
+                    }
+                }
+            }
+        }
+        separator_part_sorts.sort_unstable();
+        separator_part_sorts.dedup();
+    }
 
     // Display-controller MonoBehaviours in a DETERMINISTIC order: the OWN prefab
     // root's controller first, then ascending path_id. A bundle can ship several
@@ -1772,6 +1806,7 @@ fn collect_dynchar_bg_quads(
         camera_offset2,
         camera_view2,
         separator_slots,
+        separator_part_sorts,
         ..BgScene::default()
     };
     if quads.is_empty() {
@@ -2831,6 +2866,7 @@ pub fn collect_enemy_spine_assets(
             bg_camera_view2: None,
             bg_character_sort: None,
             separator_slots: Vec::new(),
+            separator_part_sorts: Vec::new(),
             bg_entrance_duration: None,
             bg_entrance_fade: None,
             bg_entrance_transform: None,
@@ -3110,6 +3146,7 @@ pub fn export_spine_assets(
                 asset.bg_skel_scale.unwrap_or(0.01),
                 asset.bg_camera_size,
                 asset.bg_character_sort,
+                &asset.separator_part_sorts,
                 resources,
             );
         }
@@ -3967,6 +4004,7 @@ fn export_scene(
         "characterSort": asset.bg_character_sort,
         // See `SpineAsset::separator_slots`. Slot NAMES, in the skeleton's own draw order.
         "separatorSlots": asset.separator_slots,
+        "separatorPartSorts": asset.separator_part_sorts,
         // ENTRANCE (`_Start`) cinematic timing (seconds), from the entrance director's
         // `_params.duration` + the reform `_delayTime` cluster. Present only on `_Start`
         // scenes; drives the client entrance camera dolly (tight→wide across `_adjustes`)
