@@ -1554,10 +1554,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // the sibling order they have when nothing is seated.
                         const seats: ISeparatorWash[] = [];
                         idx.forEach((slotIndex, k) => {
+                            // Skip EMPTY containers: with `?gaplayers` off the scene gaps hold
+                            // nothing, and seating them would re-parent a no-op every frame.
                             const sceneGap = scene?.gaps[k];
-                            if (sceneGap) seats.push({ wash: sceneGap, slotIndex });
+                            if (sceneGap?.children.length) seats.push({ wash: sceneGap, slotIndex });
                             const w = particles.backdropWashes[k];
-                            if (w) seats.push({ wash: w, slotIndex });
+                            if (w?.children.length) seats.push({ wash: w, slotIndex });
                         });
                         // Deepest slot FIRST: inserting before a deeper slot cannot move a
                         // shallower one, and within a slot the array order is preserved.
