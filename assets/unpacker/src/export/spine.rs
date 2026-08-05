@@ -2051,7 +2051,28 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
     // about WHAT it buys, though: on bg01 it is a near-constant +10.5 level lift, not the
     // step the game shows at t≈12.8 (ours +3.3, the game +29.3). With the DC removed both
     // sides have the same beat SHAPE, so the step is still missing somewhere else.
+    // EXPERIMENT (`DYNCHAR_MC_LAW=1`, default OFF) — **MEASURED AND REFUTED**.
+    //
+    // The `Particles-L2D/` prefix is a NAMESPACE, not a tint law, and decompiling the family
+    // shows the two do not coincide: `Dissolve/Dissolve(CustomData)` applies `_MainColor.xyz`
+    // in its VERTEX stage and doubles NOWHERE, while its `Disturb/` and `Ram/` siblings run
+    // `c = c + c`. So this prefix admits layers whose shader has no ×2 to port — which looks
+    // like a plain bug until it is measured.
+    //
+    // Narrowing the gate to the shaders that actually double changes exactly 2 layers across
+    // the three references (cello `_Start` L0 sort −15 and L115, both 1.0039/α1.0 → 0.502/
+    // α0.502) and costs **cel 17.167 -> 30.677**; mly and ska are bit-identical.
+    //
+    // Taken with the `DYNCHAR_MC_X2` result in the third tint branch, the two measurements
+    // INVERT: where the shader DOES double (Mlynar's wind sheets) we must not, and where it
+    // does NOT (cello's backdrop) we must. So this ×2 is not a port of `c = c + c` at all —
+    // it is an amplitude correction that merely happens to be 2, and the shader's own
+    // doubling is absorbed somewhere else in the texture/premultiply path. **The existing
+    // prefix gate produces the right answer on all three references; do not "fix" it to
+    // match the GLSL.**
+    let doubling_shader = std::env::var("DYNCHAR_MC_LAW").is_err() || main_color_doubles(mat);
     let l2d_animated = shader.contains("Particles-L2D/")
+        && doubling_shader
         && half_neutral
         && animated_peak.is_some_and(|p| f64::from(p) < 1.0 - 0.5 / 255.0);
     if !has_main_color {
@@ -2144,6 +2165,7 @@ fn main_color_doubles(mat: &Value) -> bool {
     shader.contains("Particles-L2D/Disturb/Disturb(CustomData)")
         || shader.contains("Particles-L2D/Disturb/Disturb Anchor")
         || shader.contains("Particles-L2D/Disturb/Disturb (")
+        || shader.contains("Particles-L2D/Ram/")
 }
 
 /// Whether a material belongs to the `Particles-L2D` compositor family that modulates by
