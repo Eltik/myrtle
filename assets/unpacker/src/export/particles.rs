@@ -2083,20 +2083,60 @@ fn resolve_material(
     all_objects: &HashMap<i64, (i32, Value)>,
     mat_ref: &Value,
 ) -> Option<ResolvedMaterial> {
-    let mat_pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
-    let (21, mat) = all_objects.get(&mat_pid)? else {
+    // DIAGNOSTIC (`SCENE_ATTRIB=1`): this function has FIVE silent `?` exits and they mean very
+    // different things — an unbound slot is an authoring fact, while an unloaded material or
+    // texture is a STAGING fault (the bundle was not passed to `-i`). A system that falls out
+    // here renders untextured, so which exit fired decides whether there is anything to fix.
+    let dbg = std::env::var("SCENE_ATTRIB").is_ok();
+    let Some(mat_pid) = get_path_id(mat_ref).filter(|&p| p != 0) else {
+        if dbg { eprintln!("  [ptcl-mat] no material PPtr"); }
         return None;
     };
-    let tex_envs = mat
+    let Some((21, mat)) = all_objects.get(&mat_pid) else {
+        if dbg {
+            eprintln!(
+                "  [ptcl-mat] material {mat_pid} NOT LOADED (class={:?}) — other bundle",
+                all_objects.get(&mat_pid).map(|(c, _)| *c)
+            );
+        }
+        return None;
+    };
+    let mat_name = mat.get("m_Name").and_then(Value::as_str).unwrap_or("?");
+    let Some(tex_envs) = mat
         .get("m_SavedProperties")
         .and_then(|sp| sp.get("m_TexEnvs"))
-        .and_then(Value::as_object)?;
-    let main_pid = tex_envs
+        .and_then(Value::as_object)
+    else {
+        if dbg { eprintln!("  [ptcl-mat] '{mat_name}' has no m_TexEnvs"); }
+        return None;
+    };
+    let Some(main_pid) = tex_envs
         .get("_MainTex")
         .and_then(|t| t.get("m_Texture"))
         .and_then(get_path_id)
-        .filter(|&p| p != 0)?;
-    let (28, tex_val) = all_objects.get(&main_pid)? else {
+        .filter(|&p| p != 0)
+    else {
+        if dbg {
+            eprintln!(
+                "  [ptcl-mat] '{mat_name}' shader='{}' binds NO _MainTex (slots: {:?}) dissolveBound={}",
+                mat.get("_shaderName").and_then(Value::as_str).unwrap_or("?"),
+                tex_envs.keys().collect::<Vec<_>>(),
+                tex_envs
+                    .get("_DissolveTex")
+                    .and_then(|t| t.get("m_Texture"))
+                    .and_then(get_path_id)
+                    .is_some_and(|p| p != 0)
+            );
+        }
+        return None;
+    };
+    let Some((28, tex_val)) = all_objects.get(&main_pid) else {
+        if dbg {
+            eprintln!(
+                "  [ptcl-mat] '{mat_name}' _MainTex {main_pid} NOT LOADED (class={:?}) — other bundle",
+                all_objects.get(&main_pid).map(|(c, _)| *c)
+            );
+        }
         return None; // texture in another bundle — unresolvable
     };
     let alpha_val = tex_envs
