@@ -1527,7 +1527,25 @@ fn collect_dynchar_bg_quads(
                     .get("_shaderName")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                if shader.contains("Ram/") {
+                // The `Ram/` gate understates the family. Decompiling
+                // `Particles-L2D/Disturb/Disturb(CustomData)` shows the SAME main-texture
+                // pan in its vertex program:
+                //     u_xlat0.xy = _Time.yy * vec2(_MainUSpeed, _MainVSpeed);
+                //     vs_TEXCOORD0.xy = u_xlat0.xy + (in_TEXCOORD0.xy * _MainTex_ST.xy + _MainTex_ST.zw);
+                // so every L2D compositor scrolls `_MainTex`, not just `Ram/`, and a non-Ram
+                // layer with a non-zero `_Main*Speed` renders STATIC where the game pans it.
+                // `DYNCHAR_UVSCROLL_ALL=1` widens the gate to the whole family.
+                //
+                // MEASURED, and kept OFF: it gives 46 of Virtuosa's layers a scroll they
+                // currently lack (a sort -4 family at +-0.2 v/s -- her vertical rain -- and a
+                // sort 4 family at +-0.1 u/s), and moves her by **+0.008** (15.342 -> 15.350;
+                // per beat t=5 +0.078, t=14 -0.023, t=17 -0.008). Mlynar and Skadi export
+                // byte-identical. So the gate is shader-CORRECT and parity-NEUTRAL on the only
+                // reference it touches, which is not enough to justify a corpus-wide
+                // reclassification unmeasured elsewhere -- see `dynchar-veil-frame-coverage`.
+                // Turn it on only together with a corpus render of the affected skins.
+                let wide = std::env::var("DYNCHAR_UVSCROLL_ALL").is_ok() && is_l2d_compositor(shader);
+                if shader.contains("Ram/") || wide {
                     let us = blend("_MainUSpeed", 0.0) as f32;
                     let vs = blend("_MainVSpeed", 0.0) as f32;
                     if us != 0.0 || vs != 0.0 {
