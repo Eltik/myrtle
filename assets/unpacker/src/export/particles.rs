@@ -2270,15 +2270,47 @@ fn resolve_ram(
                 mat_float(mat, "_Amount_02", -1.0)
             );
         }
-        shader.contains("Ram/").then_some((mat, shader))
+        // Admit the `Dissolve/` family alongside `Ram/` — but ONLY when its mask is LIVE.
+        //
+        // Its program (decompiled from `Dissolve Add Double`) is the Ram fragment minus the
+        // ramp/disturb/opacity terms plus a SECOND mask, and its pass blends `SrcAlpha, One` —
+        // additive WEIGHTED BY ALPHA, so a mask that multiplies alpha really does attenuate the
+        // draw. It reaches the same `RamEmitter`, where the unused terms are inert.
+        //
+        // The LIVE test is not pedantry. Admitting the family wholesale moves 373 systems across
+        // 47 skins onto a different colour path (the Ram fragment's ×2 `_MainColor` and highlight
+        // compression) — a change unrelated to the dissolve feature, and measured: cello
+        // 18.815 → 18.970. At `_Amount ≈ 0` the mask is 1 and the program collapses to plain
+        // `2*color*tex`, so such a material renders the same either way in the game and there is
+        // no reason to reroute it. Requiring a bound `_DissolveTex_01` with a non-zero
+        // `_Amount_01` keeps this to the systems the feature actually changes.
+        let dissolve_live = shader.contains("Dissolve/")
+            && mat_float(mat, "_Amount_01", 0.0) > 0.0
+            && mat_texenv(all_objects, mat, "_DissolveTex_01").0.is_some();
+        (shader.contains("Ram/") || dissolve_live).then_some((mat, shader))
     })?;
 
     let is_vertex = shader.contains("VertexDisturb");
+    let is_dissolve = !shader.contains("Ram/") && shader.contains("Dissolve/");
 
     let (main_pid, main_val, main_st) = mat_texenv(all_objects, mat, "_MainTex");
     let (ram_pid, ram_val, ram_st) = mat_texenv(all_objects, mat, "_RamTex");
     let (dist_pid, dist_val, dist_st) = mat_texenv(all_objects, mat, "_DisturbTex");
-    let (diss_pid, diss_val, diss_st) = mat_texenv(all_objects, mat, "_DissolveTex");
+    // The `Dissolve/` family names its maps `_DissolveTex_01`/`_02`; its single-name
+    // `_DissolveTex`/`_Amount`/`_BorderWidth` are inert residue from the Standard shader the
+    // asset was authored against. Prefer the two-map names wherever `_01` resolves.
+    let t01 = mat_texenv(all_objects, mat, "_DissolveTex_01");
+    let two_map = t01.0.is_some();
+    let (diss_pid, diss_val, diss_st) = if two_map {
+        t01
+    } else {
+        mat_texenv(all_objects, mat, "_DissolveTex")
+    };
+    let (diss2_pid, diss2_val, diss2_st) = if two_map {
+        mat_texenv(all_objects, mat, "_DissolveTex_02")
+    } else {
+        (None, None, ST_IDENTITY)
+    };
     let (vd_pid, vd_val, _vd_st) = if is_vertex {
         mat_texenv(all_objects, mat, "_VertexDisturbTex")
     } else {
@@ -2292,7 +2324,14 @@ fn resolve_ram(
 
     let vd_intensity = mat_color(mat, "_VertexDisturbIntensity", [0.0, 0.0, 0.0, 0.0]);
 
-    let main_color = mat_color(mat, "_MainColor", [0.5, 0.5, 0.5, 0.5]);
+    // `Dissolve/` multiplies `_TintColor` into the vertex colour where `Ram/` uses
+    // `_MainColor` — the same role, and the shared `col += col` supplies the family's ×2, so
+    // the 0.5 half-neutral convention carries over unchanged.
+    let main_color = if is_dissolve {
+        mat_color(mat, "_TintColor", [0.5, 0.5, 0.5, 0.5])
+    } else {
+        mat_color(mat, "_MainColor", [0.5, 0.5, 0.5, 0.5])
+    };
     // The `_Start` clip's animated `_MainColor`, resolved onto the static colour exactly
     // as the scene-quad path resolves a layer's tint (`layer_color_curve`). `tint_scale`
     // is 1 — the Ram fragment applies the family's own `col += col` at draw time, so the
@@ -2317,11 +2356,14 @@ fn resolve_ram(
     });
 
     let json = json!({
-        "kind": if is_vertex { "vertexDisturb" } else { "disturb" },
+        "kind": if is_dissolve { "dissolve" } else if is_vertex { "vertexDisturb" } else { "disturb" },
         "mainTex": Value::Null,     "mainST": main_st,
         "ramTex": Value::Null,      "ramST": ram_st,
         "disturbTex": Value::Null,  "disturbST": dist_st,
         "dissolveTex": Value::Null, "dissolveST": diss_st,
+        "dissolveTex2": Value::Null, "dissolveST2": diss2_st,
+        "amount2": if two_map { mat_float(mat, "_Amount_02", 0.0) } else { 0.0 },
+        "borderWidth2": if two_map { mat_float(mat, "_BorderWidth_02", 0.1) } else { 0.1 },
         "mainColor": main_color,
         "mainColorCurve": main_color_curve.map(|c| {
             c.into_iter()
@@ -2329,8 +2371,8 @@ fn resolve_ram(
                 .collect::<Vec<_>>()
         }),
         "opacity": mat_float(mat, "_Opacity", 1.0),
-        "borderWidth": mat_float(mat, "_BorderWidth", 0.1),
-        "amount": mat_float(mat, "_Amount", 0.5),
+        "borderWidth": if two_map { mat_float(mat, "_BorderWidth_01", 0.1) } else { mat_float(mat, "_BorderWidth", 0.1) },
+        "amount": if two_map { mat_float(mat, "_Amount_01", 0.5) } else { mat_float(mat, "_Amount", 0.5) },
         "intensityU": mat_float(mat, "_IntensityU", 0.0),
         "intensityV": mat_float(mat, "_IntensityV", 0.0),
         "disturbInfluenceDissolveUV": mat_float(mat, "_DisturbInfluenceDissolveUV", 0.0),
@@ -2351,6 +2393,7 @@ fn resolve_ram(
             ("ramTex", ram_pid, ram_val),
             ("disturbTex", dist_pid, dist_val),
             ("dissolveTex", diss_pid, diss_val),
+            ("dissolveTex2", diss2_pid, diss2_val),
             ("vertexDisturbTex", vd_pid, vd_val),
             ("vertexDisturbWeightTex", vdw_pid, vdw_val),
         ],

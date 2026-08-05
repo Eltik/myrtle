@@ -207,7 +207,10 @@ export interface IParticleSystemData {
 type RamST = [number, number, number, number];
 
 export interface IRamData {
-    kind: "disturb" | "vertexDisturb";
+    /** `dissolve` = the `Torappu/Particles-L2D/Dissolve/…` family: two multiplied masks, no
+     *  disturb warp, no ramp, `_TintColor` in place of `_MainColor`. Verified against the
+     *  decompiled `Dissolve Add Double` program. */
+    kind: "disturb" | "vertexDisturb" | "dissolve";
     mainTex: number | null;
     mainST: RamST;
     ramTex: number | null;
@@ -216,6 +219,12 @@ export interface IRamData {
     disturbST: RamST;
     dissolveTex: number | null;
     dissolveST: RamST;
+    /** SECOND dissolve map (`_DissolveTex_02`) and its own threshold/border. Null on the
+     *  single-mask `Ram/` and `Disturb/` families. */
+    dissolveTex2?: number | null;
+    dissolveST2?: RamST;
+    amount2?: number;
+    borderWidth2?: number;
     mainColor: [number, number, number, number];
     /** The `_Start` cinematic's animated `_MainColor`, keyed in absolute cinematic
      *  seconds as `[t, r, g, b, a]` — the particle twin of a scene layer's
@@ -2318,6 +2327,7 @@ uniform mat3 translationMatrix;
 uniform mat3 projectionMatrix;
 uniform vec4 uMainST;
 uniform vec4 uDissolveST;
+uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec4 uRamST;
 uniform vec2 uMainScroll;
@@ -2325,6 +2335,7 @@ uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
 varying vec2 vMainUV;
 varying vec2 vDissolveUV;
+varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
 varying vec4 vColor;
@@ -2337,10 +2348,12 @@ void main() {
     // arms carved from a shared glint atlas) hit the intended sub-rect.
     vMainUV = aUV * uMainST.xy + uMainST.zw + uMainScroll;
     vDissolveUV = aUV * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
+    vDissolveUV2 = aUV * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
     vDisturbUV = aUV * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
     vRamUV = aUV * uRamST.xy + uRamST.zw;
     vMainUV.y = 1.0 - vMainUV.y;
     vDissolveUV.y = 1.0 - vDissolveUV.y;
+    vDissolveUV2.y = 1.0 - vDissolveUV2.y;
     vDisturbUV.y = 1.0 - vDisturbUV.y;
     vRamUV.y = 1.0 - vRamUV.y;
     vColor = aColor;
@@ -2352,6 +2365,7 @@ const RAM_FRAG = `
 precision highp float;
 varying vec2 vMainUV;
 varying vec2 vDissolveUV;
+varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
 varying vec4 vColor;
@@ -2360,6 +2374,7 @@ uniform sampler2D uMainTex;
 uniform sampler2D uRamTex;
 uniform sampler2D uDisturbTex;
 uniform sampler2D uDissolveTex;
+uniform sampler2D uDissolveTex2;
 uniform vec4 uMainColor;
 uniform float uOpacity;
 uniform float uBorderWidth;
@@ -2370,6 +2385,9 @@ uniform float uDisturbInfluenceDissolveUV;
 uniform float uDisturbInfluenceMainUV;
 uniform float uHasDisturb;
 uniform float uHasDissolve;
+uniform float uHasDissolve2;
+uniform float uAmount2;
+uniform float uBorderWidth2;
 uniform float uHasRam;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
@@ -2388,6 +2406,15 @@ void main() {
     float bw = max(uBorderWidth, 1e-4);
     float edge = bw * sw + (dissolveTex - threshold);
     float dAlpha = clamp(edge / bw, 0.0, 1.0);
+    // SECOND MASK - the Dissolve/ family multiplies two, each with its own threshold,
+    // border and ST (verified against the decompiled Dissolve Add Double program). The
+    // Ram/ and Disturb/ families bind only one, so uHasDissolve2 is 0 and this is exactly 1.
+    if (uHasDissolve2 > 0.5) {
+        float d2 = texture2D(uDissolveTex2, vDissolveUV2).x;
+        float sw2 = 1.0 - floor(uAmount2 + 1.0);
+        float bw2 = max(uBorderWidth2, 1e-4);
+        dAlpha *= clamp((bw2 * sw2 + (d2 - uAmount2)) / bw2, 0.0, 1.0);
+    }
     if (uHasRam > 0.5) {
         col *= texture2D(uRamTex, vRamUV);
     }
@@ -2472,7 +2499,7 @@ class RamEmitter {
     constructor(
         data: IParticleSystemData,
         ram: IRamData,
-        tex: { main: PIXI.Texture | null; ram: PIXI.Texture | null; disturb: PIXI.Texture | null; dissolve: PIXI.Texture | null },
+        tex: { main: PIXI.Texture | null; ram: PIXI.Texture | null; disturb: PIXI.Texture | null; dissolve: PIXI.Texture | null; dissolve2?: PIXI.Texture | null },
         blend: "additive" | "normal",
         private readonly getBudget: () => number,
     ) {
@@ -2541,6 +2568,7 @@ class RamEmitter {
             uRamTex: tex.ram ?? WHITE_TEX,
             uDisturbTex: tex.disturb ?? WHITE_TEX,
             uDissolveTex: tex.dissolve ?? WHITE_TEX,
+            uDissolveTex2: tex.dissolve2 ?? WHITE_TEX,
             uMainColor: ram.mainColor,
             uOpacity: ram.opacity,
             uBorderWidth: ram.borderWidth,
@@ -2551,9 +2579,13 @@ class RamEmitter {
             uDisturbInfluenceMainUV: ram.disturbInfluenceMainUV,
             uHasDisturb: tex.disturb ? 1 : 0,
             uHasDissolve: tex.dissolve ? 1 : 0,
+            uHasDissolve2: tex.dissolve2 ? 1 : 0,
+            uAmount2: ram.amount2 ?? 0,
+            uBorderWidth2: ram.borderWidth2 ?? 0.1,
             uHasRam: tex.ram ? 1 : 0,
             uMainST: ram.mainST,
             uDissolveST: ram.dissolveST,
+            uDissolveST2: ram.dissolveST2 ?? [1, 1, 0, 0],
             uDisturbST: ram.disturbST,
             uRamST: ram.ramST,
             uMainScroll: [0, 0],
@@ -3470,7 +3502,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             if (sys.renderMode === "mesh") continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
-            const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex) }, sys.blend, budget);
+            const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex), dissolve2: rawTex(sys.ram.dissolveTex2 ?? null) }, sys.blend, budget);
             emitters.push(emitter);
             emitterSys.push(sysIndex);
             applyPsDiag(data, sys, emitter.container);
