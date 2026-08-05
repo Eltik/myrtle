@@ -1607,6 +1607,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (scene && off.has("scenefg")) scene.foreground.renderable = false;
                         if (particles && off.has("partbg")) particles.background.renderable = false;
                         if (particles && off.has("partfg")) particles.foreground.renderable = false;
+                        // BACKDROP particles are routed to neither container: `loadParticles`
+                        // sends an `isBackdropParticle` system to `sheetTarget()`, one of the
+                        // `backdropWashes` seated inside the spine's separator gaps. Ablating
+                        // only background+foreground therefore left them DRAWN, which read as
+                        // "particles are net harmful" on Virtuosa's early beats when they are in
+                        // fact worth ~12 MADC there (a true `?psoff=0,…,N` gives t=2 27.326 /
+                        // t=5 26.082 against 14.757 / 13.880 for the partial ablation).
+                        if (particles && off.has("partbg")) {
+                            for (const w of particles.backdropWashes) w.renderable = false;
+                        }
                         if (off.has("spine")) spine.renderable = false;
                         // `bg:<i>` drops one background layer, `bgonly:<i>` keeps only that one;
                         // `fg:` / `fgonly:` do the same for the foreground. Ranges allowed
