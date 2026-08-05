@@ -71,6 +71,18 @@ pub struct SpineAsset {
     /// The character spine's `m_SortingOrder`, so the live scene renderer can
     /// place the animated character among the mesh layers at the right depth.
     pub bg_character_sort: Option<i64>,
+    /// Spine-Unity `SkeletonRenderer.separatorSlotNames`: slots at which the game SPLITS this
+    /// skeleton's draw into separate submeshes (`SkeletonRenderSeparator` + N
+    /// `SkeletonPartsRenderer`s), so other renderers can be interleaved BETWEEN the parts.
+    ///
+    /// This is the authoritative background/character boundary, and nothing else expresses it —
+    /// every one of Virtuosa's 328 slots shares the single root bone `root`, so no bone
+    /// hierarchy can supply it. She splits at `B_C_R_Wing_E`, draw index 7, i.e. exactly after
+    /// her seven `*_Door_*` architecture slots. Her `bg_*` haze sheets are authored ABOVE
+    /// `characterSort` and belong in that gap: over the architecture, under the character.
+    /// Empty on skins that do not use the feature (`char_245_cello_2`), which must stay
+    /// byte-identical.
+    pub separator_slots: Vec<String>,
     /// ENTRANCE (`_Start`) cinematic total length in seconds, from the entrance
     /// director MonoBehaviour's `_params.duration` (the client plays the whole
     /// `_Start` set over this span, then hands off to the settled idle). `None`
@@ -267,6 +279,7 @@ struct BgScene {
     camera_view2: Option<f64>,
     claimed_tex: Vec<i64>,
     char_sort: Option<i64>,
+    separator_slots: Vec<String>,
 }
 
 /// Check if a bundle path is eligible for spine extraction.
@@ -814,6 +827,7 @@ pub fn collect_spine_assets(
             bg_camera_offset2: scene.camera_offset2,
             bg_camera_view2: scene.camera_view2,
             bg_character_sort: scene.char_sort,
+            separator_slots: scene.separator_slots.clone(),
             bg_entrance_duration,
             bg_entrance_fade,
             bg_entrance_transform,
@@ -1017,6 +1031,33 @@ fn collect_dynchar_bg_quads(
             .sort_by_key(|(_, go, _)| host.prefab_root_of_go(all_objects, *go) != Some(own));
     }
     let spine_sort = spine_renderers.first().map_or(0, |(.., sort)| *sort);
+
+    // Spine-Unity's OWN background/character boundary — see `SpineAsset::separator_slots`.
+    // Read from the SkeletonRenderer MonoBehaviour on the SAME GameObject whose MeshRenderer
+    // supplied `spine_sort`, so a bundle shipping several skeletons (Virtuosa ships three, two
+    // with a split and one with the feature disabled) cannot cross-wire one skeleton's split
+    // slot onto another's draw order.
+    let separator_slots: Vec<String> = spine_renderers
+        .first()
+        .and_then(|(_, go, _)| {
+            all_objects.values().find_map(|(cid, v)| {
+                if *cid != 114
+                    || v.get("skeletonDataAsset").is_none()
+                    || v.get("m_GameObject").and_then(get_path_id) != Some(*go)
+                {
+                    return None;
+                }
+                v.get("separatorSlotNames")
+                    .and_then(serde_json::Value::as_array)
+                    .map(|a| {
+                        a.iter()
+                            .filter_map(|x| x.as_str().map(str::to_owned))
+                            .filter(|x| !x.is_empty())
+                            .collect::<Vec<String>>()
+                    })
+            })
+        })
+        .unwrap_or_default();
 
     // Display-controller MonoBehaviours in a DETERMINISTIC order: the OWN prefab
     // root's controller first, then ascending path_id. A bundle can ship several
@@ -1730,6 +1771,7 @@ fn collect_dynchar_bg_quads(
         camera_view,
         camera_offset2,
         camera_view2,
+        separator_slots,
         ..BgScene::default()
     };
     if quads.is_empty() {
@@ -2788,6 +2830,7 @@ pub fn collect_enemy_spine_assets(
             bg_camera_offset2: None,
             bg_camera_view2: None,
             bg_character_sort: None,
+            separator_slots: Vec::new(),
             bg_entrance_duration: None,
             bg_entrance_fade: None,
             bg_entrance_transform: None,
@@ -3922,6 +3965,8 @@ fn export_scene(
         "cameraViewPx2": asset.bg_camera_view2.filter(|v| v.is_finite() && *v > 0.0).map(|v| v as f32),
         "aspect": asset.bg_max_aspect,
         "characterSort": asset.bg_character_sort,
+        // See `SpineAsset::separator_slots`. Slot NAMES, in the skeleton's own draw order.
+        "separatorSlots": asset.separator_slots,
         // ENTRANCE (`_Start`) cinematic timing (seconds), from the entrance director's
         // `_params.duration` + the reform `_delayTime` cluster. Present only on `_Start`
         // scenes; drives the client entrance camera dolly (tight→wide across `_adjustes`)

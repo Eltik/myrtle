@@ -3081,6 +3081,9 @@ export interface ILoadedParticles {
     data: IParticlesData;
     /** Emitters whose sort is behind the character. */
     background: PIXI.Container;
+    /** `isBackdropParticle` haze/tint sheets, kept separate so they can be seated between a
+     *  split skeleton's parts. See {@link ISceneData.separatorSlots}. */
+    backdropWash: PIXI.Container;
     /** Emitters whose sort is in front of the character. */
     foreground: PIXI.Container;
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
@@ -3493,6 +3496,11 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();
+    // The `isBackdropParticle` sheets get their OWN container rather than sharing `background`,
+    // so the consumer can seat them BETWEEN a split skeleton's parts (see the scene data's
+    // `separatorSlots`). Drawn immediately before `background`'s successor it is byte-identical
+    // to the old single-container behaviour, which is what skins without a separator keep.
+    const backdropWash = new PIXI.Container();
     const emitters: Array<Emitter | RamEmitter> = [];
     /** `emitters[i]` came from `data.systems[emitterSys[i]]` — skipped systems leave no entry. */
     const emitterSys: number[] = [];
@@ -3754,7 +3762,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // invisible through the whole reform because of this). Normal-blend → full alpha.
                 emitter.container.alpha = (meshBlend === "additive" ? additivePileGain(sys) : 1) * (bigGlow ? 0.4 : 1);
                 applyPsDiag(data, sys, emitter.container);
-                (sys.sort < data.characterSort || isBackdropParticle ? background : foreground).addChild(emitter.container);
+                (isBackdropParticle ? backdropWash : sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
             }
             continue;
         }
@@ -3798,7 +3806,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // promoted over-body copy — the background rain (and every other system) is untouched.
         if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
         applyPsDiag(data, sys, emitter.container);
-        (wouldBeBackground && !unoccludeOverlap ? background : foreground).addChild(emitter.container);
+        (isBackdropParticle && !unoccludeOverlap ? backdropWash : wouldBeBackground && !unoccludeOverlap ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
 
@@ -3809,6 +3817,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     return {
         data,
         background,
+        backdropWash,
         foreground,
         update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment) {
             // Recompute the shared live count once per frame for the budget.

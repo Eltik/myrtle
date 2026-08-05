@@ -132,6 +132,10 @@ export interface ISceneData {
     cameraViewPx2?: number | null;
     /** Sort index at which the character spine is inserted. */
     characterSort: number;
+    /** Spine-Unity `SkeletonRenderer.separatorSlotNames` — slot names at which the GAME splits
+     *  this skeleton's draw into separate submeshes so other renderers sit BETWEEN the parts.
+     *  Empty/absent on skins that do not use the feature. See {@link ISceneData.characterSort}. */
+    separatorSlots?: string[] | null;
     /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
      *  Present only on `_Start` scenes. */
     entranceDuration?: number | null;
