@@ -2287,6 +2287,25 @@ fn resolve_ram(
         // `2*color*tex`, so such a material renders the same either way in the game and there is
         // no reason to reroute it. Requiring a bound `_DissolveTex_01` with a non-zero
         // `_Amount_01` keeps this to the systems the feature actually changes.
+        // Admit the `Dissolve/` family alongside `Ram/`, but ONLY the TWO-MAP form with a live
+        // mask (see the `_01`/`_02` reads below and the notes in `spine.rs`).
+        //
+        // The single-map `(CustomData)` form is deliberately NOT admitted, and both halves of
+        // that decision are measured:
+        //   • `_UseDissolveTex` is not a liveness test. The mask is `(bw*sw + tex - t)/bw` with
+        //     `sw = 1 - roundEven(t + 0.5)`; at `t = 0`, roundEven(0.5) is 0 (banker's rounding),
+        //     so `sw = 1` and the mask is `clamp(1 + tex/bw)` — identically ONE however the
+        //     toggle is set. Virtuosa's `window_bg_01` is exactly that: it binds a dissolve
+        //     texture with `_UseDissolveTex = 1`, `_DissolveIntensity = 0` and no CustomData
+        //     curve, so its mask cuts nothing. Its long-standing "dark quad over the window" is
+        //     NOT an unread dissolve. Admitting on the toggle cost cello 18.815 → 18.970.
+        //   • Gating on the threshold instead (`_DissolveIntensity > 0`) is correct about
+        //     liveness and STILL a regression: it admits cello's `sys35` (a 2000 px normal-blend
+        //     quad whose mask does bite) and costs 18.815 → 19.068, because moving a system onto
+        //     the Ram colour path (its ×2 `_MainColor` and highlight compression) outweighs what
+        //     the mask recovers. The two-map form does not have this problem — those systems are
+        //     additive and small.
+        // Revisit only with a way to apply the mask WITHOUT changing the colour path.
         let dissolve_live = shader.contains("Dissolve/")
             && mat_float(mat, "_Amount_01", 0.0) > 0.0
             && mat_texenv(all_objects, mat, "_DissolveTex_01").0.is_some();
