@@ -941,6 +941,40 @@ pub(crate) fn collect_dynchar_particles(
         //      burst 4.4s) — no `_delayTime` activators exist in that prefab at all.
         //      It runs AFTER the activation gates, so it ADDS to the later of (1)/(2).
         let ent_reveal = host.entrance_reveal_of_go(all_objects, go_pid, entrance_windows);
+        // DIAGNOSTIC (SCENE_ATTRIB=1): particles currently take only the START of the clip's
+        // `m_IsActive` window and DISCARD its end, so a system the cinematic switches OFF keeps
+        // emitting forever. Print the full window to see whether the data is even there.
+        if attrib_dbg {
+            if let Some(w) = host.entrance_window_of_go(all_objects, go_pid, entrance_windows) {
+                eprintln!(
+                    "    [ptcl] WINDOW {:<26} from={:?} until={:?}",
+                    host.go_name(all_objects, go_pid),
+                    w.0,
+                    w.1
+                );
+            }
+            // Does the `_Start` clip animate this emitter's MATERIAL COLOUR? Scene layers get
+            // that curve (`colorCurve`); particles do not. A clip that fades an emitter's
+            // material would make the game's effect die away while ours keeps going.
+            if let Some(chs) = entrance.color_channels.get(&go_pid) {
+                let span: Vec<String> = chs
+                    .iter()
+                    .map(|c| {
+                        let f = c.curve.first().map_or(f32::NAN, |&(_, v)| v);
+                        let l = c.curve.last().map_or(f32::NAN, |&(_, v)| v);
+                        let t0 = c.curve.first().map_or(f32::NAN, |&(t, _)| t);
+                        let t1 = c.curve.last().map_or(f32::NAN, |&(t, _)| t);
+                        format!("ch{} {:.2}->{:.2} over {:.1}-{:.1}s", c.channel, f, l, t0, t1)
+                    })
+                    .collect();
+                eprintln!(
+                    "    [ptcl] MATCOLOR {:<24} {} {}",
+                    host.go_name(all_objects, go_pid),
+                    drop_where(all_objects),
+                    span.join(" | ")
+                );
+            }
+        }
         let start_delay = ps
             .get("startDelay")
             .and_then(|sd| sd.get("scalar"))
@@ -2002,6 +2036,18 @@ type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64;
 /// alpha-blend tinted systems and doubling them cost her 19.396 → 19.415 MADC, while
 /// Mlynar's win came entirely from the additive side.
 fn particle_tint(mat: &Value) -> Option<[f64; 4]> {
+    // GATED ON `is_additive` — RELAXING THIS WAS TRIED AND REVERTED (2026-08-03). The
+    // `tex * (COLOR + COLOR)` doubling really is a property of the shader FAMILY rather than the
+    // blend mode, so admitting AlphaBlend materials looked correct on paper. Measured: it changes
+    // 37 systems across the three references, hands many NORMAL-blend systems a tint whose ALPHA
+    // is 2.0 (doubling their opacity), and scores mly 17.439 -> 17.464 with cel/ska flat. It also
+    // does NOT reach the case it was written for: Virtuosa's `bg_tint_01` / `window_bg_01` export
+    // from the `Dissolve(CustomData)` variants, which `plain_mode` excludes and whose tints are
+    // the 0.5 neutral anyway — the darkening (0.390, 0.395, 0.395) tint belongs to a SKIPPED
+    // sibling, and that sibling is skipped CORRECTLY: `SCENE_ATTRIB=1` names its blocker as
+    // 'Special Only Effects' / 'Interact Only Effects', i.e. <State> Only Effects groups that ship
+    // inactive and play only on those interactions, never during the entrance. So "the skipped
+    // copy stacks with the drawn one" is refuted too. See dynchar-virtuosa-t5-localised.
     if !is_additive(mat) {
         return None;
     }

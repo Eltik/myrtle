@@ -239,10 +239,31 @@ function kneeParam(): number {
     return Number.isFinite(v) && v > 0 ? v : DEFAULT_KNEE;
 }
 
-/** Calibration endpoints for {@link sceneCompositeGamma}: `[cameraSizePx, exponent]`.
- *  These are the two extreme reference skins; everything else interpolates between them. */
-const GAMMA_CAL_LO: readonly [number, number] = [1000, 1.12]; // Skadi the Corrupting Heart
-const GAMMA_CAL_HI: readonly [number, number] = [1111, 1.02]; // Mlynar
+/** Calibration points for {@link sceneCompositeGamma}: `[cameraSizePx, exponent]`, ascending.
+ *
+ *  All three are MEASURED optima on the reference skins — each one is the minimum of a gamma
+ *  sweep of that skin's own MADC, re-measured on the current baseline:
+ *
+ *      Skadi    cs 1000   1.16 -> 10.879   [1.12 -> 10.530]   1.08 -> 11.102   1.04 -> 12.347
+ *      Virtuosa cs 1050   1.10 -> 19.322   [1.075 -> 19.270]  1.05 -> 19.402   1.03 -> 19.634
+ *      Mlynar   cs 1111   1.02 -> 17.525   [1.00 -> 17.439]   0.97 -> 17.575   0.94 -> 18.021
+ *
+ *  THE THREE ARE NOT COLLINEAR — the slope steepens from -0.0009 to -0.00123 per px — so the
+ *  previous TWO-point line could only fit two of them. It fitted Skadi and Virtuosa exactly and
+ *  missed Mlynar by 0.02, costing him 0.086 MADC. Moving its HI anchor to 1.00 (the obvious fix)
+ *  merely swaps which point absorbs the error: Mlynar becomes exact but Virtuosa is pulled off
+ *  her measured 1.075 to 1.0659 and loses 0.034. Interpolating through all three fits every
+ *  measured point exactly and costs nothing anywhere.
+ *
+ *  Corpus-checked: 63 of 82 skins change, max |delta gamma| 0.0200, and a 63-skin x 4-beat
+ *  render sweep of the (strictly larger-or-equal) anchor-move variant flagged NOTHING — max
+ *  frame-mean shift 1.60 luma, ZERO pixels moving more than 8 luma, no saturation or
+ *  content-loss change on any skin. */
+const GAMMA_CAL: readonly (readonly [number, number])[] = [
+    [1000, 1.12], // Skadi the Corrupting Heart
+    [1050, 1.075], // Virtuosa
+    [1111, 1.0], // Mlynar
+];
 
 /**
  * Exponent applied to the assembled scene composite, derived per scene from its authored
@@ -315,11 +336,18 @@ export function sceneCompositeGamma(cameraSizePx: number | undefined | null): nu
         const v = Number(diag);
         return Number.isFinite(v) && v > 0 ? v : 1;
     }
-    const [loPx, loG] = GAMMA_CAL_LO;
-    const [hiPx, hiG] = GAMMA_CAL_HI;
     if (!cameraSizePx || !Number.isFinite(cameraSizePx)) return 1;
-    const t = Math.min(1, Math.max(0, (cameraSizePx - loPx) / (hiPx - loPx)));
-    return loG + (hiG - loG) * t;
+    // Piecewise-linear through GAMMA_CAL, clamped flat outside the calibrated range.
+    const first = GAMMA_CAL[0];
+    const last = GAMMA_CAL[GAMMA_CAL.length - 1];
+    if (cameraSizePx <= first[0]) return first[1];
+    if (cameraSizePx >= last[0]) return last[1];
+    for (let i = 1; i < GAMMA_CAL.length; i++) {
+        const [aPx, aG] = GAMMA_CAL[i - 1];
+        const [bPx, bG] = GAMMA_CAL[i];
+        if (cameraSizePx <= bPx) return aG + ((bG - aG) * (cameraSizePx - aPx)) / (bPx - aPx);
+    }
+    return last[1];
 }
 
 /** DIAGNOSTIC (`?hdrprobe=<scale>`): see the shader. 0 (default) = normal tonemap. */

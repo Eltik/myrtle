@@ -24,6 +24,13 @@ import * as PIXI from "pixi.js";
 export interface ISceneRam {
     dissolveTex?: number | null;
     dissolveST: [number, number, number, number];
+    /** SECOND dissolve map. The `Dissolve/` shader family multiplies TWO masks
+     *  (`_DissolveTex_01` × `_DissolveTex_02`), each with its own threshold and border
+     *  width. Absent on the single-map `Ram/` and `Disturb/` families. */
+    dissolveTex2?: number | null;
+    dissolveST2?: [number, number, number, number];
+    amount2?: number;
+    borderWidth2?: number;
     disturbTex?: number | null;
     disturbST: [number, number, number, number];
     /** Dissolve threshold and the softness of its edge. */
@@ -207,6 +214,8 @@ interface ISceneTex {
  *  corrupt a mask. `white` stands in for an unbound slot (1.0 everywhere = no effect). */
 interface IRamSceneTex {
     dissolve: PIXI.Texture | null;
+    /** Second dissolve map (the `Dissolve/` family multiplies two). Null on single-map families. */
+    dissolve2: PIXI.Texture | null;
     disturb: PIXI.Texture | null;
     white: PIXI.Texture;
 }
@@ -388,6 +397,14 @@ function effectStretchMin(): number {
 function tiledExemptEnabled(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("tiled") === "1";
+}
+
+/** `?ordfix=0` disables the order-preserving demotion pass (see the bucketing code), so an
+ *  A/B can be rendered with an identical shot list instead of by editing the source between
+ *  passes — the comparison that a reclassification has to survive before it ships. */
+function orderFixEnabled(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ordfix") !== "0";
 }
 
 /** A painted light SHEET is exempt from `EFFECT_SCENE_GAIN`: whitish, non-additive, and
@@ -575,6 +592,11 @@ export interface ISceneLayerRuntime {
      *  outsort EVERY particle emitter above the particle container (Mlynar's sort-100
      *  white flash must cover the crystals/sparks too). */
     __sort?: number;
+    /** DIAGNOSTIC only (`?dumplayers=1`): the layer's texture index and its position in the
+     *  scene JSON's `layers` array, so a dump row can be matched back to its source without
+     *  guessing from the screen box (which the camera transform makes unreliable). */
+    __texIndex?: number;
+    __srcIndex?: number;
     __colorCurve?: [number, number, number, number, number][] | null;
     /** Mirror of the static-tint folding in {@link buildLayerMesh} (additive gain rules),
      *  so {@link applySceneLayerColor} reproduces it for every sampled colour. */
@@ -814,11 +836,13 @@ attribute vec4 aColor;
 uniform mat3 translationMatrix;
 uniform mat3 projectionMatrix;
 uniform vec4 uDissolveST;
+uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
 varying vec2 vUV;
 varying vec2 vDissolveUV;
+varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec4 vColor;
 void main() {
@@ -830,7 +854,9 @@ void main() {
     vec2 unity = vec2(aBaseUV.x, 1.0 - aBaseUV.y);
     vec2 ds = unity * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
     vec2 dt = unity * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
+    vec2 ds2 = unity * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
     vDissolveUV = vec2(ds.x, 1.0 - ds.y);
+    vDissolveUV2 = vec2(ds2.x, 1.0 - ds2.y);
     vDisturbUV = vec2(dt.x, 1.0 - dt.y);
 }
 `;
@@ -838,10 +864,12 @@ const RAM_SCENE_FRAG = `
 precision highp float;
 varying vec2 vUV;
 varying vec2 vDissolveUV;
+varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec4 vColor;
 uniform sampler2D uSampler;
 uniform sampler2D uDissolveTex;
+uniform sampler2D uDissolveTex2;
 uniform sampler2D uDisturbTex;
 uniform vec4 uColor; // premultiplied tint*alpha
 uniform float uWorldAlpha;
@@ -852,6 +880,9 @@ uniform float uIntensityV;
 uniform float uDisturbInfluenceDissolveUV;
 uniform float uDisturbInfluenceMainUV;
 uniform float uHasDissolve;
+uniform float uHasDissolve2;
+uniform float uAmount2;
+uniform float uBorderWidth2;
 uniform float uHasDisturb;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
@@ -864,6 +895,16 @@ void main() {
     float sw = 1.0 - floor(uAmount + 1.0);
     float bw = max(uBorderWidth, 1e-4);
     float dAlpha = clamp((bw * sw + (dissolveTex - uAmount)) / bw, 0.0, 1.0);
+    // The Dissolve/ family multiplies a SECOND mask with its own threshold and border
+    // (the Ram/ and Disturb/ families bind only the first, so uHasDissolve2 is 0 and this
+    // term is exactly 1). Same profile as above, sampled through the same disturb warp.
+    // NOTE: no backticks in here - this is inside a template literal.
+    if (uHasDissolve2 > 0.5) {
+        float d2 = texture2D(uDissolveTex2, dOff * uDisturbInfluenceDissolveUV + vDissolveUV2).x;
+        float sw2 = 1.0 - floor(uAmount2 + 1.0);
+        float bw2 = max(uBorderWidth2, 1e-4);
+        dAlpha *= clamp((bw2 * sw2 + (d2 - uAmount2)) / bw2, 0.0, 1.0);
+    }
     vec4 vc = vec4(vColor.rgb * vColor.a, vColor.a);
     gl_FragColor = tex * uColor * vc * uWorldAlpha * dAlpha;
 }
@@ -916,6 +957,7 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
         const shader = PIXI.Shader.from(RAM_SCENE_VERT, RAM_SCENE_FRAG, {
             uSampler: new PIXI.Texture(base),
             uDissolveTex: ramTex.dissolve ?? ramTex.white,
+            uDissolveTex2: ramTex.dissolve2 ?? ramTex.white,
             uDisturbTex: ramTex.disturb ?? ramTex.white,
             uColor,
             uWorldAlpha: 1,
@@ -926,8 +968,12 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uDisturbInfluenceDissolveUV: r.disturbInfluenceDissolveUV,
             uDisturbInfluenceMainUV: r.disturbInfluenceMainUV,
             uHasDissolve: ramTex.dissolve ? 1 : 0,
+            uHasDissolve2: ramTex.dissolve2 ? 1 : 0,
+            uAmount2: r.amount2 ?? 0,
+            uBorderWidth2: r.borderWidth2 ?? 0.1,
             uHasDisturb: ramTex.disturb ? 1 : 0,
             uDissolveST: r.dissolveST,
+            uDissolveST2: r.dissolveST2 ?? [1, 1, 0, 0],
             uDisturbST: r.disturbST,
             uDissolveScroll: [0, 0],
             uDisturbScroll: [0, 0],
@@ -972,6 +1018,23 @@ function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: numb
  * Build a Pixi mesh for one layer. Y is flipped (authored Y-up → Pixi Y-down)
  * and V is flipped (Unity → Pixi UV), matching the exporter's coordinate note.
  */
+/** Authored XY bounds `[minX, minY, maxX, maxY]` of a layer's mesh, from its flat
+ *  `[x0,y0,x1,y1,…]` position array. Used to tell whether a demoted layer actually
+ *  COVERS another one — see the order-preserving demotion pass. */
+function boundsOf(pos: number[]): [number, number, number, number] {
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+    for (let i = 0; i + 1 < pos.length; i += 2) {
+        if (pos[i] < minX) minX = pos[i];
+        if (pos[i] > maxX) maxX = pos[i];
+        if (pos[i + 1] < minY) minY = pos[i + 1];
+        if (pos[i + 1] > maxY) maxY = pos[i + 1];
+    }
+    return [minX, minY, maxX, maxY];
+}
+
 function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex | null, forceAdditive = false, fullGain = false, temperLargeAdditive = false): PIXI.Mesh | null {
     const vertexCount = layer.pos.length / 2;
     if (vertexCount < 3 || layer.idx.length < 3) return null;
@@ -1087,6 +1150,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         rt.__activeFrom = from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
         rt.__activeUntil = layer.activeUntil ?? null;
         rt.__sort = layer.sort;
+        rt.__texIndex = layer.tex;
         if (layer.colorCurve?.length) {
             rt.__colorCurve = layer.colorCurve;
             rt.__colorMode = { additive, gain };
@@ -1314,8 +1378,9 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         if (!r) return null;
         const slot = (i: number | null | undefined) => (i != null && bases[i] ? new PIXI.Texture(bases[i].raw) : null);
         const dissolve = slot(r.dissolveTex);
+        const dissolve2 = slot(r.dissolveTex2);
         const disturb = slot(r.disturbTex);
-        return dissolve || disturb ? { dissolve, disturb, white: PIXI.Texture.WHITE } : null;
+        return dissolve || dissolve2 || disturb ? { dissolve, dissolve2, disturb, white: PIXI.Texture.WHITE } : null;
     };
 
     // Does this scene own a DARK opaque painted backdrop (a self-lit painted world, not a
@@ -1340,8 +1405,15 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     // those layers never render. Moving the backdrop to the back only REVEALS those
     // previously-dead layers (never hides a visible one). Added to `background`
     // first so it renders behind the rest.
-    const backdropMeshes: PIXI.Mesh[] = [];
-    const otherBg: PIXI.Mesh[] = [];
+    /** Background-bound meshes carry their authored sort so the final order can be rebuilt
+     *  after the order-preserving demotion pass below. */
+    const backdropMeshes: { mesh: PIXI.Mesh; sort: number }[] = [];
+    const otherBg: { mesh: PIXI.Mesh; sort: number }[] = [];
+    /** Foreground candidates, bucketed only once the demoted set is known. */
+    const fgPending: { mesh: PIXI.Mesh; sort: number; box: [number, number, number, number] }[] = [];
+    /** Layers the author put in FRONT of the character that we pushed behind it (the veil
+     *  demotion), with the authored bounds needed to tell which foreground layers they cover. */
+    const demotedFg: { sort: number; box: [number, number, number, number] }[] = [];
     // A layer whose full geometry (texture index + vertex positions + UVs + triangle
     // indices) is a byte-identical duplicate of an EARLIER layer already classified as
     // background is an author-side duplicate mesh (the same backdrop baked twice — once
@@ -1353,6 +1425,10 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
     // no new constant, no per-skin value; a no-op unless two layers' geometry is
     // literally identical (verified zero such pairs in cello's/mlynar's scene JSONs).
     const bgGeometrySignatures = new Set<string>();
+    // Source index per layer, captured BEFORE the sort below reorders them — diagnostic only
+    // (`?dumplayers=1`), so a dump row names its scene-JSON layer instead of being guessed at
+    // from its screen box.
+    const srcIndexOf = new Map<ISceneLayer, number>(data.layers.map((l, i) => [l, i] as const));
     for (const layer of [...data.layers].sort((a, b) => a.sort - b.sort)) {
         const base = bases[layer.tex];
         if (!base) continue;
@@ -1451,17 +1527,64 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
         const mesh = buildLayerMesh(layer, base, ramTexOf(layer), forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
         if (!mesh) continue;
+        (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
+        const box = boundsOf(layer.pos);
         if (isForeground && !isVeil) {
-            foreground.addChild(mesh);
+            // Deferred: whether this can STAY in front depends on which layers the veil
+            // demotion moves behind it, which is only known once every layer is classified.
+            fgPending.push({ mesh, sort: layer.sort, box });
             continue;
         }
         // Large, near-fully-opaque, desaturated panel = a solid backdrop wall.
         const isBackdrop = !isRevealOverlay && !layer.additive && !isEffect && base.opaqueFrac >= 0.9 && base.whiteness >= 0.4;
-        (isBackdrop ? backdropMeshes : otherBg).push(mesh);
+        // Record anything pushed BEHIND the character that the author put in FRONT of it —
+        // the veil demotion. See the order-preservation pass below.
+        // A FULL-FRAME veil is excluded as a coverer. Its demotion is not a statement about
+        // scene depth — it is the character-specific hack that keeps a whitish wash from
+        // erasing her — so it must not drag the scene behind her with it. Mlynar's sort-10
+        // veil spans his whole camera view and would otherwise demote every layer he draws
+        // in front (0.40 MADC). A LOCALISED demoted layer genuinely sits above its
+        // neighbours, and that ordering is worth preserving.
+        const spansView = Math.max(box[2] - box[0], box[3] - box[1]) >= (data.cameraSizePx ?? Number.POSITIVE_INFINITY);
+        if (isForeground && !spansView) demotedFg.push({ sort: layer.sort, box });
+        (isBackdrop ? backdropMeshes : otherBg).push({ mesh, sort: layer.sort });
         bgGeometrySignatures.add(geomKey);
     }
-    for (const m of backdropMeshes) background.addChild(m);
-    for (const m of otherBg) background.addChild(m);
+    // ORDER-PRESERVING DEMOTION. Moving a layer behind the character does not only change
+    // its relation to HER — it changes its relation to every other scene layer, and the veil
+    // demotion silently inverts those. Virtuosa seats 34 layers at sort 5-100 behind the
+    // character as veils while five dark cross-hatched quads at sort 4 stay in front, so
+    // quads the author put UNDERNEATH get painted ON TOP of the bright crystal faces that
+    // should cover them. That is why those quads read as dark hatching across a frame the
+    // game keeps bright: measured over their own footprints we darken by 21-32 luma where
+    // the game darkens by 6-7, and the covering layers overlap them by 288-404% of area.
+    //
+    // The correction is pairwise and GEOMETRIC, not a global floor: a foreground layer is
+    // demoted only when a layer authored ABOVE it was demoted AND actually covers it. A
+    // global "demote everything below the lowest demoted sort" is both too weak and too
+    // strong — on Virtuosa the lowest demoted sort is 1, so it moves nothing, while on
+    // Mlynar it shuffles unrelated layers and costs 0.40 MADC. Requiring real coverage
+    // fixes the inversion exactly where it exists and is a no-op everywhere else.
+    const COVER = 0.5;
+    for (const p of orderFixEnabled() ? fgPending : []) {
+        const area = Math.max(1e-6, (p.box[2] - p.box[0]) * (p.box[3] - p.box[1]));
+        const covered = demotedFg.some((d) => {
+            if (d.sort <= p.sort) return false; // authored below us — no inversion possible
+            const w = Math.min(d.box[2], p.box[2]) - Math.max(d.box[0], p.box[0]);
+            const h = Math.min(d.box[3], p.box[3]) - Math.max(d.box[1], p.box[1]);
+            return w > 0 && h > 0 && (w * h) / area >= COVER;
+        });
+        if (covered) otherBg.push(p);
+    }
+    // Background draws back-to-front: solid backdrop walls first, then everything else in
+    // authored sort order. The demoted layers must MERGE into that order by sort rather than
+    // append, or they would land above the very veils they were demoted to stay under.
+    otherBg.sort((a, b) => a.sort - b.sort);
+    for (const m of backdropMeshes) background.addChild(m.mesh);
+    for (const m of otherBg) background.addChild(m.mesh);
+    for (const p of fgPending) {
+        if (!otherBg.includes(p)) foreground.addChild(p.mesh);
+    }
 
     // A scene with no background layer isn't a backdrop — it's a foreground-only
     // fx overlay. Those layers are static snapshots of animated Unity effects and

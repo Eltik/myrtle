@@ -7,7 +7,24 @@ import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
-import { applySceneLayerColor, applySceneLayerFollow, applySceneLayerRamScroll, applySceneLayerSt, applySceneLayerUvScroll, detectCurveCuts, type ISceneData, type ISceneFrame, type ISceneLayer, type ISceneLayerRuntime, loadSceneFrame, loadSceneMeshes, orthoZoomRatio, sampleColorCurve, sampleCurveXY, sceneFrameOf } from "./sceneMesh";
+import {
+    applySceneLayerColor,
+    applySceneLayerFollow,
+    applySceneLayerRamScroll,
+    applySceneLayerSt,
+    applySceneLayerUvScroll,
+    detectCurveCuts,
+    type ISceneData,
+    type ISceneFrame,
+    type ISceneLayer,
+    type ISceneLayerRuntime,
+    loadSceneFrame,
+    loadSceneMeshes,
+    orthoZoomRatio,
+    sampleColorCurve,
+    sampleCurveXY,
+    sceneFrameOf,
+} from "./sceneMesh";
 
 /** Minimal shape of a spine attachment we can measure at the setup pose. */
 interface AttachmentLike {
@@ -792,6 +809,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // positional curve — the pan lives in the animated camera-PARENT rig (`camCenter`). Each
     // frame we sample the curve at the clip's track time and scale the entrance frame by the ratio
     // to its t=0 value (so no world↔authored unit conversion), zooming around the frame centre.
+    /** ENTRANCE LAYER SEQUENCING — the `_Start` clip's per-layer `m_IsActive` windows,
+     *  material-colour curves and UV-ST curves. Kept SEPARATE from `entranceFollowRef`
+     *  because that ref only exists when the skin ships a camera-centre curve, and layer
+     *  sequencing has nothing to do with the camera: gating it on the camera track left
+     *  three skins (Kalt'sits "boc#6", Cetsyr, Chongyue "epoque#7") replaying their entrance
+     *  with EVERY layer at its static tint. For Kalt'sits that means the closing full-frame
+     *  white flash — authored white at full alpha — paints the whole cinematic pure white. */
+    const entranceSeqRef = useRef<{ spine: import("pixi-spine").Spine; sceneLayers: PIXI.Container[] } | null>(null);
     const entranceFollowRef = useRef<{
         spine: import("pixi-spine").Spine;
         root: PIXI.Container;
@@ -1043,10 +1068,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
                 ef.lastLiveCenter = [cx, cy];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
+                // Deferred entrance end: the spine's own "Start" animation ended before the
+                // authored scene timeline (its `complete` listener held off) — fire the
+                // handoff when the track clock reaches the scene end, a hair EARLY so the
+                // dissolve starts on the flash's final HELD frame (white→settle, matching
+                // the game's white fade-through), not on a one-frame scene pop after the
+                // flash window closes.
+                if (ef.fireEnd && ef.endAt != null && tt >= ef.endAt - 0.1) {
+                    const fire = ef.fireEnd;
+                    ef.fireEnd = null;
+                    fire();
+                }
+            }
+            // ENTRANCE LAYER SEQUENCING. Runs for ANY live entrance composite, independent of
+            // whether the skin ships a camera track — see `entranceSeqRef`.
+            const eseq = entranceSeqRef.current;
+            if (eseq && spineRef.current === eseq.spine) {
+                const st = eseq.spine.state.tracks[0] as unknown as { trackTime?: number } | null;
+                const tt = st?.trackTime ?? 0;
                 // Per-layer `m_IsActive` window from the `_Start` clips (gamedata): a layer with
                 // `activeFrom`/`activeUntil` renders only while `activeFrom <= t < activeUntil`.
                 // Absent = always visible (Virtuosa's backdrop is entirely always-on).
-                for (const c of ef.sceneLayers) {
+                for (const c of eseq.sceneLayers) {
                     for (const m of c.children) {
                         const mm = m as unknown as ISceneLayerRuntime;
                         const af = mm.__activeFrom;
@@ -1066,17 +1109,6 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
-                }
-                // Deferred entrance end: the spine's own "Start" animation ended before the
-                // authored scene timeline (its `complete` listener held off) — fire the
-                // handoff when the track clock reaches the scene end, a hair EARLY so the
-                // dissolve starts on the flash's final HELD frame (white→settle, matching
-                // the game's white fade-through), not on a one-frame scene pop after the
-                // flash window closes.
-                if (ef.fireEnd && ef.endAt != null && tt >= ef.endAt - 0.1) {
-                    const fire = ef.fireEnd;
-                    ef.fireEnd = null;
-                    fire();
                 }
             }
             // Hand off from the entrance to the main L2D, if its "Start" just finished.
@@ -1481,6 +1513,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 const inRange = i >= lo && i <= hi;
                                 if (m[2]) c.renderable = inRange;
                                 else if (inRange) c.renderable = false;
+                                // The entrance tick REWRITES `renderable` every frame for any
+                                // layer carrying an `m_IsActive` window, which silently undid this
+                                // ablation for exactly those layers — so a windowed layer always
+                                // measured as "contributes 0 px" no matter what it drew, while
+                                // window-less siblings ablated fine. Clear the window on the
+                                // layers this token touches so the tick leaves them alone.
+                                if (m[2] ? true : inRange) {
+                                    const rt = c as unknown as ISceneLayerRuntime;
+                                    rt.__activeFrom = undefined;
+                                    rt.__activeUntil = undefined;
+                                }
                             });
                         }
                         // `on:bg<i>` / `on:fg<i>` clears a layer's `m_IsActive` window so it
@@ -1642,6 +1685,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     blend: (m as unknown as { blendMode?: number }).blendMode,
                                     box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
                                     dbg: (m as unknown as { __blendDbg?: unknown }).__blendDbg,
+                                    // An OVERBRIGHT / vertex-colour layer carries no MeshMaterial
+                                    // tint — its whole colour lives in the `uColor` uniform, so a
+                                    // dump without it cannot tell "drawn dim" from "not drawn".
+                                    uColor: r.shader?.uniforms?.uColor,
+                                    hasVCol: !!r.shader?.uniforms?.uColor,
+                                    // Display-list state: a mesh can be visible+renderable with a
+                                    // correct uniform and still never reach the framebuffer if its
+                                    // PARENT chain is off or its worldAlpha collapsed.
+                                    wAlpha: Number(((m as unknown as { worldAlpha: number }).worldAlpha ?? -1).toFixed(3)),
+                                    pRend: (m.parent as unknown as { renderable?: boolean } | null)?.renderable,
+                                    pVis: (m.parent as unknown as { visible?: boolean } | null)?.visible,
+                                    pAlpha: Number(((m.parent as unknown as { alpha?: number } | null)?.alpha ?? -1).toFixed(3)),
+                                    inList: !!m.parent,
+                                    // The layer's SOURCE identity. Without it a dump row can be
+                                    // matched back to the scene JSON only by guessing at its
+                                    // screen box, which does not survive the camera transform —
+                                    // and attributing an error to the wrong layer wastes a round.
+                                    tex: r.__texIndex,
+                                    src: r.__srcIndex,
                                 });
                             });
                         };
@@ -2291,6 +2353,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const handoffPanDelta: [number, number] | null = ef?.lastLiveCenter ? [ef.lastLiveCenter[0] - ef.startCenter[0], ef.lastLiveCenter[1] - ef.startCenter[1]] : null;
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
+                    entranceSeqRef.current = null;
                     // The fade is at (or near) full here — hold it briefly so the swap happens
                     // UNDER it, then lift, which is what the recordings show.
                     if (entranceFadeRef.current) entranceFadeRef.current.out = 0;
@@ -2348,6 +2411,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         layoutSpine(built.root, width, height, tight, fitRef.current);
                         const sl = built.sceneLayers ?? [];
                         for (const c of sl) c.alpha = 1;
+                        // Sequence this entrance's layers regardless of whether it also has a
+                        // camera track (see `entranceSeqRef`).
+                        entranceSeqRef.current = { spine: built.spine, sceneLayers: sl };
                         // Drive the entrance camera PURELY from gamedata: the exporter-accumulated camera
                         // rig track (`entranceCamCenterCurve`, absolute mesh-px frame centre) for the
                         // pan/dolly, and the `_adjustes[1]` view extent (`entranceFrameSize`) × the ortho

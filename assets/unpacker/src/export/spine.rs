@@ -132,6 +132,14 @@ pub struct SceneRam {
     pub disturb_pid: Option<i64>,
     pub disturb_val: Option<Value>,
     pub disturb_st: [f64; 4],
+    /// SECOND dissolve map. The `Dissolve/` family multiplies TWO masks
+    /// (`_DissolveTex_01` × `_DissolveTex_02`), each with its own threshold and border;
+    /// `Ram/` and `Disturb/` carry only the first. None = single-map material.
+    pub dissolve2_pid: Option<i64>,
+    pub dissolve2_val: Option<Value>,
+    pub dissolve2_st: [f64; 4],
+    pub amount2: f32,
+    pub border_width2: f32,
     /// `_Amount` — the dissolve threshold; `_BorderWidth` — its edge softness.
     pub amount: f32,
     pub border_width: f32,
@@ -585,9 +593,39 @@ pub fn collect_spine_assets(
         // Only the full-body illustration owns the background scene; the
         // co-packed portrait crop (`dyn_portrait_*`) shares the prefab but has
         // no background of its own, so it must not inherit the illust's.
-        let (scene, skel_scale, particles) = if category == SpineCategory::DynIllust
-            && base_name.to_lowercase().starts_with("dyn_illust_")
-        {
+        // Whether this skeleton is the ENTRANCE one has always been read off the FILENAME
+        // (`…_Start`). That is a naming convention, not a guarantee, and exactly one skin
+        // breaks it: Kalt'sits "boc#6" ships TWO DISTINCT SkeletonData objects (different
+        // atlases, different skeletonJSON) BOTH named `dyn_illust_char_003_kalts_boc#6`. So
+        // neither pass is recognised as the entrance — her 44 `Start Only Effects` are gated
+        // out as if she were idle-only — and both passes write the SAME filenames, the second
+        // silently overwriting the first. No `_Start` asset set exists, and the viewer only
+        // plays an entrance when it finds one, so her cinematic cannot play at all.
+        //
+        // Derive it from the prefab ROOT instead, which is the structural fact rather than a
+        // convention, and keep the filename test as the fallback. Corpus-wide this changes
+        // exactly the one skin: every other entrance skeleton is already `_Start`-named, so
+        // `root_is_entrance` and the filename test agree and nothing moves.
+        let is_dyn_illust =
+            category == SpineCategory::DynIllust && base_name.to_lowercase().starts_with("dyn_illust_");
+        let root_is_entrance = is_dyn_illust && {
+            let h = BgParticleHost::new(all_objects);
+            mecanim_val
+                .get("m_GameObject")
+                .and_then(get_path_id)
+                .and_then(|go| h.prefab_root_of_go(all_objects, go))
+                .is_some_and(|r| h.go_name(all_objects, r).to_lowercase().starts_with("dyn_entrance_"))
+        };
+        // The name the asset set is written under. An entrance-root skeleton that is not
+        // already `_Start`-named must not collide with its idle twin.
+        let export_name: String = if root_is_entrance && !base_name.to_lowercase().contains("_start") {
+            format!("{base_name}_Start")
+        } else {
+            base_name.to_string()
+        };
+        let is_entrance_set = export_name.to_lowercase().contains("_start");
+
+        let (scene, skel_scale, particles) = if is_dyn_illust {
             let skel_scale = all_objects
                 .get(&skel_data_pid)
                 .and_then(|(_, v)| v.get("scale"))
@@ -596,7 +634,7 @@ pub fn collect_spine_assets(
             // The per-layer ENTRANCE reveal timeline (`m_IsActive`) applies ONLY to the
             // `_Start` cinematic scene; the MAIN scene's idle/interact/special clips also
             // toggle effects, but those layers are idle-visible, not entrance-sequenced.
-            let is_entrance = base_name.to_lowercase().contains("_start");
+            let is_entrance = is_entrance_set;
             // Particle systems share the prefab's scene graph. Parse them into the
             // reduced `[particles]` schema; the character sort is the same key the
             // frontend uses to composite particles among the scene layers.
@@ -727,7 +765,7 @@ pub fn collect_spine_assets(
             bg_entrance_voice,
             bg_entrance_pan_curve,
             bg_entrance_cam_center,
-        ) = if category == SpineCategory::DynIllust && base_name.to_lowercase().contains("_start") {
+        ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
             // Entrance camera ortho size (world units) → authored-px full view (2·ortho·invScale),
@@ -755,7 +793,7 @@ pub fn collect_spine_assets(
         };
 
         assets.push(SpineAsset {
-            name: base_name.to_string(),
+            name: export_name,
             skel_data: chain.skel_bytes,
             atlas_text: chain.atlas_text,
             textures: chain.textures,
@@ -1373,9 +1411,30 @@ fn collect_dynchar_bg_quads(
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
                 if shader.contains("Ram/") || is_l2d_compositor(shader) {
-                    let (mut diss_pid, mut diss_val, diss_st) =
-                        super::particles::mat_texenv(all_objects, mat, "_DissolveTex");
-                    let toggle_default = if shader.contains("Ram/") { 1.0 } else { 0.0 };
+                    // TWO-MAP NAMES FIRST. The `Dissolve/Dissolve` family reads
+                    // `_DissolveTex_01`/`_02` with `_Amount_01/_02` and `_BorderWidth_01/_02`;
+                    // its single-name `_Amount`/`_BorderWidth`/`_DissolveTex` properties are
+                    // INERT RESIDUE from the Standard shader the asset was authored against.
+                    // Reading the residue picked up meaningless thresholds and resolved NO map,
+                    // so no `ram` block was emitted at all and the layer drew as its full
+                    // bounding rectangle instead of the carved silhouette — 44 exported scene
+                    // layers across the corpus. Prefer the `_01`/`_02` pair wherever it resolves
+                    // and fall back to the single names, so `Ram/` and `Disturb/` are untouched.
+                    let t01 = super::particles::mat_texenv(all_objects, mat, "_DissolveTex_01");
+                    let two_map = t01.0.is_some();
+                    let (mut diss_pid, mut diss_val, diss_st) = if two_map {
+                        t01
+                    } else {
+                        super::particles::mat_texenv(all_objects, mat, "_DissolveTex")
+                    };
+                    let (diss2_pid, diss2_val, diss2_st) = if two_map {
+                        super::particles::mat_texenv(all_objects, mat, "_DissolveTex_02")
+                    } else {
+                        (None, None, [1.0, 1.0, 0.0, 0.0])
+                    };
+                    // A two-map material states its intent by BINDING the maps; it carries no
+                    // `_ToggleUseDissolve` at all, so the switch must not veto it.
+                    let toggle_default = if shader.contains("Ram/") || two_map { 1.0 } else { 0.0 };
                     if blend("_ToggleUseDissolve", toggle_default) < 0.5 {
                         diss_pid = None;
                         diss_val = None;
@@ -1402,6 +1461,26 @@ fn collect_dynchar_bg_quads(
                     } else {
                         has(diss_pid, &diss_val)
                     };
+                    // DIAGNOSTIC (SCENE_DEBUG=1): a `Dissolve/` material's mask lives under the
+                    // TWO-MAP names (`_DissolveTex_01/_02`, `_Amount_01/_02`,
+                    // `_BorderWidth_01/_02`); the single-name properties this code reads are
+                    // inert residue on that family, so no `ram` block is emitted and the layer
+                    // draws as its full bounding rectangle instead of the carved silhouette.
+                    // Print the layers that actually REACH the export with a live two-map
+                    // dissolve — the corpus scan counts materials, and most materials never
+                    // reach a kept layer.
+                    if !admit && std::env::var("SCENE_DEBUG").is_ok() {
+                        let f01 = blend("_Amount_01", -1.0);
+                        let t01 = super::particles::mat_texenv(all_objects, mat, "_DissolveTex_01");
+                        if f01 > 0.0 && t01.0.is_some() {
+                            eprintln!(
+                                "  TWOMAP-LOST '{}' amount_01={f01:.3} bw_01={:.3} amount_02={:.3}",
+                                mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                                blend("_BorderWidth_01", -1.0),
+                                blend("_Amount_02", -1.0)
+                            );
+                        }
+                    }
                     if admit {
                         Some(SceneRam {
                             dissolve_pid: diss_pid,
@@ -1410,8 +1489,13 @@ fn collect_dynchar_bg_quads(
                             disturb_pid: dist_pid,
                             disturb_val: dist_val,
                             disturb_st: dist_st,
-                            amount: blend("_Amount", 0.5) as f32,
-                            border_width: blend("_BorderWidth", 0.1) as f32,
+                            dissolve2_pid: diss2_pid,
+                            dissolve2_val: diss2_val,
+                            dissolve2_st: diss2_st,
+                            amount2: if two_map { blend("_Amount_02", 0.0) as f32 } else { 0.0 },
+                            border_width2: if two_map { blend("_BorderWidth_02", 0.1) as f32 } else { 0.1 },
+                            amount: if two_map { blend("_Amount_01", 0.5) } else { blend("_Amount", 0.5) } as f32,
+                            border_width: if two_map { blend("_BorderWidth_01", 0.1) } else { blend("_BorderWidth", 0.1) } as f32,
                             intensity_u: blend("_IntensityU", 0.0) as f32,
                             intensity_v: blend("_IntensityV", 0.0) as f32,
                             disturb_influence_dissolve_uv: blend("_DisturbInfluenceDissolveUV", 0.0)
@@ -2505,6 +2589,35 @@ impl BgParticleHost {
     /// emitters start OFF and are toggled on mid-cinematic (Virtuosa ~4.8–9.8s); without
     /// this their `_delayTime` is 0 so they'd wrongly emit from t=0 (during the seated
     /// intro) and be spent before the apple falls. `None` when no ancestor is toggled.
+    /// The FULL `m_IsActive` window `(from, until)` of the nearest gated ancestor — the
+    /// counterpart of {@link entrance_reveal_of_go}, which returns only the reveal. Diagnostic
+    /// for the "particles never switch off" gap.
+    pub(crate) fn entrance_window_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+        windows: &HashMap<i64, super::anim::ActiveWindow>,
+    ) -> Option<(Option<f32>, Option<f32>)> {
+        let mut cur_go = Some(go_pid);
+        for _ in 0..256 {
+            let g = cur_go?;
+            if let Some(&w) = windows.get(&g) {
+                return Some(w);
+            }
+            let tf = self.go_to_transform.get(&g)?;
+            let father = all_objects
+                .get(tf)
+                .and_then(|(_, v)| v.get("m_Father"))
+                .and_then(get_path_id)
+                .filter(|&p| p != 0)?;
+            cur_go = all_objects
+                .get(&father)
+                .and_then(|(_, v)| v.get("m_GameObject"))
+                .and_then(get_path_id);
+        }
+        None
+    }
+
     pub(crate) fn entrance_reveal_of_go(
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
@@ -3594,10 +3707,23 @@ fn export_scene(
                 &mut next_idx,
                 &mut saved,
             );
-            if diss.is_some() || dist.is_some() {
+            let diss2 = resolve_scene_mask(
+                r.dissolve2_pid,
+                r.dissolve2_val.as_ref(),
+                resources,
+                &tex_dir,
+                &mut tex_index,
+                &mut next_idx,
+                &mut saved,
+            );
+            if diss.is_some() || diss2.is_some() || dist.is_some() {
                 layer["ram"] = serde_json::json!({
                     "dissolveTex": diss,
                     "dissolveST": r.dissolve_st,
+                    "dissolveTex2": diss2,
+                    "dissolveST2": r.dissolve2_st,
+                    "amount2": r.amount2,
+                    "borderWidth2": r.border_width2,
                     "disturbTex": dist,
                     "disturbST": r.disturb_st,
                     "amount": r.amount,
@@ -3662,14 +3788,53 @@ fn export_scene(
     // static everywhere in the scene is untouched. Corpus-wide this removes 8 layers
     // across 4 of the 12 entrance skins.
     if asset.name.to_ascii_lowercase().contains("_start") {
-        let driven: std::collections::HashSet<(i64, i64)> = layers
+        // The key must include GEOMETRY. Keyed on (tex, sort) alone this drops any static
+        // quad that merely SHARES an atlas and a depth with an animated one — which is the
+        // common case, not the rare one: Mlynar "Fields of Ruination" has five distinct
+        // layers at tex 6 / sort 1, and the rule discarded a 1039x1039 panel at
+        // (-933, 44) because four unrelated quads elsewhere in the frame carry a colour
+        // curve. A true undriven TWIN is the same artwork in the same place, so requiring
+        // the bounds to match keeps every real twin (both of Mlynar's other two drops match
+        // their driven copy to well under a pixel) while sparing distinct art. The duplicate
+        // rule above already keys on full geometry; this one simply never did.
+        let bbox_key = |l: &serde_json::Value| -> Option<(i64, i64, i64, i64)> {
+            let p = l.get("pos")?.as_array()?;
+            let xs = p.iter().step_by(2).filter_map(serde_json::Value::as_f64);
+            let ys = p.iter().skip(1).step_by(2).filter_map(serde_json::Value::as_f64);
+            let (mut x0, mut x1) = (f64::INFINITY, f64::NEG_INFINITY);
+            let (mut y0, mut y1) = (f64::INFINITY, f64::NEG_INFINITY);
+            for x in xs {
+                x0 = x0.min(x);
+                x1 = x1.max(x);
+            }
+            for y in ys {
+                y0 = y0.min(y);
+                y1 = y1.max(y);
+            }
+            x0.is_finite().then(|| {
+                (
+                    x0.round() as i64,
+                    y0.round() as i64,
+                    x1.round() as i64,
+                    y1.round() as i64,
+                )
+            })
+        };
+        type SibKey = (i64, i64, (i64, i64, i64, i64));
+        let driven: std::collections::HashSet<SibKey> = layers
             .iter()
             .filter(|l| {
                 l.get("colorCurve").is_some()
                     || l.get("activeFrom").is_some()
                     || l.get("activeUntil").is_some()
             })
-            .filter_map(|l| Some((l.get("tex")?.as_i64()?, l.get("sort")?.as_i64()?)))
+            .filter_map(|l| {
+                Some((
+                    l.get("tex")?.as_i64()?,
+                    l.get("sort")?.as_i64()?,
+                    bbox_key(l)?,
+                ))
+            })
             .collect();
         layers.retain(|l| {
             if l.get("colorCurve").is_some()
@@ -3678,13 +3843,26 @@ fn export_scene(
             {
                 return true;
             }
-            let key = l
-                .get("tex")
-                .and_then(serde_json::Value::as_i64)
-                .zip(l.get("sort").and_then(serde_json::Value::as_i64));
+            let key = (|| {
+                Some((
+                    l.get("tex")?.as_i64()?,
+                    l.get("sort")?.as_i64()?,
+                    bbox_key(l)?,
+                ))
+            })();
             let keep = !key.is_some_and(|k| driven.contains(&k));
             if !keep && dbg {
-                eprintln!("  DROP[undriven-sibling] tex={:?}", key);
+                // Print the GEOMETRY too: the key is only (tex, sort), so this drop cannot
+                // tell a genuine undriven twin from a DIFFERENT quad that merely shares an
+                // atlas and a depth. The bbox is what distinguishes them.
+                let bb = l.get("pos").and_then(serde_json::Value::as_array).map(|p| {
+                    let xs: Vec<f64> = p.iter().step_by(2).filter_map(serde_json::Value::as_f64).collect();
+                    let ys: Vec<f64> = p.iter().skip(1).step_by(2).filter_map(serde_json::Value::as_f64).collect();
+                    let mn = |v: &Vec<f64>| v.iter().cloned().fold(f64::INFINITY, f64::min);
+                    let mx = |v: &Vec<f64>| v.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+                    (mn(&xs), mn(&ys), mx(&xs), mx(&ys))
+                });
+                eprintln!("  DROP[undriven-sibling] tex/sort={key:?} bbox={bb:?}");
             }
             keep
         });

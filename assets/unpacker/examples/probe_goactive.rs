@@ -84,7 +84,12 @@ fn main() {
                 chain.push(format!("{}[active={}]", name(pg), active(pg)));
                 cur = Some(pt);
             }
-            println!("GO '{n}' (pathID {p})  m_IsActive={}", active(*p));
+            println!(
+                "GO '{n}' (pathID {p})  m_IsActive={}  m_Layer={:?}  m_Tag={:?}",
+                active(*p),
+                v.get("m_Layer"),
+                v.get("m_Tag")
+            );
             println!("   ancestors: {}", chain.join(" < "));
         }
     }

@@ -435,64 +435,127 @@ const PREWARM_STEP = 1 / 30;
 /** Hard cap on pre-roll steps, so a pathological `duration` cannot stall the load. */
 const PREWARM_MAX_STEPS = 300;
 
-/** Honour Unity's `simulationSpeed` / `prewarm`? **DISABLED — MEASURED AND REJECTED.**
+/** Honour Unity's `simulationSpeed` / `prewarm`? **Still OFF by default, but the reasoning
+ *  below was wrong and the implementation was broken. Both are now fixed.**
  *
- *  The gap is real and large: `simulationSpeed` scales a system's whole clock and `prewarm`
- *  opens a looping system in steady state, and NEITHER was ever read. Corpus census
- *  (`probe_simspeed`, 13069 systems / 83 bundles): **1700 systems below 1x, 403 above, 3057
- *  prewarmed** (963 both), touching **80 of 83 skins**. So a system authored at 0.3x was
- *  running 3.3x too fast, and this is the one mechanism that can set a particle system's
- *  emission PHASE from the data rather than from an unknowable runtime start.
+ *  Corpus census (`probe_simspeed`, 13069 systems / 83 bundles): **1700 systems below 1x, 403
+ *  above, 3057 prewarmed** (963 both), touching **80 of 83 skins**.
  *
- *  Implemented faithfully (clock scaling below; a one-shot pre-roll of `duration` in system
- *  time that restores the playback clock, since Unity's prewarm populates particles without
- *  advancing time). Measured over the three references:
+ *  ## RETRACTED: "both fields are inert in the client"
  *
- *      variant            mly       cel       ska       sum
- *      baseline (off)   17.721    19.422    10.505    47.648
- *      simSpeed only    17.722    19.486    10.479    47.687
- *      prewarm only     17.701    19.681    10.496    47.878
- *      BOTH             17.718    19.629    10.475    47.822
+ *  The old note here concluded that an L2D player driving emitters from a director clock
+ *  (`Simulate(dt)` rather than `Play()`) triggers neither field, so our model was "correct on
+ *  every count". **The client binary says otherwise.** The IL2CPP dump has TWO particle paths:
  *
- *  Mlynar and Skadi both improve slightly; Virtuosa regresses, and ALL of it is one beat —
- *  her t=10 goes 24.94 -> 26.67 while every other beat of hers improves or is neutral. Split
- *  by direction at that beat (control 24.869): `simSpeed > 1` only 24.863 (neutral),
- *  `simSpeed < 1` only 26.188. **Slowing systems down is what costs her**, and it is not one
- *  rogue system — removing the diamonds (sys55) or the three delayed prewarm systems each
- *  leaves the regression essentially intact (+1.72 of +1.76).
+ *    - `Torappu.UI.UIParticleRenderer::_Simulate` steps systems by hand with
+ *      `Simulate(dt, withChildren: false, restart: false, fixedTimeStep: false)` — but its
+ *      callers are all UI SCREENS (item select, missions, activity plugins), not dynchars.
+ *    - Dynchar effects come from `DynIllustEffectHolder::_LoadEffect`, which just instantiates
+ *      a prefab and parents it. There is NO `ParticleSystem.Play` call anywhere in the dynchar
+ *      code because the systems author `playOnAwake`, and the scene is rendered by a camera
+ *      into a RenderTexture. They run on Unity's NATIVE simulation, which reads both fields
+ *      from the serialized data in C++ — never through the C# property. (A caller census
+ *      showing `get_prewarm`/`get_simulationSpeed` with zero non-XLua callers therefore proves
+ *      nothing: that is exactly what a natively-consumed field looks like.)
  *
- *  NOT gated on the start delay, though three of her prewarmed systems carry one: the raw
- *  `startDelay` is **0.000 on every prewarmed system in the bundle**, so that delay is
- *  director/`m_IsActive` gating, not the system's own — Unity's "prewarm needs no start
- *  delay" rule does not apply, and gating on it would be metric-driven tuning.
+ *  So the engine DOES apply both to dynchar systems, and the earlier measured regression was
+ *  our bug, not Unity's semantics.
  *
- *  **BOTH FIELDS ARE INERT IN THE CLIENT — established, not assumed.**
+ *  ## The two bugs that were fixed
  *
- *  `prewarm`: Virtuosa's `rainbow_large_01` is the only system in her skin whose phase can
- *  tell "prewarmed" from "long-running" (a 1.0 s offset; every other prewarmed system there
- *  shifts by 0.000). All four models of when it starts x whether it prewarms, at her t=10:
+ *  1. **Clock contamination.** `this.time` is the SYSTEM clock (scaled by `speed`), yet it was
+ *     also fed to `driftWithBone`/`sampleColorCurve` as "absolute seconds since `_Start`" for
+ *     the DIRECTOR's curves. At `simSpeed = 0.3` those cinematic curves ran 3.3x slow. Split
+ *     out as {@link Emitter.cineTime} — real timeline, never scaled, never advanced by the
+ *     pre-roll.
+ *  2. **Truncated pre-roll.** The roll was `ceil(duration / PREWARM_STEP)` steps capped at
+ *     `PREWARM_MAX_STEPS`, so any `duration` over 10 s silently stopped short of steady state —
+ *     the exact failure prewarm exists to prevent. The step now adapts so the cap can never
+ *     truncate, and the last step is partial so the roll lands exactly on `duration`.
  *
- *      starts at 0,  NO prewarm (shipped)  24.87   <- BEST by ~1.6
- *      starts at 0,  prewarmed             26.54
- *      starts at the transition, no pre.   26.44
- *      starts at the transition, prewarmed 26.47
- *      (deleting the system outright       26.39)
+ *  ## Verified: steady state is now actually reached
  *
- *  `simulationSpeed`: her diamond system is authored at 0.3, so at t=10 its clock reads 3.0 s
- *  against a 5 s lifetime — it never reaches steady state. Applied, its rings collapse from
- *  **507x365 px to a 49x45 speck** (38390 painted px -> 283) where the game plainly draws them
- *  full size; MAD inside that footprint goes 51.9 -> 62.6.
+ *  `quad_p` (Virtuosa's diamond rings, `simSpeed` 0.3, prewarmed, lifetime 5 s) drawn alone at
+ *  t=12, isolated against the particle-free plate:
  *
- *  Both point the same way, and one mechanism explains both: Unity applies `simulationSpeed`
- *  and `prewarm` when a system PLAYS, and an L2D player that drives its emitters from a
- *  director clock (`Simulate(dt)` rather than `Play()`) triggers neither. Our shipped emission
- *  model — global phase from t=0, accumulator carried across loop wraps, no prewarm, no speed
- *  scaling — is therefore correct on every count.
+ *      flags OFF (shipped)          17697 px   extent 466x235
+ *      simSpeed ONLY                  942 px   extent 116x 89   <- collapsed, the old failure
+ *      simSpeed + prewarm (fixed)   20084 px   extent 494x241   <- full size
  *
- *  The exporter still emits the fields (data is strictly better held than dropped). Re-enable
- *  with `?simspeed=1` / `?prewarm=1`, but note the corpus needs a re-extract first — only the
- *  three reference skins carry them today. **Do not re-open from the Unity-semantics argument;
- *  the next evidence has to come from the client binary.** */
+ *  Note `simSpeed` alone still collapses it, and SHOULD: a non-prewarmed system at 0.3x has
+ *  genuinely not filled by t=12. The pair is what has to be judged, and the pair is correct.
+ *  Measured against the game's own ring edges (same centre, metric and box), the fix also spans
+ *  the right radial range for the first time — GAME->ours 7.3 -> **5.7 px**, span 43-143 ->
+ *  47-175 against the game's 45-171. The shipped build misses the outermost ring entirely.
+ *
+ *  ## Why it is still OFF by default
+ *
+ *      variant          mly       cel       ska       sum
+ *      baseline (off) 17.525    19.270    10.530    47.325
+ *      BOTH (fixed)   17.522    19.460    10.502    47.484
+ *
+ *  Mlynar and Skadi improve; Virtuosa regresses, and **all of it is one beat** — t=10 costs
+ *  +1.704 while her other six beats improve or are neutral (t=12 -0.168, t=14 -0.163,
+ *  t=17 -0.060). t=10 is the diamond-ring beat, and what differs there is the emission PHASE,
+ *  which is UNMATCHABLE by construction: a dynchar system starts on `playOnAwake` when its
+ *  prefab finishes loading, then advances on real frame deltas, so its phase is set by runtime
+ *  asset-load timing — not serialised, and not reproducible between two runs of the game.
+ *  Turning these on trades one arbitrary phase for another, so the net MADC is measuring noise
+ *  in a degree of freedom we cannot win.
+ *
+ *  ## THE CORPUS RENDER — run, and it settles the default
+ *
+ *  **77 of the 82 deployed skins carry these fields** (1171 systems with `simSpeed`, 2572
+ *  prewarmed, of 4560). Every affected skin rendered twice, shipped vs candidate, at
+ *  t = 2/6/10/14 — 154 renders, 616 frames. No game reference exists for 74 of them, so this is
+ *  not a parity score; it asks whether the change DESTROYS or BLOWS OUT any skin.
+ *
+ *  **75 of 77 are neutral** (60+ move < 0.2 luma; the rest are background/fog layers at a
+ *  different phase, no saturation, no content loss). **One is destroyed:**
+ *  `char_4080_lin_nian#10` at t=6 goes 139.62 -> 154.85 frame mean with the saturated fraction
+ *  DOUBLING, 0.145 -> 0.284, over half the frame — her snow globe blows to a white blob and the
+ *  character inside disappears.
+ *
+ *  `psonly` attribution puts it almost entirely in her **sys0**, which is `maxParticles: 1`:
+ *  ONE additive Ram-dissolve mesh at `startSize` 1938 px covering half the frame, rate 1/s,
+ *  lifetime = duration = 1 s. With a single continuously-replaced particle the render IS that
+ *  particle's age — `fmod(6, 1) = 0.0` at speed 1, versus `(1.0 prewarm + 0.3*6) = 2.8 -> 0.8`
+ *  at speed 0.3. Same dissolve ring, different point in its cycle. **So it is the unmatchable
+ *  emission phase again, not a simulation error** — a `maxParticles: 1` system has no steady
+ *  state to average into, so "steady-state neutral" says nothing about it. It is still not safe
+ *  to ship: the frame genuinely hides the character and no capture exists to say which phase is
+ *  right.
+ *
+ *  ## A prewarm GATE was built, swept, and REVERTED — do not re-derive it
+ *
+ *  Gating `simSpeed` on `prewarmOf` (honour the speed only where the system reaches steady
+ *  state) is the obvious response, and it is wrong. Built it, re-ran the full 77-skin sweep:
+ *
+ *      char_4080_lin_nian#10   ungated +15.23 (dSat +0.1388)   gated +15.23 (dSat +0.1387)
+ *      flagged skins           ungated 2                       gated 2
+ *      mean |dMean|            ungated 0.605                   gated 0.632   (WORSE)
+ *      improved 11 skins, worsened 7, left 59 byte-unchanged
+ *
+ *  The destructive skin does not move, because 14 of lin's 15 `simSpeed` systems ALREADY
+ *  prewarm — the gate excludes exactly one. Its only wins were narrow (`mlynar_epoque#28`
+ *  +1.89 -> +0.08; benchmark sum 47.463 vs 47.484) and did not pay for coupling the two flags
+ *  behind a non-obvious rule, so it was reverted.
+ *
+ *  **No gate on the data can fix this case**: the failing system is `maxParticles: 1`, so its
+ *  appearance is purely its single particle's AGE. There is no steady state to reach, which is
+ *  exactly why the steady-state argument the gate rests on does not apply — and the phase is
+ *  not in the data at all.
+ *
+ *  ## Verdict: both stay OFF
+ *
+ *      variant          mly       cel       ska       sum
+ *      baseline (off) 17.525    19.270    10.530    47.325
+ *      BOTH           17.522    19.460    10.502    47.484
+ *      (gated variant 17.514    19.436    10.513    47.463 — reverted, see above)
+ *
+ *  Mlynar and Skadi improve; Virtuosa regresses, all of it at t=10, the diamond-ring beat whose
+ *  residual is the same unmatchable phase. Enabling these trades one arbitrary phase for another
+ *  and destroys one skin outright. `?simspeed=1` / `?prewarm=1`, independently, to re-test. */
 const SIM_SPEED_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("simspeed") === "1";
 function simSpeedOf(d: IParticleSystemData): number {
     if (!SIM_SPEED_ON) return 1;
@@ -1090,6 +1153,10 @@ class Emitter {
     readonly pool: IParticle[] = [];
     private readonly free: IParticle[] = [];
     private time = 0;
+    /** Absolute seconds since the `_Start` began, on the REAL timeline — never scaled by
+     *  `simulationSpeed` and never advanced by the prewarm pre-roll. Drives the DIRECTOR's
+     *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
+    private cineTime = 0;
     private emitAcc = 0;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
@@ -1152,6 +1219,7 @@ class Emitter {
         // `?psdt=<s>` shifts ONLY this clock (see psDt) — the camera and spine keep their own,
         // which is what makes it a phase measurement rather than a retime of the whole shot.
         this.time = -(data.delay ?? 0) + psDt();
+        this.cineTime = psDt();
         // Crop to the material's `_MainTex_ST` cell first, so both the whole-sprite
         // path and the sheet-slicing below operate on the selected atlas region
         // (systems that use ST-cropping carry no Texture Sheet, so the two don't mix).
@@ -1475,6 +1543,10 @@ class Emitter {
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
+        // CINEMATIC CLOCK — absolute seconds since the `_Start` began, on the REAL timeline.
+        // Advanced before any early-out so it keeps running through the start delay, and NEVER
+        // scaled by `simulationSpeed`. See the clock split documented on {@link simSpeedOf}.
+        this.cineTime += dt;
         // MAIN-MODULE CLOCK (`simulationSpeed` + `prewarm`).
         //
         // `simulationSpeed` scales the system's OWN clock, so everything keyed on it — the
@@ -1501,21 +1573,29 @@ class Emitter {
         // have, while the particle ages become the steady-state spread instead of empty.
         if (!this.prewarmed && prewarmOf(d)) {
             this.prewarmed = true;
-            // Pre-roll in SYSTEM time: the recursive call re-applies `speed`, so hand it a
-            // real-time step that scales back to PREWARM_STEP of system time.
-            const steps = Math.min(PREWARM_MAX_STEPS, Math.ceil(d.duration / PREWARM_STEP));
-            const realStep = PREWARM_STEP / speed;
+            // Pre-roll EXACTLY one `duration` of SYSTEM time. The step adapts so the
+            // PREWARM_MAX_STEPS cap can never truncate the roll (a truncated roll leaves the
+            // system short of steady state, which is precisely the error this is here to avoid),
+            // and the final step is partial so the total lands on `duration` rather than on the
+            // next whole multiple of the step.
+            const step = Math.max(PREWARM_STEP, d.duration / PREWARM_MAX_STEPS);
+            // The recursive call re-applies `speed`, so hand it real-time steps that scale back
+            // to `step` of system time.
+            const clock = this.time;
             // Unity's prewarm populates particles WITHOUT advancing playback time — the system
-            // still reports t=0 when the cinematic starts. Restore the clock afterwards, or
+            // still reports t=0 when the cinematic starts. Restore BOTH clocks afterwards, or
             // every curve keyed on absolute cinematic seconds (the `scaleCurve` fed through
             // `driftWithBone`) runs a whole `duration` late.
-            const clock = this.time;
-            for (let i = 0; i < steps; i++) this.update(realStep, findBone, restBone, displayBox, restAtt);
+            const cine = this.cineTime;
+            for (let rolled = 0; rolled < d.duration; rolled += step) {
+                this.update(Math.min(step, d.duration - rolled) / speed, findBone, restBone, displayBox, restAtt);
+            }
             this.time = clock;
+            this.cineTime = cine;
         }
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.cineTime, restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.pool);
 
@@ -1845,6 +1925,15 @@ function combineAdditiveGains(pile: number, temper: boolean): number {
  *  `sizeOverLife(age/5)`. Their PHASE is therefore `(t - t0) mod 0.5` — and a phase error cannot
  *  be measured by re-rendering at a different time, because at t=10 cello pans at 435 px/s and
  *  the whole frame moves with it. This moves the rings alone. Inert (0) by default. */
+/** DIAGNOSTIC (`?umgain=<f>`): override the UNTEXTURED-mesh gain (default 2 — the `col += col`
+ *  half-neutral convention). Sweeping it tests whether that ×2 still holds on the current
+ *  baseline; it was calibrated on one that scored 35.x. */
+function untexMeshGain(): number {
+    if (typeof window === "undefined") return 2;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("umgain") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 2;
+}
+
 function psDt(): number {
     if (typeof window === "undefined") return 0;
     const v = parseFloat(new URLSearchParams(window.location.search).get("psdt") ?? "");
@@ -2340,6 +2429,10 @@ class RamEmitter {
     private readonly particles: IRamParticle[] = [];
     private readonly cap: number;
     private time = 0;
+    /** Absolute seconds since the `_Start` began, on the REAL timeline — never scaled by
+     *  `simulationSpeed` and never advanced by the prewarm pre-roll. Drives the DIRECTOR's
+     *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
+    private cineTime = 0;
     private emitAcc = 0;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
@@ -2387,6 +2480,7 @@ class RamEmitter {
         this.data = data;
         // Start dormant through the cinematic delay (see the billboard system's ctor).
         this.time = -(data.delay ?? 0) + psDt();
+        this.cineTime = psDt();
         this.ram = ram;
         this.follow = followOf(data);
         this.rodRate = data.rateOverDistance ? sampleScalar(data.rateOverDistance, 0.5, 0) : 0;
@@ -2589,6 +2683,10 @@ class RamEmitter {
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
         const d = this.data;
         this.displayBox = displayBox ?? null;
+        // CINEMATIC CLOCK — absolute seconds since the `_Start` began, on the REAL timeline.
+        // Advanced before any early-out so it keeps running through the start delay, and NEVER
+        // scaled by `simulationSpeed`. See the clock split documented on {@link simSpeedOf}.
+        this.cineTime += dt;
         // MAIN-MODULE CLOCK (`simulationSpeed` + `prewarm`).
         //
         // `simulationSpeed` scales the system's OWN clock, so everything keyed on it — the
@@ -2615,21 +2713,29 @@ class RamEmitter {
         // have, while the particle ages become the steady-state spread instead of empty.
         if (!this.prewarmed && prewarmOf(d)) {
             this.prewarmed = true;
-            // Pre-roll in SYSTEM time: the recursive call re-applies `speed`, so hand it a
-            // real-time step that scales back to PREWARM_STEP of system time.
-            const steps = Math.min(PREWARM_MAX_STEPS, Math.ceil(d.duration / PREWARM_STEP));
-            const realStep = PREWARM_STEP / speed;
+            // Pre-roll EXACTLY one `duration` of SYSTEM time. The step adapts so the
+            // PREWARM_MAX_STEPS cap can never truncate the roll (a truncated roll leaves the
+            // system short of steady state, which is precisely the error this is here to avoid),
+            // and the final step is partial so the total lands on `duration` rather than on the
+            // next whole multiple of the step.
+            const step = Math.max(PREWARM_STEP, d.duration / PREWARM_MAX_STEPS);
+            // The recursive call re-applies `speed`, so hand it real-time steps that scale back
+            // to `step` of system time.
+            const clock = this.time;
             // Unity's prewarm populates particles WITHOUT advancing playback time — the system
-            // still reports t=0 when the cinematic starts. Restore the clock afterwards, or
+            // still reports t=0 when the cinematic starts. Restore BOTH clocks afterwards, or
             // every curve keyed on absolute cinematic seconds (the `scaleCurve` fed through
             // `driftWithBone`) runs a whole `duration` late.
-            const clock = this.time;
-            for (let i = 0; i < steps; i++) this.update(realStep, findBone, restBone, displayBox, restAtt);
+            const cine = this.cineTime;
+            for (let rolled = 0; rolled < d.duration; rolled += step) {
+                this.update(Math.min(step, d.duration - rolled) / speed, findBone, restBone, displayBox, restAtt);
+            }
             this.time = clock;
+            this.cineTime = cine;
         }
         // Cinematic time for the scale-in curves: the emitter clock counts up from
         // `-delay`, so `this.time + delay` is absolute seconds since the `_Start` began.
-        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.time + (d.delay ?? 0), restAtt);
+        driftWithBone(this.container, d.boneChain, d.pos, d.simulationSpace, findBone, this.boneAnchor, restBone, this.follow, d.scaleCurve ? d : undefined, this.cineTime, restAtt);
         // World-space systems leave their particles behind as the emitter travels on.
         if (d.simulationSpace === "world") holdWorldSpace(this.container, this.worldSpace, this.particles);
 
@@ -2724,7 +2830,7 @@ class RamEmitter {
         // brightens held its static serialized colour for the whole shot.
         const curve = this.ram.mainColorCurve;
         if (curve?.length) {
-            this.shader.uniforms.uMainColor = sampleColorCurve(curve, this.time + (d.delay ?? 0));
+            this.shader.uniforms.uMainColor = sampleColorCurve(curve, this.cineTime);
         }
 
         // Scroll offsets for the three animated UV sets (fract(time * speed)).
@@ -3400,7 +3506,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                 // only here: applying it to the TEXTURED mesh emitters as well measured worse
                 // (Virtuosa t=2 32.19 → 34.75, her `window_bg_01` backdrop panel carries a
                 // 180° emitter angle the game plainly does not draw it with).
-                const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, 2, sys.rot ?? 0);
+                const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, untexMeshGain(), sys.rot ?? 0);
                 emitters.push(emitter);
                 emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
@@ -3437,6 +3543,46 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         const emRate = sys.emission?.rate ? scalarMax(sys.emission.rate) : 0;
         const burstTotal = (sys.emission?.bursts ?? []).reduce((a, b) => a + b.count, 0);
         const isStaticProp = effBlend === "normal" && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && scalarMax(sys.startSize) > 0.4 * (data.cameraSizePx || 1050);
+        // The SECOND spelling of the same "static geometry faked as a particle system" idea,
+        // for a MESH emitter. Where `isStaticProp` above recognises the BURST spelling (rate 0,
+        // one or two bursts, a lifetime spanning the cinematic), this recognises the
+        // CAP-SATURATED one: `maxParticles: 1` with an emission rate that overruns that cap by
+        // orders of magnitude, so the cap — not the rate — governs and exactly one particle is
+        // ever alive; a lifetime spanning the whole emitter cycle, so that particle never dies
+        // within it; and ZERO dynamics of any kind — no start speed, no gravity, no spawn shape,
+        // and no velocity / size / colour / rotation curve, noise or trail. A system authored
+        // that way has no time-varying output at all: it draws one mesh, unchanging, forever.
+        // That is scenery, not an effect.
+        //
+        // Virtuosa "Diversity in Oneness"'s ten `wing_p` rigs are the case that forced this.
+        // They alpha-blend a hot-pink membrane (tex 250,81,140) over her wing blades, which the
+        // game does not draw ANYWHERE in frame — hue-matching the capture at t=12, its pink
+        // pixel count and centroid equal our particles-OFF render (8761 @ (433,73) vs 6784 @
+        // (433,94)), i.e. all of the game's pink is her own artwork, while ours jumps to 22531
+        // @ (492,134). Our render of them is nonetheless FAITHFUL — rasterising the mesh
+        // triangles and weighting by screen area, the authored alpha is 0.156 against the 0.169
+        // we measure off the frame (1.08×) — so the mismatch is not an amplitude bug to fix but
+        // content the game withholds at runtime (see the `_HGExternalCtrl` kill switch in its
+        // shader, which is keyword-selected and never serialised). Everything else was excluded
+        // with measurements: the fragment program (`Torappu/Particles-L2D/AlphaBlend` computes
+        // `tex × (COLOR+COLOR)` with `_TintColor` at the 0.502 half-neutral, alpha included, so
+        // the doubling cancels), renderer `m_Enabled`/`m_RenderMode`, the director's `_effects`
+        // activation, an `m_IsActive` OFF-window (none exists — every window ends `until=None`),
+        // the GameObject layer (entrance-root vs idle-root, not a culling mask), depth demotion
+        // (68 % of the harm is OFF her silhouette) and a placement shift (correlation 0.173 at
+        // zero, best only 0.226). Worth −0.340 MADC, improving every live beat.
+        // BONE-ATTACHED AND IN FRONT OF THE CHARACTER. The zero-dynamics shape above also fits
+        // painted SCENERY faked as a mesh particle, which the game genuinely draws and which the
+        // `isBackdropPanel` carve-out below exists to protect (skipping such a panel leaves the
+        // dark environment backdrop showing through as a flat black rectangle). Two kinds turned
+        // up in the corpus scan: unparented sheets (Wiš'adel's 3522 px `sort: -18`, Siege's
+        // 1920 px `sort: -50` and 1050 px `sort: -71`), excluded by requiring a followed BONE;
+        // and bone-attached scenery (Nian's six `BG_Screen_*` panels at `sort: -133…-73`),
+        // excluded by the same `sort < characterSort ⇒ scenery` line the mesh path already
+        // draws. What remains is rig decoration pinned to the skeleton and drawn OVER the
+        // character — which is what pokes out of a silhouette the game keeps clean.
+        const noDynamics = scalarMax(sys.startSpeed) === 0 && scalarMax(sys.gravity) === 0 && (sys.shape?.type ?? "none") === "none" && !sys.velocityOverLife && !sys.sizeOverLife && !sys.colorOverLife && !sys.noise && !sys.rotOverLifeDegPerSec && !sys.trail && !sys.tint;
+        const isStaticMeshProp = effBlend === "normal" && sys.renderMode === "mesh" && !!sys.followBone && sys.sort >= data.characterSort && sys.looping && sys.maxParticles === 1 && emRate * scalarMax(sys.lifetime) >= 100 && sys.duration > 0 && scalarMax(sys.lifetime) >= sys.duration && noDynamics;
         // Mesh render mode emits particles as arbitrary textured MESHES (whose
         // geometry we don't export), often a single large quad with a non-sprite
         // texture (a galaxy band, a mask, a distortion map). Billboarding those
@@ -3480,7 +3626,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             // wash) exactly like the flow maps the skip targets — sort + burst shape is what
             // separates them.
             const isBackdropPanel = !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && sys.sort < data.characterSort;
-            const meshOK = meshBlend === "additive" || !tex.desatPanel || isBackdropPanel;
+            const meshOK = (meshBlend === "additive" || !tex.desatPanel || isBackdropPanel) && !isStaticMeshProp;
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
                 emitters.push(emitter);

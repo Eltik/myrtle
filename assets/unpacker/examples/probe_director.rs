@@ -98,16 +98,19 @@ fn main() {
                         println!("   effect pathID={ep} (external)");
                         continue;
                     };
+                    // An `_effects` entry may be a COMPONENT (name via its m_GameObject) or
+                    // the GameObject itself (name in m_Name) — Virtuosa's list is the latter.
                     let nm = ev
                         .get("m_GameObject")
                         .and_then(pid)
                         .and_then(|g| go_name.get(&g))
                         .cloned()
+                        .or_else(|| ev.get("m_Name").and_then(Value::as_str).map(str::to_string))
                         .unwrap_or_default();
                     println!(
-                        "   effect '{nm}' _delayTime={:?} keys={:?}",
+                        "   effect '{nm}' pathID={ep} m_IsActive={:?} _delayTime={:?}",
+                        ev.get("m_IsActive"),
                         ev.get("_delayTime"),
-                        ev.as_object().map(|o| o.keys().collect::<Vec<_>>())
                     );
                 }
             }
