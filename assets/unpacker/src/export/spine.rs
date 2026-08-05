@@ -1628,7 +1628,39 @@ fn collect_dynchar_bg_quads(
                     // A two-map material states its intent by BINDING the maps; it carries no
                     // `_ToggleUseDissolve` at all, so the switch must not veto it.
                     let toggle_default = if shader.contains("Ram/") || two_map { 1.0 } else { 0.0 };
-                    if blend("_ToggleUseDissolve", toggle_default) < 0.5 {
+                    // `DYNCHAR_DISSOLVE_GATE=1`: honour `_ToggleUseDissolve` only on the shaders
+                    // that actually DECLARE it. Dumping the property block of every
+                    // dissolve-capable `Particles*` shader shows just three do — the
+                    // `Disturb Anchor` variants (declared default 0.0, which is what the
+                    // fallback below already assumes). On the other 25 the fragment applies the
+                    // mask UNCONDITIONALLY (no `if(_ToggleUseDissolve)` branch at all), so a
+                    // material's copy of the property is inert residue and vetoing on it drops a
+                    // real mask.
+                    //
+                    // Mlynar's two clouds are the case that found this: `bg02_yun_01` happens to
+                    // carry `_ToggleUseDissolve = 1` and keeps its mask, while `bg02_yun_02` —
+                    // same shader, same rig — carries no such property, defaults to 0 and is
+                    // VETOED, so it draws as its full bounding rectangle instead of a carved
+                    // cloud. The existing `Ram/ || two_map` default is a partial approximation
+                    // of this rule; asking the shader subsumes it.
+                    //
+                    // ⛔ **MEASURED AND REFUTED — keep the veto.** The property-block reading is
+                    // solid, and applying it is WORSE on two of three references:
+                    //
+                    //     mly 17.360 -> 18.455      cel 15.342 -> 15.780      ska unchanged
+                    //
+                    // The blast radius is large (every skin gains masks, several new atlas pages),
+                    // so the newly-admitted masks must be wrong in some OTHER respect — a mask
+                    // that resolves is not the same as a mask the runtime actually applies with
+                    // our `_Amount`/`_BorderWidth`. This is the third shader-correct change this
+                    // session to measure worse (see `main_color_doubles` and the L2D x2 gate):
+                    // on this pipeline the GLSL is necessary evidence, never sufficient.
+                    let vetoed = if std::env::var("DYNCHAR_DISSOLVE_GATE").is_ok() {
+                        shader.contains("Disturb Anchor") && blend("_ToggleUseDissolve", 0.0) < 0.5
+                    } else {
+                        blend("_ToggleUseDissolve", toggle_default) < 0.5
+                    };
+                    if vetoed {
                         diss_pid = None;
                         diss_val = None;
                     }
@@ -2972,6 +3004,26 @@ fn accumulate_matrix(
         if guard > 256 {
             break;
         }
+        // DIAGNOSTIC (`DYNCHAR_TFCHAIN=1`): this walk TERMINATES on any transform that is not
+        // class 4, which silently drops every ancestor above it. RectTransform is class 224 and
+        // these prefabs contain them, so a chain that passes through one would be accumulated
+        // only partially — a constant position error for exactly those layers.
+        if std::env::var("DYNCHAR_TFCHAIN").is_ok() && all_objects.get(&tf_pid).is_none() {
+            eprintln!("  [tfchain] MISSING transform pid {tf_pid} at depth={guard} — chain truncated");
+        }
+        if std::env::var("DYNCHAR_TFCHAIN").is_ok()
+            && let Some((cid, v)) = all_objects.get(&tf_pid)
+            && *cid != 4
+        {
+            let name = v
+                .get("m_GameObject")
+                .and_then(get_path_id)
+                .and_then(|g| all_objects.get(&g))
+                .and_then(|(_, o)| o.get("m_Name"))
+                .and_then(Value::as_str)
+                .unwrap_or("?");
+            eprintln!("  [tfchain] TRUNCATED at class {cid} (pid {tf_pid}) go='{name}' depth={guard}");
+        }
         let Some((4, tf)) = all_objects.get(&tf_pid) else {
             break;
         };
@@ -2994,11 +3046,32 @@ fn accumulate_matrix(
         };
         // Position/rotation come from the idle-pose override for this transform
         // when present, else the prefab bind pose.
-        let pos = idle
-            .pos
-            .get(&tf_pid)
-            .copied()
-            .unwrap_or_else(|| vec3("m_LocalPosition", 0.0));
+        let prefab_pos = vec3("m_LocalPosition", 0.0);
+        let pos = idle.pos.get(&tf_pid).copied().unwrap_or(prefab_pos);
+        // DIAGNOSTIC (`DYNCHAR_TFCHAIN=1`): the IDLE-pose override is applied when building
+        // EVERY scene's quads, including the `_Start` entrance scene. Where the idle pose puts
+        // a transform somewhere other than the prefab bind pose, the entrance quad is baked at
+        // the IDLE position and stays there for the whole entrance.
+        if std::env::var("DYNCHAR_TFCHAIN").is_ok() {
+            let d = [
+                pos[0] - prefab_pos[0],
+                pos[1] - prefab_pos[1],
+                pos[2] - prefab_pos[2],
+            ];
+            if d[0].abs() > 1e-6 || d[1].abs() > 1e-6 || d[2].abs() > 1e-6 {
+                let name = tf
+                    .get("m_GameObject")
+                    .and_then(get_path_id)
+                    .and_then(|g| all_objects.get(&g))
+                    .and_then(|(_, o)| o.get("m_Name"))
+                    .and_then(Value::as_str)
+                    .unwrap_or("?");
+                eprintln!(
+                    "  [idlepose] go='{name}' prefab=({:.4},{:.4}) idle=({:.4},{:.4}) delta=({:.4},{:.4}) units",
+                    prefab_pos[0], prefab_pos[1], pos[0], pos[1], d[0], d[1]
+                );
+            }
+        }
         let quat = if let Some(&e) = idle.euler.get(&tf_pid) {
             super::anim::euler_deg_to_quat(e)
         } else {
