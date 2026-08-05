@@ -1479,7 +1479,43 @@ fn collect_dynchar_bg_quads(
                     .iter()
                     .find(|(n, _)| n == "_MainColor")
                     .map_or([1.0; 4], |(_, c)| *c);
-                (mc, 1.0, false)
+                // EXPERIMENT (`DYNCHAR_MC_X2=1`, default OFF) — **MEASURED AND REFUTED**,
+                // and the most direct test this question will ever get.
+                //
+                // Rejecting `ram_tint_scale`'s HEURISTIC for the ×2 is not the same as
+                // establishing that the shader doesn't double, so this asks the GLSL
+                // instead of the authored value (see `main_color_doubles`). For these wind
+                // sheets the answer is unambiguously YES — `Disturb(CustomData)` runs
+                // `c = tex * _MainColor * vs_COLOR0; c = c + c;` and the frontend's
+                // `RAM_SCENE_FRAG` deliberately does not double — so on paper the layer
+                // renders at half Unity's amplitude.
+                //
+                // rgb is deliberately NOT clamped here: the shader writes `SV_Target0.xyz`
+                // straight through (only `.w` is clamped) and the frontend composites scene
+                // layers into a half-float HDR target, so the blue reaches 2.0 the way
+                // Unity has it. That makes this a STRICTLY different test from the earlier
+                // `DYNCHAR_RAM_X2_CONST`, which took the clamped path and pinned that 2.0
+                // back to 1.0 — a desaturated double. Both are now refuted, in both
+                // directions: clamped costs mly 17.405 -> 18.501, this HDR one costs
+                // 17.405 -> **23.666**. `tint_scale` rides along onto the animated curve
+                // (`anim.rs`), so the port covers the whole timeline, not just the base.
+                //
+                // What that buys: the long-open blue cast is NOT a missing shader ×2. The
+                // doubling provably exists in Unity and porting it is measurably wrong by a
+                // wide margin, so something else in this pipeline already carries that
+                // factor for this family. It is not `EFFECT_SCENE_GAIN` (0.3, a reduction,
+                // and these layers are `fullGain`-exempt for carrying a colour curve).
+                // Do not re-derive from the GLSL alone — the shader is right and the
+                // conclusion still doesn't follow.
+                if std::env::var("DYNCHAR_MC_X2").is_ok() && main_color_doubles(mat) {
+                    (
+                        [mc[0] * 2.0, mc[1] * 2.0, mc[2] * 2.0, (mc[3] * 2.0).min(1.0)],
+                        2.0,
+                        true,
+                    )
+                } else {
+                    (mc, 1.0, false)
+                }
             } else {
                 (material_tint(mat), 1.0, false)
             };
@@ -2072,6 +2108,42 @@ pub fn is_l2d_compositor(shader: &str) -> bool {
         .rfind("Particles-L2D/")
         .map(|i| &shader[i + "Particles-L2D/".len()..])
         .is_some_and(|rest| rest.contains('/'))
+}
+
+/// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,
+/// read out of the shader's own GLSL rather than inferred from how the authored value
+/// looks. `Torappu/Particles-L2D/Disturb/Disturb(CustomData)`:
+///
+/// ```glsl
+/// u_xlat16_1 = texture(_MainTex, uv) * _MainColor * vs_COLOR0;
+/// u_xlat16_1 = u_xlat16_1 + u_xlat16_1;                 // ×2, all FOUR channels
+/// SV_Target0.xyz = u_xlat16_1.xyz;                      // rgb NOT clamped
+/// SV_Target0.w   = clamp(mask * u_xlat16_1.w * _Opacity, 0.0, 1.0);
+/// ```
+///
+/// The frontend's `RAM_SCENE_FRAG` deliberately does not double ("already baked into the
+/// exported tint"), so a layer that reaches the branch below with no scale is rendered at
+/// HALF the amplitude the shader gives it — the doubling happens nowhere at all.
+///
+/// Scanning every `Particles*` shader in `[uc]shaders.ab` for this self-add splits the
+/// families cleanly, and the split does NOT follow the namespace: the `Dissolve(CustomData)`
+/// siblings apply `_MainColor.xyz` in their VERTEX stage with no doubling anywhere, which is
+/// why this asks the shader instead of the `Particles-L2D/` prefix.
+///
+/// `_MainColorACtrl` is a red herring here — only the three `Disturb Anchor` variants
+/// declare it (`k = mix(1, _MainColor.a, ctrl)`), and the wind sheets that carry the
+/// property on the material do not use those shaders, so it is serialized residue.
+fn main_color_doubles(mat: &Value) -> bool {
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    // Verified by decompiling each one's fragment program. Doubling families first; the
+    // `Dissolve/` and `Disturb2` siblings are the verified NON-doubling ones and must not
+    // be folded in by a looser prefix match.
+    shader.contains("Particles-L2D/Disturb/Disturb(CustomData)")
+        || shader.contains("Particles-L2D/Disturb/Disturb Anchor")
+        || shader.contains("Particles-L2D/Disturb/Disturb (")
 }
 
 /// Whether a material belongs to the `Particles-L2D` compositor family that modulates by
