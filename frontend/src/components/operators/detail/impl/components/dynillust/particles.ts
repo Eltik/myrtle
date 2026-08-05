@@ -826,7 +826,24 @@ function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
  *  when the exporter captured one (sampled at the emitter clock — rate-curve systems
  *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
 function emissionRate(d: IParticleSystemData, constRate: number, time: number): number {
-    return d.rateCurve?.length ? Math.max(0, sampleCurve(d.rateCurve, time)) : constRate;
+    // A clip-driven `rateCurve` (absolute cinematic seconds) wins wherever one exists.
+    if (d.rateCurve?.length) return Math.max(0, sampleCurve(d.rateCurve, time));
+    // Unity evaluates `EmissionModule.rateOverTime` at the system's NORMALIZED cycle
+    // position, so a curve-mode rate must be re-sampled every frame. It was instead frozen
+    // at the value the constructor took once, `sampleScalar(rate, 0.5, 0)` — the curve at
+    // t=0. The standard authoring pattern ramps IN from zero, so that constant is exactly
+    // 0.0 and those systems emitted NOTHING for their entire life, however large the
+    // plateau. Virtuosa's four `_Start` systems each ask for a 5/s plateau over 3-6s (~15
+    // particles) and produced none. Corpus census: 104 systems across 15 composites.
+    const r = d.emission?.rate;
+    if (r && (r.mode === "curve" || r.mode === "rangeCurve")) {
+        const dur = d.duration > 0 ? d.duration : 1;
+        const cyc = time / dur;
+        // Looping systems wrap; a one-shot clamps so its tail holds the curve's last key.
+        const n = d.looping ? cyc - Math.floor(cyc) : Math.min(1, Math.max(0, cyc));
+        return Math.max(0, sampleScalar(r, 0.5, n));
+    }
+    return constRate;
 }
 
 /** velocityOverLifetime drift, in WORLD space (px/s).
@@ -1167,6 +1184,8 @@ class Emitter {
      *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
     private cineTime = 0;
     private emitAcc = 0;
+    /** Has this system EVER had a live particle? See {@link liveCount}. */
+    everLive = false;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
     private firedBursts = new Set<number>();
@@ -1841,8 +1860,32 @@ class Emitter {
         }
     }
 
+    /** DIAGNOSTIC (`?dumplayers=1`): why is this system silent? Reports the emitter's own
+     *  clock, the emission rate the data evaluates to RIGHT NOW, and the cap/pool state, so a
+     *  system that never spawns can be told apart from one that is merely dormant. */
+    dbg(): Record<string, number | string | boolean | null> {
+        const d = this.data;
+        return {
+            t: Number(this.time.toFixed(3)),
+            cine: Number(this.cineTime.toFixed(3)),
+            dur: d.duration,
+            loop: !!d.looping,
+            rateNow: Number(emissionRate(d, this.rate, this.time).toFixed(3)),
+            acc: Number(this.emitAcc.toFixed(3)),
+            bone: d.boneChain ? String(d.boneChain[d.boneChain.length - 1]) : null,
+            boneName: this.boneAnchor.boneName, boneOk: this.boneAnchor.boneName ? !!this.boneAnchor.ref : null, resolved: this.boneAnchor.resolved,
+            simSpace: String(d.simulationSpace),
+        };
+    }
+
     liveCount(): number {
-        return this.pool.length - this.free.length;
+        const n = this.pool.length - this.free.length;
+        // Latch, not a sample. A fixed beat list cannot answer "does this system EVER emit":
+        // a 0.3s burst 13s into a 14.5s entrance falls between beats and reads as dead. The
+        // module calls `liveCount()` every frame, so latching here makes the answer exact for
+        // the cost of one comparison.
+        if (n > 0) this.everLive = true;
+        return n;
     }
 
     destroy(): void {
@@ -2461,6 +2504,8 @@ class RamEmitter {
      *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
     private cineTime = 0;
     private emitAcc = 0;
+    /** Has this system EVER had a live particle? See {@link liveCount}. */
+    everLive = false;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
     private firedBursts = new Set<number>();
@@ -2967,6 +3012,7 @@ class RamEmitter {
     }
 
     liveCount(): number {
+        if (this.particles.length > 0) this.everLive = true;
         return this.particles.length;
     }
 
@@ -3407,6 +3453,25 @@ function additivePileGain(sys: IParticleSystemData): number {
 const EFFECT_PARTICLE_GAIN = 0.3; // = sceneMesh EFFECT_SCENE_GAIN
 const EFFECT_PARTICLE_MAX = 512; // = sceneMesh EFFECT_TEX_MAX (effect-overlay vs large boundary)
 
+/** DIAGNOSTIC registry of every particles module loaded on this page.
+ *
+ *  A corpus census wants one question answered per system: does it EVER emit? Sampling the
+ *  live probe at fixed beats cannot answer it, and gets it wrong in both directions — a
+ *  system whose window falls between beats reads dead (23 of Wisadel's 93 did, all of them
+ *  fine), and an ENTRANCE composite is destroyed at the hand-off, so any probe scheduled
+ *  after that sees nothing at all while a probe before its late systems fire calls them dead
+ *  (Ch'en the Holungday's four systems are delayed to 8.0s of a 9.767s entrance). The
+ *  emitters' `everLive` latch is authoritative and survives destruction inside this closure,
+ *  so a SINGLE dump at the end of the clip reports every composite exactly.
+ *
+ *  One entry per composite per page load (at most a handful), so retaining them is free. */
+const PARTICLE_CENSUS: { emitters: number; snapshot(): { sys: number; everLive: boolean }[] }[] = [];
+
+/** Finalised never-emitted census for every composite this page built, live or destroyed. */
+export function particleCensus(): { emitters: number; systems: { sys: number; everLive: boolean }[] }[] {
+    return PARTICLE_CENSUS.map((c) => ({ emitters: c.emitters, systems: c.snapshot() }));
+}
+
 export async function loadParticles(url: string, textureBaseUrl: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false): Promise<ILoadedParticles | null> {
     let data: IParticlesData;
     try {
@@ -3727,6 +3792,10 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     }
     if (emitters.length === 0) return null;
 
+    PARTICLE_CENSUS.push({
+        emitters: emitters.length,
+        snapshot: () => emitters.map((e, i) => ({ sys: emitterSys[i] ?? -1, everLive: !!(e as unknown as { everLive?: boolean }).everLive })),
+    });
     return {
         data,
         background,
@@ -3762,7 +3831,8 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
                         if (iw > 0 && ih > 0) paintedPx += iw * ih;
                     }
                 }
-                return { sys: emitterSys[i] ?? -1, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx, rope: "pool" in e ? ropeStats(e.pool) : null };
+                const dbg = "dbg" in e && typeof (e as { dbg?: unknown }).dbg === "function" ? (e as unknown as { dbg(): unknown }).dbg() : null;
+                return { sys: emitterSys[i] ?? -1, dbg, everLive: (e as unknown as { everLive?: boolean }).everLive ?? null, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx, rope: "pool" in e ? ropeStats(e.pool) : null };
             });
         },
         destroy() {

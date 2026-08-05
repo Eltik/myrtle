@@ -6,7 +6,8 @@ import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
-import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
+import {
+    particleCensus, ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
 import {
     applySceneLayerColor,
     applySceneLayerFollow,
@@ -1549,6 +1550,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // DIAGNOSTIC (`?dumplayers=1`): expose live per-layer draw state so a
                 // residual can be matched against what each scene layer actually contributes.
                 if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dumplayers")) {
+                    (window as unknown as { __particleCensus?: () => unknown }).__particleCensus = () => particleCensus();
                     (window as unknown as { __dumpEmitters?: () => unknown }).__dumpEmitters = () => {
                         const lp = particlesRef.current;
                         const r = appRef.current?.renderer;
