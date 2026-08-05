@@ -2169,7 +2169,7 @@ fn mat_float(mat: &Value, name: &str, default: f64) -> f64 {
 
 /// Read an rgba/vector shader property from `m_SavedProperties.m_Colors`
 /// (Unity stores `Color` AND `Vector` properties here). Missing → `default`.
-fn mat_color(mat: &Value, name: &str, default: [f64; 4]) -> [f64; 4] {
+pub(crate) fn mat_color(mat: &Value, name: &str, default: [f64; 4]) -> [f64; 4] {
     match mat
         .get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Colors"))
@@ -2263,11 +2263,14 @@ fn resolve_ram(
             && mat_float(mat, "_Amount_01", -1.0) > 0.0
             && mat_texenv(all_objects, mat, "_DissolveTex_01").0.is_some()
         {
+            let edge = mat_color(mat, "_Edgecolor", [-1.0, -1.0, -1.0, -1.0]);
             eprintln!(
-                "    [ptcl] DISSOLVE-TWOMAP '{}' shader={shader} amount_01={:.3} amount_02={:.3}",
+                "    [ptcl] DISSOLVE-TWOMAP '{}' shader={shader} amount_01={:.3} amount_02={:.3} edge=({:.3},{:.3},{:.3},{:.3}) pow={:.3}",
                 mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
                 mat_float(mat, "_Amount_01", -1.0),
-                mat_float(mat, "_Amount_02", -1.0)
+                mat_float(mat, "_Amount_02", -1.0),
+                edge[0], edge[1], edge[2], edge[3],
+                mat_float(mat, "_pow", -1.0)
             );
         }
         // Admit the `Dissolve/` family alongside `Ram/` — but ONLY when its mask is LIVE.

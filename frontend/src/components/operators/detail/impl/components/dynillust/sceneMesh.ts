@@ -31,6 +31,10 @@ export interface ISceneRam {
     dissolveST2?: [number, number, number, number];
     amount2?: number;
     borderWidth2?: number;
+    /** `_Edgecolor` (straight RGBA) + `_pow` — the rim the `...edge` shader variants composite
+     *  along the dissolve boundary. Absent on the variants whose program has no rim term. */
+    edgeColor?: [number, number, number, number] | null;
+    edgePow?: number;
     disturbTex?: number | null;
     disturbST: [number, number, number, number];
     /** Dissolve threshold and the softness of its edge. */
@@ -883,6 +887,9 @@ uniform float uHasDissolve;
 uniform float uHasDissolve2;
 uniform float uAmount2;
 uniform float uBorderWidth2;
+uniform vec4 uEdgeColor;
+uniform float uEdgePow;
+uniform float uHasEdge;
 uniform float uHasDisturb;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
@@ -906,7 +913,27 @@ void main() {
         dAlpha *= clamp((bw2 * sw2 + (d2 - uAmount2)) / bw2, 0.0, 1.0);
     }
     vec4 vc = vec4(vColor.rgb * vColor.a, vColor.a);
-    gl_FragColor = tex * uColor * vc * uWorldAlpha * dAlpha;
+    vec4 pm = tex * uColor * vc * uWorldAlpha;   // premultiplied layer colour, pre-mask
+    // EDGE RIM. The ...edge variants light the dissolve boundary:
+    //   e   = clamp(mask / edge.a, 0, 1)
+    //   rim = pow(1 - smoothstep(0, 1, e), pow)
+    //   rgb = mix(rgb, edge.rgb, rim)      a = mask * a * mix(1, edge.a, rim)
+    // Recovered to straight alpha because this shader composites premultiplied. With rim = 0
+    // the whole branch reduces exactly to pm * dAlpha, so a layer with no rim is untouched.
+    // edge.a == 0 means the rim is authored OFF: the game divides by it, e saturates to 1,
+    // smoothstep reaches 1 and pow(0, _pow) is 0. The max() guard below reproduces that
+    // exactly rather than producing a NaN - most authored _Edgecolor values are (0,0,0,0).
+    float aBase = pm.a;
+    vec3 cRgb = aBase > 1e-5 ? pm.rgb / aBase : vec3(0.0);
+    float rim = 0.0;
+    if (uHasEdge > 0.5) {
+        float e = clamp(dAlpha / max(uEdgeColor.a, 1e-4), 0.0, 1.0);
+        float sm = e * e * (3.0 - 2.0 * e);
+        rim = pow(max(1.0 - sm, 0.0), max(uEdgePow, 1e-4));
+    }
+    vec3 outRgb = mix(cRgb, uEdgeColor.rgb, rim);
+    float outA = dAlpha * aBase * mix(1.0, uEdgeColor.a, rim);
+    gl_FragColor = vec4(outRgb * outA, outA);
 }
 `;
 
@@ -971,6 +998,9 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uHasDissolve2: ramTex.dissolve2 ? 1 : 0,
             uAmount2: r.amount2 ?? 0,
             uBorderWidth2: r.borderWidth2 ?? 0.1,
+            uEdgeColor: r.edgeColor ?? [1, 1, 1, 1],
+            uEdgePow: r.edgePow ?? 1,
+            uHasEdge: r.edgeColor ? 1 : 0,
             uHasDisturb: ramTex.disturb ? 1 : 0,
             uDissolveST: r.dissolveST,
             uDissolveST2: r.dissolveST2 ?? [1, 1, 0, 0],

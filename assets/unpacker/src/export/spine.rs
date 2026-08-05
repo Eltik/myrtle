@@ -140,6 +140,13 @@ pub struct SceneRam {
     pub dissolve2_st: [f64; 4],
     pub amount2: f32,
     pub border_width2: f32,
+    /// `_Edgecolor` + `_pow` — the RIM the `…edge` shader variants composite along the dissolve
+    /// boundary: `rim = pow(1 - smoothstep(clamp(mask/_Edgecolor.w)), _pow)`, then
+    /// `rgb = mix(rgb, _Edgecolor.rgb, rim)` and `a *= mix(1, _Edgecolor.w, rim)`. Only the
+    /// variants whose NAME carries `edge` read it; on the others the property is residue and the
+    /// program has no rim term at all (verified against both decompiled fragments). None = no rim.
+    pub edge_color: Option<[f32; 4]>,
+    pub edge_pow: f32,
     /// `_Amount` — the dissolve threshold; `_BorderWidth` — its edge softness.
     pub amount: f32,
     pub border_width: f32,
@@ -1492,6 +1499,11 @@ fn collect_dynchar_bg_quads(
                             dissolve2_pid: diss2_pid,
                             dissolve2_val: diss2_val,
                             dissolve2_st: diss2_st,
+                            edge_color: shader.to_ascii_lowercase().contains("edge").then(|| {
+                                let c = super::particles::mat_color(mat, "_Edgecolor", [1.0, 1.0, 1.0, 1.0]);
+                                [c[0] as f32, c[1] as f32, c[2] as f32, c[3] as f32]
+                            }),
+                            edge_pow: blend("_pow", 1.0) as f32,
                             amount2: if two_map { blend("_Amount_02", 0.0) as f32 } else { 0.0 },
                             border_width2: if two_map { blend("_BorderWidth_02", 0.1) as f32 } else { 0.1 },
                             amount: if two_map { blend("_Amount_01", 0.5) } else { blend("_Amount", 0.5) } as f32,
@@ -3724,6 +3736,8 @@ fn export_scene(
                     "dissolveST2": r.dissolve2_st,
                     "amount2": r.amount2,
                     "borderWidth2": r.border_width2,
+                    "edgeColor": r.edge_color,
+                    "edgePow": r.edge_pow,
                     "disturbTex": dist,
                     "disturbST": r.disturb_st,
                     "amount": r.amount,
