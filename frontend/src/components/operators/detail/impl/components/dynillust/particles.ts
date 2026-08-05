@@ -3865,6 +3865,17 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         emitters: emitters.length,
         snapshot: () => emitters.map((e, i) => ({ sys: emitterSys[i] ?? -1, everLive: !!(e as unknown as { everLive?: boolean }).everLive })),
     });
+    // Registry for `scratchpad/opcheck/psdump.js`, which reports which systems have LIVE
+    // particles at a given trackTime AND where they land on screen — the only way to attribute
+    // a localised residual to a specific emitter without rendering all 58 of them one at a
+    // time. Inert unless the harness sets `__PS_DEBUG` before the bundle loads, so it costs a
+    // single boolean check in production. Was removed after its last use and had to be
+    // rewritten from psdump's trailing comment; keep it.
+    if (typeof window !== "undefined" && (window as unknown as { __PS_DEBUG?: boolean }).__PS_DEBUG) {
+        const w = window as unknown as { __psRegs?: unknown[] };
+        w.__psRegs = w.__psRegs ?? [];
+        w.__psRegs.push({ url, data, emitters, background, foreground });
+    }
     return {
         data,
         background,
