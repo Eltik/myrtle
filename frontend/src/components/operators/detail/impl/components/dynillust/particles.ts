@@ -3385,13 +3385,24 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         const cx = (w - 1) / 2;
         const cy = (h - 1) / 2;
         const rMax = Math.min(w, h) / 2;
-        const border = Math.max(2, Math.min(w, h) * 0.16);
+        // DIAGNOSTIC (`?vig=<f>`): scale the border-fade width (and, at 0, drop the radial
+        // falloff too). These two shape corrections SOFTEN every opaque particle texture — a
+        // 16% border fade on all of them plus a full radial orb on uniform-bright fills — and
+        // the measured particle deficit is a STRUCTURE deficit (we carry ~70% of the game's
+        // particle luma but as little as a third of its spatial variation), so how much of that
+        // softening is ours to keep is exactly the open question.
+        const vigScale = (() => {
+            if (typeof window === "undefined") return 1;
+            const v = parseFloat(new URLSearchParams(window.location.search).get("vig") ?? "");
+            return Number.isFinite(v) && v >= 0 ? v : 1;
+        })();
+        const border = Math.max(2, Math.min(w, h) * 0.16 * vigScale);
         const smooth = (t: number) => t * t * (3 - 2 * t);
         for (let y = 0; y < h; y++) {
             for (let x = 0; x < w; x++) {
                 const edge = Math.min(x, w - 1 - x, y, h - 1 - y);
-                let f = edge < border ? smooth(edge / border) : 1;
-                if (uniformBright) {
+                let f = vigScale === 0 ? 1 : edge < border ? smooth(edge / border) : 1;
+                if (uniformBright && vigScale !== 0) {
                     const rn = Math.hypot(x - cx, y - cy) / rMax;
                     f *= rn >= 1 ? 0 : smooth(1 - rn);
                 }
