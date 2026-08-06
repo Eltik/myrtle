@@ -1221,6 +1221,10 @@ class Emitter {
     private emitAcc = 0;
     /** Has this system EVER had a live particle? See {@link liveCount}. */
     everLive = false;
+    /** How many times `spawn()` was CALLED. Separates "never tried" (delay, zero rate, an
+     *  unreached window) from "tried and CULLED" (off-frame spawn, exhausted budget) — the two
+     *  read identically as `everLive: false` and need completely different follow-up. */
+    spawnTried = 0;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
     private firedBursts = new Set<number>();
@@ -1412,6 +1416,7 @@ class Emitter {
     }
 
     private spawn(): void {
+        this.spawnTried++;
         if (this.pool.length - this.free.length >= Math.min(this.data.maxParticles || perSystemCap(), perSystemCap())) return;
         if (this.getBudget() <= 0) return;
 
@@ -2556,6 +2561,10 @@ class RamEmitter {
     private emitAcc = 0;
     /** Has this system EVER had a live particle? See {@link liveCount}. */
     everLive = false;
+    /** How many times `spawn()` was CALLED. Separates "never tried" (delay, zero rate, an
+     *  unreached window) from "tried and CULLED" (off-frame spawn, exhausted budget) — the two
+     *  read identically as `everLive: false` and need completely different follow-up. */
+    spawnTried = 0;
     /** One-shot latch for the {@link prewarmOf} pre-roll. */
     private prewarmed = false;
     private firedBursts = new Set<number>();
@@ -2723,6 +2732,7 @@ class RamEmitter {
     }
 
     private spawn(): void {
+        this.spawnTried++;
         if (this.particles.length >= this.cap || this.getBudget() <= 0) return;
         const d = this.data;
         const nt = d.duration > 0 ? (this.time % d.duration) / d.duration : 0;
@@ -4033,7 +4043,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
 
     PARTICLE_CENSUS.push({
         emitters: emitters.length,
-        snapshot: () => emitters.map((e, i) => ({ sys: emitterSys[i] ?? -1, everLive: !!(e as unknown as { everLive?: boolean }).everLive })),
+        snapshot: () => emitters.map((e, i) => ({ sys: emitterSys[i] ?? -1, everLive: !!(e as unknown as { everLive?: boolean }).everLive, tried: (e as unknown as { spawnTried?: number }).spawnTried ?? 0 })),
     });
     // Registry for `scratchpad/opcheck/psdump.js`, which reports which systems have LIVE
     // particles at a given trackTime AND where they land on screen — the only way to attribute
