@@ -2583,6 +2583,10 @@ class RamEmitter {
     private readonly uvData: Float32Array;
     private readonly colData: Float32Array;
     private readonly customData: Float32Array;
+    /** Verts per particle — 4 for a billboard quad, else the exported mesh's vertex count. */
+    private readonly vpp: number;
+    /** The system's exported mesh, when it draws one instead of a quad. */
+    private readonly meshGeo: { pos: number[]; uv: number[]; idx: number[] } | null;
     private readonly posBuf: PIXI.Buffer;
     private readonly colBuf: PIXI.Buffer;
     private readonly customBuf: PIXI.Buffer;
@@ -2611,16 +2615,41 @@ class RamEmitter {
         this.sheetTiles = data.sheet ? Math.max(0, data.sheet.tilesX * data.sheet.tilesY) : 0;
         this.cap = Math.max(1, Math.min(perSystemCap(), data.maxParticles > 0 ? data.maxParticles : perSystemCap()));
 
-        // Preallocate geometry for `cap` quads (4 verts, 6 indices each).
-        const nv = this.cap * 4;
+        // GEOMETRY TEMPLATE — a quad, or the system's own exported MESH.
+        //
+        // A `renderMode:"mesh"` Ram system draws its particles as an arbitrary mesh, not a
+        // billboard. Those used to be dropped whole (255 systems across 21 composites), because
+        // this path only ever emitted 4-vert quads. The template is now parameterised: `vpp`
+        // verts and `ipp` indices per particle, seeded from `data.mesh` when there is one.
+        // Everything downstream (positions, colour, CustomData, the degenerate collapse) walks
+        // `vpp`, so the quad case is byte-identical.
+        const mg = data.renderMode === "mesh" && data.mesh && data.mesh.idx.length >= 3 ? data.mesh : null;
+        this.meshGeo = mg;
+        const vpp = mg ? Math.floor(mg.pos.length / 2) : 4;
+        const ipp = mg ? mg.idx.length : 6;
+        this.vpp = vpp;
+        // The index buffer is Uint16, so the LAST vertex index must stay under 65536 — a
+        // several-hundred-vert mesh would otherwise wrap and scramble the triangles. Clamp the
+        // live cap rather than the buffer, so the geometry and the simulation agree.
+        if (vpp > 0) this.cap = Math.max(1, Math.min(this.cap, Math.floor(65535 / vpp)));
+        const nv = this.cap * vpp;
         this.posData = new Float32Array(nv * 2);
         this.uvData = new Float32Array(nv * 2);
         this.colData = new Float32Array(nv * 4);
         this.customData = new Float32Array(nv * 2);
-        const idx = new Uint16Array(this.cap * 6);
+        const idx = new Uint16Array(this.cap * ipp);
         for (let q = 0; q < this.cap; q++) {
-            const v = q * 4;
-            const o = q * 6;
+            const v = q * vpp;
+            const o = q * ipp;
+            const u = v * 2;
+            if (mg) {
+                for (let t = 0; t < ipp; t++) idx[o + t] = v + mg.idx[t];
+                for (let t = 0; t < vpp; t++) {
+                    this.uvData[u + t * 2] = mg.uv[t * 2] ?? 0;
+                    this.uvData[u + t * 2 + 1] = mg.uv[t * 2 + 1] ?? 0;
+                }
+                continue;
+            }
             idx[o] = v;
             idx[o + 1] = v + 1;
             idx[o + 2] = v + 2;
@@ -2632,7 +2661,6 @@ class RamEmitter {
             // live flipbook TILE's sub-rect (see {@link writeGeometry}) — exactly
             // Unity's order, where the Texture Sheet module rewrites the vertex UV
             // and each sampler's `_ST` then applies on top of the tile.
-            const u = v * 2;
             this.uvData[u] = 0;
             this.uvData[u + 1] = 0;
             this.uvData[u + 2] = 1;
@@ -3000,29 +3028,47 @@ class RamEmitter {
             const s = Math.sin(th);
             const cx = p.x;
             const cy = -p.y;
-            const vp = q * 8;
+            const vpp = this.vpp;
+            const vp = q * vpp * 2;
             // 4 corners: TL(-hx,-hy) TR(hx,-hy) BR(hx,hy) BL(-hx,hy), shifted so the Unity
             // PIVOT lands on the particle's position — the corner offsets are what the
             // rotation below is applied to, so shifting them here also makes the quad rotate
             // ABOUT the pivot, matching Unity. `hx`/`hy` are half-extents, so a pivot of 1.0
             // displaces by the full size. Unity's +Y is up, this buffer is Y-down.
-            const pv = d.pivot;
-            const ppx = pv ? pv[0] * 2 * hx : 0;
-            const ppy = pv ? pv[1] * 2 * hy : 0;
-            const cxs = [-hx - ppx, hx - ppx, hx - ppx, -hx - ppx];
-            const cys = [-hy + ppy, -hy + ppy, hy + ppy, hy + ppy];
-            for (let k = 0; k < 4; k++) {
-                const lxk = cxs[k];
-                const lyk = cys[k];
-                pos[vp + k * 2] = cx + lxk * c - lyk * s;
-                pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+            const mg = this.meshGeo;
+            if (mg) {
+                // MESH particle: the geometry is raw mesh-local and Unity scales it by the
+                // particle size, so `finalPx = local × size` — the same convention
+                // `MeshEmitter.applyDisp` uses (`m.scale.set(sz)`), with the same rotation and
+                // Y-flip the quad branch applies. No pivot: that is a billboard-corner concept,
+                // and the mesh carries its own origin.
+                const szm = p.size * grow;
+                const mp = mg.pos;
+                for (let k = 0; k < vpp; k++) {
+                    const lxk = mp[k * 2] * szm;
+                    const lyk = mp[k * 2 + 1] * szm;
+                    pos[vp + k * 2] = cx + lxk * c - lyk * s;
+                    pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+                }
+            } else {
+                const pv = d.pivot;
+                const ppx = pv ? pv[0] * 2 * hx : 0;
+                const ppy = pv ? pv[1] * 2 * hy : 0;
+                const cxs = [-hx - ppx, hx - ppx, hx - ppx, -hx - ppx];
+                const cys = [-hy + ppy, -hy + ppy, hy + ppy, hy + ppy];
+                for (let k = 0; k < 4; k++) {
+                    const lxk = cxs[k];
+                    const lyk = cys[k];
+                    pos[vp + k * 2] = cx + lxk * c - lyk * s;
+                    pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+                }
             }
             // Texture Sheet Animation: point the quad at the live flipbook TILE, in the
             // same raster (row-major, top-down) order the sprite path slices frames in.
             // Every `_ST` in the shader then applies ON TOP of the tile, which is Unity's
             // own order — without it a sheet system samples the WHOLE atlas per quad and
             // stamps the grid, which is why such systems used to be barred from this path.
-            if (sheet && this.sheetTiles > 1) {
+            if (sheet && this.sheetTiles > 1 && !this.meshGeo) {
                 const prog = sheet.frameOverTime ? sampleCurve(sheet.frameOverTime, lf) : lf;
                 const cycles = sheet.cycles && sheet.cycles > 0 ? sheet.cycles : 1;
                 const fi = Math.min(this.sheetTiles - 1, Math.max(0, Math.floor(prog * cycles * this.sheetTiles) % this.sheetTiles));
@@ -3037,29 +3083,29 @@ class RamEmitter {
                     uv[vp + k * 2 + 1] = vs[k];
                 }
             }
-            const vc = q * 16;
-            for (let k = 0; k < 4; k++) {
+            const vc = q * vpp * 4;
+            for (let k = 0; k < vpp; k++) {
                 col[vc + k * 4] = cr;
                 col[vc + k * 4 + 1] = cg;
                 col[vc + k * 4 + 2] = cb;
                 col[vc + k * 4 + 3] = ca;
             }
-            const vk = q * 8;
+            const vk = q * vpp * 2;
             // CustomData (vs_TEXCOORD2 = per-particle dissolve amount + disturb
             // intensity). Systems with the CustomData module DISABLED (every svash2
             // Ram mask effect) hold a static 0 and the dissolve mask shapes the fill
             // directly; an exported `ramDissolveCurve` (Virtuosa's crumbling apples)
             // replays the per-particle dissolve amount over normalized lifetime.
             const dis = d.ramDissolveCurve ? sampleCurve(d.ramDissolveCurve, lf) : 0;
-            for (let k = 0; k < 4; k++) {
+            for (let k = 0; k < vpp; k++) {
                 cst[vk + k * 2] = dis; // dissolve amount
                 cst[vk + k * 2 + 1] = 0; // disturb intensity (no _DisturbTex bound here)
             }
         }
-        // Collapse unused quads to a degenerate point so they draw nothing.
+        // Collapse unused particles to a degenerate point so they draw nothing.
         for (let q = n; q < this.cap; q++) {
-            const vp = q * 8;
-            for (let k = 0; k < 8; k++) pos[vp + k] = 0;
+            const vp = q * this.vpp * 2;
+            for (let k = 0; k < this.vpp * 2; k++) pos[vp + k] = 0;
         }
         this.posBuf.update();
         this.colBuf.update();
@@ -3656,15 +3702,19 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // path, which now drives the flipbook tile through the vertex UVs.
         const ramSheet = !!(sys.sheet && sys.sheet.tilesX * sys.sheet.tilesY > 1);
         const spriteWouldDrop = sys.ram?.mainTex != null && !!bases[sys.ram.mainTex]?.skip;
-        // `?rammesh=1`: a Ram-shader system with `renderMode:"mesh"` has NO implementation —
-        // the Ram path draws billboards only, so the branch below dropped it outright. That is
-        // 255 systems across 21 composites (Logos 72, Angel2 54, Nian `cfa#1` 49), some authored
-        // up to 12983 px; Virtuosa's `bg_rain_01` (1996 px, kind `disturb`) is the local case.
-        // Falling through draws the mesh with its own texture, WITHOUT the disturb/dissolve
-        // terms — strictly closer than not drawing it, but not faithful. Opt-in until measured.
-        const ramMeshFallthrough = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammesh") === "1";
-        if (sys.ram && (!ramSheet || spriteWouldDrop) && !(ramMeshFallthrough && sys.renderMode === "mesh" && sys.tex != null)) {
-            if (sys.renderMode === "mesh") continue;
+        // A Ram-shader system with `renderMode:"mesh"` draws its particles as the exported
+        // MESH, not a billboard. These used to be dropped outright — 255 systems across 21
+        // composites (Logos 72, Angel2 54, Nian `cfa#1` 49), some authored up to 12983 px;
+        // Virtuosa's `bg_rain_01` (1996 px, kind `disturb`) is the largest system in her
+        // entrance. `RamEmitter` now carries an arbitrary per-particle vertex template, so they
+        // take the SAME shader path as the billboards.
+        //
+        // Falling through to the plain textured-mesh path instead is REFUTED: without the
+        // disturb/dissolve terms the raw texture stamps a huge opaque quad over the scene
+        // (cel 15.152 -> 18.359). `?rammesh=0` restores the old drop.
+        const ramMeshOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("rammesh") !== "0";
+        if (sys.ram && (!ramSheet || spriteWouldDrop)) {
+            if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3)) continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
             const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex), dissolve2: rawTex(sys.ram.dissolveTex2 ?? null) }, sys.blend, budget);
