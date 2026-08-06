@@ -3750,8 +3750,17 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // `background`, i.e. the pre-separator behaviour. Isolates the ROUTING change from the
         // SEATING change, which otherwise move together.
         const routeOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("sheetroute") !== "0";
+        // `?sortroute=1`: where the skeleton IS split, the game's part depths are AUTHORITATIVE,
+        // so the `isBackdropParticle` name/hazePanel heuristic should not gate placement at all —
+        // ANY normal-blend system whose sort lands inside a gap belongs in that gap. Cello's
+        // `air_01` (sort 12, inside [0,20]) is the case that motivated it: not `bg_*`-named, so
+        // it needs `tex.hazePanel`, and without it the largest haze sheet in the scene (1161 px)
+        // goes to the FOREGROUND instead of the wash — which is exactly the upper-background
+        // shortfall. ON by default (`?sortroute=0` disables): swept across all 39 separator skins,
+        // 0 anomalies, max change 0.59 on any skin other than the two references.
+        const sortRoute = typeof window === "undefined" || new URLSearchParams(window.location.search).get("sortroute") !== "0";
         const sheetTarget = (): PIXI.Container => {
-            if (isBackdropParticle && hasParts && routeOn) {
+            if ((isBackdropParticle || (sortRoute && effBlend === "normal")) && hasParts && routeOn) {
                 // The last part drawn at or below this sheet's own depth; the sheet goes in the
                 // gap immediately after it.
                 let j = -1;
@@ -3937,7 +3946,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // promoted over-body copy — the background rain (and every other system) is untouched.
         if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
         applyPsDiag(data, sys, emitter.container);
-        (unoccludeOverlap ? foreground : isBackdropParticle ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
+        (unoccludeOverlap ? foreground : isBackdropParticle || (sortRoute && hasParts && effBlend === "normal") ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
 

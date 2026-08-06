@@ -841,7 +841,10 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
         if (sp.children[at - 1] === sep.wash) continue; // already seated
         sp.addChildAt(sep.wash, at);
         if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepdbg") === "1") {
-            console.log(`DBGBG seat k=${k} slotIndex=${sep.slotIndex} at=${at} washKids=${sep.wash.children.length} spineKids=${sp.children.length}`);
+            {
+                const b = (sep.wash as unknown as { getBounds(): { x: number; y: number; width: number; height: number } }).getBounds();
+                console.log(`DBGBG seat k=${k} slotIndex=${sep.slotIndex} at=${at} washKids=${sep.wash.children.length} box=${Math.round(b.x)},${Math.round(b.y)},${Math.round(b.width)}x${Math.round(b.height)} spineKids=${sp.children.length}`);
+            }
         }
     }
 }
