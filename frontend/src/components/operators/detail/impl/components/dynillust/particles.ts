@@ -307,6 +307,17 @@ export interface IParticlesData {
 const GLOBAL_MAX_PARTICLES = 1400;
 /** Per-emitter hard cap, regardless of the authored maxParticles. */
 const PER_SYSTEM_CAP = 250;
+/** DIAGNOSTIC (`?pscap=<n>`): raise/lower {@link PER_SYSTEM_CAP}. It BINDS on Mlynar's `sys20`
+ *  — a large additive haze authoring `rate 1000/s x lifetime 0.35-0.5s`, i.e. a steady state of
+ *  ~425-500 particles — so we draw barely half its population. His particle contribution at t=4
+ *  measures +1.05 against the game's +10.73, and that 9.7 deficit matches the -9.2 frame-wide
+ *  DC darkness of the beat. No other system on the three references comes close to the cap
+ *  (next highest steady state is 90). */
+function perSystemCap(): number {
+    if (typeof window === "undefined") return PER_SYSTEM_CAP;
+    const v = parseInt(new URLSearchParams(window.location.search).get("pscap") ?? "", 10);
+    return Number.isFinite(v) && v > 0 ? v : PER_SYSTEM_CAP;
+}
 /** Number of ribbon points per particle trail. */
 const TRAIL_POINTS = 12;
 
@@ -1290,7 +1301,7 @@ class Emitter {
         if (this.trailLayer) this.container.addChild(this.trailLayer);
         // Ribbon mode is one polyline through the whole system, not a ribbon per
         // particle, so it replaces the per-particle rope path entirely.
-        this.ribbon = data.trail?.mode === "ribbon" && this.trailLayer ? new RibbonTrail(data.trail, trailTexture ?? this.texture, this.trailLayer, Math.min(data.maxParticles || PER_SYSTEM_CAP, PER_SYSTEM_CAP)) : null;
+        this.ribbon = data.trail?.mode === "ribbon" && this.trailLayer ? new RibbonTrail(data.trail, trailTexture ?? this.texture, this.trailLayer, Math.min(data.maxParticles || perSystemCap(), perSystemCap())) : null;
 
         // Texture Sheet Animation: slice the atlas into tile frames so each
         // particle shows one animating cell, not the whole grid stamped at once
@@ -1401,7 +1412,7 @@ class Emitter {
     }
 
     private spawn(): void {
-        if (this.pool.length - this.free.length >= Math.min(this.data.maxParticles || PER_SYSTEM_CAP, PER_SYSTEM_CAP)) return;
+        if (this.pool.length - this.free.length >= Math.min(this.data.maxParticles || perSystemCap(), perSystemCap())) return;
         if (this.getBudget() <= 0) return;
 
         const d = this.data;
@@ -1714,7 +1725,7 @@ class Emitter {
                 const key = Math.floor(this.time / (d.duration || 1)) * 1000 + burst.t;
                 if (cycleT >= burst.t && !this.firedBursts.has(key)) {
                     this.firedBursts.add(key);
-                    for (let i = 0; i < Math.min(burst.count, PER_SYSTEM_CAP); i++) this.spawn();
+                    for (let i = 0; i < Math.min(burst.count, perSystemCap()); i++) this.spawn();
                 }
             }
         }
@@ -2598,7 +2609,7 @@ class RamEmitter {
         this.volWorld = worldVelocityOverLife(data);
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
         this.sheetTiles = data.sheet ? Math.max(0, data.sheet.tilesX * data.sheet.tilesY) : 0;
-        this.cap = Math.max(1, Math.min(PER_SYSTEM_CAP, data.maxParticles > 0 ? data.maxParticles : PER_SYSTEM_CAP));
+        this.cap = Math.max(1, Math.min(perSystemCap(), data.maxParticles > 0 ? data.maxParticles : perSystemCap()));
 
         // Preallocate geometry for `cap` quads (4 verts, 6 indices each).
         const nv = this.cap * 4;
@@ -3475,7 +3486,19 @@ function scalarMax(s: MMScalar | undefined): number {
  *  shape. MOVING emitters (speed > 0) spread their particles over distinct positions, so
  *  they don't pile and aren't touched; BURST emitters (Hoshiguma's ice-flames: `rate=0`,
  *  `life=0.2s`, one particle per burst) have ~0 concurrent pile and stay full-bright. */
+/** DIAGNOSTIC (`?pilegain=<f>`): scale the pile attenuation (1 = none). The heuristic assumes
+ *  the concurrent particles stack AT A POINT, which is false for a box/area emitter — Mlynar's
+ *  `sys20` spawns over 912x638 px, yet reads `density = rate x lifetime = 500` and is clamped to
+ *  `MIN_GAIN`, i.e. drawn at 2% of its authored brightness. */
+function pileGainOverride(): number | null {
+    if (typeof window === "undefined") return null;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("pilegain") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
 function additivePileGain(sys: IParticleSystemData): number {
+    const ov = pileGainOverride();
+    if (ov !== null) return Math.min(1, ov);
     const STATIONARY_SPEED = 1; // authored-px/s; these blooms are exactly 0
     const TARGET_STACK = 0.8; // allowed overlapping-particle "brightness" at the core
     const MIN_GAIN = 0.02;
