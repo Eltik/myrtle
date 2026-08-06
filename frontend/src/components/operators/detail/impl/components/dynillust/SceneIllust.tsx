@@ -793,7 +793,12 @@ interface ISeparatorWash {
  *  `spine.update()` rebuilds `children` from `skeleton.drawOrder` each frame, so the wash is
  *  re-seated every tick rather than parented once.
  *
- *  SHIPPED (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
+ *  ⚠️ DISABLED (`?sepwash=1` to enable) — LEAKS. `spine.update()` re-appends slot
+ *  containers each frame, so re-seating grows `spine.children` without bound: cello reaches
+ *  849 children by t=17 against ~329 slots, one leaked per frame. Fix the leak before
+ *  re-enabling; the 15.190 measurement below was taken WITH the leak active.
+ *
+ *  Previously shipped (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
  *  against the game's 193.8 with NO ghosting (her darks 26.8 vs the game's 25.5; undemoting
  *  gives 151.9). Seating all four sheets regressed the frame (21.969 -> 24.671) — the fix was
  *  to bind each sheet by SORT to the parts' own depths (see `sheetTarget` in particles.ts),
@@ -815,6 +820,9 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
         if (at < 0) continue;
         if (sp.children[at - 1] === sep.wash) continue; // already seated
         sp.addChildAt(sep.wash, at);
+        if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepdbg") === "1") {
+            console.log(`DBGBG seat k=${k} slotIndex=${sep.slotIndex} at=${at} washKids=${sep.wash.children.length} spineKids=${sp.children.length}`);
+        }
     }
 }
 
@@ -1539,7 +1547,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const sepNames = scene?.data.separatorSlots;
                     // ON by default; `?sepwash=0` disables. Data-gated — a skin with no
                     // `separatorSlots` is untouched (Mlynar ships none and is bit-identical).
-                    const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") !== "0" : true;
+                    const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") === "1" : false;
                     if (on && particles && sepNames && sepNames.length > 0) {
                         const slots = (spine as unknown as { skeleton: { slots: { data: { name: string } }[] } }).skeleton.slots;
                         // Draw indices of the split slots, ASCENDING — gap k sits at the k-th
