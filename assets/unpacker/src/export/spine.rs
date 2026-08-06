@@ -1098,8 +1098,10 @@ fn collect_dynchar_bg_quads(
                     }
                 }
             }
-            sorts.sort_unstable();
-            sorts.dedup();
+            // Preserve `partsRenderers` ORDER (part 0 first, which is also ascending depth) and
+            // do NOT dedup: with N separator slots there are exactly N+1 parts, gap i spans
+            // [parts[i], parts[i+1]), and sorting/deduping would silently break that mapping if
+            // two parts ever shared a sortingOrder.
             sorts
         })
         .unwrap_or_default();
