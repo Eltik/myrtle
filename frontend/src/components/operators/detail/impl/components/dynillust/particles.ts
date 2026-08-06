@@ -3656,7 +3656,14 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // path, which now drives the flipbook tile through the vertex UVs.
         const ramSheet = !!(sys.sheet && sys.sheet.tilesX * sys.sheet.tilesY > 1);
         const spriteWouldDrop = sys.ram?.mainTex != null && !!bases[sys.ram.mainTex]?.skip;
-        if (sys.ram && (!ramSheet || spriteWouldDrop)) {
+        // `?rammesh=1`: a Ram-shader system with `renderMode:"mesh"` has NO implementation —
+        // the Ram path draws billboards only, so the branch below dropped it outright. That is
+        // 255 systems across 21 composites (Logos 72, Angel2 54, Nian `cfa#1` 49), some authored
+        // up to 12983 px; Virtuosa's `bg_rain_01` (1996 px, kind `disturb`) is the local case.
+        // Falling through draws the mesh with its own texture, WITHOUT the disturb/dissolve
+        // terms — strictly closer than not drawing it, but not faithful. Opt-in until measured.
+        const ramMeshFallthrough = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammesh") === "1";
+        if (sys.ram && (!ramSheet || spriteWouldDrop) && !(ramMeshFallthrough && sys.renderMode === "mesh" && sys.tex != null)) {
             if (sys.renderMode === "mesh") continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
@@ -3773,7 +3780,14 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             }
             return isBackdropParticle ? backdropWashes[0] : sys.sort < data.characterSort ? background : foreground;
         };
-        const isStaticProp = effBlend === "normal" && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && scalarMax(sys.startSize) > 0.4 * (data.cameraSizePx || 1050);
+        // ...but a BACKDROP sheet is not a prop. `bg_ref` (Virtuosa, sort 3, 773 px, one burst,
+        // 17 s life) matches the static-prop signature exactly and was being dropped by it — yet
+        // it is one of the three sheets that make up her background wash, and losing it is why
+        // the wash reached only 38.5% of the region that needs it. The discriminator is the one
+        // already in hand: `isBackdropParticle` (a `bg_*` chain, or a haze panel) means the game
+        // draws this AS scenery, whereas `chair` is a prop the game replaces with real scene
+        // geometry. Exempt the former.
+        const isStaticProp = !isBackdropParticle && effBlend === "normal" && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && scalarMax(sys.startSize) > 0.4 * (data.cameraSizePx || 1050);
         // The SECOND spelling of the same "static geometry faked as a particle system" idea,
         // for a MESH emitter. Where `isStaticProp` above recognises the BURST spelling (rate 0,
         // one or two bursts, a lifetime spanning the cinematic), this recognises the
