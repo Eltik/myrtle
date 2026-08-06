@@ -1695,8 +1695,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 }
                             });
                         }
-                        // `on:bg<i>` / `on:fg<i>` clears a layer's `m_IsActive` window so it
+                        // `on:bg:<i>` / `on:fg:<i>` clears a layer's `m_IsActive` window so it
                         // stays drawn — tests whether missing content is a mis-timed window.
+                        // NOTE THE SECOND COLON: the regex is `on:(bg|fg):(\d+)`. Written
+                        // `on:bg12` the token silently does not match, the ablation is a no-op,
+                        // and the run reads as "this layer contributes nothing".
                         for (const tok of off) {
                             const m = /^on:(bg|fg):(\d+)$/.exec(tok);
                             if (!m || !scene) continue;
