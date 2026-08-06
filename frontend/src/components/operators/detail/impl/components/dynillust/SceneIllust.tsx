@@ -805,6 +805,12 @@ interface ISeparatorWash {
  *  which puts bg_ref/bg_tint_01/air_01 in the gap and leaves bg_rain_01 genuinely in front.
  *  cel 18.844 -> 17.167, ska 10.500 -> 10.465, mly bit-identical (ships no separator).
  */
+/** `?actwin=0` disables the per-layer `m_IsActive` window gating (diagnostic). */
+function activeWindowsOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("actwin") !== "0";
+}
+
 function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     if (!seps.length) return;
     const sp = spine as unknown as { children: PIXI.DisplayObject[]; addChildAt(c: PIXI.DisplayObject, i: number): unknown; slotContainers?: PIXI.DisplayObject[] };
@@ -1177,7 +1183,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         const mm = m as unknown as ISceneLayerRuntime;
                         const af = mm.__activeFrom;
                         const au = mm.__activeUntil;
-                        if (af != null || au != null) m.renderable = (af == null || tt >= af) && (au == null || tt < au);
+                        // DIAGNOSTIC `?actwin=0`: ignore the exported windows and leave every
+                        // layer on. Virtuosa hides 74 of 132 layers at t=2/5/8 this way —
+                        // including 28 flank layers (authored x -770..-332 and +1039..+1208)
+                        // that sit exactly where her background is ~80 luma too dark.
+                        if ((af != null || au != null) && activeWindowsOn()) m.renderable = (af == null || tt >= af) && (au == null || tt < au);
                         // Material-colour replay: the `_Start` clip animates some layers'
                         // material colour (Mlynar's white flash alpha ramps 0→0.671 over
                         // 13→15s); sample the exported curve at the track time and re-tint.
