@@ -344,6 +344,12 @@ function loadTexture(url: string): Promise<ISceneTex> {
 /** Attenuation for caustic / light-dome OVERLAY layers (a small texture stretched
  *  over a large mesh) — approximates the engine's absent HDR tonemap so they read
  *  as a faint ripple, not a bold white swirl over the scene. */
+/** `?bgglow=1` promotes white non-opaque BACKGROUND glow sheets to additive (diagnostic). */
+function bgGlowAdditive(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("bgglow") === "1";
+}
+
 /** `?gaplayers=1` seats scene layers between a split skeleton's parts (diagnostic, default OFF). */
 function gapLayersEnabled(): boolean {
     if (typeof window === "undefined") return false;
@@ -1704,7 +1710,19 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // without summing. Respect the authored blend; keep full gain so the lines stay
         // crisp (not the 0.3 caustic attenuation). The other clause (a SATURATED fg glow
         // over the character — Hoshiguma's blue ice-flame) is unchanged.
-        const forceAdditive = isForeground && !layer.additive && isEffect && base.sat >= GLOW_SAT_MIN && overCharacter;
+        // `?bgglow=1` (diagnostic): a BACKGROUND layer whose texture is a white, wholly
+        // non-opaque glow sheet, drawn NORMAL. `forceAdditive` below only ever promotes
+        // FOREGROUND layers over the character, so a background glow can never reach it.
+        // Virtuosa's layer 113 is the case: tex 21 is 128x128 at whiteness 0.949 /
+        // opaqueFrac 0, and it alone covers 90.4% of her upper-background deficit at t=12,
+        // drawing 115.4 where the game shows 199.4. Composited NORMAL a white glow at ~0.28
+        // mean alpha lands near 103; only an additive draw reaches the capture.
+        // Data-derived (texture statistics), never a layer index.
+        // NOT gated on `isForeground`: layer 113 sorts at 8 (above characterSort 0) so it IS
+        // foreground here and is demoted to the background container later — the original
+        // clause still misses it because a WHITE glow fails `sat >= GLOW_SAT_MIN`.
+        const bgGlow = bgGlowAdditive() && !layer.additive && base.whiteness >= 0.9 && base.opaqueFrac <= 0.02;
+        const forceAdditive = (isForeground && !layer.additive && isEffect && base.sat >= GLOW_SAT_MIN && overCharacter) || bgGlow;
         // A layer with an authored colour curve carries its EXACT animated alpha — the
         // effect-overlay gain (which tames caustics frozen without their animation)
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
