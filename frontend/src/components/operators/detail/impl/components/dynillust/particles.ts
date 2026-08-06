@@ -3746,8 +3746,12 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // Only sheets the heuristic already flagged are re-routed, so nothing else moves.
         const partSorts = data.separatorPartSorts ?? [];
         const hasParts = partSorts.length >= 2;
+        // DIAGNOSTIC `?sheetroute=0`: ignore the part depths and demote every flagged sheet to
+        // `background`, i.e. the pre-separator behaviour. Isolates the ROUTING change from the
+        // SEATING change, which otherwise move together.
+        const routeOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("sheetroute") !== "0";
         const sheetTarget = (): PIXI.Container => {
-            if (isBackdropParticle && hasParts) {
+            if (isBackdropParticle && hasParts && routeOn) {
                 // The last part drawn at or below this sheet's own depth; the sheet goes in the
                 // gap immediately after it.
                 let j = -1;
