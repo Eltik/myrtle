@@ -3113,6 +3113,23 @@ class RamEmitter {
         if (this.sheetTiles > 1) this.uvBuf.update();
     }
 
+    /** DIAGNOSTIC twin of {@link Emitter.dbg} — the Ram path had none, so a silent Ram system
+     *  reported `dbg: null` and could not be told apart from one that was never constructed. */
+    dbg(): Record<string, number | string | boolean | null> {
+        const d = this.data;
+        return {
+            t: Number(this.time.toFixed(3)),
+            cine: Number(this.cineTime.toFixed(3)),
+            dur: d.duration,
+            loop: !!d.looping,
+            rateNow: Number(emissionRate(d, this.rate, this.time).toFixed(3)),
+            acc: Number(this.emitAcc.toFixed(3)),
+            cap: this.cap,
+            pool: this.particles.length,
+            simSpace: String(d.simulationSpace),
+        };
+    }
+
     liveCount(): number {
         if (this.particles.length > 0) this.everLive = true;
         return this.particles.length;
