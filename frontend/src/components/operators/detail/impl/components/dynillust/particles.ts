@@ -189,6 +189,11 @@ export interface IParticleSystemData {
      *  `CustomDataModule`'s Vector stream (shader vs_TEXCOORD2.x, added to `_Amount`).
      *  Virtuosa's entrance apples crumble away with it (−0.12 → 1 by ~30% of life). */
     ramDissolveCurve?: ICurvePoint[] | null;
+    /** ENTRANCE material-colour animation, `[t, r, g, b, a]` in absolute cinematic seconds —
+     *  the particle twin of a scene layer's `colorCurve`. REPLACES {@link tint} while it runs
+     *  (the exporter resolves the curve against that same static tint, so applying both would
+     *  count it twice). Absent unless the `_Start` clip animates this emitter's material. */
+    colorCurve?: [number, number, number, number, number][] | null;
     /** The `_Start` cinematic's animated SCALE FACTOR on an effect-host ancestor
      *  (multiplier of the baked resting pose, keyed in absolute cinematic seconds).
      *  Virtuosa "Diversity in Oneness": the crown host scales 1.0→0.28 over 9.4–12.43s
@@ -1198,6 +1203,10 @@ class Emitter {
      *  `simulationSpeed` and never advanced by the prewarm pre-roll. Drives the DIRECTOR's
      *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
     private cineTime = 0;
+    /** Whole-emitter colour sampled from {@link IParticleSystemData.colorCurve} at
+     *  {@link cineTime}, or null when the clip does not animate this material. Replaces the
+     *  static `tint` in the per-particle colour. */
+    private sysColor: [number, number, number, number] | null = null;
     private emitAcc = 0;
     /** Has this system EVER had a live particle? See {@link liveCount}. */
     everLive = false;
@@ -1596,6 +1605,9 @@ class Emitter {
         // Advanced before any early-out so it keeps running through the start delay, and NEVER
         // scaled by `simulationSpeed`. See the clock split documented on {@link simSpeedOf}.
         this.cineTime += dt;
+        // Whole-emitter colour from the `_Start` clip, resampled each frame (see
+        // IParticleSystemData.colorCurve). Null when the clip does not animate this material.
+        this.sysColor = d.colorCurve?.length ? sampleColorCurve(d.colorCurve, this.cineTime) : null;
         // MAIN-MODULE CLOCK (`simulationSpeed` + `prewarm`).
         //
         // `simulationSpeed` scales the system's OWN clock, so everything keyed on it — the
@@ -1768,7 +1780,13 @@ class Emitter {
             const lifeCol = d.colorOverLife ? sampleColor(d.colorOverLife, lf, p.rand) : { r: 1, g: 1, b: 1, a: 1 };
             // …and by the material's doubled `_TintColor` (see IParticleSystemData.tint);
             // absent (the neutral) for all but a handful of systems.
-            const mt = d.tint;
+            //
+            // An ENTRANCE material-colour curve REPLACES that static tint while it runs: the
+            // exporter resolved the curve against the same value, so multiplying both would
+            // apply it twice. Sampled on the CINEMATIC clock (absolute seconds since `_Start`),
+            // not per-particle life — this is the clip fading the whole emitter, which is why a
+            // system the cinematic switches off used to keep drawing at full strength.
+            const mt = this.sysColor ?? d.tint;
             const col = {
                 r: p.startCol.r * lifeCol.r * (mt ? mt[0] : 1),
                 g: p.startCol.g * lifeCol.g * (mt ? mt[1] : 1),

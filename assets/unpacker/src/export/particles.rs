@@ -908,6 +908,18 @@ pub(crate) fn collect_dynchar_particles(
             entrance.color_channels.get(&go_pid).map(Vec::as_slice),
             blend,
         );
+        // Same clip data, for the emitters the Ram path does not cover (see
+        // `particle_color_curve`). Gated for measurement: `DYNCHAR_PTCL_COLORCURVE=1`.
+        let color_curve = if std::env::var("DYNCHAR_PTCL_COLORCURVE").is_ok() {
+            particle_color_curve(
+                all_objects,
+                renderer,
+                entrance.color_channels.get(&go_pid).map(Vec::as_slice),
+                blend,
+            )
+        } else {
+            None
+        };
 
         // Emitter world transform (spine-root frame) → position (px) + Z rot.
         let world = host.world_of_go(all_objects, go_pid);
@@ -1163,6 +1175,7 @@ pub(crate) fn collect_dynchar_particles(
             "blend": if blend { "additive" } else { "normal" },
             // The material's ×2 `_TintColor`, or null at the neutral — see `particle_tint`.
             "tint": tint.map_or(Value::Null, |t| json!(t)),
+
             "renderMode": render_mode,
             "pos": pos,
             "rot": rot,
@@ -1177,6 +1190,15 @@ pub(crate) fn collect_dynchar_particles(
             "maxParticles": i(&initial, "maxNumParticles").unwrap_or(1000),
             "boneChain": bone_chain,
         });
+        // ENTRANCE material-colour animation, `[t, r, g, b, a]` — see `particle_color_curve`.
+        // Inserted only when present so the default export stays byte-identical.
+        if let Some(cc) = &color_curve {
+            sys["colorCurve"] = json!(
+                cc.iter()
+                    .map(|&(t, c)| [t, c[0], c[1], c[2], c[3]])
+                    .collect::<Vec<_>>()
+            );
+        }
         // Cinematic start delay (omitted when 0 to keep always-on scenes lean).
         if delay > 0.0 {
             sys["delay"] = json!(delay);
@@ -2172,6 +2194,55 @@ type RendererTexture = (
     [f64; 4],
     Option<[f64; 4]>,
 );
+
+/// The `_Start` clip's animated MATERIAL COLOUR for a plain (non-Ram) emitter, as
+/// `(t, [r,g,b,a])` samples — the particle-path twin of the scene quad's `colorCurve`.
+///
+/// The Ram family already gets this (`mainColorCurve` in [`resolve_ram_data`]); every other
+/// emitter ignored it entirely, so a system the cinematic FADES OUT kept drawing at full
+/// strength. Virtuosa is the case that found it — `SCENE_ATTRIB=1` reports
+/// `bg_rain_01` alpha 0.16→0.00 over 6.2-8.0s and `spark_large` 0.50→0.00 over 9.9-10.2s,
+/// both of which we drew flat — and it is the shape of the "particles over-draw late"
+/// residual measured across her whole field.
+///
+/// Resolved against the SAME tint the system exports (`particle_tint`, the ×2 `_TintColor`
+/// when additive, else the material's own colour), so curve and static value stay in one
+/// convention. `tint_scale` is 1: the ×2 is already folded into the exported `tint`, and
+/// doubling it again here would apply it twice.
+fn particle_color_curve(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    renderer: Option<&Value>,
+    channels: Option<&[super::anim::MaterialColorChannel]>,
+    additive: bool,
+) -> Option<Vec<(f32, [f32; 4])>> {
+    let channels = channels?;
+    let materials = renderer?.get("m_Materials")?.as_array()?;
+    let mat = materials.iter().find_map(|mat_ref| {
+        let pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
+        let (21, m) = all_objects.get(&pid)? else { return None };
+        Some(m)
+    })?;
+    // Skip the Ram family: it carries its own `mainColorCurve` on the Ram colour path, and
+    // applying both would fade it twice.
+    if mat
+        .get("_shaderName")
+        .and_then(Value::as_str)
+        .is_some_and(|s| s.contains("Ram/"))
+    {
+        return None;
+    }
+    let (props, tint_prop) = super::spine::material_color_props(mat);
+    let base = particle_tint(mat).unwrap_or([1.0, 1.0, 1.0, 1.0]);
+    super::anim::layer_color_curve(
+        channels,
+        &props,
+        tint_prop.as_deref(),
+        [base[0] as f32, base[1] as f32, base[2] as f32, base[3] as f32],
+        1.0,
+        false,
+        additive,
+    )
+}
 
 /// Resolve the renderer's first usable material (the particle's own texture)
 /// into a [`RendererTexture`].
