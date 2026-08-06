@@ -793,7 +793,7 @@ interface ISeparatorWash {
  *  `spine.update()` rebuilds `children` from `skeleton.drawOrder` each frame, so the wash is
  *  re-seated every tick rather than parented once.
  *
- *  ⚠️ DISABLED (`?sepwash=1` to enable) — LEAKS. `spine.update()` re-appends slot
+ *  SHIPPED (`?sepwash=0` disables). The per-frame re-seat once LEAKED — `spine.update()` re-appends slot
  *  containers each frame, so re-seating grows `spine.children` without bound: cello reaches
  *  849 children by t=17 against ~329 slots, one leaked per frame. Fix the leak before
  *  re-enabling; the 15.190 measurement below was taken WITH the leak active.
@@ -810,6 +810,26 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     const sp = spine as unknown as { children: PIXI.DisplayObject[]; addChildAt(c: PIXI.DisplayObject, i: number): unknown; slotContainers?: PIXI.DisplayObject[] };
     const conts = sp.slotContainers;
     if (!conts) return;
+    // pixi-spine re-adds every slot container each `update()` to restore `skeleton.drawOrder`.
+    // With a FOREIGN child spliced in, its index bookkeeping stops matching and containers get
+    // appended instead of moved, so `children` grows one per frame — cello reached 849 against
+    // 328 slots by t=17 (a leak plus a per-frame traversal cost on every render).
+    //
+    // Dedupe in place before re-seating, keeping the LAST occurrence of each child: the last
+    // pass is pixi-spine's most recent ordering, so that is the authoritative one. Cheap (one
+    // O(n) sweep) and it bounds `children` at slots + foreign for good.
+    {
+        const kids = sp.children;
+        const seen = new Set<PIXI.DisplayObject>();
+        let w = kids.length;
+        for (let i = kids.length - 1; i >= 0; i--) {
+            const c = kids[i];
+            if (seen.has(c)) continue;
+            seen.add(c);
+            kids[--w] = c;
+        }
+        if (w > 0) kids.splice(0, w);
+    }
     // `seps` arrives sorted deepest-slot-first, and each insert goes immediately BEFORE its
     // slot container, so walking forward preserves both the slot order and the order within
     // a gap. The index is re-read every time rather than cached, because each insert shifts it.
@@ -1052,6 +1072,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `children` from `skeleton.drawOrder` every frame, so a one-time `addChildAt`
                 // does not stick — this has to run after each update.
                 reseatSeparatorWash(spineRef.current, separatorWashRef.current);
+                if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepdbg") === "1") {
+                    const sk: any = spineRef.current as any;
+                    const kids = sk.children.length;
+                    const conts = new Set(sk.slotContainers ?? []);
+                    let foreign = 0;
+                    for (const c of sk.children) if (!conts.has(c)) foreign++;
+                    console.log(`DBGBG kids=${kids} slotConts=${(sk.slotContainers ?? []).length} foreign=${foreign}`);
+                }
                 // `update` rebuilds the dark shadow slots' meshes each frame; flip them
                 // back to non-renderable so the static backdrop's version shows instead.
                 if (hideShadowsRef.current) hideRedundantShadowSlots(spineRef.current);
@@ -1547,7 +1575,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const sepNames = scene?.data.separatorSlots;
                     // ON by default; `?sepwash=0` disables. Data-gated — a skin with no
                     // `separatorSlots` is untouched (Mlynar ships none and is bit-identical).
-                    const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") === "1" : false;
+                    const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") !== "0" : true;
                     if (on && particles && sepNames && sepNames.length > 0) {
                         const slots = (spine as unknown as { skeleton: { slots: { data: { name: string } }[] } }).skeleton.slots;
                         // Draw indices of the split slots, ASCENDING — gap k sits at the k-th
