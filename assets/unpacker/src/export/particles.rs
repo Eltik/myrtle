@@ -634,10 +634,10 @@ pub(crate) fn collect_dynchar_particles(
     // Env-gated attribution — see the twin in `collect_dynchar_bg_quads`. Output-neutral.
     let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
 
-    // EXPERIMENT (`DYNCHAR_CROSSROOT_UNIQUE=1`, default OFF): world origins of every
-    // SAME-ROOT particle system, so a cross-root candidate can be tested for a positional
-    // twin. See `admit_positional_unique` below for what this is for and why.
-    let crossroot_unique = std::env::var("DYNCHAR_CROSSROOT_UNIQUE").is_ok();
+    // World origins of every SAME-ROOT particle system, so a cross-root candidate can be tested
+    // for a positional twin. See `admit_positional_unique` below. **Default ON since
+    // 2026-08-08** — `DYNCHAR_CROSSROOT_UNIQUE=0` restores the old drop-everything behaviour.
+    let crossroot_unique = std::env::var("DYNCHAR_CROSSROOT_UNIQUE").as_deref() != Ok("0");
     let own_positions: Vec<(f32, f32)> = if crossroot_unique {
         systems
             .iter()
@@ -744,9 +744,31 @@ pub(crate) fn collect_dynchar_particles(
         // themselves dropped for other reasons. A narrower twin set would admit MORE, not
         // less, so relaxing it only moves further in the direction that already fails.
         //
-        // **Cross-root admission is now refuted four ways** (blanket, swap, set-completion,
-        // positional de-dup). The idle rig's emitters are not what the entrance is missing.
-        // Kept behind `DYNCHAR_CROSSROOT_UNIQUE=1`, default OFF.
+        // **⚠️ RE-MEASURED 2026-08-08 — the ten-point loss was the PLACEMENT BUG, not the
+        // admission.** Every one of the four refutations ran while cross-root systems were
+        // emitted in their OWN root's frame (see the re-basing below), so each admitted a set of
+        // emitters that then drew in the wrong place. With the re-basing in, the same positional
+        // de-dup gate measures:
+        //
+        //     shipped baseline            mly 17.864  cel 17.646  ska 10.403   cet 58.925
+        //     positional de-dup + rebase  mly 17.864  cel 17.630  ska 10.446   cet 57.949
+        //
+        // Virtuosa goes from −10.5 to +0.016. Across the three references it is neutral (±0.05,
+        // and Mlynar is bit-identical because he gains no systems), and Civilight Eterna — whose
+        // entrance embers are ALL cross-root — gains ~1.0. So the conclusion "the idle rig's
+        // emitters are not what the entrance is missing" no longer follows from the evidence.
+        //
+        // **Corpus re-export + QA sweep run 2026-08-08 — now DEFAULT ON.** Only 10 of 82 skins
+        // change at all (every one an entrance set); the other 72 are byte-identical. Seven of
+        // the ten have game captures and were scored before/after:
+        //
+        //     mly 17.864→17.864   cel 17.646→17.630   ska 10.403→10.446   exc 24.074→24.073
+        //     cet 58.925→57.949   mue 86.446→86.412   wis 88.117→88.135
+        //
+        // Worst regression +0.043 (Skadi), best −0.976 (Civilight Eterna), net −0.966. The three
+        // changed skins with no capture (Kalt'sits, Chongyue, Passenger) were QA-rendered at 5
+        // beats before and after: mean|diff| ≤ 1.51, no BLANK/DEGENERATE flags.
+        // `DYNCHAR_CROSSROOT_UNIQUE=0` restores the old behaviour.
         let admit_positional_unique = crossroot_unique
             && cross_root
             && entrance.is_entrance
@@ -922,7 +944,36 @@ pub(crate) fn collect_dynchar_particles(
         };
 
         // Emitter world transform (spine-root frame) → position (px) + Z rot.
+        //
+        // CROSS-ROOT RE-BASING. `world_of_go` accumulates up to whichever skeleton root it
+        // reaches, so a system living under the IDLE root comes back in the IDLE root's frame —
+        // but the entrance composite draws in the `_Start` root's frame. Emitting that position
+        // unchanged places the effect wherever the two roots happen to differ.
+        //
+        // Measured on Civilight Eterna (`char_4134_cetsyr_epoque#50`), whose entrance embers are
+        // all cross-root: with admission on, `emitprobe` showed every `fire_*` emitter alive and
+        // painting ~50k px² with ONE particle of 11-16 on screen, boxes at y ≈ −100..−250 against
+        // a 416 px frame — roughly 300 px too high, where the game puts them mid-frame. Their
+        // chain roots at `..._Idle_01(Clone)` through idle-rig bones (`fixed`, `static_offset`)
+        // the `_Start` composite does not have.
+        //
+        // Fix: express both in the common prefab frame (`world_full_of_go`, which does not stop
+        // at a root and so includes the root's own transform) and map into the entrance root's
+        // local frame — `own_root⁻¹ · system_world`. Same-root systems are untouched, so this is
+        // inert wherever cross-root admission is off, which is everywhere by default.
         let world = host.world_of_go(all_objects, go_pid);
+        let world = if cross_root && admit_cross_root {
+            match scope.own {
+                Some(own) => {
+                    let own_root = host.world_full_of_go(all_objects, own);
+                    let sys_full = host.world_full_of_go(all_objects, go_pid);
+                    own_root.inverse_affine().mul(&sys_full)
+                }
+                None => world,
+            }
+        } else {
+            world
+        };
         let origin = world.point([0.0, 0.0, 0.0]);
         let pos = [
             f64::from(origin[0]) * inv_scale,

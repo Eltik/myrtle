@@ -15,6 +15,7 @@ import {
     applySceneLayerSt,
     applySceneLayerUvScroll,
     detectCurveCuts,
+    type ISceneAperture,
     type ISceneData,
     type ISceneFrame,
     type ISceneLayer,
@@ -231,6 +232,32 @@ function gapFillOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("gapfill") !== "0";
 }
+
+/** `?apscale=0` freezes the scope aperture at its baked radius, ignoring the rim transform's
+ *  animated scale (diagnostic). */
+function apertureScaleOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("apscale") !== "0";
+}
+
+/** Linear sample of a `[t, value]` keyframe list, clamped at both ends. The scene's other
+ *  samplers are shaped for XY and RGBA curves; this is the scalar case. */
+function sampleScalar(curve: [number, number][], t: number): number {
+    if (!curve.length) return 1;
+    if (t <= curve[0][0]) return curve[0][1];
+    const last = curve[curve.length - 1];
+    if (t >= last[0]) return last[1];
+    for (let i = 1; i < curve.length; i++) {
+        if (curve[i][0] >= t) {
+            const [t0, v0] = curve[i - 1];
+            const [t1, v1] = curve[i];
+            const span = t1 - t0;
+            return span > 1e-9 ? v0 + ((v1 - v0) * (t - t0)) / span : v1;
+        }
+    }
+    return last[1];
+}
+
 /** Blur radius as a fraction of the backdrop's on-screen height. `?gapblur=<f>` sweeps it. */
 const GAP_BLUR_FRACTION = 1 / 24;
 function gapBlurFraction(): number {
@@ -256,6 +283,81 @@ function frameBoxParam(): IAnimationBounds | null {
     const p = raw.split(",").map(Number);
     if (p.length !== 4 || p.some((n) => !Number.isFinite(n)) || p[2] <= 0 || p[3] <= 0) return null;
     return { x: p[0], y: p[1], width: p[2], height: p[3] };
+}
+
+/** DIAGNOSTIC (`?statcam=1`): skip the `_Start` cinematic and render the STANDING IDLE under a
+ *  camera that never moves — the shot the game's OWN skin preview shows.
+ *
+ *  **Why this exists: it is the only uncontaminated reference we can obtain.** Every parity number
+ *  to date is measured against a salvaged CRF36 recording whose encode damage is 40-57% of the
+ *  score ([[dynchar-degradation-floor-real-headroom]]), and no renderer-side change can reach past
+ *  that floor. The game's skin preview (FLOT Lookbook → skin → magnifier) can be captured at
+ *  2340x1080 / 100 Mbps for ANY skin including unowned ones, so it is clean — but it is NOT the
+ *  entrance, and pointing the entrance renderer at it would be comparing two different shots.
+ *
+ *  What the preview actually plays was established by measurement, not assumption:
+ *
+ *    - **No white flash.** `_Start` ends in a full-frame whiteout; the salvaged references peak at
+ *      235-236 mean luma (1.9-2.5x their own base) at t=14.4 / 17.8 / 21.8 s. The preview captures
+ *      never exceed 1.25x base and have no flash anywhere. It cannot be `_Start`.
+ *    - **No camera motion.** Background-strip drift (left 15% of frame, vs. a frame shortly after
+ *      open, at +2/4/6/8 s) is 2-3x smaller than the reference's on all three skins.
+ *    - The character is already fully formed in the first frame, where `_Start` opens on the
+ *      seated/reforming shape.
+ *
+ *  So the target shot is: standing idle, settled framing, camera locked. That is exactly the path
+ *  the 70 dynchar skins with no `_Start` already take, which is why this flag only has to decline
+ *  to build the entrance composite — `openStandingIdle()` with no `fromEntrance` and no
+ *  `entrancePullOut` is already static, and is the most-exercised framing path in the file.
+ *
+ *  Composes with `?framebox=x,y,w,h`, which wins over the settled box (see `openStandingIdle`) —
+ *  use that to search for the preview's framing if the authored `_adjustes` box turns out not to
+ *  match it. Off by default; the production viewer and every existing measurement are untouched. */
+function staticCamOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("statcam") === "1";
+}
+
+/** DIAGNOSTIC (`?statbox=<zoom>[,<dx>,<dy>]`): scale the {@link staticCamOn} framing box about its
+ *  own centre by `zoom` and shift it by `dx,dy` box-space px. Inert unless `?statcam=1`.
+ *
+ *  Exists to PIN a measured residual to its gamedata source rather than bake it in. Against the
+ *  preview captures, the authored tight box is right in kind but leaves a consistent shortfall —
+ *  the render must be enlarged ~1.27x (ska 1.26, mly 1.30-1.32, cel 1.24), with a per-skin
+ *  translation whose sign differs between skins (ska dx-46/dy+82, mly dx-34/dy-68, cel dx+32/
+ *  dy-26, in 900x416 px). Those are real, not noise: mly and cel reproduce their offsets EXACTLY
+ *  at two different times, and the phase-matched fits peak at 7.6 sigma.
+ *
+ *  The translation almost certainly comes from `bodyFrameBox` building the tight box on the WIDE
+ *  stop's centre — the gamedata ships a separate `cameraOffsetPx2` for `_adjustes[1]` which we
+ *  never read. That is the first thing to test with this knob. It is deliberately NOT applied as a
+ *  default: a fitted zoom constant is exactly the sort of thing this codebase refuses to ship
+ *  (see the fitted-gradient and clamp-ceiling findings), and one frame per skin cannot calibrate
+ *  a constant that must hold for 82.
+ *
+ *  Measure with a PHASE-MATCHED pair — game time = viewer-open time + our track time (open is
+ *  2.07/2.18/2.00 s for mly/cel/ska). Comparing arbitrary times silently halves the correlation
+ *  and moves the fitted scale. */
+/** `?tightoff=0` — under `?statcam=1`, DON'T re-seat the tight box on the tight `_adjustes[1]`
+ *  stop's own centre. Exists purely so the shift can be A/B'd against the old shared-centre
+ *  behaviour; default on, and inert outside statcam. */
+function tightOffOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("tightoff") !== "0";
+}
+
+function staticCamBox(b: IAnimationBounds): IAnimationBounds {
+    if (typeof window === "undefined") return b;
+    const raw = new URLSearchParams(window.location.search).get("statbox");
+    if (!raw) return b;
+    const p = raw.split(",").map(Number);
+    const z = p[0];
+    if (!Number.isFinite(z) || z <= 0) return b;
+    const dx = Number.isFinite(p[1]) ? p[1] : 0;
+    const dy = Number.isFinite(p[2]) ? p[2] : 0;
+    const w = b.width * z;
+    const h = b.height * z;
+    return { x: b.x + b.width / 2 - w / 2 + dx, y: b.y + b.height / 2 - h / 2 + dy, width: w, height: h };
 }
 
 /** Frame a no-entrance skin to everything it PAINTS rather than to its authored `_adjustes`
@@ -501,6 +603,23 @@ interface IComposite {
      *  authored offset delta (the game's small pan). Null when the skin has no tight
      *  endpoint; the opener then derives the tight box from the 0.646 game ratio. */
     authoredTightBounds: IAnimationBounds | null;
+    /** The authored SHIFT from the wide `_adjustes[0]` stop to the tight `_adjustes[1]` one, in
+     *  render/vis px (`(offsetPx2 − offsetPx) × RCAL`, Y flipped to screen-down).
+     *
+     *  `bodyFrameBox` builds BOTH boxes on the same body-measured centre, because the raw
+     *  `_adjustes` offset is unusable for centring — it points ~650 px BELOW the body in export
+     *  space (see the note there). Their DIFFERENCE is still meaningful in that space though, so
+     *  the two stops' relative move survives even though neither absolute position does. This is
+     *  the same cross-space-additive convention `centerBlend` and the hand-off delta already use.
+     *
+     *  Null when the skin ships no second stop. Consumed only by `?statcam=1` (see
+     *  `staticCamOn`) — applying it to `authoredTightBounds` itself would move the ENTRANCE
+     *  framing on the 12 skins that have one, including all three references, and silently
+     *  invalidate every recorded baseline. */
+    authoredTightShift: [number, number] | null;
+    /** The game's SKIN-PREVIEW framing box — half the wide `_adjustes[0]` view. Consumed only by
+     *  `?statcam=1`; see the derivation where it is built. Null for skins with no authored view. */
+    previewBounds: IAnimationBounds | null;
     /** The TIGHT `_adjustes[1]` stop as a FRACTION of the wide display view (`viewPx2/viewPx`).
      *  Lets the settled main idle open on the SAME close-up the entrance held before pulling
      *  out to the wide frame. Null when the skin ships no tight stop. */
@@ -521,6 +640,7 @@ interface IComposite {
      *  own camera rig (the animated camera-parent Transform) accumulated by the Rust exporter into
      *  a world-space centre curve. Drives the entrance pan/dolly directly; no measured bounds. */
     entranceCamCenterCurve: [number, number, number][] | null;
+    entranceCamRollCurve: [number, number][] | null;
     /** The entrance frame EXTENT in mesh px — the `_Start` camera's view at its ANIMATED t=0
      *  ortho size (`2·ortho₀/skeletonScale`, falling back to the static `entranceViewPx`, then the
      *  tight `_adjustes[1]` stop) — the base frame size the live camera holds, scaled by the
@@ -530,6 +650,13 @@ interface IComposite {
     /** The entrance's scene-mesh containers (background + foreground) — carry the per-layer
      *  `m_IsActive` gating meshes. Entrance-only. */
     sceneLayers: PIXI.Container[] | null;
+    /** The circular VIEWPORT APERTURE this entrance is watched through (Executor's rifle
+     *  scope), or null for the other 81 skins. Applied as a scene-space mask so the camera
+     *  move carries it. See {@link ISceneAperture}. */
+    aperture: ISceneAperture | null;
+    /** The aperture's mask graphic, seated in the scene container so it shares the camera
+     *  transform. Held so the entrance tick can lift the mask when the scope opens. */
+    apertureMask: PIXI.Graphics | null;
     /** Capability A: the scene's Ram-family UV-scroll layer meshes (flat list, collected from
      *  the background/foreground/overlay containers). The always-running tick re-scrolls their
      *  UVs each frame with the continuous scene clock (idle AND entrance). Empty for scenes
@@ -619,10 +746,26 @@ function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
  *  it to that and centre it on the animated character's visible bounds (the focal
  *  point both the static art and the spine are composed around). This aligns the
  *  spine over its own static counterpart so the missing backdrop fills in behind. */
-/** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`. */
-const ENTRANCE_FADE_IN = 0.85;
-/** Seconds the fade holds at full before lifting (covers the idle swap). */
-const ENTRANCE_FADE_HOLD = 0.2;
+/** Read a fade-timing override off the query string, falling back to the shipped default. */
+function fadeParam(name: string, dflt: number): number {
+    if (typeof window === "undefined") return dflt;
+    // Guard on the RAW string: `Number(null)` is 0, which is finite and >= 0, so testing the
+    // parsed number alone silently makes every absent param read as zero.
+    const raw = new URLSearchParams(window.location.search).get(name);
+    if (raw === null || raw === "") return dflt;
+    const v = Number(raw);
+    return Number.isFinite(v) && v >= 0 ? v : dflt;
+}
+
+/** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`.
+ *
+ *  DIAGNOSTIC (`?fadein=`): overridable so the ramp can be swept against a capture. The shipped
+ *  0.85 was measured on Virtuosa alone, and she is one of only five skins the director fade
+ *  actually reaches — the rest perform the fade through their own scene layers and suppress it
+ *  (see {@link sceneDrivesEntranceFade}), so this constant is far less validated than it looks. */
+const ENTRANCE_FADE_IN = fadeParam("fadein", 0.85);
+/** Seconds the fade holds at full before lifting (covers the idle swap). `?fadehold=`. */
+const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
 /** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
  *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
 const ENTRANCE_FADE_OUT = 0.35;
@@ -904,12 +1047,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  three skins (Kalt'sits "boc#6", Cetsyr, Chongyue "epoque#7") replaying their entrance
      *  with EVERY layer at its static tint. For Kalt'sits that means the closing full-frame
      *  white flash — authored white at full alpha — paints the whole cinematic pure white. */
-    const entranceSeqRef = useRef<{ spine: import("pixi-spine").Spine; sceneLayers: PIXI.Container[]; endAt: number | null; fireEnd: (() => void) | null } | null>(null);
+    const entranceSeqRef = useRef<{
+        spine: import("pixi-spine").Spine;
+        sceneLayers: PIXI.Container[];
+        endAt: number | null;
+        fireEnd: (() => void) | null;
+        aperture: ISceneAperture | null;
+        apertureMask: PIXI.Graphics | null;
+    } | null>(null);
     const entranceFollowRef = useRef<{
         spine: import("pixi-spine").Spine;
         root: PIXI.Container;
         ortho: [number, number][] | null;
         camCenter: [number, number, number][];
+        /** Authored camera roll, degrees. Null for every rig whose basis is axis-aligned. */
+        camRoll: [number, number][] | null;
         /** Segment end-indices in `camCenter` that are HARD CUTS (Skadi the Corrupting Heart's
          *  rig repositions) — the sampler STEPS through these instead of interpolating, so an
          *  instant reposition isn't smeared into a visible pan. Empty for cut-free curves. */
@@ -1131,7 +1283,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // leaving the pan/centre on `tt`. Isolates a zoom-specific timing error from a
                 // global clock error (which would move the centre too). Inert at 0.
                 const orthoLead = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("ortholead") ?? "0") || 0 : 0;
-                const size = ef.frameSize * orthoZoomRatio(ef.ortho, tt + orthoLead);
+                let size = ef.frameSize * orthoZoomRatio(ef.ortho, tt + orthoLead);
+                // DIAGNOSTIC (`?camscale=`): multiply the entrance frame extent. Separates a
+                // wrong-ZOOM error from the wrong-CENTRE error `?camdx=`/`?camdy=` probe.
+                if (typeof window !== "undefined") {
+                    const cs = parseFloat(new URLSearchParams(window.location.search).get("camscale") ?? "");
+                    if (Number.isFinite(cs) && cs > 0) size *= cs;
+                }
                 // STEADY FRAMING (skins with no authored `_transform` beat, e.g. Mlynar "Fields of
                 // Ruination"): measured against the game recording, the baked rig-centre curve swings
                 // the character HORIZONTALLY into the right third (its X excursion reaches ~-355 off
@@ -1159,15 +1317,62 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //    it is a pure scale change) + the 0.45s crossfade, matching the game.
                 // All gamedata-derived, no magic constant. Skins WITH an authored transform beat (cello,
                 // skadi2) keep the pure rig camera — `centerBlend` is null for them (verified parity).
-                const cx = c[0];
+                let cxShift = 0;
                 let cy = c[1];
                 const cb = ef.centerBlend;
                 if (cb) {
                     cy = cb.cy0 + (c[1] - cb.rigEndY);
                 }
+                // DIAGNOSTIC (`?camdx=` / `?camdy=`, authored px): shift the entrance camera centre
+                // by a constant. A constant framing offset is invisible to BOTH of the obvious
+                // tests — a pan-delta comparison sees only differences, and a scale sweep sees only
+                // zoom — so it needs its own probe. This is what localised Muelsyse's defect: a
+                // sharp optimum at +300 px in Y and exactly 0 in X (MADC 87.168 -> 23.699), which
+                // then matched her rig's Main Camera local Y of +2.9947 units to within the
+                // sampling grid and led to the zero-scale bug in `entrance_camera_track`.
+                if (typeof window !== "undefined") {
+                    const q = new URLSearchParams(window.location.search);
+                    const ddx = parseFloat(q.get("camdx") ?? "");
+                    const ddy = parseFloat(q.get("camdy") ?? "");
+                    if (Number.isFinite(ddy)) cy += ddy;
+                    if (Number.isFinite(ddx)) cxShift = ddx;
+                }
+                const cx = c[0] + cxShift;
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
                 ef.lastLiveCenter = [cx, cy];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
+                // DIAGNOSTIC (`?camroll=<deg>`): ROLL the frame about its centre. Wiš'adel's
+                // `_Start` clip animates her camera parent's euler Z from 11.34° to 29.56° over
+                // the first 2.4s, and `entrance_camera_track` only samples POSITION curves — so
+                // the authored roll is frozen at its t=0 value. A roll cannot be approximated by
+                // the `?camdx=`/`?camdy=` probe, which is why that one found a wrong-signed
+                // optimum. Position is re-solved so the camera centre stays centred.
+                {
+                    const override = typeof window === "undefined" ? Number.NaN : parseFloat(new URLSearchParams(window.location.search).get("camroll") ?? "");
+                    const authored = ef.camRoll?.length ? sampleScalar(ef.camRoll, tt) : 0;
+                    const rollDeg = Number.isFinite(override) ? override : authored;
+                    if (Number.isFinite(rollDeg) && rollDeg !== 0) {
+                        const r = (rollDeg * Math.PI) / 180;
+                        ef.root.rotation = r;
+                        const p0x = ef.root.position.x;
+                        const p0y = ef.root.position.y;
+                        const ddx = sw / 2 - p0x;
+                        const ddy = sh / 2 - p0y;
+                        const co = Math.cos(r);
+                        const si = Math.sin(r);
+                        ef.root.position.set(sw / 2 - (co * ddx - si * ddy), sh / 2 - (si * ddx + co * ddy));
+                    }
+                }
+                // DIAGNOSTIC: expose the live entrance camera so a probe can read the ACTUAL
+                // world-units-per-screen-pixel, instead of inferring the zoom from pixels.
+                if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("cambox")) {
+                    (window as unknown as { __camBox?: unknown }).__camBox = {
+                        tt, cx, cy, size, sw, sh, fit: fitRef.current,
+                        rootScaleX: ef.root.scale.x, rootScaleY: ef.root.scale.y,
+                        viewWorldH: sh / ef.root.scale.y, viewWorldW: sw / ef.root.scale.x,
+                        usingBlend: !!ef.centerBlend, rawCy: c[1],
+                    };
+                }
             }
             // ENTRANCE LAYER SEQUENCING. Runs for ANY live entrance composite, independent of
             // whether the skin ships a camera track — see `entranceSeqRef`.
@@ -1175,6 +1380,34 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             if (eseq && spineRef.current === eseq.spine) {
                 const st = eseq.spine.state.tracks[0] as unknown as { trackTime?: number } | null;
                 const tt = st?.trackTime ?? 0;
+                // Executor: 5.2 s, where the scene's second root activates and the capture goes
+                // 100% lit within one frame.
+                const ap = eseq.aperture;
+                if (ap && eseq.apertureMask) {
+                    const live = entranceFollowRef.current?.lastLiveCenter;
+                    if (live) eseq.apertureMask.position.set(live[0], live[1]);
+                    // The rim's own transform is ANIMATED, and the aperture is its inner circle,
+                    // so the radius has to follow. Scaling the whole plate is safe: the hole is
+                    // centred on the graphic's origin, and the 50000-wide plate still covers the
+                    // frame at every multiplier. Decoded from the entrance clip and validated
+                    // against the capture — at t=4.0 the multiplier is 0.669 where the measured
+                    // width/camera-scale ratio is 0.667. `?apscale=0` restores the frozen radius.
+                    if (ap.scaleCurve?.length && apertureScaleOn()) {
+                        const m = sampleScalar(ap.scaleCurve, tt);
+                        if (Number.isFinite(m) && m > 0) eseq.apertureMask.scale.set(m);
+                    }
+                    // The rim's own curve carries the whole beat — black hold, then the WHITE
+                    // reveal flash, then alpha 0 — so replay it rather than inferring an end.
+                    if (ap.curve?.length) {
+                        const [r, g, b, a] = sampleColorCurve(ap.curve, tt);
+                        const q = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
+                        eseq.apertureMask.tint = (q(r) << 16) | (q(g) << 8) | q(b);
+                        eseq.apertureMask.alpha = Math.max(0, Math.min(1, a));
+                        eseq.apertureMask.visible = a > 0.002;
+                    } else if (ap.until != null) {
+                        eseq.apertureMask.visible = tt < ap.until;
+                    }
+                }
                 // Per-layer `m_IsActive` window from the `_Start` clips (gamedata): a layer with
                 // `activeFrom`/`activeUntil` renders only while `activeFrom <= t < activeUntil`.
                 // Absent = always visible (Virtuosa's backdrop is entirely always-on).
@@ -1922,7 +2155,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             y0 = Math.min(y0, l.pos[i + 1]);
                             y1 = Math.max(y1, l.pos[i + 1]);
                         }
-                        return x1 - x0 >= viewExt && y1 - y0 >= viewExt;
+                        if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
+                        // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh
+                        // whose box is 2047² against a 2000 view — so it passed — but its silhouette
+                        // is cut off diagonally and holds only 70% of the view's area. It suppressed
+                        // gap-fill and left a hard-edged grey wedge across a third of her frame,
+                        // exactly the symptom gap-fill exists to prevent. Require the mesh to
+                        // actually CONTAIN the view's worth of area as well.
+                        //
+                        // The 0.95 is slack for a tight quad whose box slightly exceeds the view,
+                        // not a tuned constant: the real covers sit at 2.4–6.1 and the concave ones
+                        // at 0.70–0.73, so the gap is an order of magnitude wide. Mlynar's layer 17
+                        // is the closest true cover at 0.972 — keep that margin in mind before
+                        // raising this.
+                        let meshArea = 0;
+                        for (let k = 0; k + 2 < l.idx.length; k += 3) {
+                            const a = l.idx[k] * 2;
+                            const b = l.idx[k + 1] * 2;
+                            const c = l.idx[k + 2] * 2;
+                            if (Math.max(a, b, c) + 1 >= l.pos.length) continue;
+                            meshArea += Math.abs((l.pos[b] - l.pos[a]) * (l.pos[c + 1] - l.pos[a + 1]) - (l.pos[c] - l.pos[a]) * (l.pos[b + 1] - l.pos[a + 1])) / 2;
+                        }
+                        return meshArea >= 0.95 * viewExt * viewExt;
                     });
                 const gapFill = !useStatic && gapFillOn() && !sceneCoversFrame && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
@@ -2052,6 +2306,72 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // The TIGHT open endpoint: the exact `cameraViewPx2` box (2nd `_adjustes` stop),
                 // same centre — the viewer dollies OUT from here. Null unless a 2nd camera stop.
                 const authoredTightBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx2) && vis ? bodyFrameBox(authoredFrame.viewPx2 as number) : null;
+                // The game's SKIN-PREVIEW framing (`?statcam=1`): the CAMERA's own orthographic
+                // size, not either `_adjustes` display stop. Built through `bodyFrameBox` so the
+                // `VBIAS` term rescales with the extent rather than being carried over from a box
+                // of a different size.
+                //
+                // MEASURED against the clean 2340x1080 captures. Method: the RENDERER generates each
+                // candidate framing (so no numpy resampling artefact enters the fit), each is scored
+                // against a 10-frame time-average of the settled idle (t>=9, so the character and
+                // particles wash out and only static scenery drives the match), and translation is
+                // searched exhaustively to +/-140 px — the last of which matters, since a shift
+                // clipped at the search boundary silently depresses EVERY scale (it hid Mlynar's
+                // true optimum and cost him a factor of 3.5 in correlation). Re-expressing each
+                // skin's fitted extent against the candidate bases:
+                //
+                //     basis            ska      cel      mly     spread
+                //     viewPx          0.4944   0.5206   0.5180    5.1%
+                //     viewPx2         0.7899   0.8060   0.7687    4.6%
+                //     cameraSizePx    0.9565   0.9565   0.9278    3.0%   <- THIS
+                //
+                // `_adjustes` are the in-game VIEWER's display crops; the preview is a plain camera
+                // render, so the camera's own size is what it should track. ska and cel land on
+                // 0.9565 EXACTLY — both peak at zoom 1.000 with sharp curves (NCC 0.715 and 0.506
+                // against ~0.3 at +/-3%) despite unrelated `_adjustes` values, which is what makes
+                // this the basis rather than a coincidence.
+                //
+                // How exact: inverting the fits to the ortho each skin's framing implies gives
+                // **10.0000** against an authored 10.000 (ska) and **10.4997** against 10.500 (cel)
+                // — five significant figures on two independent skins. Mlynar implies 10.7768
+                // against 11.110.
+                //
+                // ⚠️ VALIDATED ON TWO SKINS. Mlynar is a genuine 3% outlier — he peaks at
+                // 0.965-0.970, also sharply (0.677 against 0.336 at 1.000), so it is not scatter.
+                // Do NOT "fix" it by averaging: that would make all three wrong instead of one.
+                // Excluded as causes: `skeletonScale` (identical 0.01 on all three), idle-vs-`_Start`
+                // camera size (identical), content-limiting (the scene exceeds the view on all
+                // three), a second display controller (each bundle ships exactly one), `_maxSize`
+                // (2048x2048 everywhere), and every other numeric field in the scene JSON — none has
+                // the required signature of "equal for ska and cel, 0.970x for mly".
+                //
+                // The one structural difference found: Mlynar ships **three** `_adjustes` stops
+                // (1990 / 1341 / 2808) where ska and cel ship two, and the exporter only ever reads
+                // the first two. That splits these three samples exactly along the observed outlier
+                // — but it is a class covering **46 of 82** skins, so with n=3 it is a correlation,
+                // not a cause, and the magnitude is unexplained (3-stop skins' stop0/cameraSizePx
+                // does differ, 1.857 vs 1.631, but by well under one SD). The decisive test is a
+                // fresh capture of one more 2-stop and one more 3-stop skin. Until then, treat this
+                // framing as unvalidated on the 3-stop half of the corpus.
+                //
+                // On the 0.9565: if the preview shows exactly `cameraSizePx` of authored height,
+                // then the true authored->render conversion for this shot is 0.9565 x RCAL = 0.747,
+                // against the 0.781 `RCAL` carries. So this constant is really the gap between the
+                // preview's conversion and RCAL's — and RCAL is the suspect one: it was fitted on
+                // ONE skin's entrance against CRF36 footage. If RCAL is ever recalibrated against
+                // clean data, this must move with it (ideally to 1.0, deleting itself).
+                //
+                // Also more robust than the `_adjustes` bases: `cameraSizePx` is required by
+                // `sceneFrameOf`, whereas `viewPx` can be an uninitialised -FLT_MAX (Nearl Epoque).
+                // `?statfrac=<f>` sweeps it.
+                const PREVIEW_CAM_FRAC = calibrationParam("statfrac", 0.9565);
+                const previewBounds: IAnimationBounds | null = authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null;
+                // Relative move between the two authored stops (see `IComposite.authoredTightShift`).
+                // Y is flipped because the authored offsets are spine-authored Y-UP and the framing
+                // boxes are screen-down — the same flip `authoredDisplayBounds` documents.
+                const o0 = authoredFrame?.offsetPx;
+                const o2 = authoredFrame?.offsetPx2;
+                const authoredTightShift: [number, number] | null = o0 && o2 ? [(o2[0] - o0[0]) * RCAL, -(o2[1] - o0[1]) * RCAL] : null;
                 let bounds: IAnimationBounds | null;
                 if (opts.framingOverride) {
                     bounds = opts.framingOverride;
@@ -2219,6 +2539,37 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const animDur = spine.spineData.animations.find((a: { name: string }) => a.name === entranceAnim)?.duration ?? 0;
                     if (animDur > dur + 0.05) deferEndUntil = Math.min(deferEndUntil ?? dur, dur);
                 }
+                // VIEWPORT APERTURE (Executor's rifle scope). Seated INSIDE the scene container
+                // so the entrance camera's pan/zoom carries it exactly as it carries the layers
+                // — the aperture is scene-fixed, and its apparent expansion is the camera pulling
+                // back, not an animation. Entrance-only: the settled idle is never scoped.
+                const aperture = opts.mode === "entrance" ? (scene?.aperture ?? null) : null;
+                let apertureMask: PIXI.Graphics | null = null;
+                if (aperture) {
+                    // A black COVER with a circular hole rather than a mask on the scene: the
+                    // surround has to be pure black (measured max luma outside the scope: 0.0),
+                    // and masking the scene alone would leave the viewer's own environment fill
+                    // showing through. As the LAST child of the composite root it also covers the
+                    // static backdrop, particles and spine — everything the entrance draws.
+                    //
+                    // Drawn at the local origin and MOVED each tick onto the live camera centre
+                    // (the shot tracks the scope). Seated in the scene container so the camera's
+                    // zoom scales it — the aperture's apparent growth is entirely that zoom. The
+                    // plate is far wider than any authored scene so it covers at every zoom.
+                    // Filled WHITE and TINTED by the rim's authored curve — a tint multiplies, so a
+                    // black fill could never flash white. The curve supplies black, the flash and
+                    // the end time (see {@link sceneAperture}).
+                    const PLATE = 50000;
+                    apertureMask = new PIXI.Graphics();
+                    apertureMask.beginFill(0xffffff);
+                    apertureMask.drawRect(-PLATE, -PLATE, PLATE * 2, PLATE * 2);
+                    apertureMask.beginHole().drawCircle(0, 0, aperture.radius).endHole();
+                    apertureMask.endFill();
+                    apertureMask.tint = 0x000000;
+                    const c0 = sampleCurveXY(scene?.data.entranceCamCenterCurve ?? null, 0);
+                    if (c0) apertureMask.position.set(c0[0], c0[1]);
+                    sceneContainer.addChild(apertureMask);
+                }
                 const scrollLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];
                 const followLayers: PIXI.Mesh[] = [];
@@ -2247,14 +2598,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     bounds,
                     authoredDisplayBounds,
                     authoredTightBounds,
+                    authoredTightShift,
+                    previewBounds,
                     entranceViewRatio: authoredFrame?.viewPx2 && authoredFrame?.viewPx ? (authoredFrame.viewPx2 as number) / authoredFrame.viewPx : null,
                     entranceDuration: scene?.data.entranceDuration ?? null,
                     entranceFade: sceneDrivesEntranceFade(scene?.data ?? null) ? null : (scene?.data.entranceFade ?? null),
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
                     entranceCamCenterCurve: (scene?.data.entranceCamCenterCurve as [number, number, number][] | undefined) ?? null,
+                    entranceCamRollCurve: (scene?.data.entranceCamRollCurve as [number, number][] | undefined) ?? null,
                     entranceFrameSize,
                     sceneLayers: opts.mode === "entrance" && scene ? [scene.background, scene.foreground, ...(sceneOverlay ? [sceneOverlay] : [])] : null,
+                    aperture,
+                    apertureMask,
                     scrollLayers,
                     ramLayers,
                     followLayers,
@@ -2287,13 +2643,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 separatorWash: [],
                 authoredDisplayBounds: null,
                 authoredTightBounds: null,
+                authoredTightShift: null,
+                previewBounds: null,
                 entranceViewRatio: null,
                 entranceDuration: null,
                 entranceFade: null,
                 entranceTransform: null,
                 entranceOrthoCurve: null,
                 entranceCamCenterCurve: null,
+                entranceCamRollCurve: null,
                 entranceFrameSize: null,
+                aperture: null,
+                apertureMask: null,
                 sceneLayers: null,
                 scrollLayers: [],
                 ramLayers: [],
@@ -2361,6 +2722,51 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             particlesFg: m(particlesRef.current?.foreground),
                             screen: { w: app.screen.width, h: app.screen.height },
                         };
+                    };
+                    // Spine CLIPPING attachments, and whether pixi-spine actually applied them.
+                    // Civilight Eterna's entrance is the only captured skin the game pillarboxes
+                    // (a hard 1920x1080 aperture inside 2340x1080), and hers is the only `_Start`
+                    // skeleton that ships clipping attachments — so the two need to be compared
+                    // directly. `applied` distinguishes "the skeleton has no clip" from "it has one
+                    // and our draw-order splicing tore the clippingContainer apart", which look the
+                    // same in a render but need opposite fixes.
+                    const w2 = window as unknown as { __dynClip?: () => unknown };
+                    w2.__dynClip = () => {
+                        const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;
+                        const sp = c?.spine as unknown as (PIXI.Container & { skeleton?: Record<string, unknown> }) | undefined;
+                        const sk = sp?.skeleton as unknown as { slots?: unknown[] } | undefined;
+                        if (!sk?.slots) return "NO SKELETON";
+                        const wt = sp?.worldTransform;
+                        const out: unknown[] = [];
+                        for (const raw of sk.slots) {
+                            const slot = raw as Record<string, unknown> & { getAttachment?: () => unknown };
+                            const att = slot.getAttachment?.() as Record<string, unknown> | null;
+                            if (!att || att.endSlot === undefined) continue;
+                            const n = (att.worldVerticesLength as number) ?? 0;
+                            const verts = new Float32Array(n);
+                            (att.computeWorldVertices as (s: unknown, a: number, b: number, v: Float32Array, o: number, st: number) => void)?.(slot, 0, n, verts, 0, 2);
+                            let x0 = Infinity;
+                            let x1 = -Infinity;
+                            let y0 = Infinity;
+                            let y1 = -Infinity;
+                            for (let i = 0; i < n; i += 2) {
+                                x0 = Math.min(x0, verts[i]); x1 = Math.max(x1, verts[i]);
+                                y0 = Math.min(y0, verts[i + 1]); y1 = Math.max(y1, verts[i + 1]);
+                            }
+                            const sx = (x: number, y: number) => (wt ? { x: wt.a * x + wt.c * y + wt.tx, y: wt.b * x + wt.d * y + wt.ty } : { x, y });
+                            const p0 = sx(x0, y0), p1 = sx(x1, y1);
+                            const cc = slot.clippingContainer as PIXI.Container | undefined;
+                            out.push({
+                                slot: (slot.data as Record<string, unknown> | undefined)?.name,
+                                attachment: att.name,
+                                endSlot: (att.endSlot as Record<string, unknown> | null)?.name ?? null,
+                                verts: n / 2,
+                                localBox: { x: x0, y: y0, w: x1 - x0, h: y1 - y0, aspect: (x1 - x0) / (y1 - y0) },
+                                screenBox: { x: Math.min(p0.x, p1.x), y: Math.min(p0.y, p1.y), w: Math.abs(p1.x - p0.x), h: Math.abs(p1.y - p0.y) },
+                                applied: { hasGraphics: !!slot.currentGraphics, clipChildren: cc ? cc.children.length : -1 },
+                            });
+                        }
+                        return { screen: { w: app.screen.width, h: app.screen.height }, clips: out };
                     };
                 }
 
@@ -2503,8 +2909,26 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // 1500 px view). Frame the drawn CONTENT instead. 70 of the 82 dynchar
                         // skins take this path; the 12 with an entrance are untouched, which is
                         // why the three measured reference skins cannot move.
-                        const whole = fitWholeArt() ? main.contentBounds : null;
-                        const settle = whole ?? gameFrame;
+                        // `?statcam=1` reproduces the game's SKIN-PREVIEW shot, which is NOT this
+                        // archive shot. The archive view contains the whole cut-out with margins;
+                        // the preview runs scene content edge to edge with no margin on any side,
+                        // so it is an authored camera box fitted by HEIGHT (see `fitRef`), and the
+                        // TIGHT `_adjustes[1]` stop rather than the wide `_adjustes[0]` one: the
+                        // wide box renders the subject ~1.6x too small against the captures, and
+                        // the authored tight/wide ratio is exactly that (ska 1934.6/1211 = 1.598,
+                        // cel 1929/1246 = 1.548, mly 1990/1341 = 1.484). Gamedata, not a fitted
+                        // constant. Falls back to the wide box for any skin shipping no [1] stop.
+                        // Half the wide `_adjustes[0]` view (see `previewBounds`), else the tight
+                        // box re-seated on its own authored centre (see `authoredTightShift`;
+                        // `?tightoff=0` A/Bs that), else the wide box.
+                        let previewBox = main.previewBounds ?? main.authoredTightBounds ?? gameFrame;
+                        const tshift = main.authoredTightShift;
+                        if (staticCamOn() && !main.previewBounds && tshift && tightOffOn() && main.authoredTightBounds) {
+                            previewBox = { ...previewBox, x: previewBox.x + tshift[0], y: previewBox.y + tshift[1] };
+                        }
+                        const preview = staticCamOn() ? staticCamBox(previewBox) : null;
+                        const whole = fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
+                        const settle = preview ?? whole ?? gameFrame;
                         // The authored framing fits by HEIGHT, which crops the width — fine for a
                         // shot composed around the character, wrong for "show the whole picture".
                         // A content box is only meaningful CONTAINED, which is also what the game's
@@ -2570,6 +2994,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const handoffPanDelta: [number, number] | null = ef?.lastLiveCenter ? [ef.lastLiveCenter[0] - ef.startCenter[0], ef.lastLiveCenter[1] - ef.startCenter[1]] : null;
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
+                    // Retire the scope with the sequencer that drives it. The cover is only ever
+                    // updated from the entrance tick, so leaving it visible here would black the
+                    // frame for the whole hand-off window (Executor renders pure black at 5.5s
+                    // otherwise — the reveal is at 5.2 but the composite swap comes later).
+                    if (entranceSeqRef.current?.apertureMask) entranceSeqRef.current.apertureMask.visible = false;
                     entranceSeqRef.current = null;
                     // The fade is at (or near) full here — hold it briefly so the swap happens
                     // UNDER it, then lift, which is what the recordings show.
@@ -2594,12 +3023,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (i >= 0) composites.splice(i, 1);
                     }
                 };
-                const entrance = await buildComposite(startSkel, startAtlas, {
-                    mode: "entrance",
-                    onEntranceEnd: () => {
-                        doSwapRef.current = swapToMainIdle;
-                    },
-                });
+                // `?statcam=1` declines to build the entrance at all, so the fall-through below opens
+                // the standing idle STATIC at the settled frame — the game's own preview shot. Gating
+                // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
+                // the wire, so a statcam render is not perturbed by the entrance's assets at all.
+                const entrance = staticCamOn()
+                    ? null
+                    : await buildComposite(startSkel, startAtlas, {
+                          mode: "entrance",
+                          onEntranceEnd: () => {
+                              doSwapRef.current = swapToMainIdle;
+                          },
+                      });
                 if (aborted()) {
                     if (entrance && entrance !== "unsupported") entrance.destroy();
                     return; // main stays tracked in compositesRef; cleanup frees it.
@@ -2635,6 +3070,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             sceneLayers: sl,
                             endAt: built.entranceSceneEnd,
                             fireEnd: built.entranceSceneEnd != null ? built.requestEntranceEnd : null,
+                            aperture: built.aperture,
+                            apertureMask: built.apertureMask,
                         };
                         // Drive the entrance camera PURELY from gamedata: the exporter-accumulated camera
                         // rig track (`entranceCamCenterCurve`, absolute mesh-px frame centre) for the
@@ -2659,6 +3096,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 root: built.root,
                                 ortho: built.entranceOrthoCurve ?? null,
                                 camCenter: built.entranceCamCenterCurve,
+                                camRoll: built.entranceCamRollCurve,
                                 camCuts: detectCurveCuts(built.entranceCamCenterCurve, built.entranceFrameSize),
                                 frameSize: built.entranceFrameSize,
                                 centerBlend,

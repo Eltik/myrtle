@@ -850,6 +850,19 @@ function backdropDemoteEnabled(): boolean {
     return new URLSearchParams(window.location.search).get("bdp") !== "0";
 }
 
+/** `?uniskip=0` restores the old flat 150 flow-map luminance cut (diagnostic). */
+function uniformFieldSkipOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("uniskip") !== "0";
+}
+
+/** `?meshtile=0` restores the old behaviour where a MESH-render texture-sheet system sampled the
+ *  whole atlas instead of its live tile (diagnostic). */
+function sheetMeshTilingOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("meshtile") !== "0";
+}
+
 /** `?nocull=1` disables the off-screen spawn cull (diagnostic). */
 function cullDisabled(): boolean {
     if (typeof window === "undefined") return false;
@@ -3078,7 +3091,7 @@ class RamEmitter {
             // Every `_ST` in the shader then applies ON TOP of the tile, which is Unity's
             // own order — without it a sheet system samples the WHOLE atlas per quad and
             // stamps the grid, which is why such systems used to be barred from this path.
-            if (sheet && this.sheetTiles > 1 && !this.meshGeo) {
+            if (sheet && this.sheetTiles > 1 && sheetMeshTilingOn()) {
                 const prog = sheet.frameOverTime ? sampleCurve(sheet.frameOverTime, lf) : lf;
                 const cycles = sheet.cycles && sheet.cycles > 0 ? sheet.cycles : 1;
                 const fi = Math.min(this.sheetTiles - 1, Math.max(0, Math.floor(prog * cycles * this.sheetTiles) % this.sheetTiles));
@@ -3086,11 +3099,27 @@ class RamEmitter {
                 const ch = 1 / sheet.tilesY;
                 const u0 = (fi % sheet.tilesX) * cw;
                 const v0 = Math.floor(fi / sheet.tilesX) * ch;
-                const us = [u0, u0 + cw, u0 + cw, u0];
-                const vs = [v0, v0, v0 + ch, v0 + ch];
-                for (let k = 0; k < 4; k++) {
-                    uv[vp + k * 2] = us[k];
-                    uv[vp + k * 2 + 1] = vs[k];
+                if (mg) {
+                    // MESH particle: Unity's Texture Sheet Animation applies to mesh render mode
+                    // too — it maps the mesh's OWN UVs into the live tile. Excluding mesh geometry
+                    // here left every mesh+sheet system sampling the WHOLE atlas, which stamps the
+                    // grid: Civilight Eterna's seven background planes each carry a 1x2 sheet whose
+                    // two frames are different landscape paintings, so both were drawn stacked with
+                    // a hard seam across the backdrop instead of one frame filling it. For a
+                    // unit-quad billboard `u0 + u*cw` reduces exactly to the corner form below, so
+                    // this is one rule for both paths rather than a special case.
+                    const mu = mg.uv;
+                    for (let k = 0; k < vpp; k++) {
+                        uv[vp + k * 2] = u0 + (mu[k * 2] ?? 0) * cw;
+                        uv[vp + k * 2 + 1] = v0 + (mu[k * 2 + 1] ?? 0) * ch;
+                    }
+                } else {
+                    const us = [u0, u0 + cw, u0 + cw, u0];
+                    const vs = [v0, v0, v0 + ch, v0 + ch];
+                    for (let k = 0; k < 4; k++) {
+                        uv[vp + k * 2] = us[k];
+                        uv[vp + k * 2 + 1] = vs[k];
+                    }
                 }
             }
             const vc = q * vpp * 4;
@@ -3483,7 +3512,20 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         // texture that draws today can start being dropped. The `maxLum >= 64` floor keeps
         // near-black noise (where a huge ratio is meaningless) out.
         const brightCore = (maxLum > 200 && maxLum > meanLum * 4) || (maxLum >= 64 && maxLum > meanLum * 8);
-        const skip = meanLum < 150 && meanSat < 0.2 && !brightCore;
+        // …and the same peak-to-mean property raises the LUMINANCE ceiling, because
+        // uniformity — not brightness — is what separates a shader warp-input from a drawable
+        // sprite. The `< 150` cut leaks a mid-grey flow map that happens to sit just above it:
+        // Civilight Eterna's particle `tex 0` measures meanLum 158, meanSat 0.013 and a
+        // peak-to-mean of **1.26** (the most uniform field in her set), and it is what her seven
+        // full-frame background mesh planes are drawn with — stamping a pale grey wash over the
+        // whole frame where the game paints a dark landscape. That single texture is most of her
+        // "blown background".
+        //
+        // Bounded deliberately at 200 rather than removed: a white FLASH panel is uniform and
+        // desaturated too (meanLum ~250), and must keep drawing. So the ceiling only lifts from
+        // 150 to 200, and only for a field with no concentrated peak at all.
+        const uniformField = maxLum < meanLum * 2 && uniformFieldSkipOn();
+        const skip = meanLum < (uniformField ? 200 : 150) && meanSat < 0.2 && !brightCore;
         const cx = (w - 1) / 2;
         const cy = (h - 1) / 2;
         const rMax = Math.min(w, h) / 2;

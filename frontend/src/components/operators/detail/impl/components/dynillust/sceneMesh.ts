@@ -90,6 +90,10 @@ export interface ISceneLayer {
      *  Replayed each frame at the entrance track time, REPLACING `tint`. Absent = the
      *  material colour is static. Only `_Start` scenes carry it. */
     colorCurve?: [number, number, number, number, number][] | null;
+    /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
+     *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
+     *  layer's transform (or an ancestor's) — 3 layers across 2 composites corpus-wide. */
+    scaleCurve?: [number, number][] | null;
     /** SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space) for
      *  a Ram-family scene layer. The frontend offsets the layer's UVs by `t · [u, v]` each
      *  frame (continuous scene clock), reproducing the shader's `_Time`-driven scroll. Absent
@@ -174,6 +178,11 @@ export interface ISceneData {
      *  accumulated from the FULL camera rig (positions/rotations/scales) in the extractor. PURE
      *  gamedata: the entrance frame is centred here each frame, no measurement/inference. `_Start`. */
     entranceCamCenterCurve?: [number, number, number][] | null;
+    /** ENTRANCE camera ROLL about the view axis, `[t_s, degrees]`. Present only when the rig is
+     *  actually rolled: 12 of the 13 entrance skins have an exactly axis-aligned camera basis
+     *  (right = +X, up = +Y, roll 0.000°) and ship `null`. Wiš'adel's rig rolls
+     *  −11.34° → −29.56° over her first 2.4 s. */
+    entranceCamRollCurve?: [number, number][] | null;
     /** ENTRANCE voice-line offset (s), `_params.charVoiceOffset` — when the reformed character
      *  starts talking. Exported but currently unread (the hand-off fires from the `_Start`
      *  clip's own `complete`). */
@@ -183,8 +192,29 @@ export interface ISceneData {
     layers: ISceneLayer[];
 }
 
+/** A circular VIEWPORT APERTURE the entrance is seen through — everything outside it is
+ *  black. See {@link sceneAperture}. */
+export interface ISceneAperture {
+    /** Radius in MESH px. The aperture rides the camera centre (the shot tracks the scope),
+     *  so this is a scene-scaled radius and the camera's zoom sizes it on screen for free. */
+    radius: number;
+    /** The rim layer's own authored colour curve, which drives the surround completely: it holds
+     *  black at full alpha for the scoped span, flips to WHITE for the reveal flash, then drops to
+     *  alpha 0. Preferred over {@link until} — it carries the flash and the exact end time. */
+    curve: [number, number, number, number, number][] | null;
+    /** Fallback end time (first `rootRevealFrom`) for a rim with no curve. */
+    until: number | null;
+    /** The rim transform's ENTRANCE scale multiplier over time, or null when unanimated.
+     *  Executor's scope is animated: the game scales the rim 0.69..1.25 across the cinematic and
+     *  the aperture follows, which a frozen radius cannot express (measured width/camera-scale
+     *  swings 295..521 where ours was a constant 425). */
+    scaleCurve: [number, number][] | null;
+}
+
 export interface ILoadedScene {
     data: ISceneData;
+    /** Non-null only for a scene that is viewed through a circular aperture (1 skin in 82). */
+    aperture: ISceneAperture | null;
     /** Layers behind the character (sort < characterSort). */
     background: PIXI.Container;
     /** Layers in front of the character (sort > characterSort). */
@@ -223,6 +253,10 @@ interface ISceneTex {
     opaqueFrac: number;
     /** Alpha-weighted mean saturation of the texture in [0,1]. */
     sat: number;
+    /** When this texture is an ANNULUS, its inner edge as a fraction of the half-size;
+     *  null otherwise. Non-null is what makes a layer eligible to be a viewport
+     *  aperture — see {@link sceneAperture}. */
+    annulusInner: number | null;
 }
 
 /** A Ram-masked layer's mask textures, resolved from the scene's shared texture list.
@@ -320,6 +354,64 @@ function analyzeTexture(img: HTMLImageElement): { whiteness: number; opaqueFrac:
     }
 }
 
+/** Radial alpha profile test: is this texture an ANNULUS — transparent core, one
+ *  opaque band, transparent rim? Returns the INNER edge as a fraction of the
+ *  half-size (the 50%-alpha crossing scanning outward), or null if it is not a ring.
+ *
+ *  This is the signature of a viewport APERTURE — see {@link sceneAperture}. Sampled
+ *  on a fixed 128x128 grid so the cost is independent of the source texture size. */
+function annulusInner(img: HTMLImageElement): number | null {
+    try {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        // A ring is authored square and centred; a non-square texture is something else.
+        if (!w || !h || w !== h || w < 32) return null;
+        const N = 128;
+        const canvas = document.createElement("canvas");
+        canvas.width = N;
+        canvas.height = N;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return null;
+        ctx.drawImage(img, 0, 0, N, N);
+        const px = ctx.getImageData(0, 0, N, N).data;
+        // Mean alpha in 100 normalised-radius bins about the centre.
+        const BINS = 100;
+        const sum = new Float64Array(BINS);
+        const cnt = new Float64Array(BINS);
+        const c = (N - 1) / 2;
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const r = Math.hypot(x - c, y - c) / (N / 2);
+                if (r >= 1) continue;
+                const b = Math.min(BINS - 1, Math.floor(r * BINS));
+                sum[b] += px[(y * N + x) * 4 + 3];
+                cnt[b]++;
+            }
+        }
+        const at = (b: number) => (cnt[b] > 0 ? sum[b] / cnt[b] : 0);
+        const mean = (lo: number, hi: number) => {
+            let s = 0;
+            let n = 0;
+            for (let b = lo; b < hi; b++) {
+                s += at(b) * cnt[b];
+                n += cnt[b];
+            }
+            return n > 0 ? s / n : 0;
+        };
+        // Core clear, rim clear, and a solid band somewhere between — all three, or it
+        // is a disc / a blob / a full-frame plate rather than a ring.
+        if (mean(0, 45) >= 8) return null;
+        if (mean(97, 100) >= 8) return null;
+        let band = 0;
+        for (let b = 45; b < 98; b++) band = Math.max(band, at(b));
+        if (band <= 200) return null;
+        for (let b = 30; b < BINS; b++) if (at(b) > 127) return b / BINS;
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 function loadTexture(url: string): Promise<ISceneTex> {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -334,7 +426,7 @@ function loadTexture(url: string): Promise<ISceneTex> {
             const glow = darkDropGlow(img);
             if (glow) glow.wrapMode = PIXI.WRAP_MODES.REPEAT;
             const { whiteness, opaqueFrac, sat } = analyzeTexture(img);
-            resolve({ raw, glow: glow ?? raw, whiteness, opaqueFrac, sat });
+            resolve({ raw, glow: glow ?? raw, whiteness, opaqueFrac, sat, annulusInner: annulusInner(img) });
         };
         img.onerror = () => reject(new Error(`Failed to load scene texture: ${url}`));
         img.src = url;
@@ -1301,7 +1393,21 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         // activation (whichever is later). `isRevealOverlay` above deliberately keys
         // on the clip window alone — a root-revealed layer is scenery, not an overlay.
         const from = layer.activeFrom ?? null;
-        const rootFrom = layer.rootRevealFrom ?? null;
+        // DIAGNOSTIC (`?rrf=0`): ignore the cross-root activation beat, restoring the older
+        // "union always-on" behaviour. Tests whether the idle prefab's copy of the scene is
+        // being withheld during a window where the game already shows it.
+        // DIAGNOSTIC (`?rrf=0`): ignore the cross-root activation beat entirely. Tests whether
+        // the idle prefab's copy of the scene is being withheld during a window where the game
+        // already shows it. (`?rrfbg=1`, background-only, is applied in `buildScene` where
+        // `characterSort` is in scope.)
+        // DIAGNOSTIC (`?rrf=0` off entirely, `?rrft=<seconds>` override the beat). Sweeping the
+        // beat is what separates "the gate is wrong" from "its time is wrong" — on Wiš'adel the
+        // sweep came back cleanly MONOTONE with the shipped 12.0 optimal and every earlier value
+        // worse, which closed the cross-root avenue for her.
+        const q0 = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+        const rrfOn = !q0 || q0.get("rrf") !== "0";
+        const rrfT = q0 ? parseFloat(q0.get("rrft") ?? "") : Number.NaN;
+        const rootFrom = !rrfOn ? null : layer.rootRevealFrom == null ? null : Number.isFinite(rrfT) ? rrfT : layer.rootRevealFrom;
         rt.__activeFrom = from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
         rt.__activeUntil = layer.activeUntil ?? null;
         rt.__sort = layer.sort;
@@ -1511,6 +1617,62 @@ export async function loadSceneFrame(sceneUrl: string): Promise<ISceneFrame | nu
 }
 
 /**
+ * Derive the entrance's circular VIEWPORT APERTURE, or null when it has none.
+ *
+ * Executor the Ex Foedere's entrance is watched down a rifle scope: the first 5.2 s are
+ * clipped to a circle with a HARD pure-black surround (measured max luma outside: 0.0),
+ * opening to the full frame at the reveal. No texture paints that surround — the only
+ * mark of it in the data is the scope's rim, which is an unmistakable trio:
+ *
+ *   1. its texture is an ANNULUS (see {@link annulusInner}),
+ *   2. it is tinted pure BLACK, and
+ *   3. it sits at the very TOP of the sort order (hers is sort 50; nothing else exceeds 16).
+ *
+ * The aperture is then the rim's INNER circle at SCENE scale, riding the camera centre. Two
+ * measurements pin that down: across the capture the scope's centre never leaves ~15 px of the
+ * frame centre while the camera pans hundreds of units (so the shot TRACKS the scope — its
+ * authored quad sits far off-camera and is not where it is drawn), and its radius is dead
+ * constant over exactly the span where the ortho curve is constant, then moves only when the
+ * camera does. Scaling the rim's inner radius by the camera zoom predicts the observed clip to
+ * within 2% (texture says 0.734 of the half-size; the capture implies 0.754).
+ *
+ * The rim layer's own `colorCurve` then drives the surround end to end, and is the whole story:
+ * it holds `(0,0,0,1)` — black, opaque — for the scoped span, flips to `(1,1,1,1)` for the
+ * reveal FLASH, and drops to alpha 0 three hundredths later. So the cover is filled WHITE and
+ * tinted by the curve, which yields black, then the flash, then nothing, with no inferred timing
+ * at all. Only a rim with no curve falls back to the first `rootRevealFrom`: a scoped entrance
+ * ships its scene twice —
+ * once as the scoped "before" root and once as the revealed "after" root — and the reveal is
+ * exactly when the scope opens (hers: both 5.2, matching the capture's 100%-lit frame to the
+ * frame). Scanning all 82 exported skins, these conditions select HER AND NOTHING ELSE, so
+ * this cannot disturb a skin that has no scope.
+ */
+function sceneAperture(data: ISceneData, bases: ISceneTex[]): ISceneAperture | null {
+    const layers = data.layers ?? [];
+    if (!layers.length) return null;
+    const top = Math.max(...layers.map((l) => l.sort));
+    for (const l of layers) {
+        if (l.sort !== top) continue;
+        const t = l.tint;
+        if (!t || Math.max(t[0], t[1], t[2]) > 0.02) continue;
+        const inner = bases[l.tex]?.annulusInner;
+        if (inner == null) continue;
+        const xs = l.pos.filter((_, i) => i % 2 === 0);
+        const ys = l.pos.filter((_, i) => i % 2 === 1);
+        const halfW = (Math.max(...xs) - Math.min(...xs)) / 2;
+        const halfH = (Math.max(...ys) - Math.min(...ys)) / 2;
+        const reveals = layers.map((q) => q.rootRevealFrom).filter((v): v is number => v != null);
+        return {
+            radius: Math.min(halfW, halfH) * inner,
+            curve: l.colorCurve ?? null,
+            until: reveals.length ? Math.min(...reveals) : null,
+            scaleCurve: l.scaleCurve ?? null,
+        };
+    }
+    return null;
+}
+
+/**
  * Fetch and build the background/foreground mesh containers for a scene.
  * Returns null when there is no scene JSON (the common case — the skin's scene
  * is fully in the spine), so callers fall back to spine-only rendering.
@@ -1529,7 +1691,7 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         // scene JSON may still carry the entrance CAMERA track. Return an empty-mesh scene so that
         // data still reaches the entrance camera (SceneIllust sources entranceCamCenterCurve etc.
         // from scene.data); returning null here would discard the whole entrance camera move.
-        if (data.entranceCamCenterCurve?.length) return { data, background: new PIXI.Container(), foreground: new PIXI.Container(), gaps: [], hasDarkBackdrop: false };
+        if (data.entranceCamCenterCurve?.length) return { data, aperture: null, background: new PIXI.Container(), foreground: new PIXI.Container(), gaps: [], hasDarkBackdrop: false };
         return null;
     }
 
@@ -1829,5 +1991,5 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         return null;
     }
 
-    return { data, background, foreground, gaps, hasDarkBackdrop };
+    return { data, aperture: sceneAperture(data, bases), background, foreground, gaps, hasDarkBackdrop };
 }

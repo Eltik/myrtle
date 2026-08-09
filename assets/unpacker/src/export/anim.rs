@@ -1042,16 +1042,22 @@ fn camera_ancestor_gos(all_objects: &HashMap<i64, (i32, Value)>) -> std::collect
 /// authored away from the origin (skadi2 "Iteration": root at (8.53, 25.19) → the camera track
 /// landed ~2500 px below the scene and the whole entrance framed empty space).
 #[must_use]
+/// The ENTRANCE camera's frame-CENTRE trajectory and, when the rig is rolled, its ROLL.
+///
+/// Returns `(centre[(t, cx, cy)], roll[(t, degrees)])`. The roll is `None` unless the rig actually
+/// rotates the camera about the view axis — 12 of the 13 entrance skins have an exactly
+/// axis-aligned camera basis (right = +X, up = +Y, roll 0.000°), so they keep a `None` and their
+/// exported centre is bit-identical.
 pub fn entrance_camera_track(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
-) -> Option<Vec<(f32, f32, f32)>> {
+) -> (Option<Vec<(f32, f32, f32)>>, Option<Vec<(f32, f32)>>) {
     use super::mesh::Mat4;
     // Ordered chain camera→root (transform pids) + maps.
     let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
     let mut tf_father: HashMap<i64, i64> = HashMap::new();
     let mut tf_go: HashMap<i64, i64> = HashMap::new();
-    let mut cam_go: Option<i64> = None;
+    let mut cam_go: Option<(i64, i64)> = None;
     for (pid, (cid, v)) in all_objects {
         match cid {
             4 | 224 => {
@@ -1063,7 +1069,18 @@ pub fn entrance_camera_track(
                     tf_father.insert(*pid, f);
                 }
             }
-            20 => cam_go = v.get("m_GameObject").and_then(get_path_id).or(cam_go),
+            // Deterministic camera pick: LOWEST path_id, not "whichever this HashMap happened to
+            // yield last". A bundle shipping several cameras would otherwise flip between runs —
+            // the exact bug already fixed for the `_cameraSize` display controllers in spine.rs.
+            // (Every entrance bundle checked so far ships exactly one, so this is a guard.)
+            20 => {
+                if let Some(g) = v.get("m_GameObject").and_then(get_path_id) {
+                    cam_go = Some(match cam_go {
+                        Some((p0, g0)) if p0 <= *pid => (p0, g0),
+                        _ => (*pid, g),
+                    });
+                }
+            }
             _ => {}
         }
     }
@@ -1075,7 +1092,7 @@ pub fn entrance_camera_track(
         .filter_map(|(_, v)| v.get("m_GameObject").and_then(get_path_id))
         .collect();
     let mut chain: Vec<i64> = Vec::new(); // transform pids, camera→(just below the spine root)
-    let mut cur = cam_go.and_then(|g| go_to_tf.get(&g).copied());
+    let mut cur = cam_go.and_then(|(_, g)| go_to_tf.get(&g).copied());
     for _ in 0..64 {
         let Some(tf) = cur else { break };
         if tf_go.get(&tf).is_some_and(|go| spine_gos.contains(go)) {
@@ -1085,10 +1102,12 @@ pub fn entrance_camera_track(
         cur = tf_father.get(&tf).copied().filter(|&f| f != 0);
     }
     if chain.is_empty() {
-        return None;
+        return (None, None);
     }
-    // Static local TRS of each chain transform.
-    let local_trs = |tf: i64, pos_override: Option<[f32; 3]>| -> Mat4 {
+    // Static local TRS of each chain transform. `unit_scale` builds the same node with scale 1
+    // on every axis — used ONLY to derive the screen basis (see `axis` below), never to place the
+    // camera.
+    let local_trs = |tf: i64, pos_override: Option<[f32; 3]>, rot_override: Option<[f32; 4]>, unit_scale: bool| -> Mat4 {
         let Some((_, v)) = all_objects.get(&tf) else {
             return Mat4::identity();
         };
@@ -1102,7 +1121,7 @@ pub fn entrance_camera_track(
             [g("x"), g("y"), g("z")]
         };
         let pos = pos_override.unwrap_or_else(|| vec3("m_LocalPosition", 0.0));
-        let q = {
+        let q = rot_override.unwrap_or_else(|| {
             let g = |k: &str, d: f32| {
                 v.get("m_LocalRotation")
                     .and_then(|x| x.get(k))
@@ -1110,15 +1129,20 @@ pub fn entrance_camera_track(
                     .unwrap_or(d.into()) as f32
             };
             [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
-        };
-        let mut s = vec3("m_LocalScale", 1.0);
-        // Some rig transforms ship a 0 scale component (unused axis); treat as 1 so the chain
-        // doesn't collapse — the camera view only uses X/Y and forward.
-        for c in &mut s {
-            if c.abs() < 1e-6 {
-                *c = 1.0;
-            }
-        }
+        });
+        // A ZERO scale component is REAL, not a defect to be patched out. Unity flattens that
+        // axis, so a child's local offset along it contributes NOTHING to the world position —
+        // rigs use this deliberately to neutralise an axis of a camera's own local placement.
+        // Muelsyse: `Dummy002` ships scale (1, 0, 1), which cancels the Main Camera's local
+        // +2.9947 Y. Substituting 1 let that through as a 299.47 authored-px vertical error and
+        // left X (scale 1, so unaffected) exactly right — the signature measured in the render:
+        // MADC 87.168 -> 23.699 at a +300 px Y shift, with 0 px wanted in X.
+        //
+        // The substitution existed because the screen basis below is read off this matrix's
+        // columns, and a collapsed column normalises to garbage. That is fixed properly by taking
+        // the basis from a UNIT-SCALE build of the same chain: an orthonormal basis belongs to the
+        // rotation, not to the scale.
+        let s = if unit_scale { [1.0, 1.0, 1.0] } else { vec3("m_LocalScale", 1.0) };
         Mat4::trs(pos, q, s)
     };
     // Find EVERY animated chain transform + its 3-component position curve. A camera dolly may split
@@ -1138,6 +1162,10 @@ pub fn entrance_camera_track(
     let is_ancestor = build_ancestor_check(all_objects);
     let clip_animators = build_clip_animator_gos(all_objects);
     let mut animated: HashMap<i64, [Vec<(f32, f32)>; 3]> = HashMap::new();
+    // ROTATION curves on the same chain, keyed transform pid -> (is_euler, per-component curves).
+    // Wiš'adel's `_Start` animates her camera parent's EULER Z from 11.338° to 29.556° over the
+    // first 2.4 s; reading only `attr == 1` froze the shot at its opening roll.
+    let mut animated_rot: HashMap<i64, (bool, Vec<Vec<(f32, f32)>>)> = HashMap::new();
     for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 || !is_entrance_clip(v) {
             continue;
@@ -1154,13 +1182,35 @@ pub fn entrance_camera_track(
             // that plays this clip and then pick the candidate that is actually on the
             // camera chain — an arbitrary pick could name the wrong twin and drop the
             // camera move entirely.
-            let scoped = (type_id == 4 && attr == 1)
+            let is_pos = type_id == 4 && attr == 1;
+            let is_rot = type_id == 4 && (attr == 2 || attr == 4);
+            let scoped = (is_pos || is_rot)
                 .then(|| hash_to_gos.get(&path))
                 .flatten()
                 .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
-            if let Some(&go) = scoped
-                .as_deref()
-                .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
+            if is_rot
+                && let Some(&go) = scoped
+                    .as_deref()
+                    .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
+                && let Some(&tf) = go_to_tf.get(&go)
+            {
+                let cs: Vec<Option<Vec<(f32, f32)>>> = (0..count).map(|i| decode_curve_at(v, gidx + i)).collect();
+                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() > 1)) {
+                    let entry = animated_rot.entry(tf).or_insert_with(|| (attr == 4, vec![Vec::new(); count]));
+                    for (i, c) in cs.into_iter().enumerate() {
+                        if let Some(c) = c
+                            && i < entry.1.len()
+                            && c.len() > entry.1[i].len()
+                        {
+                            entry.1[i] = c;
+                        }
+                    }
+                }
+            }
+            if is_pos
+                && let Some(&go) = scoped
+                    .as_deref()
+                    .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
                 && let Some(&tf) = go_to_tf.get(&go)
             {
                 let cs = [
@@ -1185,8 +1235,8 @@ pub fn entrance_camera_track(
             gidx += count;
         }
     }
-    if animated.is_empty() {
-        return None;
+    if animated.is_empty() && animated_rot.is_empty() {
+        return (None, None);
     }
     // Timeline = union of EVERY animated axis's keyframe times.
     let mut times: Vec<f32> = animated
@@ -1195,10 +1245,11 @@ pub fn entrance_camera_track(
         .flatten()
         .map(|(t, _)| *t)
         .collect();
+    times.extend(animated_rot.values().flat_map(|(_, cs)| cs.iter().flatten()).map(|(t, _)| *t));
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     times.dedup();
     if times.len() < 2 {
-        return None;
+        return (None, None);
     }
     let sample = |c: &Vec<(f32, f32)>, t: f32, fallback: f32| -> f32 {
         if c.is_empty() {
@@ -1247,42 +1298,77 @@ pub fn entrance_camera_track(
             None => sp,
         }
     };
+    // An animated transform's local ROTATION at time t, as a quaternion. Euler curves (attr 4)
+    // are Unity degrees in ZXY order; quaternion curves (attr 2) are used as-is.
+    let sample_rot_tf = |tf: i64, t: f32| -> Option<[f32; 4]> {
+        let (is_euler, cs) = animated_rot.get(&tf)?;
+        if *is_euler {
+            let e: Vec<f32> = (0..3).map(|i| cs.get(i).map_or(0.0, |c| sample(c, t, 0.0))).collect();
+            let (rx, ry, rz) = (e[0].to_radians(), e[1].to_radians(), e[2].to_radians());
+            let (cx, sx) = ((rx * 0.5).cos(), (rx * 0.5).sin());
+            let (cy, sy) = ((ry * 0.5).cos(), (ry * 0.5).sin());
+            let (cz, sz) = ((rz * 0.5).cos(), (rz * 0.5).sin());
+            let qmul = |a: [f32; 4], b: [f32; 4]| {
+                [
+                    a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+                    a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+                    a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+                    a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2],
+                ]
+            };
+            // Unity's Quaternion.Euler(x, y, z) composes as Ry * Rx * Rz.
+            Some(qmul(qmul([0.0, sy, 0.0, cy], [sx, 0.0, 0.0, cx]), [0.0, 0.0, sz, cz]))
+        } else {
+            let q: Vec<f32> = (0..4)
+                .map(|i| {
+                    let d = if i == 3 { 1.0 } else { 0.0 };
+                    cs.get(i).map_or(d, |c| sample(c, t, d))
+                })
+                .collect();
+            Some([q[0], q[1], q[2], q[3]])
+        }
+    };
     // Accumulate the world matrix (root→camera) at time t, substituting EVERY animated transform's
-    // sampled position.
-    let world_at = |t: f32| -> Mat4 {
+    // sampled position AND rotation.
+    let world_at = |t: f32, unit_scale: bool| -> Mat4 {
         let mut m = Mat4::identity();
         for &tf in chain.iter().rev() {
-            let local = if animated.contains_key(&tf) {
-                local_trs(tf, Some(sample_tf(tf, t)))
-            } else {
-                local_trs(tf, None)
-            };
+            let pos = animated.contains_key(&tf).then(|| sample_tf(tf, t));
+            let rot = sample_rot_tf(tf, t);
+            let local = local_trs(tf, pos, rot, unit_scale);
             m = m.mul(&local);
         }
         m
     };
-    // Screen axes from the camera's world orientation (t0). right = col0, up = col1.
-    let m0 = world_at(times[0]);
-    let axis = |col: usize| {
-        let c = [m0.0[0][col], m0.0[1][col], m0.0[2][col]];
+    // The camera's ROLL about its view axis, per frame, in the spine-root plane.
+    let roll_at = |t: f32| -> f32 {
+        let m = world_at(t, true);
+        let c = [m.0[0][0], m.0[1][0], m.0[2][0]];
         let n = (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]).sqrt().max(1e-6);
-        [c[0] / n, c[1] / n, c[2] / n]
+        (c[1] / n).atan2(c[0] / n).to_degrees()
     };
-    let right = axis(0);
-    let up = axis(1);
     let inv = inv_scale as f32;
     let mut out = Vec::with_capacity(times.len());
+    let mut rolls = Vec::with_capacity(times.len());
     for &t in &times {
-        let p = world_at(t).point([0.0, 0.0, 0.0]);
-        // ABSOLUTE frame centre in the spine mesh space (authored px): the camera position projected
-        // onto its screen right/up (an ortho camera's centre is its own in-plane position), scaled by
-        // invScale. `up` is negated because the spine plane is placed Y-flipped (see note above), so
-        // the mesh space is Y-UP with the character to +Y.
-        let cx = (p[0] * right[0] + p[1] * right[1] + p[2] * right[2]) * inv;
-        let cy = -(p[0] * up[0] + p[1] * up[1] + p[2] * up[2]) * inv;
-        out.push((t, cx, cy));
+        let p = world_at(t, false).point([0.0, 0.0, 0.0]);
+        // ABSOLUTE frame centre in the spine mesh space (authored px). An orthographic camera
+        // aimed at the spine PLANE centres the frame on its own position expressed in THAT
+        // plane's axes — so read the world X/Y directly. The previous form projected onto the
+        // CAMERA's own right/up, which is identical while the rig is unrolled (12 of the 13
+        // entrance skins have an exactly axis-aligned basis: right = +X, up = +Y, roll 0.000°)
+        // but folds a rolled rig's rotation INTO the centre, which is wrong twice over — the
+        // centre moves when it should not, and the roll never reaches the renderer.
+        // Wiš'adel is the one rolled rig; her measured correction (+182 px, +25..32 px against
+        // the old form) matches this model's (+182.5, +33.4).
+        // `y` is negated because the spine plane is placed Y-flipped, so mesh space is Y-UP.
+        out.push((t, p[0] * inv, -p[1] * inv));
+        rolls.push((t, roll_at(t)));
     }
-    Some(out)
+    // Emit the roll only when the rig is actually rolled, so every axis-aligned skin keeps a
+    // `None` and its exported scene JSON stays byte-identical.
+    let rolled = rolls.iter().any(|(_, r)| r.abs() > 0.01);
+    (Some(out), rolled.then_some(rolls))
 }
 
 /// The ENTRANCE camera POSITIONAL dolly (pan), extracted from the `_Start` clip that animates a

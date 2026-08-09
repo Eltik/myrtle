@@ -241,28 +241,36 @@ function kneeParam(): number {
 
 /** Calibration points for {@link sceneCompositeGamma}: `[cameraSizePx, exponent]`, ascending.
  *
- *  All three are MEASURED optima on the reference skins — each one is the minimum of a gamma
- *  sweep of that skin's own MADC, re-measured on the current baseline:
+ *  RE-MEASURED 2026-08-07 against the CLEAN 2340x1080 / 100 Mbps entrance captures. The previous
+ *  values were sweep minima against the SALVAGED reference, and that reference is systematically
+ *  DARKER than the real game (measured +5.7 / +4.3 / +1.1 luma fresh-minus-salvage on the three
+ *  skins). Tuning to it therefore darkened the renderer to match a degraded copy — the residual
+ *  showed up as a per-skin gamma of ~1.04 against the clean capture, near zero at black and
+ *  growing through the midtones, which is the signature of an exponent error rather than an
+ *  offset. Every exponent below dropped:
  *
- *      Skadi    cs 1000   1.16 -> 10.879   [1.12 -> 10.530]   1.08 -> 11.102   1.04 -> 12.347
- *      Virtuosa cs 1050   1.10 -> 19.322   [1.075 -> 19.270]  1.05 -> 19.402   1.03 -> 19.634
- *      Mlynar   cs 1111   1.02 -> 17.525   [1.00 -> 17.439]   0.97 -> 17.575   0.94 -> 18.021
+ *      Skadi    cs 1000   1.02 -> 10.679   1.03 -> 10.478  [1.04 -> 10.403]  1.05 -> 10.468   1.06 -> 10.650
+ *      Virtuosa cs 1050   1.01 -> 17.667  [1.02 -> 17.646]  1.03 -> 17.670   1.04 -> 17.782   1.06 -> 18.179
+ *      Mlynar   cs 1111   0.92 -> 17.904  [0.93 -> 17.864]  0.94 -> 17.866   0.95 -> 17.911   0.98 -> 18.300
  *
- *  THE THREE ARE NOT COLLINEAR — the slope steepens from -0.0009 to -0.00123 per px — so the
- *  previous TWO-point line could only fit two of them. It fitted Skadi and Virtuosa exactly and
- *  missed Mlynar by 0.02, costing him 0.086 MADC. Moving its HI anchor to 1.00 (the obvious fix)
- *  merely swaps which point absorbs the error: Mlynar becomes exact but Virtuosa is pulled off
- *  her measured 1.075 to 1.0659 and loses 0.034. Interpolating through all three fits every
- *  measured point exactly and costs nothing anywhere.
+ *  All three minima are INTERIOR and bracketed on both sides. Worth against the clean reference:
+ *  **mly 18.77 -> 17.86, cel 18.57 -> 17.65, ska 12.89 -> 10.40**.
  *
- *  Corpus-checked: 63 of 82 skins change, max |delta gamma| 0.0200, and a 63-skin x 4-beat
- *  render sweep of the (strictly larger-or-equal) anchor-move variant flagged NOTHING — max
- *  frame-mean shift 1.60 luma, ZERO pixels moving more than 8 luma, no saturation or
- *  content-loss change on any skin. */
+ *  The three are still not collinear (slope -0.0004 then -0.0014 per px), so the piecewise
+ *  interpolation through all three is kept — a straight line would again fit only two.
+ *
+ *  ⚠️ This is a MUCH larger move than the previous re-anchoring (|delta gamma| up to 0.08 against
+ *  0.02), and it brightens rather than darkens, so the corpus risk is highlight clipping rather
+ *  than crush. See the saturation sweep recorded alongside it before widening the range further.
+ *
+ *  The old note here said replacing these needed "a fourth and fifth reference CAPTURE". That is
+ *  no longer the binding constraint — the entrance is capturable for ANY skin, owned or not, via
+ *  the FLOT Lookbook viewer's play button, so the calibration set can now be extended by capture
+ *  rather than by inference. */
 const GAMMA_CAL: readonly (readonly [number, number])[] = [
-    [1000, 1.12], // Skadi the Corrupting Heart
-    [1050, 1.075], // Virtuosa
-    [1111, 1.0], // Mlynar
+    [1000, 1.04], // Skadi the Corrupting Heart
+    [1050, 1.02], // Virtuosa
+    [1111, 0.93], // Mlynar
 ];
 
 /**

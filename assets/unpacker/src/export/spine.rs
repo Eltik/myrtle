@@ -124,6 +124,9 @@ pub struct SpineAsset {
     /// ENTRANCE camera FRAME-CENTRE trajectory in authored px: `(time_s, cxPx, cyPx)`, accumulated
     /// from the full camera rig (pure gamedata). The frame is centred here each frame.
     pub bg_entrance_cam_center: Option<Vec<(f32, f32, f32)>>,
+    /// ENTRANCE camera ROLL about the view axis, `[t_seconds, degrees]`. `None` unless the rig is
+    /// actually rolled — 12 of the 13 entrance skins have an axis-aligned camera basis.
+    pub bg_entrance_cam_roll: Option<Vec<(f32, f32)>>,
     /// ENTRANCE voice-line offset (s) from `_params.charVoiceOffset` — when the reformed
     /// cellist starts talking. The seated→standing hand-off beat (the standing form lives at
     /// a different rig position than the seated form, so the entrance hands off to the idle
@@ -210,6 +213,16 @@ pub struct BgQuad {
     /// (distortion-drop / glass-additive) in `export_scene`.
     pub src_blend: f64,
     pub dst_blend: f64,
+    /// ENTRANCE uniform-scale MULTIPLIER keyframes for this layer's own transform, relative
+    /// to the prefab pose the static `mesh` was baked at (so 1.0 = unchanged). `None` when the
+    /// `_Start` clips do not animate this transform's scale.
+    ///
+    /// Scene quads used to consume no transform curve at all — the geometry was frozen at the
+    /// prefab pose — which is why Executor's scope rim exported as a static quad while the game
+    /// animates it. Decoding her curve and scaling the measured aperture by it reproduces the
+    /// capture's radius to ~1% at four of five beats, so this is the missing input rather than an
+    /// anchoring error. See `entrance_transform_curves`.
+    pub scale_curve: Option<Vec<(f32, f32)>>,
     /// ENTRANCE reveal time (seconds) — when this layer's GameObject (or a nearest
     /// ancestor group) is switched ON by an `m_IsActive` curve in the `_Start` clips.
     /// `None` = always active (visible from t=0). Only `_Start` scenes carry non-None.
@@ -792,6 +805,7 @@ pub fn collect_spine_assets(
             bg_entrance_voice,
             bg_entrance_pan_curve,
             bg_entrance_cam_center,
+            bg_entrance_cam_roll,
         ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
@@ -803,7 +817,7 @@ pub fn collect_spine_assets(
             // `entrance_ortho_curve`). Replaces client-side guesswork about the zoom timing.
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects);
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
-            let cam_center = super::anim::entrance_camera_track(all_objects, inv);
+            let (cam_center, cam_roll) = super::anim::entrance_camera_track(all_objects, inv);
             (
                 dur,
                 fade,
@@ -814,9 +828,10 @@ pub fn collect_spine_assets(
                 voice,
                 pan_curve,
                 cam_center,
+                cam_roll,
             )
         } else {
-            (None, None, None, None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None, None, None)
         };
 
         assets.push(SpineAsset {
@@ -844,6 +859,7 @@ pub fn collect_spine_assets(
             bg_entrance_ortho_curve,
             bg_entrance_pan_curve,
             bg_entrance_cam_center,
+            bg_entrance_cam_roll,
             bg_entrance_voice,
             particles,
         });
@@ -986,8 +1002,27 @@ fn collect_dynchar_bg_quads(
     // A scene layer inherits the reveal of its nearest such ancestor. Only for the
     // `_Start` cinematic — the main scene's clip toggles are idle/interact state, not
     // an entrance sequence, so its layers stay always-visible.
+    // ⚠️ Do NOT lift this `is_entrance` gate to "fix" a missing idle animation. Tried and
+    // REFUTED (2026-08-06): the clean skin-preview capture shows Mlynar's IDLE stepping from mean
+    // luma ~119 to ~96 at t≈6.5 s (his seated background figures go from lit to dark silhouettes),
+    // and the exported idle scene carries 0 windows / 0 colour curves, which looks exactly like an
+    // exporter gap. It is not. Running `active_windows` on the idle prefab yields the `_Start`
+    // CLIP's curves — the dumped windows are [3.47, 11.67) and [11.53, 12.30) with curves running
+    // to t=14.33, i.e. his entrance length, not anything the idle could replay. It also silently
+    // changed his layer count 15 → 13. The idle's timed behaviour, whatever drives it, is not in
+    // this map.
     let reveal_map = if is_entrance {
         super::anim::active_windows(all_objects)
+    } else {
+        HashMap::new()
+    };
+    // ENTRANCE per-layer TRANSFORM animation: GO → scale/position curves from the `_Start`
+    // clip(s). Already built for particle hosts (`particles.rs` uses it to drive a rig's
+    // scale-in); scene quads never asked for it, so their geometry stayed frozen at the prefab
+    // pose. Executor's scope rim is the measurable case — the game animates its scale 0.91..1.66
+    // and the aperture follows, which our static quad cannot express.
+    let xform_map = if is_entrance {
+        super::anim::entrance_transform_curves(all_objects)
     } else {
         HashMap::new()
     };
@@ -1930,6 +1965,71 @@ fn collect_dynchar_bg_quads(
                 host.root_name_of_go(all_objects, go_pid)
             );
         }
+        // ENTRANCE scale animation for THIS quad's own transform, normalised against the prefab
+        // pose the mesh above was baked at, so the renderer applies a pure multiplier and a skin
+        // with no animation is bit-identical. Dividing by the prefab scale is what makes it a
+        // multiplier: the curve is absolute local scale, and `world` already carries the prefab
+        // value, so emitting the raw curve would double-apply it.
+        // Walk SELF-THEN-ANCESTORS, exactly as `reveal_of_go` does for the visibility window: a
+        // parent's scale animation carries its whole subtree, and the animated transform is
+        // routinely NOT the one holding the mesh. Executor's scope is the case — the annulus quad
+        // belongs to `zhunx_02` (the crosshair) while the scale curve sits on its parent
+        // `heip_01 (1)`, so a self-only lookup finds nothing and the aperture stays frozen.
+        let xform_owner = {
+            let mut cur = Some(go_pid);
+            let mut found = None;
+            for _ in 0..256 {
+                let Some(g) = cur else { break };
+                if xform_map.contains_key(&g) {
+                    found = Some(g);
+                    break;
+                }
+                let Some(tf) = go_to_transform.get(&g) else { break };
+                let father = all_objects
+                    .get(tf)
+                    .and_then(|(_, v)| v.get("m_Father"))
+                    .and_then(get_path_id)
+                    .filter(|&p| p != 0);
+                let Some(father) = father else { break };
+                cur = all_objects
+                    .get(&father)
+                    .and_then(|(_, v)| v.get("m_GameObject"))
+                    .and_then(get_path_id);
+            }
+            found
+        };
+        let scale_curve = xform_owner.and_then(|owner| xform_map.get(&owner)).and_then(|et| {
+            if et.scale.len() < 2 {
+                return None;
+            }
+            // Normalise against the OWNER's prefab scale — the transform the curve belongs to,
+            // not the quad's own, or the multiplier is divided by the wrong number.
+            let base = xform_owner
+                .and_then(|owner| go_to_transform.get(&owner))
+                .and_then(|tf| all_objects.get(tf))
+                .and_then(|(_, tv)| tv.get("m_LocalScale"))
+                .and_then(|s| s.get("x"))
+                .and_then(Value::as_f64)
+                .unwrap_or(1.0) as f32;
+            if base.abs() < 1e-6 {
+                return None;
+            }
+            let c: Vec<(f32, f32)> = et.scale.iter().map(|&(t, v)| (t, v / base)).collect();
+            // All-1.0 curves carry no information and would only bloat every scene JSON.
+            c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
+        });
+        // DIAGNOSTIC (`DYNCHAR_XFORM_DEBUG=1`): which GO owns each quad, and did it find a
+        // curve? The curve map is keyed by the clip's DISAMBIGUATED ctrl, which need not be the
+        // clone the quad was collected from — that mismatch is why Executor's scope rim exports
+        // without its scale animation while `band_01` gets one.
+        if std::env::var("DYNCHAR_XFORM_DEBUG").is_ok() {
+            eprintln!(
+                "  [xform] go={go_pid} name={:?} root={:?} curve={} sort={sort}",
+                host.go_name(all_objects, go_pid),
+                host.root_name_of_go(all_objects, go_pid),
+                scale_curve.as_ref().map_or(0, Vec::len),
+            );
+        }
         quads.push(BgQuad {
             mesh,
             tex_val,
@@ -1943,6 +2043,7 @@ fn collect_dynchar_bg_quads(
             st,
             src_blend,
             dst_blend,
+            scale_curve,
             active_from: window.0,
             active_until: window.1,
             root_reveal_from: cross_from,
@@ -2766,6 +2867,27 @@ impl BgParticleHost {
             })
     }
 
+    /// The GameObject's transform accumulated to the TOP of the prefab — the spine-root stop
+    /// is NOT applied, so a root's own transform is included and two different roots become
+    /// directly comparable.
+    ///
+    /// `world_of_go` stops at whichever skeleton root it reaches, which means a system living
+    /// under the IDLE root comes back in the IDLE root's frame while the entrance composite
+    /// draws in the `_Start` root's frame. Re-basing one into the other needs both expressed in
+    /// a common frame, which is what this provides. See the cross-root re-basing in
+    /// `collect_dynchar_particles`.
+    pub(crate) fn world_full_of_go(
+        &self,
+        all_objects: &HashMap<i64, (i32, Value)>,
+        go_pid: i64,
+    ) -> super::mesh::Mat4 {
+        self.go_to_transform
+            .get(&go_pid)
+            .map_or_else(super::mesh::Mat4::identity, |&tf| {
+                accumulate_matrix(all_objects, tf, &HashSet::new(), &self.idle)
+            })
+    }
+
     /// The world matrix of the GameObject's Transform PARENT (its `m_Father` chain,
     /// up to but excluding the spine root). Used to project a child's animated LOCAL
     /// position (in the parent's frame) into the spine-root world frame — the pivot
@@ -3172,6 +3294,7 @@ pub fn collect_enemy_spine_assets(
             bg_entrance_ortho_curve: None,
             bg_entrance_pan_curve: None,
             bg_entrance_cam_center: None,
+            bg_entrance_cam_roll: None,
             bg_entrance_voice: None,
             particles: Vec::new(),
         });
@@ -4054,6 +4177,12 @@ fn export_scene(
         if has_vcol {
             layer["col"] = serde_json::json!(col);
         }
+        // ENTRANCE uniform-scale multiplier over the baked pose (1.0 = unchanged). Emitted only
+        // when the `_Start` clips actually animate this transform, so an unanimated corpus stays
+        // byte-identical.
+        if let Some(sc) = &quad.scale_curve {
+            layer["scaleCurve"] = serde_json::json!(sc.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+        }
         // ENTRANCE reveal time (s) — the layer is hidden until its `m_IsActive` switches
         // ON in the `_Start` cinematic (cathedral first, mirror-world + throne later).
         // Omitted (always visible) for main scenes and always-active `_Start` layers.
@@ -4317,6 +4446,7 @@ fn export_scene(
         "entranceOrthoCurve": asset.bg_entrance_ortho_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entrancePanCurve": asset.bg_entrance_pan_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entranceCamCenterCurve": asset.bg_entrance_cam_center.as_ref().map(|c| c.iter().map(|(t, x, y)| [*t, *x, *y]).collect::<Vec<_>>()),
+        "entranceCamRollCurve": asset.bg_entrance_cam_roll.as_ref().map(|c| c.iter().map(|(t, r)| [*t, *r]).collect::<Vec<_>>()),
         "entranceVoiceOffset": asset.bg_entrance_voice.map(|v| v as f32),
         "textureCount": next_idx,
         "layers": layers,

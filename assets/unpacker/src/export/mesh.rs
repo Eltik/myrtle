@@ -406,6 +406,39 @@ impl Mat4 {
         Self(m)
     }
 
+    /// Inverse of an AFFINE transform (the 3x3 linear block inverted, translation
+    /// back-substituted). Every matrix here comes from `trs`, so the bottom row is
+    /// `[0,0,0,1]` and a general 4x4 inverse would be wasted work.
+    ///
+    /// Returns identity for a singular linear block (a degenerate zero scale), which keeps a
+    /// bad transform from turning into NaN coordinates downstream.
+    #[must_use]
+    pub fn inverse_affine(&self) -> Self {
+        let m = &self.0;
+        let det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+            + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+        if det.abs() < 1e-12 {
+            return Self::identity();
+        }
+        let inv_det = 1.0 / det;
+        let mut r = [[0.0f32; 4]; 4];
+        r[0][0] = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * inv_det;
+        r[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * inv_det;
+        r[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * inv_det;
+        r[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * inv_det;
+        r[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * inv_det;
+        r[1][2] = (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * inv_det;
+        r[2][0] = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * inv_det;
+        r[2][1] = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * inv_det;
+        r[2][2] = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * inv_det;
+        // t' = -R⁻¹ · t
+        for i in 0..3 {
+            r[i][3] = -(r[i][0] * m[0][3] + r[i][1] * m[1][3] + r[i][2] * m[2][3]);
+        }
+        r[3][3] = 1.0;
+        Self(r)
+    }
+
     /// Transform a point (implicit w = 1), ignoring perspective divide.
     #[must_use]
     pub fn point(&self, p: [f32; 3]) -> [f32; 3] {
