@@ -700,8 +700,16 @@ pub fn collect_spine_assets(
             // This replaces always using transform completion, which was ~1.7s too late
             // for skins with an earlier voice-line beat. Skins with neither late beat
             // (Mlynar) keep the union always-on.
+            // A cross-root reveal beat that lands AFTER the cinematic ends can never fire, so the
+            // layers it gates would simply never draw. Two skins author exactly that — Civilight
+            // Eterna's transform is 20.4 against a 19.0 s entrance (23 of her 28 scene layers) and
+            // Eyjafjalla's is 14.5 against 9.77 (3 of 6). For Civilight Eterna the consequence is
+            // stark: her own root's last backdrop ends at 12.0, so from there to the end NOTHING
+            // draws and the frame is an empty void where the game shows a full landscape. Emitting
+            // a gate we know cannot fire is worse than emitting none, so drop it.
             let cross_root_reveal = if is_entrance {
-                find_entrance_timing(all_objects).4
+                let t = find_entrance_timing(all_objects);
+                t.4.filter(|r| t.0.is_none_or(|dur| *r <= dur))
             } else {
                 None
             };
