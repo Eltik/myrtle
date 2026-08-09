@@ -2156,6 +2156,29 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             y1 = Math.max(y1, l.pos[i + 1]);
                         }
                         if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
+                        // AND A LAYER THAT NEVER REACHES OPACITY CANNOT OCCLUDE ANYTHING. Geometry
+                        // alone said "covered" for three skins whose cover is a translucent haze:
+                        // Mlynar's layer 17 peaks at alpha 0.275 and Civilight Eterna's layer 21 at
+                        // 0.298 — neither is EVER opaque, yet both suppressed gap-fill for the whole
+                        // cinematic and left a bare void where the game shows backdrop. (Skadi's
+                        // layer 29 also starts at 0 but its curve reaches 1.0, so it still counts.)
+                        // Additive layers are excluded outright: adding light never hides anything.
+                        if (l.additive) return false;
+                        let maxAlpha = l.tint?.[3] ?? 1;
+                        if (l.colorCurve?.length) {
+                            maxAlpha = 0;
+                            for (const k of l.colorCurve) maxAlpha = Math.max(maxAlpha, k[4]);
+                        }
+                        if (maxAlpha < 0.99) return false;
+                        // ...AND IT HAS TO COVER FOR THE WHOLE CINEMATIC, not for a moment of it.
+                        // The test had no notion of WHEN a layer is visible, so a transition flash
+                        // suppressed gap-fill for the entire entrance: Civilight Eterna's layer 27
+                        // appears at t=17.37 of a 19 s shot, Kal'tsit's layer 45 lives for 0.87 s of
+                        // 14.5, Skadi's layer 29 for the last 2.9 s of 22.33. Meanwhile the frame
+                        // behind them was left bare for the other nine tenths of the run.
+                        const entDur = scene?.data.entranceDuration ?? 0;
+                        if ((l.activeFrom ?? 0) > 0.01) return false;
+                        if (l.activeUntil != null && entDur > 0 && l.activeUntil < entDur - 0.01) return false;
                         // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh
                         // whose box is 2047² against a 2000 view — so it passed — but its silhouette
                         // is cut off diagonally and holds only 70% of the view's area. It suppressed
