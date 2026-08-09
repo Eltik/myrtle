@@ -145,6 +145,95 @@ fn is_entrance_clip(clip: &Value) -> bool {
     name.contains("start") || name.contains("entrance") || name.contains("enter")
 }
 
+/// Clips that DRIVE THE ENTRANCE CAMERA, identified structurally rather than by name.
+///
+/// `is_entrance_clip` name-matches "start" | "entrance" | "enter", and three entrance skins name
+/// their camera clip something else entirely — Eyjafjalla the Hvit Aska's is
+/// `char_1016_agoat2#_camera_01`, Ch'en the Holungday's is `Take 002` (Unity's default clip name),
+/// Whislash-alter's is just `03`. For those the ortho + centre tracks came back `None` and the
+/// entrance was framed on the IDLE's tight bounds instead.
+///
+/// A clip drives the camera if any binding's path hashes to a subpath of the camera's own
+/// ancestor chain AND the binding is camera MOTION: the Camera component (`typeID 20`, its
+/// orthographic size) or a Transform position/rotation/scale (`typeID 4`, attributes 1/2/3/4).
+/// `m_IsActive` toggles (`typeID 1`) are deliberately excluded — idle and interact clips switch
+/// chain objects on and off without moving the camera at all.
+///
+/// **Name gate FIRST, structure as fallback.** Where any camera-motion clip is already
+/// name-admitted this returns exactly that set, so every skin the old rule handled is untouched by
+/// construction; the structural set is consulted only when the name gate finds nothing. Verified:
+/// each of the 13 entrance bundles holds exactly ONE clip binding camera motion.
+fn camera_motion_clips(all_objects: &HashMap<i64, (i32, Value)>) -> HashSet<i64> {
+    let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
+    let mut tf_go: HashMap<i64, i64> = HashMap::new();
+    let mut tf_father: HashMap<i64, i64> = HashMap::new();
+    let mut cam_go: Option<i64> = None;
+    for (pid, (cid, v)) in all_objects {
+        match cid {
+            4 | 224 => {
+                if let Some(g) = v.get("m_GameObject").and_then(get_path_id) {
+                    go_to_tf.insert(g, *pid);
+                    tf_go.insert(*pid, g);
+                }
+                if let Some(f) = v.get("m_Father").and_then(get_path_id) {
+                    tf_father.insert(*pid, f);
+                }
+            }
+            20 => {
+                if let Some(g) = v.get("m_GameObject").and_then(get_path_id) {
+                    cam_go = Some(cam_go.map_or(g, |g0| if *pid < g0 { g } else { g0 }));
+                }
+            }
+            _ => {}
+        }
+    }
+    let Some(cg) = cam_go else { return HashSet::new() };
+    // Names camera -> root, then every CONTIGUOUS subpath, because a binding path is relative to
+    // whichever Animator plays the clip and we do not know which that is yet.
+    let mut names: Vec<String> = Vec::new();
+    let mut cur = go_to_tf.get(&cg).copied();
+    for _ in 0..64 {
+        let Some(tf) = cur else { break };
+        let go = tf_go.get(&tf).copied().unwrap_or(0);
+        names.push(
+            all_objects
+                .get(&go)
+                .and_then(|(_, v)| v.get("m_Name"))
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string(),
+        );
+        cur = tf_father.get(&tf).copied().filter(|&f| f != 0);
+    }
+    names.reverse();
+    let mut hashes: HashSet<u32> = HashSet::new();
+    for i in 0..names.len() {
+        for j in i..names.len() {
+            hashes.insert(crc32(names[i..=j].join("/").as_bytes()));
+        }
+    }
+    let mut named: HashSet<i64> = HashSet::new();
+    let mut structural: HashSet<i64> = HashSet::new();
+    for (pid, (cid, v)) in all_objects {
+        if *cid != 74 {
+            continue;
+        }
+        let Some(bindings) = generic_bindings(v) else { continue };
+        let drives = bindings.iter().any(|b| {
+            let (type_id, attr, path) = binding_fields(b);
+            hashes.contains(&path) && (type_id == 20 || (type_id == 4 && (1..=4).contains(&attr)))
+        });
+        if !drives {
+            continue;
+        }
+        structural.insert(*pid);
+        if is_entrance_clip(v) {
+            named.insert(*pid);
+        }
+    }
+    if named.is_empty() { structural } else { named }
+}
+
 /// Clips that run on the ENTRANCE's clock but whose NAME does not say so: the clips played
 /// by an Animator living inside a `<start> only …` group.
 ///
@@ -1166,8 +1255,9 @@ pub fn entrance_camera_track(
     // Wiš'adel's `_Start` animates her camera parent's EULER Z from 11.338° to 29.556° over the
     // first 2.4 s; reading only `attr == 1` froze the shot at its opening roll.
     let mut animated_rot: HashMap<i64, (bool, Vec<Vec<(f32, f32)>>)> = HashMap::new();
+    let cam_clips = camera_motion_clips(all_objects);
     for (clip_pid, (cid, v)) in all_objects {
-        if *cid != 74 || !is_entrance_clip(v) {
+        if *cid != 74 || !cam_clips.contains(clip_pid) {
             continue;
         }
         let Some(bindings) = generic_bindings(v) else {
@@ -1235,9 +1325,13 @@ pub fn entrance_camera_track(
             gidx += count;
         }
     }
-    if animated.is_empty() && animated_rot.is_empty() {
-        return (None, None);
-    }
+    // A camera that never MOVES still has a position, and dropping it costs real behaviour: the
+    // renderer only engages its entrance follow (and therefore the authored ORTHO zoom) when a
+    // centre curve exists. Kal'tsit ships 302 ortho keys with a static chain, so her whole
+    // entrance zoom was being discarded; Civilight Eterna is fully static and was framed on the
+    // IDLE's tight bounds instead of her own entrance camera. Emit a constant two-key curve for
+    // them — `world_at` reads the static TRS when nothing is animated, so the value is exact.
+    let is_static = animated.is_empty() && animated_rot.is_empty();
     // Timeline = union of EVERY animated axis's keyframe times.
     let mut times: Vec<f32> = animated
         .values()
@@ -1248,6 +1342,9 @@ pub fn entrance_camera_track(
     times.extend(animated_rot.values().flat_map(|(_, cs)| cs.iter().flatten()).map(|(t, _)| *t));
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     times.dedup();
+    if is_static {
+        times = vec![0.0, 1.0];
+    }
     if times.len() < 2 {
         return (None, None);
     }
@@ -1530,9 +1627,10 @@ fn decode_streamed_curve(streamed_raw: &[u32], idx: usize) -> Option<Vec<(f32, f
 /// as a relative zoom on the entrance frame, so no world↔authored unit conversion is needed.
 #[must_use]
 pub fn entrance_ortho_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
+    let cam_clips = camera_motion_clips(all_objects);
     let mut best: Option<Vec<(f32, f32)>> = None;
-    for (cid, v) in all_objects.values() {
-        if *cid != 74 || !is_entrance_clip(v) {
+    for (pid, (cid, v)) in all_objects {
+        if *cid != 74 || !cam_clips.contains(pid) {
             continue;
         }
         if let Some(curve) = decode_scalar_curve(v, 20, ORTHO_SIZE_CRC) {

@@ -3058,7 +3058,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (built.entranceViewRatio && built.entranceDuration && built.entranceTransform) {
                         entrancePullOut = { ratio: built.entranceViewRatio, dur: Math.max(0.5, built.entranceDuration - built.entranceTransform) };
                     }
-                    const tight = built.authoredTightBounds ?? built.authoredDisplayBounds ?? built.bounds;
+                    let tight = built.authoredTightBounds ?? built.authoredDisplayBounds ?? built.bounds;
+                    // DIAGNOSTIC (`?entscale=`, `?entview=1`): a skin with NO camera track frames its
+                    // entrance on the IDLE's tight bounds, and its own `entranceViewPx` (the `_Start`
+                    // camera's serialized ortho view) is never consulted. `?entscale=` scales the box;
+                    // `?entview=1` replaces its SIZE with `entranceViewPx`, keeping the centre.
+                    if (tight && typeof window !== "undefined") {
+                        const q = new URLSearchParams(window.location.search);
+                        const es = parseFloat(q.get("entscale") ?? "");
+                        const evPx = built.entranceFrameSize;
+                        const cx0 = tight.x + tight.width / 2;
+                        const cy0 = tight.y + tight.height / 2;
+                        if (q.get("entview") === "1" && evPx) {
+                            tight = { x: cx0 - evPx / 2, y: cy0 - evPx / 2, width: evPx, height: evPx };
+                        } else if (Number.isFinite(es) && es > 0) {
+                            tight = { x: cx0 - (tight.width * es) / 2, y: cy0 - (tight.height * es) / 2, width: tight.width * es, height: tight.height * es };
+                        }
+                    }
                     if (tight) {
                         layoutSpine(built.root, width, height, tight, fitRef.current);
                         const sl = built.sceneLayers ?? [];
