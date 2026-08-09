@@ -1140,7 +1140,12 @@ fn camera_ancestor_gos(all_objects: &HashMap<i64, (i32, Value)>) -> std::collect
 pub fn entrance_camera_track(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
-) -> (Option<Vec<(f32, f32, f32)>>, Option<Vec<(f32, f32)>>) {
+    view_half: Option<f64>,
+) -> (
+    Option<Vec<(f32, f32, f32)>>,
+    Option<Vec<(f32, f32)>>,
+    Option<[f32; 4]>,
+) {
     use super::mesh::Mat4;
     // Ordered chain camera→root (transform pids) + maps.
     let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
@@ -1191,7 +1196,7 @@ pub fn entrance_camera_track(
         cur = tf_father.get(&tf).copied().filter(|&f| f != 0);
     }
     if chain.is_empty() {
-        return (None, None);
+        return (None, None, None);
     }
     // Static local TRS of each chain transform. `unit_scale` builds the same node with scale 1
     // on every axis — used ONLY to derive the screen basis (see `axis` below), never to place the
@@ -1346,7 +1351,7 @@ pub fn entrance_camera_track(
         times = vec![0.0, 1.0];
     }
     if times.len() < 2 {
-        return (None, None);
+        return (None, None, None);
     }
     let sample = |c: &Vec<(f32, f32)>, t: f32, fallback: f32| -> f32 {
         if c.is_empty() {
@@ -1465,7 +1470,150 @@ pub fn entrance_camera_track(
     // Emit the roll only when the rig is actually rolled, so every axis-aligned skin keeps a
     // `None` and its exported scene JSON stays byte-identical.
     let rolled = rolls.iter().any(|(_, r)| r.abs() > 0.01);
-    (Some(out), rolled.then_some(rolls))
+    let cam0 = world_at(times[0], false).point([0.0, 0.0, 0.0]);
+    let aperture = view_half.and_then(|vh| find_letterbox(all_objects, [cam0[0], cam0[1]], inv, vh as f32));
+    (Some(out), rolled.then_some(rolls), aperture)
+}
+
+/// The entrance LETTERBOX, when the prefab paints one.
+///
+/// Civilight Eterna's cinematic renders into a hard 16:9 window inside the 2340x1080 screen, and
+/// that has no per-skin rule behind it: her prefab simply ships FOUR opaque planes whose inner
+/// edges bound the window. `BG_black_02` stops at x −18.83, `BG_black_01` starts at x +9.26,
+/// `BG_black_04` stops at y +7.09, `BG_black_03` starts at y +22.90 — a 28.09 x 15.81 window,
+/// aspect **1.777**, whose height equals her `entranceViewPx` (15.80) exactly. She is the only
+/// entrance skin that ships them; the other twelve have none, which is why every universal rule
+/// ever tried (director, `_maxSize`, camera count, skin_table, release date) came back identical.
+///
+/// Detected GEOMETRICALLY, never by name: a quad is a bar when it spans the camera centre on one
+/// axis and lies wholly to one side on the other. The aperture is the intersection of the inner
+/// edges. Returned in the same authored-px space as the frame centre (so `y` is negated the same
+/// way), as `[x0, y0, x1, y1]`, and only when it is a strict sub-rectangle of the camera's view —
+/// so a skin without a letterbox emits `None` and its scene JSON is unchanged.
+///
+/// ⚠️ These planes are dropped by the `_meshExtResolved` + no-window gate in `collect_dynchar_bg_quads`
+/// and this deliberately does NOT relax that gate: splitting it by scene was tried before and cost
+/// Skadi a real regression. The geometry is read directly instead.
+fn find_letterbox(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    cam_xy: [f32; 2],
+    inv: f32,
+    view_half: f32,
+) -> Option<[f32; 4]> {
+    use super::mesh::Mat4;
+    let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
+    let mut tf_father: HashMap<i64, i64> = HashMap::new();
+    for (pid, (cid, v)) in all_objects {
+        if matches!(cid, 4 | 224) {
+            if let Some(g) = v.get("m_GameObject").and_then(get_path_id) {
+                go_to_tf.insert(g, *pid);
+            }
+            if let Some(f) = v.get("m_Father").and_then(get_path_id) {
+                tf_father.insert(*pid, f);
+            }
+        }
+    }
+    let local_of = |tf: i64| -> Mat4 {
+        let Some((_, v)) = all_objects.get(&tf) else { return Mat4::identity() };
+        let vec3 = |field: &str, d: f32| {
+            let g = |k: &str| {
+                v.get(field).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+            };
+            [g("x"), g("y"), g("z")]
+        };
+        let q = {
+            let g = |k: &str, d: f32| {
+                v.get("m_LocalRotation").and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+            };
+            [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
+        };
+        Mat4::trs(vec3("m_LocalPosition", 0.0), q, vec3("m_LocalScale", 1.0))
+    };
+    // (left inner, right inner, bottom inner, top inner) in WORLD units
+    let (mut li, mut ri, mut bi, mut ti) = (f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY);
+    let mut bars = 0usize;
+    for (pid, (cid, v)) in all_objects {
+        if *cid != 33 {
+            continue; // MeshFilter
+        }
+        let Some(go) = v.get("m_GameObject").and_then(get_path_id) else { continue };
+        // the owning GameObject must be active, else it paints nothing
+        if !all_objects.get(&go).and_then(|(_, gv)| gv.get("m_IsActive")).and_then(Value::as_bool).unwrap_or(true) {
+            continue;
+        }
+        let Some((_, mv)) = v.get("m_Mesh").and_then(get_path_id).and_then(|m| all_objects.get(&m)) else { continue };
+        let Some(ab) = mv.get("m_LocalAABB") else { continue };
+        let g = |f: &str, k: &str| ab.get(f).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+        let (cx, cy) = (g("m_Center", "x"), g("m_Center", "y"));
+        let (ex, ey) = (g("m_Extent", "x"), g("m_Extent", "y"));
+        if ex <= 0.0 || ey <= 0.0 {
+            continue;
+        }
+        let _ = ey;
+        // world matrix of this GameObject
+        let mut m = Mat4::identity();
+        let mut cur = go_to_tf.get(&go).copied();
+        let mut stack: Vec<i64> = Vec::new();
+        for _ in 0..64 {
+            let Some(tf) = cur else { break };
+            stack.push(tf);
+            cur = tf_father.get(&tf).copied().filter(|&f| f != 0);
+        }
+        for &tf in stack.iter().rev() {
+            m = m.mul(&local_of(tf));
+        }
+        // world AABB from the four transformed corners (rotation matters — the rigs are rotated)
+        let (mut x0, mut x1, mut y0, mut y1) = (f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY);
+        for sx in [-1.0f32, 1.0] {
+            for sy in [-1.0f32, 1.0] {
+                let p = m.point([cx + sx * ex, cy + sy * ey, 0.0]);
+                x0 = x0.min(p[0]);
+                x1 = x1.max(p[0]);
+                y0 = y0.min(p[1]);
+                y1 = y1.max(p[1]);
+            }
+        }
+        // A LETTERBOX bar reaches beyond the frame on both axes — that is what makes it a mask
+        // rather than a prop. Without this every small quad sitting off to one side qualifies and
+        // five skins pick up a bogus aperture.
+        let view = 2.0 * view_half;
+        if (x1 - x0) < view || (y1 - y0) < view {
+            continue;
+        }
+        let (kx, ky) = (cam_xy[0], cam_xy[1]);
+        let spans_x = x0 <= kx && kx <= x1;
+        let spans_y = y0 <= ky && ky <= y1;
+        if spans_y && x1 < kx {
+            li = li.max(x1);
+            bars += 1;
+        } else if spans_y && x0 > kx {
+            ri = ri.min(x0);
+            bars += 1;
+        } else if spans_x && y1 < ky {
+            bi = bi.max(y1);
+            bars += 1;
+        } else if spans_x && y0 > ky {
+            ti = ti.min(y0);
+            bars += 1;
+        }
+    }
+    // All FOUR bars, or it is not a frame.
+    if bars < 4 || !li.is_finite() || !ri.is_finite() || !bi.is_finite() || !ti.is_finite() || ri <= li || ti <= bi {
+        return None;
+    }
+    // A LETTERBOX crops the WIDTH and preserves the camera's view HEIGHT — that is what makes it
+    // a letterbox rather than an arrangement of props that happens to surround the centre. Both
+    // conditions are needed: Kal'tsit and Executor each produce a four-sided window from ordinary
+    // scenery, but theirs are PORTRAIT (aspect 0.84 and 0.39) and Kal'tsit's is 42% off the view
+    // height. Civilight Eterna's is aspect 1.7767 with a height of 1581 against her `entranceViewPx`
+    // of 1580 — 0.06% out.
+    let (w, h) = ((ri - li) * inv, (ti - bi) * inv);
+    let view_px = 2.0 * view_half * inv;
+    if w < h || (h / view_px - 1.0).abs() > 0.02 {
+        return None;
+    }
+    // Same authored-px space as the frame centre: y negated.
+    Some([li * inv, -ti * inv, ri * inv, -bi * inv])
 }
 
 /// The ENTRANCE camera POSITIONAL dolly (pan), extracted from the `_Start` clip that animates a

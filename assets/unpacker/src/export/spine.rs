@@ -127,6 +127,9 @@ pub struct SpineAsset {
     /// ENTRANCE camera ROLL about the view axis, `[t_seconds, degrees]`. `None` unless the rig is
     /// actually rolled — 12 of the 13 entrance skins have an axis-aligned camera basis.
     pub bg_entrance_cam_roll: Option<Vec<(f32, f32)>>,
+    /// ENTRANCE LETTERBOX window `[x0, y0, x1, y1]` in authored px, same space as the frame
+    /// centre. `None` unless the prefab paints one — only Civilight Eterna does.
+    pub bg_entrance_aperture: Option<[f32; 4]>,
     /// ENTRANCE voice-line offset (s) from `_params.charVoiceOffset` — when the reformed
     /// cellist starts talking. The seated→standing hand-off beat (the standing form lives at
     /// a different rig position than the seated form, so the entrance hands off to the idle
@@ -806,6 +809,7 @@ pub fn collect_spine_assets(
             bg_entrance_pan_curve,
             bg_entrance_cam_center,
             bg_entrance_cam_roll,
+            bg_entrance_aperture,
         ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
@@ -817,7 +821,7 @@ pub fn collect_spine_assets(
             // `entrance_ortho_curve`). Replaces client-side guesswork about the zoom timing.
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects);
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
-            let (cam_center, cam_roll) = super::anim::entrance_camera_track(all_objects, inv);
+            let (cam_center, cam_roll, aperture) = super::anim::entrance_camera_track(all_objects, inv, ortho);
             (
                 dur,
                 fade,
@@ -829,9 +833,10 @@ pub fn collect_spine_assets(
                 pan_curve,
                 cam_center,
                 cam_roll,
+                aperture,
             )
         } else {
-            (None, None, None, None, None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None, None, None, None)
         };
 
         assets.push(SpineAsset {
@@ -860,6 +865,7 @@ pub fn collect_spine_assets(
             bg_entrance_pan_curve,
             bg_entrance_cam_center,
             bg_entrance_cam_roll,
+            bg_entrance_aperture,
             bg_entrance_voice,
             particles,
         });
@@ -3295,6 +3301,7 @@ pub fn collect_enemy_spine_assets(
             bg_entrance_pan_curve: None,
             bg_entrance_cam_center: None,
             bg_entrance_cam_roll: None,
+            bg_entrance_aperture: None,
             bg_entrance_voice: None,
             particles: Vec::new(),
         });
@@ -4447,6 +4454,7 @@ fn export_scene(
         "entrancePanCurve": asset.bg_entrance_pan_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entranceCamCenterCurve": asset.bg_entrance_cam_center.as_ref().map(|c| c.iter().map(|(t, x, y)| [*t, *x, *y]).collect::<Vec<_>>()),
         "entranceCamRollCurve": asset.bg_entrance_cam_roll.as_ref().map(|c| c.iter().map(|(t, r)| [*t, *r]).collect::<Vec<_>>()),
+        "entranceAperturePx": asset.bg_entrance_aperture,
         "entranceVoiceOffset": asset.bg_entrance_voice.map(|v| v as f32),
         "textureCount": next_idx,
         "layers": layers,

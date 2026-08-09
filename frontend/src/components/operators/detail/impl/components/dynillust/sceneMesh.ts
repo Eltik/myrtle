@@ -183,6 +183,11 @@ export interface ISceneData {
      *  (right = +X, up = +Y, roll 0.000°) and ship `null`. Wiš'adel's rig rolls
      *  −11.34° → −29.56° over her first 2.4 s. */
     entranceCamRollCurve?: [number, number][] | null;
+    /** ENTRANCE LETTERBOX window `[x0, y0, x1, y1]` in authored px, in the same space as
+     *  {@link entranceCamCenterCurve}. Present only when the prefab paints one — Civilight Eterna
+     *  ships four black planes bounding a 2809x1581 window (aspect 1.7767 = 16:9) whose height is
+     *  her `entranceViewPx` exactly; no other entrance skin has them. */
+    entranceAperturePx?: [number, number, number, number] | null;
     /** ENTRANCE voice-line offset (s), `_params.charVoiceOffset` — when the reformed character
      *  starts talking. Exported but currently unread (the hand-off fires from the `_Start`
      *  clip's own `complete`). */

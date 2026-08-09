@@ -2570,6 +2570,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (c0) apertureMask.position.set(c0[0], c0[1]);
                     sceneContainer.addChild(apertureMask);
                 }
+                // ENTRANCE LETTERBOX. Civilight Eterna's cinematic renders into a hard 16:9 window
+                // inside the 2340x1080 screen, and there is no per-skin rule behind it: her prefab
+                // ships FOUR opaque planes whose inner edges bound the window (2809x1581, aspect
+                // 1.7767, height = her `entranceViewPx` exactly). The exporter reads that geometry
+                // and emits the rect; here it becomes four black quads drawn over everything.
+                //
+                // Built in the SAME space as the camera centre, as a child of the scene container,
+                // so it inherits the camera pan/zoom/roll for free and disappears with the entrance
+                // composite at the hand-off. `?letterbox=0` disables it.
+                const apRect = opts.mode === "entrance" ? scene?.data.entranceAperturePx : null;
+                if (apRect && (typeof window === "undefined" || new URLSearchParams(window.location.search).get("letterbox") !== "0")) {
+                    const [ax0, ay0, ax1, ay1] = apRect;
+                    const F = 50000;
+                    const bars = new PIXI.Graphics();
+                    bars.beginFill(0x000000);
+                    bars.drawRect(-F, -F, F + ax0, F * 2); // left
+                    bars.drawRect(ax1, -F, F * 2, F * 2); // right
+                    bars.drawRect(ax0, -F, ax1 - ax0, F + ay0); // top
+                    bars.drawRect(ax0, ay1, ax1 - ax0, F * 2); // bottom
+                    bars.endFill();
+                    sceneContainer.addChild(bars);
+                }
                 const scrollLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];
                 const followLayers: PIXI.Mesh[] = [];
