@@ -1385,10 +1385,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // world-units-per-screen-pixel, instead of inferring the zoom from pixels.
                 if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("cambox")) {
                     (window as unknown as { __camBox?: unknown }).__camBox = {
-                        tt, cx, cy, size, sw, sh, fit: fitRef.current,
-                        rootScaleX: ef.root.scale.x, rootScaleY: ef.root.scale.y,
-                        viewWorldH: sh / ef.root.scale.y, viewWorldW: sw / ef.root.scale.x,
-                        usingBlend: !!ef.centerBlend, rawCy: c[1],
+                        tt,
+                        cx,
+                        cy,
+                        size,
+                        sw,
+                        sh,
+                        fit: fitRef.current,
+                        rootScaleX: ef.root.scale.x,
+                        rootScaleY: ef.root.scale.y,
+                        viewWorldH: sh / ef.root.scale.y,
+                        viewWorldW: sw / ef.root.scale.x,
+                        usingBlend: !!ef.centerBlend,
+                        rawCy: c[1],
                     };
                 }
             }
