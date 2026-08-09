@@ -747,6 +747,20 @@ function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
  *  point both the static art and the spine are composed around). This aligns the
  *  spine over its own static counterpart so the missing backdrop fills in behind. */
 /** Read a fade-timing override off the query string, falling back to the shipped default. */
+/** Alpha of a scene layer's colour curve at time `t` (keys are `[t, r, g, b, a]`). */
+function sampleColorAlpha(curve: number[][], t: number): number {
+    if (!curve.length) return 1;
+    if (t <= curve[0][0]) return curve[0][4];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, , , , a0] = curve[i - 1];
+            const [t1, , , , a1] = curve[i];
+            return t1 > t0 ? a0 + ((a1 - a0) * (t - t0)) / (t1 - t0) : a1;
+        }
+    }
+    return curve[curve.length - 1][4];
+}
+
 function fadeParam(name: string, dflt: number): number {
     if (typeof window === "undefined") return dflt;
     // Guard on the RAW string: `Number(null)` is 0, which is finite and >= 0, so testing the
@@ -1105,6 +1119,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // Mlynar's own white-transition plane already holds the frame white from t=15.0, and Skadi
     // reaches white through her authored fade LAYERS — and her recording runs
     // 134 → 146 → 178 → 211 → 240 → 254 over `duration - 1.0s` → `duration - 0.2s`.
+    /** Gap-fill sprite + the layers CAPABLE of covering the frame. Whether one actually covers is
+     *  re-evaluated every entrance frame from its clip window and animated alpha, so a transition
+     *  flash cannot suppress the backdrop for a whole cinematic. */
+    const gapFillRef = useRef<{ sprite: PIXI.Sprite; covers: ISceneLayer[] } | null>(null);
     const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null } | null>(null);
     const crossfadeRef = useRef<{ wrapper: PIXI.Container; mainRoot: PIXI.Container; entRoot: PIXI.Container; ent: IComposite; elapsed: number; duration: number } | null>(null);
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
@@ -1380,6 +1398,24 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             if (eseq && spineRef.current === eseq.spine) {
                 const st = eseq.spine.state.tracks[0] as unknown as { trackTime?: number } | null;
                 const tt = st?.trackTime ?? 0;
+                // GAP-FILL, per frame: hide the defocused backdrop only while something opaque is
+                // actually in front of it. Decided at build time this suppressed the fill for a
+                // whole cinematic on the strength of a flash lasting under a second.
+                const gf = gapFillRef.current;
+                if (gf) {
+                    let covered = false;
+                    for (const l of gf.covers) {
+                        if (l.activeFrom != null && tt < l.activeFrom) continue;
+                        if (l.activeUntil != null && tt > l.activeUntil) continue;
+                        let a = l.tint?.[3] ?? 1;
+                        if (l.colorCurve?.length) a = sampleColorAlpha(l.colorCurve, tt);
+                        if (a >= 0.99) {
+                            covered = true;
+                            break;
+                        }
+                    }
+                    gf.sprite.renderable = !covered;
+                }
                 // Executor: 5.2 s, where the scene's second root activates and the capture goes
                 // 100% lit within one frame.
                 const ap = eseq.aperture;
@@ -2141,67 +2177,51 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // misty vista. Gated on the geometry, not on a skin: only when no layer spans
                 // the view, so a scene that already fills the frame is untouched.
                 const viewExt = 2 * (scene?.data.cameraSizePx ?? 0);
-                const sceneCoversFrame =
-                    !!scene &&
-                    viewExt > 0 &&
-                    scene.data.layers.some((l) => {
-                        let x0 = Infinity;
-                        let x1 = -Infinity;
-                        let y0 = Infinity;
-                        let y1 = -Infinity;
-                        for (let i = 0; i < l.pos.length; i += 2) {
-                            x0 = Math.min(x0, l.pos[i]);
-                            x1 = Math.max(x1, l.pos[i]);
-                            y0 = Math.min(y0, l.pos[i + 1]);
-                            y1 = Math.max(y1, l.pos[i + 1]);
-                        }
-                        if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
-                        // AND A LAYER THAT NEVER REACHES OPACITY CANNOT OCCLUDE ANYTHING. Geometry
-                        // alone said "covered" for three skins whose cover is a translucent haze:
-                        // Mlynar's layer 17 peaks at alpha 0.275 and Civilight Eterna's layer 21 at
-                        // 0.298 — neither is EVER opaque, yet both suppressed gap-fill for the whole
-                        // cinematic and left a bare void where the game shows backdrop. (Skadi's
-                        // layer 29 also starts at 0 but its curve reaches 1.0, so it still counts.)
-                        // Additive layers are excluded outright: adding light never hides anything.
-                        if (l.additive) return false;
-                        let maxAlpha = l.tint?.[3] ?? 1;
-                        if (l.colorCurve?.length) {
-                            maxAlpha = 0;
-                            for (const k of l.colorCurve) maxAlpha = Math.max(maxAlpha, k[4]);
-                        }
-                        if (maxAlpha < 0.99) return false;
-                        // ...AND IT HAS TO COVER FOR THE WHOLE CINEMATIC, not for a moment of it.
-                        // The test had no notion of WHEN a layer is visible, so a transition flash
-                        // suppressed gap-fill for the entire entrance: Civilight Eterna's layer 27
-                        // appears at t=17.37 of a 19 s shot, Kal'tsit's layer 45 lives for 0.87 s of
-                        // 14.5, Skadi's layer 29 for the last 2.9 s of 22.33. Meanwhile the frame
-                        // behind them was left bare for the other nine tenths of the run.
-                        const entDur = scene?.data.entranceDuration ?? 0;
-                        if ((l.activeFrom ?? 0) > 0.01) return false;
-                        if (l.activeUntil != null && entDur > 0 && l.activeUntil < entDur - 0.01) return false;
-                        // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh
-                        // whose box is 2047² against a 2000 view — so it passed — but its silhouette
-                        // is cut off diagonally and holds only 70% of the view's area. It suppressed
-                        // gap-fill and left a hard-edged grey wedge across a third of her frame,
-                        // exactly the symptom gap-fill exists to prevent. Require the mesh to
-                        // actually CONTAIN the view's worth of area as well.
-                        //
-                        // The 0.95 is slack for a tight quad whose box slightly exceeds the view,
-                        // not a tuned constant: the real covers sit at 2.4–6.1 and the concave ones
-                        // at 0.70–0.73, so the gap is an order of magnitude wide. Mlynar's layer 17
-                        // is the closest true cover at 0.972 — keep that margin in mind before
-                        // raising this.
-                        let meshArea = 0;
-                        for (let k = 0; k + 2 < l.idx.length; k += 3) {
-                            const a = l.idx[k] * 2;
-                            const b = l.idx[k + 1] * 2;
-                            const c = l.idx[k + 2] * 2;
-                            if (Math.max(a, b, c) + 1 >= l.pos.length) continue;
-                            meshArea += Math.abs((l.pos[b] - l.pos[a]) * (l.pos[c + 1] - l.pos[a + 1]) - (l.pos[c] - l.pos[a]) * (l.pos[b + 1] - l.pos[a + 1])) / 2;
-                        }
-                        return meshArea >= 0.95 * viewExt * viewExt;
-                    });
-                const gapFill = !useStatic && gapFillOn() && !sceneCoversFrame && !!backdropData && !!backdropFrame;
+                // Layers CAPABLE of covering the frame: big enough, actually able to occlude,
+                // and not additive. Whether one covers at a given moment is decided per frame
+                // below, from its clip window and animated alpha.
+                const coverLayers = !scene || viewExt <= 0 ? [] : scene.data.layers.filter((l) => {
+                    let x0 = Infinity;
+                    let x1 = -Infinity;
+                    let y0 = Infinity;
+                    let y1 = -Infinity;
+                    for (let i2 = 0; i2 < l.pos.length; i2 += 2) {
+                        x0 = Math.min(x0, l.pos[i2]);
+                        x1 = Math.max(x1, l.pos[i2]);
+                        y0 = Math.min(y0, l.pos[i2 + 1]);
+                        y1 = Math.max(y1, l.pos[i2 + 1]);
+                    }
+                    if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
+                    // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh whose
+                    // box is 2047² against a 2000 view — so it passed — but its silhouette is cut
+                    // off diagonally and holds only 70% of the view's area. It suppressed gap-fill
+                    // and left a hard-edged grey wedge across a third of her frame. Require the mesh
+                    // to actually CONTAIN the view's worth of area. The 0.95 is slack for a tight
+                    // quad whose box slightly exceeds the view, not a tuned constant: real covers
+                    // sit at 2.4–6.1 and concave ones at 0.70–0.73.
+                    let meshArea = 0;
+                    for (let k = 0; k + 2 < l.idx.length; k += 3) {
+                        const a = l.idx[k] * 2;
+                        const b = l.idx[k + 1] * 2;
+                        const c = l.idx[k + 2] * 2;
+                        if (Math.max(a, b, c) + 1 >= l.pos.length) continue;
+                        meshArea += Math.abs((l.pos[b] - l.pos[a]) * (l.pos[c + 1] - l.pos[a + 1]) - (l.pos[c] - l.pos[a]) * (l.pos[b + 1] - l.pos[a + 1])) / 2;
+                    }
+                    if (meshArea < 0.95 * viewExt * viewExt) return false;
+                    // AND IT HAS TO BE ABLE TO OCCLUDE. Geometry alone said "covered" for layers
+                    // that never become opaque — Mlynar's layer 17 peaks at alpha 0.275, Civilight
+                    // Eterna's layer 21 at 0.298 — and for ADDITIVE layers, which cannot hide
+                    // anything by construction.
+                    if (l.additive) return false;
+                    let maxAlpha = l.tint?.[3] ?? 1;
+                    if (l.colorCurve?.length) {
+                        maxAlpha = 0;
+                        for (const k of l.colorCurve) maxAlpha = Math.max(maxAlpha, k[4]);
+                    }
+                    return maxAlpha >= 0.99;
+                });
+                const sceneCoversFrame = coverLayers.length > 0;
+                const gapFill = !useStatic && gapFillOn() && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
@@ -2216,6 +2236,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         bd.filters = [blur];
                     }
                     sceneContainer.addChildAt(bd, 0);
+                    if (gapFill && sceneCoversFrame) gapFillRef.current = { sprite: bd, covers: coverLayers };
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
