@@ -270,6 +270,7 @@ function kneeParam(): number {
 const GAMMA_CAL: readonly (readonly [number, number])[] = [
     [1000, 1.04], // Skadi the Corrupting Heart
     [1050, 1.02], // Virtuosa
+    [1100, 1.02], // Muelsyse — the fourth capture this table asked for (see below)
     [1111, 0.93], // Mlynar
 ];
 
@@ -334,9 +335,32 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * could be checked: Nian #7 (1800 → 1.02) shifts by at most 2 code values, Texas the
  * Omertosa (889 → 1.12) by at most 11. Neither degenerates.
  *
- * TO REPLACE THIS: it needs a fourth and fifth reference CAPTURE, not more analysis — the
- * three we own are the whole calibration set, and the within-skin test above has already
- * extracted what they can say.
+ * 2026-08-09 — FIVE MORE CAPTURES ARRIVED, and they say two things.
+ *
+ * Sweeping the exponent per skin against the new references gives a measured optimum for each:
+ *
+ *     skin  cameraSizePx  this table PREDICTED  MEASURED  verdict
+ *     wis       1000              1.04            ~1.03    agrees
+ *     exc       1040              1.024            1.02     agrees
+ *     cet       1050              1.02             1.02     agrees
+ *     eyja      1050              1.02             1.02     agrees
+ *     mue       1100              0.946            1.02     ** WRONG by 0.074 **
+ *
+ * Four of the five land where the line predicts, which is real corroboration — the original
+ * three-point fit was not a fluke. But Muelsyse breaks it, and breaks it where it matters:
+ * she and Mlynar are ELEVEN pixels apart in camera size and want exponents 0.09 apart. No
+ * smooth function of this key can do that, so camera size is confirmed as a proxy rather than
+ * a cause, exactly as the section above suspected. Seven of the eight measured skins want
+ * 1.02–1.04; Mlynar alone wants 0.93.
+ *
+ * Muelsyse is added as a measured point rather than smoothed over: she is the ONLY capture at
+ * 1100, and the alternative is to keep predicting a value her own reference refutes. That makes
+ * the final segment a cliff (1100 → 1111 is 1.02 → 0.93), which is honest about the fit being a
+ * lookup rather than a law. No corpus scene falls strictly between those two keys.
+ *
+ * TO REPLACE THIS: a driver, not more points. The five new captures have now shown the key is
+ * not causal; what is missing is a mechanism, and Mlynar is the skin that would falsify or
+ * confirm any candidate.
  */
 export function sceneCompositeGamma(cameraSizePx: number | undefined | null): number {
     const diag = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("gamma") : null;
