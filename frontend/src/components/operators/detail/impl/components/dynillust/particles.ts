@@ -939,6 +939,13 @@ function sheetMeshTilingOn(): boolean {
     return new URLSearchParams(window.location.search).get("meshtile") !== "0";
 }
 
+/** DIAGNOSTIC (`?ramtile=0`): revert the RAM slot to flipping V on the COMPOSED sheet
+ *  coordinate (the pre-2026-08-10 behaviour) instead of within the tile. */
+function ramTileFlipOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ramtile") !== "0";
+}
+
 /** `?nocull=1` disables the off-screen spawn cull (diagnostic). */
 function cullDisabled(): boolean {
     if (typeof window === "undefined") return false;
@@ -2520,6 +2527,7 @@ uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec4 uRamST;
 uniform vec2 uRamFlip;
+uniform float uRamSheeted;
 uniform vec2 uMainScroll;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
@@ -2541,6 +2549,11 @@ void main() {
     vDissolveUV = aUV * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
     vDissolveUV2 = aUV * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
     vDisturbUV = aUV * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
+    // RAM slot V orientation. For an UNSHEETED system aUV is a plain Unity UV and the
+    // blanket "flip V because the PNG is top-down" below is right. For a SHEETED one it is
+    // NOT: the Texture Sheet block has already rewritten aUV into PNG RASTER space (row-major,
+    // top-down, v0 = floor(frame/tilesX)/tilesY), so flipping afterwards converts twice.
+    // uRamSheeted skips the flip for exactly those systems.
     vRamUV = aUV * uRamST.xy + uRamST.zw;
     vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
     vRawUV = aUV;
@@ -2548,7 +2561,7 @@ void main() {
     vDissolveUV.y = 1.0 - vDissolveUV.y;
     vDissolveUV2.y = 1.0 - vDissolveUV2.y;
     vDisturbUV.y = 1.0 - vDisturbUV.y;
-    vRamUV.y = 1.0 - vRamUV.y;
+    if (uRamSheeted <= 0.0) vRamUV.y = 1.0 - vRamUV.y;
     vColor = aColor;
     vCustom = aCustom;
 }
@@ -2618,6 +2631,12 @@ void main() {
         dAlpha *= clamp((bw2 * sw2 + (d2 - uAmount2)) / bw2, 0.0, 1.0);
     }
     if (uHasRam > 0.5) {
+        // NOTE: no un-premultiply here. PIXI premultiplies on upload where the game's shader
+        // multiplies the ramp in with STRAIGHT alpha, so this looked like a real divergence --
+        // but it is MEASURED INERT, because every ramp in the corpus that matters is a HARD
+        // cut-out. Civilight Eterna's terrain ramp tex4 is 49% fully transparent and only 3.7%
+        // PARTIALLY transparent, so alpha is ~1 wherever the plane draws at all and dividing by
+        // it changes nothing (coverage 47.0% -> 46.4%, level identical to 0.1).
         col *= texture2D(uRamTex, vRamUV);
     }
     float a = clamp(dAlpha * col.a * uOpacity, 0.0, 1.0);
@@ -2826,6 +2845,10 @@ class RamEmitter {
             uTonemap: ramTonemap(),
             uMainOff: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammain") === "0" ? 1 : 0,
             uRamFlip: ramFlip(),
+            // 1 when the Texture Sheet block rewrites this system's aUV into PNG raster
+            // space, in which case the RAM slot must NOT be V-flipped again. Tracks exactly
+            // the condition that block runs under, so no other system can be reached.
+            uRamSheeted: ramTileFlipOn() && data.sheet && data.sheet.tilesX * data.sheet.tilesY > 1 && sheetMeshTilingOn() ? 1 : 0,
             uRamUVDebug: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramuv") === "2" ? 2 : new URLSearchParams(window.location.search).get("ramuv") === "1" ? 1 : 0,
             uDisturbBias: ramDisturb().bias,
             uDisturbGain: ramDisturb().gain,
