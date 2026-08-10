@@ -3863,7 +3863,16 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     const wrapOf = (i: number | null): number | undefined => (i == null ? undefined : data.textureWrap?.[i]);
     const ramMainTex = (i: number | null): PIXI.Texture | null => {
         const b = i != null ? bases[i] : null;
-        return b ? new PIXI.Texture(b.darkDropBase) : null;
+        if (!b) return null;
+        // DIAGNOSTIC (`?rammainraw=1`): sample the RAW `_MainTex` for the Ram main slot instead of
+        // the dark-drop base. `darkDropBase` applies luminance→alpha, a border fade, AND — for a
+        // "uniform-bright fill", which a flow map is by construction — a full RADIAL FALLOFF. That
+        // is a sprite correction, and the Ram shader does not consume `_MainTex` as a sprite: the
+        // decompiled fragment reads it flat and multiplies the ramp into it. On Civilight Eterna's
+        // background planes (main = `flow_177_3`, 256², sd 13.7) the falloff fades the plane out
+        // toward its own edges, which is exactly where her aperture strips go dark and flat.
+        const raw = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammainraw") === "1";
+        return new PIXI.Texture(raw ? b.rawBase : b.darkDropBase);
     };
 
     for (const [sysIndex, sys] of data.systems.entries()) {
