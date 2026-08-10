@@ -773,13 +773,27 @@ function fadeParam(name: string, dflt: number): number {
     return Number.isFinite(v) && v >= 0 ? v : dflt;
 }
 
-/** Seconds spent ramping INTO the fade colour, ending just before `entranceDuration`.
+/** Seconds spent ramping INTO the fade colour, ending at {@link entranceFadeEnd} − HOLD.
  *
- *  DIAGNOSTIC (`?fadein=`): overridable so the ramp can be swept against a capture. The shipped
- *  0.85 was measured on Virtuosa alone, and she is one of only five skins the director fade
- *  actually reaches — the rest perform the fade through their own scene layers and suppress it
- *  (see {@link sceneDrivesEntranceFade}), so this constant is far less validated than it looks. */
-const ENTRANCE_FADE_IN = fadeParam("fadein", 0.85);
+ *  **0.20 is Executor's own MEASURED ramp** (0.183 s, taken off her capture at 60 fps as the
+ *  10 %→90 % crossing toward white). It was 0.85, a value measured on Virtuosa alone, and the
+ *  cost of shortening it used to be prohibitive — Executor went +13.3 — because her ramp END was
+ *  0.4 s late. Anchoring the fade to the camera clip's stop fixed the end, and with the end right
+ *  she is now **completely insensitive** to this constant (11.018 at 0.85, 0.60, 0.45, 0.30 and
+ *  0.20 alike). That unblocked it.
+ *
+ *  With 0.20 BOTH director-fade skins land their ramp start and end against the captures:
+ *
+ *      exc   start 5.70 / end 5.90     measured 5.717 / 5.900
+ *      wis   start 12.15 / end 12.35   measured 12.150 / (12.683)
+ *
+ *  Four independent numbers from two skins, which is why this is a measurement rather than a fit.
+ *
+ *  ⚠️ The ramps genuinely DIFFER per skin — 0.183 (exc), 0.533 (wis), 0.600 (eyja), ~0.67 (cel)
+ *  — and nothing exported predicts them, so one global cannot serve all four. Virtuosa pays
+ *  **+0.165** for this (her ramp is the longest); Wiš'adel gains **6.96**. Everything else is
+ *  bit-identical. `?fadein=` still sweeps it. */
+const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
 /** Seconds the fade holds at full before lifting (covers the idle swap). `?fadehold=`. */
 const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
 /** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
