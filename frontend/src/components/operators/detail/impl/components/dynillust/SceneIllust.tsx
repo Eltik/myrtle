@@ -3043,7 +3043,38 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `cameraSizePx` square centred on the visible art), so fall back to it. Same
                 // `?? bounds` chain the entrance paths below already use; a no-op for every skin
                 // whose `_adjustes[0]` is a real number.
-                const gameFrame = main.authoredDisplayBounds ?? main.bounds;
+                // The post-entrance idle settles on the TIGHT `_adjustes[1]` stop, not the wide
+                // `_adjustes[0]` one (`?settletight=0` reverts).
+                //
+                // This path used to disagree with itself. A skin with NO authored pull-out already
+                // settled tight — see the `fromEntrance && !entrancePullOut && openTight` branch
+                // below, which carries "verified against the recording, the steady settle is a
+                // knees-up shot, not a full-body pull-out". A skin WITH one dollied out to the wide
+                // box instead, purely because it happened to have a usable `entranceTransform`.
+                // So Mlynar (no transform) looked right and Virtuosa (transform 12.0) did not, for
+                // no reason connected to how either is framed.
+                //
+                // The wide box is the ARCHIVE crop: this file already records that it "renders the
+                // subject ~1.6x too small against the captures", with authored tight/wide ratios
+                // ska 1.598, cel 1.548, mly 1.484.
+                //
+                // MEASURED against the Android captures, aligned by cross-correlating each raw
+                // against its own trimmed clip (t0 = 4.10-4.40 s, correlation 0.987-1.000) and
+                // sampled after each skin's pull-out would have completed (`duration +
+                // (duration - transform)`). All five affected skins improve and none regresses:
+                //
+                //     cel  wide needs 1.75-1.90x to match, tight needs 1.10x
+                //     ska / mue / wis / exc   wide renders small and vignetted; tight fills the
+                //                             frame at the capture's scale
+                //
+                // ⚠️ Judge this VISUALLY. Gradient-NCC is useless on the settle — our settled idle
+                // is also markedly darker than the capture, which pins correlation near 0.05 at
+                // every scale, and a scale search silently clips at its own search bounds.
+                // ⚠️ MADC cannot see this at all: every scored beat lands before the hand-off, so
+                // all eight baselines are bit-identical either way. That is why this survived so
+                // long.
+                const settleTight = typeof window === "undefined" || new URLSearchParams(window.location.search).get("settletight") !== "0";
+                const gameFrame = (settleTight ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : main.authoredDisplayBounds) ?? main.bounds;
                 const openTight = main.authoredTightBounds; // the game's `_adjustes[1]`, else null
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
