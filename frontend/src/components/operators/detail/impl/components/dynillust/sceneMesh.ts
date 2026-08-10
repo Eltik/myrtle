@@ -1413,8 +1413,14 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         const rrfOn = !q0 || q0.get("rrf") !== "0";
         const rrfT = q0 ? parseFloat(q0.get("rrft") ?? "") : Number.NaN;
         const rootFrom = !rrfOn ? null : layer.rootRevealFrom == null ? null : Number.isFinite(rrfT) ? rrfT : layer.rootRevealFrom;
-        rt.__activeFrom = from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
-        rt.__activeUntil = layer.activeUntil ?? null;
+        // DIAGNOSTIC (`?nowin=1`): drop every scene-layer visibility window so a layer is driven by
+        // its colour curve alone. Civilight Eterna's two transition planes each carry a curve that
+        // runs far past the `m_IsActive` window exported for them — L26's curve reaches t=12.67
+        // against a window ending 6.33 (the game blacks out at BOTH 5.7 and 12.0), and L27's starts
+        // at t=0 against a window opening at 17.37 (the game starts brightening at 16.4).
+        const noWin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("nowin") === "1";
+        rt.__activeFrom = noWin ? null : from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
+        rt.__activeUntil = noWin ? null : (layer.activeUntil ?? null);
         rt.__sort = layer.sort;
         rt.__texIndex = layer.tex;
         if (layer.colorCurve?.length) {
