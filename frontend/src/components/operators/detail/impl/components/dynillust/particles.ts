@@ -3381,6 +3381,23 @@ interface ILoadedTex {
      *  a dark starfield/bokeh field (Logos, Nian) drops out instead of boxing.
      *  Equals `rawBase` for real-alpha sprites (nothing to drop). */
     darkDropBase: PIXI.BaseTexture;
+    /** As `base` (luminance-alpha + the 16% border fade) but WITHOUT the uniform-bright
+     *  RADIAL orb. The orb exists to give a shapeless opaque fill some shape so it doesn't
+     *  stamp a hard rectangle — a failure mode that only exists when the texture's dark
+     *  field is VISIBLE. An ADDITIVE draw's dark field contributes nothing by construction,
+     *  so the orb has nothing to fix there and instead throws away most of the authored
+     *  light: it multiplies by `smooth(1 - r/rMax)`, which averages ~0.2 over the sheet and
+     *  zeroes everything outside the inscribed circle. Civilight Eterna's `guangyun01` is a
+     *  full-frame IRIDESCENT CAUSTIC (tex17, meanLum 199, peak/mean 1.28) — uniformly bright
+     *  because it is uniformly lit, not because it is shapeless — and the orb was rendering
+     *  it ~5x too dim.
+     *
+     *  The border fade is KEPT for additive: a bright field really can add a hard-edged
+     *  rectangle of light, and fading the outer 16% costs nothing.
+     *
+     *  Identical to `base` whenever the orb was not applied, so this is free for the ~all
+     *  textures that are not `uniformBright`. */
+    noOrbBase: PIXI.BaseTexture;
     /** A DESATURATED, substantially-FILLED texture (mean saturation < 0.2 over a
      *  covered ≥25% of the sheet): a blue-grey flow/distortion "background" map a
      *  Unity shader samples to warp the scene, not a drawable sprite. Unlike `skip`
@@ -3485,7 +3502,7 @@ function sheetBadCells(base: PIXI.BaseTexture, tx: number, ty: number): Set<numb
 function processGlowTexture(img: HTMLImageElement): ILoadedTex {
     const plain = (skip = false, desatPanel = false, hazePanel = false): ILoadedTex => {
         const base = PIXI.BaseTexture.from(img);
-        return { base, glow: false, rawBase: base, darkDropBase: base, skip, desatPanel, hazePanel };
+        return { base, glow: false, rawBase: base, darkDropBase: base, noOrbBase: base, skip, desatPanel, hazePanel };
     };
     try {
         const w = img.naturalWidth || img.width;
@@ -3548,6 +3565,7 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         let lumSum = 0;
         let satSum = 0;
         let maxLum = 0;
+        let darkN = 0;
         for (let i = 0; i < px.length; i += 4) {
             const r = px[i];
             const g = px[i + 1];
@@ -3556,6 +3574,7 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
             const a = lum <= BLACK_POINT ? 0 : lum;
             px[i + 3] = a;
             if (a > 128) highAlpha++;
+            if (a === 0) darkN++;
             if (lum > maxLum) maxLum = lum;
             lumSum += lum;
             satSum += lum > 0 ? (lum - Math.min(r, g, b)) / lum : 0;
@@ -3563,12 +3582,40 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         }
         // Snapshot the luminance-alpha result (dark field dropped, NO vignette or
         // radial) for the Ram MAIN slot — see ILoadedTex.darkDropBase.
+        //
+        // ...but only when there IS a dark field to drop. The transform exists so a
+        // glow-on-black main (a starfield, a trail streak) contributes its stars and not its
+        // black background; on a FULL-COVERAGE map — a cloud/landscape field with no black in
+        // it at all — it is pure loss, silently making an opaque plane 26-70% transparent
+        // because "not pure white" is read as "partly absent". Civilight Eterna's background
+        // planes are exactly that: main `tex3` has minimum luminance 130/255, so every pixel
+        // was being drawn at 51-78% alpha and her whole late-cinematic backdrop washed out.
+        //
+        // The two populations do not overlap. Over her Ram mains that reach this branch the
+        // dark-pixel fraction is either 0.0000-0.0072 (tex 1/3/8/14/17/26/49 — full-coverage
+        // maps) or 0.5278-0.5546 (tex 41/58 — trail streak and light rays on black). Nothing
+        // lands between, so the threshold sits in a wide empty gap rather than on a tuned edge.
+        // Textures with a real alpha channel never reach here (they return `plain` above, where
+        // darkDropBase already equals rawBase), so this only ever affects opaque maps.
+        //
+        // ⚠️ NOT SHIPPED — opt in with `?ramdropgate=1`. The rule is right about the texture and
+        // measures BETTER exactly where it was derived (Civilight Eterna t=17 35.294 -> 31.967,
+        // t=14 and t=18.5 also improve) but WORSE on her early beats (t=8 22.906 -> 28.515,
+        // t=11 39.725 -> 46.310), for a 7-beat net of 30.808 -> 32.440. Her early and late
+        // background planes share main `tex3`, so a texture-level gate cannot separate them —
+        // which is itself the finding: whatever is wrong at t=8/11 is NOT the alpha transform,
+        // it was only being masked by it. Shipping a principled change that measures worse is a
+        // mistake this project has already made once (see the Mlynar backdrop-clamp note).
+        const RAM_MAIN_DARK_FIELD_MIN = 0.1;
+        const hasDarkField = !ramDropGate() || darkN / Math.max(1, alphaN) >= RAM_MAIN_DARK_FIELD_MIN;
         const ddCanvas = document.createElement("canvas");
         ddCanvas.width = w;
         ddCanvas.height = h;
         const ddCtx = ddCanvas.getContext("2d");
         let darkDropBase: PIXI.BaseTexture;
-        if (ddCtx) {
+        if (!hasDarkField) {
+            darkDropBase = PIXI.BaseTexture.from(img);
+        } else if (ddCtx) {
             ddCtx.putImageData(imgData, 0, 0);
             darkDropBase = PIXI.BaseTexture.from(ddCanvas);
         } else {
@@ -3657,22 +3704,41 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         })();
         const border = Math.max(2, Math.min(w, h) * 0.16 * vigScale);
         const smooth = (t: number) => t * t * (3 - 2 * t);
+        // Border fade only — snapshot BEFORE the radial orb, so an additive draw can use the
+        // full authored field (see ILoadedTex.noOrbBase). Only materialised when the orb is
+        // actually about to be applied; otherwise `base` already is the border-only result.
+        let noOrbBase: PIXI.BaseTexture | null = null;
+        const applyOrb = uniformBright && vigScale !== 0;
         for (let y = 0; y < h; y++) {
             for (let x = 0; x < w; x++) {
                 const edge = Math.min(x, w - 1 - x, y, h - 1 - y);
-                let f = vigScale === 0 ? 1 : edge < border ? smooth(edge / border) : 1;
-                if (uniformBright && vigScale !== 0) {
-                    const rn = Math.hypot(x - cx, y - cy) / rMax;
-                    f *= rn >= 1 ? 0 : smooth(1 - rn);
-                }
+                const f = vigScale === 0 ? 1 : edge < border ? smooth(edge / border) : 1;
                 const idx = (y * w + x) * 4 + 3;
                 px[idx] = Math.round(px[idx] * f);
+            }
+        }
+        if (applyOrb) {
+            const noOrbCanvas = document.createElement("canvas");
+            noOrbCanvas.width = w;
+            noOrbCanvas.height = h;
+            const noOrbCtx = noOrbCanvas.getContext("2d");
+            if (noOrbCtx) {
+                noOrbCtx.putImageData(imgData, 0, 0);
+                noOrbBase = PIXI.BaseTexture.from(noOrbCanvas);
+            }
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const rn = Math.hypot(x - cx, y - cy) / rMax;
+                    const idx = (y * w + x) * 4 + 3;
+                    px[idx] = Math.round(px[idx] * (rn >= 1 ? 0 : smooth(1 - rn)));
+                }
             }
         }
         ctx.putImageData(imgData, 0, 0);
         // Opaque glow textures render additive, so desatPanel (a normal-blend mesh
         // gate) never applies — but keep the field consistent.
-        return { base: PIXI.BaseTexture.from(canvas), glow: true, rawBase: PIXI.BaseTexture.from(img), darkDropBase, skip, desatPanel: false, hazePanel: false };
+        const base = PIXI.BaseTexture.from(canvas);
+        return { base, glow: true, rawBase: PIXI.BaseTexture.from(img), darkDropBase, noOrbBase: noOrbBase ?? base, skip, desatPanel: false, hazePanel: false };
     } catch {
         return plain();
     }
@@ -3764,6 +3830,27 @@ function additivePileGain(sys: IParticleSystemData): number {
  *  flare survives) and gated on the data-derived flag so every other skin is byte-identical.
  *  "Large" = billboard bigger than the effect-overlay size (mirrors `EFFECT_TEX_MAX`), so
  *  small additive sparks (the amber orb, comet trail, glow motes) are untouched. */
+/** DIAGNOSTIC (`?addskip=1`): apply the flow/distortion-map `tex.skip` to AUTHORED-ADDITIVE
+ *  billboards too, i.e. revert to the pre-2026-08-10 behaviour. 51 systems across 10 skins. */
+function addSkipAll(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("addskip") === "1";
+}
+
+/** DIAGNOSTIC (`?ramdropgate=1`): gate the Ram MAIN luminance→alpha drop on the texture
+ *  actually HAVING a dark field. OFF by default — see ILoadedTex.darkDropBase for why. */
+function ramDropGate(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("ramdropgate") === "1";
+}
+
+/** DIAGNOSTIC (`?orb=1`): re-apply the uniform-bright radial orb to AUTHORED-ADDITIVE
+ *  billboards, i.e. revert to the pre-2026-08-10 texture choice. See ILoadedTex.noOrbBase. */
+function orbOnAdditive(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("orb") === "1";
+}
+
 const EFFECT_PARTICLE_GAIN = 0.3; // = sceneMesh EFFECT_SCENE_GAIN
 const EFFECT_PARTICLE_MAX = 512; // = sceneMesh EFFECT_TEX_MAX (effect-overlay vs large boundary)
 
@@ -3971,7 +4058,19 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // a drawable sprite; billboarding/mesh-stamping it leaves flickering grey
         // rectangles (Hoshiguma Alter's top "wave artifacts"). Skip it here — the
         // Ram-shader path above already consumed such maps as flow inputs.
-        if (tex.skip) continue;
+        //
+        // ...unless the system is AUTHORED ADDITIVE. The grey-rectangle failure this guards
+        // against needs the dark field to be visible, and additive blending makes it exactly
+        // invisible — a mid-grey flow map added over the scene would brighten it, which is
+        // what a light wash IS. The classifier cannot tell the two apart from pixels alone
+        // (Civilight Eterna's `guang_01 (1)` is a soft white light GRADIENT, tex25: meanLum
+        // 128.7, meanSat 0.000, peak/mean 1.98 — indistinguishable from a flow map by every
+        // property the rule reads), but the AUTHOR already made the call by choosing the
+        // blend mode. Trust it. Systems the rule was written for (Hoshiguma Alter's wave
+        // artifacts, Civilight Eterna's own full-frame background planes) are normal-blend
+        // and still skipped.
+        // `?addskip=1` restores the old behaviour (skip regardless of blend) for A/B.
+        if (tex.skip && (sys.blend !== "additive" || addSkipAll())) continue;
         // Scene-DEPTH atmospherics exported at a particle sort ABOVE the character —
         // Unity "bg_*" GameObjects (tint/rain/reflection washes: Virtuosa "Diversity
         // Oneness"'s bg_tint_01 / bg_rain_01) and large soft haze clouds (its air_01,
@@ -4188,7 +4287,11 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
         // trail material; otherwise it reuses the particle texture.
         const trailTex = sys.trail && sys.trail.tex != null ? bases[sys.trail.tex] : null;
         const trailTexture = trailTex ? new PIXI.Texture(trailTex.base) : null;
-        const emitter = new Emitter(sys, new PIXI.Texture(tex.base), trailTexture, blend, budget);
+        // An AUTHORED-additive billboard takes the no-orb variant: the uniform-bright radial
+        // falloff is a shape correction for a VISIBLE dark field, and additive has none.
+        // See ILoadedTex.noOrbBase. `?orb=1` restores the old behaviour for A/B.
+        const drawBase = sys.blend === "additive" && !orbOnAdditive() ? tex.noOrbBase : tex.base;
+        const emitter = new Emitter(sys, new PIXI.Texture(drawBase), trailTexture, blend, budget);
         emitters.push(emitter);
         emitterSys.push(sysIndex);
         // Tame a LARGE additive billboard on a self-lit dark-backdrop scene (mirrors the
