@@ -78,6 +78,13 @@ export interface ISceneLayer {
      *  passes this (`m_IsActive` toggle-off — the cinematic's environment swap). Absent =
      *  never hidden. Only `_Start` scenes carry it. */
     activeUntil?: number | null;
+    /** The FULL `[from, until]` schedule when the `_Start` clip switches this layer on MORE
+     *  THAN ONCE — Civilight Eterna's `Transition_black_01` blacks the frame out over
+     *  5.17–6.33 and AGAIN over 11.50–12.67, and a single `activeFrom`/`activeUntil` pair can
+     *  only carry the first. Those two scalars still hold window 0, so this is purely additive:
+     *  absent (the overwhelming majority) means the pair is the whole schedule. `null` bounds
+     *  mean "from t=0" / "never hidden". */
+    activeWindows?: [number | null, number | null][];
     /** CROSS-ROOT reveal (s): the layer is the IDLE prefab's world inside an entrance
      *  scene — the game only activates that prefab at the director's transform beat
      *  (Virtuosa's white mirror-world appears at 12.0, after the blue-sea reveal).
@@ -146,6 +153,12 @@ export interface ISceneData {
     separatorPartSorts?: number[] | null;
     /** ENTRANCE (`_Start`) cinematic total length in seconds (director `_params.duration`).
      *  Present only on `_Start` scenes. */
+    /** `m_StopTime` of the entrance CAMERA clip — where the cinematic's authored content
+     *  actually ends, which can PRECEDE the director's nominal `entranceDuration` (Executor
+     *  6.100 vs 6.500; Mlynar 15.967 vs 16.500). The end-of-entrance screen fade is anchored
+     *  here, not at `entranceDuration`. Absent when the skin's camera clip is unidentifiable
+     *  (Civilight Eterna's camera never moves) — fall back to the duration. */
+    entranceClipStop?: number | null;
     entranceDuration?: number | null;
     /** Straight RGBA (0..1) of the director's end-of-entrance screen fade (`_params.fadeColor`).
      *  The client fades the whole view to this colour as the entrance ends, swaps to the settled
@@ -789,6 +802,9 @@ function tintToHex(t: [number, number, number, number]): number {
 export interface ISceneLayerRuntime {
     __activeFrom?: number | null;
     __activeUntil?: number | null;
+    /** Mirror of {@link ISceneLayer.activeWindows}, cross-root clamp already folded in.
+     *  When present it SUPERSEDES `__activeFrom`/`__activeUntil` in the entrance tick. */
+    __activeWindows?: [number | null, number | null][] | null;
     /** The layer's authored Unity `m_SortingOrder` — used to hoist scene layers that
      *  outsort EVERY particle emitter above the particle container (Mlynar's sort-100
      *  white flash must cover the crystals/sparks too). */
@@ -799,6 +815,10 @@ export interface ISceneLayerRuntime {
     __texIndex?: number;
     __srcIndex?: number;
     __colorCurve?: [number, number, number, number, number][] | null;
+    /** The layer's STATIC authored tint — how the IDLE scene paints this same artwork, since
+     *  the idle copies of the windowed layers carry neither a window nor a colour curve.
+     *  Read only by the `?statictail=1` diagnostic. */
+    __staticTint?: [number, number, number, number];
     /** Mirror of the static-tint folding in {@link buildLayerMesh} (additive gain rules),
      *  so {@link applySceneLayerColor} reproduces it for every sampled colour. */
     __colorMode?: { additive: boolean; gain: number };
@@ -911,7 +931,9 @@ export function applySceneLayerColor(mesh: PIXI.DisplayObject, rgba: [number, nu
     // `?lcolor=` — scale THIS layer's colour, keyed on its source index (see layerColorScales).
     const ls = layerColorScales().get(mm.__srcIndex ?? -1);
     if (ls !== undefined) {
-        rgb[0] *= ls[0]; rgb[1] *= ls[1]; rgb[2] *= ls[2];
+        rgb[0] *= ls[0];
+        rgb[1] *= ls[1];
+        rgb[2] *= ls[2];
     }
     if (shader instanceof PIXI.MeshMaterial) {
         shader.tint = tintToHex(rgb);
@@ -1421,8 +1443,15 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         const noWin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("nowin") === "1";
         rt.__activeFrom = noWin ? null : from != null || rootFrom != null ? Math.max(from ?? 0, rootFrom ?? 0) : null;
         rt.__activeUntil = noWin ? null : (layer.activeUntil ?? null);
+        // Multi-window schedule, with the cross-root activation folded in as a lower bound on
+        // every window exactly as it is on the single-window `__activeFrom` above.
+        rt.__activeWindows = noWin || !layer.activeWindows?.length ? null : layer.activeWindows.map(([f, u]) => [rootFrom == null ? f : Math.max(f ?? 0, rootFrom), u] as [number | null, number | null]);
         rt.__sort = layer.sort;
         rt.__texIndex = layer.tex;
+        // The layer's STATIC authored tint, i.e. how the IDLE scene paints this same artwork
+        // (its copy carries no window and no colour curve). Kept so `?statictail=1` can test
+        // whether an expired entrance layer should revert to it rather than vanish.
+        rt.__staticTint = layer.tint;
         if (layer.colorCurve?.length) {
             rt.__colorCurve = layer.colorCurve;
             rt.__colorMode = { additive, gain };

@@ -338,7 +338,7 @@ fn read_streamed_timed(data: &[u32]) -> Vec<(f32, Vec<StreamedKey>)> {
 pub fn active_timelines(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, f32> {
     active_windows(all_objects)
         .into_iter()
-        .filter_map(|(go, w)| w.0.map(|from| (go, from)))
+        .filter_map(|(go, w)| w.first().and_then(|iv| iv.0).map(|from| (go, from)))
         .collect()
 }
 
@@ -351,8 +351,83 @@ pub fn active_timelines(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64
 /// the `_Start` cinematic performs, which a reveal-only timeline misses.
 pub type ActiveWindow = (Option<f32>, Option<f32>);
 
+/// A GameObject's FULL visibility schedule: the ordered, disjoint `[from, until)` windows the
+/// clip switches it on for. Almost every object has exactly one, but a cinematic is free to
+/// flash something twice, and a single `(from, until)` pair silently truncates that to the
+/// first window — hiding everything after the first switch-off for the rest of the entrance.
+pub type ActiveWindowList = Vec<ActiveWindow>;
+
+/// Fold a clip's `m_IsActive` on/off transitions into the intervals the object is VISIBLE for.
+/// `start_on` is the clip's opening state; `None` bounds mean "from t=0" / "never hidden".
+/// An always-on object yields a single `(None, None)`, which callers treat as "no window".
+fn windows_from_transitions(start_on: bool, transitions: &[(f32, bool)]) -> ActiveWindowList {
+    let mut out: ActiveWindowList = Vec::new();
+    let mut on = start_on;
+    let mut from: Option<f32> = None;
+    for &(t, next) in transitions {
+        if next && !on {
+            from = Some(t);
+            on = true;
+        } else if !next && on {
+            out.push((from, Some(t)));
+            from = None;
+            on = false;
+        }
+    }
+    if on {
+        out.push((from, None));
+    }
+    out
+}
+
+/// Merge two schedules by INTERSECTION — the object is visible only where BOTH agree. For the
+/// single-window case this is exactly the previous "latest reveal, earliest hide" rule, so the
+/// generalisation cannot move any object that has one window per clip.
+fn intersect_windows(a: &[ActiveWindow], b: &[ActiveWindow]) -> ActiveWindowList {
+    let mut out: ActiveWindowList = Vec::new();
+    for &(af, au) in a {
+        for &(bf, bu) in b {
+            let from = match (af, bf) {
+                (Some(x), Some(y)) => Some(x.max(y)),
+                (x, y) => x.or(y),
+            };
+            let until = match (au, bu) {
+                (Some(x), Some(y)) => Some(x.min(y)),
+                (x, y) => x.or(y),
+            };
+            // Drop windows the intersection collapsed to nothing.
+            if let (Some(f), Some(u)) = (from, until) {
+                if u <= f {
+                    continue;
+                }
+            }
+            out.push((from, until));
+        }
+    }
+    out
+}
+
+/// `m_StopTime` of the clip that actually drives the entrance CAMERA — the authored end of the
+/// cinematic's content, which can fall BEFORE the director's nominal `_params.duration`
+/// (Executor's camera clip stops at 6.100 against a duration of 6.500; Mlynar's at 15.967
+/// against 16.500). The director's end-of-entrance fade is anchored to this, not to `duration`.
+///
+/// Identified STRUCTURALLY via {@link camera_motion_clips}, not by name: three skins do not use
+/// the `start|entrance|enter` vocabulary, and a name-gated scan picks up short prop clips
+/// instead (Lappland's longest name-admitted clip stops at 0.833 on a 14.5 s entrance, which
+/// would truncate her whole cinematic).
 #[must_use]
-pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindow> {
+pub fn entrance_clip_stop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f32> {
+    let cam_clips = camera_motion_clips(all_objects);
+    all_objects
+        .iter()
+        .filter(|(pid, (cid, _))| *cid == 74 && cam_clips.contains(pid))
+        .filter_map(|(_, (_, v))| clip_stop_time(v))
+        .fold(None, |acc: Option<f32>, s| Some(acc.map_or(s, |a| a.max(s))))
+}
+
+#[must_use]
+pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindowList> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
     let clip_animators = build_clip_animator_gos(all_objects);
@@ -382,7 +457,7 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
                 .flatten()
         })
         .map(|d| d as f32);
-    let mut out: HashMap<i64, ActiveWindow> = HashMap::new();
+    let mut out: HashMap<i64, ActiveWindowList> = HashMap::new();
     for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 {
             continue;
@@ -395,7 +470,13 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
             continue;
         }
         let stop = clip_stop_time(v);
-        for (go, (from, mut until)) in active_timeline(
+        if std::env::var("SCENE_DEBUG").is_ok() {
+            eprintln!(
+                "  [clip] {:?} stop={stop:?} director_duration={director_duration:?}",
+                v.get("m_Name").and_then(Value::as_str).unwrap_or("?")
+            );
+        }
+        for (go, mut ivs) in active_timeline(
             v,
             &hash_to_gos,
             &is_ancestor,
@@ -410,29 +491,34 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
             // hide by the clip's own stop, else the overlay holds its final frame (a
             // permanent white-out) into the settle. Prefab-ACTIVE GOs keep their `None`
             // hide — they stay visible after the clip on their own serialized state.
-            if until.is_none() && from.is_some() && !prefab_active(all_objects, go) {
+            let Some(&(last_from, last_until)) = ivs.last() else {
+                continue;
+            };
+            if last_until.is_none() && last_from.is_some() && !prefab_active(all_objects, go) {
                 // Expire at the STATE's exit, not the CLIP's stop. Measured against the
                 // recording: Mlynar's white transition flash is held full-white by the game
                 // until ~16.5s (the director duration) while its clip stops at 15.97 — cutting
                 // at the clip stop exposes the bare scene for the last ~0.55s of the entrance
                 // (luminance 248 -> 97 where the game stays 248). Falls back to the clip stop
                 // when no director duration is authored, and never SHORTENS a window.
-                until = match (stop, director_duration) {
+                let bound = match (stop, director_duration) {
                     (Some(s), Some(d)) if d > s => Some(d),
                     (s, _) => s,
                 };
+                if let Some(last) = ivs.last_mut() {
+                    last.1 = bound;
+                }
             }
-            let e = out.entry(go).or_insert((from, until));
-            // Merge across clips: LATEST reveal (entrance's delayed switch-on beats a
-            // const-on state clip) and EARLIEST hide (the cinematic's deactivation).
-            e.0 = match (e.0, from) {
-                (Some(a), Some(b)) => Some(a.max(b)),
-                (a, b) => a.or(b),
-            };
-            e.1 = match (e.1, until) {
-                (Some(a), Some(b)) => Some(a.min(b)),
-                (a, b) => a.or(b),
-            };
+            // Merge across clips by intersecting the schedules (see `intersect_windows`).
+            match out.entry(go) {
+                std::collections::hash_map::Entry::Occupied(mut e) => {
+                    let merged = intersect_windows(e.get(), &ivs);
+                    e.insert(merged);
+                }
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    e.insert(ivs);
+                }
+            }
         }
     }
     out
@@ -2268,7 +2354,7 @@ fn active_timeline(
     animator_gos: Option<&[i64]>,
     go_parent: &HashMap<i64, i64>,
     go_name: &HashMap<i64, String>,
-) -> HashMap<i64, ActiveWindow> {
+) -> HashMap<i64, ActiveWindowList> {
     let clip_name = clip.get("m_Name").and_then(Value::as_str).unwrap_or("");
     let mut out = HashMap::new();
     let Some(bindings) = generic_bindings(clip) else {
@@ -2288,7 +2374,7 @@ fn active_timeline(
     let stream_count = total_curve_count(bindings).saturating_sub(dense_count + const_count);
     let timed = read_streamed_timed(&streamed_raw);
     let mut all_hashes = std::collections::HashSet::new();
-    let mut windows = Vec::new();
+    let mut windows: Vec<(u32, ActiveWindowList)> = Vec::new();
     let mut gidx = 0usize;
     for b in bindings {
         let (type_id, attr, path) = binding_fields(b);
@@ -2299,6 +2385,14 @@ fn active_timeline(
             let mut prev: Option<bool> = None;
             let mut reveal: Option<f32> = None;
             let mut hide: Option<f32> = None;
+            // EVERY on/off transition, not just the first of each kind: a GameObject the clip
+            // toggles off and back ON collapses to a PERMANENT hide if only the first of each is
+            // kept. Civilight Eterna's overlay runs on 5.17 / off 6.33 / on 11.50 / off 12.67 —
+            // two separate windows, the second of which is the cut the capture shows at t=12.
+            let mut transitions: Vec<(f32, bool)> = Vec::new();
+            // The state the clip OPENS in, taken from the boundary padding frame that the
+            // `fi == 0` skip below deliberately does not treat as a transition.
+            let mut start_on = false;
             for (fi, (time, keys)) in timed.iter().enumerate() {
                 for k in keys {
                     if k.index == gidx {
@@ -2313,9 +2407,13 @@ fn active_timeline(
                 // (time = f32::MIN sentinel) doesn't register as a spurious state.
                 if fi == 0 {
                     prev = Some(on);
+                    start_on = on;
                     continue;
                 }
                 if let Some(p) = prev {
+                    if p != on {
+                        transitions.push((time.max(0.0), on));
+                    }
                     if !p && on && reveal.is_none() {
                         reveal = Some(time.max(0.0));
                     }
@@ -2326,12 +2424,12 @@ fn active_timeline(
                 prev = Some(on);
             }
             if reveal.is_some() || hide.is_some() {
-                windows.push((path, reveal, hide));
+                windows.push((path, windows_from_transitions(start_on, &transitions)));
             }
         }
         gidx += count;
     }
-    for (path, reveal, hide) in windows {
+    for (path, ivs) in windows {
         let Some(candidates) = hash_to_gos.get(&path) else {
             continue;
         };
@@ -2346,7 +2444,17 @@ fn active_timeline(
             clip_name,
             go_name,
         ) {
-            out.insert(go, (reveal, hide));
+            // `SCENE_DEBUG=1` prints the resolved visibility SCHEDULE per object. This is what
+            // turned "Civilight Eterna's backdrop just stops at t=12" into a one-line diagnosis:
+            // `Transition_black_01` reads `[(5.17, 6.33), (11.5, 12.67)]`, i.e. the cinematic
+            // blacks the frame out TWICE and only the first window was ever exported.
+            if std::env::var("SCENE_DEBUG").is_ok() {
+                eprintln!(
+                    "  [active] {:?} (clip {clip_name}) {ivs:?}",
+                    go_name.get(&go).map_or("?", String::as_str)
+                );
+            }
+            out.insert(go, ivs);
         }
     }
     out

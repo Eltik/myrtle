@@ -6,8 +6,7 @@ import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
-import {
-    particleCensus, ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
+import { particleCensus, ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
 import {
     applySceneLayerColor,
     applySceneLayerFollow,
@@ -628,6 +627,9 @@ interface IComposite {
      *  and the `transform` reform beat. Non-null only for a "_Start" entrance composite;
      *  drives the tight→wide camera dolly length and the hand-off time. */
     entranceDuration: number | null;
+    /** Where the end-of-entrance fade finishes ramping — `min(duration, clipStop)`.
+     *  See {@link entranceFadeEnd}. */
+    entranceFadeEnd: number | null;
     /** Straight RGBA of the director's end-of-entrance screen fade (`_params.fadeColor`), or
      *  null when the skin ships no entrance director. See {@link ENTRANCE_FADE_IN}. */
     entranceFade: [number, number, number, number] | null;
@@ -805,9 +807,34 @@ const ENTRANCE_FADE_OUT = 0.35;
  *  nothing to add), which is what makes this safe to apply by rule rather than per skin.
  *
  *  Colour is compared to the director's own `fadeColor` rather than assumed white. */
+/** When does the end-of-entrance screen fade finish ramping?
+ *
+ *  The director ships a nominal `duration`, but the cinematic's authored content ends when its
+ *  CAMERA CLIP stops, and the two are not the same: Executor's camera clip stops at 6.100
+ *  against a duration of 6.500, and her capture saturates to white at exactly 5.900 —
+ *  `clipStop − HOLD`, to a frame. Anchoring on `duration` put our ramp 0.400 s late, which a
+ *  time-offset sweep rules out as a reference-trim artefact (0 is the optimum in both
+ *  directions, ±0.2 s costs 8–24 MADC).
+ *
+ *  Only ever SHORTENS: where the clip runs past the director (9 of the 11 entrance skins that
+ *  report both) the duration still wins, so this cannot stretch a fade. `?fadeanchor=0` reverts.
+ *
+ *  ⚠️ This is not a licence to anchor the fade RAMP on data too: the ramp lengths genuinely
+ *  differ per skin (measured 0.183 s on Executor, 0.533 on Wiš'adel, 0.600 on Eyjafjalla) and
+ *  nothing exported predicts them. See the note in {@link ENTRANCE_FADE_IN}. */
+function entranceFadeEnd(data: ISceneData | null): number | null {
+    const dur = data?.entranceDuration ?? null;
+    if (dur == null) return null;
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fadeanchor") === "0") return dur;
+    const stop = data?.entranceClipStop ?? null;
+    return stop != null && stop < dur ? stop : dur;
+}
+
 function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     const fade = data?.entranceFade;
-    const dur = data?.entranceDuration;
+    // Same anchor the ramp itself uses, so the "does the layer beat the director?" test stays
+    // consistent with when the director actually finishes.
+    const dur = entranceFadeEnd(data);
     if (!data || !fade || !dur || !data.cameraSizePx) return false;
     const ext = 2 * data.cameraSizePx;
     const rampStart = dur - ENTRANCE_FADE_HOLD - ENTRANCE_FADE_IN;
@@ -966,6 +993,13 @@ interface ISeparatorWash {
 function activeWindowsOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("actwin") !== "0";
+}
+
+/** `?statictail=1`: an EXPIRED layer reverts to its static idle tint rather than hiding
+ *  (models a mid-cinematic cut from the `_Start` scene to the idle scene). */
+function staticTailOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("statictail") === "1";
 }
 
 function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
@@ -1465,7 +1499,26 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // layer on. Virtuosa hides 74 of 132 layers at t=2/5/8 this way —
                         // including 28 flank layers (authored x -770..-332 and +1039..+1208)
                         // that sit exactly where her background is ~80 luma too dark.
-                        if ((af != null || au != null) && activeWindowsOn()) m.renderable = (af == null || tt >= af) && (au == null || tt < au);
+                        // A multi-window schedule supersedes the `af`/`au` pair (which carries only
+                        // its first window): the layer draws inside ANY of its windows.
+                        const aws = mm.__activeWindows;
+                        if (aws?.length && activeWindowsOn()) {
+                            m.renderable = aws.some(([f, u]) => (f == null || tt >= f) && (u == null || tt < u));
+                        } else if ((af != null || au != null) && activeWindowsOn()) {
+                            m.renderable = (af == null || tt >= af) && (au == null || tt < au);
+                        }
+                        // DIAGNOSTIC `?statictail=1`: once a layer's window has EXPIRED, keep it
+                        // drawn at its STATIC authored tint instead of hiding it. This models the
+                        // hypothesis that the game cuts from the `_Start` scene to the IDLE scene
+                        // mid-cinematic: the idle copies of Civilight Eterna's three lavender
+                        // fields carry no window and no colour curve, so after her t=12.0 cut they
+                        // would come back at full static tint. `?nowin=1` cannot test this — it
+                        // leaves the colour curve driving, and these curves end at alpha 0.
+                        if (staticTailOn() && !aws?.length && au != null && tt >= au && mm.__staticTint) {
+                            m.renderable = true;
+                            applySceneLayerColor(m, mm.__staticTint);
+                            continue;
+                        }
                         // Material-colour replay: the `_Start` clip animates some layers'
                         // material colour (Mlynar's white flash alpha ramps 0→0.671 over
                         // 13→15s); sample the exported curve at the track time and re-tint.
@@ -2079,9 +2132,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 // splitting scenery slots from character slots.
                                 bone: (sl as unknown as { bone?: { data?: { name?: string } } }).bone?.data?.name ?? null,
                                 root: (() => {
-                                    let b = (sl as unknown as { bone?: { parent?: unknown; data?: { name?: string } } }).bone as
-                                        | { parent?: { parent?: unknown; data?: { name?: string } } | null; data?: { name?: string } }
-                                        | undefined;
+                                    let b = (sl as unknown as { bone?: { parent?: unknown; data?: { name?: string } } }).bone as { parent?: { parent?: unknown; data?: { name?: string } } | null; data?: { name?: string } } | undefined;
                                     let guard = 0;
                                     while (b?.parent && guard++ < 64) b = b.parent as typeof b;
                                     return b?.data?.name ?? null;
@@ -2189,46 +2240,49 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Layers CAPABLE of covering the frame: big enough, actually able to occlude,
                 // and not additive. Whether one covers at a given moment is decided per frame
                 // below, from its clip window and animated alpha.
-                const coverLayers = !scene || viewExt <= 0 ? [] : scene.data.layers.filter((l) => {
-                    let x0 = Infinity;
-                    let x1 = -Infinity;
-                    let y0 = Infinity;
-                    let y1 = -Infinity;
-                    for (let i2 = 0; i2 < l.pos.length; i2 += 2) {
-                        x0 = Math.min(x0, l.pos[i2]);
-                        x1 = Math.max(x1, l.pos[i2]);
-                        y0 = Math.min(y0, l.pos[i2 + 1]);
-                        y1 = Math.max(y1, l.pos[i2 + 1]);
-                    }
-                    if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
-                    // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh whose
-                    // box is 2047² against a 2000 view — so it passed — but its silhouette is cut
-                    // off diagonally and holds only 70% of the view's area. It suppressed gap-fill
-                    // and left a hard-edged grey wedge across a third of her frame. Require the mesh
-                    // to actually CONTAIN the view's worth of area. The 0.95 is slack for a tight
-                    // quad whose box slightly exceeds the view, not a tuned constant: real covers
-                    // sit at 2.4–6.1 and concave ones at 0.70–0.73.
-                    let meshArea = 0;
-                    for (let k = 0; k + 2 < l.idx.length; k += 3) {
-                        const a = l.idx[k] * 2;
-                        const b = l.idx[k + 1] * 2;
-                        const c = l.idx[k + 2] * 2;
-                        if (Math.max(a, b, c) + 1 >= l.pos.length) continue;
-                        meshArea += Math.abs((l.pos[b] - l.pos[a]) * (l.pos[c + 1] - l.pos[a + 1]) - (l.pos[c] - l.pos[a]) * (l.pos[b + 1] - l.pos[a + 1])) / 2;
-                    }
-                    if (meshArea < 0.95 * viewExt * viewExt) return false;
-                    // AND IT HAS TO BE ABLE TO OCCLUDE. Geometry alone said "covered" for layers
-                    // that never become opaque — Mlynar's layer 17 peaks at alpha 0.275, Civilight
-                    // Eterna's layer 21 at 0.298 — and for ADDITIVE layers, which cannot hide
-                    // anything by construction.
-                    if (l.additive) return false;
-                    let maxAlpha = l.tint?.[3] ?? 1;
-                    if (l.colorCurve?.length) {
-                        maxAlpha = 0;
-                        for (const k of l.colorCurve) maxAlpha = Math.max(maxAlpha, k[4]);
-                    }
-                    return maxAlpha >= 0.99;
-                });
+                const coverLayers =
+                    !scene || viewExt <= 0
+                        ? []
+                        : scene.data.layers.filter((l) => {
+                              let x0 = Infinity;
+                              let x1 = -Infinity;
+                              let y0 = Infinity;
+                              let y1 = -Infinity;
+                              for (let i2 = 0; i2 < l.pos.length; i2 += 2) {
+                                  x0 = Math.min(x0, l.pos[i2]);
+                                  x1 = Math.max(x1, l.pos[i2]);
+                                  y0 = Math.min(y0, l.pos[i2 + 1]);
+                                  y1 = Math.max(y1, l.pos[i2 + 1]);
+                              }
+                              if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
+                              // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh whose
+                              // box is 2047² against a 2000 view — so it passed — but its silhouette is cut
+                              // off diagonally and holds only 70% of the view's area. It suppressed gap-fill
+                              // and left a hard-edged grey wedge across a third of her frame. Require the mesh
+                              // to actually CONTAIN the view's worth of area. The 0.95 is slack for a tight
+                              // quad whose box slightly exceeds the view, not a tuned constant: real covers
+                              // sit at 2.4–6.1 and concave ones at 0.70–0.73.
+                              let meshArea = 0;
+                              for (let k = 0; k + 2 < l.idx.length; k += 3) {
+                                  const a = l.idx[k] * 2;
+                                  const b = l.idx[k + 1] * 2;
+                                  const c = l.idx[k + 2] * 2;
+                                  if (Math.max(a, b, c) + 1 >= l.pos.length) continue;
+                                  meshArea += Math.abs((l.pos[b] - l.pos[a]) * (l.pos[c + 1] - l.pos[a + 1]) - (l.pos[c] - l.pos[a]) * (l.pos[b + 1] - l.pos[a + 1])) / 2;
+                              }
+                              if (meshArea < 0.95 * viewExt * viewExt) return false;
+                              // AND IT HAS TO BE ABLE TO OCCLUDE. Geometry alone said "covered" for layers
+                              // that never become opaque — Mlynar's layer 17 peaks at alpha 0.275, Civilight
+                              // Eterna's layer 21 at 0.298 — and for ADDITIVE layers, which cannot hide
+                              // anything by construction.
+                              if (l.additive) return false;
+                              let maxAlpha = l.tint?.[3] ?? 1;
+                              if (l.colorCurve?.length) {
+                                  maxAlpha = 0;
+                                  for (const k of l.colorCurve) maxAlpha = Math.max(maxAlpha, k[4]);
+                              }
+                              return maxAlpha >= 0.99;
+                          });
                 const sceneCoversFrame = coverLayers.length > 0;
                 const gapFill = !useStatic && gapFillOn() && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
@@ -2677,6 +2731,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     previewBounds,
                     entranceViewRatio: authoredFrame?.viewPx2 && authoredFrame?.viewPx ? (authoredFrame.viewPx2 as number) / authoredFrame.viewPx : null,
                     entranceDuration: scene?.data.entranceDuration ?? null,
+                    entranceFadeEnd: entranceFadeEnd(scene?.data ?? null),
                     entranceFade: sceneDrivesEntranceFade(scene?.data ?? null) ? null : (scene?.data.entranceFade ?? null),
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
@@ -2722,6 +2777,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 previewBounds: null,
                 entranceViewRatio: null,
                 entranceDuration: null,
+                entranceFadeEnd: null,
                 entranceFade: null,
                 entranceTransform: null,
                 entranceOrthoCurve: null,
@@ -2805,6 +2861,45 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // directly. `applied` distinguishes "the skeleton has no clip" from "it has one
                     // and our draw-order splicing tore the clippingContainer apart", which look the
                     // same in a render but need opposite fixes.
+                    // Per-SLOT visibility: name, live attachment and colour alpha, plus the
+                    // screen box of what it actually draws. Civilight Eterna's aperture EDGES are
+                    // painted by the skeleton's own background attachments (ablating the spine
+                    // flattens them; ablating scene or particles does not), and they go dark for
+                    // exactly the 6→12 s window her side strips are empty — so "which slot stopped
+                    // drawing, and was it the alpha or the attachment" is the question this answers.
+                    const w3 = window as unknown as { __dynSlots?: () => unknown };
+                    w3.__dynSlots = () => {
+                        const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;
+                        const sp = c?.spine as unknown as (PIXI.Container & { skeleton?: Record<string, unknown>; slotContainers?: PIXI.Container[] }) | undefined;
+                        const sk = sp?.skeleton as unknown as { slots?: unknown[] } | undefined;
+                        if (!sk?.slots) return "NO SKELETON";
+                        const out: unknown[] = [];
+                        (sk.slots as unknown[]).forEach((raw, i) => {
+                            const sl = raw as {
+                                data?: { name?: string };
+                                color?: { a?: number };
+                                attachment?: { name?: string } | null;
+                            };
+                            const cont = sp?.slotContainers?.[i];
+                            let box: { x: number; y: number; w: number; h: number } | null = null;
+                            try {
+                                const b = cont?.getBounds();
+                                if (b && b.width > 0 && b.height > 0) box = { x: b.x, y: b.y, w: b.width, h: b.height };
+                            } catch {
+                                box = null;
+                            }
+                            out.push({
+                                i,
+                                slot: sl.data?.name ?? "?",
+                                att: sl.attachment?.name ?? null,
+                                alpha: sl.color?.a ?? null,
+                                vis: cont?.visible ?? null,
+                                rend: cont?.renderable ?? null,
+                                box,
+                            });
+                        });
+                        return out;
+                    };
                     const w2 = window as unknown as { __dynClip?: () => unknown };
                     w2.__dynClip = () => {
                         const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;
@@ -2825,11 +2920,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             let y0 = Infinity;
                             let y1 = -Infinity;
                             for (let i = 0; i < n; i += 2) {
-                                x0 = Math.min(x0, verts[i]); x1 = Math.max(x1, verts[i]);
-                                y0 = Math.min(y0, verts[i + 1]); y1 = Math.max(y1, verts[i + 1]);
+                                x0 = Math.min(x0, verts[i]);
+                                x1 = Math.max(x1, verts[i]);
+                                y0 = Math.min(y0, verts[i + 1]);
+                                y1 = Math.max(y1, verts[i + 1]);
                             }
                             const sx = (x: number, y: number) => (wt ? { x: wt.a * x + wt.c * y + wt.tx, y: wt.b * x + wt.d * y + wt.ty } : { x, y });
-                            const p0 = sx(x0, y0), p1 = sx(x1, y1);
+                            const p0 = sx(x0, y0),
+                                p1 = sx(x1, y1);
                             const cc = slot.clippingContainer as PIXI.Container | undefined;
                             out.push({
                                 slot: (slot.data as Record<string, unknown> | undefined)?.name,
@@ -2901,7 +2999,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             sp.height = height;
                             sp.alpha = 0;
                             app.stage.addChild(sp);
-                            entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceDuration, out: null };
+                            entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceFadeEnd ?? c.entranceDuration, out: null };
                         }
                     }
                     spineRef.current = c.spine;

@@ -94,6 +94,9 @@ pub struct SpineAsset {
     /// `_Start` set over this span, then hands off to the settled idle). `None`
     /// for the main set or a skin without an entrance director.
     pub bg_entrance_duration: Option<f64>,
+    /// `m_StopTime` of the entrance CAMERA clip — the authored end of the cinematic's content,
+    /// which can precede the director's nominal `duration`. See `anim::entrance_clip_stop`.
+    pub bg_entrance_clip_stop: Option<f32>,
     /// ENTRANCE screen-fade colour, from the director's `_params.fadeColor` (premultiplied
     /// straight RGBA, 0..1). The client fades the whole view to this colour as the entrance
     /// ends and then cuts to the settled idle — the recordings show Virtuosa reaching pure
@@ -234,6 +237,10 @@ pub struct BgQuad {
     /// is switched OFF by an `m_IsActive` curve in the `_Start` clips (the cinematic's
     /// environment SWAP). `None` = never hidden (visible to the end). Only `_Start` scenes.
     pub active_until: Option<f32>,
+    /// The FULL visibility schedule when the clip authors MORE THAN ONE window (empty
+    /// otherwise, so the common single-window case keeps `active_from`/`active_until` alone).
+    /// Emitted as `activeWindows`; the renderer draws the layer inside ANY of them.
+    pub active_windows: Vec<super::anim::ActiveWindow>,
     /// CROSS-ROOT reveal (seconds): the layer belongs to ANOTHER skeleton's prefab
     /// root (the idle world inside an entrance scene) and only becomes visible when
     /// the game activates that prefab at the director's transform beat. Kept apart
@@ -818,6 +825,7 @@ pub fn collect_spine_assets(
             bg_entrance_cam_center,
             bg_entrance_cam_roll,
             bg_entrance_aperture,
+            bg_entrance_clip_stop,
         ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
@@ -842,9 +850,10 @@ pub fn collect_spine_assets(
                 cam_center,
                 cam_roll,
                 aperture,
+                super::anim::entrance_clip_stop(all_objects),
             )
         } else {
-            (None, None, None, None, None, None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None, None, None, None, None)
         };
 
         assets.push(SpineAsset {
@@ -865,6 +874,7 @@ pub fn collect_spine_assets(
             separator_slots: scene.separator_slots.clone(),
             separator_part_sorts: scene.separator_part_sorts.clone(),
             bg_entrance_duration,
+            bg_entrance_clip_stop,
             bg_entrance_fade,
             bg_entrance_transform,
             bg_entrance_view,
@@ -946,15 +956,15 @@ pub fn detect_dynchar_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
 /// `(None, None)` when neither the object nor any ancestor is toggled (→ always visible).
 fn reveal_of_go(
     go_pid: i64,
-    reveal: &HashMap<i64, super::anim::ActiveWindow>,
+    reveal: &HashMap<i64, super::anim::ActiveWindowList>,
     go_to_transform: &HashMap<i64, i64>,
     all_objects: &HashMap<i64, (i32, Value)>,
-) -> super::anim::ActiveWindow {
+) -> super::anim::ActiveWindowList {
     let mut cur_go = Some(go_pid);
     for _ in 0..256 {
         let Some(g) = cur_go else { break };
-        if let Some(&w) = reveal.get(&g) {
-            return w;
+        if let Some(w) = reveal.get(&g) {
+            return w.clone();
         }
         let Some(tf) = go_to_transform.get(&g) else {
             break;
@@ -970,7 +980,7 @@ fn reveal_of_go(
             .and_then(|(_, v)| v.get("m_GameObject"))
             .and_then(get_path_id);
     }
-    (None, None)
+    Vec::new()
 }
 
 /// Collect every background-scene mesh quad of a dynillust prefab.
@@ -1315,7 +1325,7 @@ fn collect_dynchar_bg_quads(
         // A colour-reveal admission must not override the state gate: a group the game
         // reserves for another state stays out no matter what its curves do.
         let state_blocked = state_only_blocked(all_objects, go_pid, &go_to_transform, is_entrance);
-        if !eff_active && window == (None, None) && !(has_color_reveal && !state_blocked) {
+        if !eff_active && window.is_empty() && !(has_color_reveal && !state_blocked) {
             skipped_inactive += 1;
             if attrib_dbg {
                 let (by, why) = blocking_ancestor(
@@ -1385,7 +1395,7 @@ fn collect_dynchar_bg_quads(
             // otherwise a warm-ring/god-ray reveal painted on an external texture is
             // lost. Non-reveal meshExt quads without a window stay dropped (they'd be
             // always-on frozen fx polluting the idle scene).
-            if mat.get("_meshExtResolved").is_some() && window == (None, None) && !has_color_reveal
+            if mat.get("_meshExtResolved").is_some() && window.is_empty() && !has_color_reveal
             {
                 continue;
             }
@@ -1894,7 +1904,7 @@ fn collect_dynchar_bg_quads(
         // in-bundle statically-active layer) are untouched — this only re-checks the two
         // paths the color-reveal exception newly opened.
         let admitted_by_reveal =
-            has_color_reveal && window == (None, None) && (!eff_active || resolved_meshext);
+            has_color_reveal && window.is_empty() && (!eff_active || resolved_meshext);
         if admitted_by_reveal {
             let reveals = color_curve
                 .as_ref()
@@ -2058,8 +2068,9 @@ fn collect_dynchar_bg_quads(
             src_blend,
             dst_blend,
             scale_curve,
-            active_from: window.0,
-            active_until: window.1,
+            active_from: window.first().and_then(|w| w.0),
+            active_until: window.first().and_then(|w| w.1),
+            active_windows: if window.len() > 1 { window.clone() } else { Vec::new() },
             root_reveal_from: cross_from,
             color_curve,
             uv_scroll,
@@ -3089,12 +3100,13 @@ impl BgParticleHost {
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
         go_pid: i64,
-        windows: &HashMap<i64, super::anim::ActiveWindow>,
+        windows: &HashMap<i64, super::anim::ActiveWindowList>,
     ) -> Option<(Option<f32>, Option<f32>)> {
         let mut cur_go = Some(go_pid);
         for _ in 0..256 {
             let g = cur_go?;
-            if let Some(&w) = windows.get(&g) {
+            // First window only — see `entrance_reveal_of_go`.
+            if let Some(&w) = windows.get(&g).and_then(|w| w.first()) {
                 return Some(w);
             }
             let tf = self.go_to_transform.get(&g)?;
@@ -3115,12 +3127,16 @@ impl BgParticleHost {
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
         go_pid: i64,
-        windows: &HashMap<i64, super::anim::ActiveWindow>,
+        windows: &HashMap<i64, super::anim::ActiveWindowList>,
     ) -> Option<f32> {
         let mut cur_go = Some(go_pid);
         for _ in 0..256 {
             let g = cur_go?;
-            if let Some(&(Some(from), _)) = windows.get(&g) {
+            // FIRST window only: an emitter's schedule is its delay + lifetime, and driving a
+            // particle system through a multi-window flash is a separate question from the
+            // scene layer this generalisation was built for. Single-window hosts (all of them
+            // today, bar the scene overlays) are unaffected.
+            if let Some(Some(from)) = windows.get(&g).and_then(|w| w.first()).map(|w| w.0) {
                 return Some(from);
             }
             let tf = self.go_to_transform.get(&g)?;
@@ -3301,6 +3317,7 @@ pub fn collect_enemy_spine_assets(
             separator_slots: Vec::new(),
             separator_part_sorts: Vec::new(),
             bg_entrance_duration: None,
+            bg_entrance_clip_stop: None,
             bg_entrance_fade: None,
             bg_entrance_transform: None,
             bg_entrance_view: None,
@@ -4057,6 +4074,14 @@ fn export_scene(
         // An unanimated twin of an already-emitted animated layer is the undriven
         // prefab-root copy: skip it outright.
         let mut replace_at = None;
+        // ⛔ Do NOT add an "expiry handover" here — i.e. keeping the undriven twin and revealing
+        // it at the driven copy's `activeUntil`. It was built and MEASURED (2026-08-09) on the
+        // case that motivated it, Civilight Eterna's three full-frame lavender fields expiring at
+        // t=12.0: the re-export changed **0 files** (no dynchar has a twin in that state), and the
+        // equivalent renderer-side probe `?statictail=1` — let every expired layer keep painting
+        // at its static idle tint — measured 32.138 → 32.216, i.e. inert-to-worse. Her t=12 cut is
+        // `Transition_black_01`'s SECOND `m_IsActive` window, which the exporter was truncating;
+        // see `ActiveWindowList` in anim.rs.
         match bare_sigs.get(&bare_sig) {
             Some(&(_, true)) if !bare_animated => {
                 if dbg {
@@ -4206,6 +4231,18 @@ fn export_scene(
         }
         if let Some(t) = quad.active_until {
             layer["activeUntil"] = serde_json::json!(t);
+        }
+        // FULL schedule when the clip flashes this layer more than once. `activeFrom`/
+        // `activeUntil` above still carry the FIRST window, so a renderer that does not know
+        // about `activeWindows` degrades to exactly the previous behaviour rather than to
+        // always-on. Each entry is `[from, until]` with `null` for an open bound.
+        if quad.active_windows.len() > 1 {
+            layer["activeWindows"] = serde_json::json!(
+                quad.active_windows
+                    .iter()
+                    .map(|&(f, u)| serde_json::json!([f, u]))
+                    .collect::<Vec<_>>()
+            );
         }
         // CROSS-ROOT reveal (idle-world layers inside an entrance scene): visibility
         // gate only — deliberately NOT `activeFrom`, so the frontend's reveal-overlay
@@ -4451,6 +4488,7 @@ fn export_scene(
         // scenes; drives the client entrance camera dolly (tight→wide across `_adjustes`)
         // and the hand-off to the settled idle — so those are gamedata, not guessed.
         "entranceDuration": asset.bg_entrance_duration.map(|v| v as f32),
+        "entranceClipStop": asset.bg_entrance_clip_stop,
         // Straight RGBA of the director's end-of-entrance screen fade (see `bg_entrance_fade`).
         "entranceFade": asset.bg_entrance_fade.map(|c| Value::from(vec![c[0], c[1], c[2], c[3]])),
         "entranceTransform": asset.bg_entrance_transform.map(|v| v as f32),
