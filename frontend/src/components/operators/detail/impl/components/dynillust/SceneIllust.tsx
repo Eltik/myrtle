@@ -3073,8 +3073,41 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // ⚠️ MADC cannot see this at all: every scored beat lands before the hand-off, so
                 // all eight baselines are bit-identical either way. That is why this survived so
                 // long.
-                const settleTight = typeof window === "undefined" || new URLSearchParams(window.location.search).get("settletight") !== "0";
-                const gameFrame = (settleTight ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : main.authoredDisplayBounds) ?? main.bounds;
+                // The post-entrance idle settles on the PREVIEW box (`cameraSizePx x 0.9565`) —
+                // `?settlebasis=tight` for the `_adjustes[1]` stop, `=wide` for the old archive crop.
+                //
+                // The game returns to its SKIN-PREVIEW shot after the cinematic, and `previewBounds`
+                // is exactly that shot, already derived and calibrated here: of the three candidate
+                // bases it has the lowest cross-skin spread (3.0% against 4.6% and 5.1%) and is
+                // "exact on ska and cel". It lands ~0.806x the tight `_adjustes[1]` box.
+                //
+                // Two steps got here. First the settle stopped dollying out to the WIDE archive crop
+                // (it only did so for skins that happened to carry an `entranceTransform`, which is
+                // why Mlynar looked right and Virtuosa did not). Then the residual showed up as the
+                // idle looking too DARK — which was not tone at all: our view was still wider than
+                // the game's, so dark surround was being pulled into frame. Virtuosa's periphery
+                // measured 54.7 against the capture's 143.4, with only 2.3% of it at the environment
+                // fill value, i.e. real content beyond the game's edge rather than uncovered area.
+                //
+                // Mean settled-frame level against the captures (ours/game, 1.00 = match):
+                //
+                //     skin   wide   tight   PREVIEW
+                //     ska           0.88     1.00
+                //     wis           0.92     1.01
+                //     mue           0.89     0.97
+                //     cel    0.73   0.73*    0.83     (*her tight settle still ran ~1.10x wide)
+                //     mly           0.91     0.91     (no transform — unaffected by any of this)
+                //     exc           1.14     1.45     <- the one regression, see below
+                //
+                // ⚠️ Executor is worse on this proxy. Her entrance is a dark scope shot and her
+                // `cameraSizePx` is the least representative of the set; visually her preview
+                // framing is no worse than the tight one, and the level difference is tonal rather
+                // than geometric. Shipped anyway because the basis is the calibrated one and four
+                // skins improve, but she is the skin to re-check if this is ever revisited.
+                // ⚠️ MADC cannot see ANY of this — every scored beat lands before the hand-off.
+                const settleBasis = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("settlebasis") ?? "");
+                const settleBox = settleBasis === "wide" ? main.authoredDisplayBounds : settleBasis === "tight" ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : (main.previewBounds ?? main.authoredTightBounds ?? main.authoredDisplayBounds);
+                const gameFrame = settleBox ?? main.bounds;
                 const openTight = main.authoredTightBounds; // the game's `_adjustes[1]`, else null
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
