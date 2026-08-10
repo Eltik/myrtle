@@ -298,6 +298,9 @@ export interface IParticlesData {
      *  `separatorSlots`). Virtuosa: [0, 20]. Empty when the skin has no separator. */
     separatorPartSorts?: number[] | null;
     textureCount: number;
+    /** Unity's authored per-texture wrap mode, parallel to the saved PNG indices:
+     *  0 Repeat, 1 Clamp, 2 Mirror. Consumed only by the RAM slots — see {@link applyWrap}. */
+    textureWrap?: number[];
     systems: IParticleSystemData[];
 }
 
@@ -305,6 +308,79 @@ export interface IParticlesData {
 
 /** Global live-particle ceiling across every emitter (perf guard). */
 const GLOBAL_MAX_PARTICLES = 1400;
+/** ⛔ REFUTED, default OFF (`?meshyflip=1` to try it). Unity mesh local space is Y-up and this
+ *  vertex buffer is Y-down, so negating the mesh's local Y here LOOKS required — the billboard
+ *  branch does carry that flip in its corner order (vertex 0 is (-hx,-hy), screen top, with
+ *  uv (0,0)). Measured on Civilight Eterna, whose 2:1 background planes are the most sensitive
+ *  case in the corpus: **31.186 with the flip vs 30.848 without**. The mesh path's non-negated Y
+ *  is therefore CORRECT as it stands, and this closes "the mesh geometry is inverted" as an
+ *  explanation for the unmechanised `?ramflip=uv` gain. */
+function meshYFlip(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("meshyflip") === "1";
+}
+
+/** DIAGNOSTIC (`?ramflip=u|v|uv`): mirror the RAM sampler's UV. The mesh these planes use has
+ *  u = 1 at its LEFT edge, so the ramp texture is read horizontally mirrored; whether that is
+ *  authored or a lost flip is what this settles. */
+function ramFlip(): [number, number] {
+    const v = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("ramflip") ?? "");
+    return [v.includes("u") ? 1 : 0, v.includes("v") ? 1 : 0];
+}
+
+/** Reinhard strength for the Ram shader (`?ramtonemap=<k>`, shipped 0.5, 0 = none).
+ *  ⚠️ The REAL shader has no compression at all — the decompiled fragment ends
+ *  `SV_Target0.xyz = u_xlat16_1.xyz` — because the game feeds this into an HDR bloom pass we do
+ *  not run. Ours is a deliberate stand-in for that pass, and it is the only place this port
+ *  knowingly diverges. */
+function ramTonemap(): number {
+    if (typeof window === "undefined") return 0.5;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("ramtonemap") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 0.5;
+}
+
+/** DIAGNOSTIC (`?ramtex=0`): drop the Ram shader's RAMP multiply, to tell "the ramp texture is
+ *  bound and contributing" apart from "we are only seeing the warped MAIN texture". */
+function ramTexOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ramtex") !== "0";
+}
+
+/** DIAGNOSTIC (`?ramdist=<off|bipolar|N>`): how the Ram shader consumes its disturb map.
+ *  Shipped default is the one-sided read the port was written with. */
+function ramDisturb(): { bias: number; gain: number } {
+    const v = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("ramdist") ?? "");
+    if (v === "off") return { bias: 0, gain: 0 };
+    if (v === "bipolar") return { bias: 0.5, gain: 1 };
+    const g = parseFloat(v);
+    return Number.isFinite(g) ? { bias: 0, gain: g } : { bias: 0, gain: 1 };
+}
+
+/** Apply Unity's AUTHORED wrap mode (`m_TextureSettings.m_WrapU`, exported as `textureWrap`)
+ *  to a RAM-shader slot. That shader SCROLLS its samplers every frame (`uMainScroll`,
+ *  `uDissolveScroll`, `uDisturbScroll`) and tiles them via the `mainST`/`dissolveST` scale
+ *  factors, so it reads UVs well outside [0, 1]. Pixi defaults to CLAMP, which edge-smears
+ *  there: once the scroll carries the sampled range off the texture the emitter freezes into a
+ *  flat field and never recovers. Civilight Eterna's `bg_01_Particle_01` does exactly that —
+ *  its mean locks to 100.0 from t=6.0 and never changes again for eleven seconds.
+ *
+ *  Scene layers already set REPEAT for the same reason (see `loadTexture` in `sceneMesh.ts`).
+ *
+ *  ⚠️ Blanket REPEAT is NOT the answer and was measured: cet 32.138 → 31.784 and
+ *  mly 17.974 → 17.957, but **cel 17.630 → 17.762**. These bundles genuinely author both modes
+ *  (Civilight Eterna's `bg_window_01_1` is Clamp while her background sheets are Repeat), so the
+ *  authored value is what ships. Applied only to RAM slots — sprite paths keep their UVs inside
+ *  [0, 1], where the mode cannot matter. `?ptclwrap=0` restores Pixi's default CLAMP. */
+function applyWrap(t: PIXI.Texture | null, wrap: number | undefined): PIXI.Texture | null {
+    if (!t) return t;
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ptclwrap") === "0") return t;
+    // Unity WrapMode: 0 Repeat, 1 Clamp, 2 Mirror. Absent (older exports) keeps Pixi's default.
+    if (wrap === 0) t.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    else if (wrap === 2) t.baseTexture.wrapMode = PIXI.WRAP_MODES.MIRRORED_REPEAT;
+    else if (wrap === 1) t.baseTexture.wrapMode = PIXI.WRAP_MODES.CLAMP;
+    return t;
+}
+
 /** Per-emitter hard cap, regardless of the authored maxParticles. */
 const PER_SYSTEM_CAP = 250;
 /** DIAGNOSTIC (`?pscap=<n>`): raise/lower {@link PER_SYSTEM_CAP}. It BINDS on Mlynar's `sys20`
@@ -1941,7 +2017,9 @@ class Emitter {
             rateNow: Number(emissionRate(d, this.rate, this.time).toFixed(3)),
             acc: Number(this.emitAcc.toFixed(3)),
             bone: d.boneChain ? String(d.boneChain[d.boneChain.length - 1]) : null,
-            boneName: this.boneAnchor.boneName, boneOk: this.boneAnchor.boneName ? !!this.boneAnchor.ref : null, resolved: this.boneAnchor.resolved,
+            boneName: this.boneAnchor.boneName,
+            boneOk: this.boneAnchor.boneName ? !!this.boneAnchor.ref : null,
+            resolved: this.boneAnchor.resolved,
             simSpace: String(d.simulationSpace),
         };
     }
@@ -2441,6 +2519,7 @@ uniform vec4 uDissolveST;
 uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec4 uRamST;
+uniform vec2 uRamFlip;
 uniform vec2 uMainScroll;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
@@ -2449,6 +2528,7 @@ varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
+varying vec2 vRawUV;
 varying vec4 vColor;
 varying vec2 vCustom;
 void main() {
@@ -2462,6 +2542,8 @@ void main() {
     vDissolveUV2 = aUV * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
     vDisturbUV = aUV * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
     vRamUV = aUV * uRamST.xy + uRamST.zw;
+    vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
+    vRawUV = aUV;
     vMainUV.y = 1.0 - vMainUV.y;
     vDissolveUV.y = 1.0 - vDissolveUV.y;
     vDissolveUV2.y = 1.0 - vDissolveUV2.y;
@@ -2479,6 +2561,7 @@ varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
+varying vec2 vRawUV;
 varying vec4 vColor;
 varying vec2 vCustom;
 uniform sampler2D uMainTex;
@@ -2500,12 +2583,20 @@ uniform float uHasDissolve2;
 uniform float uAmount2;
 uniform float uBorderWidth2;
 uniform float uHasRam;
+uniform float uDisturbBias;
+uniform float uDisturbGain;
+uniform float uRamUVDebug;
+uniform float uMainOff;
+uniform float uTonemap;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
-    vec2 dOff = (vCustom.y + vec2(uIntensityU, uIntensityV)) * disturbSample;
+    // DIAGNOSTIC (?ramdist=): uDisturbBias re-centres the warp. 0.0 = the shipped one-sided
+    // read (offset 0..intensity); 0.5 = bipolar (-intensity/2..+intensity/2), which is how a
+    // Unity flow/disturb map is normally consumed. uDisturbGain scales the whole term.
+    vec2 dOff = (vCustom.y + vec2(uIntensityU, uIntensityV)) * (disturbSample - uDisturbBias) * uDisturbGain;
     vec2 mUV = dOff * uDisturbInfluenceMainUV + vMainUV;
     vec2 dsUV = dOff * uDisturbInfluenceDissolveUV + vDissolveUV;
-    vec4 col = texture2D(uMainTex, mUV) * uMainColor * vColor;
+    vec4 col = mix(texture2D(uMainTex, mUV), vec4(1.0), uMainOff) * uMainColor * vColor;
     col += col; // faithful *2 (also makes _MainColor.a=0.5 neutral on alpha)
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dsUV).x : 1.0;
     float threshold = vCustom.x + uAmount;
@@ -2533,9 +2624,13 @@ void main() {
     // The game feeds this into an HDR bloom+tonemap pass we don't run; the *2
     // above then just blows out. Compress highlights with a gentle Reinhard so
     // mids are untouched but the over-bright (esp. opaque normal-blend) tames.
-    vec3 rgb = col.rgb / (1.0 + 0.5 * max(col.rgb, 0.0));
+    vec3 rgb = col.rgb / (1.0 + uTonemap * max(col.rgb, 0.0));
     // Premultiplied output: ADD (One,One) adds rgb*a; NORMAL over-blends by a.
     gl_FragColor = vec4(rgb * a, a);
+    // DIAGNOSTIC (?ramuv=1): paint the RAM sampler's UV instead of the shaded result, so a
+    // collapsed or mis-tiled vRamUV is visible directly rather than inferred from luminance.
+    if (uRamUVDebug > 0.5) gl_FragColor = vec4(fract(vRamUV.x), fract(vRamUV.y), 0.0, 1.0);
+    if (uRamUVDebug > 1.5) gl_FragColor = vec4(fract(vRawUV.x), fract(vRawUV.y), 0.0, 1.0);
 }
 `;
 
@@ -2727,7 +2822,13 @@ class RamEmitter {
             uHasDissolve2: tex.dissolve2 ? 1 : 0,
             uAmount2: ram.amount2 ?? 0,
             uBorderWidth2: ram.borderWidth2 ?? 0.1,
-            uHasRam: tex.ram ? 1 : 0,
+            uHasRam: tex.ram && ramTexOn() ? 1 : 0,
+            uTonemap: ramTonemap(),
+            uMainOff: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammain") === "0" ? 1 : 0,
+            uRamFlip: ramFlip(),
+            uRamUVDebug: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramuv") === "2" ? 2 : new URLSearchParams(window.location.search).get("ramuv") === "1" ? 1 : 0,
+            uDisturbBias: ramDisturb().bias,
+            uDisturbGain: ramDisturb().gain,
             uMainST: ram.mainST,
             uDissolveST: ram.dissolveST,
             uDissolveST2: ram.dissolveST2 ?? [1, 1, 0, 0],
@@ -3065,11 +3166,25 @@ class RamEmitter {
                 // `MeshEmitter.applyDisp` uses (`m.scale.set(sz)`), with the same rotation and
                 // Y-flip the quad branch applies. No pivot: that is a billboard-corner concept,
                 // and the mesh carries its own origin.
+                // PER-AXIS: Unity scales a mesh particle by the particle's size on EACH axis, and
+                // `startSizeY` is exactly that second axis (Unity `size3D`, and the channel the
+                // exporter folds an anisotropic emitter basis into). Scaling both axes by
+                // `p.size` drew every mesh particle SQUARE — Civilight Eterna's 2:1 background
+                // planes came out 919x919 instead of 919x459, which stretched a 0.23-wide band of
+                // their landscape sheet over the whole frame and smeared away all of its detail.
+                // The billboard branch immediately above already used `p.sizeY`; this one did not.
                 const szm = p.size * grow;
+                const szy = p.sizeY * grow;
                 const mp = mg.pos;
+                // Unity mesh space is Y-UP; this buffer is Y-DOWN. The billboard branch below
+                // bakes that flip into its corner ORDER (vertex 0 is (-hx,-hy) — screen top —
+                // carrying uv (0,0)); the mesh branch had no equivalent, so a mesh particle's
+                // geometry landed inverted and dragged its UVs with it, sampling every one of its
+                // textures upside down. `?meshyflip=0` restores the old behaviour.
+                const my = meshYFlip() ? -1 : 1;
                 for (let k = 0; k < vpp; k++) {
                     const lxk = mp[k * 2] * szm;
-                    const lyk = mp[k * 2 + 1] * szm;
+                    const lyk = mp[k * 2 + 1] * szy * my;
                     pos[vp + k * 2] = cx + lxk * c - lyk * s;
                     pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
                 }
@@ -3691,10 +3806,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     // half the corpus has a separator and several have SIX slots / SEVEN parts, so a single
     // container cannot express it. With no separator this is one container drawn exactly where
     // the sheets used to be, i.e. byte-identical to the previous behaviour.
-    const backdropWashes: PIXI.Container[] = Array.from(
-        { length: Math.max(1, (data.separatorPartSorts?.length ?? 0) - 1) },
-        () => new PIXI.Container(),
-    );
+    const backdropWashes: PIXI.Container[] = Array.from({ length: Math.max(1, (data.separatorPartSorts?.length ?? 0) - 1) }, () => new PIXI.Container());
     const emitters: Array<Emitter | RamEmitter> = [];
     /** `emitters[i]` came from `data.systems[emitterSys[i]]` — skipped systems leave no entry. */
     const emitterSys: number[] = [];
@@ -3748,6 +3860,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
      *  it measured WORSE against the game on all three reference skins, because our
      *  render already sits well ABOVE the capture's luminance through that whole shot.
      *  Kept as-is until that DC excess is understood; see the round-11 notes. */
+    const wrapOf = (i: number | null): number | undefined => (i == null ? undefined : data.textureWrap?.[i]);
     const ramMainTex = (i: number | null): PIXI.Texture | null => {
         const b = i != null ? bases[i] : null;
         return b ? new PIXI.Texture(b.darkDropBase) : null;
@@ -3786,7 +3899,19 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
             if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3)) continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
-            const emitter = new RamEmitter(sys, sys.ram, { main, ram: rawTex(sys.ram.ramTex), disturb: rawTex(sys.ram.disturbTex), dissolve: rawTex(sys.ram.dissolveTex), dissolve2: rawTex(sys.ram.dissolveTex2 ?? null) }, sys.blend, budget);
+            const emitter = new RamEmitter(
+                sys,
+                sys.ram,
+                {
+                    main: applyWrap(main, wrapOf(sys.ram.mainTex)),
+                    ram: applyWrap(rawTex(sys.ram.ramTex), wrapOf(sys.ram.ramTex)),
+                    disturb: applyWrap(rawTex(sys.ram.disturbTex), wrapOf(sys.ram.disturbTex)),
+                    dissolve: applyWrap(rawTex(sys.ram.dissolveTex), wrapOf(sys.ram.dissolveTex)),
+                    dissolve2: applyWrap(rawTex(sys.ram.dissolveTex2 ?? null), wrapOf(sys.ram.dissolveTex2 ?? null)),
+                },
+                sys.blend,
+                budget,
+            );
             emitters.push(emitter);
             emitterSys.push(sysIndex);
             applyPsDiag(data, sys, emitter.container);

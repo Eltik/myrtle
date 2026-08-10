@@ -465,7 +465,7 @@ pub(crate) struct RootScope<'a> {
 /// GameObjects (idle path), and effect-host transform (scale/position) curves. All
 /// empty for the idle/main scene (which plays none of these clips).
 pub(crate) struct EntranceCtx<'a> {
-    pub windows: &'a HashMap<i64, super::anim::ActiveWindow>,
+    pub windows: &'a HashMap<i64, super::anim::ActiveWindowList>,
     pub rate_curves: &'a HashMap<i64, Vec<(f32, f32)>>,
     pub event_rate_gos: &'a std::collections::HashSet<i64>,
     pub transform_curves: &'a HashMap<i64, super::anim::EntranceTransform>,
@@ -638,7 +638,14 @@ pub(crate) fn collect_dynchar_particles(
     // for a positional twin. See `admit_positional_unique` below. **Default ON since
     // 2026-08-08** — `DYNCHAR_CROSSROOT_UNIQUE=0` restores the old drop-everything behaviour.
     let crossroot_unique = std::env::var("DYNCHAR_CROSSROOT_UNIQUE").as_deref() != Ok("0");
-    let own_positions: Vec<(f32, f32)> = if crossroot_unique {
+    // A positional twin must ALSO share the GameObject's NAME (`DYNCHAR_CROSSROOT_NAMEKEY=1`).
+    // The same authored object reachable from two prefab roots keeps its name; two genuinely
+    // different systems that merely both sit at the WORLD ORIGIN do not. Origin-only matching
+    // is near-meaningless at (0, 0), where rig nodes and full-frame backdrops pile up — on
+    // Civilight Eterna it silently drops `BG_lizi`, `BG_Idle` and `Special_01`, none of which
+    // has an exported counterpart of that name.
+    let crossroot_namekey = std::env::var("DYNCHAR_CROSSROOT_NAMEKEY").as_deref() == Ok("1");
+    let own_positions: Vec<(f32, f32, String)> = if crossroot_unique {
         systems
             .iter()
             .filter_map(|(_, ps)| {
@@ -651,7 +658,7 @@ pub(crate) fn collect_dynchar_particles(
                     return None;
                 }
                 let o = host.world_of_go(all_objects, go).point([0.0, 0.0, 0.0]);
-                Some((o[0], o[1]))
+                Some((o[0], o[1], host.go_name(all_objects, go)))
             })
             .collect()
     } else {
@@ -774,9 +781,12 @@ pub(crate) fn collect_dynchar_particles(
             && entrance.is_entrance
             && {
                 let o = host.world_of_go(all_objects, go_pid).point([0.0, 0.0, 0.0]);
-                !own_positions
-                    .iter()
-                    .any(|(x, y)| (x - o[0]).abs() <= 3.0f32 && (y - o[1]).abs() <= 3.0f32)
+                let my_name = host.go_name(all_objects, go_pid);
+                !own_positions.iter().any(|(x, y, n)| {
+                    (x - o[0]).abs() <= 3.0f32
+                        && (y - o[1]).abs() <= 3.0f32
+                        && (!crossroot_namekey || *n == my_name)
+                })
             };
         let admit_cross_root = (cross_root && transform_host.is_some())
             || admit_entrance_root
@@ -872,6 +882,14 @@ pub(crate) fn collect_dynchar_particles(
         let emission_enabled = b(&emission, "enabled", false);
         if !emission_enabled && bursts_raw.is_empty() {
             skipped.never_emits += 1; // nothing is ever emitted
+            if attrib_dbg {
+                eprintln!(
+                    "    [ptcl] DROP never-emits     {:<26} {} root={}",
+                    host.go_name(all_objects, go_pid),
+                    drop_where(all_objects),
+                    host.root_name_of_go(all_objects, go_pid)
+                );
+            }
             continue;
         }
         // Event-clip-driven rate with no bursts: quiet at the steady state (the rate
@@ -1153,6 +1171,22 @@ pub(crate) fn collect_dynchar_particles(
         } else {
             0
         };
+        // ANISOTROPIC emitter scale. `world_axis_mean` below collapses the emitter's world basis
+        // to ONE scalar, which draws a mesh particle SQUARE even where the rig deliberately
+        // stretches it. Civilight Eterna's seven background planes all carry a basis of exactly
+        // |X| = 2·|Y|, so her 2:1 backdrop rendered as a square that stopped ~50 px short of the
+        // aperture on each side — the empirical best-fit width correction was 1.333×, which is
+        // precisely `|X| / mean` for a 2:1 basis.
+        //
+        // Emitted as a RATIO against the mean so `startSize` keeps its meaning and every
+        // isotropic system is bit-identical. Mesh render mode only: a mesh particle is the
+        // transform's own geometry, so the non-uniformity is unambiguous, whereas a billboard
+        // faces the camera and its size semantics are not the transform's.
+        //
+        // ⚠️ Degenerate bases are COMMON (a collapsed axis is real — see the camera zero-scale
+        // note) and must fall back to the mean, or the mesh would vanish entirely.
+        let axis_x = f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1]));
+        let axis_y = f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1]));
         let world_axis_mean = 0.5
             * (f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1]))
                 + f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1])));
@@ -1221,7 +1255,11 @@ pub(crate) fn collect_dynchar_particles(
 
         // ---- Build the reduced system JSON ------------------------------
         let mut sys = json!({
-            "name": ps.get("m_Name").and_then(Value::as_str).unwrap_or(""),
+            // The OWNING GameObject's name. `ps` is the ParticleSystem COMPONENT, and Unity
+            // components carry no `m_Name` — reading it there yielded "" for every system in
+            // the corpus, which is why particle diagnostics could only ever refer to a system
+            // by its index and no probe output could be tied back to an authored object.
+            "name": host.go_name(all_objects, go_pid),
             "sort": sort,
             "blend": if blend { "additive" } else { "normal" },
             // The material's ×2 `_TintColor`, or null at the neutral — see `particle_tint`.
@@ -1423,8 +1461,24 @@ pub(crate) fn collect_dynchar_particles(
         if let Some(s) = initial.get("startSpeed") {
             sys["startSpeed"] = mmscalar(s, em_inv);
         }
+        // ANISOTROPIC emitter basis → per-axis particle size, folded into the SAME `startSizeY`
+        // channel Unity's `size3D` uses (see below). `world_axis_mean` collapsed the basis to one
+        // scalar, drawing a mesh particle square wherever the rig deliberately stretched it.
+        // Mesh render mode only, and only when BOTH axes are non-degenerate — a collapsed axis is
+        // real and must keep the mean, or the mesh would vanish.
+        let aniso = std::env::var("DYNCHAR_PS_ANISO").as_deref() != Ok("0")
+            && render_mode == "mesh"
+            && axis_x > 1e-6
+            && axis_y > 1e-6
+            && (axis_x - axis_y).abs() > 5e-3 * axis_x.max(axis_y);
+        let (fx, fy) = if aniso {
+            let mean = 0.5 * (axis_x + axis_y);
+            ((axis_x / mean) as f32, (axis_y / mean) as f32)
+        } else {
+            (1.0f32, 1.0f32)
+        };
         if let Some(s) = initial.get("startSize") {
-            sys["startSize"] = mmscalar(s, em_inv);
+            sys["startSize"] = mmscalar(s, em_inv * f64::from(fx));
             // Unity `size3D`: the particle quad is a RECTANGLE, its height authored
             // separately in `startSizeY`. Exporting only `startSize` renders such a
             // system SQUARE — Mlynar's 14 `fangkuai_*` city slabs are 0.5 × 2.0 units,
@@ -1433,10 +1487,13 @@ pub(crate) fn collect_dynchar_particles(
             if b(&initial, "size3D", false)
                 && let Some(sy) = initial.get("startSizeY")
             {
-                let size_y = mmscalar(sy, em_inv);
+                let size_y = mmscalar(sy, em_inv * f64::from(fy));
                 if size_y != sys["startSize"] {
                     sys["startSizeY"] = size_y;
                 }
+            } else if aniso {
+                // No authored `size3D`: the Y size is the X size re-scaled by the basis ratio.
+                sys["startSizeY"] = mmscalar(s, em_inv * f64::from(fy));
             }
         }
         // startRotation is authored in radians → degrees.
@@ -2726,6 +2783,14 @@ pub fn export_particles(
     std::fs::create_dir_all(&tex_dir).ok();
 
     let mut tex_index: HashMap<i64, usize> = HashMap::new();
+    // Unity's authored per-texture wrap mode (`m_TextureSettings.m_WrapU`), indexed the same way
+    // as the saved PNGs: 0 = Repeat, 1 = Clamp, 2 = Mirror. The Ram shader SCROLLS and TILES its
+    // samplers, so it reads UVs far outside [0, 1]; Pixi defaults every texture to CLAMP, which
+    // edge-smears there and freezes such an emitter into a flat field. Blanket-REPEAT is not the
+    // answer either — these bundles genuinely author both (Civilight Eterna's `bg_window_01_1`
+    // is Clamp while her background sheets are Repeat), and forcing REPEAT everywhere costs
+    // Virtuosa 17.630 -> 17.762. Ship the authored value.
+    let mut tex_wrap: Vec<i64> = Vec::new();
     let mut next_idx = 0usize;
     let mut saved = 0usize;
     let mut systems: Vec<Value> = Vec::with_capacity(particles.len());
@@ -2777,7 +2842,23 @@ pub fn export_particles(
             {
                 saved += 1;
             }
+            if std::env::var("SCENE_ATTRIB").is_ok() {
+                eprintln!(
+                    "    [ptcl-tex] idx={idx} pid={pid} name={:?} {}x{}",
+                    tex_val.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                    tex.width, tex.height
+                );
+            }
             tex_index.insert(pid, idx);
+            while tex_wrap.len() < idx {
+                tex_wrap.push(0);
+            }
+            tex_wrap.push(
+                tex_val
+                    .pointer("/m_TextureSettings/m_WrapU")
+                    .and_then(Value::as_i64)
+                    .unwrap_or(0),
+            );
             next_idx += 1;
             Some(idx)
         };
@@ -2830,6 +2911,7 @@ pub fn export_particles(
         "characterSort": character_sort,
         "separatorPartSorts": separator_part_sorts,
         "textureCount": next_idx,
+        "textureWrap": tex_wrap,
         "systems": systems,
     });
     if let Ok(text) = serde_json::to_string(&meta)
