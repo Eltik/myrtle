@@ -308,6 +308,19 @@ export interface IParticlesData {
 
 /** Global live-particle ceiling across every emitter (perf guard). */
 const GLOBAL_MAX_PARTICLES = 1400;
+/** DIAGNOSTIC (`?pbudget=<n>`): override the global ceiling.
+ *
+ *  The ceiling counts PARTICLES, not painted area, so a single quad that draws the entire
+ *  background competes with a one-pixel snow mote on equal terms. Civilight Eterna's seven
+ *  background planes are each `maxParticles: 1` with a 5 s life and a staggered `delay`, and
+ *  every one of them stops drawing forever the moment its first particle dies — which is what a
+ *  saturated budget looks like from the outside. This knob separates "the budget starved it"
+ *  from "the emitter never tried". */
+function globalMaxParticles(): number {
+    if (typeof window === "undefined") return GLOBAL_MAX_PARTICLES;
+    const v = Number.parseInt(new URLSearchParams(window.location.search).get("pbudget") ?? "", 10);
+    return Number.isFinite(v) && v > 0 ? v : GLOBAL_MAX_PARTICLES;
+}
 /** ⛔ REFUTED, default OFF (`?meshyflip=1` to try it). Unity mesh local space is Y-up and this
  *  vertex buffer is Y-down, so negating the mesh's local Y here LOOKS required — the billboard
  *  branch does carry that flip in its corner order (vertex 0 is (-hx,-hy), screen top, with
@@ -4013,7 +4026,8 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     /** `emitters[i]` came from `data.systems[emitterSys[i]]` — skipped systems leave no entry. */
     const emitterSys: number[] = [];
     let liveEstimate = 0;
-    const budget = () => GLOBAL_MAX_PARTICLES - liveEstimate;
+    const budgetCap = globalMaxParticles();
+    const budget = () => budgetCap - liveEstimate;
 
     /** Does this world-space system's STATIC spawn disc substantially overlap the
      *  character's own body bounds? A per-system geometric test (not a blanket flag) —

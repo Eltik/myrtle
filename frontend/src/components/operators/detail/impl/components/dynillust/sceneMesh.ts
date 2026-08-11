@@ -201,6 +201,12 @@ export interface ISceneData {
      *  ships four black planes bounding a 2809x1581 window (aspect 1.7767 = 16:9) whose height is
      *  her `entranceViewPx` exactly; no other entrance skin has them. */
     entranceAperturePx?: [number, number, number, number] | null;
+    /** The letterbox BARS' own `m_SortingOrder`, on the same scale as {@link ISceneLayer.sort}.
+     *  A letterbox is not automatically the topmost thing on screen: Civilight Eterna's bars sort
+     *  at 100, exactly TIED with the two full-screen `Transition_*` planes, and the game paints
+     *  her end-of-cinematic white fade OVER the bars. Present whenever
+     *  {@link entranceAperturePx} is. */
+    entranceApertureSort?: number | null;
     /** ENTRANCE voice-line offset (s), `_params.charVoiceOffset` — when the reformed character
      *  starts talking. Exported but currently unread (the hand-off fires from the `_Start`
      *  clip's own `complete`). */

@@ -1230,7 +1230,7 @@ pub fn entrance_camera_track(
 ) -> (
     Option<Vec<(f32, f32, f32)>>,
     Option<Vec<(f32, f32)>>,
-    Option<[f32; 4]>,
+    Option<([f32; 4], i32)>,
 ) {
     use super::mesh::Mat4;
     // Ordered chain camera→root (transform pids) + maps.
@@ -1580,12 +1580,18 @@ pub fn entrance_camera_track(
 /// ⚠️ These planes are dropped by the `_meshExtResolved` + no-window gate in `collect_dynchar_bg_quads`
 /// and this deliberately does NOT relax that gate: splitting it by scene was tried before and cost
 /// Skadi a real regression. The geometry is read directly instead.
+///
+/// Returned WITH the bars' own `m_SortingOrder`, because a letterbox is not automatically the
+/// topmost thing on screen: Civilight Eterna's bars sort at 100, exactly TIED with the two
+/// full-screen `Transition_*` planes the director flashes, and the game paints her end-of-cinematic
+/// white fade OVER the bars (its pillarbox ramps to 0.99 alpha while ours stayed at 0.00 for the
+/// whole fade). Drawing the bars unconditionally last cost ~20 luma on that beat.
 fn find_letterbox(
     all_objects: &HashMap<i64, (i32, Value)>,
     cam_xy: [f32; 2],
     inv: f32,
     view_half: f32,
-) -> Option<[f32; 4]> {
+) -> Option<([f32; 4], i32)> {
     use super::mesh::Mat4;
     let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
     let mut tf_father: HashMap<i64, i64> = HashMap::new();
@@ -1615,10 +1621,28 @@ fn find_letterbox(
         };
         Mat4::trs(vec3("m_LocalPosition", 0.0), q, vec3("m_LocalScale", 1.0))
     };
+    // GameObject -> `m_SortingOrder` of its MeshRenderer, the same scale every scene quad is
+    // ordered on. Read here rather than assumed, so the bars take their authored place in the
+    // draw order instead of being pinned to the top.
+    let mut go_sort: HashMap<i64, i32> = HashMap::new();
+    for (_, (cid, v)) in all_objects {
+        if *cid != 23 {
+            continue; // MeshRenderer
+        }
+        if let Some(g) = v.get("m_GameObject").and_then(get_path_id) {
+            go_sort.insert(
+                g,
+                v.get("m_SortingOrder").and_then(Value::as_i64).unwrap_or(0) as i32,
+            );
+        }
+    }
     // (left inner, right inner, bottom inner, top inner) in WORLD units
     let (mut li, mut ri, mut bi, mut ti) = (f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY);
     let mut bars = 0usize;
-    for (pid, (cid, v)) in all_objects {
+    // The bars share one sorting order in practice; take the HIGHEST so the exported value is the
+    // one that must be cleared for a layer to draw over the whole frame.
+    let mut bar_sort = i32::MIN;
+    for (_pid, (cid, v)) in all_objects {
         if *cid != 33 {
             continue; // MeshFilter
         }
@@ -1669,18 +1693,24 @@ fn find_letterbox(
         let (kx, ky) = (cam_xy[0], cam_xy[1]);
         let spans_x = x0 <= kx && kx <= x1;
         let spans_y = y0 <= ky && ky <= y1;
-        if spans_y && x1 < kx {
+        let is_bar = if spans_y && x1 < kx {
             li = li.max(x1);
-            bars += 1;
+            true
         } else if spans_y && x0 > kx {
             ri = ri.min(x0);
-            bars += 1;
+            true
         } else if spans_x && y1 < ky {
             bi = bi.max(y1);
-            bars += 1;
+            true
         } else if spans_x && y0 > ky {
             ti = ti.min(y0);
+            true
+        } else {
+            false
+        };
+        if is_bar {
             bars += 1;
+            bar_sort = bar_sort.max(go_sort.get(&go).copied().unwrap_or(0));
         }
     }
     // All FOUR bars, or it is not a frame.
@@ -1699,7 +1729,10 @@ fn find_letterbox(
         return None;
     }
     // Same authored-px space as the frame centre: y negated.
-    Some([li * inv, -ti * inv, ri * inv, -bi * inv])
+    Some((
+        [li * inv, -ti * inv, ri * inv, -bi * inv],
+        if bar_sort == i32::MIN { 0 } else { bar_sort },
+    ))
 }
 
 /// The ENTRANCE camera POSITIONAL dolly (pan), extracted from the `_Start` clip that animates a

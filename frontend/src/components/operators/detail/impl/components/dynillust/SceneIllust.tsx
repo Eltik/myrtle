@@ -846,6 +846,9 @@ function entranceFadeEnd(data: ISceneData | null): number | null {
 
 function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     const fade = data?.entranceFade;
+    // `?scenefade=0` forces the DIRECTOR fade back on even when a scene layer looks like it
+    // drives the ramp — the A/B for skins where the layer cannot reach the whole screen.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("scenefade") === "0") return false;
     // Same anchor the ramp itself uses, so the "does the layer beat the director?" test stays
     // consistent with when the director actually finishes.
     const dur = entranceFadeEnd(data);
@@ -2037,6 +2040,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     const rt = c as unknown as ISceneLayerRuntime;
                                     rt.__activeFrom = undefined;
                                     rt.__activeUntil = undefined;
+                                    // The multi-window schedule SUPERSEDES the `af`/`au` pair, and
+                                    // clearing only the pair left the tick re-deriving `renderable`
+                                    // from the windows every frame — so a windowed layer measured
+                                    // as "contributes 0 px" no matter what it drew. Civilight
+                                    // Eterna's whole foreground reads that way: every `fg:<i>`
+                                    // moved the frame by 0.00 while ablating the container moved
+                                    // it by 114 luma.
+                                    rt.__activeWindows = undefined;
                                 }
                             });
                         }
@@ -2055,7 +2066,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             mm.__activeUntil = undefined;
                             c.renderable = true;
                         }
-                        if (off.has("bgcount") && scene) console.log(`[abl] bgchildren=${scene.background.children.length}`);
+                        if (off.has("bgcount") && scene) console.log(`[abl] bgchildren=${scene.background.children.length} fgchildren=${scene.foreground.children.length}`);
                         if (sceneOverlay && (off.has("scenefg") || off.has("overlay"))) sceneOverlay.renderable = false;
                     }
                 }
@@ -2700,6 +2711,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Built in the SAME space as the camera centre, as a child of the scene container,
                 // so it inherits the camera pan/zoom/roll for free and disappears with the entrance
                 // composite at the hand-off. `?letterbox=0` disables it.
+                //
+                // ⚠️ The bars are NOT automatically topmost. They carry an ordinary
+                // `m_SortingOrder` like every other quad (hers is 100), and it is exactly TIED
+                // with the two full-screen `Transition_*` planes the director flashes — all six
+                // also sit at world z 0.000, so depth does not separate them either. The game
+                // paints her end-of-cinematic white fade OVER the bars: its pillarbox ramps to
+                // 0.99 alpha while ours, with the bars pinned last, stayed at 0.00 for the whole
+                // fade. That is ~10.5% of the scored columns held at black against the game's
+                // ~194 luma, and it was essentially the entire t=18.5 beat.
+                //
+                // So place them by sort, ties going to the OTHER layer: the bars are inserted
+                // before the first hoisted layer that sorts at or above them. Sort-driven and
+                // symmetric with the above-every-emitter hoist a few hundred lines up.
+                // `?barsort=0` pins them last again (the old behaviour).
                 const apRect = opts.mode === "entrance" ? scene?.data.entranceAperturePx : null;
                 if (apRect && (typeof window === "undefined" || new URLSearchParams(window.location.search).get("letterbox") !== "0")) {
                     const [ax0, ay0, ax1, ay1] = apRect;
@@ -2711,7 +2736,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     bars.drawRect(ax0, -F, ax1 - ax0, F + ay0); // top
                     bars.drawRect(ax0, ay1, ax1 - ax0, F * 2); // bottom
                     bars.endFill();
-                    sceneContainer.addChild(bars);
+                    const barSort = scene?.data.entranceApertureSort;
+                    const bySort = typeof window === "undefined" || new URLSearchParams(window.location.search).get("barsort") !== "0";
+                    const above = sceneOverlay && bySort && barSort != null ? sceneOverlay.children.findIndex((m) => ((m as unknown as ISceneLayerRuntime).__sort ?? Number.NEGATIVE_INFINITY) >= barSort) : -1;
+                    if (sceneOverlay && above === 0) {
+                        // Every overlay layer sorts at/above the bars (Civilight Eterna: both
+                        // transitions at 100, tied), so "just before the overlay" is the same
+                        // draw order — and keeps the bars OUT of the overlay container, so
+                        // `?abl=overlay` still attributes scene layers rather than silently
+                        // deleting the pillarbox too (it read as a +6.9 luma "finding" once).
+                        sceneContainer.addChildAt(bars, sceneContainer.getChildIndex(sceneOverlay));
+                    } else if (sceneOverlay && above > 0) sceneOverlay.addChildAt(bars, above);
+                    else sceneContainer.addChild(bars);
                 }
                 const scrollLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];

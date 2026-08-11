@@ -131,8 +131,10 @@ pub struct SpineAsset {
     /// actually rolled — 12 of the 13 entrance skins have an axis-aligned camera basis.
     pub bg_entrance_cam_roll: Option<Vec<(f32, f32)>>,
     /// ENTRANCE LETTERBOX window `[x0, y0, x1, y1]` in authored px, same space as the frame
-    /// centre. `None` unless the prefab paints one — only Civilight Eterna does.
-    pub bg_entrance_aperture: Option<[f32; 4]>,
+    /// centre, paired with the BARS' own `m_SortingOrder`. `None` unless the prefab paints one —
+    /// only Civilight Eterna does. The sort matters: her bars tie with the director's full-screen
+    /// transition planes, which the game paints OVER them.
+    pub bg_entrance_aperture: Option<([f32; 4], i32)>,
     /// ENTRANCE voice-line offset (s) from `_params.charVoiceOffset` — when the reformed
     /// cellist starts talking. The seated→standing hand-off beat (the standing form lives at
     /// a different rig position than the seated form, so the entrance hands off to the idle
@@ -4601,7 +4603,8 @@ fn export_scene(
         "entrancePanCurve": asset.bg_entrance_pan_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entranceCamCenterCurve": asset.bg_entrance_cam_center.as_ref().map(|c| c.iter().map(|(t, x, y)| [*t, *x, *y]).collect::<Vec<_>>()),
         "entranceCamRollCurve": asset.bg_entrance_cam_roll.as_ref().map(|c| c.iter().map(|(t, r)| [*t, *r]).collect::<Vec<_>>()),
-        "entranceAperturePx": asset.bg_entrance_aperture,
+        "entranceAperturePx": asset.bg_entrance_aperture.map(|(rect, _)| rect),
+        "entranceApertureSort": asset.bg_entrance_aperture.map(|(_, sort)| sort),
         "entranceVoiceOffset": asset.bg_entrance_voice.map(|v| v as f32),
         "textureCount": next_idx,
         "layers": layers,
