@@ -2527,7 +2527,7 @@ uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec4 uRamST;
 uniform vec2 uRamFlip;
-uniform float uRamSheeted;
+uniform float uSheeted;
 uniform vec2 uMainScroll;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
@@ -2545,23 +2545,32 @@ void main() {
     // TRANSFORM_TEX offsets land in the mirrored half of the atlas. Flip V after
     // applying each _ST so partial-region samples (e.g. the reticle crosshair
     // arms carved from a shared glint atlas) hit the intended sub-rect.
-    vMainUV = aUV * uMainST.xy + uMainST.zw + uMainScroll;
-    vDissolveUV = aUV * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
-    vDissolveUV2 = aUV * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
-    vDisturbUV = aUV * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
-    // RAM slot V orientation. For an UNSHEETED system aUV is a plain Unity UV and the
-    // blanket "flip V because the PNG is top-down" below is right. For a SHEETED one it is
-    // NOT: the Texture Sheet block has already rewritten aUV into PNG RASTER space (row-major,
-    // top-down, v0 = floor(frame/tilesX)/tilesY), so flipping afterwards converts twice.
-    // uRamSheeted skips the flip for exactly those systems.
-    vRamUV = aUV * uRamST.xy + uRamST.zw;
+    // A SHEETED system's aUV has been rewritten by the Texture Sheet block into PNG RASTER
+    // space (row-major, top-down: v0 = floor(frame/tilesX)/tilesY). Every _ST below is authored
+    // against UNITY's convention, where v runs bottom-up, so the two disagree by a whole tile —
+    // for a 1x2 sheet our frame 1 spans v [0.5,1.0] where Unity's spans [0,0.5]. Feeding the PNG
+    // coordinate straight into a Unity _ST is what pushed Civilight Eterna's terrain dissolve
+    // entirely OUTSIDE [0,1] (measured y -0.671..-0.082, 0% in range); that texture CLAMPS, so
+    // every texel sampled one dark edge row and the whole reveal drew nothing, with no other
+    // symptom to go on.
+    //
+    // Convert to Unity space FIRST, then apply each _ST, then flip back as before. For an
+    // IDENTITY _ST this is algebraically the same as skipping the final flip, so it reproduces
+    // the shipped RAM-slot behaviour exactly; it differs only where an _ST scales or offsets,
+    // which is precisely the case that was broken.
+    vec2 uvU = uSheeted > 0.5 ? vec2(aUV.x, 1.0 - aUV.y) : aUV;
+    vMainUV = uvU * uMainST.xy + uMainST.zw + uMainScroll;
+    vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
+    vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
+    vDisturbUV = uvU * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
+    vRamUV = uvU * uRamST.xy + uRamST.zw;
     vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
     vRawUV = aUV;
     vMainUV.y = 1.0 - vMainUV.y;
     vDissolveUV.y = 1.0 - vDissolveUV.y;
     vDissolveUV2.y = 1.0 - vDissolveUV2.y;
     vDisturbUV.y = 1.0 - vDisturbUV.y;
-    if (uRamSheeted <= 0.0) vRamUV.y = 1.0 - vRamUV.y;
+    vRamUV.y = 1.0 - vRamUV.y;
     vColor = aColor;
     vCustom = aCustom;
 }
@@ -2650,6 +2659,12 @@ void main() {
     // collapsed or mis-tiled vRamUV is visible directly rather than inferred from luminance.
     if (uRamUVDebug > 0.5) gl_FragColor = vec4(fract(vRamUV.x), fract(vRamUV.y), 0.0, 1.0);
     if (uRamUVDebug > 1.5) gl_FragColor = vec4(fract(vRawUV.x), fract(vRawUV.y), 0.0, 1.0);
+    // ?ramuv=3 paints the DISSOLVE sampler's UV, and ?ramuv=4 its RAW (pre-fract) value scaled
+    // into 0..1 over [-1,2] so an out-of-range coordinate is visible as such rather than wrapped.
+    // A dissolve UV pushed outside [0,1] under CLAMP pins the whole quad to one edge row, which
+    // reads as "the system draws nothing" with no other symptom.
+    if (uRamUVDebug > 2.5 && uRamUVDebug < 3.5) gl_FragColor = vec4(fract(dsUV.x), fract(dsUV.y), 0.0, 1.0);
+    if (uRamUVDebug > 3.5) gl_FragColor = vec4((dsUV.x + 1.0) / 3.0, (dsUV.y + 1.0) / 3.0, 0.0, 1.0);
 }
 `;
 
@@ -2846,10 +2861,11 @@ class RamEmitter {
             uMainOff: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammain") === "0" ? 1 : 0,
             uRamFlip: ramFlip(),
             // 1 when the Texture Sheet block rewrites this system's aUV into PNG raster
-            // space, in which case the RAM slot must NOT be V-flipped again. Tracks exactly
-            // the condition that block runs under, so no other system can be reached.
-            uRamSheeted: ramTileFlipOn() && data.sheet && data.sheet.tilesX * data.sheet.tilesY > 1 && sheetMeshTilingOn() ? 1 : 0,
-            uRamUVDebug: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramuv") === "2" ? 2 : new URLSearchParams(window.location.search).get("ramuv") === "1" ? 1 : 0,
+            // space, in which case every _ST needs the coordinate converted to Unity space
+            // first. Tracks exactly the condition that block runs under, so no other system
+            // can be reached. `?ramtile=0` reverts.
+            uSheeted: ramTileFlipOn() && data.sheet && data.sheet.tilesX * data.sheet.tilesY > 1 && sheetMeshTilingOn() ? 1 : 0,
+            uRamUVDebug: typeof window === "undefined" ? 0 : Number.parseFloat(new URLSearchParams(window.location.search).get("ramuv") ?? "0") || 0,
             uDisturbBias: ramDisturb().bias,
             uDisturbGain: ramDisturb().gain,
             uMainST: ram.mainST,
@@ -3621,14 +3637,21 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         // Textures with a real alpha channel never reach here (they return `plain` above, where
         // darkDropBase already equals rawBase), so this only ever affects opaque maps.
         //
-        // ⚠️ NOT SHIPPED — opt in with `?ramdropgate=1`. The rule is right about the texture and
-        // measures BETTER exactly where it was derived (Civilight Eterna t=17 35.294 -> 31.967,
-        // t=14 and t=18.5 also improve) but WORSE on her early beats (t=8 22.906 -> 28.515,
-        // t=11 39.725 -> 46.310), for a 7-beat net of 30.808 -> 32.440. Her early and late
-        // background planes share main `tex3`, so a texture-level gate cannot separate them —
-        // which is itself the finding: whatever is wrong at t=8/11 is NOT the alpha transform,
-        // it was only being masked by it. Shipping a principled change that measures worse is a
-        // mistake this project has already made once (see the Mlynar backdrop-clamp note).
+        // ✅ SHIPPED 2026-08-10 (`?ramdropgate=0` reverts), but only after the sheeted-UV fixes.
+        // Measured OFF first: it cost cet +1.632 while the terrain ramp was still drawing upside
+        // down, and again +0.015 after round 1. With the UVs correct it is a net win, and it is
+        // what recovers the terrain plane's DETAIL — high-frequency energy over the plane goes
+        // 4.04 -> 7.61 against a source that carries 13.55 and a game that shows 13.06.
+        //
+        //     cet 30.168 -> 30.035     mly 17.983 -> 18.082     other six BIT-IDENTICAL
+        //
+        // ⚠️ The GATE is load-bearing, not the raw sample. Forcing raw unconditionally
+        // (`?rammainraw=1`) gives cet the same 30.035 but destroys Wisadel, 33.641 -> 45.282:
+        // her Ram mains ARE glow-on-black, so for her the luminance->alpha is doing real work.
+        // The dark-field test is exactly what separates the two populations.
+        //
+        // 11 skins have a Ram main that switches to raw; the 7 unreferenced ones were rendered
+        // at 5 beats each before and after — byte-identical, no blow-outs.
         const RAM_MAIN_DARK_FIELD_MIN = 0.1;
         const hasDarkField = !ramDropGate() || darkN / Math.max(1, alphaN) >= RAM_MAIN_DARK_FIELD_MIN;
         const ddCanvas = document.createElement("canvas");
@@ -3860,11 +3883,11 @@ function addSkipAll(): boolean {
     return new URLSearchParams(window.location.search).get("addskip") === "1";
 }
 
-/** DIAGNOSTIC (`?ramdropgate=1`): gate the Ram MAIN luminance→alpha drop on the texture
- *  actually HAVING a dark field. OFF by default — see ILoadedTex.darkDropBase for why. */
+/** DIAGNOSTIC (`?ramdropgate=0`): apply the Ram MAIN luminance→alpha drop to EVERY opaque
+ *  texture, i.e. revert the dark-field gate. ON by default — see ILoadedTex.darkDropBase. */
 function ramDropGate(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("ramdropgate") === "1";
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ramdropgate") !== "0";
 }
 
 /** DIAGNOSTIC (`?orb=1`): re-apply the uniform-bright radial orb to AUTHORED-ADDITIVE
