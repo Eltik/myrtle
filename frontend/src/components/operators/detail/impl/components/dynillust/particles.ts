@@ -2655,6 +2655,7 @@ uniform float uHasRam;
 uniform float uDisturbBias;
 uniform float uDisturbGain;
 uniform float uRamUVDebug;
+uniform float uRamTerm;
 uniform float uMainOff;
 uniform float uTonemap;
 uniform float uRgb2;
@@ -2715,6 +2716,30 @@ void main() {
         // it changes nothing (coverage 47.0% -> 46.4%, level identical to 0.1).
         col *= texture2D(uRamTex, vRamUV);
     }
+    // DIAGNOSTIC (?ramterm=<n>): isolate which factor of the Ram alpha product collapses, by
+    // dropping one term or painting one term as opaque greyscale. This is what resolved
+    // Civilight Eterna's background planes going to exactly 0.00 five seconds after each one's
+    // delay: term 2 restored them at every beat while term 1 did nothing, which put it in
+    // col.a; then terms 4/6/7 showed mainTex.a, vColor.a and ramTex.a all pinned at 1.000
+    // while col.a read 0.000 — leaving uMainColor, which is driven by the clip's
+    // ram.mainColorCurve. Those curves are AUTHORED fades (bg_01 ramps 0.502 -> 0.000 over
+    // t=5.33..6.00), so the planes switching off is correct, not a defect.
+    //
+    // ⚠️ When reading these paints, EXCLUDE the letterbox columns. The bars are pure black and
+    // 17.8% of the frame, so a fully-white term averages 0.822 over a naive mask and reads as
+    // "not opaque" — that cost a round.
+    //   1 = drop the DISSOLVE  (a = col.a * uOpacity)
+    //   2 = drop col.a         (a = dAlpha * uOpacity)
+    //   3 = dissolve only      (a = dAlpha)
+    if (uRamTerm > 0.5 && uRamTerm < 1.5) dAlpha = 1.0;
+    if (uRamTerm > 1.5 && uRamTerm < 2.5) col.a = 1.0;
+    if (uRamTerm > 2.5 && uRamTerm < 3.5) { col.a = 1.0; }
+    // 4 = paint the RAM sampler's ALPHA as opaque greyscale; 5 = paint col.a (post-ram) likewise.
+    if (uRamTerm > 3.5 && uRamTerm < 4.5) { gl_FragColor = vec4(vec3(texture2D(uRamTex, vRamUV).a), 1.0); return; }
+    if (uRamTerm > 4.5 && uRamTerm < 5.5) { gl_FragColor = vec4(vec3(col.a), 1.0); return; }
+    // 6 = the MAIN sampler's alpha; 7 = the per-particle VERTEX colour alpha.
+    if (uRamTerm > 5.5 && uRamTerm < 6.5) { gl_FragColor = vec4(vec3(texture2D(uMainTex, mUV).a), 1.0); return; }
+    if (uRamTerm > 6.5) { gl_FragColor = vec4(vec3(vColor.a), 1.0); return; }
     float a = clamp(dAlpha * col.a * uOpacity, 0.0, 1.0);
     // The game feeds this into an HDR bloom+tonemap pass we don't run; the *2
     // above then just blows out. Compress highlights with a gentle Reinhard so
@@ -2935,6 +2960,7 @@ class RamEmitter {
             // can be reached. `?ramtile=0` reverts.
             uSheeted: ramTileFlipOn() && data.sheet && data.sheet.tilesX * data.sheet.tilesY > 1 && sheetMeshTilingOn() ? 1 : 0,
             uRamUVDebug: typeof window === "undefined" ? 0 : Number.parseFloat(new URLSearchParams(window.location.search).get("ramuv") ?? "0") || 0,
+            uRamTerm: typeof window === "undefined" ? 0 : Number.parseFloat(new URLSearchParams(window.location.search).get("ramterm") ?? "0") || 0,
             uDisturbBias: ramDisturb().bias,
             uDisturbGain: ramDisturb().gain,
             uMainST: ram.mainST,
