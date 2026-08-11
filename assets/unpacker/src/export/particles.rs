@@ -2044,15 +2044,46 @@ pub(crate) fn collect_dynchar_particles(
         if let Some(uv) = ps.get("UVModule")
             && b(uv, "enabled", false)
         {
+            // `frameOverTime` is a Unity MinMaxCurve. Only state 1 (single curve) was read, and
+            // every other state fell through to null — which the renderer re-interprets as "no
+            // authored frame, so animate the flipbook from life fraction". That is a different
+            // animation, not an absent one.
+            //
+            // Civilight Eterna's seven background planes are the case that exposes it: each is a
+            // 1x2 sheet whose `frameOverTime` is a CONSTANT 0.5 (minMaxState 0), i.e.
+            // `floor(0.5 * cycles * tiles) = 1` — frame 1, held for the system's whole life. The
+            // capture agrees exactly: correlated against each raw tile it sits on tile 1 at every
+            // sample from t=5.5 to 12.0 and never advances, while a life-driven flipbook flips
+            // every ~0.5 s. Emit the constant as a flat curve so the renderer's existing
+            // `sampleCurve` path returns it unchanged at any life fraction.
+            //
+            // State 3 (two constants) is Unity's random-between-two; take the max endpoint, which
+            // is what a single-particle system with maxParticles 1 lands on in practice. State 2
+            // (two curves) keeps the max curve, matching the state-1 treatment.
             let frame = uv.get("frameOverTime");
             let frame_curve = match frame {
-                Some(fr) if i(fr, "minMaxState").unwrap_or(0) == 1 => {
-                    let scalar = fd(fr, "scalar", 1.0);
-                    fr.get("maxCurve")
-                        .map(|mc| json!(sample_curve(mc, scalar, 1.0)))
-                        .unwrap_or(Value::Null)
-                }
-                _ => Value::Null,
+                Some(fr) => match i(fr, "minMaxState").unwrap_or(0) {
+                    1 => {
+                        let scalar = fd(fr, "scalar", 1.0);
+                        fr.get("maxCurve")
+                            .map(|mc| json!(sample_curve(mc, scalar, 1.0)))
+                            .unwrap_or(Value::Null)
+                    }
+                    2 => {
+                        let scalar = fd(fr, "scalar", 1.0);
+                        fr.get("maxCurve")
+                            .map(|mc| json!(sample_curve(mc, scalar, 1.0)))
+                            .unwrap_or(Value::Null)
+                    }
+                    // 0 = constant, 3 = two constants. Unity stores the value in `scalar` (the
+                    // curves are empty), so emit it as a two-point flat curve.
+                    0 | 3 => {
+                        let c = fd(fr, "scalar", 0.0);
+                        json!([{ "t": 0.0, "v": c }, { "t": 1.0, "v": c }])
+                    }
+                    _ => Value::Null,
+                },
+                None => Value::Null,
             };
             sys["sheet"] = json!({
                 "tilesX": i(uv, "tilesX").unwrap_or(1),
