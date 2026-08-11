@@ -340,6 +340,14 @@ function ramRgb2(): number {
     return Number.isFinite(v) && v >= 0 ? v : 1;
 }
 
+/** DIAGNOSTIC (`?ramalpha2=<f>`): scale the ALPHA half of the Ram shader's `col += col`.
+ *  1 = shipped (alpha doubles with rgb); 0.5 = the doubling applies to RGB only. */
+function ramAlpha2(): number {
+    if (typeof window === "undefined") return 1;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("ramalpha2") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
 function ramTonemap(): number {
     if (typeof window === "undefined") return 0.5;
     const v = parseFloat(new URLSearchParams(window.location.search).get("ramtonemap") ?? "");
@@ -2561,18 +2569,30 @@ void main() {
     // arms carved from a shared glint atlas) hit the intended sub-rect.
     // A SHEETED system's aUV has been rewritten by the Texture Sheet block into PNG RASTER
     // space (row-major, top-down: v0 = floor(frame/tilesX)/tilesY). Every _ST below is authored
-    // against UNITY's convention, where v runs bottom-up, so the two disagree by a whole tile —
-    // for a 1x2 sheet our frame 1 spans v [0.5,1.0] where Unity's spans [0,0.5]. Feeding the PNG
-    // coordinate straight into a Unity _ST is what pushed Civilight Eterna's terrain dissolve
-    // entirely OUTSIDE [0,1] (measured y -0.671..-0.082, 0% in range); that texture CLAMPS, so
-    // every texel sampled one dark edge row and the whole reveal drew nothing, with no other
-    // symptom to go on.
+    // against UNITY's convention, so the two disagree and the composed coordinate is wrong.
+    // Feeding the PNG coordinate straight into a Unity _ST is what pushed Civilight Eterna's
+    // terrain dissolve entirely OUTSIDE [0,1] (measured y -0.671..-0.082, 0% in range); that
+    // texture CLAMPS, so every texel sampled one dark edge row and the whole reveal drew nothing,
+    // with no other symptom to go on.
     //
-    // Convert to Unity space FIRST, then apply each _ST, then flip back as before. For an
-    // IDENTITY _ST this is algebraically the same as skipping the final flip, so it reproduces
-    // the shipped RAM-slot behaviour exactly; it differs only where an _ST scales or offsets,
-    // which is precisely the case that was broken.
-    vec2 uvU = uSheeted > 0.5 ? vec2(aUV.x, 1.0 - aUV.y) : aUV;
+    // The correction is a 180-degree flip of the tile -- BOTH axes -- applied before each _ST.
+    //
+    // V was established first (the terrain rendered upside down, and a cut-out texture's alpha
+    // makes orientation visible where luminance cannot). U was found the same way, by warping the
+    // texture through the shader's own per-pixel UV and reading which texels land where: at cet's
+    // t=8 the frame's LEFT edge sampled u 0.856 (dense art, texture alpha 0.983) and its RIGHT
+    // edge u 0.166 (alpha 0.213), i.e. mirrored — while the capture puts the dense ruins on the
+    // RIGHT. Flipping U as well: cet 29.172 -> 24.497, mly -0.012, the other six BIT-IDENTICAL.
+    //
+    // WARNING: stated as MEASURED, not derived, and NO BACKTICKS in here -- this is a template
+    // literal. The obvious mechanism does not survive checking: these planes are authored at
+    // rot 180, but that is not general -- of the 218 sheeted ram systems in the corpus, 73 sit at
+    // rot 0 and only 54 at 180. And with tilesX == 1 the sheet block leaves u untouched
+    // (u0 = 0, cw = 1), so U ought to behave like a non-sheeted system, which needs no flip.
+    // The scoped flip is nonetheless strictly better than the global ramflip=u everywhere the two
+    // differ (cet 24.497 vs 24.928; cel and mue exactly unchanged rather than nudged), so the
+    // gate is doing real work even though the reason is not yet pinned down.
+    vec2 uvU = uSheeted > 0.5 ? vec2(1.0 - aUV.x, 1.0 - aUV.y) : aUV;
     vMainUV = uvU * uMainST.xy + uMainST.zw + uMainScroll;
     vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
     vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
@@ -2625,6 +2645,7 @@ uniform float uRamUVDebug;
 uniform float uMainOff;
 uniform float uTonemap;
 uniform float uRgb2;
+uniform float uAlpha2;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
     // DIAGNOSTIC (?ramdist=): uDisturbBias re-centres the warp. 0.0 = the shipped one-sided
@@ -2644,6 +2665,15 @@ void main() {
     // the Reinhard: (rgb2, tonemap) = (1, 0.5) 30.035 | (0.7, 0) 30.206 | (0.5, 0) 32.046 |
     // (0.5, 0.15) 32.320 | (0.5, 0.3) 32.589 | (0.5, 0.5) 32.936. The shipped pair is optimal.
     col.rgb *= uRgb2;
+    // DIAGNOSTIC (?ramalpha2=<f>), default 1 = no-op. ⛔ The alpha half of the doubling is REAL;
+    // the plane IS opaque. The earlier justification for it was circular (it assumed the
+    // conclusion), so it was tested properly: at 0.5 the planes sit at ~0.5 alpha and the skin
+    // illustration shows through. That is measured WRONG — cet 29.172 -> 29.747, and per column
+    // at t=8 it helps 630-720 (detail ratio 0.42 -> 0.64) while HURTING 720-810 (0.28 -> 0.20)
+    // and the left edge (0.64 -> 0.40), and pushes the full-frame level further from the capture
+    // (77.8 -> 81.1 against 70.9). ⇒ the right-edge ruins are composited ABOVE these planes in
+    // the game, not seen through them.
+    col.a *= uAlpha2;
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dsUV).x : 1.0;
     float threshold = vCustom.x + uAmount;
     // Game shader: sw = 1 - roundEven(threshold + 0.5). roundEven(y) ~= floor(y +
@@ -2883,6 +2913,7 @@ class RamEmitter {
             uHasRam: tex.ram && ramTexOn() ? 1 : 0,
             uTonemap: ramTonemap(),
             uRgb2: ramRgb2(),
+            uAlpha2: ramAlpha2(),
             uMainOff: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammain") === "0" ? 1 : 0,
             uRamFlip: ramFlip(),
             // 1 when the Texture Sheet block rewrites this system's aUV into PNG raster
