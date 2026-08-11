@@ -876,6 +876,43 @@ function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     });
 }
 
+/** Additive blending must contribute LIGHT, not COVERAGE.
+ *
+ *  PIXI's premultiplied ADD is `gl.blendFunc(ONE, ONE)`, which adds the source colour to the
+ *  destination — correct — and also adds the source ALPHA to the destination alpha. On an opaque
+ *  canvas that is invisible. Inside the HDR pass it is not: the scene renders into a half-float
+ *  RGBA target and the tonemap composite honours that alpha, so every additive fragment OCCLUDES
+ *  the environment behind it in proportion to its own alpha. A DARK additive sprite therefore
+ *  DARKENS the frame, which additive blending is supposed to make impossible.
+ *
+ *  Measured on Civilight Eterna's `guangyun01` halo before the equivalent fix in the Ram shader:
+ *  writing premultiplied black at alpha 0.8 took the frame 63.40 -> 12.43, a factor of
+ *  0.196 = 1 - 0.8 — exactly a NORMAL over-blend. With `?nohdr=1` the same write was a perfect
+ *  no-op, and forcing `blendMode = ADD` changed nothing, so neither the blend flag nor PIXI's
+ *  blend map was at fault: only the alpha channel.
+ *
+ *  Fixing it in the shader only reaches the Ram path. Patching the blend FUNC reaches every
+ *  additive draw — batched sprites included, whose fragments belong to PIXI's own batch shader —
+ *  by switching ADD to `blendFuncSeparate(ONE, ONE, ZERO, ONE)`: colour adds, destination alpha
+ *  is left alone. `?addalpha=0` reverts.
+ */
+function patchAdditiveBlendAlpha(app: PIXI.Application): void {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("addalpha") === "0") return;
+    const renderer = app.renderer as unknown as { state?: { blendModes?: number[][]; blendMode?: number }; gl?: WebGLRenderingContext };
+    const st = renderer.state;
+    const gl = renderer.gl;
+    if (!st?.blendModes || !gl) return;
+    for (const mode of [PIXI.BLEND_MODES.ADD, PIXI.BLEND_MODES.ADD_NPM]) {
+        const cur = st.blendModes[mode];
+        // Only the plain two-argument forms; anything already separate is left as authored.
+        if (!cur || cur.length !== 2) continue;
+        st.blendModes[mode] = [cur[0], cur[1], gl.ZERO, gl.ONE];
+    }
+    // Drop the cached mode so the new function is applied on the next state change rather
+    // than being skipped by StateSystem's early-out.
+    st.blendMode = -1;
+}
+
 function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }): PIXI.Sprite {
     const { texture, centroid } = backdrop;
     const sprite = new PIXI.Sprite(texture);
@@ -1279,6 +1316,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             autoStart: false,
         });
         app.ticker.stop();
+        patchAdditiveBlendAlpha(app);
         appRef.current = app;
         container.appendChild(app.view as HTMLCanvasElement);
 
