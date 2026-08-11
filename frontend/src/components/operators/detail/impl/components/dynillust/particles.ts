@@ -941,6 +941,13 @@ function uniformFieldSkipOn(): boolean {
 
 /** `?meshtile=0` restores the old behaviour where a MESH-render texture-sheet system sampled the
  *  whole atlas instead of its live tile (diagnostic). */
+/** DIAGNOSTIC (`?sheethold=<i>`): pin every mesh flipbook to frame <i>. See the use site. */
+function sheetHold(): number | null {
+    if (typeof window === "undefined") return null;
+    const v = Number.parseInt(new URLSearchParams(window.location.search).get("sheethold") ?? "", 10);
+    return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
 function sheetMeshTilingOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("meshtile") !== "0";
@@ -3264,9 +3271,22 @@ class RamEmitter {
             // own order — without it a sheet system samples the WHOLE atlas per quad and
             // stamps the grid, which is why such systems used to be barred from this path.
             if (sheet && this.sheetTiles > 1 && sheetMeshTilingOn()) {
+                // DIAGNOSTIC (?sheethold=<i>): pin the flipbook to one frame instead of driving it
+                // from life fraction. Civilight Eterna's background planes carry `frameOverTime:
+                // null`, which we read as "animate by lf" — so our tile flips every ~0.5 s, while
+                // the CAPTURE sits on the same tile for the whole 5.5-12.0 s life of those planes
+                // (correlated against each raw tile: tile1 +0.41..+0.72 at every sample, tile0
+                // +0.06..+0.50, and the solved plane at t=9.667 reads tile1 +0.651 / tile0 +0.149).
+                //
+                // ⛔ Pinning it GLOBALLY is not the fix — cet 30.035 -> 30.357 (frame 1) and
+                // 31.147 (frame 0) — because this overrides all 24 of her sheeted systems, not
+                // just the seven background planes. The frame law has to come from the DATA
+                // per system (a dropped TSA startFrame or a constant frameOverTime the exporter
+                // is flattening to null), not from a global override.
+                const hold = sheetHold();
                 const prog = sheet.frameOverTime ? sampleCurve(sheet.frameOverTime, lf) : lf;
                 const cycles = sheet.cycles && sheet.cycles > 0 ? sheet.cycles : 1;
-                const fi = Math.min(this.sheetTiles - 1, Math.max(0, Math.floor(prog * cycles * this.sheetTiles) % this.sheetTiles));
+                const fi = hold != null ? Math.min(this.sheetTiles - 1, Math.max(0, hold)) : Math.min(this.sheetTiles - 1, Math.max(0, Math.floor(prog * cycles * this.sheetTiles) % this.sheetTiles));
                 const cw = 1 / sheet.tilesX;
                 const ch = 1 / sheet.tilesY;
                 const u0 = (fi % sheet.tilesX) * cw;
