@@ -306,6 +306,12 @@ export interface IParticlesData {
 
 // ---------------------------------------------------------------------------
 
+/** `?ramaddalpha=0` restores the old behaviour (additive Ram fragments writing their alpha
+ *  into the HDR target, where it occludes the environment). Diagnostic/revert only. */
+function ramAdditiveAlphaFix(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ramaddalpha") !== "0";
+}
 /** Global live-particle ceiling across every emitter (perf guard). */
 const GLOBAL_MAX_PARTICLES = 1400;
 /** DIAGNOSTIC (`?pbudget=<n>`): override the global ceiling.
@@ -2656,6 +2662,7 @@ uniform float uDisturbBias;
 uniform float uDisturbGain;
 uniform float uRamUVDebug;
 uniform float uRamTerm;
+uniform float uAdditive;
 uniform float uMainOff;
 uniform float uTonemap;
 uniform float uRgb2;
@@ -2739,14 +2746,33 @@ void main() {
     if (uRamTerm > 4.5 && uRamTerm < 5.5) { gl_FragColor = vec4(vec3(col.a), 1.0); return; }
     // 6 = the MAIN sampler's alpha; 7 = the per-particle VERTEX colour alpha.
     if (uRamTerm > 5.5 && uRamTerm < 6.5) { gl_FragColor = vec4(vec3(texture2D(uMainTex, mUV).a), 1.0); return; }
-    if (uRamTerm > 6.5) { gl_FragColor = vec4(vec3(vColor.a), 1.0); return; }
+    if (uRamTerm > 6.5 && uRamTerm < 7.5) { gl_FragColor = vec4(vec3(vColor.a), 1.0); return; }
+    // 8/9 = BLEND PROBE. 8 writes premultiplied BLACK at alpha 0.8, 9 writes nothing.
+    // Under ADD (One,One) both are a no-op and must measure identical; under NORMAL
+    // premultiplied (One,1-a) 8 multiplies the destination by 0.2 and 9 does not.
+    if (uRamTerm > 7.5 && uRamTerm < 8.5) { gl_FragColor = vec4(0.0, 0.0, 0.0, 0.8); return; }
+    if (uRamTerm > 8.5) { gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0); return; }
     float a = clamp(dAlpha * col.a * uOpacity, 0.0, 1.0);
     // The game feeds this into an HDR bloom+tonemap pass we don't run; the *2
     // above then just blows out. Compress highlights with a gentle Reinhard so
     // mids are untouched but the over-bright (esp. opaque normal-blend) tames.
     vec3 rgb = col.rgb / (1.0 + uTonemap * max(col.rgb, 0.0));
     // Premultiplied output: ADD (One,One) adds rgb*a; NORMAL over-blends by a.
-    gl_FragColor = vec4(rgb * a, a);
+    // ADDITIVE systems must not contribute to the destination ALPHA.
+    //
+    // The fragment is premultiplied, so ADD (One,One) adds rgb * a to the colour — correct —
+    // but it ALSO adds a to the target's alpha. That is harmless on an opaque canvas, and it
+    // is a real bug inside the HDR pass: the scene renders into a half-float RGBA target whose
+    // alpha the tonemap composite then honours, so an additive fragment OCCLUDES the environment
+    // behind it in proportion to its own alpha. A dark additive quad therefore DARKENS the frame,
+    // which additive blending is supposed to make impossible.
+    //
+    // Measured on Civilight Eterna's guangyun01 (the 5983 px pink halo that lights her left
+    // half from t=16.2): writing premultiplied BLACK at alpha 0.8 took the frame 63.40 -> 12.43,
+    // a factor of 0.196 = 1 - 0.8, i.e. exactly a NORMAL over-blend. With ?nohdr=1 the same
+    // write is a perfect no-op, and forcing blendMode = ADD unconditionally changes nothing —
+    // so the blend mode was never the problem, the alpha channel was.
+    gl_FragColor = vec4(rgb * a, uAdditive > 0.5 ? 0.0 : a);
     // DIAGNOSTIC (?ramuv=1): paint the RAM sampler's UV instead of the shaded result, so a
     // collapsed or mis-tiled vRamUV is visible directly rather than inferred from luminance.
     if (uRamUVDebug > 0.5) gl_FragColor = vec4(fract(vRamUV.x), fract(vRamUV.y), 0.0, 1.0);
@@ -2961,6 +2987,7 @@ class RamEmitter {
             uSheeted: ramTileFlipOn() && data.sheet && data.sheet.tilesX * data.sheet.tilesY > 1 && sheetMeshTilingOn() ? 1 : 0,
             uRamUVDebug: typeof window === "undefined" ? 0 : Number.parseFloat(new URLSearchParams(window.location.search).get("ramuv") ?? "0") || 0,
             uRamTerm: typeof window === "undefined" ? 0 : Number.parseFloat(new URLSearchParams(window.location.search).get("ramterm") ?? "0") || 0,
+            uAdditive: blend === "additive" && ramAdditiveAlphaFix() ? 1 : 0,
             uDisturbBias: ramDisturb().bias,
             uDisturbGain: ramDisturb().gain,
             uMainST: ram.mainST,
