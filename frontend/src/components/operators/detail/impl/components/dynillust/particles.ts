@@ -333,6 +333,13 @@ function ramFlip(): [number, number] {
  *  `SV_Target0.xyz = u_xlat16_1.xyz` — because the game feeds this into an HDR bloom pass we do
  *  not run. Ours is a deliberate stand-in for that pass, and it is the only place this port
  *  knowingly diverges. */
+/** DIAGNOSTIC (`?ramrgb2=<f>`): scale the RGB half of the Ram shader's `col += col`. 1 = shipped. */
+function ramRgb2(): number {
+    if (typeof window === "undefined") return 1;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("ramrgb2") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
 function ramTonemap(): number {
     if (typeof window === "undefined") return 0.5;
     const v = parseFloat(new URLSearchParams(window.location.search).get("ramtonemap") ?? "");
@@ -2610,6 +2617,7 @@ uniform float uDisturbGain;
 uniform float uRamUVDebug;
 uniform float uMainOff;
 uniform float uTonemap;
+uniform float uRgb2;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
     // DIAGNOSTIC (?ramdist=): uDisturbBias re-centres the warp. 0.0 = the shipped one-sided
@@ -2620,6 +2628,15 @@ void main() {
     vec2 dsUV = dOff * uDisturbInfluenceDissolveUV + vDissolveUV;
     vec4 col = mix(texture2D(uMainTex, mUV), vec4(1.0), uMainOff) * uMainColor * vColor;
     col += col; // faithful *2 (also makes _MainColor.a=0.5 neutral on alpha)
+    // DIAGNOSTIC (?ramrgb2=<f>), default 1 = no-op. ⛔ The x2 on RGB is NOT the error.
+    // Isolating Civilight Eterna's background planes out of the capture (difference across their
+    // own authored 0.502->0 fade, restricted to pixels a matched no-fade window proves static)
+    // reads our planes at 2.1-2.26x the game's, stable over masks from 1% to 10.6% of the frame.
+    // But a fade delta is (a0-a1)*(P - B): it measures the plane against WHAT IS BEHIND IT, not
+    // the plane. Scaling this factor is measured WORSE at every setting, alone and jointly with
+    // the Reinhard: (rgb2, tonemap) = (1, 0.5) 30.035 | (0.7, 0) 30.206 | (0.5, 0) 32.046 |
+    // (0.5, 0.15) 32.320 | (0.5, 0.3) 32.589 | (0.5, 0.5) 32.936. The shipped pair is optimal.
+    col.rgb *= uRgb2;
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dsUV).x : 1.0;
     float threshold = vCustom.x + uAmount;
     // Game shader: sw = 1 - roundEven(threshold + 0.5). roundEven(y) ~= floor(y +
@@ -2858,6 +2875,7 @@ class RamEmitter {
             uBorderWidth2: ram.borderWidth2 ?? 0.1,
             uHasRam: tex.ram && ramTexOn() ? 1 : 0,
             uTonemap: ramTonemap(),
+            uRgb2: ramRgb2(),
             uMainOff: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("rammain") === "0" ? 1 : 0,
             uRamFlip: ramFlip(),
             // 1 when the Texture Sheet block rewrites this system's aUV into PNG raster
