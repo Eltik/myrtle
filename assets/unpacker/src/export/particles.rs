@@ -1597,10 +1597,36 @@ pub(crate) fn collect_dynchar_particles(
         // entrance apples crumble away with it (−0.12 → 1.0 by ~30% of their 10s
         // life); without it they'd ride the falling rig forever. Consumed by the
         // frontend's RamEmitter only (plain billboards have no dissolve stage).
+        //
+        // ⚠️ Read the stream the RENDERER ACTUALLY SENDS, not "the first Vector-mode stream".
+        // Unity only uploads the custom streams listed in `ParticleSystemRenderer.m_VertexStreams`
+        // (`ParticleSystemVertexStream`: 30..=33 are Custom1X..XYZW, 34..=37 Custom2X..XYZW), and a
+        // CustomData stream configured in the module but absent from that list never reaches the
+        // shader at all — the threshold it would have supplied is simply 0.
+        //
+        // Civilight Eterna is the case that found this. All 32 of her CustomData systems send
+        // Custom2 and nothing else; 29 of them put their Vector data in stream 1, which matches.
+        // But `guangyun01` (her end-of-cinematic lens flare) and the two `down_vase_lizi_*` author
+        // theirs in stream 0, which is NEVER sent. Taking the first Vector-mode stream therefore
+        // exported a 0.392 -> 0.465 dissolve threshold for a flare the game dissolves by 0, and
+        // `dAlpha = saturate(dis - thr)` rendered it at ~20% of its intended brightness.
+        let sent_stream = renderer
+            .and_then(|r| r.get("m_VertexStreams"))
+            .and_then(Value::as_array)
+            .and_then(|arr| {
+                let ids: Vec<i64> = arr.iter().filter_map(Value::as_i64).collect();
+                if ids.iter().any(|&x| (30..=33).contains(&x)) {
+                    Some(0usize)
+                } else if ids.iter().any(|&x| (34..=37).contains(&x)) {
+                    Some(1usize)
+                } else {
+                    None
+                }
+            });
         if let Some(cdm) = ps.get("CustomDataModule")
             && b(cdm, "enabled", false)
         {
-            for stream in 0..2 {
+            for stream in sent_stream.into_iter() {
                 if i(cdm, &format!("mode{stream}")).unwrap_or(0) != 1 {
                     continue;
                 }
