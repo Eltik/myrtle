@@ -900,6 +900,32 @@ pub fn collect_spine_assets(
     (assets, claimed)
 }
 
+/// Page dimensions declared by an atlas text, keyed by page base name (no `.png`).
+///
+/// libgdx atlas format: a page is a bare filename line followed by `size: W,H`. The frontend
+/// scales every region's UVs by these numbers, so a written PNG whose dimensions disagree
+/// silently misplaces every attachment.
+fn atlas_page_sizes(atlas_text: &str) -> HashMap<String, (u32, u32)> {
+    let mut out = HashMap::new();
+    let mut page: Option<String> = None;
+    for line in atlas_text.lines() {
+        let t = line.trim();
+        if let Some(rest) = t.strip_prefix("size:") {
+            if let Some(name) = page.take()
+                && let Some((w, h)) = rest.split_once(',')
+                && let (Ok(w), Ok(h)) = (w.trim().parse::<u32>(), h.trim().parse::<u32>())
+            {
+                out.insert(name, (w, h));
+            }
+        } else if t.ends_with(".png") {
+            page = Some(t.trim_end_matches(".png").to_string());
+        } else if t.is_empty() {
+            page = None;
+        }
+    }
+    out
+}
+
 /// Largest page dimension declared in an atlas text (`size: W,H` lines).
 fn atlas_max_dim(atlas_text: &str) -> u64 {
     atlas_text
@@ -3561,24 +3587,99 @@ pub fn export_spine_assets(
             count += 1;
         }
 
-        // Write atlas
+        // Write atlas.
+        //
+        // A skin's ENTRANCE (`_Start`) and IDLE assets are separate spine assets that land in the
+        // SAME output directory, and their atlases can name the same page file at DIFFERENT sizes:
+        // Kal'tsit `boc#6` declares `dyn_illust_char_003_kalts_boc#6.png` as 2348x2348 for the idle
+        // and 2336x2336 for the entrance. Whichever is written last wins, and the loser's regions
+        // are all scaled by the size ratio — the character renders as disconnected fragments.
+        //
+        // Namespace a page under the asset that declares it whenever the two names differ, and
+        // rewrite the atlas text to match, so the two assets can never clobber each other.
+        let mut atlas_text = asset.atlas_text.clone();
+        let mut page_renames: HashMap<String, String> = HashMap::new();
+        // ⚠️ Namespace as `{asset}__{page}`, NOT as `{asset}`. A MULTI-PAGE atlas names its
+        // extra pages `{base}2`, `{base}3`, … (6 skins in the corpus do), and collapsing them
+        // all onto the asset name would make page 2 clobber page 1 — trading one collision for
+        // a worse one. The prefixed form is unique per (asset, page) by construction.
+        for page in atlas_page_sizes(&asset.atlas_text).keys() {
+            if *page != asset.name {
+                page_renames.insert(page.clone(), format!("{}__{page}", asset.name));
+            }
+        }
+        for (from, to) in &page_renames {
+            atlas_text = atlas_text.replace(&format!("{from}.png"), &format!("{to}.png"));
+        }
         let atlas_path = spine_dir.join(format!("{}.atlas", asset.name));
-        if std::fs::write(&atlas_path, &asset.atlas_text).is_ok() {
+        if std::fs::write(&atlas_path, &atlas_text).is_ok() {
             count += 1;
         }
 
-        // Decode textures and apply alpha merging
-        let mut decoded = HashMap::new();
+        // Decode textures and apply alpha merging.
+        //
+        // `decoded` is keyed by texture NAME, so two Texture2D objects sharing one name
+        // silently overwrite each other and whichever comes last in `asset.textures` wins.
+        // That is not hypothetical: Kal'tsit's `boc#6` bundle carries TWO textures called
+        // `dyn_illust_char_003_kalts_boc#6`, 2348x2348 (fmt 49) and 2336x2336 (fmt 50), and
+        // the `.atlas` declares 2348. Picking the 2336 one scales every region's UVs by
+        // 2348/2336 and shatters the character into disconnected fragments.
+        //
+        // The atlas itself says which page is correct, so resolve collisions against it
+        // rather than by iteration order. Same lesson as the shader map: never key on a
+        // bare name when the bundle can repeat one.
+        let page_sizes = atlas_page_sizes(&atlas_text);
+        let mut decoded: HashMap<String, _> = HashMap::new();
         for (_, tex_val) in &asset.textures {
             match decode_texture_object(tex_val, resources) {
-                Ok(Some(tex)) => {
-                    decoded.insert(tex.name.clone(), tex);
-                }
+                Ok(Some(tex)) => match decoded.entry(tex.name.clone()) {
+                    std::collections::hash_map::Entry::Vacant(e) => {
+                        e.insert(tex);
+                    }
+                    std::collections::hash_map::Entry::Occupied(mut e) => {
+                        let want = page_sizes.get(&tex.name).copied();
+                        let new_fits = want == Some((tex.width, tex.height));
+                        let old_fits = want == Some((e.get().width, e.get().height));
+                        eprintln!(
+                            "  duplicate spine texture name {} — {}x{} vs {}x{}, atlas declares {}",
+                            tex.name,
+                            e.get().width,
+                            e.get().height,
+                            tex.width,
+                            tex.height,
+                            want.map_or("nothing".to_string(), |(w, h)| format!("{w}x{h}"))
+                        );
+                        if new_fits && !old_fits {
+                            e.insert(tex);
+                        }
+                    }
+                },
                 Ok(None) => {}
                 Err(e) => {
                     let name = tex_val["m_Name"].as_str().unwrap_or("?");
                     eprintln!("  error decoding spine texture {name}: {e}");
                 }
+            }
+        }
+        // Apply the page rename to the decoded textures so the PNG lands under the namespaced
+        // filename the rewritten atlas now points at.
+        for (from, to) in &page_renames {
+            if let Some(mut tex) = decoded.remove(from) {
+                tex.name = to.clone();
+                decoded.insert(to.clone(), tex);
+            }
+        }
+        // ASSERT the invariant the frontend depends on: every page the atlas declares must be
+        // written at exactly the declared size. Cheap, and it catches this whole class at export
+        // instead of as a shattered skin in a corpus render.
+        for (page, (w, h)) in &page_sizes {
+            if let Some(tex) = decoded.get(page)
+                && (tex.width, tex.height) != (*w, *h)
+            {
+                eprintln!(
+                    "  ATLAS SIZE MISMATCH {}/{page}: atlas declares {w}x{h} but the texture is {}x{} — every region UV will be wrong",
+                    asset.name, tex.width, tex.height
+                );
             }
         }
         count += alpha_merge::merge_and_export(decoded, &spine_dir);
