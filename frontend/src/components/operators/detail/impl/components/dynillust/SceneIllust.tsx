@@ -2426,7 +2426,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const gapFill = !useStatic && gapFillOn() && !(settledGroundOn() && settledRef.current) && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
-                    if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
+                    const bdAblated =
+                        typeof window !== "undefined" &&
+                        (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
+                    if (bdAblated) bd.renderable = false;
                     if (gapFill) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff
                         // is a spatial frequency, not a pixel count (see gapFillOn).
@@ -2441,7 +2444,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // Tracked so the transform beat can retire it. Only the GAP FILL: a `useStatic`
                     // backdrop IS the artwork, and retiring that would blank the view.
                     if (gapFill) gapFillSpritesRef.current.push(bd);
-                    if (gapFill && sceneCoversFrame) gapFillRef.current = { sprite: bd, covers: coverLayers };
+                    // ⚠️ Do NOT register the per-frame coverage toggle when this sprite has been
+                    // ABLATED. The toggle below assigns `renderable` every frame, so it silently
+                    // overwrote `?abl=backdrop` and the token appeared to do nothing — which is
+                    // exactly how a gap-fill wash got mis-attributed as an unexplained base layer
+                    // (`?gapfill=0` removed it; `?abl=backdrop` did not). Same failure as the
+                    // `?abl=fg:` tokens that never cleared `__activeWindows`.
+                    if (gapFill && sceneCoversFrame && !bdAblated) gapFillRef.current = { sprite: bd, covers: coverLayers };
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
