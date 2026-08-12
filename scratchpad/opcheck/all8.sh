@@ -12,8 +12,10 @@
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
 # Baselines as of 2026-08-10 (empty EXTRA):
-#   ska 10.447  exc  8.919  cel 18.021  mly 18.073  mue 21.908  eyja 22.123  cet 18.087  wis 12.645
-# (cet/exc/wis numbers are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
+#   exc 8.919  eyja 10.409  ska 10.447  wis 12.645  cel 18.021  mly 18.073  cet 18.087  mue 21.918
+# (cet/exc/wis/eyja are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
+# ✅ ALL EIGHT references are now trim-swept. mue is the only one needing no offset, and is now the
+#    corpus worst — the first time the worst skin is known to be a renderer error and not a trim.
 set -e
 HERE=${0:A:h}
 label=${1:?label required}; extra=${2:-}; shift 2 2>/dev/null || shift 1
@@ -47,6 +49,15 @@ REFOFF[exc]=0.100
 # symmetric (18.005 / 8.066 / 17.756). ⚠️ Changes ZERO pixels -- the renderer did not improve.
 # 🔑 t=12 (41.66) is now her ONLY bad beat; the other five are among the best in the corpus.
 REFOFF[wis]=-0.200
+# eyja added 2026-08-11: 3 frames, our render runs BEHIND (same sign as exc). 22.123 -> 10.409, a
+# HALVING. Corroborated two ways: a dense 31-sample per-pixel sweep over 1.5-7.5s, independent of
+# the beat set, minimises at exactly -0.100 in its convention (23.631 -> 11.797), and the 4-beat
+# score minimises at the same +0.100 with a sharp rise either side (12.585 / 10.409 / 12.952).
+REFOFF[eyja]=0.100
+# ⛔ mue was swept and needs NO offset -- the score is BEST at 0.000 (21.918) and degrades
+# monotonically (+0.017 -> 23.263, +0.033 -> 24.190). A dense sweep over 2.0-8.0s did prefer +0.033
+# by 0.51 on a base of 11.3, but that did NOT survive on her actual beat set. 🔑 Her trim is
+# CORRECT, so mue's 21.918 -- now the corpus worst -- is a genuine RENDERER error, not measurement.
 
 DIR[ska]='char_1012_skadi2_iteration#2';  BEATS[ska]="3,5,7,9,13,16,19"
 DIR[exc]='char_1032_excu2_sale#12';       BEATS[exc]="1,2,3,4,5,6"
