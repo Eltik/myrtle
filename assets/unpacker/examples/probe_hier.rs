@@ -55,13 +55,36 @@ fn main() {
                 println!("   {}{}", "  ".repeat(i), name.get(&g).cloned().unwrap_or_default());
             }
             let camtf = tf_of_go.get(cg).copied().unwrap_or(0);
-            println!("   -- direct children of the camera GO:");
+            println!("   -- direct children of the camera GO, with subtree sizes:");
+            // Count renderers (class 23 MeshRenderer / 137 SkinnedMesh) under each child, so a
+            // rig that holds real ART is distinguishable from one that holds only transforms.
+            let mut rend_go: std::collections::HashSet<i64> = std::collections::HashSet::new();
+            for obj in &sf.objects {
+                if obj.class_id == 23 || obj.class_id == 137 {
+                    if let Ok(v) = read_object(&sf, obj) {
+                        if let Some(g) = v.get("m_GameObject").and_then(pid) { rend_go.insert(g); }
+                    }
+                }
+            }
             for c in children.get(&camtf).into_iter().flatten() {
                 let g = go_of_tf.get(c).copied().unwrap_or(0);
                 let n = name.get(&g).cloned().unwrap_or_default();
-                if want.is_empty() || n.to_ascii_lowercase().contains(&want) {
-                    println!("        {n}");
+                if !(want.is_empty() || n.to_ascii_lowercase().contains(&want)) { continue; }
+                // BFS the subtree
+                let mut stack = vec![*c];
+                let (mut nodes, mut rends) = (0usize, 0usize);
+                let mut sample: Vec<String> = Vec::new();
+                while let Some(t) = stack.pop() {
+                    nodes += 1;
+                    let gg = go_of_tf.get(&t).copied().unwrap_or(0);
+                    if rend_go.contains(&gg) {
+                        rends += 1;
+                        if sample.len() < 8 { sample.push(name.get(&gg).cloned().unwrap_or_default()); }
+                    }
+                    for cc in children.get(&t).into_iter().flatten() { stack.push(*cc); }
                 }
+                println!("        {n}: {nodes} nodes, {rends} renderers");
+                if !sample.is_empty() { println!("            e.g. {}", sample.join(", ")); }
             }
         }
     }
