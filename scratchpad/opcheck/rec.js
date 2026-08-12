@@ -96,7 +96,18 @@ const initScript = () => {
         ],
     });
     const page = await browser.newPage();
-    await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
+    // SUPERSAMPLING (`DSF=<n>`). The game renders the dyn illust into a 2048^2 target and the
+    // capture downscales from it, so its frames carry the detail of a much higher-resolution
+    // render. The production viewer matches that on any retina display (PIXI takes its resolution
+    // from `window.devicePixelRatio`), but this harness pinned dSF to 1 -- so we were scoring a
+    // render SOFTER than both the game and the shipping viewer. Measured on Civilight Eterna:
+    // our frame carries only ~65% of the capture's high-frequency energy (|dx| 7.73 vs 11.22 in
+    // her worst region, 4.48 vs 6.24 full-frame).
+    //
+    // Frames are captured at DSF x the requested size and downscaled back, i.e. SSAA. Default
+    // stays 1 so every historical number remains reproducible.
+    const DSF = Number(process.env.DSF || 1);
+    await page.setViewport({ width: W, height: H, deviceScaleFactor: DSF });
     await page.evaluateOnNewDocument(initScript);
 
     const url =

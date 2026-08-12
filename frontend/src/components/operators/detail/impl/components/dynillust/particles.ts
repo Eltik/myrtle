@@ -3964,6 +3964,26 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
     }
 }
 
+/** DIAGNOSTIC (`?unskip=<i,j,…>`): force the listed TEXTURE INDICES to draw normally, clearing
+ *  `skip` / `desatPanel` / `hazePanel`.
+ *
+ *  Isolating ONE texture is the only way to tell a mis-classification that MATTERS from one that
+ *  does not: moving a corpus threshold re-classifies ~129 textures at once and its per-skin net is
+ *  uninterpretable (that is what made the `?desatcov` result unreadable — five of Civilight
+ *  Eterna's textures changed together). Indices are the exported `<n>.png` numbers, so this is a
+ *  probe for attribution, never a fix. */
+function unskipSet(): Set<number> {
+    if (typeof window === "undefined") return new Set();
+    const q = new URLSearchParams(window.location.search).get("unskip");
+    if (!q) return new Set();
+    return new Set(
+        q
+            .split(",")
+            .map((x) => Number.parseInt(x, 10))
+            .filter((x) => Number.isFinite(x)),
+    );
+}
+
 function loadTexture(url: string): Promise<ILoadedTex> {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -4104,7 +4124,14 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     }
     if (!data.systems?.length) return null;
 
-    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseUrl}${i}.png${bust}`).catch(() => null)));
+    const unskip = unskipSet();
+    const bases = await Promise.all(
+        Array.from({ length: data.textureCount }, (_, i) =>
+            loadTexture(`${textureBaseUrl}${i}.png${bust}`)
+                .then((t) => (unskip.has(i) ? { ...t, skip: false, desatPanel: false, hazePanel: false } : t))
+                .catch(() => null),
+        ),
+    );
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();

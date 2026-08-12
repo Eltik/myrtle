@@ -1,49 +1,31 @@
-//! THROWAWAY diagnostic: dump a Shader's SERIALIZED PASS STATE (name, tags, blend factors,
-//! ZWrite/Cull, and the declared properties) straight out of `[uc]shaders.ab`.
+//! THROWAWAY diagnostic: dump a Shader's per-pass BLEND STATE.
 //!
-//! Motivation: Virtuosa's ten wing particle rigs draw a saturated PINK wisp where the game shows
-//! essentially nothing. Every authored input has been verified correct — pink source texture,
-//! neutral `_TintColor`, `maxParticles` respected, director-activated, right UV cell, no vertex
-//! colour on the mesh. The only component still taken on trust is the shader itself,
-//! `Torappu/Particles-L2D/AlphaBlend`, whose name we assume means `tex * color` over the frame.
-//! Unity's SerializedShader keeps per-pass fixed-function state, so the real blend equation and
-//! render queue can be read without decompiling any bytecode.
+//! Motivation: `Torappu/Particles-L2D/Additive`'s fragment sets
+//! `SV_Target0.xyz = 2 * color.rgb * tint.rgb * tex.rgb` — it never multiplies RGB by alpha. Our
+//! renderer premultiplies, so on a particle authored at `startColor.a = 0.11` we draw ~9x too
+//! dim... but ONLY if the pass blends `One One`. If it blends `SrcAlpha One` the GPU applies the
+//! alpha instead and our result is right. The GLSL cannot answer that; the pass state can.
 //!
-//! Usage: cargo run --release --example probe_shaderstate -- <shaders.ab> [pathID|name-substr]
+//! Usage: cargo run --release --example probe_shaderstate -- <bundle.ab> <pathID>
 
 use serde_json::Value;
 use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
 
-/// Walk an arbitrary JSON subtree and print any key that looks like render state.
-fn dump_state(v: &Value, depth: usize, out: &mut Vec<String>) {
-    if depth > 8 {
-        return;
-    }
+fn walk(v: &Value, path: &str, out: &mut Vec<(String, String)>) {
     match v {
         Value::Object(m) => {
-            for (k, val) in m {
+            for (k, vv) in m {
+                let p = format!("{path}.{k}");
                 let kl = k.to_ascii_lowercase();
-                if kl.contains("blend")
-                    || kl.contains("zwrite")
-                    || kl.contains("ztest")
-                    || kl.contains("cull")
-                    || kl.contains("queue")
-                    || kl.contains("rendertype")
-                    || kl == "m_tags"
-                    || kl == "m_name"
-                    || kl == "m_lod"
-                {
-                    let s = serde_json::to_string(val).unwrap_or_default();
-                    if s.len() < 400 {
-                        out.push(format!("{:indent$}{k} = {s}", "", indent = depth * 2));
-                    }
+                if kl.contains("blend") || kl.contains("zwrite") || kl.contains("colormask") || kl.contains("srcfactor") || kl.contains("dstfactor") {
+                    out.push((p.clone(), format!("{vv}")));
                 }
-                dump_state(val, depth + 1, out);
+                walk(vv, &p, out);
             }
         }
         Value::Array(a) => {
-            for x in a.iter().take(16) {
-                dump_state(x, depth + 1, out);
+            for (i, vv) in a.iter().enumerate().take(24) {
+                walk(vv, &format!("{path}[{i}]"), out);
             }
         }
         _ => {}
@@ -51,42 +33,32 @@ fn dump_state(v: &Value, depth: usize, out: &mut Vec<String>) {
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("shaders.ab");
-    let want = std::env::args().nth(2).unwrap_or_default();
-    let want_pid: Option<i64> = want.parse().ok();
+    let mut args = std::env::args().skip(1);
+    let path = args.next().expect("bundle");
+    let want: i64 = args.next().expect("pathID").parse().expect("pathID must be an integer");
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
-
     for entry in &bundle.files {
-        let lower = entry.path.to_ascii_lowercase();
-        if lower.ends_with(".ress") || lower.ends_with(".resource") {
-            continue;
-        }
         let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
         for obj in &sf.objects {
-            if obj.class_id != 48 {
+            if obj.path_id != want {
                 continue;
             }
             let Ok(v) = read_object(&sf, obj) else { continue };
-            let name = v
-                .get("m_ParsedForm")
-                .and_then(|p| p.get("m_Name"))
-                .and_then(Value::as_str)
-                .or_else(|| v.get("m_Name").and_then(Value::as_str))
-                .unwrap_or("?");
-            let hit = match want_pid {
-                Some(p) => obj.path_id == p,
-                None => want.is_empty() || name.to_ascii_lowercase().contains(&want.to_ascii_lowercase()),
-            };
-            if !hit {
-                continue;
-            }
-            println!("\n===== SHADER '{name}'  pathID={}", obj.path_id);
-            println!("  top-level keys: {:?}", v.as_object().map(|m| m.keys().collect::<Vec<_>>()));
+            println!("shader '{}'", v.get("m_ParsedForm").and_then(|p| p.get("m_Name")).and_then(Value::as_str).unwrap_or(v["m_Name"].as_str().unwrap_or("?")));
             let mut out = Vec::new();
-            dump_state(&v, 0, &mut out);
-            for line in out.iter().take(120) {
-                println!("  {line}");
+            walk(&v, "", &mut out);
+            if out.is_empty() {
+                println!("  (no blend-ish fields; dumping top-level keys)");
+                if let Value::Object(m) = &v {
+                    for k in m.keys() {
+                        println!("    {k}");
+                    }
+                }
+            }
+            for (p, val) in out.iter().take(60) {
+                let short = if val.len() > 200 { format!("{}…", &val[..200]) } else { val.clone() };
+                println!("  {p} = {short}");
             }
         }
     }
