@@ -2130,6 +2130,17 @@ pub fn entrance_material_color_channels(
             // Top nibble 4..=7 = a colour CHANNEL binding (r/g/b/a); a channel-less
             // material float uses the plain crc32 and is not a colour.
             let nibble = ((attr as u64) >> 28) & 0xF;
+            // DIAGNOSTIC (`DYNCHAR_COLORDBG=1`): which of the filter's conditions rejects a
+            // material-colour binding. Printed per binding of an admitted clip.
+            if std::env::var("DYNCHAR_COLORDBG").is_ok() && (4..=7).contains(&nibble) {
+                eprintln!(
+                    "    [chan] clip='{}' attr=0x{:08x} custom={custom} (want {MATERIAL_CUSTOM_TYPE}) pptr={is_pptr} nibble={nibble} pathresolved={} curvelen={:?}",
+                    v.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                    attr,
+                    hash_to_gos.contains_key(&path),
+                    decode_curve_any(v, gidx).map(|c| c.len()),
+                );
+            }
             if custom == MATERIAL_CUSTOM_TYPE
                 && !is_pptr
                 && (4..=7).contains(&nibble)

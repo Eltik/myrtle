@@ -1924,6 +1924,26 @@ fn collect_dynchar_bg_quads(
         };
         // The layer's animated material colour (entrance scenes only), matched against
         // the material's own colour properties and resolved onto the static tint.
+        // DIAGNOSTIC (`DYNCHAR_COLORDBG=1`): why does a layer end up with no animated colour?
+        // Prints what the extractor found for this GO against the material colour props the
+        // matcher will test it against — the two halves of `layer_color_curve`'s only filter.
+        if std::env::var("DYNCHAR_COLORDBG").is_ok() {
+            let chs = color_channels.get(&go_pid);
+            eprintln!(
+                "  [colordbg] go={go_pid} channels={} props=[{}] tint_prop={:?}",
+                chs.map_or("NONE".to_string(), |c| c
+                    .iter()
+                    .map(|x| format!("crc28=0x{:07x}/ch{}", x.prop_crc28, x.channel))
+                    .collect::<Vec<_>>()
+                    .join(" ")),
+                color_props
+                    .iter()
+                    .map(|(n, _)| n.as_str())
+                    .collect::<Vec<_>>()
+                    .join(","),
+                tint_prop,
+            );
+        }
         let color_curve = color_channels.get(&go_pid).and_then(|chs| {
             super::anim::layer_color_curve(
                 chs,
