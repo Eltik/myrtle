@@ -3674,6 +3674,14 @@ function sheetBadCells(base: PIXI.BaseTexture, tx: number, ty: number): Set<numb
  * already carry real transparency (soft sprites) are returned untouched.
  */
 function processGlowTexture(img: HTMLImageElement): ILoadedTex {
+    /** Minimum alpha coverage for a desaturated texture to count as a FLOW/HAZE panel rather
+     *  than artwork. DIAGNOSTIC ONLY — `?desatcov=<f>` overrides both gates; the shipped
+     *  defaults are the historical ones and are passed in per call site. */
+    const filledPanelMinCov = (dflt: number): number => {
+        if (typeof window === "undefined") return dflt;
+        const v = parseFloat(new URLSearchParams(window.location.search).get("desatcov") ?? "");
+        return Number.isFinite(v) && v >= 0 ? v : dflt;
+    };
     const plain = (skip = false, desatPanel = false, hazePanel = false): ILoadedTex => {
         const base = PIXI.BaseTexture.from(img);
         return { base, glow: false, rawBase: base, darkDropBase: base, noOrbBase: base, skip, desatPanel, hazePanel };
@@ -3722,13 +3730,44 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         // Filled + desaturated (regardless of brightness) → a flow/distortion panel
         // (gates normal-blend MESH; see ILoadedTex.desatPanel). Thin coloured effects
         // (lightning/ice-flame) and thin white sparks fall below covFrac and pass.
-        const desatPanel = cov > 0 && covFrac >= 0.25 && satS / cov < 0.2;
+        // ...but ONLY when the panel actually FILLS its rectangle. A flow/distortion input is a
+        // full-bleed field; a texture with an authored alpha SILHOUETTE is artwork, however
+        // desaturated it happens to be. Civilight Eterna's `tex 21` is a 1500² ATLAS — a
+        // cathedral, banners, swords, chess pieces, foliage sprigs — at covFrac 0.58 and sat
+        // 0.15, and the old `>= 0.25` gate called it a flow panel and dropped the two big
+        // background planes drawn with it (`foliage_eye_lizi_01`, `foliage_back_lizi_01`,
+        // mesh/normal, sizes 5900 and 8600, sorts -19/-22). That is her missing lower-left.
+        //
+        // The threshold is not fitted: measured over every particle texture in the corpus (1350;
+        // 392 flagged), covFrac splits the flagged population with an EMPTY GAP —
+        //
+        //     0.25-0.50:  83     0.70-0.85:  18     0.95-1.00: 263  <- genuine filled panels
+        //     0.50-0.70:  26     0.85-0.95:   2     <- the gap
+        //
+        // so any cut in [0.85, 0.95] separates them.
+        //
+        // ⛔ AND YET RAISING THE GATE IS MEASURED WORSE — do not retry it. At 0.9 (which restores
+        // those two planes and 129 textures corpus-wide):
+        //
+        //     cet 18.087 -> 18.137     cel 18.021 -> 18.181     wis 12.643 -> 12.829
+        //     ska / exc / mly / mue / eyja  bit-identical
+        //
+        // and cet's TARGET beat is among the losers (t=11 25.919 -> 26.550) even though t=8 and
+        // t=14 improve. So the planes are real artwork we are right to be suspicious of drawing:
+        // restoring them costs more than it returns, wherever the fault actually lies. The
+        // classification argument was sound and the measurement still says no — a corpus scan
+        // counts layers, not consequences. `?desatcov=<f>` sweeps it for any re-test.
+        const desatPanel = cov > 0 && covFrac >= filledPanelMinCov(0.25) && satS / cov < 0.2;
         // A BRIGHT, desaturated, present-but-soft sheet = atmospheric haze/fog (see
         // ILoadedTex.hazePanel). Bright fill (meanLum ≥ 150) rules out the dark
         // distortion orb; low saturation rules out coloured light sheets. The split
         // only demotes it when it also drives a LARGE normal-blend emitter, so small
         // white sparks (same texture profile) are never affected.
-        const hazePanel = cov > 0 && covFrac >= 0.15 && lumS / cov >= 150 && satS / cov < 0.2;
+        // Same correction, same reason: a haze SHEET is a sheet. At covFrac >= 0.15 this also
+        // demoted the atlas above (it is bright and desaturated), so fixing only `desatPanel`
+        // would have left the planes dropped by this instead — the two gates have to move
+        // together or neither restores the draw.
+        const hazePanel = cov > 0 && covFrac >= filledPanelMinCov(0.15) && lumS / cov >= 150 && satS / cov < 0.2;
         if (n === 0 || opaque / n < 0.85) return plain(darkOrb, desatPanel, hazePanel);
         // alpha = luminance, with a black point so the near-black/dark-grey field
         // (Logos' starfield sits at ~23/255) drops to fully transparent instead of
