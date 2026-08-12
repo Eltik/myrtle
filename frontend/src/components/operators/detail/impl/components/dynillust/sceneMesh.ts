@@ -182,6 +182,9 @@ export interface ISceneData {
      *  keyframes (Virtuosa 1.87 hold → 1.50 zoom-in on the transform → 1.91 out). There is NO
      *  positional pan. The frontend replays it as a RELATIVE zoom (ratio to the t=0 value) on the
      *  entrance frame, so no world↔authored unit conversion is needed. `_Start` scenes only. */
+    /** ENTRANCE post-process: the `pp` PostProcessVolume's effect, its intensity, and the
+     *  volume WEIGHT curve the `_Start` clip animates. Null when the skin ships none. */
+    entrancePostFx?: { effect: string; intensity: number; weightCurve: [number, number][] } | null;
     entranceOrthoCurve?: [number, number][] | null;
     /** ENTRANCE camera POSITIONAL dolly (pan): `[t_s, progress 0..1]` keyframes, extracted from
      *  the animated camera-ancestor Transform position in the `_Start` clip. Exported but currently

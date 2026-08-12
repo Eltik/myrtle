@@ -651,6 +651,8 @@ interface IComposite {
      *  data-driven camera motion (extracted from the clip animating the Main Camera's orthographic
      *  size). Scales the entrance frame relative to its base extent as the shot pushes in/out. */
     entranceOrthoCurve: [number, number][] | null;
+    /** ENTRANCE post-process volume (see {@link entrancePostFxRef}). */
+    entrancePostFx: { effect: string; intensity: number; weightCurve: [number, number][] } | null;
     /** The `_Start` camera's ABSOLUTE frame-centre track (`[t_s, cx, cy]`, mesh px) — the game's
      *  own camera rig (the animated camera-parent Transform) accumulated by the Rust exporter into
      *  a world-space centre curve. Drives the entrance pan/dolly directly; no measured bounds. */
@@ -849,6 +851,24 @@ const ENTRANCE_FADE_OUT = 0.35;
  *  ⚠️ This is not a licence to anchor the fade RAMP on data too: the ramp lengths genuinely
  *  differ per skin (measured 0.183 s on Executor, 0.533 on Wiš'adel, 0.600 on Eyjafjalla) and
  *  nothing exported predicts them. See the note in {@link ENTRANCE_FADE_IN}. */
+/** Sample a `[t, value]` curve, clamped at both ends. Used for the entrance post-process volume
+ *  weight; kept local because `sampleCurveXY` is for the 3-component camera track. */
+function sampleCurveAt(curve: [number, number][], t: number): number {
+    if (!curve.length) return 0;
+    if (t <= curve[0][0]) return curve[0][1];
+    const last = curve[curve.length - 1];
+    if (t >= last[0]) return last[1];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, v0] = curve[i - 1];
+            const [t1, v1] = curve[i];
+            const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+            return v0 + (v1 - v0) * f;
+        }
+    }
+    return last[1];
+}
+
 function entranceFadeEnd(data: ISceneData | null): number | null {
     const dur = data?.entranceDuration ?? null;
     if (dur == null) return null;
@@ -1278,6 +1298,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  re-evaluated every entrance frame from its clip window and animated alpha, so a transition
      *  flash cannot suppress the backdrop for a whole cinematic. */
     const gapFillRef = useRef<{ sprite: PIXI.Sprite; covers: ISceneLayer[] } | null>(null);
+    /** ENTRANCE POST-PROCESS. Every dyn-illust entrance ships a `pp` PostProcessVolume whose
+     *  WEIGHT the `_Start` clip animates, and we reproduced none of it. Whislash the Decadenza's
+     *  profile is `HGGreyScale` at intensity 1.0: her capture is objectively monochrome early on
+     *  (mean saturation 0.000 at t=2, 0.006 at t=4) while we rendered full colour, which is also
+     *  why her CHROMA error dwarfed every other skin's (15.5 vs ~2).
+     *
+     *  Driven off the entrance clock like the fade, and gated on the exported data, so a skin
+     *  with no volume — or one whose volume is never opened — is untouched. Civilight Eterna
+     *  ships an `HGMobileBlur` profile whose weight measures 0 at every scored beat, and she is
+     *  bit-identical with this in place. */
+    const entrancePostFxRef = useRef<{ filter: PIXI.ColorMatrixFilter; curve: [number, number][]; intensity: number; target: PIXI.Container } | null>(null);
     const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null; transform: number | null } | null>(null);
     /** Gap-fill vista sprites in the tree, so the transform beat can retire them. A list: while the
      *  entrance hands off, TWO composites are alive and each builds its own. */
@@ -1704,6 +1735,24 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // of the cinematic whites out exactly as the game's does, hold through the idle swap,
             // then lift. `out` is set by the hand-off; until then the ramp is driven purely by the
             // entrance clock against the authored `duration`.
+            // ENTRANCE POST-PROCESS: sample the authored volume weight at the entrance clock and
+            // apply the effect. Saturation is 1 - weight*intensity, so weight 0 is a true no-op.
+            const pfx = entrancePostFxRef.current;
+            if (pfx && entranceFadeRef.current) {
+                const w = Math.max(0, Math.min(1, sampleCurveAt(pfx.curve, entranceFadeRef.current.elapsed) * pfx.intensity));
+                const sat = 1 - w;
+                // Rec.601 luma-preserving saturation matrix (PIXI's ColorMatrixFilter layout).
+                const lr = 0.299 * (1 - sat);
+                const lg = 0.587 * (1 - sat);
+                const lb = 0.114 * (1 - sat);
+                pfx.filter.matrix = [
+                    lr + sat, lg, lb, 0, 0,
+                    lr, lg + sat, lb, 0, 0,
+                    lr, lg, lb + sat, 0, 0,
+                    0, 0, 0, 1, 0,
+                ];
+                pfx.target.filters = w > 0.001 ? [pfx.filter] : null;
+            }
             const efd = entranceFadeRef.current;
             if (efd) {
                 efd.elapsed += dt;
@@ -1730,7 +1779,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (a <= 0) {
                         efd.sprite.parent?.removeChild(efd.sprite);
                         efd.sprite.destroy();
-                        entranceFadeRef.current = null;
+                        entrancePostFxRef.current = null;
+            entranceFadeRef.current = null;
                     }
                 } else {
                     // The ramp COMPLETES at `duration - HOLD`, not at `duration`: the capture is
@@ -2943,6 +2993,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     entranceFade: sceneDrivesEntranceFade(scene?.data ?? null) ? null : (scene?.data.entranceFade ?? null),
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
+                    entrancePostFx: (scene?.data.entrancePostFx as IComposite["entrancePostFx"]) ?? null,
                     entranceCamCenterCurve: (scene?.data.entranceCamCenterCurve as [number, number, number][] | undefined) ?? null,
                     entranceCamRollCurve: (scene?.data.entranceCamRollCurve as [number, number][] | undefined) ?? null,
                     entranceFrameSize,
@@ -2989,6 +3040,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 entranceFade: null,
                 entranceTransform: null,
                 entranceOrthoCurve: null,
+                entrancePostFx: null,
                 entranceCamCenterCurve: null,
                 entranceCamRollCurve: null,
                 entranceFrameSize: null,
@@ -3209,6 +3261,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             sp.alpha = 0;
                             app.stage.addChild(sp);
                             entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceFadeEnd ?? c.entranceDuration, out: null, transform: c.entranceTransform ?? null };
+                            // ENTRANCE POST-PROCESS. Only the greyscale family is implemented; a
+                            // blur profile is recognised but skipped (Civilight Eterna ships one
+                            // whose weight measures 0 at every scored beat, so nothing is lost).
+                            const pf = c.entrancePostFx;
+                            if (pf && /grey|gray|saturat/i.test(pf.effect) && pf.weightCurve.length > 1) {
+                                entrancePostFxRef.current = {
+                                    filter: new PIXI.ColorMatrixFilter(),
+                                    curve: pf.weightCurve,
+                                    intensity: pf.intensity,
+                                    target: c.root,
+                                };
+                            }
                         }
                     }
                     spineRef.current = c.spine;

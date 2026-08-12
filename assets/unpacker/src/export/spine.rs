@@ -97,6 +97,10 @@ pub struct SpineAsset {
     /// `m_StopTime` of the entrance CAMERA clip — the authored end of the cinematic's content,
     /// which can precede the director's nominal `duration`. See `anim::entrance_clip_stop`.
     pub bg_entrance_clip_stop: Option<f32>,
+    /// ENTRANCE post-process: `(effect_name, intensity, weight_curve)` from the `pp`
+    /// PostProcessVolume whose weight the `_Start` clip animates. `None` when the skin ships no
+    /// volume or no clip drives it. See `anim::entrance_post_fx`.
+    pub bg_entrance_post_fx: Option<(String, f32, Vec<(f32, f32)>)>,
     /// ENTRANCE screen-fade colour, from the director's `_params.fadeColor` (premultiplied
     /// straight RGBA, 0..1). The client fades the whole view to this colour as the entrance
     /// ends and then cuts to the settled idle — the recordings show Virtuosa reaching pure
@@ -828,6 +832,7 @@ pub fn collect_spine_assets(
             bg_entrance_cam_roll,
             bg_entrance_aperture,
             bg_entrance_clip_stop,
+            bg_entrance_post_fx,
         ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
@@ -858,6 +863,7 @@ pub fn collect_spine_assets(
             // units. `entrance_dolly_curve` returns None for an orthographic camera, so every
             // existing skin keeps the ortho path by construction. See its doc comment for the
             // measured validation (predicted 0.3637, measured optimum 0.36).
+            let post_fx = super::anim::entrance_post_fx(all_objects);
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects)
                 .or_else(|| super::anim::entrance_dolly_curve(all_objects));
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
@@ -875,9 +881,10 @@ pub fn collect_spine_assets(
                 cam_roll,
                 aperture,
                 super::anim::entrance_clip_stop(all_objects),
+                post_fx,
             )
         } else {
-            (None, None, None, None, None, None, None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None, None, None, None, None, None)
         };
 
         assets.push(SpineAsset {
@@ -909,6 +916,7 @@ pub fn collect_spine_assets(
             bg_entrance_cam_roll,
             bg_entrance_aperture,
             bg_entrance_voice,
+            bg_entrance_post_fx,
             particles,
         });
     }
@@ -2613,6 +2621,13 @@ type EntranceTiming = (
 /// `entranceViewPx` between 1000 and 600 across runs of identical code — a 1.67x framing
 /// swing decided by hash iteration order. Ordering by `path_id` makes the choice stable,
 /// matching the convention `build_hash_to_go` already uses for collisions.
+/// Deterministic object order for sibling modules (see `anim::entrance_post_fx`, which must not
+/// walk hash order — the probe that found the post-process volume printed a different clip on
+/// every run because it did).
+pub(crate) fn objects_by_path_id_pub(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<(&i64, &(i32, Value))> {
+    objects_by_path_id(all_objects)
+}
+
 fn objects_by_path_id(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<(&i64, &(i32, Value))> {
     let mut v: Vec<_> = all_objects.iter().collect();
     v.sort_unstable_by_key(|(pid, _)| **pid);
@@ -3393,6 +3408,7 @@ pub fn collect_enemy_spine_assets(
             bg_entrance_view: None,
             bg_entrance_cam_offset: None,
             bg_entrance_ortho_curve: None,
+            bg_entrance_post_fx: None,
             bg_entrance_pan_curve: None,
             bg_entrance_cam_center: None,
             bg_entrance_cam_roll: None,
@@ -4642,6 +4658,11 @@ fn export_scene(
         "entranceCamOffsetPx": asset.bg_entrance_cam_offset.map(|(x, y)| [x as f32, y as f32]),
         // Data-driven camera dolly zoom: [[t_seconds, orthographic_size], …] keyframes.
         "entranceOrthoCurve": asset.bg_entrance_ortho_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
+        "entrancePostFx": asset.bg_entrance_post_fx.as_ref().map(|(name, inten, curve)| serde_json::json!({
+            "effect": name,
+            "intensity": inten,
+            "weightCurve": curve.iter().map(|(t, w)| [*t, *w]).collect::<Vec<_>>(),
+        })),
         "entrancePanCurve": asset.bg_entrance_pan_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entranceCamCenterCurve": asset.bg_entrance_cam_center.as_ref().map(|c| c.iter().map(|(t, x, y)| [*t, *x, *y]).collect::<Vec<_>>()),
         "entranceCamRollCurve": asset.bg_entrance_cam_roll.as_ref().map(|c| c.iter().map(|(t, r)| [*t, *r]).collect::<Vec<_>>()),

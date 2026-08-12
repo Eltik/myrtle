@@ -1742,6 +1742,91 @@ fn find_letterbox(
 /// timing between the measured seated & standing framings — the game's exact camera-move timing,
 /// no hardcoding. `None` when no camera-ancestor position is animated.
 #[must_use]
+/// CRC32("weight") — the animated `PostProcessVolume.weight` the entrance clips drive.
+const PP_WEIGHT_CRC: u32 = 0x07cd_5541;
+
+/// The entrance POST-PROCESS chain: which effect the `_Start` cinematic runs, how strong it is,
+/// and the animated volume weight that fades it in and out.
+///
+/// Every dyn-illust entrance ships a GameObject named `pp` carrying a Unity `PostProcessVolume`
+/// (`isGlobal: 1`, `weight: 0.0` at rest) pointing at a per-skin `sharedProfile`, plus the
+/// `Hidden/PostProcessing/*` shaders. The `_Start` clip then animates the volume's **weight**, so
+/// the effect ramps in over the cinematic. We were reproducing none of it.
+///
+/// Whislash the Decadenza's profile is **HGGreyScale at intensity 1.0**, and her capture is
+/// objectively monochrome early on — mean saturation **0.000 at beat 2 and 0.006 at beat 4** —
+/// while we render full colour. Desaturating our render at a constant full weight already takes
+/// her 77.51 -> 71.52.
+///
+/// Returns `(effect_name, intensity, weight_curve)`. `None` when the skin ships no volume, no
+/// profile, or no clip animating the weight — so a skin whose volume never opens (Civilight
+/// Eterna: an `HGMobileBlur` profile that no clip ever drives) exports nothing and is untouched.
+///
+/// ⚠️ Iterates objects in `path_id` order, never a `HashMap`: the probe that found this printed a
+/// different matching clip on each run because it walked hash order.
+#[must_use]
+pub fn entrance_post_fx(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> Option<(String, f32, Vec<(f32, f32)>)> {
+    let ordered = super::spine::objects_by_path_id_pub(all_objects);
+    // The `pp` volume: a MonoBehaviour carrying `sharedProfile` + `isGlobal`.
+    let (vol_go, profile_pid) = ordered.iter().find_map(|(_, (cid, v))| {
+        if *cid != 114 {
+            return None;
+        }
+        let prof = v.get("sharedProfile").and_then(get_path_id).filter(|&p| p != 0)?;
+        let go = v.get("m_GameObject").and_then(get_path_id)?;
+        Some((go, prof))
+    })?;
+    // Its profile's first settings entry names the effect and carries its intensity.
+    let (effect, intensity) = ordered.iter().find_map(|(pid, (_, v))| {
+        if **pid != profile_pid {
+            return None;
+        }
+        let first = v.get("settings").and_then(Value::as_array)?.first()?;
+        let sp = first.get("m_PathID").and_then(Value::as_i64)?;
+        ordered.iter().find_map(|(p2, (_, sv))| {
+            if **p2 != sp {
+                return None;
+            }
+            let name = sv.get("m_Name").and_then(Value::as_str)?.to_string();
+            let inten = sv
+                .get("intensity")
+                .and_then(|i| i.get("value"))
+                .and_then(Value::as_f64)
+                .unwrap_or(1.0) as f32;
+            Some((name, inten))
+        })
+    })?;
+    // The weight curve: whichever clip binds crc32("weight") on the volume's GameObject.
+    let hash_to_gos = build_hash_to_gos(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    for (clip_pid, (cid, v)) in &ordered {
+        if *cid != 74 {
+            continue;
+        }
+        let Some(bindings) = generic_bindings(v) else { continue };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
+        let mut gidx = 0usize;
+        for b in bindings {
+            let (type_id, attr, path) = binding_fields(b);
+            let count = binding_curve_count(type_id, attr);
+            if type_id == 114 && (attr as u32) == PP_WEIGHT_CRC {
+                let hits = hash_to_gos.get(&path).map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
+                if hits.as_deref().is_some_and(|g| g.contains(&vol_go))
+                    && let Some(curve) = decode_curve_at(v, gidx)
+                    && curve.len() > 1
+                {
+                    return Some((effect, intensity, curve));
+                }
+            }
+            gidx += count;
+        }
+    }
+    None
+}
+
 pub fn entrance_pan_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
     let chain = camera_ancestor_gos(all_objects);
     if chain.is_empty() {
