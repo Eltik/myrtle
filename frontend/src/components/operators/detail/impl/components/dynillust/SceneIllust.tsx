@@ -88,13 +88,22 @@ const FEET_ROW_FRAC = 0.07;
  * Returns null (caller falls back to geometry bounds) if it can't be measured.
  */
 function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spine").Spine, idleAnim: string): IVisBounds | null {
+    // Measure at rate 1 but RESTORE the caller's rate afterwards. Leaving it at 1 permanently
+    // clobbers whatever the composite set, which silently disables any animation-rate control
+    // downstream — `measureAnimationBounds` in chibi/helpers.ts already saves and restores for
+    // exactly this reason. Currently metric-neutral (ANIMATION_SPEED is 1, so both paths land on
+    // 1), which is why it went unnoticed; it is a correctness fix, not a measured win.
+    const prevTimeScale = spine.state.timeScale;
     spine.state.timeScale = 1;
     spine.state.clearTracks();
     spine.skeleton.setToSetupPose();
     if (spine.spineData.findAnimation(idleAnim)) spine.state.setAnimation(0, idleAnim, true);
     spine.update(0);
     const geom = spine.getLocalBounds();
-    if (geom.width <= 0 || geom.height <= 0) return null;
+    if (geom.width <= 0 || geom.height <= 0) {
+        spine.state.timeScale = prevTimeScale;
+        return null;
+    }
 
     const MAX = 512;
     const scale = Math.min(MAX / geom.width, MAX / geom.height, 4);
@@ -135,7 +144,10 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
             }
             rowMass[y] = rowSum;
         }
-        if (x1 < x0 || y1 < y0) return { x: geom.x, y: geom.y, width: geom.width, height: geom.height };
+        if (x1 < x0 || y1 < y0) {
+            spine.state.timeScale = prevTimeScale;
+            return { x: geom.x, y: geom.y, width: geom.width, height: geom.height };
+        }
         const centroid = sw > 0 ? { cx: geom.x + sx / sw / scale, cy: geom.y + sy / sw / scale } : undefined;
         // Pose-robust head/feet: the first/last row (top-down / bottom-up) whose alpha mass
         // reaches SOLID_ROW_FRAC of the densest row — skipping thin protrusions (a raised
@@ -156,6 +168,7 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
                 break;
             }
         }
+        spine.state.timeScale = prevTimeScale;
         return {
             x: geom.x + x0 / scale,
             y: geom.y + y0 / scale,
@@ -1532,6 +1545,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("cambox")) {
                     (window as unknown as { __camBox?: unknown }).__camBox = {
                         tt,
+                        // The spine track's OWN animation length, next to the director clock it is
+                        // being driven against. A skeleton whose `Start` is not `entranceDuration`
+                        // long drifts in the middle while still lining up at both ends — exactly
+                        // Whislash the Decadenza's signature.
+                        animDur: (ef.spine.state.tracks[0] as unknown as { animation?: { duration?: number } } | null)?.animation?.duration ?? null,
+                        animName: (ef.spine.state.tracks[0] as unknown as { animation?: { name?: string } } | null)?.animation?.name ?? null,
+                        timeScale: ef.spine.state.timeScale,
                         cx,
                         cy,
                         size,
@@ -1837,7 +1857,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             }
 
             spine.autoUpdate = false;
-            spine.state.timeScale = ANIMATION_SPEED;
+            // DIAGNOSTIC (`?animspeed=<f>`): scale the spine track rate. A `_Start` skeleton whose
+            // animation is LONGER than the director's `entranceDuration` must be fitted into the
+            // cinematic somehow — compressed or truncated — and the two look identical at both
+            // ends while differing through the middle. Whislash the Decadenza's Start runs 18.667s
+            // against a 14.5s entrance (ratio 1.2874); every other reference is within 2.4%.
+            const animSpeedQ = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("animspeed") ?? "") : Number.NaN;
+            spine.state.timeScale = ANIMATION_SPEED * (Number.isFinite(animSpeedQ) && animSpeedQ > 0 ? animSpeedQ : 1);
             spine.scale.set(1);
             spine.position.set(0, 0);
 
