@@ -182,8 +182,10 @@ corrected trim offset — at the old offsets several of these read as out of syn
 <ul>
   <li><strong>Civilight Eterna (18.087)</strong> — now the worst. Her error is broad rather than one
     bad beat, but three of her four worst beats share a −20 to −40 luma deficit in the
-    <em>same lower-left corner</em>. Measured out so far: the terrain plane, the whole scene-layer
-    set, the gap-fill backdrop, the HDR pass, and all 132 particle systems.</li>
+    <em>same lower-left corner</em>. In that corner the game carries <strong>1.8× as many bright
+    blobs, each about 0.45× the size</strong> — twice the bright area — while our brightest pixels
+    already match exactly. Measured out: the terrain plane, the whole scene-layer set, the gap-fill
+    backdrop, the HDR pass, all 132 particle systems, framing, gamma and bloom.</li>
   <li><strong>Mlynar (18.073)</strong> — a +1.98 Cb blue cast on his skin alone. Eight mechanisms
     refuted; two colour-space explanations fitted it to ~1% and both turned out wrong.</li>
   <li><strong>Cello (18.021)</strong> — twelve mechanisms refuted and considered exhausted.</li>
@@ -192,6 +194,26 @@ corrected trim offset — at the old offsets several of these read as out of syn
   <li><strong>The 74 skins with no capture</strong> — only 8 of 82 are measured at all. This is the
     largest remaining source of error and none of the numbers above speak to it.</li>
 </ul>
+
+<div class="finding">
+  <h3>A broken diagnostic invented a phantom</h3>
+  <p>One ablation switch was silently ineffective: the gap-fill sprite is registered for a per-frame
+  coverage toggle that re-assigned its visibility every frame, overwriting the ablation one frame
+  later. That manufactured an "unexplained base layer" that appeared to survive every ablation on two
+  skins — it was the gap-fill wash the whole time, and a second switch had been removing it all
+  along. Worth stating plainly because the wrong conclusion was reported before the tool was
+  checked: <em>when an ablation shows no effect, verify the ablation before believing the result.</em></p>
+</div>
+
+<div class="finding">
+  <h3>A clean population split is not evidence that acting on it helps</h3>
+  <p>Two of Civilight Eterna's large background planes are dropped because their texture — a 1500²
+  atlas of a cathedral, banners, swords and foliage — is classified as a flow/distortion map. The
+  misclassification is real, and coverage separates the two populations with an empty gap (127
+  textures below 0.85, <em>two</em> in between, 263 filled panels above 0.95). Restoring them still
+  measures worse on three skins, including her own target beat. The change was reverted and the
+  numbers kept.</p>
+</div>
 
 <footer>
   Scored with <code>all8.sh</code> over a fixed per-skin beat set, inner crop, 30 fps.
