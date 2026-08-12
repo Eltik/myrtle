@@ -6,7 +6,7 @@ import { cn } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
-import { particleCensus, ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles } from "./particles";
+import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles, particleCensus } from "./particles";
 import {
     applySceneLayerColor,
     applySceneLayerFollow,
@@ -984,8 +984,41 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
 // Fresh per-app texture (the app is destroyed with `texture: true`, so a shared/cached
 // texture would be torn down under later mounts).
 const VIEWER_BACKDROP = "#4d4d4e";
+/** The ground the game shows once the entrance has passed its transform beat — a flat near-white,
+ *  measured off the captures, not assumed: Muelsyse's surround settles to (252.7, 252.5, 252.3)
+ *  with a per-channel std of ~10. Flat is the tell that it is a ground and not content, and its
+ *  boundary follows the art's own silhouette, so it shows through the illustration's ALPHA rather
+ *  than being the render target's edge. See {@link settledGroundOn}. */
+const SETTLED_GROUND = "#fcfcfc";
 
-function createEnvironmentBgTexture(dark = false): PIXI.Texture {
+/** Past the entrance's transform beat the game paints a flat near-white ground and stops showing
+ *  the static art's vista behind the scene — so the gap fill must stop there too.
+ *
+ *  The two are ONE defect and neither half works alone: on Muelsyse's t=18, dropping the gap fill
+ *  alone is WORSE (49.142 -> 52.632) because the region it vacates falls through to the studio
+ *  grey, and whitening the ground alone leaves blurred art over 18.5% of frame. Together:
+ *  **49.142 -> 26.910**.
+ *
+ *  ⚠️ Anchored on `entranceTransform`, NOT on the end-fade ramp and NOT on the hand-off — both are
+ *  provably out of reach. `entranceFadeEnd` is min(duration, clipStop) = 20.0 for her, so with
+ *  FADE_IN/FADE_HOLD at 0.2 the ramp runs 19.6-19.8 and the hand-off fires at 20.0, while the
+ *  scored beat is t=18 and the capture's ground finishes at 16.767. The fade anchor IS the value
+ *  that is ~3s late; anchoring to it inherits the error. `entranceTransform` (13.0) leads the
+ *  capture's ramp by ~1.4s instead.
+ *
+ *  🔑 Leading is safe, and this was measured rather than assumed. The risk was saturating to white
+ *  while the capture is still mid-ramp, so t=15 (corner ~104) was priced: 32.596 -> 31.357, it
+ *  IMPROVES. The reason is that the studio fill is only 2.6% of frame there against 10.3% at t=18 —
+ *  an early switch has almost no surface to act on while the scene still covers the frame.
+ *
+ *  ⚠️ Gap fill is worth real parity DURING the entrance (cello t=2 -0.678), so this gates rather
+ *  than disabling it. `?settledground=0` reverts. */
+function settledGroundOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("settledground") !== "0";
+}
+
+function createEnvironmentBgTexture(dark = false, fill: string = VIEWER_BACKDROP): PIXI.Texture {
     const S = 512;
     const cvs = document.createElement("canvas");
     cvs.width = S;
@@ -1004,7 +1037,7 @@ function createEnvironmentBgTexture(dark = false): PIXI.Texture {
             g.addColorStop(1, "#0c0d12");
             ctx.fillStyle = g;
         } else {
-            ctx.fillStyle = VIEWER_BACKDROP;
+            ctx.fillStyle = fill;
         }
         ctx.fillRect(0, 0, S, S);
     }
@@ -1139,6 +1172,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     /** The backdrop wash re-parented inside the spine (see {@link reseatSeparatorWash}). */
     const separatorWashRef = useRef<ISeparatorWash[]>([]);
     const envBgRef = useRef<PIXI.Sprite | null>(null);
+    /** Whether the live environment fill is the DARK-backdrop variant. The settled swap skips
+     *  those: that fill is not only the surround but a measured light LEAK through a
+     *  semi-transparent painted world (see createEnvironmentBgTexture), so whitening it would
+     *  change the art itself, and no reference scores a dark-backdrop skin this late. */
+    const envBgDarkRef = useRef(false);
+    /** Latched once the entrance clock passes `entranceTransform`. A LATCH, not a one-shot sweep:
+     *  the settled composite is BUILT after the beat and constructs its own gap-fill sprite, so
+     *  anything built from here on must consult this. See {@link settledGroundOn}. */
+    const settledRef = useRef(false);
     // Every composite built for the current skin (usually one; two while a "_Start"
     // entrance is playing before it hands off to the settled main L2D). Tracked so
     // cleanup frees them all — under the HDR pass their containers live OUTSIDE the
@@ -1223,7 +1265,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  re-evaluated every entrance frame from its clip window and animated alpha, so a transition
      *  flash cannot suppress the backdrop for a whole cinematic. */
     const gapFillRef = useRef<{ sprite: PIXI.Sprite; covers: ISceneLayer[] } | null>(null);
-    const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null } | null>(null);
+    const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null; transform: number | null } | null>(null);
+    /** Gap-fill vista sprites in the tree, so the transform beat can retire them. A list: while the
+     *  entrance hands off, TWO composites are alive and each builds its own. */
+    const gapFillSpritesRef = useRef<PIXI.Sprite[]>([]);
     const crossfadeRef = useRef<{ wrapper: PIXI.Container; mainRoot: PIXI.Container; entRoot: PIXI.Container; ent: IComposite; elapsed: number; duration: number } | null>(null);
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
     // and zooms OUT to the steady framing over a fraction of a second, then holds. This
@@ -1636,6 +1681,22 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             const efd = entranceFadeRef.current;
             if (efd) {
                 efd.elapsed += dt;
+                // SETTLED GROUND, latched off the entrance clock (see settledGroundOn). Driven from
+                // the clock rather than the hand-off event because the hand-off fires at
+                // `duration`, ~3s after the capture's ground has already finished.
+                if (settledGroundOn() && !settledRef.current && efd.transform != null && efd.elapsed >= efd.transform) {
+                    settledRef.current = true;
+                    for (const sp of gapFillSpritesRef.current) sp.renderable = false;
+                    gapFillSpritesRef.current = [];
+                    const envBg = envBgDarkRef.current ? null : envBgRef.current;
+                    if (envBg) {
+                        const old = envBg.texture;
+                        envBg.texture = createEnvironmentBgTexture(false, SETTLED_GROUND);
+                        // Built per-app and owned by nothing else, so the replaced one leaks
+                        // unless destroyed with its base.
+                        old.destroy(true);
+                    }
+                }
                 let a = 0;
                 if (efd.out !== null) {
                     efd.out += dt;
@@ -2359,7 +2420,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                               return maxAlpha >= 0.99;
                           });
                 const sceneCoversFrame = coverLayers.length > 0;
-                const gapFill = !useStatic && gapFillOn() && !!backdropData && !!backdropFrame;
+                // `settledRef` is why this is not just `gapFillOn()`: past the transform beat the
+                // game shows a flat ground where this vista paints, and the settled composite is
+                // built AFTER the latch is set.
+                const gapFill = !useStatic && gapFillOn() && !(settledGroundOn() && settledRef.current) && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop")) bd.renderable = false;
@@ -2374,6 +2438,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         bd.filters = [blur];
                     }
                     sceneContainer.addChildAt(bd, 0);
+                    // Tracked so the transform beat can retire it. Only the GAP FILL: a `useStatic`
+                    // backdrop IS the artwork, and retiring that would blank the view.
+                    if (gapFill) gapFillSpritesRef.current.push(bd);
                     if (gapFill && sceneCoversFrame) gapFillRef.current = { sprite: bd, covers: coverLayers };
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
@@ -3053,6 +3120,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // camera framing (the opening pan, the post-handoff wide settle) where this is the
                 // ONLY fill; omitting it reopens black voids there. Only the fill's COLOUR is gated,
                 // on the data-derived `hasDarkBackdrop` (cello-only by construction).
+                envBgDarkRef.current = !!main.hasDarkBackdrop;
                 const envBg = new PIXI.Sprite(createEnvironmentBgTexture(main.hasDarkBackdrop));
                 // DIAGNOSTIC (`?fill=RRGGBB`): repaint the viewer fill so the spine's EFFECTIVE
                 // transparency can be measured — the mean shifts by (fillDelta x uncovered area).
@@ -3099,7 +3167,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             sp.height = height;
                             sp.alpha = 0;
                             app.stage.addChild(sp);
-                            entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceFadeEnd ?? c.entranceDuration, out: null };
+                            entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceFadeEnd ?? c.entranceDuration, out: null, transform: c.entranceTransform ?? null };
                         }
                     }
                     spineRef.current = c.spine;

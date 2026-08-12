@@ -12,10 +12,10 @@
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
 # Baselines as of 2026-08-10 (empty EXTRA):
-#   exc 8.919  eyja 10.409  ska 10.447  wis 12.645  cel 18.021  mly 18.073  cet 18.087  mue 21.918
+#   exc 8.919  eyja 10.408  ska 10.447  wis 12.643  mue 17.216  cel 18.021  mly 18.073  cet 18.087
 # (cet/exc/wis/eyja are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
-# ✅ ALL EIGHT references are now trim-swept. mue is the only one needing no offset, and is now the
-#    corpus worst — the first time the worst skin is known to be a renderer error and not a trim.
+# ✅ ALL EIGHT references are now trim-swept. mue is the only one needing no offset.
+# cet 18.087 is now the corpus worst.
 set -e
 HERE=${0:A:h}
 label=${1:?label required}; extra=${2:-}; shift 2 2>/dev/null || shift 1
@@ -57,7 +57,8 @@ REFOFF[eyja]=0.100
 # ⛔ mue was swept and needs NO offset -- the score is BEST at 0.000 (21.918) and degrades
 # monotonically (+0.017 -> 23.263, +0.033 -> 24.190). A dense sweep over 2.0-8.0s did prefer +0.033
 # by 0.51 on a base of 11.3, but that did NOT survive on her actual beat set. 🔑 Her trim is
-# CORRECT, so mue's 21.918 -- now the corpus worst -- is a genuine RENDERER error, not measurement.
+# CORRECT, so her error was a genuine RENDERER error -- and was duly found and fixed (the settled
+# ground, 21.918 -> 17.216).
 
 DIR[ska]='char_1012_skadi2_iteration#2';  BEATS[ska]="3,5,7,9,13,16,19"
 DIR[exc]='char_1032_excu2_sale#12';       BEATS[exc]="1,2,3,4,5,6"
