@@ -20,6 +20,7 @@ SKINS = [
     ("mly",  "Mlynar",            18.073, 18.073, "Open — a blue cast, eight mechanisms refuted."),
     ("cel",  "Cello",             18.021, 18.021, "Open — twelve mechanisms refuted; considered exhausted."),
     ("ska",  "Skadi",             10.447, 10.447, "Stable."),
+    ("whitw2","Whislash the Decadenza", 92.853, 77.490, "New 9th reference. Perspective camera: dolly fixed, pan still wrong."),
 ]
 
 def vid(key):
@@ -32,8 +33,11 @@ def vid(key):
     assert base64.b64decode(b) == p.read_bytes()
     return b
 
-before_mean = sum(s[2] for s in SKINS) / len(SKINS)
-after_mean  = sum(s[3] for s in SKINS) / len(SKINS)
+# The ninth skin is a NEW reference, not one of the calibrated eight -- averaging it into the
+# headline would make that number incomparable to every earlier figure. Report the eight.
+CAL = [s for s in SKINS if s[0] != "whitw2"]
+before_mean = sum(s[2] for s in CAL) / len(CAL)
+after_mean  = sum(s[3] for s in CAL) / len(CAL)
 
 rows = "\n".join(
     f'<tr class="{"win" if a < b else "flat"}"><td class="nm">{n}</td>'
@@ -141,7 +145,7 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
   <div class="headline">
     <div class="stat"><p class="k">Corpus mean</p>
       <p class="v"><span class="from">{before_mean:.3f}</span> <span class="to">{after_mean:.3f}</span></p></div>
-    <div class="stat"><p class="k">Skins measured</p><p class="v">8 <span class="from">of 82</span></p></div>
+    <div class="stat"><p class="k">Skins measured</p><p class="v">9 <span class="from">of 82</span></p></div>
     <div class="stat"><p class="k">Of the 4 fixes</p><p class="v">3 <span class="from">changed no pixels</span></p></div>
   </div>
 </header>
@@ -171,6 +175,17 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
   the vacated region drops to grey); whitening the ground alone leaves the vista painted. Together:
   49.1 → 26.9 on her worst beat. That coupling is why four earlier single-cause attempts all came
   back refuted — each was scored against a frame where the other half still painted the same pixels.</p>
+</div>
+
+<div class="finding">
+  <h3>The ninth reference immediately paid for itself</h3>
+  <p>A capture had been sitting unscored on disk. Turning it into a reference exposed a defect class
+  none of the eight calibrated skins could show: <strong>hers is the only perspective entrance camera
+  in the corpus</strong>. The exporter only ever read the orthographic size, so her camera's Z dolly
+  &mdash; 3.00 down to 1.22, then back out to 13.0 &mdash; read as a camera that never moves, and her
+  whole 14.5-second cinematic framed on one static box. Deriving the extent from the frustum instead
+  took her from 92.9 to 77.5, with the other eight bit-identical because the new path only runs when
+  the camera is perspective. Her scale now matches the capture; her pan does not yet.</p>
 </div>
 
 <h2>Side by side</h2>

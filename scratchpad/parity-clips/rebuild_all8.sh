@@ -19,7 +19,7 @@ DIR[eyja]='char_1016_agoat2_epoque#34';   OFF[eyja]=0.100
 DIR[cet]='char_4134_cetsyr_epoque#50';    OFF[cet]=-0.067
 DIR[wis]='char_1035_wisdel_sale#14';      OFF[wis]=-0.200
 keys=(${@:2})
-(( ${#keys} )) || keys=(ska exc cel mly mue eyja cet wis)
+(( ${#keys} )) || keys=(ska exc cel mly mue eyja cet wis whitw2)
 for k in $keys; do
   echo "=== $k (off ${OFF[$k]})"
   FPS=${FPS:-20} $HERE/mkclip_any.sh $k "${DIR[$k]}" $out ${OFF[$k]}
