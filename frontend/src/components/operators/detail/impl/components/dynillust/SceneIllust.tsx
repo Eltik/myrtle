@@ -839,6 +839,18 @@ const ENTRANCE_FADE_OUT = 0.35;
 function entranceFadeEnd(data: ISceneData | null): number | null {
     const dur = data?.entranceDuration ?? null;
     if (dur == null) return null;
+    // `?fadeend=<seconds>` overrides the anchor outright. DIAGNOSTIC ONLY — it exists to price the
+    // prize before anyone invests in deriving a better anchor, because nothing the game ships
+    // predicts one: the director's `_params` is just { duration, charVoiceOffset, fadeColor }, with
+    // no fade timing at all, so `duration − HOLD` is our own inference. It holds on Executor
+    // (clipStop 6.100 − HOLD = 5.900, matching her capture to the frame) and fails badly on
+    // Muelsyse, whose capture saturates at 16.767 against an anchor of 20.0 — 3.0s late, and 61%
+    // of her worst beat. ⚠️ Do NOT promote a measured value here into a shipped constant; that is
+    // per-skin overfitting of exactly the kind this project keeps having to retract.
+    if (typeof window !== "undefined") {
+        const fe = Number(new URLSearchParams(window.location.search).get("fadeend"));
+        if (Number.isFinite(fe) && fe > 0) return fe;
+    }
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fadeanchor") === "0") return dur;
     const stop = data?.entranceClipStop ?? null;
     return stop != null && stop < dur ? stop : dur;
