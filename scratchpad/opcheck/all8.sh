@@ -12,8 +12,8 @@
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
 # Baselines as of 2026-08-10 (empty EXTRA):
-#   ska 10.447  exc 11.038  cel 18.021  mly 18.073  mue 21.908  eyja 22.123  cet 18.087  wis 33.649
-# (cet's number is NOT comparable to anything before 2026-08-11 — see REFOFF[cet] below.)
+#   ska 10.447  exc  8.919  cel 18.021  mly 18.073  mue 21.908  eyja 22.123  cet 18.087  wis 33.649
+# (cet's and exc's numbers are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
 set -e
 HERE=${0:A:h}
 label=${1:?label required}; extra=${2:-}; shift 2 2>/dev/null || shift 1
@@ -30,6 +30,13 @@ REFOFF[mly]=0.033; REFOFF[cel]=-0.033; REFOFF[ska]=0.067
 # blackout 11.0-13.0 (best 0.100) and the first blackout 5.0-6.5 (best 0.100). Took the cleanest
 # instrument's value. ⚠️ This changes ZERO pixels -- it only compares the right frames.
 REFOFF[cet]=-0.067
+# exc added 2026-08-11. Her clip is trimmed 3 frames EARLY -- our render runs BEHIND, the opposite
+# sign to cet. Corroborated INDEPENDENTLY of the score by the scope's lit-disc radius: the game
+# releases the aperture at t=5.10 where we release at 5.20, and shifting the whole radius
+# trajectory over 4.5-5.3 cuts mean |dr| from 24.71px to 6.32px, best at 0.100. The score minimum
+# then lands on the SAME 0.100 and is symmetric (9.343 at both +0.067 and +0.133), which is what a
+# real trim error looks like and a tuned constant does not. ⚠️ Changes ZERO pixels.
+REFOFF[exc]=0.100
 
 DIR[ska]='char_1012_skadi2_iteration#2';  BEATS[ska]="3,5,7,9,13,16,19"
 DIR[exc]='char_1032_excu2_sale#12';       BEATS[exc]="1,2,3,4,5,6"
