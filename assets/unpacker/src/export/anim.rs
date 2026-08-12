@@ -1893,6 +1893,88 @@ fn decode_streamed_curve(streamed_raw: &[u32], idx: usize) -> Option<Vec<(f32, f
 /// `None` when no clip animates the camera ortho size (most dynchars). The frontend replays it
 /// as a relative zoom on the entrance frame, so no world↔authored unit conversion is needed.
 #[must_use]
+/// The entrance camera's DOLLY curve for a PERSPECTIVE camera: `(time_s, distance)` from the
+/// camera's own animated local Z.
+///
+/// Almost every dyn-illust entrance camera is orthographic, where a Z move is pure depth and
+/// cannot reframe anything — which is why the exporter only ever read `orthographic size`.
+/// Whislash the Decadenza (`char_1038_whitw2_sale#15`) is the exception: her Main Camera is
+/// `orthographic = 0`, fov 60, and her `_Start` clip animates the camera's position on **Z only**
+/// (3.000 -> 1.224 at t=2.8, then back out), leaving X/Y at zero. Read as an orthographic rig that
+/// is exactly a camera which never moves, so her whole 14.5 s cinematic framed on one static box.
+///
+/// Under perspective the visible extent at the subject plane is `2·d·tan(fov/2)`, i.e. LINEAR in
+/// the camera distance — so returning `(t, d)` here lets the existing consumer treat it exactly
+/// like an ortho-size curve: the client's `orthoZoomRatio` divides by the first keyframe, and
+/// `d(t)/d(0)` IS the perspective scale ratio. No client change, and no new units.
+///
+/// Verified numerically before it was written: at t=2 the model puts her extent at 293.1 px
+/// against the 806.0 the ortho path assumed, i.e. a 0.3637 factor, and a `?camscale=` sweep of the
+/// live renderer bottoms out at **0.36** (0.28 -> 69.4, 0.32 -> 63.7, 0.36 -> 62.0, 0.40 -> 66.0,
+/// 0.45 -> 72.1). Predicted and measured optimum agree to two digits.
+///
+/// Returns `None` for an orthographic camera, so every existing skin is untouched by construction.
+#[must_use]
+pub fn entrance_dolly_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
+    let cam_pid = super::spine::entrance_camera_pid(all_objects)?;
+    // Orthographic cameras keep the ortho path; only a perspective rig dollies.
+    let is_ortho = all_objects
+        .get(&cam_pid)
+        .and_then(|(_, v)| v.get("orthographic"))
+        .and_then(|o| o.as_i64().or_else(|| o.as_bool().map(i64::from)))
+        .unwrap_or(1);
+    if is_ortho != 0 {
+        return None;
+    }
+    let cam_go = all_objects
+        .get(&cam_pid)
+        .and_then(|(_, v)| v.get("m_GameObject"))
+        .and_then(get_path_id)?;
+    let hash_to_gos = build_hash_to_gos(all_objects);
+    let is_ancestor = build_ancestor_check(all_objects);
+    let clip_animators = build_clip_animator_gos(all_objects);
+    let cam_clips = camera_motion_clips(all_objects);
+    let mut best: Option<Vec<(f32, f32)>> = None;
+    let mut best_range = 0.0f32;
+    for (clip_pid, (cid, v)) in all_objects {
+        if *cid != 74 || !cam_clips.contains(clip_pid) {
+            continue;
+        }
+        let Some(bindings) = generic_bindings(v) else {
+            continue;
+        };
+        let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
+        let mut gidx = 0usize;
+        for b in bindings {
+            let (type_id, attr, path) = binding_fields(b);
+            let count = binding_curve_count(type_id, attr);
+            let go = hash_to_gos
+                .get(&path)
+                .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor))
+                .as_deref()
+                .and_then(|gos| gos.iter().find(|&&g| g == cam_go))
+                .copied()
+                .unwrap_or(0);
+            // Position on the CAMERA's own GameObject; component 2 is Z.
+            if type_id == 4 && attr == 1 && go == cam_go && count > 2 {
+                if let Some(curve) = decode_curve_at(v, gidx + 2) {
+                    let (mn, mx) = curve
+                        .iter()
+                        .fold((f32::MAX, f32::MIN), |(a, b), &(_, val)| (a.min(val), b.max(val)));
+                    // A camera whose Z never changes carries no dolly; prefer the moving one.
+                    let range = mx - mn;
+                    if range > best_range && curve.iter().all(|&(_, d)| d > 0.0) {
+                        best_range = range;
+                        best = Some(curve);
+                    }
+                }
+            }
+            gidx += count;
+        }
+    }
+    best
+}
+
 pub fn entrance_ortho_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
     let cam_clips = camera_motion_clips(all_objects);
     let mut best: Option<Vec<(f32, f32)>> = None;

@@ -835,16 +835,38 @@ pub fn collect_spine_assets(
             // the tight close-up the cinematic opens on before dollying out to the display frame.
             let inv = 1.0 / skel_scale.unwrap_or(0.01);
             let cam_off = find_entrance_camera_offset(all_objects).map(|(x, y)| (x * inv, y * inv));
+            // For a PERSPECTIVE camera the serialized `orthographic size` is inert — Unity keeps
+            // the field but never uses it — so `2·ortho·inv` describes a framing the game never
+            // shows. The real opening extent is the frustum height at the subject plane,
+            // `2·d(0)·tan(fov/2)`, with `d(0)` the first keyframe of the dolly (or the camera's
+            // static Z when it does not move).
+            let persp_view = super::anim::entrance_dolly_curve(all_objects).and_then(|c| {
+                let d0 = c.first()?.1;
+                let fov = entrance_camera_pid(all_objects)
+                    .and_then(|p| all_objects.get(&p))
+                    .and_then(|(_, v)| v.get("field of view"))
+                    .and_then(Value::as_f64)? as f32;
+                (d0 > 0.0 && fov > 0.0)
+                    .then(|| f64::from(2.0 * d0 * (fov.to_radians() / 2.0).tan()) * inv)
+            });
             // The DATA-DRIVEN camera dolly: the animated orthographic-size curve (see
             // `entrance_ortho_curve`). Replaces client-side guesswork about the zoom timing.
-            let ortho_curve = super::anim::entrance_ortho_curve(all_objects);
+            // PERSPECTIVE rigs dolly on the camera's Z instead of animating an ortho size. The
+            // dolly curve is `(t, distance)`, and the client's zoom consumer only ever uses the
+            // RATIO to the first keyframe — and `d(t)/d(0)` is exactly the perspective scale
+            // ratio — so it drops straight into the same field with no client change and no new
+            // units. `entrance_dolly_curve` returns None for an orthographic camera, so every
+            // existing skin keeps the ortho path by construction. See its doc comment for the
+            // measured validation (predicted 0.3637, measured optimum 0.36).
+            let ortho_curve = super::anim::entrance_ortho_curve(all_objects)
+                .or_else(|| super::anim::entrance_dolly_curve(all_objects));
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
             let (cam_center, cam_roll, aperture) = super::anim::entrance_camera_track(all_objects, inv, ortho);
             (
                 dur,
                 fade,
                 tr,
-                ortho.map(|o| 2.0 * o * inv),
+                persp_view.or_else(|| ortho.map(|o| 2.0 * o * inv)),
                 cam_off,
                 ortho_curve,
                 voice,
@@ -2580,7 +2602,7 @@ fn objects_by_path_id(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<(&i64, &(
 /// The ENTRANCE camera's `path_id`. The director names it outright (`_mainCamera.camera`),
 /// which is the authored answer whenever a prefab ships more than one class-20 Camera;
 /// the lowest-`path_id` camera is only a deterministic last resort.
-fn entrance_camera_pid(all_objects: &HashMap<i64, (i32, Value)>) -> Option<i64> {
+pub(crate) fn entrance_camera_pid(all_objects: &HashMap<i64, (i32, Value)>) -> Option<i64> {
     let ordered = objects_by_path_id(all_objects);
     let named = ordered.iter().find_map(|(_, (cid, v))| {
         (*cid == 114)
