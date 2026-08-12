@@ -20,7 +20,7 @@ SKINS = [
     ("mly",  "Mlynar",            18.073, 18.073, "Open — a blue cast, eight mechanisms refuted."),
     ("cel",  "Cello",             18.021, 18.021, "Open — twelve mechanisms refuted; considered exhausted."),
     ("ska",  "Skadi",             10.447, 10.447, "Stable."),
-    ("whitw2","Whislash the Decadenza", 92.853, 77.490, "New 9th reference. Perspective camera: dolly fixed, pan still wrong."),
+    ("whitw2","Whislash the Decadenza", 92.853, 73.264, "New 9th reference. Perspective camera + post-process greyscale both fixed."),
 ]
 
 def vid(key):
@@ -175,6 +175,18 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
   the vacated region drops to grey); whitening the ground alone leaves the vista painted. Together:
   49.1 → 26.9 on her worst beat. That coupling is why four earlier single-cause attempts all came
   back refuted — each was scored against a frame where the other half still painted the same pixels.</p>
+</div>
+
+<div class="finding">
+  <h3>An entire subsystem was missing: the post-process volume</h3>
+  <p>Every entrance ships a Unity <strong>PostProcessVolume</strong> whose weight the cinematic's own
+  animation clip drives &mdash; and the renderer reproduced none of it. Whislash's profile is a
+  full-strength greyscale, and her capture is <em>objectively monochrome</em> early on (mean
+  saturation 0.000 at t=2) while we rendered full colour. That single omission was most of her
+  chroma error, which had dwarfed every other skin's for days. Reading the volume, its profile and
+  its animated weight out of the bundle took her from 77.5 to 73.3, with the eight calibrated skins
+  bit-identical because none of them opens a volume. The gains land exactly where the authored
+  weight is 1.0 and are exactly zero where it is 0.</p>
 </div>
 
 <div class="finding">
