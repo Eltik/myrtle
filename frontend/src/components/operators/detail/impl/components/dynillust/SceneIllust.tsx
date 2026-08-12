@@ -1558,6 +1558,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // whole cinematic on the strength of a flash lasting under a second.
                 const gf = gapFillRef.current;
                 if (gf) {
+                    // DIAGNOSTIC (`?gapcover=0`): keep the vista visible regardless of the
+                    // coverage test. The test asks whether any layer in `covers` is at alpha
+                    // >= 0.99, which is a claim about OPACITY, not about whether that layer
+                    // actually reaches the pixels the vista is filling — so a spanning-but-
+                    // elsewhere layer can suppress the fill over a region it never paints.
                     let covered = false;
                     for (const l of gf.covers) {
                         if (l.activeFrom != null && tt < l.activeFrom) continue;
@@ -1569,7 +1574,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             break;
                         }
                     }
-                    gf.sprite.renderable = !covered;
+                    const gapCoverOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapcover") !== "0";
+                    gf.sprite.renderable = gapCoverOn ? !covered : true;
                 }
                 // Executor: 5.2 s, where the scene's second root activates and the capture goes
                 // 100% lit within one frame.
