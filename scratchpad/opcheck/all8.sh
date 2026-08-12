@@ -12,8 +12,8 @@
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
 # Baselines as of 2026-08-10 (empty EXTRA):
-#   ska 10.447  exc  8.919  cel 18.021  mly 18.073  mue 21.908  eyja 22.123  cet 18.087  wis 33.649
-# (cet's and exc's numbers are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
+#   ska 10.447  exc  8.919  cel 18.021  mly 18.073  mue 21.908  eyja 22.123  cet 18.087  wis 12.645
+# (cet/exc/wis numbers are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
 set -e
 HERE=${0:A:h}
 label=${1:?label required}; extra=${2:-}; shift 2 2>/dev/null || shift 1
@@ -37,6 +37,16 @@ REFOFF[cet]=-0.067
 # then lands on the SAME 0.100 and is symmetric (9.343 at both +0.067 and +0.133), which is what a
 # real trim error looks like and a tuned constant does not. ⚠️ Changes ZERO pixels.
 REFOFF[exc]=0.100
+# wis added 2026-08-11, and this one is BIG: SIX frames. Our render runs 0.200s AHEAD of her
+# reference cut. ⚠️ The flash-anchor check that validated the other trims to ±0.083s did NOT catch
+# this -- wis was one of the 3-of-8 it could not anchor, so "the trims are verified" never covered
+# her. Corroborated two ways: (a) FIVE of her six beats independently pick -0.200, each collapsing
+# to 6.4-7.5 from 33.6, with 2-3x degradation ONE frame either side, and the pick is CONSTANT
+# across t=2..10 -- a rate error would ramp; (b) a dense 31-sample per-pixel MADC sweep over
+# 1.0-4.0s, independent of the beat set, minimises at exactly 0.200 (30.727 -> 8.066) and is
+# symmetric (18.005 / 8.066 / 17.756). ⚠️ Changes ZERO pixels -- the renderer did not improve.
+# 🔑 t=12 (41.66) is now her ONLY bad beat; the other five are among the best in the corpus.
+REFOFF[wis]=-0.200
 
 DIR[ska]='char_1012_skadi2_iteration#2';  BEATS[ska]="3,5,7,9,13,16,19"
 DIR[exc]='char_1032_excu2_sale#12';       BEATS[exc]="1,2,3,4,5,6"
