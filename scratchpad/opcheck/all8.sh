@@ -68,6 +68,16 @@ DIR[mue]='char_249_mlyss_boc#8';          BEATS[mue]="3,6,9,12,15,18"
 DIR[eyja]='char_1016_agoat2_epoque#34';   BEATS[eyja]="2,4,6,8"
 DIR[cet]='char_4134_cetsyr_epoque#50';    BEATS[cet]="2,5,8,11,14,17,18.5"
 DIR[wis]='char_1035_wisdel_sale#14';      BEATS[wis]="2,4,6,8,10,12"
+# NINTH reference, added 2026-08-12 and deliberately OUT of the default key list below.
+# `whitw2_game_fresh.mp4` was built from the previously-unscored `whitw2_entrance.mp4` capture
+# (2340x1080 @60, already on disk). t0 = 3.9667 s, derived GEOMETRICALLY from the hard black->lit
+# cut at the start of the cinematic (frames 95..118 are pure 0.0, frame 119 is 95.69) and
+# cross-checked against the white-out: entranceDuration 14.5 puts the fade end within 0.17 s.
+# ⚠️ She currently scores ~92.9 because her ENTRANCE DOES NOT RENDER (see
+# dynchar-whitw2-entrance-not-rendered): the framing is static-wide for the whole cinematic and
+# no white-out is produced. Scoring her in the default set would swamp the corpus mean with one
+# broken skin, so run her explicitly:  ./all8.sh <label> "" whitw2
+DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
 
 # NB: `${@:-a b c}` expands the default as a SINGLE word in zsh — spell the branch out.
 if (( $# )); then keys=($@); else keys=(ska exc cel mly mue eyja cet wis); fi
