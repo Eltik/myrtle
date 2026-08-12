@@ -1,0 +1,28 @@
+# The dynchar parity HARNESS is tracked; the data it chews through is not.
+#
+# These scripts were lost once and rebuilt from scratch, which cost real work — the reference
+# beat map, the trim offsets, the dropout guard and the QA classifier all live here. What must
+# NOT be tracked is the capture corpus and the render output, which run to several GB.
+
+# Reference captures and recovery snapshots (~3.4 GB).
+opcheck/REF_NEW/
+opcheck/REF/
+opcheck/RECOVERY/
+
+# Instrumentation and deps, both reproducible.
+opcheck/frida/
+opcheck/node_modules/
+
+# Rendered frames, clips and their staging dirs.
+*.png
+*.jpg
+*.mp4
+parity-clips/fresh8/
+parity-clips/f_*/
+
+# Superseded artifact-update iterations — `refresh_artifact.py` is the live one and is tracked.
+parity-clips/update_artifact*.py
+
+# Scratch prompts and captured logs.
+*.txt
+*.log

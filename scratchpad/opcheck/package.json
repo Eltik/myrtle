@@ -1,0 +1,1 @@
+{"name":"opcheck-harness","private":true,"dependencies":{"puppeteer":"^25.4.0"}}
