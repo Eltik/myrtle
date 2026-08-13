@@ -20,7 +20,11 @@ fenc=$(python3 -c "import urllib.parse;print(urllib.parse.quote('''$skel''',safe
 frames=$out/f_$key; rm -rf $frames; mkdir -p $frames
 FPS=${FPS:-30}
 shots=$(python3 -c "print(','.join(f'{i/float($FPS)+$off:.4f}' for i in range(int($FPS*$secs))))")
-EXTRA="$bd" node $OP/rec.js "/spine/DynIllust/$enc/$fenc" $frames "$shots" 900 416 >/dev/null 2>&1
+# Clips render on the SAME pinned basis as the scorer (`rt2048=0`, display density). The viewer
+# now ships at the client's own render targets, which is several times heavier — a clip built at
+# that density takes minutes per skin under the harness's software GL, and would no longer match
+# the numbers on the page. See `dynchar-idle-2048-render-target`.
+EXTRA="rt2048=0&$bd" node $OP/rec.js "/spine/DynIllust/$enc/$fenc" $frames "$shots" 900 416 >/dev/null 2>&1
 python3 - "$frames" "$FPS" > $frames/list.txt <<'PY'
 import os, sys
 d, fps = sys.argv[1], float(sys.argv[2])

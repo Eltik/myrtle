@@ -601,20 +601,25 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             if (coverageOn()) renderer.render(covContainer, { renderTexture: covRT, clear: true });
         },
         resize(w: number, h: number, res: number) {
-            target.resize(w, h, true);
+            // ⚠️ setResolution BEFORE resize, never after. `BaseTexture.setResolution` RESCALES the
+            // texture's screen dimensions to preserve its pixel size (`width = width*oldRes/res`),
+            // so resizing first and setting the resolution second leaves every target off by
+            // `oldRes/res`. Latent until the renderer's resolution actually changed at runtime —
+            // which it now does when the idle path takes over the square-2048 RT density.
             target.baseTexture.setResolution(res);
+            target.resize(w, h, true);
             const positions = mesh.geometry.getBuffer("aVertexPosition");
             positions.data = new Float32Array([0, 0, w, 0, w, h, 0, h]) as unknown as typeof positions.data;
             positions.update();
             const nbw = Math.max(1, Math.round(w / BLOOM_DOWNSCALE));
             const nbh = Math.max(1, Math.round(h / BLOOM_DOWNSCALE));
-            bloomRT.resize(nbw, nbh, true);
             bloomRT.baseTexture.setResolution(res);
+            bloomRT.resize(nbw, nbh, true);
             setBrightQuad(nbw, nbh);
             const ncw = Math.max(1, Math.round(w / COVERAGE_DOWNSCALE));
             const nch = Math.max(1, Math.round(h / COVERAGE_DOWNSCALE));
-            covRT.resize(ncw, nch, true);
             covRT.baseTexture.setResolution(res);
+            covRT.resize(ncw, nch, true);
             setCovQuad(ncw, nch);
         },
         destroy() {

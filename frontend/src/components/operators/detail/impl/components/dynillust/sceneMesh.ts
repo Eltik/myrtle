@@ -41,6 +41,11 @@ export interface ISceneRam {
     amount: number;
     borderWidth: number;
     /** How far a disturb sample displaces the lookups, and which lookups it reaches. */
+    /** `_AnchorU`/`_AnchorV` — the zero point the disturb sample is measured against.
+     *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
+     *  reproduces the plain `sample * intensity` every `Ram/` layer shipped with. */
+    anchorU?: number;
+    anchorV?: number;
     intensityU: number;
     intensityV: number;
     disturbInfluenceDissolveUV: number;
@@ -1131,6 +1136,8 @@ uniform vec4 uColor; // premultiplied tint*alpha
 uniform float uWorldAlpha;
 uniform float uAmount;
 uniform float uBorderWidth;
+uniform float uAnchorU;
+uniform float uAnchorV;
 uniform float uIntensityU;
 uniform float uIntensityV;
 uniform float uDisturbInfluenceDissolveUV;
@@ -1145,7 +1152,9 @@ uniform float uHasEdge;
 uniform float uHasDisturb;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
-    vec2 dOff = vec2(uIntensityU, uIntensityV) * disturbSample;
+    // Game shader: (sample - anchor) * intensity. With the anchor at 0 this is exactly the
+    // previous sample * intensity, so layers without one are bit-identical.
+    vec2 dOff = (vec2(disturbSample) - vec2(uAnchorU, uAnchorV)) * vec2(uIntensityU, uIntensityV);
     vec4 tex = texture2D(uSampler, dOff * uDisturbInfluenceMainUV + vUV); // premultiplied
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dOff * uDisturbInfluenceDissolveUV + vDissolveUV).x : 1.0;
     // Game shader: sw = 1 - roundEven(_Amount + 0.5), i.e. floor(_Amount + 1.0). Porting
@@ -1242,6 +1251,8 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uWorldAlpha: 1,
             uAmount: r.amount,
             uBorderWidth: r.borderWidth,
+            uAnchorU: r.anchorU ?? 0,
+            uAnchorV: r.anchorV ?? 0,
             uIntensityU: r.intensityU,
             uIntensityV: r.intensityV,
             uDisturbInfluenceDissolveUV: r.disturbInfluenceDissolveUV,

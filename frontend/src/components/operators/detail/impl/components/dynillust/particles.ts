@@ -189,6 +189,15 @@ export interface IParticleSystemData {
      *  `CustomDataModule`'s Vector stream (shader vs_TEXCOORD2.x, added to `_Amount`).
      *  Virtuosa's entrance apples crumble away with it (−0.12 → 1 by ~30% of life). */
     ramDissolveCurve?: ICurvePoint[] | null;
+    /** Per-particle DISSOLVE-UV offset over normalized lifetime as `[t, u, v]` triples, from the
+     *  CustomData floats that land in `in_TEXCOORD1.xy`. Absent when nothing authors it. */
+    ramDissolveUVCurve?: [number, number, number][] | null;
+    /** Per-particle MAIN-UV offset (payload 1,2) and DISTURB-UV offset (payload 7,8) over
+     *  normalized lifetime, same [t, u, v] shape. */
+    ramMainUVCurve?: [number, number, number][] | null;
+    ramDisturbUVCurve?: [number, number, number][] | null;
+    /** Per-particle DISTURB INTENSITY (payload 6) as [t, v] pairs. */
+    ramDisturbIntensityCurve?: ICurvePoint[] | null;
     /** ENTRANCE material-colour animation, `[t, r, g, b, a]` in absolute cinematic seconds —
      *  the particle twin of a scene layer's `colorCurve`. REPLACES {@link tint} while it runs
      *  (the exporter resolves the curve against that same static tint, so applying both would
@@ -693,8 +702,28 @@ const PREWARM_MAX_STEPS = 300;
  *
  *  Mlynar and Skadi improve; Virtuosa regresses, all of it at t=10, the diamond-ring beat whose
  *  residual is the same unmatchable phase. Enabling these trades one arbitrary phase for another
- *  and destroys one skin outright. `?simspeed=1` / `?prewarm=1`, independently, to re-test. */
-const SIM_SPEED_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("simspeed") === "1";
+ *  and destroys one skin outright. `?simspeed=1` / `?prewarm=1`, independently, to re-test.
+ *
+ *  ✅ **RE-MEASURED 2026-08-12 AND ENABLED — the verdict above is INVERTED for `simSpeed`.**
+ *  Unity applies `simulationSpeed`; ignoring it was simply wrong, and every premise of the old
+ *  veto has since flipped:
+ *
+ *   • **The destructive case is now the DISABLED state.** `char_4080_lin_nian#10` at t=2 renders
+ *     as a blown white blob with hard banding that washes the character out with the flag OFF, and
+ *     clean — character, snow globe and cloud detail all legible — with it ON. At t=6, the old
+ *     failure beat, mean goes 126.56 -> 124.39 and the saturated fraction FALLS 0.115 -> 0.098
+ *     (it used to rise 0.145 -> 0.284). Other fixes since 2026-08-03 changed that picture.
+ *   • **Virtuosa's t=10 IMPROVES**, and it was the loudest objection: 42.95 -> 41.07 MAD at that
+ *     beat, and 18.006 -> 17.518 over her whole beat set. The `quad_p` mesh that draws her
+ *     diamond ring carries `simSpeed 0.3` and spins at 45 deg/s, so running it at 1.0x put the
+ *     ring at a wholly different angle.
+ *   • **The corpus of measured references improves**: 12.778 -> 12.716, with cel -0.488,
+ *     cet -0.151, wis -0.029 against ska/mly +0.039 and mue +0.087.
+ *
+ *  ⚠️ `prewarm` stays OFF and was re-measured separately: on Virtuosa's t=10 it is WORSE
+ *  (42.95 -> 43.84) and it dominates when combined (both = 43.84). The two flags were bundled in
+ *  the original sweep, which is why the good half was never adopted. `?simspeed=0` disables. */
+const SIM_SPEED_ON = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("simspeed") !== "0" : true;
 function simSpeedOf(d: IParticleSystemData): number {
     if (!SIM_SPEED_ON) return 1;
     const s = d.simSpeed;
@@ -961,6 +990,35 @@ function backdropDemoteEnabled(): boolean {
 }
 
 /** `?uniskip=0` restores the old flat 150 flow-map luminance cut (diagnostic). */
+/** DIAGNOSTIC (`?customuv=1`, default OFF): also apply the per-particle MAIN-UV (payload 1,2) and
+ *  DISTURB-UV (payload 7,8) offsets from the CustomData payload.
+ *
+ *  The positional decode itself is proven — the DISSOLVE offset at payload 3,4 is what fixed
+ *  Wiš'adel's ending stroke (12.643 → 6.779). These two siblings are decoded the same way and are
+ *  exported, but applying them MEASURED WORSE on both references that author them
+ *  (cel 18.006 → 18.018, cet 18.059 → 18.082; the other six bit-identical), and the only skins
+ *  authoring the disturb pair have no capture at all, so nothing can validate them. Kept off by
+ *  default for the same reason as `DYNCHAR_UVSCROLL_ALL`: shader-correct is necessary evidence,
+ *  never sufficient. Turn on only alongside a corpus render of the affected skins. */
+/** DIAGNOSTIC (`?psize=<f>`, default 1): scale every particle's spawn size.
+ *
+ *  Motivation, measured 2026-08-12: at the 99th-percentile threshold the game draws ~2.8x as many
+ *  distinct bright blobs as we do, each ~3x SMALLER in area (count ratio 0.358, size ratio 3.007
+ *  over all eight references), while the PRODUCT — the total bright area — matches to ~8%. Same
+ *  light, wrong granularity. One candidate cause is a systematic over-size at spawn; this sweeps
+ *  it directly. Applied at BOTH `sampleScalar(d.startSize, ...)` sites so the sprite and mesh/ram
+ *  paths move together (a one-path knob reads as "the size is fine" no matter what it is). */
+function psizeMul(): number {
+    if (typeof window === "undefined") return 1;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("psize") ?? "");
+    return Number.isFinite(v) && v > 0 ? v : 1;
+}
+
+function customUVOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("customuv") === "1";
+}
+
 function uniformFieldSkipOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("uniskip") !== "0";
@@ -1615,7 +1673,7 @@ class Emitter {
         // fixed, so a system that gains a `startSizeY` does not re-phase the seeded
         // simulation of every particle after it.
         const sizeRand = Math.random();
-        const size = sampleScalar(d.startSize, sizeRand, nt);
+        const size = sampleScalar(d.startSize, sizeRand, nt) * psizeMul();
         const rot = sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt);
         const startCol = sampleColor(d.startColor, nt);
 
@@ -2559,7 +2617,8 @@ precision highp float;
 attribute vec2 aVertexPosition;
 attribute vec2 aUV;
 attribute vec4 aColor;
-attribute vec2 aCustom;
+attribute vec4 aCustom;
+attribute vec4 aCustom2;
 uniform mat3 translationMatrix;
 uniform mat3 projectionMatrix;
 uniform vec4 uMainST;
@@ -2579,7 +2638,7 @@ varying vec2 vDisturbUV;
 varying vec2 vRamUV;
 varying vec2 vRawUV;
 varying vec4 vColor;
-varying vec2 vCustom;
+varying vec4 vCustom;
 void main() {
     gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
     // Unity samples textures V-bottom-up but the exported PNGs are top-down, so
@@ -2612,10 +2671,16 @@ void main() {
     // differ (cet 24.497 vs 24.928; cel and mue exactly unchanged rather than nudged), so the
     // gate is doing real work even though the reason is not yet pinned down.
     vec2 uvU = uSheeted > 0.5 ? vec2(1.0 - aUV.x, 1.0 - aUV.y) : aUV;
-    vMainUV = uvU * uMainST.xy + uMainST.zw + uMainScroll;
-    vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
-    vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
-    vDisturbUV = uvU * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
+    // aCustom2.xy / .zw: per-particle MAIN and DISTURB uv offsets (payload 1,2 and 7,8),
+    // the same positional CustomData decode as the dissolve offset below.
+    vMainUV = uvU * uMainST.xy + uMainST.zw + uMainScroll + aCustom2.xy;
+    // + aCustom.zw: the PER-PARTICLE dissolve-UV offset the game feeds through
+    // in_TEXCOORD1.xy (u_xlat16_2.xy = dissolveUV + in_TEXCOORD1.xy in the Ram vertex
+    // program). Zero for every system without a dissolve-UV curve, so this is inert
+    // unless the CustomData actually authors it.
+    vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll + aCustom.zw;
+    vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll + aCustom.zw;
+    vDisturbUV = uvU * uDisturbST.xy + uDisturbST.zw + uDisturbScroll + aCustom2.zw;
     vRamUV = uvU * uRamST.xy + uRamST.zw;
     vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
     vRawUV = aUV;
@@ -2638,7 +2703,7 @@ varying vec2 vDisturbUV;
 varying vec2 vRamUV;
 varying vec2 vRawUV;
 varying vec4 vColor;
-varying vec2 vCustom;
+varying vec4 vCustom;
 uniform sampler2D uMainTex;
 uniform sampler2D uRamTex;
 uniform sampler2D uDisturbTex;
@@ -2852,6 +2917,7 @@ class RamEmitter {
     private readonly uvData: Float32Array;
     private readonly colData: Float32Array;
     private readonly customData: Float32Array;
+    private readonly custom2Data: Float32Array;
     /** Verts per particle — 4 for a billboard quad, else the exported mesh's vertex count. */
     private readonly vpp: number;
     /** The system's exported mesh, when it draws one instead of a quad. */
@@ -2859,6 +2925,7 @@ class RamEmitter {
     private readonly posBuf: PIXI.Buffer;
     private readonly colBuf: PIXI.Buffer;
     private readonly customBuf: PIXI.Buffer;
+    private readonly custom2Buf: PIXI.Buffer;
     /** Only rewritten (and re-uploaded) for a texture-sheet system — see `sheetTiles`. */
     private readonly uvBuf: PIXI.Buffer;
     /** `tilesX * tilesY` when the system drives a Texture Sheet flipbook, else 0. */
@@ -2905,7 +2972,8 @@ class RamEmitter {
         this.posData = new Float32Array(nv * 2);
         this.uvData = new Float32Array(nv * 2);
         this.colData = new Float32Array(nv * 4);
-        this.customData = new Float32Array(nv * 2);
+        this.customData = new Float32Array(nv * 4);
+        this.custom2Data = new Float32Array(nv * 4);
         const idx = new Uint16Array(this.cap * ipp);
         for (let q = 0; q < this.cap; q++) {
             const v = q * vpp;
@@ -2946,12 +3014,14 @@ class RamEmitter {
         this.posBuf = new PIXI.Buffer(this.posData as unknown as BufArg);
         this.colBuf = new PIXI.Buffer(this.colData as unknown as BufArg);
         this.customBuf = new PIXI.Buffer(this.customData as unknown as BufArg);
+        this.custom2Buf = new PIXI.Buffer(this.custom2Data as unknown as BufArg);
         this.uvBuf = new PIXI.Buffer(this.uvData as unknown as BufArg);
         const geometry = new PIXI.Geometry();
         geometry.addAttribute("aVertexPosition", this.posBuf, 2);
         geometry.addAttribute("aUV", this.uvBuf, 2);
         geometry.addAttribute("aColor", this.colBuf, 4);
-        geometry.addAttribute("aCustom", this.customBuf, 2);
+        geometry.addAttribute("aCustom", this.customBuf, 4);
+        geometry.addAttribute("aCustom2", this.custom2Buf, 4);
         geometry.addIndex(new PIXI.Buffer(idx as unknown as BufArg));
 
         const mainT = tex.main ?? WHITE_TEX;
@@ -3057,7 +3127,7 @@ class RamEmitter {
         // fixed, so a system that gains a `startSizeY` does not re-phase the seeded
         // simulation of every particle after it.
         const sizeRand = Math.random();
-        const size = sampleScalar(d.startSize, sizeRand, nt);
+        const size = sampleScalar(d.startSize, sizeRand, nt) * psizeMul();
         const wDir = dirAng + rotDeg * DEG;
         const life = Math.max(MIN_PARTICLE_LIFE, sampleScalar(d.lifetime, Math.random(), nt));
         // Edge-clip fix: a world-space system's static spawn position can be baked for an
@@ -3294,6 +3364,7 @@ class RamEmitter {
         const pos = this.posData;
         const col = this.colData;
         const cst = this.customData;
+        const cst2 = this.custom2Data;
         const uv = this.uvData;
         const sheet = d.sheet;
         const n = Math.min(this.particles.length, this.cap);
@@ -3418,16 +3489,50 @@ class RamEmitter {
                 col[vc + k * 4 + 2] = cb;
                 col[vc + k * 4 + 3] = ca;
             }
-            const vk = q * vpp * 2;
+            const vk = q * vpp * 4;
             // CustomData (vs_TEXCOORD2 = per-particle dissolve amount + disturb
             // intensity). Systems with the CustomData module DISABLED (every svash2
             // Ram mask effect) hold a static 0 and the dissolve mask shapes the fill
             // directly; an exported `ramDissolveCurve` (Virtuosa's crumbling apples)
             // replays the per-particle dissolve amount over normalized lifetime.
             const dis = d.ramDissolveCurve ? sampleCurve(d.ramDissolveCurve, lf) : 0;
+            // Payload 6. Same unvalidated-sibling category as the main/disturb UV offsets: the
+            // three skins that author it have no capture, so it stays behind `?customuv=1`.
+            const dInt =
+                customUVOn() && d.ramDisturbIntensityCurve
+                    ? sampleCurve(d.ramDisturbIntensityCurve, lf)
+                    : 0;
+            // Per-particle UV offsets, decoded positionally out of the CustomData payload
+            // (1,2 -> main · 3,4 -> dissolve · 7,8 -> disturb). All default to 0, so a system
+            // that authors none renders exactly as before.
+            const uvAt = (c: [number, number, number][] | null | undefined): [number, number] => {
+                if (!c?.length) return [0, 0];
+                let a = c[0];
+                let b2 = c[c.length - 1];
+                for (let m = 0; m < c.length - 1; m++) {
+                    if (lf >= c[m][0] && lf <= c[m + 1][0]) {
+                        a = c[m];
+                        b2 = c[m + 1];
+                        break;
+                    }
+                }
+                const span = b2[0] - a[0];
+                const f = span > 1e-6 ? (lf - a[0]) / span : 0;
+                return [a[1] + (b2[1] - a[1]) * f, a[2] + (b2[2] - a[2]) * f];
+            };
+            const [du, dv] = uvAt(d.ramDissolveUVCurve);
+            const extraUV = customUVOn();
+            const [mu, mv] = extraUV ? uvAt(d.ramMainUVCurve) : [0, 0];
+            const [tu, tv] = extraUV ? uvAt(d.ramDisturbUVCurve) : [0, 0];
             for (let k = 0; k < vpp; k++) {
-                cst[vk + k * 2] = dis; // dissolve amount
-                cst[vk + k * 2 + 1] = 0; // disturb intensity (no _DisturbTex bound here)
+                cst[vk + k * 4] = dis; // dissolve amount
+                cst[vk + k * 4 + 1] = dInt; // disturb intensity
+                cst[vk + k * 4 + 2] = du; // dissolve UV offset u
+                cst[vk + k * 4 + 3] = dv; // dissolve UV offset v
+                cst2[vk + k * 4] = mu; // main UV offset u
+                cst2[vk + k * 4 + 1] = mv; // main UV offset v
+                cst2[vk + k * 4 + 2] = tu; // disturb UV offset u
+                cst2[vk + k * 4 + 3] = tv; // disturb UV offset v
             }
         }
         // Collapse unused particles to a degenerate point so they draw nothing.
@@ -3438,6 +3543,7 @@ class RamEmitter {
         this.posBuf.update();
         this.colBuf.update();
         this.customBuf.update();
+        this.custom2Buf.update();
         if (this.sheetTiles > 1) this.uvBuf.update();
     }
 

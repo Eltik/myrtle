@@ -869,6 +869,45 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
     return last[1];
 }
 
+/** Render density for the dyn illust, in both paths.
+ *
+ *  The client never draws a dynamic illustration at the coarse density a browser hands us by
+ *  default. Its IDLE viewer renders into a SQUARE 2048 target — `AdaptiveRenderStrategy`
+ *  returns `*w = *h = 2048` unconditionally, `LegacyRenderStrategy` returns
+ *  `max(platformCap, 2048)`, and a live Frida trace reports
+ *  `Camera.set_orthographicSize … aspect=1.00000 pixel=2048x2048` — then rebuilds the on-screen
+ *  quad from it every frame. Its ENTRANCE takes a different route (the quad rebuild rate drops to
+ *  0/s for the whole cinematic while `Camera.allCamerasCount` goes 3 -> 5: the entrance prefab's
+ *  own cameras render DIRECTLY) but still lands on a full-resolution surface — `Camera.main` stays
+ *  `ui_camera` at **2340x1080** throughout. See `dynchar-il2cpp-render-path`.
+ *
+ *  Either way the client resolves far more than we did: our frames carried ~0.80x the capture's
+ *  high-frequency energy on every reference skin, and it resolved ~2.8x as many distinct bright
+ *  points at ~3x smaller size for the same total lit area. So drive the renderer at the density
+ *  that puts 2048 device pixels across the illust's frame, for the entrance as well as the idle.
+ *
+ *  Applied ONCE at construction and on container resize — never switched mid-session. That is
+ *  deliberate: changing `renderer.resolution` at runtime invalidates the same state a container
+ *  resize does, and re-laying out to recover it overwrites whatever framing the caller was about
+ *  to apply (statcam's preview box, the hand-off's standing-idle dolly).
+ *
+ *  `RES_CAP` bounds the buffer for small containers (a 200px-tall thumbnail would otherwise ask
+ *  for 10x); the floor keeps us at no less than the display's own density. `?rt2048=0` reverts. */
+const DYN_RT_SIZE = 2048;
+/** The client's ENTRANCE does not go through the square RT — it renders through `ui_camera`
+ *  straight onto the screen surface, measured at **2340x1080**. So its faithful target is that
+ *  screen HEIGHT, not the RT's 2048. Lower than the idle's target, and correspondingly cheaper. */
+const DYN_SCREEN_H = 1080;
+const RES_CAP = 4;
+function dynRenderResolution(cssHeight: number, path: "entrance" | "idle"): number {
+    if (typeof window === "undefined") return 1;
+    const dpr = window.devicePixelRatio || 1;
+    if (new URLSearchParams(window.location.search).get("rt2048") === "0") return dpr;
+    if (!(cssHeight > 0)) return dpr;
+    const want = path === "idle" ? DYN_RT_SIZE : DYN_SCREEN_H;
+    return Math.min(RES_CAP, Math.max(dpr, want / cssHeight));
+}
+
 function entranceFadeEnd(data: ISceneData | null): number | null {
     const dur = data?.entranceDuration ?? null;
     if (dur == null) return null;
@@ -1357,6 +1396,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         const currentLoadId = ++loadIdRef.current;
         let animationFrameId: number | null = null;
 
+        /** Step to the idle target when the idle path takes over: the hand-off, or load completion
+         *  for a skin that plays no cinematic. Resizes the density-dependent targets ONLY —
+         *  re-laying out here would overwrite the framing the caller is about to apply (statcam's
+         *  preview box, the hand-off's standing-idle dolly). Idempotent. */
+        const raiseToIdleResolution = () => {
+            const a = appRef.current;
+            const cw = containerRef.current?.clientWidth ?? 0;
+            const ch = containerRef.current?.clientHeight ?? 0;
+            if (!a || cw <= 0 || ch <= 0) return;
+            const want = dynRenderResolution(ch, "idle");
+            if (Math.abs(a.renderer.resolution - want) <= 0.01) return;
+            a.renderer.resolution = want;
+            a.renderer.resize(cw, ch);
+            hdrRef.current?.resize(cw, ch, want);
+            if (envBgRef.current) resizeEnvironmentBg(envBgRef.current, cw, ch);
+        };
+
         const cleanup = () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             hideShadowsRef.current = false;
@@ -1406,7 +1462,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             height: container.clientHeight || 450,
             backgroundAlpha: 0,
             antialias: true,
-            resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+            // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
+            // steps up to the square-2048 RT target when the idle path takes over — which is
+            // exactly where the client itself switches between the two.
+            resolution: dynRenderResolution(container.clientHeight || 450, staticCamOn() ? "idle" : "entrance"),
             autoDensity: true,
             // The tick below drives EVERYTHING — clock, spine, particles, and both render
             // passes — so PIXI's own ticker must not render as well. Left on it did two
@@ -1484,7 +1543,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const { width: sw, height: sh } = appRef.current.screen;
                 // Camera CENTRE: sample the accumulated gamedata camera track at the clip time. Its
                 // keyframe timing IS the game's dolly/pan — replay it directly.
-                const c = sampleCurveXY(ef.camCenter, tt, ef.camCuts) ?? [0, 0];
+                // DIAGNOSTIC (`?camlead=<seconds>`): sample the camera CENTRE at `tt + lead`
+                // while leaving the spine, scene layers and particles on `tt`. This isolates a
+                // CAMERA-vs-CONTENT timing skew from a global clock error — a global error moves
+                // both and is already ruled out for cello by a trim sweep that minimises sharply
+                // at her shipped offset. Inert at 0. Twin of `?ortholead=` for the zoom.
+                const camLead =
+                    typeof window !== "undefined"
+                        ? parseFloat(new URLSearchParams(window.location.search).get("camlead") ?? "0") || 0
+                        : 0;
+                const c = sampleCurveXY(ef.camCenter, tt + camLead, ef.camCuts) ?? [0, 0];
                 // Camera SIZE: the gamedata frame extent (`_adjustes` view px) × the ortho-size ratio,
                 // so the character grows into the frame exactly as the authored zoom dictates.
                 // DIAGNOSTIC (`?ortholead=<seconds>`): sample the ZOOM curve at `tt + lead` only,
@@ -3504,6 +3572,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const handoffPanDelta: [number, number] | null = ef?.lastLiveCenter ? [ef.lastLiveCenter[0] - ef.startCenter[0], ef.lastLiveCenter[1] - ef.startCenter[1]] : null;
                     entranceZoomRef.current = null;
                     entranceFollowRef.current = null;
+                    // The client stops rendering through the entrance cameras here and resumes
+                    // drawing the square 2048 RT quad; match it. Happens UNDER the held fade below.
+                    raiseToIdleResolution();
                     // Retire the scope with the sequencer that drives it. The cover is only ever
                     // updated from the entrance tick, so leaving it visible here would black the
                     // frame for the whole hand-off window (Executor renders pure black at 5.5s
@@ -3550,6 +3621,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     return; // main stays tracked in compositesRef; cleanup frees it.
                 }
                 const built = entrance && entrance !== "unsupported" ? entrance : null;
+                // No cinematic: the idle path is live already, so take its target now.
+                if (!built) raiseToIdleResolution();
                 if (built) {
                     // The game HOLDS the entrance shot steadily through the whole transform and only
                     // pulls back to the wide frame AFTERWARD, on the settled idle (see
@@ -3664,6 +3737,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             const w = containerRef.current.clientWidth;
             const h = containerRef.current.clientHeight;
             if (w <= 0 || h <= 0) return;
+            // The client's target is a FIXED size, so the resolution that reproduces it moves as
+            // the container does.
+            {
+                const want = dynRenderResolution(h, entranceFollowRef.current ? "entrance" : "idle");
+                if (Math.abs(currentApp.renderer.resolution - want) > 0.01) currentApp.renderer.resolution = want;
+            }
             currentApp.renderer.resize(w, h);
             hdrRef.current?.resize(w, h, currentApp.renderer.resolution);
             if (envBgRef.current) resizeEnvironmentBg(envBgRef.current, w, h);

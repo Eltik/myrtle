@@ -1623,6 +1623,134 @@ pub(crate) fn collect_dynchar_particles(
                     None
                 }
             });
+        // PER-PARTICLE DISSOLVE-UV OFFSET over normalized lifetime.
+        //
+        // The custom floats are packed, in `m_VertexStreams` order, into the texcoord payload
+        // that follows the base UV, and the Ram vertex program consumes them positionally:
+        //
+        //     payload 1,2  -> in_TEXCOORD0.zw : added to the MAIN uv
+        //     payload 3,4  -> in_TEXCOORD1.xy : added to the DISSOLVE uv   <- this block
+        //     payload 5    -> in_TEXCOORD1.z  : + _Amount, the dissolve THRESHOLD (below)
+        //     payload 6    -> in_TEXCOORD1.w  : disturb intensity
+        //     payload 7,8  -> in_TEXCOORD2.xy : added to the DISTURB uv
+        //
+        // read straight out of `Ram/Disturb(CustomData)`:
+        //     u_xlat16_2.xy = dissolveUV + in_TEXCOORD1.xy;
+        //     vs_TEXCOORD2.xy = in_TEXCOORD1.zw;
+        //
+        // Wiš'adel's `stroke_01 (1)` is the case that found this. Her ending wipe is ONE quad
+        // whose main texture is fully opaque (alpha 255 over every texel) and dark, so nothing
+        // but the dissolve can carve it — and her only CustomData curve, Custom1.z ramping
+        // 1.0 -> -0.4511 over an 0.8 s life, lands on payload 3: it SCROLLS the dissolve lookup
+        // across the gradient mask, sweeping the stroke in. Without it the quad draws at its
+        // static `_Amount` from the instant it spawns, stamping a flat grey veil over the whole
+        // frame 0.25 s before the game darkens at all (t=12 MADC 41.7 against 6.4 either side).
+        //
+        // ⚠️ Positional, NOT "the first Vector stream": Civilight Eterna's `guangyun01` has the
+        // identical stream list and authors its curve on Custom1.x — payload 1, the MAIN uv —
+        // so it must NOT become a dissolve scroll. Deriving the position from the stream list
+        // keeps both skins right and needs no per-skin rule.
+        let payload: Vec<(usize, usize)> = renderer
+            .and_then(|r| r.get("m_VertexStreams"))
+            .and_then(Value::as_array)
+            .map(|arr| {
+                let mut out = Vec::new();
+                for id in arr.iter().filter_map(Value::as_i64) {
+                    // Custom1X..Custom1XYZW = 31..=34, Custom2X..Custom2XYZW = 35..=38.
+                    let (slot, n) = match id {
+                        31..=34 => (0usize, (id - 30) as usize),
+                        35..=38 => (1usize, (id - 34) as usize),
+                        _ => continue,
+                    };
+                    for c in 0..n {
+                        out.push((slot, c));
+                    }
+                }
+                out
+            })
+            .unwrap_or_default();
+        if let Some(cdm) = ps.get("CustomDataModule")
+            && b(cdm, "enabled", false)
+            && payload.len() >= 4
+        {
+            // Each axis is sampled independently, then both are interpolated onto the UNION
+            // of their time bases — the two curves need not share keyframes, and in practice
+            // only one axis is usually authored (the other stays 0).
+            // One extractor for every payload PAIR. The positions come from the table above,
+            // so adding an axis is a one-line call rather than another bespoke block.
+            let axis_curve = |idx: usize| -> Vec<(f64, f64)> {
+                let Some(&(slot, comp)) = payload.get(idx) else {
+                    return Vec::new();
+                };
+                if i(cdm, &format!("mode{slot}")).unwrap_or(0) != 1 {
+                    return Vec::new();
+                }
+                let Some(vc) = cdm.get(format!("vector{slot}_{comp}").as_str()) else {
+                    return Vec::new();
+                };
+                let Some(mc) = vc.get("maxCurve") else {
+                    return Vec::new();
+                };
+                let scalar = fd(vc, "scalar", 1.0);
+                let pts = sample_curve(mc, if scalar != 0.0 { scalar } else { 1.0 }, 1.0);
+                if pts.len() > 1 {
+                    pts.iter()
+                        .map(|p| (fd(p, "t", 0.0), fd(p, "v", 0.0)))
+                        .collect()
+                } else {
+                    Vec::new()
+                }
+            };
+            // Interpolate a pair of axes onto the UNION of their time bases — the two curves
+            // need not share keyframes, and usually only one axis is authored.
+            let pair = |a: &Vec<(f64, f64)>, b2: &Vec<(f64, f64)>| -> Option<Vec<Vec<f64>>> {
+                if a.is_empty() && b2.is_empty() {
+                    return None;
+                }
+                let mut times: Vec<f64> = a.iter().chain(b2.iter()).map(|&(t, _)| t).collect();
+                times.sort_by(|x, y| x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal));
+                times.dedup_by(|x, y| (*x - *y).abs() < 1e-6);
+                let at = |c: &Vec<(f64, f64)>, t: f64| -> f64 {
+                    if c.is_empty() {
+                        return 0.0;
+                    }
+                    if t <= c[0].0 {
+                        return c[0].1;
+                    }
+                    for w in c.windows(2) {
+                        if t <= w[1].0 {
+                            let span = w[1].0 - w[0].0;
+                            let f = if span > 1e-9 { (t - w[0].0) / span } else { 0.0 };
+                            return w[0].1 + (w[1].1 - w[0].1) * f;
+                        }
+                    }
+                    c[c.len() - 1].1
+                };
+                let out: Vec<Vec<f64>> = times
+                    .iter()
+                    .map(|&t| vec![t, at(a, t), at(b2, t)])
+                    .collect();
+                (out.len() > 1).then_some(out)
+            };
+            // payload 1,2 -> MAIN uv; 3,4 -> DISSOLVE uv; 7,8 -> DISTURB uv (1-indexed above).
+            if let Some(v) = pair(&axis_curve(0), &axis_curve(1)) {
+                sys["ramMainUVCurve"] = json!(v);
+            }
+            if let Some(v) = pair(&axis_curve(2), &axis_curve(3)) {
+                sys["ramDissolveUVCurve"] = json!(v);
+            }
+            if let Some(v) = pair(&axis_curve(6), &axis_curve(7)) {
+                sys["ramDisturbUVCurve"] = json!(v);
+            }
+            // payload 6 -> the per-particle DISTURB INTENSITY the frontend currently pins at 0.
+            {
+                let di = axis_curve(5);
+                if !di.is_empty() {
+                    sys["ramDisturbIntensityCurve"] =
+                        json!(di.iter().map(|&(t, v)| vec![t, v]).collect::<Vec<_>>());
+                }
+            }
+        }
         if let Some(cdm) = ps.get("CustomDataModule")
             && b(cdm, "enabled", false)
         {

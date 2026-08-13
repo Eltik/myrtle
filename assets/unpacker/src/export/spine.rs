@@ -192,6 +192,23 @@ pub struct SceneRam {
     /// `_DissolveUSpeed`/`_DissolveVSpeed` and the disturb pair, in UV/second.
     pub dissolve_speed: [f32; 2],
     pub disturb_speed: [f32; 2],
+    /// `_AnchorU`/`_AnchorV` — the ZERO POINT the disturb sample is measured against.
+    ///
+    /// The `Particles-L2D/Disturb/Disturb Anchor` family computes its displacement as
+    /// `(sample - anchor) * intensity`, not `sample * intensity`:
+    ///
+    /// ```glsl
+    /// u_xlat16_8   = texture(_DisturTex, uv).x;
+    /// u_xlat16_1.xy = vec2(u_xlat16_8) + (-vec2(_AnchorU, _AnchorV));
+    /// u_xlat16_1.xy = u_xlat16_1.xy * vec2(_IntensityU, _IntensityV) + vs_TEXCOORD0.xy;
+    /// ```
+    ///
+    /// Without the subtraction a mid-grey map (sample ~0.5) displaces by a CONSTANT half an
+    /// intensity instead of oscillating around zero, i.e. a static shift rather than a warp.
+    /// Defaults to 0.0, which reproduces the previous `sample * intensity` exactly, so every
+    /// already-shipping `Ram/` layer is unchanged.
+    pub anchor_u: f32,
+    pub anchor_v: f32,
 }
 
 /// One textured mesh quad of the background scene, resolved to world geometry
@@ -280,6 +297,19 @@ pub struct BgQuad {
     /// at runtime, so its serialized transform (and therefore the baked `pos` above) is
     /// only an editor pose. `None` = a world-fixed scene quad (the common case).
     pub follow: Option<BgFollow>,
+    /// SOURCE GameObject path_id, for diagnostics only — never emitted to JSON.
+    ///
+    /// Scene layers export ANONYMOUSLY (`idx`/`pos`/`sort`/`tex`/`tint`/`uv` and nothing else),
+    /// so there is no way to ask "which object is layer 23?" from the output. That gap silently
+    /// invalidated a corpus scan: matching scroller GameObjects against exported layer names
+    /// returned 0 hits on all nine references — not because the objects were unexported, but
+    /// because layers carry no name to match. `DYNCHAR_LAYERMAP=1` prints the mapping at the
+    /// emission site so attribution is possible without guessing at index alignment (which
+    /// the drop heuristics break anyway).
+    pub go_pid: i64,
+    /// Source GameObject name, resolved at construction (where the object map is in scope).
+    /// Diagnostics only — never emitted.
+    pub go_name: String,
 }
 
 /// A scene quad's runtime bone attachment (spine-unity `BoneFollower`). At runtime the
@@ -1783,8 +1813,26 @@ fn collect_dynchar_bg_quads(
                         diss_pid = None;
                         diss_val = None;
                     }
-                    let (dist_pid, dist_val, dist_st) =
-                        super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
+                    // TWO SPELLINGS. The `Ram/` family binds `_DisturbTex`; the
+                    // `Particles-L2D/Disturb/*` family spells the SAME slot `_DisturTex`
+                    // (no `b`) while still using the `b` spelling for its speed floats — the
+                    // mixed naming is in the shipped GLSL, not a transcription slip. Reading
+                    // only the long name resolved nothing on that family, so a layer already
+                    // admitted by its live dissolve drew with `uHasDisturb = 0` and no warp
+                    // at all. Corpus-wide the short spelling is on 444 materials against the
+                    // long one's 1881, so this is a second population rather than an edge case.
+                    //
+                    // ⚠️ This deliberately does NOT change ADMISSION — a disturb-only material
+                    // still fails `admit` below. Porting disturb-only layers was measured worse
+                    // (Virtuosa 35.322 -> 37.770); this only completes layers that are already in.
+                    let (dist_pid, dist_val, dist_st) = {
+                        let long = super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
+                        if long.0.is_some() && long.1.is_some() {
+                            long
+                        } else {
+                            super::particles::mat_texenv(all_objects, mat, "_DisturTex")
+                        }
+                    };
                     let has = |p: Option<i64>, v: &Option<Value>| p.is_some() && v.is_some();
                     // What a newly admitted family must show is a LIVE DISSOLVE: the
                     // material binds `_DissolveTex` and leaves `_ToggleUseDissolve` on
@@ -1845,6 +1893,8 @@ fn collect_dynchar_bg_quads(
                             border_width2: if two_map { blend("_BorderWidth_02", 0.1) as f32 } else { 0.1 },
                             amount: if two_map { blend("_Amount_01", 0.5) } else { blend("_Amount", 0.5) } as f32,
                             border_width: if two_map { blend("_BorderWidth_01", 0.1) } else { blend("_BorderWidth", 0.1) } as f32,
+                            anchor_u: blend("_AnchorU", 0.0) as f32,
+                            anchor_v: blend("_AnchorV", 0.0) as f32,
                             intensity_u: blend("_IntensityU", 0.0) as f32,
                             intensity_v: blend("_IntensityV", 0.0) as f32,
                             disturb_influence_dissolve_uv: blend("_DisturbInfluenceDissolveUV", 0.0)
@@ -2155,6 +2205,8 @@ fn collect_dynchar_bg_quads(
             st_curve,
             ram,
             follow,
+            go_pid,
+            go_name: host.go_name(all_objects, go_pid),
         });
     }
 
@@ -4003,7 +4055,48 @@ fn export_scene(
             .collect()
     };
 
+    // CROSS-ROOT DUPLICATES. An entrance scene bundles BOTH prefab roots' layers, and for
+    // several skins the idle root is a near-copy of the entrance root's scenery: Muelsyse ships
+    // `bg_sky_01`, `bg_cloud_01`, `bg_water_01`, `bg_tree_01`, every `water_line_*` and every
+    // `ribbon_*` TWICE — once from her own root (always drawn) and once from the idle root
+    // (gated by `root_reveal_from`). The gate reveals the second copy without retiring the
+    // first, so from the transform beat onward every one of those layers draws twice, and an
+    // alpha-blended layer composited over itself is markedly heavier than the game's single
+    // draw. That is why her error STEPS at `entranceTransform` (13.0) and never recovers:
+    // t=13 scores 13.2 and t=14..19 sit at 23-30.
+    //
+    // The game swaps worlds rather than adding one, so the redundant copy must not be emitted.
+    // Keep the OWN-root layer (it is on screen for the whole cinematic) and drop the cross-root
+    // twin. Measured mue **17.220 -> 11.755**, every other reference bit-identical.
+    //
+    // The key is the source GameObject NAME alone, and that was measured against tighter keys
+    // rather than assumed — the two roots re-author the same object with different draw data:
+    //
+    //     (name, sort, tex)  -> mue 12.458      (name, sort) -> 12.435      (name) -> 11.755
+    //
+    // `ribbon_19` is the case that shows why: both roots carry it at sort -5, but the idle copy
+    // binds a different `_MainTex` (4 vs 12), so any key including the texture leaves it doubled.
+    //
+    // ⚠️ Only ever drops a TWIN. A cross-root layer with NO own-root counterpart is genuine extra
+    // scenery and is untouched — Cello's cross-root layers are distinct content (removing their
+    // gate moves t=2/t=5 and leaves her worst beat bit-identical), and she scores 18.006 either
+    // way. Nothing here fires for a skin whose two roots hold different scenery.
+    let own_root_keys: std::collections::HashSet<String> = order
+        .iter()
+        .filter(|q| q.root_reveal_from.is_none())
+        .map(|q| q.go_name.clone())
+        .collect();
+    let mut dropped_twins = 0usize;
+    // (reported after the loop so a corpus export shows where it fires)
+
     for quad in order {
+        // Cross-root duplicate of a layer we already draw — see `own_root_keys` above.
+        if quad.root_reveal_from.is_some()
+            && own_root_keys.contains(&quad.go_name)
+        {
+            dropped_twins += 1;
+            continue;
+        }
         // A frozen burst copy samples the SAME atlas sub-rect as the particle system it
         // duplicates. A quad reading a DIFFERENT `_MainTex_ST` rect of a shared atlas is
         // distinct art and must survive: Virtuosa "Diversity in Oneness"'s `window/lan_01`
@@ -4473,6 +4566,8 @@ fn export_scene(
                     "disturbST": r.disturb_st,
                     "amount": r.amount,
                     "borderWidth": r.border_width,
+                    "anchorU": r.anchor_u,
+                    "anchorV": r.anchor_v,
                     "intensityU": r.intensity_u,
                     "intensityV": r.intensity_v,
                     "disturbInfluenceDissolveUV": r.disturb_influence_dissolve_uv,
@@ -4517,8 +4612,25 @@ fn export_scene(
             bare_sigs.insert(bare_sig, (idx, true));
         } else {
             bare_sigs.insert(bare_sig, (layers.len(), bare_animated));
+            // DIAGNOSTIC (`DYNCHAR_LAYERMAP=1`): emitted-layer index -> source GameObject.
+            // The only way to attribute a scene layer to an object; see `BgQuad::go_pid`.
+            if std::env::var("DYNCHAR_LAYERMAP").is_ok() {
+                eprintln!(
+                    "  [layermap] layer={} go={} name={:?} sort={} tex={} ram={}",
+                    layers.len(),
+                    quad.go_pid,
+                    quad.go_name,
+                    quad.sort,
+                    tex_idx,
+                    quad.ram.is_some(),
+                );
+            }
             layers.push(layer);
         }
+    }
+
+    if dropped_twins > 0 && std::env::var("SCENE_DEBUG").is_ok() {
+        eprintln!("  cross-root twins dropped: {dropped_twins}");
     }
 
     // ENTRANCE only: drop an UNDRIVEN copy of artwork the cinematic drives elsewhere.
