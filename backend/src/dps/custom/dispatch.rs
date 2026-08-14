@@ -18,6 +18,7 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_1037_amiya3" => generated::amiya_medic(unit, enemy),
         "char_218_cuttle" => generated::andreana(unit, enemy),
         "char_291_aglina" => generated::angelina(unit, enemy),
+        "char_1015_aglna2" => generated::angelina_alter(unit, enemy),
         "char_346_aosta" => generated::aosta(unit, enemy),
         "char_365_aprl" => generated::april(unit, enemy),
         "char_332_archet" => generated::archetto(unit, enemy),

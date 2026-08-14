@@ -8049,6 +8049,46 @@
     },
     "conditionals": []
   },
+  "char_1015_aglna2": {
+    "name": "AngelinaTheMellowWish",
+    "class_name": "AngelinaTheMellowWish",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "weightlessTarget",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "talent2",
+        "name": "liftoffSelfBuff",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
   "char_4151_tinman": {
     "name": "TinMan",
     "class_name": "TinMan",
