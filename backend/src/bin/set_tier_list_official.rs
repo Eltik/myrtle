@@ -133,7 +133,10 @@ async fn main() -> Result<()> {
     } else {
         "no longer official"
     };
-    println!("\nDone. '{}' is {} (list_type = {}).", updated.name, verb, updated.list_type);
+    println!(
+        "\nDone. '{}' is {} (list_type = {}).",
+        updated.name, verb, updated.list_type
+    );
     println!(
         "Note: the running server caches tier-list detail by slug. Restart it or \
          flush the cache for this change to show immediately."

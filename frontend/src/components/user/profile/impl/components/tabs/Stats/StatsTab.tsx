@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
-import { AssistantCard } from "./cards/AssistantCard";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
 import { ElitePromotionCard } from "./cards/ElitePromotionCard";
@@ -20,13 +19,11 @@ interface IStatsTabProps {
     roster: IRosterEntry[];
     operatorsStatic: IOperatorListItem[];
     nonDefaultSkinCount: number | null;
-    secretary: string | null;
-    secretarySkinId: string | null;
 }
 
 const EMPTY_OWNED_SKINS = new Set<string>();
 
-export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinCount, secretary, secretarySkinId }: IStatsTabProps) {
+export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: charSkins } = useQuery(skinsIndexQueryOptions());
     const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
@@ -39,7 +36,6 @@ export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinC
 
     return (
         <div className="grid gap-3 pb-8 sm:grid-cols-2">
-            <AssistantCard secretary={secretary} secretarySkinId={secretarySkinId} server={server} operatorsStatic={operatorsStatic} />
             <CollectionCard collectionPercentage={stats.collectionPercentage} totalAvailable={stats.totalAvailable} totalOwned={stats.totalOwned} />
             <ElitePromotionCard eliteBreakdown={stats.eliteBreakdown} />
             <ClassBreakdownCard professions={stats.professions} />

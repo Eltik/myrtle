@@ -8,13 +8,20 @@ export function compactNum(n: number): string {
     return Math.round(n).toString();
 }
 
-/** Signed compact number for deltas: "+25.7k", "-1.2k", "+0". */
+/** Signed compact number for deltas: "+25.7k", "−1.2k", "0". */
 export function signedCompact(n: number): string {
     const sign = n > 0 ? "+" : n < 0 ? "−" : "";
     return `${sign}${compactNum(Math.abs(n))}`;
 }
 
-export interface RoomYieldInfo {
+/** Signed percentage for deltas: "+7%", "−3%". The single source for the sign
+ *  glyphs (true minus U+2212) so every delta in the plan reads the same. */
+export function signedPct(n: number, digits = 0): string {
+    const sign = n >= 0 ? "+" : "−";
+    return `${sign}${Math.abs(n).toFixed(digits)}%`;
+}
+
+interface RoomYieldInfo {
     /** Resource short label, e.g. "LMD", "gold", "EXP". */
     unit: "LMD" | "gold" | "EXP" | null;
     /** Per-day amount in that unit. */
@@ -38,7 +45,21 @@ export function roomYieldLabel(room: IRoomAssignment): string | null {
     return `${compactNum(y.amount)} ${y.unit}/day${star}`;
 }
 
-export interface AssignmentTotals {
+const NON_PROD_LABELS: Record<string, string> = {
+    MEETING: "clue",
+    TRAINING: "training",
+    HIRE: "HR",
+};
+
+/** The Control Center crew's non-production effects ("clue +15% · HR +10%"),
+ *  in each boosted facility's own units - deliberately NOT folded into yield. */
+export function nonProductionLabel(room: IRoomAssignment): string | null {
+    const effects = room.non_production ?? [];
+    if (effects.length === 0) return null;
+    return effects.map((e) => `${NON_PROD_LABELS[e.room_type] ?? e.room_type.toLowerCase()} +${e.value.toFixed(0)}%`).join(" · ");
+}
+
+interface AssignmentTotals {
     lmd: number;
     exp: number;
     /** Combined LMD-equivalent (EXP folded at 1:1). */

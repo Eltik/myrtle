@@ -1,7 +1,7 @@
 import { Skeleton } from "#/components/ui/skeleton";
 import type { IImprovementsResponse } from "#/lib/api/user";
 import type { ISubscore } from "../helpers";
-import { BasePanel } from "./BasePanel";
+import { BasePanel } from "./base/BasePanel";
 import { MedalPanel } from "./MedalPanel";
 import { OperatorPanel } from "./OperatorPanel";
 import { RoguelikePanel } from "./RoguelikePanel";

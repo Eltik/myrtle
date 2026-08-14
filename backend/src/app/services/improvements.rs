@@ -14,13 +14,10 @@ use crate::core::gamedata::types::operator::OperatorProfession;
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment_with_pins, compute_sustained_assignment,
-    morale_recovery, morale_sustained_beneficiaries, sustained_efficiency_of,
 };
 use crate::core::grade::base::buff_registry::{
     BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
 };
-use crate::core::grade::base::perception;
-use crate::core::grade::base::perception::evaluate;
 use crate::core::grade::base::shift_rotation::ShiftRotation;
 use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
 use crate::core::grade::base::types::{
@@ -265,9 +262,6 @@ pub struct BaseImprovements {
     /// The player's CURRENT base exactly as stationed right now - for comparing
     /// against the optimized assignments.
     pub current: Option<BaseAssignmentDto>,
-    /// The player's current base expressed as a rotation (main + sustained value),
-    /// so the comparison can line it up against the optimizer's.
-    pub current_rotation: Option<RotationDto>,
     /// Peak assignment - the highest-efficiency arrangement of the roster across
     /// the existing rooms. Useful as a "what's possible right now" view.
     pub optimal: Option<BaseAssignmentDto>,
@@ -333,8 +327,6 @@ pub struct BaseAssignmentDto {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationDto {
-    /// The main staffing - your best operators, working almost all the time.
-    pub main: BaseAssignmentDto,
     /// Per-room rotation plan: who to swap first, when, and the backup.
     pub rooms: Vec<RoomRotationDto>,
     /// The small shared bench that covers every room: because only one operator is
@@ -399,6 +391,19 @@ pub struct RoomAssignmentDto {
     pub yield_lmd_per_day: f64,
     pub yield_gold_per_day: f64,
     pub yield_exp_per_day: f64,
+    /// Non-production effects this crew provides (Control Center only): clue /
+    /// training / HR speed in each boosted facility's OWN units - never folded
+    /// into the LMD objective. Empty for other rooms.
+    pub non_production: Vec<NonProdEffectDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct NonProdEffectDto {
+    /// The boosted facility's room type ("MEETING", "TRAINING", "HIRE").
+    pub room_type: String,
+    /// Effect % in that facility's own units (clue collection speed,
+    /// Specialization training speed, HR contacting speed).
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -425,6 +430,29 @@ pub struct ShiftRotationDto {
     /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
     /// shift instead of resting the middle one. The frontend badges these as "24/7 - Fiammetta".
     pub sustained: Vec<AssignedOperator>,
+    /// A week-long morale simulation of the recommended rhythm: does it hold up?
+    pub sustainability: SustainabilityDto,
+}
+
+/// The rotation validated by a time-stepped morale simulation (game-true drain
+/// and dorm-recovery rates): honest evidence the plan survives its own rhythm,
+/// instead of an unchecked recommendation.
+#[derive(Debug, Clone, Serialize)]
+pub struct SustainabilityDto {
+    /// "`holds_up`" - nobody runs dry; "depletes" - someone's morale hits zero mid-shift.
+    pub verdict: String,
+    pub horizon_hours: f64,
+    /// Operators whose morale empties while working, with when and where.
+    pub depleted: Vec<DepletedOperatorDto>,
+    /// Peak number of resting operators the dorms could not hold at once.
+    pub dorm_overflow: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DepletedOperatorDto {
+    pub operator: AssignedOperator,
+    pub at_hours: f64,
+    pub room_type: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1207,46 +1235,56 @@ async fn build_base_improvements(
     // and its support plan + consumer payoffs are surfaced below. It's a peak/snapshot
     // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
     // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
-    let perception = is_243_layout(&user_building).then(|| {
-        evaluate(
-            &profiles,
-            &user_building,
-            &game_data.building,
-            &morale_drains,
-            &registry,
-        )
-    });
-
-    // The economy boosts its CONSUMERS (a direct productivity buff the optimizer values and
-    // places) and reserves its SUPPORT operators in the rooms that feed the pool, so the optimal
-    // plan is computed around the full comp - the generators, the Ling/Dusk Control-Center pair,
-    // and a Fiammetta-type morale-swap manager (when owned) - rather than treating the boost as
-    // free. Both are gated to a 243 economy; an empty perception leaves the plain optimum.
+    // NATIVE-FIRST: the pool machinery (plan_optimal_economies + the bundle
+    // oracle below) prices every economy from clauses. The Fiammetta-type
+    // morale-swap manager is rotation logistics, not an economy: reserve one
+    // whenever the roster owns both a morale-conditional generator (Ling) and
+    // a manager - the manager sustains the generator's grant, and she carries
+    // no production value a reservation could waste.
     let mut optimal_registry = registry.clone();
     let mut optimal_pins: Vec<(String, String)> = Vec::new();
-    if let Some(p) = &perception {
-        for (buff_id, pct) in &p.overrides {
+    let has_conditional_generator = profiles.iter().any(|op| {
+        crate::core::grade::base::pools::has_morale_conditional_grant(op, &game_data.building)
+    });
+    let rotation_manager = has_conditional_generator
+        .then(|| {
+            crate::core::grade::base::assignment::morale_swap_enabler(
+                &profiles,
+                &game_data.building,
+            )
+        })
+        .flatten();
+    if let Some(manager) = &rotation_manager {
+        optimal_pins.push((manager.clone(), "DORMITORY".to_string()));
+    }
+
+    // Native pool economies (Senshi's Monster Meals, Mr. Nothing's and
+    // Rosmontis' dorm-fed chains): the same override-and-pin pattern, solved
+    // from clauses. A consumer is only credited when every generator feeding
+    // it is the consumer themself or pinned by the plan - never phantom value
+    // from an operator the search might not seat. Perception's richer
+    // economics win any overlap.
+    let native_economies = crate::core::grade::base::pools::plan_optimal_economies(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+    );
+    for (buff_id, pct) in &native_economies.overrides {
+        if optimal_registry.get(buff_id).is_none_or(|s| {
+            !matches!(
+                s,
+                BuffResolutionStrategy::PoolPayoff { .. }
+                    | BuffResolutionStrategy::GlobalEffect { .. }
+            )
+        }) {
             optimal_registry.insert(
                 buff_id.clone(),
-                BuffResolutionStrategy::DirectEfficiency { value: *pct },
+                BuffResolutionStrategy::PoolPayoff { pct: *pct },
             );
-        }
-        // Global Control-Center consumers (Sakiko's Passion -> all Factories) fold in as a
-        // whole-room buff, so the optimizer values stationing them in the Control Center.
-        for (buff_id, (target_room, pct)) in &p.global_overrides {
-            optimal_registry.insert(
-                buff_id.clone(),
-                BuffResolutionStrategy::GlobalEffect {
-                    target_room: target_room.clone(),
-                    bonus_pct: *pct,
-                },
-            );
-        }
-        optimal_pins.extend(p.support.iter().cloned());
-        if let Some(manager) = &p.rotation_manager {
-            optimal_pins.push((manager.clone(), "DORMITORY".to_string()));
         }
     }
+    optimal_pins.extend(native_economies.pins.iter().cloned());
 
     let current = compute_current_assignment(
         &profiles,
@@ -1256,7 +1294,7 @@ async fn build_base_improvements(
         &morale_drains,
         None,
     );
-    let optimal = compute_optimal_assignment_with_pins(
+    let mut optimal = compute_optimal_assignment_with_pins(
         &profiles,
         &user_building,
         &game_data.building,
@@ -1264,6 +1302,67 @@ async fn build_base_improvements(
         &morale_drains,
         &optimal_pins,
     );
+    // Joint-seating bundles (the Sui Control-Center economy): each bundle
+    // packages generator pins + solved consumer overrides, and the OPTIMIZER
+    // judges the seat economics - run the search with the bundle and keep it
+    // only if the realized total yield improves. Displacement costs (globals
+    // the pinned CC seats would otherwise carry) show up in the yield, so no
+    // hand-modeled tradeoff is needed.
+    for bundle in crate::core::grade::base::pools::candidate_bundles(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+    ) {
+        let mut trial_registry = optimal_registry.clone();
+        for (buff_id, pct) in &bundle.overrides {
+            // Never downgrade: a consumer already priced higher by another
+            // plan (native economies, perception) keeps its better value.
+            let existing = match trial_registry.get(buff_id) {
+                Some(BuffResolutionStrategy::PoolPayoff { pct: p }) => *p,
+                _ => f64::NEG_INFINITY,
+            };
+            if *pct > existing {
+                trial_registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPayoff { pct: *pct },
+                );
+            }
+        }
+        // Pool-scaled Control-Center globals ride the same never-downgrade
+        // rule against whatever global value another plan already folded.
+        for (buff_id, target_room, pct) in &bundle.globals {
+            let existing = match trial_registry.get(buff_id) {
+                Some(BuffResolutionStrategy::GlobalEffect { bonus_pct, .. }) => *bonus_pct,
+                _ => f64::NEG_INFINITY,
+            };
+            if *pct > existing {
+                trial_registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::GlobalEffect {
+                        target_room: target_room.clone(),
+                        bonus_pct: *pct,
+                    },
+                );
+            }
+        }
+        let mut trial_pins = optimal_pins.clone();
+        trial_pins.extend(bundle.pins.iter().cloned());
+        let trial = compute_optimal_assignment_with_pins(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &trial_registry,
+            &morale_drains,
+            &trial_pins,
+        );
+        use crate::core::grade::base::assignment::assignment_value;
+        if assignment_value(&trial.rooms) > assignment_value(&optimal.rooms) + 1e-9 {
+            optimal = trial;
+            optimal_registry = trial_registry;
+            optimal_pins = trial_pins;
+        }
+    }
     let sustained = compute_sustained_assignment(
         &profiles,
         &user_building,
@@ -1272,71 +1371,54 @@ async fn build_base_improvements(
         &morale_drains,
     );
 
-    // The player's current base as a rotation main, so the comparison can show
-    // their sustained output against the optimizer's. A morale-swap manager (Fiammetta) the player
-    // owns holds one operator (e.g. a 24/7 Proviso) at full morale, so credit it here too.
-    let cur_recovery = morale_recovery(&user_building);
-    let cur_sustained_set = morale_sustained_beneficiaries(
-        &current,
-        &profiles,
-        &morale_drains,
-        cur_recovery,
-        &game_data.building,
-    );
-    let current_sustained = sustained_efficiency_of(
-        &current,
-        &profiles,
-        &morale_drains,
-        cur_recovery,
-        &registry,
-        &game_data.building,
-        &cur_sustained_set,
-    );
-    let current_rotation = Some(rotation_to_dto(
-        &RotationAssignment {
-            main: current.clone(),
-            rooms: Vec::new(),
-            shared_bench: Vec::new(),
-            sets: Vec::new(),
-            sustained_efficiency: current_sustained,
-        },
-        game_data,
-    ));
-
-    let current_dto = base_assignment_to_dto(&current, game_data);
-    let optimal_dto = base_assignment_to_dto(&optimal, game_data);
+    let current_dto = base_assignment_to_dto(&current, game_data, &profiles, &registry);
+    let optimal_dto = base_assignment_to_dto(&optimal, game_data, &profiles, &optimal_registry);
     let rotation_dto = rotation_to_dto(&sustained, game_data);
     let layout = build_layout_summary(&user_building);
 
-    // The shift rotation is only shown for a 243 base layout (2 trading posts,
-    // 4 factories, 3 power plants) - the structure the rotation is designed around.
-    let shift_rotation = if is_243_layout(&user_building) {
+    // The shift rotation plans over trading/factory/power structures generically
+    // (group tiling, gold-split and power squads all derive from the actual
+    // rooms), so any base with the full production spread gets one - 243 and
+    // 252 are the layouts the tests pin.
+    // The rotation plans with the same economy-aware registry and generator
+    // pins as the optimal view (PoolPayoff overrides from perception, native
+    // pool plans, and accepted bundles): consumers price their solved payoff
+    // in team selection, and pinned generators hold their seats every shift.
+    let shift_rotation = if has_shift_rotation_layout(&user_building) {
         let rotation = recommend_shift_rotation(
             &profiles,
             &user_building,
             &game_data.building,
-            &registry,
+            &optimal_registry,
             &morale_drains,
+            &optimal_pins,
         );
         Some(shift_rotation_to_dto(
             &rotation,
             game_data,
             &profiles,
             &user_building,
-            &registry,
+            &optimal_registry,
             &morale_drains,
         ))
     } else {
         None
     };
 
-    let perception = perception
-        .as_ref()
-        .and_then(|p| perception_to_dto(p, game_data));
+    let perception = native_economy_dto(
+        &registry,
+        &optimal_registry,
+        &optimal_pins,
+        &profiles,
+        &user_building,
+        &morale_drains,
+        rotation_manager.as_deref(),
+        has_conditional_generator,
+        game_data,
+    );
 
     Ok(BaseImprovements {
         current: Some(current_dto),
-        current_rotation,
         optimal: Some(optimal_dto),
         rotation: Some(rotation_dto),
         layout,
@@ -1345,26 +1427,103 @@ async fn build_base_improvements(
     })
 }
 
-/// Build the resource-economy plan DTO, or `None` when the roster powers no economy on this
-/// base. Surfaces both the support generators to station and the production operators the
-/// economy boosts (with their bonus).
-fn perception_to_dto(
-    result: &perception::PerceptionResult,
+/// Build the resource-economy plan DTO from the COMMITTED plan itself: every
+/// buff the optimal registry re-priced (pool payoffs, pool-scaled globals)
+/// plus the generator seats the plan reserved. `None` when the plan committed
+/// no economy. Sustained scales the peak by the mean uptime of the plan's
+/// OTHER pinned generators - the pool only stays full while they work; the
+/// consumer's own co-present share counts in full. A coarser factor than the
+/// old per-contribution weighting, from the same uptime inputs.
+#[allow(clippy::too_many_arguments)]
+fn native_economy_dto(
+    base_registry: &HashMap<String, BuffResolutionStrategy>,
+    optimal_registry: &HashMap<String, BuffResolutionStrategy>,
+    optimal_pins: &[(String, String)],
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    morale_drains: &HashMap<String, f64>,
+    rotation_manager: Option<&str>,
+    has_conditional_generator: bool,
     game_data: &GameData,
 ) -> Option<PerceptionPlanDto> {
-    if result.consumers.is_empty() {
+    use crate::core::grade::base::assignment::{morale_recovery, op_uptime};
+
+    // The plan's generator seats: every reserved non-production pin except the
+    // morale-swap manager (surfaced separately).
+    let support: Vec<(String, String)> = {
+        let mut seen = std::collections::HashSet::new();
+        optimal_pins
+            .iter()
+            .filter(|(id, room)| {
+                Some(id.as_str()) != rotation_manager
+                    && room != "MANUFACTURE"
+                    && room != "TRADING"
+                    && seen.insert(id.clone())
+            })
+            .cloned()
+            .collect()
+    };
+
+    // Mean uptime of the OTHER pinned generators, per consumer.
+    let recovery = morale_recovery(building);
+    let sustain_factor = |consumer: &str| -> f64 {
+        let ups: Vec<f64> = support
+            .iter()
+            .filter(|(id, _)| id != consumer)
+            .filter_map(|(id, _)| profiles.iter().find(|p| &p.char_id == id))
+            .map(|p| op_uptime(p, morale_drains, recovery))
+            .collect();
+        if ups.is_empty() {
+            1.0
+        } else {
+            ups.iter().sum::<f64>() / ups.len() as f64
+        }
+    };
+
+    // Consumers = the optimal registry's economy re-pricings.
+    let mut by_char: HashMap<String, PerceptionConsumerDto> = HashMap::new();
+    for (buff_id, strategy) in optimal_registry {
+        let (room_type, pct) = match strategy {
+            BuffResolutionStrategy::PoolPayoff { pct } => {
+                let Some(buff) = game_data.building.buffs.get(buff_id) else {
+                    continue;
+                };
+                (buff.room_type.clone(), *pct)
+            }
+            BuffResolutionStrategy::GlobalEffect {
+                target_room,
+                bonus_pct,
+            } if base_registry.get(buff_id) != Some(strategy) => (target_room.clone(), *bonus_pct),
+            _ => continue,
+        };
+        if pct <= 0.0 {
+            continue;
+        }
+        let Some(owner) = profiles
+            .iter()
+            .find(|p| p.available_buffs.iter().any(|b| b == buff_id))
+        else {
+            continue;
+        };
+        let sustained = pct * sustain_factor(&owner.char_id);
+        let slot = by_char
+            .entry(owner.char_id.clone())
+            .or_insert_with(|| PerceptionConsumerDto {
+                operator: assigned_operator(&owner.char_id, game_data),
+                room_type: room_type.clone(),
+                bonus_pct: 0.0,
+                sustained_pct: 0.0,
+            });
+        if pct > slot.bonus_pct {
+            slot.room_type = room_type;
+            slot.bonus_pct = pct;
+            slot.sustained_pct = sustained;
+        }
+    }
+    if by_char.is_empty() {
         return None;
     }
-    let mut consumers: Vec<PerceptionConsumerDto> = result
-        .consumers
-        .iter()
-        .map(|c| PerceptionConsumerDto {
-            operator: assigned_operator(&c.char_id, game_data),
-            room_type: c.room_type.clone(),
-            bonus_pct: c.bonus_pct,
-            sustained_pct: c.sustained_pct,
-        })
-        .collect();
+    let mut consumers: Vec<PerceptionConsumerDto> = by_char.into_values().collect();
     // Strongest bonus first - a stable, meaningful order for the UI.
     consumers.sort_by(|a, b| {
         b.bonus_pct
@@ -1372,8 +1531,7 @@ fn perception_to_dto(
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     Some(PerceptionPlanDto {
-        support: result
-            .support
+        support: support
             .iter()
             .map(|(id, room)| PerceptionSupportDto {
                 operator: assigned_operator(id, game_data),
@@ -1381,17 +1539,15 @@ fn perception_to_dto(
             })
             .collect(),
         consumers,
-        rotation_manager: result
-            .rotation_manager
-            .as_ref()
-            .map(|id| assigned_operator(id, game_data)),
-        needs_rotation_manager: result.needs_rotation_manager,
+        rotation_manager: rotation_manager.map(|id| assigned_operator(id, game_data)),
+        needs_rotation_manager: has_conditional_generator && rotation_manager.is_none(),
     })
 }
 
-/// A "243" base: exactly 2 trading posts, 4 factories, and 3 power plants. The
-/// shift rotation is built for this layout, so it is only offered for it.
-fn is_243_layout(building: &UserBuilding) -> bool {
+/// A base with the full production spread the shift rotation plans over: at
+/// least one trading post, a factory pair to split, and a power plant. Covers
+/// 243 and 252 (the tested layouts) and degrades gracefully for others.
+fn has_shift_rotation_layout(building: &UserBuilding) -> bool {
     let count = |room_type: &str| {
         building
             .rooms
@@ -1399,7 +1555,7 @@ fn is_243_layout(building: &UserBuilding) -> bool {
             .filter(|r| r.room_type == room_type)
             .count()
     };
-    count("TRADING") == 2 && count("MANUFACTURE") == 4 && count("POWER") == 3
+    count("TRADING") >= 1 && count("MANUFACTURE") >= 2 && count("POWER") >= 1
 }
 
 /// For each rotation cell, find the player's CURRENT preset team - across every room of the
@@ -1680,13 +1836,60 @@ pub fn shift_rotation_to_dto(
             rooms: room_dtos,
         });
     }
+    // Validate the recommended rhythm with the game-true morale simulation and
+    // ship the verdict alongside the plan.
+    let targeted = crate::core::grade::base::buff_registry::targeted_morale_effects(
+        &game_data.building.buffs,
+        &build_name_to_char(&game_data.operators),
+    );
+    let sim = crate::core::grade::base::sustain_sim::simulate_rotation(
+        rotation,
+        profiles,
+        building,
+        &game_data.building,
+        registry,
+        morale_drains,
+        &targeted,
+    );
+    let room_type_of = |slot_id: &str| -> String {
+        rotation
+            .shifts
+            .iter()
+            .flat_map(|s| s.rooms.iter())
+            .find(|r| r.slot_id == slot_id)
+            .map_or_else(|| slot_id.to_string(), |r| r.room_type.clone())
+    };
+    let sustainability = SustainabilityDto {
+        verdict: match sim.verdict {
+            crate::core::grade::base::sustain_sim::Verdict::HoldsUp => "holds_up".to_string(),
+            crate::core::grade::base::sustain_sim::Verdict::Depletes => "depletes".to_string(),
+        },
+        horizon_hours: sim.horizon_hours,
+        depleted: sim
+            .depleted
+            .iter()
+            .map(|d| DepletedOperatorDto {
+                operator: assigned_operator(&d.char_id, game_data),
+                at_hours: d.at_hours,
+                room_type: room_type_of(&d.slot_id),
+            })
+            .collect(),
+        dorm_overflow: sim.dorm_overflow,
+    };
+
     ShiftRotationDto {
         shifts: shift_dtos,
         sustained: ops(&rotation.sustained),
+        sustainability,
     }
 }
 
-fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {
+fn base_assignment_to_dto(
+    asn: &BaseAssignment,
+    game_data: &GameData,
+    profiles: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> BaseAssignmentDto {
     use crate::core::grade::base::yield_model::BaseFlows;
 
     // Realized output with the gold→trade coupling (LMD = min(made, sold) × 500).
@@ -1705,7 +1908,7 @@ fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAss
         rooms: asn
             .rooms
             .iter()
-            .map(|r| room_assignment_to_dto(r, game_data))
+            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry))
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
         yield_lmd_per_day: flows.realized_lmd(),
@@ -1727,7 +1930,6 @@ fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
 
 fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDto {
     RotationDto {
-        main: base_assignment_to_dto(&asn.main, game_data),
         rooms: asn
             .rooms
             .iter()
@@ -1780,7 +1982,12 @@ fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDt
     }
 }
 
-fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAssignmentDto {
+fn room_assignment_to_dto(
+    room: &RoomAssignment,
+    game_data: &GameData,
+    profiles: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> RoomAssignmentDto {
     let y = room_yield(
         &room.room_type,
         room.formula_type.as_deref(),
@@ -1788,6 +1995,18 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
         room.total_efficiency,
         room.order_value,
     );
+    let non_production = if room.room_type == "CONTROL" {
+        crate::core::grade::base::assignment::cc_non_production_effects(
+            &room.operators,
+            profiles,
+            registry,
+        )
+        .into_iter()
+        .map(|(room_type, value)| NonProdEffectDto { room_type, value })
+        .collect()
+    } else {
+        Vec::new()
+    };
     RoomAssignmentDto {
         slot_id: room.slot_id.clone(),
         room_type: room.room_type.clone(),
@@ -1804,6 +2023,7 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
         yield_lmd_per_day: y.lmd_per_day,
         yield_gold_per_day: y.gold_per_day,
         yield_exp_per_day: y.exp_per_day,
+        non_production,
     }
 }
 

@@ -38,15 +38,14 @@ use crate::core::gamedata::types::building::BuildingDataFile;
 use super::types::UserRoom;
 use super::{
     assignment::{
-        assign_auxiliary_rooms, base_wide_relevant, base_wide_unlocked, build_op_index,
-        compute_team_efficiency, effective_facility_counts, fill_remaining_slots, morale_recovery,
-        num_morale_swap_managers, op_uptime, resolve_base_wide, room_search_score,
-        rotation_cc_plan,
+        assign_auxiliary_rooms, base_wide_relevant, build_op_index, compute_team_efficiency,
+        effective_facility_counts, fill_remaining_slots, morale_recovery, num_morale_swap_managers,
+        op_uptime, resolve_base_wide, resolve_room_presence, room_presence_relevant,
+        room_search_score, rotation_cc_plan,
     },
     buff_registry::BuffResolutionStrategy,
-    evaluate::evaluate_buff,
     team_select::plan_production_groups,
-    types::{EvalContext, OperatorBaseProfile, UserBuilding},
+    types::{OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
 };
 
@@ -293,17 +292,30 @@ pub fn recommend_shift_rotation(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
 ) -> ShiftRotation {
-    if !base_wide_relevant(operators, registry) {
-        return rotation_core(operators, building, building_data, registry, morale_drains);
+    if !base_wide_relevant(operators, registry) && !room_presence_relevant(operators, registry) {
+        return rotation_core(
+            operators,
+            building,
+            building_data,
+            registry,
+            morale_drains,
+            pins,
+        );
     }
-    let pass1_registry = resolve_base_wide(registry, &HashSet::new());
+    let pass1_registry = resolve_room_presence(
+        &resolve_base_wide(registry, &HashSet::new()),
+        &HashMap::new(),
+        operators,
+    );
     let pass1 = rotation_core(
         operators,
         building,
         building_data,
         &pass1_registry,
         morale_drains,
+        pins,
     );
     let deployed: HashSet<String> = pass1
         .shifts
@@ -311,16 +323,33 @@ pub fn recommend_shift_rotation(
         .flat_map(|s| s.rooms.iter().filter(|r| r.active))
         .flat_map(|r| r.recommended.iter().cloned())
         .collect();
-    if !base_wide_unlocked(operators, registry, &deployed) {
+    // Room-presence gates resolve against the room types the FIRST shift stations
+    // people in (the rotation keeps room type per slot constant across shifts).
+    let deployed_rooms: HashMap<String, String> = pass1
+        .shifts
+        .iter()
+        .flat_map(|s| s.rooms.iter().filter(|r| r.active))
+        .flat_map(|r| {
+            r.recommended
+                .iter()
+                .map(|op| (op.clone(), r.room_type.clone()))
+        })
+        .collect();
+    let pass2_registry = resolve_room_presence(
+        &resolve_base_wide(registry, &deployed),
+        &deployed_rooms,
+        operators,
+    );
+    if pass2_registry == pass1_registry {
         return pass1;
     }
-    let pass2_registry = resolve_base_wide(registry, &deployed);
     rotation_core(
         operators,
         building,
         building_data,
         &pass2_registry,
         morale_drains,
+        pins,
     )
 }
 
@@ -330,13 +359,33 @@ fn rotation_core(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
 ) -> ShiftRotation {
-    let facility_counts = effective_facility_counts(building, operators, registry);
+    let facility_counts = effective_facility_counts(building, operators, registry, building_data);
     let total_dorm_levels = building.total_dorm_levels();
     let production_rooms: Vec<&UserRoom> = building
         .rooms
         .iter()
         .filter(|r| is_production_room(&r.room_type))
+        .collect();
+
+    // Economy pins - the generator seats the pool plans and accepted bundles
+    // reserve (Ling/Dusk in the CC, Senshi in a dormitory, robots in plants).
+    // They are reserved from EVERY rotation pool so production/aux/power can't
+    // burn them as fillers; Control-Center pins additionally join BOTH squads,
+    // because the economy needs them present whenever its consumers work. The
+    // morale simulation runs on the result and reports honestly if that 24/7
+    // presence doesn't hold.
+    let roster_ids: HashSet<&str> = operators.iter().map(|o| o.char_id.as_str()).collect();
+    let pinned_ids: HashSet<String> = pins
+        .iter()
+        .filter(|(id, _)| roster_ids.contains(id.as_str()))
+        .map(|(id, _)| id.clone())
+        .collect();
+    let cc_pinned: Vec<String> = pins
+        .iter()
+        .filter(|(id, rt)| rt == "CONTROL" && pinned_ids.contains(id))
+        .map(|(id, _)| id.clone())
         .collect();
 
     // Control Center Squad 1 (with its global bonuses / faction conditions) and the
@@ -347,11 +396,14 @@ fn rotation_core(
         building,
         building_data,
         registry,
+        &cc_pinned,
         |assigned, global_bonuses, cc_conditions| {
+            let mut assigned = assigned.clone();
+            assigned.extend(pinned_ids.iter().cloned());
             plan_production_groups(
                 &production_rooms,
                 operators,
-                assigned,
+                &assigned,
                 registry,
                 building_data,
                 &facility_counts,
@@ -451,6 +503,7 @@ fn rotation_core(
     if !sustained_label.is_empty() {
         let mut exclude: HashSet<String> = cc_plan.squad1.iter().cloned().collect();
         exclude.extend(sustained_label.iter().cloned());
+        exclude.extend(pinned_ids.iter().cloned());
         // Teams re-planned around the pin: the pinned operator is out of the pool and
         // their permanent slot shrinks the teams that only ever work their room.
         let reserved: HashMap<String, usize> = kept_by_room
@@ -480,9 +533,15 @@ fn rotation_core(
         }
     }
     used.extend(sustained_label.iter().cloned());
+    used.extend(pinned_ids.iter().cloned());
 
-    // Office / Reception: Squad 1 from the best leftovers, Squad 2 from what remains.
-    let aux_squads = |assigned: &mut HashSet<String>| -> HashMap<String, (String, Vec<String>)> {
+    // Office / Reception: Squad 1 from the best leftovers, Squad 2 from what
+    // remains. Squad 1 works a 24h block (its shifts wrap consecutive), so its
+    // pick excludes heavy-drainers - they stay in the pool for the single-shift
+    // Squad 2, the seat their morale bar can actually finish.
+    let aux_squads = |assigned: &mut HashSet<String>,
+                      only_24h_sustainable: bool|
+     -> HashMap<String, (String, Vec<String>)> {
         let mut rooms = Vec::new();
         assign_auxiliary_rooms(
             &mut rooms,
@@ -492,6 +551,7 @@ fn rotation_core(
             registry,
             morale_drains,
             assigned,
+            only_24h_sustainable,
         );
         rooms
             .into_iter()
@@ -499,8 +559,8 @@ fn rotation_core(
             .collect()
     };
     let mut assigned = used.clone();
-    let aux1 = aux_squads(&mut assigned);
-    let aux2 = aux_squads(&mut assigned);
+    let aux1 = aux_squads(&mut assigned, true);
+    let aux2 = aux_squads(&mut assigned, false);
 
     // Control Center Squad 2: the best global-bonus fill from the leftovers, so the
     // CC keeps granting bonuses while Squad 1 rests.
@@ -515,6 +575,7 @@ fn rotation_core(
         registry,
         &facility_counts,
         &assigned,
+        morale_drains,
     );
     for plant in &power_plan {
         assigned.extend(plant.main.iter().cloned());
@@ -528,6 +589,23 @@ fn rotation_core(
     // from production, aux, or power. An entirely empty Squad 2 stays empty (dark).
     let mut cc1 = cc_plan.squad1.clone();
     let mut cc2 = cc_squad2;
+    // Seat the Control-Center economy pins in Squad 1 - two of the three shifts
+    // under either pattern, the same realistic uptime the perception economy
+    // priced their payoff at. Both squads would mean a 36h unbroken stretch no
+    // morale bar survives; the generators rest exactly when Squad 2 covers.
+    #[allow(clippy::cast_sign_loss)]
+    let cc_cap = cc_plan.control_slots.max(0) as usize;
+    for id in cc_pinned.iter().rev() {
+        if !cc1.contains(id) {
+            cc1.insert(0, id.clone());
+        }
+    }
+    if cc_cap > 0 {
+        cc1.truncate(cc_cap);
+    }
+    // A pin that Squad 2 also picked on its own merits would work all three
+    // shifts - drop it from the 12h seat so the rest shift survives.
+    cc2.retain(|id| !cc_pinned.contains(id));
     if !cc1.is_empty() {
         fill_remaining_slots(
             &mut cc1,
@@ -535,6 +613,7 @@ fn rotation_core(
             "CONTROL",
             operators,
             building_data,
+            registry,
             &mut assigned,
         );
     }
@@ -545,6 +624,7 @@ fn rotation_core(
             "CONTROL",
             operators,
             building_data,
+            registry,
             &mut assigned,
         );
     }
@@ -583,6 +663,41 @@ fn rotation_core(
             if ti != 0 {
                 g.teams.swap(0, ti);
             }
+        }
+    }
+
+    // A Block pattern turns Squad 1 into a 24-hour seat, so the same gate that
+    // governs every other 24h block applies: a member whose drain can't finish
+    // a 24h bar trades places with a sustaining Squad-2 member (the 12h seat).
+    // Economy pins stay - their around-the-clock presence IS the plan, and the
+    // morale simulation reports honestly if it doesn't hold.
+    if cc_pattern == SquadPattern::Block {
+        let is_pin = |id: &str| cc_pinned.iter().any(|p| p == id);
+        let sustains = |id: &str| {
+            op_index
+                .get(id)
+                .is_none_or(|op| super::sustain_sim::sustains_24h_block(op, morale_drains))
+        };
+        let mut heavy: Vec<String> = Vec::new();
+        cc1.retain(|id| {
+            if is_pin(id) || sustains(id) {
+                true
+            } else {
+                heavy.push(id.clone());
+                false
+            }
+        });
+        for id in heavy {
+            if let Some(j) = cc2
+                .iter()
+                .position(|c| !is_pin(c) && sustains(c) && !cc1.contains(c))
+            {
+                cc1.push(cc2[j].clone());
+                cc2[j] = id;
+            } else if !cc2.contains(&id) && (cc2.len() as i32) < cc_plan.control_slots {
+                cc2.push(id);
+            }
+            // else: benched - no Control-Center seat can hold this drain 24h.
         }
     }
 
@@ -748,17 +863,37 @@ fn rotation_core(
             let (pk, pf) = flip_costs(&p.slot_id, &p.main, &p.backup);
             (k + pk, f + pf)
         });
-        if flip < keep && backup_total + 1e-9 >= main_total {
+        // A flip promotes the old Squad 2 onto Squad 1's 24h block, so it may
+        // only happen when every promoted operator's morale bar survives one.
+        let bar_ok_ids = |ids: &[String]| -> bool {
+            ids.iter().all(|id| {
+                op_index
+                    .get(id.as_str())
+                    .is_none_or(|op| super::sustain_sim::sustains_24h_block(op, morale_drains))
+            })
+        };
+        if flip < keep
+            && backup_total + 1e-9 >= main_total
+            && power_plan.iter().all(|p| bar_ok_ids(&p.backup))
+        {
             for plant in &mut power_plan {
                 std::mem::swap(&mut plant.main, &mut plant.backup);
             }
         }
     }
+    let bar_ok_ids = |ids: &[String]| -> bool {
+        ids.iter().all(|id| {
+            op_index
+                .get(id.as_str())
+                .is_none_or(|op| super::sustain_sim::sustains_24h_block(op, morale_drains))
+        })
+    };
     let mut aux1 = aux1;
     let mut aux2 = aux2;
     for (slot, (_, squad1)) in &mut aux1 {
         if let Some((_, squad2)) = aux2.get_mut(slot)
             && flip_better(slot, squad1, squad2)
+            && bar_ok_ids(squad2)
         {
             std::mem::swap(squad1, squad2);
         }
@@ -766,6 +901,7 @@ fn rotation_core(
     if cc_pattern == SquadPattern::Alternating
         && let Some(cc_slot) = &cc_plan.slot_id
         && flip_better(cc_slot, &cc1, &cc2)
+        && bar_ok_ids(&cc2)
     {
         std::mem::swap(&mut cc1, &mut cc2);
     }
@@ -960,32 +1096,7 @@ fn power_value(
     registry: &HashMap<String, BuffResolutionStrategy>,
     facility_counts: &HashMap<String, usize>,
 ) -> f64 {
-    let ctx = EvalContext {
-        facility_counts,
-        total_dorm_levels: 0,
-        room_teammates: Vec::new(),
-        self_order_limit: 0,
-    };
-    op.available_buffs
-        .iter()
-        .filter(|b| {
-            building_data
-                .buffs
-                .get(*b)
-                .is_some_and(|buff| buff.room_type == "POWER")
-        })
-        .filter_map(|b| registry.get(b))
-        .map(|s| match s {
-            // A facility-count enabler (Greyy the Lightningbearer E2) earns no drone output, but
-            // it must be STATIONED in a power plant for its "+1 Power Plant" to fire and power the
-            // automation factories - so rank it highly here, above ordinary drone operators.
-            BuffResolutionStrategy::FacilityCountModifier {
-                target_room,
-                amount,
-            } if target_room == "POWER" => f64::from(*amount) * 30.0,
-            other => evaluate_buff(other, &ctx),
-        })
-        .fold(0.0, f64::max)
+    super::ledger::op_power_rank_value(op, building_data, registry, facility_counts)
 }
 
 /// A power plant's Squad 1 plus the Squad 2 that covers its alternating rest shift.
@@ -1012,6 +1123,7 @@ fn build_power_plan(
     registry: &HashMap<String, BuffResolutionStrategy>,
     facility_counts: &HashMap<String, usize>,
     used: &HashSet<String>,
+    morale_drains: &HashMap<String, f64>,
 ) -> Vec<PowerPlant> {
     let power_rooms: Vec<&UserRoom> = building
         .rooms
@@ -1044,10 +1156,19 @@ fn build_power_plan(
     // Even split: strongest first, each into the squad with the lower running total
     // (a squad stops accepting once its plant slots are full). With 25/20/20/20/20/15
     // specialists this yields 60/60 rather than best-first's 65/55.
+    let bar_ok = |id: &str| -> bool {
+        operators
+            .iter()
+            .find(|op| op.char_id == id)
+            .is_none_or(|op| super::sustain_sim::sustains_24h_block(op, morale_drains))
+    };
     let mut squads: [(Vec<String>, f64); 2] = [(Vec::new(), 0.0), (Vec::new(), 0.0)];
     for (id, value) in ranked.into_iter().take(per_squad * 2) {
         let pick = (0..2)
             .filter(|&i| squads[i].0.len() < per_squad)
+            // Squad 1's shifts wrap into a 24h block; a heavy-drainer only fits
+            // the single-shift Squad 2.
+            .filter(|&i| i == 1 || bar_ok(&id))
             .min_by(|&a, &b| {
                 squads[a]
                     .1
@@ -1060,8 +1181,9 @@ fn build_power_plan(
         }
     }
     // The split can't always be exactly even; the STRONGER half leads as Squad 1
-    // (it covers shifts 1 & 3 in the displayed cycle), the weaker covers shift 2.
-    if squads[1].1 > squads[0].1 {
+    // (it covers shifts 1 & 3 in the displayed cycle), the weaker covers shift 2 -
+    // unless promoting the stronger half would put a heavy-drainer on the 24h block.
+    if squads[1].1 > squads[0].1 && squads[1].0.iter().all(|id| bar_ok(id)) {
         squads.swap(0, 1);
     }
     let [(squad1, _), (squad2, _)] = squads;

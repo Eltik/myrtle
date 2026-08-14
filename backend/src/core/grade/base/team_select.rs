@@ -277,6 +277,8 @@ fn select_balanced_teams(
                 // Factories can run automation teams (Weedy + facility-count scalers
                 // like Purestream); enumerate them as ordinary candidates.
                 spec.room_type == "MANUFACTURE",
+                // Rotation teams work 24h blocks - heavy-drainers can't finish one.
+                true,
             );
             teams.truncate(CANDIDATES_PER_GROUP);
             teams
@@ -636,6 +638,9 @@ fn pad_teams(
                 }
                 if has_automation_buff(op, registry)
                     || op_is_nullifier(op, &room_type, formula.as_deref(), registry, building_data)
+                    // Padding seats the op into a 24h-block team - a heavy-drainer
+                    // would run dry mid-block.
+                    || !crate::core::grade::base::sustain_sim::sustains_24h_block(op, morale_drains)
                 {
                     continue;
                 }

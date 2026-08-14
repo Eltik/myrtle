@@ -4,7 +4,7 @@
  * These are the real base-UI hues - Trading Post blue, Factory gold, Power Plant
  * green, Control Center deep teal - so the plan reads like the game.
  */
-export const ROOM_COLORS: Record<string, string> = {
+const ROOM_COLORS: Record<string, string> = {
     TRADING: "#0075a9", // blue
     MANUFACTURE: "#ffd800", // gold
     POWER: "#8fc31f", // green
@@ -17,7 +17,7 @@ export const ROOM_COLORS: Record<string, string> = {
 };
 
 /** Raw in-game hue for a room type (falls back to a neutral gray). */
-export function roomColor(roomType: string): string {
+function roomColor(roomType: string): string {
     return ROOM_COLORS[roomType] ?? "#8a8a8a";
 }
 
@@ -26,7 +26,7 @@ export function roomColor(roomType: string): string {
  * toward `--foreground` keeps even the dark Control Center teal and the bright
  * Factory gold legible on both light and dark backgrounds.
  */
-export interface RoomAccent {
+interface RoomAccent {
     /** Raw hue (legend dots). */
     color: string;
     /** Coloured shape border around the room's crew. */
@@ -67,12 +67,19 @@ export function roomLabel(roomType: string): string {
     return ROOM_LABELS[roomType] ?? roomType.charAt(0) + roomType.slice(1).toLowerCase();
 }
 
-/** Short formula tag for a factory (Gold / EXP / Shard), or `null`. */
+/**
+ * Short formula tag for a factory product ("Gold" / "EXP" / "Shard"), or `null`
+ * when the room has no formula configured. Unknown `F_*` codes fall back to a
+ * title-cased form of the code instead of vanishing.
+ */
 export function formulaTag(formula: string | null | undefined): string | null {
+    if (!formula) return null;
     if (formula === "F_GOLD") return "Gold";
     if (formula === "F_EXP") return "EXP";
     if (formula === "F_DIAMOND") return "Shard";
-    return null;
+    const bare = formula.replace(/^F_/, "");
+    if (!bare) return null;
+    return bare.charAt(0) + bare.slice(1).toLowerCase();
 }
 
 /** Room name with its formula tag appended ("Factory · Gold"). */
@@ -80,6 +87,3 @@ export function roomFormulaLabel(roomType: string, formula: string | null | unde
     const tag = formulaTag(formula);
     return tag ? `${roomLabel(roomType)} · ${tag}` : roomLabel(roomType);
 }
-
-/** Distinct room types present in a plan, in a stable display order, for the legend. */
-export const ROOM_LEGEND_ORDER = ["TRADING", "MANUFACTURE", "POWER", "CONTROL", "DORMITORY"] as const;

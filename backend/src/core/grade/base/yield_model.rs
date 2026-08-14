@@ -27,6 +27,15 @@ pub const EXP_TO_LMD: f64 = 1.0;
 const FACTORY_GOLD_PER_DAY_BASE: f64 = 20.0;
 /// Gold bars/day a Trading Post can sell at 100% productivity (no buffs).
 const TRADING_GOLD_SOLD_PER_DAY_BASE: f64 = 20.0;
+/// Drones ("Labor") regenerated per day at 100% recovery speed:
+/// 86400 s / `LaborRecoverTime` (360 s per drone, `building_data.json`).
+const DRONES_PER_DAY_BASE: f64 = 240.0;
+/// LMD-equivalent of one drone, valued at its production use: one drone buys
+/// `ManufactReduceTimeUnit` (180 s) of factory progress per
+/// `ManufactLaborCostUnit` (1), and 180 s of a gold factory is 180/4320 of a
+/// bar (`ManufactFormulas["4"].cost_point`) at 500 LMD. Assumes recovered
+/// drones are spent on production - the standard endgame use.
+const LMD_PER_DRONE: f64 = GOLD_BAR_LMD * 180.0 / 4320.0;
 
 /// EXP/day an `F_EXP` factory produces at 100% productivity, by factory level.
 const fn factory_exp_per_day_base(level: i32) -> f64 {
@@ -51,6 +60,10 @@ pub struct BaseFlows {
     pub gold_sell_capacity: f64,
     /// EXP/day produced by `F_EXP` factories.
     pub exp: f64,
+    /// Summed drone-recovery bonus % from Power Plant operators. The plants'
+    /// inherent recovery is layout-constant, so only operator buffs move the
+    /// objective between assignments.
+    pub drone_recovery_pct: f64,
 }
 
 impl BaseFlows {
@@ -77,6 +90,9 @@ impl BaseFlows {
             ("MANUFACTURE", Some("F_EXP")) => {
                 self.exp += factory_exp_per_day_base(level) * mult;
             }
+            ("POWER", _) => {
+                self.drone_recovery_pct += speed_pct;
+            }
             _ => {}
         }
     }
@@ -88,7 +104,9 @@ impl BaseFlows {
 
     /// Total daily output as a single LMD-equivalent value.
     pub fn total_value(&self) -> f64 {
-        self.realized_lmd() + self.exp * EXP_TO_LMD
+        self.realized_lmd()
+            + self.exp * EXP_TO_LMD
+            + self.drone_recovery_pct / 100.0 * DRONES_PER_DAY_BASE * LMD_PER_DRONE
     }
 }
 

@@ -246,33 +246,6 @@ pub fn compute_match_tags(
 /// Center buffs that target base tags rather than factions.
 const FACTION_BASE_TAG_ALIASES: &[(&str, &str)] = &[("pinus", "knight")];
 
-pub struct EvalContext<'a> {
-    /// How many of each room type exist in the base
-    pub facility_counts: &'a HashMap<String, usize>,
-    /// Total dormitory levels (for &dorm&lv scaling)
-    pub total_dorm_levels: i32,
-    /// Other operators in the same room (borrowed to avoid per-evaluation clones).
-    pub room_teammates: Vec<&'a TeammateInfo>,
-    /// The evaluating operator's OWN order/capacity-limit contribution, so a self-counting
-    /// scaler (Vermeil) can include it on top of `room_teammates`'.
-    pub self_order_limit: i32,
-}
-
-#[derive(Clone)]
-pub struct TeammateInfo {
-    /// `char_id` of the teammate - used to resolve named-teammate conditional
-    /// buffs (e.g. "+65% only when Lappland is in the same room").
-    pub char_id: String,
-    /// Match tags for count-scaling synergies: faction ids + leading words of
-    /// this operator's skill names (e.g. "rhine", "standardization"). May be
-    /// augmented at evaluation time by a skill-type converter in the room.
-    pub match_tags: Vec<String>,
-    pub buff_ids: Vec<String>,
-    /// Sum of `DirectEfficiency` values from this teammate's buffs
-    pub direct_efficiency: f64,
-    pub order_limit_contribution: i32,
-}
-
 #[derive(Clone, Default)]
 pub struct RoomAssignment {
     pub slot_id: String,

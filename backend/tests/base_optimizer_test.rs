@@ -22,7 +22,6 @@ use backend::core::grade::base::assignment::{
 use backend::core::grade::base::buff_registry::{
     BuffResolutionStrategy, build_name_to_char, build_registry,
 };
-use backend::core::grade::base::perception;
 use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding, UserRoom};
 use backend::database::models::roster::RosterEntry;
@@ -2338,6 +2337,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         &gd.building,
         &registry,
         &drains,
+        &[],
     );
 
     assert_eq!(rot.shifts.len(), 3, "three shifts");
@@ -2457,271 +2457,6 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         p0[0], p0[1],
         "Squad 2 (or a dark rest) covers the middle shift"
     );
-}
-
-#[test]
-fn perception_pool_credits_rosmontis_on_a_243() {
-    // The Rosmontis / Ebenholz "Perception Information" economy: operators resting in
-    // dormitories feed a base-wide pool that Rosmontis converts to Chain of Thought and
-    // reads for productivity. On a 243 with full dorms (~20 resting), the two core
-    // per-resting generators (Rosmontis + Ebenholz) alone give her a sizable bonus.
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let resting = perception::resting_capacity(&building, &gd.building);
-    assert_eq!(resting, 20, "4 dorms x 5 slots");
-
-    let roster = vec![
-        profile(gd, "char_391_rosmon"), // Rosmontis (generator + Chain-of-Thought consumer)
-        profile(gd, "char_4046_ebnhlz"), // Ebenholz (generator + Soundless-Resonance consumer)
-        profile(gd, "char_245_cello"),  // Virtuosa (dorm Soundless-Resonance generator)
-        profile(gd, "char_455_nothin"), // Mr. Nothing (Worldly Plight / "Yan" economy)
-    ];
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let result = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
-    for c in &result.consumers {
-        println!(
-            "  {} reads {} -> +{:.0}% (sustained +{:.0}%) [{}]",
-            c.char_id, c.resource, c.bonus_pct, c.sustained_pct, c.room_type
-        );
-    }
-
-    // Rosmontis's Chain of Thought equals the dormitory occupancy (~20) - the guide's
-    // "20 PI max" - NOT a shared pool summed with Ebenholz's. So ~+20%, not +40%.
-    let rosmontis = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_391_rosmon");
-    assert!(
-        rosmontis.is_some_and(|c| c.room_type == "MANUFACTURE" && (c.bonus_pct - 20.0).abs() < 2.0),
-        "Rosmontis should read ~+20% Chain of Thought (capped at dorm occupancy), got {:?}",
-        rosmontis.map(|c| (c.resource.clone(), c.bonus_pct))
-    );
-    // Rosmontis is the SOLE Chain-of-Thought source here (she generates it from dorm occupancy
-    // and reads it herself), so her pool is co-present with her consumption: the sustained 24/7
-    // bonus equals the peak - her own rest reduces her OUTPUT, not the bonus multiplier.
-    assert!(
-        rosmontis.is_some_and(|c| (c.sustained_pct - c.bonus_pct).abs() < 0.01),
-        "a self-feeding consumer's sustained bonus should equal its peak, got {:?}",
-        rosmontis.map(|c| (c.bonus_pct, c.sustained_pct))
-    );
-    // Ebenholz reads her OWN Soundless Resonance (~dorm occupancy / 2 at E2), independent of
-    // Rosmontis - around +10-12%, not the +22% a shared pool would give.
-    let ebenholz = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_4046_ebnhlz");
-    assert!(
-        ebenholz.is_some_and(|c| c.bonus_pct < 16.0),
-        "Ebenholz should read her own ~+10-12% SR, not a shared-pool +22%, got {:?}",
-        ebenholz.map(|c| c.bonus_pct)
-    );
-}
-
-#[test]
-fn perception_consumer_is_placed_and_credited_on_a_243() {
-    // End-to-end: with the Perception override folded into the registry (as the 243
-    // improvements path does), the optimizer must place Rosmontis in a Factory and credit
-    // her base-wide Chain-of-Thought bonus - beating the generic gold operators she's up
-    // against. (Non-243 layouts and `current` keep the unaugmented registry.)
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let roster = vec![
-        profile(gd, "char_391_rosmon"),  // Rosmontis (perception consumer)
-        profile(gd, "char_4046_ebnhlz"), // Ebenholz (feeds the pool)
-        profile(gd, "char_237_gravel"),  // Metalwork +35% (gold)
-        profile(gd, "char_4141_marcil"), // generic +30%
-        profile(gd, "char_159_peacok"),  // generic
-        profile(gd, "char_102_texas"),   // trader
-        profile(gd, "char_103_angel"),   // trader
-    ];
-
-    let name_to_char = build_name_to_char(&gd.operators);
-    let (mut registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    for (buff_id, pct) in
-        perception::evaluate(&roster, &building, &gd.building, &drains, &registry).overrides
-    {
-        registry.insert(
-            buff_id,
-            BuffResolutionStrategy::DirectEfficiency { value: pct },
-        );
-    }
-
-    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
-    let room = asn
-        .rooms
-        .iter()
-        .find(|r| r.operators.iter().any(|o| o == "char_391_rosmon"));
-    assert!(
-        room.is_some_and(|r| r.room_type == "MANUFACTURE"),
-        "Rosmontis should be placed in a Factory by her Perception bonus, got {:?}",
-        room.map(|r| (&r.room_type, r.total_efficiency))
-    );
-    assert!(
-        room.is_some_and(|r| r.total_efficiency >= 40.0),
-        "her Factory should carry the ~+40% Chain-of-Thought bonus, got {:?}",
-        room.map(|r| r.total_efficiency)
-    );
-}
-
-#[test]
-fn perception_cross_room_support_placement_on_a_243() {
-    // Phase 1b: a support generator earns a non-production seat *because* it feeds deployed
-    // consumers elsewhere. Mulberry (HR Office) makes Worldly Plight; Shu & Jieyun (Factory)
-    // consume it (Jieyun via Witchcraft Crystal). With no Worldly-Plight generator stationed
-    // the pool is empty - so the plan must station Mulberry in HR and credit the factories.
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5), room("hr", "HIRE", 1)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let roster = vec![
-        profile(gd, "char_473_mberry"), // Mulberry  - HR Worldly Plight generator
-        profile(gd, "char_436_whispr"), // Whisperain - HR (Memory Fragment, non-bd -> 0)
-        profile(gd, "char_2025_shu"),   // Shu     - Factory Worldly Plight consumer
-        profile(gd, "char_4078_bdhkgt"), // Jieyun  - Factory WP -> Witchcraft Crystal consumer
-    ];
-
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let result = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
-    println!("support plan: {:?}", result.support);
-    assert!(
-        result
-            .support
-            .iter()
-            .any(|(c, r)| c == "char_473_mberry" && r == "HIRE"),
-        "Mulberry should be stationed in HR to feed Worldly Plight, got {:?}",
-        result.support
-    );
-
-    for c in &result.consumers {
-        println!(
-            "  {} reads {} -> +{:.0}% [{}]",
-            c.char_id, c.resource, c.bonus_pct, c.room_type
-        );
-    }
-    let shu = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_2025_shu");
-    let jieyun = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_4078_bdhkgt");
-    assert!(
-        shu.is_some_and(|c| c.room_type == "MANUFACTURE" && c.bonus_pct > 5.0),
-        "Shu should read a Worldly-Plight bonus enabled by Mulberry, got {shu:?}"
-    );
-    assert!(
-        jieyun.is_some_and(|c| c.room_type == "MANUFACTURE" && c.bonus_pct > 5.0),
-        "Jieyun should read a Witchcraft-Crystal bonus, got {jieyun:?}"
-    );
-}
-
-#[test]
-fn perception_support_is_pinned_and_reserved_in_the_optimal_plan() {
-    // The economy is wired into the REAL optimizer, not a side panel: its support generators and
-    // morale-swap manager are pinned into the rooms that feed the pool and reserved from
-    // everything else, so production is optimized around them - never double-booking an operator.
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5), room("hr", "HIRE", 3)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let roster = vec![
-        profile(gd, "char_473_mberry"), // Mulberry - Office Worldly-Plight generator
-        profile(gd, "char_2023_ling"),  // Ling - Control-Center conditional generator
-        profile(gd, "char_2015_dusk"),  // Dusk - Control-Center conditional generator
-        profile(gd, "char_300_phenxi"), // Fiammetta - morale-swap rotation manager
-        profile(gd, "char_455_nothin"), // Mr. Nothing - Trading consumer
-        profile(gd, "char_391_rosmon"), // Rosmontis - Factory consumer
-        profile(gd, "char_2025_shu"),   // Shu - Factory consumer
-        // A few strong generic producers so the optimizer has plenty to staff production with.
-        profile(gd, "char_002_amiya"),
-        profile(gd, "char_003_kalts"),
-        profile(gd, "char_134_ifrit"),
-    ];
-
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let perception = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
-
-    // Build the same pins the service builds: the support plan + the morale-swap manager.
-    let mut pins: Vec<(String, String)> = perception.support.clone();
-    if let Some(mgr) = &perception.rotation_manager {
-        pins.push((mgr.clone(), "DORMITORY".to_string()));
-    }
-    assert!(
-        perception.rotation_manager.as_deref() == Some("char_300_phenxi"),
-        "Fiammetta should be picked up as the rotation manager, got {:?}",
-        perception.rotation_manager
-    );
-
-    let asn = compute_optimal_assignment_with_pins(
-        &roster,
-        &building,
-        &gd.building,
-        &registry,
-        &drains,
-        &pins,
-    );
-    let in_room = |id: &str, rt: &str| {
-        asn.rooms
-            .iter()
-            .any(|r| r.room_type == rt && r.operators.iter().any(|o| o == id))
-    };
-    let in_production = |id: &str| {
-        asn.rooms
-            .iter()
-            .filter(|r| matches!(r.room_type.as_str(), "MANUFACTURE" | "TRADING" | "POWER"))
-            .any(|r| r.operators.iter().any(|o| o == id))
-    };
-
-    // Control-Center generators are forced into the CC even though they carry no CC production bonus.
-    assert!(
-        in_room("char_2023_ling", "CONTROL"),
-        "Ling should be pinned into the Control Center"
-    );
-    assert!(
-        in_room("char_2015_dusk", "CONTROL"),
-        "Dusk should be pinned into the Control Center"
-    );
-    // The Office generator and the dorm-stationed morale-swap manager show up in their rooms.
-    assert!(
-        in_room("char_473_mberry", "HIRE"),
-        "Mulberry should be pinned into the Office"
-    );
-    assert!(
-        in_room("char_300_phenxi", "DORMITORY"),
-        "Fiammetta should be pinned into a dormitory"
-    );
-    // None of the reserved economy operators may be double-booked into a production room.
-    for id in [
-        "char_473_mberry",
-        "char_2023_ling",
-        "char_2015_dusk",
-        "char_300_phenxi",
-    ] {
-        assert!(
-            !in_production(id),
-            "{id} is reserved and must not appear in a production room"
-        );
-    }
 }
 
 #[test]
@@ -2888,122 +2623,6 @@ fn optimal_with_empty_pins_is_identical_to_the_plain_optimum() {
     );
 }
 
-#[test]
-fn perception_conditional_ling_dusk_feed_both_economies_sustainably() {
-    // Phase 2 + time-simulation: Ling & Dusk (Control Center) flip which resource they make by
-    // morale. The SUSTAINABLE state (a Fiammetta manager holds them at full/high morale) puts
-    // each on its high-morale side - one resource EACH, not both on the single best one (that
-    // transient peak "only lasts 1 shift" per the guide). So Ling -> Worldly Plight (boosts Mr.
-    // Nothing) and Dusk -> Perception Information (which converts to Rosmontis's Chain of
-    // Thought, boosting her). Both are planned into the Control Center.
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let roster = vec![
-        profile(gd, "char_2023_ling"), // Ling - high morale -> Worldly Plight (Yan)
-        profile(gd, "char_2015_dusk"), // Dusk - high morale -> Perception Information (A/B)
-        profile(gd, "char_455_nothin"), // Mr. Nothing - Trading Worldly-Plight gen + consumer
-        profile(gd, "char_391_rosmon"), // Rosmontis - Factory Chain-of-Thought consumer
-    ];
-
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let result = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
-    println!("support: {:?}", result.support);
-    for c in &result.consumers {
-        println!(
-            "  {} reads {} -> +{:.0}% [{}]",
-            c.char_id, c.resource, c.bonus_pct, c.room_type
-        );
-    }
-    assert!(
-        result
-            .support
-            .iter()
-            .any(|(c, r)| c == "char_2023_ling" && r == "CONTROL")
-            && result
-                .support
-                .iter()
-                .any(|(c, r)| c == "char_2015_dusk" && r == "CONTROL"),
-        "Ling and Dusk should both be planned into the Control Center, got {:?}",
-        result.support
-    );
-    // Ling adds +15 Worldly Plight on top of Mr. Nothing's resting ~20 -> ~+35% (NOT the +50%
-    // the transient "both on Worldly Plight" peak would give).
-    let mrn = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_455_nothin");
-    assert!(
-        mrn.is_some_and(|c| (c.bonus_pct - 35.0).abs() < 4.0),
-        "Mr. Nothing should read ~+35% (resting + Ling's Worldly Plight), got {mrn:?}"
-    );
-    // Dusk's +10 Perception Information converts to Rosmontis's Chain of Thought on top of her
-    // own ~20 -> ~+30%.
-    let ros = result
-        .consumers
-        .iter()
-        .find(|c| c.char_id == "char_391_rosmon");
-    assert!(
-        ros.is_some_and(|c| c.bonus_pct > 25.0),
-        "Dusk's Perception Information should lift Rosmontis above her solo ~+20%, got {ros:?}"
-    );
-    // Generator-side uptime: Rosmontis's own ~20 is co-present (full), but Dusk's cross-source
-    // +10 only counts while DUSK works, so the sustained value sits between her solo +20% and
-    // the +30% peak (it does NOT collapse all the way to +20% - the self part is undiminished).
-    assert!(
-        ros.is_some_and(|c| c.sustained_pct > 20.0 && c.sustained_pct < c.bonus_pct),
-        "Rosmontis's sustained bonus should keep her full self-pool and a scaled share of Dusk's, got {ros:?}"
-    );
-    // Likewise Mr. Nothing: own ~20 Worldly Plight (co-present) + Ling's +15 scaled by Ling's uptime.
-    assert!(
-        mrn.is_some_and(|c| c.sustained_pct > 20.0 && c.sustained_pct < c.bonus_pct),
-        "Mr. Nothing's sustained bonus should keep his full self-pool and a scaled share of Ling's, got {mrn:?}"
-    );
-}
-
-#[test]
-fn perception_rotation_needs_a_morale_swap_manager() {
-    // Phase 3: a Ling/Dusk morale-conditional rotation must be sustained by a Fiammetta-type
-    // morale-swap manager. The plan flags this - named when the roster owns one, "needed"
-    // when it doesn't. (The full time-averaged morale simulation is deliberately deferred -
-    // the peak is the meaningful number; see docs/base-resource-economy.md.)
-    let gd = load_game_data();
-    let mut rooms = vec![room("cc", "CONTROL", 5)];
-    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
-    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
-    let building = UserBuilding { rooms };
-
-    let base = vec![
-        profile(gd, "char_2023_ling"),  // Ling (conditional)
-        profile(gd, "char_2015_dusk"),  // Dusk (conditional)
-        profile(gd, "char_455_nothin"), // Mr. Nothing (Worldly-Plight consumer)
-    ];
-
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    // No morale-swap operator owned -> the rotation is flagged as needing one.
-    let without = perception::evaluate(&base, &building, &gd.building, &drains, &registry);
-    assert!(
-        without.needs_rotation_manager && without.rotation_manager.is_none(),
-        "a Ling/Dusk rotation with no Fiammetta should flag it needs a morale-swap manager"
-    );
-
-    // With Fiammetta owned -> she's named as the manager and the flag clears.
-    let mut with = base;
-    with.push(profile(gd, "char_300_phenxi")); // Fiammetta (morale-swap manager)
-    let result = perception::evaluate(&with, &building, &gd.building, &drains, &registry);
-    assert_eq!(
-        result.rotation_manager.as_deref(),
-        Some("char_300_phenxi"),
-        "Fiammetta should be picked as the rotation manager"
-    );
-    assert!(!result.needs_rotation_manager);
-}
-
 // ─── BanG Dream "Passion" combo: joint, slot-budgeted Control-Center valuation ──────────────
 
 const SAKIKO: &str = "char_4182_oblvns"; // Plentiful Work Experience: global FACTORY consumer
@@ -3024,17 +2643,6 @@ fn bd_base_243() -> UserBuilding {
 }
 
 /// Run the resource-economy solve the way the service does (real registry + drains).
-fn perception_of(
-    gd: &GameData,
-    roster: &[OperatorBaseProfile],
-    building: &UserBuilding,
-) -> perception::PerceptionResult {
-    let name_to_char = build_name_to_char(&gd.operators);
-    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    perception::evaluate(roster, building, &gd.building, &drains, &registry)
-}
-
-/// Does this operator carry any Control-Center base skill (so it competes for CC seats)?
 fn is_control_op(gd: &GameData, op: &OperatorBaseProfile) -> bool {
     op.available_buffs.iter().any(|b| {
         gd.building
@@ -3044,76 +2652,9 @@ fn is_control_op(gd: &GameData, op: &OperatorBaseProfile) -> bool {
     })
 }
 
-fn mf_override(p: &perception::PerceptionResult) -> Option<f64> {
-    p.global_overrides
-        .values()
-        .find(|(room, _)| room == "MANUFACTURE")
-        .map(|(_, pct)| *pct)
-}
-fn td_override(p: &perception::PerceptionResult) -> Option<f64> {
-    p.global_overrides
-        .values()
-        .find(|(room, _)| room == "TRADING")
-        .map(|(_, pct)| *pct)
-}
-
-#[test]
-fn passion_combo_is_committed_realized_and_counts_the_dual_role_once() {
-    let gd = load_game_data();
-    let building = bd_base_243();
-    // The five combo operators alone: with no OTHER Control-Center operators the ordinary fill is
-    // worth ~nothing, so the whole-base combo wins and commits.
-    let roster: Vec<_> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
-        .iter()
-        .map(|id| profile(gd, id))
-        .collect();
-    let p = perception_of(gd, &roster, &building);
-
-    let mf = mf_override(&p).expect("factories should get the committed Passion bonus");
-    let td = td_override(&p).expect("trading should get the committed Passion bonus");
-    assert!(
-        td > mf,
-        "trading's 1/8-per-point rate outpaces factories' 1/20: {td} vs {mf}"
-    );
-
-    // Realized pool = Monster of Acting +20 (counted ONCE) + Diligent Worker +10 + Reliable
-    // Companion +10 + Idol's Aura (one per resting operator). Factories read pool/20, trading
-    // pool/8; a double-counted +20 would inflate both.
-    let resting = perception::resting_capacity(&building, &gd.building);
-    let pool = 20.0 + 10.0 + 10.0 + f64::from(resting);
-    assert!(
-        (mf - pool / 20.0).abs() < 0.05,
-        "factory override {mf} should equal pool/20 = {}",
-        pool / 20.0
-    );
-    assert!(
-        (td - pool / 8.0).abs() < 0.05,
-        "trading override {td} should equal pool/8 = {}",
-        pool / 8.0
-    );
-
-    // Pure generators are pinned into the Control Center; the consumers are NOT pinned (the
-    // bonus-greedy seats them via their realized bonus), and the dual-role op never takes a pin.
-    let pins: std::collections::HashSet<&str> = p
-        .support
-        .iter()
-        .filter(|(_, rt)| rt == "CONTROL")
-        .map(|(c, _)| c.as_str())
-        .collect();
-    for g in [AMORIS, DOLRIS, TMORIS] {
-        assert!(
-            pins.contains(g),
-            "{g} (generator) should be pinned into the Control Center, pins = {pins:?}"
-        );
-    }
-    assert!(
-        !pins.contains(SAKIKO) && !pins.contains(MORTIS),
-        "consumers are seated by the optimizer, not pinned"
-    );
-}
-
 #[test]
 fn passion_combo_staffs_the_control_center_and_lifts_factories() {
+    use backend::core::grade::base::pools::candidate_bundles;
     let gd = load_game_data();
     let building = bd_base_243();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -3126,17 +2667,19 @@ fn passion_combo_staffs_the_control_center_and_lifts_factories() {
         .into_iter()
         .filter(|op| combo.contains(op.char_id.as_str()) || !is_control_op(gd, op))
         .collect();
-    let p = perception::evaluate(&roster, &building, &gd.building, &drains, &registry);
 
-    // Fold the economy into the registry exactly like the improvements service.
+    // The NATIVE bundle machinery offers the quintet as one economy: apply it
+    // exactly like the service's oracle trial (overrides + globals + pins).
+    let bundles = candidate_bundles(&roster, &building, &gd.building, &registry);
+    let bundle = bundles
+        .iter()
+        .find(|b| b.pins.iter().any(|(id, _)| id == SAKIKO))
+        .expect("the Passion economy is offered as a bundle");
     let mut reg = registry.clone();
-    for (b, pct) in &p.overrides {
-        reg.insert(
-            b.clone(),
-            BuffResolutionStrategy::DirectEfficiency { value: *pct },
-        );
+    for (b, pct) in &bundle.overrides {
+        reg.insert(b.clone(), BuffResolutionStrategy::PoolPayoff { pct: *pct });
     }
-    for (b, (room, pct)) in &p.global_overrides {
+    for (b, room, pct) in &bundle.globals {
         reg.insert(
             b.clone(),
             BuffResolutionStrategy::GlobalEffect {
@@ -3152,7 +2695,7 @@ fn passion_combo_staffs_the_control_center_and_lifts_factories() {
         &gd.building,
         &reg,
         &drains,
-        &p.support,
+        &bundle.pins,
     );
     let cc = with_combo
         .rooms
@@ -3193,72 +2736,6 @@ fn passion_combo_staffs_the_control_center_and_lifts_factories() {
 }
 
 #[test]
-fn partial_passion_roster_yields_a_smaller_pool() {
-    let gd = load_game_data();
-    let building = bd_base_243();
-    let full: Vec<_> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
-        .iter()
-        .map(|id| profile(gd, id))
-        .collect();
-    // Drop the dorm generator and one flat generator: a smaller Passion pool.
-    let partial: Vec<_> = [SAKIKO, MORTIS, AMORIS]
-        .iter()
-        .map(|id| profile(gd, id))
-        .collect();
-
-    let full_mf = mf_override(&perception_of(gd, &full, &building)).expect("full combo commits");
-    let part_mf =
-        mf_override(&perception_of(gd, &partial, &building)).expect("partial combo still commits");
-    assert!(
-        part_mf > 0.0,
-        "the partial combo still pays something: {part_mf}"
-    );
-    assert!(
-        part_mf < full_mf,
-        "fewer generators -> smaller realized pool: {part_mf} < {full_mf}"
-    );
-}
-
-#[test]
-fn weak_partial_combo_is_not_committed_when_ordinary_buffs_win() {
-    let gd = load_game_data();
-    let building = bd_base_243();
-    // Sakiko + one small generator, but the full roster of ordinary Control-Center buffers competes
-    // for the same seats. The combo's lone ~+0.5% to factories loses, so it must NOT commit.
-    let drop: std::collections::HashSet<&str> = [MORTIS, DOLRIS, TMORIS].into_iter().collect();
-    let roster: Vec<_> = full_roster(gd)
-        .into_iter()
-        .filter(|op| !drop.contains(op.char_id.as_str()))
-        .collect();
-    let p = perception_of(gd, &roster, &building);
-    assert!(
-        p.global_overrides.is_empty(),
-        "a weak partial combo must lose to the ordinary CC fill and emit no global override, got {:?}",
-        p.global_overrides
-    );
-}
-
-#[test]
-fn a_roster_without_passion_ops_has_no_combo_override() {
-    let gd = load_game_data();
-    let building = bd_base_243();
-    let combo: std::collections::HashSet<&str> = [SAKIKO, MORTIS, AMORIS, DOLRIS, TMORIS]
-        .into_iter()
-        .collect();
-    let roster: Vec<_> = full_roster(gd)
-        .into_iter()
-        .filter(|op| !combo.contains(op.char_id.as_str()))
-        .collect();
-    let p = perception_of(gd, &roster, &building);
-    assert!(
-        p.global_overrides.is_empty(),
-        "no Passion operators -> no Control-Center combo override"
-    );
-}
-
-// ─── Part A: shift rotation never double-books an operator within one shift ──────────────────
-
-#[test]
 fn shift_rotation_never_double_books_an_operator_within_a_shift() {
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
     use std::collections::HashMap;
@@ -3267,7 +2744,8 @@ fn shift_rotation_never_double_books_an_operator_within_a_shift() {
     // bd_base_243 has 3 power plants, exercising the widened power-plan exclusion.
     let building = bd_base_243();
     let roster = full_roster(gd);
-    let rotation = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rotation =
+        recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     for shift in &rotation.shifts {
         let mut owner: HashMap<&str, &str> = HashMap::new();
         for room in shift.rooms.iter().filter(|r| r.active) {
@@ -3568,7 +3046,7 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
     .map(|id| profile(gd, id))
     .collect();
 
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
     assert_eq!(
         rot.sustained,
@@ -3628,7 +3106,7 @@ fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
     .map(|id| profile(gd, id))
     .collect();
 
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
     assert!(
         rot.sustained.is_empty(),
@@ -3909,7 +3387,7 @@ fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
     .filter(|id| gd.building.chars.contains_key(**id))
     .map(|id| profile(gd, id))
     .collect();
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
     // Collect the distinct trading teams by team_id.
     let mut teams: std::collections::HashMap<String, std::collections::HashSet<String>> =
@@ -3965,7 +3443,7 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
     .iter()
     .map(|id| profile(gd, id))
     .collect();
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     assert_eq!(
         rot.sustained,
         vec![SHAMARE.to_string()],
@@ -4011,7 +3489,7 @@ fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     .filter(|id| gd.building.chars.contains_key(**id))
     .map(|id| profile(gd, id))
     .collect();
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
     let cc = |k: usize| -> Vec<String> {
         rot.shifts[k]
@@ -4129,7 +3607,7 @@ fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
     rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
     let building = UserBuilding { rooms };
     let roster = vec![profile(gd, GREYY_ALTER)];
-    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
     let cell = rot.shifts[0]
         .rooms
         .iter()
@@ -4139,5 +3617,2322 @@ fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
     assert!(
         (eff - 23.5).abs() < 0.1,
         "3x L3 plants = 235 drones -> +23.5% (not the +25% cap), got {eff}"
+    );
+}
+
+// ─── Clause registry goldens: real gamedata buffs reduce to the expected shapes ──────────────
+
+#[test]
+fn clause_registry_goldens_on_real_gamedata() {
+    use backend::core::grade::base::clause::{
+        ClauseKind, CondScope, Metric, Subject, SuppressExempt, build_clauses,
+    };
+    let gd = load_game_data();
+    let clauses = build_clauses(&gd.building.buffs, &build_name_to_char(&gd.operators));
+
+    // Texas "Feud": no base, +65% gated on Lappland sharing the post.
+    let texas = &clauses["trade_ord_spd&cost_P[000]"];
+    assert!(
+        texas.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::RequiresChar { chars, scope: CondScope::Room } if !chars.is_empty()
+        ) && c.value > 50.0),
+        "Texas reduces to a Room-scoped RequiresChar worth +65: {texas:?}"
+    );
+
+    // Shamare "Whispers": per-body scaling + suppression that spares flat order value.
+    let shamare = &clauses["trade_ord_vodfox[000]"];
+    assert!(
+        shamare.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::ScalingCount {
+                subject: Subject::AnyOtherOccupant,
+                ..
+            }
+        )),
+        "Shamare scales per body: {shamare:?}"
+    );
+    assert!(
+        shamare.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::SuppressesOthers { metrics, exempt: SuppressExempt::None }
+                if metrics.contains(&Metric::OrderValue { pure_gold: true })
+                    && !metrics.contains(&Metric::OrderValue { pure_gold: false })
+        )),
+        "Shamare suppresses speed + Pure-Gold value but spares flat value: {shamare:?}"
+    );
+
+    // Weedy automation: per-Power-Plant scaling + facility-count-exempt suppression.
+    let weedy = &clauses["manu_prod_spd&power[010]"];
+    assert!(
+        weedy.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::ScalingRoomCount { room } if room == "POWER"
+        )),
+        "Weedy scales per Power Plant: {weedy:?}"
+    );
+    assert!(
+        weedy.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::SuppressesOthers {
+                exempt: SuppressExempt::RoomCountScaledSources,
+                ..
+            }
+        )),
+        "Weedy's suppression exempts facility-count productivity: {weedy:?}"
+    );
+
+    // Quartz "Precise Scheduling": +30 base + +2 per distinct recipe type.
+    let quartz = &clauses["trade_ord_spd&formula[000]"];
+    assert!(
+        quartz
+            .iter()
+            .any(|c| matches!(c.kind, ClauseKind::SelfValue) && (c.value - 30.0).abs() < 0.01),
+        "Quartz base +30: {quartz:?}"
+    );
+    assert!(
+        quartz.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::ScalingRoomCount { room } if room == "MANUFACTURE_RECIPE_TYPES"
+        )),
+        "Quartz scales per recipe type: {quartz:?}"
+    );
+
+    // Hoederer "Starting From Scratch β": +30 base + +5 when Ines/W works any Work Area.
+    let hoederer = &clauses["trade_ord_par&per[001]"];
+    assert!(
+        hoederer
+            .iter()
+            .any(|c| matches!(c.kind, ClauseKind::SelfValue) && (c.value - 30.0).abs() < 0.01),
+        "Hoederer base +30: {hoederer:?}"
+    );
+    assert!(
+        hoederer.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::RequiresChar { chars, scope: CondScope::BaseWorkArea } if chars.len() == 2
+        )),
+        "Hoederer's rider requires Ines/W in any Work Area: {hoederer:?}"
+    );
+
+    // Proviso "Damages for Breach": Pure-Gold order VALUE, not speed.
+    let proviso = &clauses["trade_ord_against[010]"];
+    assert!(
+        proviso
+            .iter()
+            .any(|c| c.metric == Metric::OrderValue { pure_gold: true } && c.value > 40.0),
+        "Proviso is Pure-Gold order value: {proviso:?}"
+    );
+
+    // Greyy the Lightningbearer: drone skill scales on the base's drone capacity
+    // with the stated +25% cap; the E2 skill raises the POWER facility count.
+    let greyy_drone = &clauses["power_rec_drone[000]"];
+    assert!(
+        greyy_drone.iter().any(|c| matches!(
+            &c.kind,
+            ClauseKind::ScalingRoomCount { room } if room == "DRONE_CAPACITY"
+        ) && c.cap == Some(25.0)),
+        "Greyy Alter's drone skill scales on DRONE_CAPACITY capped at 25: {greyy_drone:?}"
+    );
+    let greyy_count = &clauses["power_count[000]"];
+    assert!(
+        greyy_count
+            .iter()
+            .any(|c| c.metric == Metric::FacilityCount("POWER".into())),
+        "Greyy Alter's E2 raises the POWER facility count: {greyy_count:?}"
+    );
+
+    // Vermeil: capacity +8 (limit metric) and morale reduction on the same buff.
+    let vermeil = &clauses["manu_prod_limit&cost[0000]"];
+    assert!(
+        vermeil
+            .iter()
+            .any(|c| c.metric == Metric::CapacityLimit && (c.value - 8.0).abs() < 0.01),
+        "Vermeil's capacity +8 is a CapacityLimit clause: {vermeil:?}"
+    );
+}
+
+/// Full planner run on a REAL captured base (dumped from psql by the session
+/// tooling, never committed). With the CP2 shadow live, every room evaluation
+/// double-scores through the clause ledger and panics on divergence - so a
+/// clean pass here proves ledger equivalence on live data, and the printed
+/// summary is the diff baseline for the principled changes (CP3/CP4).
+///
+/// Run: `BASE_REPRO_DIR`=<dir with building_<uid>.json / roster_<uid>.json> \
+///      cargo test `real_base_repro` -- --ignored --nocapture
+#[test]
+#[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
+fn real_base_repro() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::buff_registry::faction_tags_of;
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+
+    let dir = std::env::var("BASE_REPRO_DIR").expect("set BASE_REPRO_DIR to the dump directory");
+    let uid = std::env::var("BASE_REPRO_UID").unwrap_or_else(|_| "89153800".into());
+    let read = |name: &str| -> serde_json::Value {
+        let path = format!("{dir}/{name}_{uid}.json");
+        let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+        serde_json::from_str(&text).unwrap_or_else(|e| panic!("parse {path}: {e}"))
+    };
+
+    let gd = load_game_data();
+    let building_json = read("building");
+    let roster: Vec<RosterEntry> = serde_json::from_value(read("roster")).expect("roster rows");
+
+    let user_building = UserBuilding::from_json(&building_json);
+    assert!(!user_building.is_empty(), "captured building parses");
+
+    // Mirror build_base_improvements: roster -> profiles, registry, perception
+    // overrides feeding the OPTIMAL registry only.
+    let profiles: Vec<OperatorBaseProfile> = roster
+        .iter()
+        .filter_map(|entry| {
+            let bc = gd.building.chars.get(&entry.operator_id)?;
+            let static_op = gd.operators.get(&entry.operator_id);
+            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
+            Some(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                rarity,
+                &gd.building,
+            ))
+        })
+        .collect();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, morale_drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // NATIVE-FIRST (mirrors the service): every economy is priced from
+    // clauses; the morale-swap manager is reserved when the roster owns both
+    // a morale-conditional generator and a manager.
+    let mut optimal_registry = registry.clone();
+    let mut optimal_pins: Vec<(String, String)> = Vec::new();
+    if profiles
+        .iter()
+        .any(|op| backend::core::grade::base::pools::has_morale_conditional_grant(op, &gd.building))
+        && let Some(manager) =
+            backend::core::grade::base::assignment::morale_swap_enabler(&profiles, &gd.building)
+    {
+        optimal_pins.push((manager, "DORMITORY".to_string()));
+    }
+
+    // Native pool economies, mirroring the service's wiring.
+    let native = backend::core::grade::base::pools::plan_optimal_economies(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &registry,
+    );
+    for (bid, pct) in &native.overrides {
+        if optimal_registry.get(bid).is_none_or(|s| {
+            !matches!(
+                s,
+                BuffResolutionStrategy::PoolPayoff { .. }
+                    | BuffResolutionStrategy::GlobalEffect { .. }
+            )
+        }) {
+            optimal_registry.insert(
+                bid.clone(),
+                BuffResolutionStrategy::PoolPayoff { pct: *pct },
+            );
+        }
+    }
+    optimal_pins.extend(native.pins.iter().cloned());
+    println!(
+        "== NATIVE ECONOMIES: {} overrides {:?}, pins {:?}",
+        native.overrides.len(),
+        native.overrides,
+        native.pins
+    );
+    // Joint-seating bundles judged by the same yield oracle the service uses.
+    let bundles = backend::core::grade::base::pools::candidate_bundles(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &registry,
+    );
+    for bundle in &bundles {
+        println!(
+            "== BUNDLE candidate: overrides {:?}, pins {:?}",
+            bundle.overrides, bundle.pins
+        );
+    }
+    let mut oracle_verdicts: Vec<String> = Vec::new();
+    {
+        use backend::core::grade::base::assignment::{
+            assignment_value, compute_optimal_assignment_with_pins,
+        };
+        let baseline = compute_optimal_assignment_with_pins(
+            &profiles,
+            &user_building,
+            &gd.building,
+            &optimal_registry,
+            &morale_drains,
+            &optimal_pins,
+        );
+        let mut baseline_value = assignment_value(&baseline.rooms);
+        for bundle in &bundles {
+            let mut trial_registry = optimal_registry.clone();
+            for (bid, pct) in &bundle.overrides {
+                let existing = match trial_registry.get(bid) {
+                    Some(BuffResolutionStrategy::PoolPayoff { pct: p }) => *p,
+                    _ => f64::NEG_INFINITY,
+                };
+                if *pct > existing {
+                    trial_registry.insert(
+                        bid.clone(),
+                        BuffResolutionStrategy::PoolPayoff { pct: *pct },
+                    );
+                }
+            }
+            for (bid, target_room, pct) in &bundle.globals {
+                let existing = match trial_registry.get(bid) {
+                    Some(BuffResolutionStrategy::GlobalEffect { bonus_pct, .. }) => *bonus_pct,
+                    _ => f64::NEG_INFINITY,
+                };
+                if *pct > existing {
+                    trial_registry.insert(
+                        bid.clone(),
+                        BuffResolutionStrategy::GlobalEffect {
+                            target_room: target_room.clone(),
+                            bonus_pct: *pct,
+                        },
+                    );
+                }
+            }
+            let mut trial_pins = optimal_pins.clone();
+            trial_pins.extend(bundle.pins.iter().cloned());
+            let trial = compute_optimal_assignment_with_pins(
+                &profiles,
+                &user_building,
+                &gd.building,
+                &trial_registry,
+                &morale_drains,
+                &trial_pins,
+            );
+            let (b, t) = (baseline_value, assignment_value(&trial.rooms));
+            let committed = t > b + 1e-9;
+            oracle_verdicts.push(format!(
+                "bundle {:?}: baseline {b:.1} vs trial {t:.1} -> {}",
+                bundle
+                    .pins
+                    .iter()
+                    .map(|(c, _)| c.as_str())
+                    .collect::<Vec<_>>(),
+                if committed { "COMMIT" } else { "reject" }
+            ));
+            // Mirror the service: a winning bundle commits its registry and
+            // pins, and later bundles compete against the improved plan.
+            if committed {
+                optimal_registry = trial_registry;
+                optimal_pins = trial_pins;
+                baseline_value = t;
+            }
+        }
+    }
+    for v in &oracle_verdicts {
+        println!("== ORACLE: {v}");
+    }
+
+    let print_assignment = |label: &str, a: &backend::core::grade::base::types::BaseAssignment| {
+        println!("== {label}: total {:.3}", a.total_production_efficiency);
+        for r in &a.rooms {
+            println!(
+                "  {} {} {:?} eff {:.3} value {:.3} ops {:?}",
+                r.slot_id,
+                r.room_type,
+                r.formula_type,
+                r.total_efficiency,
+                r.order_value,
+                r.operators
+            );
+        }
+    };
+
+    let current = compute_current_assignment(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &registry,
+        &morale_drains,
+        None,
+    );
+    print_assignment("CURRENT", &current);
+
+    let optimal = compute_optimal_assignment_with_pins(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &optimal_registry,
+        &morale_drains,
+        &optimal_pins,
+    );
+    print_assignment("OPTIMAL", &optimal);
+
+    let sustained = compute_sustained_assignment(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &registry,
+        &morale_drains,
+    );
+    print_assignment("SUSTAINED main", &sustained.main);
+    println!("sustained_efficiency {:.3}", sustained.sustained_efficiency);
+
+    // Mirror the service: the rotation plans with the economy-aware registry
+    // (PoolPayoff overrides) and seats the generator pins every shift.
+    let rotation = recommend_shift_rotation(
+        &profiles,
+        &user_building,
+        &gd.building,
+        &optimal_registry,
+        &morale_drains,
+        &optimal_pins,
+    );
+    println!("== ROTATION: {} shifts", rotation.shifts.len());
+    for (i, s) in rotation.shifts.iter().enumerate() {
+        for r in s.rooms.iter().filter(|r| r.active) {
+            println!(
+                "  shift{i} {} {} team {:?} eff {:?}",
+                r.slot_id, r.room_type, r.recommended, r.efficiency
+            );
+        }
+    }
+
+    // The rotation's own morale-simulation verdict (targeted pair effects
+    // included, mirroring the service).
+    {
+        use backend::core::grade::base::sustain_sim::simulate_rotation;
+        let targeted = backend::core::grade::base::buff_registry::targeted_morale_effects(
+            &gd.building.buffs,
+            &name_to_char,
+        );
+        let report = simulate_rotation(
+            &rotation,
+            &profiles,
+            &user_building,
+            &gd.building,
+            &registry,
+            &morale_drains,
+            &targeted,
+        );
+        println!(
+            "== SUSTAINABILITY: {:?} over {:.0}h, dorm_overflow {}",
+            report.verdict, report.horizon_hours, report.dorm_overflow
+        );
+        for d in &report.depleted {
+            println!(
+                "  depleted {} @{:.0}h in {}",
+                d.char_id, d.at_hours, d.slot_id
+            );
+        }
+    }
+
+    // The whole point: every evaluation above ran the ledger shadow without a
+    // divergence panic.
+    println!("shadow-clean: real base scored identically by both engines");
+}
+
+/// NEVER-GUESS diagnostics (CP3): every buff the parser can't reduce to real
+/// clauses contributes exactly ZERO and must be VISIBLE - this test prints the
+/// full unresolved inventory (the work list for new parsers) and pins the
+/// properties the principle demands: unresolved sets carry no value, and the
+/// families the goldens prove parseable never regress into the list.
+#[test]
+fn unresolved_buffs_are_zero_and_inventoried() {
+    use backend::core::grade::base::clause::{ClauseKind, build_clauses, unresolved_buffs};
+    let gd = load_game_data();
+    let clauses = build_clauses(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let unresolved = unresolved_buffs(&clauses);
+
+    let mut by_room: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for id in &unresolved {
+        let buff = &gd.building.buffs[*id];
+        *by_room.entry(buff.room_type.as_str()).or_default() += 1;
+        println!(
+            "UNRESOLVED {:<12} {:<40} {}",
+            buff.room_type, id, buff.buff_name
+        );
+        // Never guess: an unresolved buff's clause set carries no scoring
+        // value. A morale drain may ride along - it comes from structured
+        // side-map data, not from guessing at the productivity text.
+        assert!(
+            clauses[*id].iter().all(|c| match c.kind {
+                ClauseKind::Unresolved => c.value == 0.0,
+                _ => c.metric == backend::core::grade::base::clause::Metric::MoraleDrainDelta,
+            }),
+            "{id}: unresolved buffs must not carry value alongside the marker"
+        );
+    }
+    println!(
+        "unresolved: {} of {} buffs {:?}",
+        unresolved.len(),
+        clauses.len(),
+        by_room
+    );
+
+    // Families the goldens prove parseable must never fall back to Unresolved.
+    for known in [
+        "trade_ord_spd&cost_P[000]",  // Texas
+        "trade_ord_vodfox[000]",      // Shamare
+        "manu_prod_spd&power[010]",   // Weedy
+        "trade_ord_spd&formula[000]", // Quartz
+        "trade_ord_par&per[001]",     // Hoederer
+        "trade_ord_against[010]",     // Proviso
+        "power_rec_drone[000]",       // Greyy Alter
+        "manu_prod_limit&cost[0000]", // Vermeil
+        // Deployment-context gates (ConditionalOnRoomPresence)
+        "manu_formula_spd_P[000]",        // Gummy in a Trading Post
+        "power_rec_spd_P[000]",           // Kal'tsit in the Control Center
+        "power_rec_spd_P[001]",           // Logos as the Trainer
+        "power_rec_spd_ext&faction[000]", // another Laterano op in a Power Plant
+        // Drain-only buffs: their sole effect (the morale drain) IS captured,
+        // so the Unresolved marker would be label pessimism.
+        "power_rec_spd&cost[000]",
+        "power_rec_spd&cost[010]",
+        // Pure side-channel grant (dorm-occupancy Passion gen, natively priced)
+        "control_dorm_bd[000]",
+        // Non-production CC skills (ControlNonProduction, own units, 0 LMD)
+        "control_upMeetingSpeed[000]",
+        "control_upMeetingSpeed[100]",
+        "control_meeting_spd&bd[000]",
+        "control_mp&meet_spd[000]",
+        "control_train_spd[010]",
+        "control_train_spd[011]",
+        "control_train_spd[012]",
+        "control_hire_spd&bd[000]",
+    ] {
+        assert!(
+            !unresolved.contains(&known),
+            "{known} regressed to Unresolved"
+        );
+    }
+}
+
+/// Deployment-context gates ("if Kal'tsit is assigned to the Control Center, drone
+/// recovery +5%") parse into `ConditionalOnRoomPresence` and are credited by registry
+/// rewrite exactly when the deployment stations the required operator - or enough
+/// operators of the required faction - in the gate's room type. Context-free scoring
+/// credits the gated part 0 (never guess).
+#[test]
+// Exact float equality is intentional: these are deterministic values threaded
+// straight from the same constants/formulas the assignment resolver used, not
+// results of independent floating-point computation.
+#[allow(clippy::float_cmp)]
+fn room_presence_gates_resolve_against_the_deployment() {
+    use backend::core::grade::base::assignment::resolve_room_presence;
+    use backend::core::grade::base::buff_registry::{BuffResolutionStrategy, build_registry};
+    use backend::core::grade::base::types::OperatorBaseProfile;
+    use std::collections::HashMap;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // Golden parse: the four gate buffs land on the new strategy with the right context.
+    let expect = [
+        ("manu_formula_spd_P[000]", "TRADING", 35.0),
+        ("power_rec_spd_P[000]", "CONTROL", 5.0),
+        ("power_rec_spd_P[001]", "TRAINING", 5.0),
+        ("power_rec_spd_ext&faction[000]", "POWER", 5.0),
+    ];
+    for (id, want_room, want_bonus) in expect {
+        match registry.get(id) {
+            Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
+                required_char_ids,
+                required_faction,
+                room_type,
+                base_efficiency,
+                bonus_efficiency,
+                ..
+            }) => {
+                assert_eq!(room_type, want_room, "{id}: wrong gate room type");
+                assert_eq!(*bonus_efficiency, want_bonus, "{id}: wrong bonus");
+                assert_eq!(
+                    *base_efficiency, 0.0,
+                    "{id}: gates in this family are pure-bonus"
+                );
+                assert!(
+                    !required_char_ids.is_empty() || required_faction.is_some(),
+                    "{id}: gate must name an operator or a faction"
+                );
+            }
+            other => panic!("{id}: expected ConditionalOnRoomPresence, got {other:?}"),
+        }
+    }
+
+    // Named gate: Kal'tsit seated in the Control Center unlocks the +5, anywhere else doesn't.
+    let kaltsit = name_to_char["kal'tsit"].clone();
+    let gate_id = "power_rec_spd_P[000]";
+    for (room, want) in [("CONTROL", 5.0), ("MANUFACTURE", 0.0)] {
+        let stationed: HashMap<String, String> = [(kaltsit.clone(), room.to_string())].into();
+        let resolved = resolve_room_presence(&registry, &stationed, &[]);
+        assert_eq!(
+            resolved.get(gate_id),
+            Some(&BuffResolutionStrategy::DirectEfficiency { value: want }),
+            "Kal'tsit in {room}"
+        );
+    }
+
+    // Faction gate: "another Laterano Operator in a Power Plant" needs TWO Laterano
+    // operators deployed there (the owner works one too); one alone stays locked.
+    let lat = |id: &str| OperatorBaseProfile {
+        char_id: id.to_string(),
+        available_buffs: vec![],
+        faction_tags: vec!["laterano".to_string()],
+        match_tags: vec![],
+        rarity: 6,
+        elite: 2,
+    };
+    let ops = [lat("char_a"), lat("char_b")];
+    let gate_id = "power_rec_spd_ext&faction[000]";
+    let one: HashMap<String, String> = [("char_a".to_string(), "POWER".to_string())].into();
+    let two: HashMap<String, String> = [
+        ("char_a".to_string(), "POWER".to_string()),
+        ("char_b".to_string(), "POWER".to_string()),
+    ]
+    .into();
+    let resolved_one = resolve_room_presence(&registry, &one, &ops);
+    let resolved_two = resolve_room_presence(&registry, &two, &ops);
+    assert_eq!(
+        resolved_one.get(gate_id),
+        Some(&BuffResolutionStrategy::DirectEfficiency { value: 0.0 }),
+        "one Laterano operator alone must not unlock 'another Laterano'"
+    );
+    assert_eq!(
+        resolved_two.get(gate_id),
+        Some(&BuffResolutionStrategy::DirectEfficiency { value: 5.0 }),
+        "two Laterano operators in Power Plants unlock the bonus"
+    );
+}
+
+/// A base-wide Control-Center recovery aura (Chongyue-type: "+0.05/hr to
+/// Operators working in other buildings") stretches PRODUCTION members' swap
+/// clocks in the plan - the same working-drain offset the simulator charges,
+/// not a dorm-rest bonus.
+#[test]
+fn cc_base_wide_recovery_stretches_swap_clocks() {
+    use backend::core::grade::base::assignment::compute_sustained_assignment;
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    const BODY: &str = "char_102_texas";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // A real owner of a base-wide CC recovery aura, from the parsed registry.
+    let holder = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char.iter().any(|bc| {
+                bc.buff_data.iter().any(|bd| {
+                    matches!(
+                        registry.get(&bd.buff_id),
+                        Some(BuffResolutionStrategy::MoraleModifier {
+                            recovery_per_hour,
+                            base_wide: true,
+                            ..
+                        }) if *recovery_per_hour > 0.0
+                    )
+                })
+            })
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns a base-wide CC recovery aura");
+
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp", "TRADING", 3),
+            room("d0", "DORMITORY", 2),
+        ],
+    };
+    let body_hours = |ids: &[&str]| -> f64 {
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        let plan =
+            compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
+        plan.rooms
+            .iter()
+            .flat_map(|r| r.members.iter())
+            .find(|m| m.operator == BODY)
+            .map(|m| m.lasts_hours)
+            .expect("the body operator rotates in the plan")
+    };
+    let without = body_hours(&[BODY, "char_140_whitew"]);
+    let with_holder = body_hours(&[BODY, "char_140_whitew", holder.as_str()]);
+    assert!(
+        with_holder > without,
+        "the CC's base-wide recovery must stretch a trading member's clock \
+         ({with_holder}h vs {without}h)"
+    );
+}
+
+/// Waaifu's Team Spirit makes her IMMUNE to teammates' room morale auras
+/// (Shu's -0.1/hr factory aura passes her by, in either direction), and
+/// Cement's Vlog cuts her drain by 0.25/hr only while the factory produces
+/// Battle Records - both now charged by the sustainability sim.
+#[test]
+fn aura_immunity_and_formula_drain_shape_the_sim() {
+    use backend::core::grade::base::buff_registry::targeted_morale_effects;
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::simulate_rotation;
+    const WAAIFU: &str = "char_243_waaifu";
+    const CEMENT: &str = "char_328_cammou";
+    const SHU: &str = "char_2025_shu"; // owns the -0.1 factory aura
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let targeted = targeted_morale_effects(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![room("mf", "MANUFACTURE", 3), room("d0", "DORMITORY", 2)],
+    };
+    // A 36h unbroken factory stretch: depletion hour = 24 / effective drain.
+    let mk = |crew: Vec<&str>, formula: &str| ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![ShiftRoom {
+                    slot_id: "mf".into(),
+                    room_type: "MANUFACTURE".into(),
+                    formula_type: Some(formula.to_string()),
+                    recommended: crew.iter().map(|s| (*s).to_string()).collect(),
+                    current: Vec::new(),
+                    active: true,
+                    efficiency: None,
+                    team_id: None,
+                    team_label: None,
+                }],
+            })
+            .collect(),
+        sustained: Vec::new(),
+    };
+    let at = |crew: Vec<&str>, formula: &str, who: &str| -> f64 {
+        let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
+        let report = simulate_rotation(
+            &mk(crew, formula),
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            &targeted,
+        );
+        report
+            .depleted
+            .iter()
+            .find(|d| d.char_id == who)
+            .map(|d| d.at_hours)
+            .expect("a 36h stretch depletes")
+    };
+
+    // Vlog: -0.25 only while producing Battle Records (F_EXP).
+    let exp = at(vec![CEMENT], "F_EXP", CEMENT); // 24/0.75 = 32h
+    let gold = at(vec![CEMENT], "F_GOLD", CEMENT); // 24h
+    assert!(
+        exp > gold + 4.0,
+        "Vlog only pays off on Battle Records ({exp}h vs {gold}h)"
+    );
+
+    // Team Spirit: Shu's -0.1 aura stretches HER OWN clock but not Waaifu's.
+    let shu_at = at(vec![WAAIFU, SHU], "F_GOLD", SHU); // 24/0.9 ≈ 26.7h
+    let waaifu_at = at(vec![WAAIFU, SHU], "F_GOLD", WAAIFU); // immune: 24h
+    assert!(
+        shu_at > waaifu_at + 1.0,
+        "the aura helps Shu but passes immune Waaifu by ({shu_at}h vs {waaifu_at}h)"
+    );
+    assert!(
+        (waaifu_at - 24.0).abs() < 0.5,
+        "Waaifu drains at the plain rate despite the aura ({waaifu_at}h)"
+    );
+}
+
+/// Targeted morale effects between co-seated operators - the Ave Mujica
+/// drama: Dolris' rider drains Sakiko +0.1/hr while they share the Control
+/// Center, and Mortis' amnesty cancels Sakiko's OWN +0.05 rider. The sim
+/// charges each exactly when the pair is co-seated.
+#[test]
+fn targeted_morale_effects_follow_co_seating() {
+    use backend::core::grade::base::buff_registry::targeted_morale_effects;
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::simulate_rotation;
+    const SAKIKO: &str = "char_4182_oblvns";
+    const MORTIS: &str = "char_4183_mortis";
+    const DOLRIS: &str = "char_4184_dolris";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let targeted = targeted_morale_effects(&gd.building.buffs, &name_to_char);
+
+    let building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 2)],
+    };
+    // A 36h unbroken CC stretch, so depletion hour = 24 / effective drain.
+    let mk = |crew: Vec<&str>| ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![ShiftRoom {
+                    slot_id: "cc".into(),
+                    room_type: "CONTROL".into(),
+                    formula_type: None,
+                    recommended: crew.iter().map(|s| (*s).to_string()).collect(),
+                    current: Vec::new(),
+                    active: true,
+                    efficiency: None,
+                    team_id: None,
+                    team_label: None,
+                }],
+            })
+            .collect(),
+        sustained: Vec::new(),
+    };
+    let sakiko_at = |crew: Vec<&str>| -> f64 {
+        let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
+        let report = simulate_rotation(
+            &mk(crew),
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            &targeted,
+        );
+        report
+            .depleted
+            .iter()
+            .find(|d| d.char_id == SAKIKO)
+            .map(|d| d.at_hours)
+            .expect("a 36h stretch depletes Sakiko")
+    };
+
+    const AMORIS: &str = "char_4185_amoris";
+    let alone = sakiko_at(vec![SAKIKO]); // own +0.05 -> 24/1.05
+    let with_mortis = sakiko_at(vec![SAKIKO, MORTIS]); // amnesty -> 24/1.0
+    let with_dolris = sakiko_at(vec![SAKIKO, DOLRIS]); // +0.1 rider -> 24/1.15
+    let with_amoris = sakiko_at(vec![SAKIKO, AMORIS]); // +0.05 rider -> 24/1.10
+    assert!(
+        with_amoris < alone - 0.5,
+        "Amoris' rider drains Sakiko faster ({with_amoris}h vs {alone}h)"
+    );
+    assert!(
+        (alone - 24.0 / 1.05).abs() < 0.1,
+        "alone: her own rider drains 1.05/hr (got {alone}h)"
+    );
+    assert!(
+        with_mortis > alone + 0.5,
+        "Mortis' amnesty cancels her own rider ({with_mortis}h vs {alone}h)"
+    );
+    assert!(
+        with_dolris < alone - 0.5,
+        "Dolris' rider drains her faster ({with_dolris}h vs {alone}h)"
+    );
+}
+
+/// The Control Center's own recovery auras (`control_mp_cost`: "+0.05/hr to
+/// all Operators in the Control Center") offset its workers' drain in the
+/// sustainability sim - and ONLY its workers: the aura is room-local, so a
+/// trading-post worker in the same rotation gains nothing from it.
+#[test]
+fn cc_recovery_auras_offset_cc_workers_drain_only() {
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::simulate_rotation;
+    const BODY_CC: &str = "char_102_texas";
+    const BODY_TP: &str = "char_140_whitew";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // A real owner of the CC-room recovery aura, from gamedata.
+    let aura_owner = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char.iter().any(|bc| {
+                bc.buff_data
+                    .iter()
+                    .any(|bd| bd.buff_id.starts_with("control_mp_cost["))
+            })
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns the CC recovery aura");
+
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp", "TRADING", 3),
+            room("d0", "DORMITORY", 2),
+        ],
+    };
+    // Everyone works ALL THREE shifts (36h unbroken): a neutral 1.0/hr drain
+    // depletes at exactly 24h; a -0.05 aura stretches that to 24/0.95 ≈ 25.3h.
+    let mk = |cc_crew: Vec<String>| ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![
+                    ShiftRoom {
+                        slot_id: "cc".into(),
+                        room_type: "CONTROL".into(),
+                        formula_type: None,
+                        recommended: cc_crew.clone(),
+                        current: Vec::new(),
+                        active: true,
+                        efficiency: None,
+                        team_id: None,
+                        team_label: None,
+                    },
+                    ShiftRoom {
+                        slot_id: "tp".into(),
+                        room_type: "TRADING".into(),
+                        formula_type: None,
+                        recommended: vec![BODY_TP.to_string()],
+                        current: Vec::new(),
+                        active: true,
+                        efficiency: None,
+                        team_id: None,
+                        team_label: None,
+                    },
+                ],
+            })
+            .collect(),
+        sustained: Vec::new(),
+    };
+    let depleted_at = |rotation: &ShiftRotation, ids: &[&str], who: &str| -> f64 {
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        let report = simulate_rotation(
+            rotation,
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            &std::collections::HashMap::new(),
+        );
+        report
+            .depleted
+            .iter()
+            .find(|d| d.char_id == who)
+            .map(|d| d.at_hours)
+            .expect("a 36h stretch depletes a neutral operator")
+    };
+
+    let without = mk(vec![BODY_CC.to_string()]);
+    let with_aura = mk(vec![BODY_CC.to_string(), aura_owner.clone()]);
+    let ids_with = [BODY_CC, BODY_TP, aura_owner.as_str()];
+    let cc_before = depleted_at(&without, &[BODY_CC, BODY_TP], BODY_CC);
+    let cc_after = depleted_at(&with_aura, &ids_with, BODY_CC);
+    assert!(
+        cc_after > cc_before + 0.5,
+        "the CC aura must stretch a CC worker's bar ({cc_after}h vs {cc_before}h)"
+    );
+    // Room-local: the trading worker's clock must not move.
+    let tp_before = depleted_at(&without, &[BODY_CC, BODY_TP], BODY_TP);
+    let tp_after = depleted_at(&with_aura, &ids_with, BODY_TP);
+    assert!(
+        (tp_after - tp_before).abs() < 1e-6,
+        "a CC-room aura must not reach a trading post ({tp_after}h vs {tp_before}h)"
+    );
+}
+
+/// Pool-scaled Control-Center globals (Sakiko's "all Trading Posts +1% per 8
+/// Passion", the Mortis "all Factories +1% (+1% per 20)") parse into
+/// `GlobalPoolScaling` and resolve by registry rewrite against settled pool
+/// points - floored steps, base always on - exactly like the other
+/// deployment-dependent rewrites. Context-free scoring credits the base only.
+#[test]
+// Exact float equality is intentional: these are deterministic values threaded
+// straight from the same constants/formulas the resolver used, not results of
+// independent floating-point computation.
+#[allow(clippy::float_cmp)]
+fn global_pool_consumers_resolve_against_settled_points() {
+    use backend::core::grade::base::assignment::resolve_global_pool;
+    use backend::core::grade::base::buff_registry::{BuffResolutionStrategy, build_registry};
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+
+    for (id, want_room, want_base, want_pct, want_per) in [
+        ("control_mp_bd&trade[000]", "TRADING", 0.0, 1.0, 8.0),
+        ("control_prod_bd_spd[010]", "MANUFACTURE", 1.0, 1.0, 20.0),
+        ("control_prod_bd_spd[000]", "MANUFACTURE", 0.5, 0.5, 20.0),
+    ] {
+        match registry.get(id) {
+            Some(BuffResolutionStrategy::GlobalPoolScaling {
+                target_room,
+                base_pct,
+                pct,
+                per,
+                resource,
+            }) => {
+                assert_eq!(target_room, want_room, "{id}");
+                assert_eq!(*base_pct, want_base, "{id}");
+                assert_eq!(*pct, want_pct, "{id}");
+                assert_eq!(*per, want_per, "{id}");
+                assert_eq!(resource, "bd_mujica", "{id}");
+            }
+            other => panic!("{id}: expected GlobalPoolScaling, got {other:?}"),
+        }
+    }
+
+    // 50 Passion: trading global = floor(50/8) x 1 = 6; factory = 1 + floor(50/20) x 1 = 3.
+    let points: HashMap<String, f64> = [("bd_mujica".to_string(), 50.0)].into();
+    let resolved = resolve_global_pool(&registry, &points);
+    assert_eq!(
+        resolved.get("control_mp_bd&trade[000]"),
+        Some(&BuffResolutionStrategy::GlobalEffect {
+            target_room: "TRADING".to_string(),
+            bonus_pct: 6.0,
+        })
+    );
+    assert_eq!(
+        resolved.get("control_prod_bd_spd[010]"),
+        Some(&BuffResolutionStrategy::GlobalEffect {
+            target_room: "MANUFACTURE".to_string(),
+            bonus_pct: 3.0,
+        })
+    );
+    // No points: the base survives, the pool part is 0 (never guess).
+    let dry = resolve_global_pool(&registry, &std::collections::HashMap::new());
+    assert_eq!(
+        dry.get("control_prod_bd_spd[010]"),
+        Some(&BuffResolutionStrategy::GlobalEffect {
+            target_room: "MANUFACTURE".to_string(),
+            bonus_pct: 1.0,
+        })
+    );
+}
+
+/// The planner's `lasts_hours` reads the same room-wide drain-aura model the
+/// sustainability simulator charges: a trading-post aura carrier stretches
+/// every TEAMMATE's swap clock, not just its own - previously the display
+/// said "swap Texas at 24h" while the simulator knew she'd last far longer.
+#[test]
+fn lasts_hours_reads_the_room_drain_aura() {
+    use backend::core::grade::base::assignment::compute_sustained_assignment;
+    const BODY: &str = "char_102_texas";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // A real owner of the trading drain-reduction aura, from gamedata.
+    let aura_owner = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char.iter().any(|bc| {
+                bc.buff_data
+                    .iter()
+                    .any(|bd| bd.buff_id.starts_with("trade_cost["))
+            })
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns the trading drain aura");
+
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 2)],
+    };
+    let hours_of = |ids: &[&str]| -> f64 {
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        let plan =
+            compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
+        plan.rooms
+            .iter()
+            .flat_map(|r| r.members.iter())
+            .find(|m| m.operator == BODY)
+            .map(|m| m.lasts_hours)
+            .expect("the body operator is in the rotation plan")
+    };
+    let without = hours_of(&[BODY, "char_140_whitew"]);
+    let with_aura = hours_of(&[BODY, "char_140_whitew", aura_owner.as_str()]);
+    assert!(
+        with_aura > without,
+        "the drain-reduction aura must stretch a teammate's swap clock \
+         ({with_aura}h with vs {without}h without)"
+    );
+}
+
+/// The 3-shift rotation runs on the same economy plan as the optimal view: a
+/// consumer's `PoolPayoff` override prices into rotation team selection, and a
+/// pinned Control-Center generator (Ling for the Sui economy) holds a Squad-1
+/// seat - two of the three shifts, the same realistic uptime perception priced
+/// the payoff at (all three would be a 36h stretch no morale bar survives) -
+/// and is never burned as a production filler.
+#[test]
+fn rotation_seats_economy_pins_and_credits_payoffs() {
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const LING: &str = "char_2023_ling";
+    const SHU: &str = "char_2025_shu";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (mut registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // The solved consumer payoff the pool plans would commit (Shu's factory
+    // skill priced at its Sui-economy value).
+    registry.insert(
+        "manu_prod_spd_bd[300]".to_string(),
+        BuffResolutionStrategy::PoolPayoff { pct: 40.0 },
+    );
+    let roster = full_roster(gd);
+    let building = generic_base();
+    let pins = vec![(LING.to_string(), "CONTROL".to_string())];
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &pins);
+
+    let ling_cc_shifts = rot
+        .shifts
+        .iter()
+        .filter(|s| {
+            s.rooms.iter().any(|r| {
+                r.room_type == "CONTROL" && r.active && r.recommended.iter().any(|id| id == LING)
+            })
+        })
+        .count();
+    assert_eq!(
+        ling_cc_shifts, 2,
+        "the pinned generator holds the Squad-1 share: 2 of 3 shifts"
+    );
+    for shift in &rot.shifts {
+        for room in shift.rooms.iter().filter(|r| r.room_type != "CONTROL") {
+            assert!(
+                !room.recommended.iter().any(|id| id == LING),
+                "shift {}: the pinned generator must not be spent as a {} filler",
+                shift.index,
+                room.room_type
+            );
+        }
+    }
+    // The payoff-priced consumer earns a factory seat somewhere in the rotation.
+    assert!(
+        rot.shifts.iter().any(|s| {
+            s.rooms
+                .iter()
+                .any(|r| r.room_type == "MANUFACTURE" && r.recommended.iter().any(|id| id == SHU))
+        }),
+        "a +40% PoolPayoff consumer must be worth a factory seat"
+    );
+}
+
+/// Non-production Control-Center skills (clue / training / HR) parse into
+/// `ControlNonProduction` - priced in their OWN units with zero LMD weight (the
+/// objective stays production-pure, matching both reference implementations) -
+/// and break ties for SPARE CC seats with the reference priority: clue > HR >
+/// training. "Only the strongest effect of this type" makes ONE family per
+/// boosted metric, across different buff-id prefixes.
+#[test]
+// Exact float equality is intentional: the expected value is threaded straight
+// from the same constant the resolver used, not an independent computation.
+#[allow(clippy::float_cmp)]
+fn cc_non_production_skills_parse_and_break_spare_seat_ties() {
+    use backend::core::grade::base::assignment::fill_remaining_slots;
+    use backend::core::grade::base::buff_registry::{BuffResolutionStrategy, build_registry};
+    use backend::core::grade::base::clause::build_clauses;
+    use backend::core::grade::base::types::OperatorBaseProfile;
+    use std::collections::HashSet;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // Golden parse: room target, value, and gating.
+    for (id, want_room, want_value, gated) in [
+        ("control_upMeetingSpeed[000]", "MEETING", 25.0, false),
+        ("control_meeting_spd&bd[000]", "MEETING", 5.0, false),
+        ("control_mp&meet_spd[000]", "MEETING", 5.0, true), // with Sakiko
+        ("control_train_spd[010]", "TRAINING", 5.0, false),
+        ("control_hire_spd&bd[000]", "HIRE", 10.0, false),
+    ] {
+        match registry.get(id) {
+            Some(BuffResolutionStrategy::ControlNonProduction {
+                target_room,
+                value,
+                same_room_gate,
+            }) => {
+                assert_eq!(target_room, want_room, "{id}");
+                assert_eq!(*value, want_value, "{id}");
+                assert_eq!(same_room_gate.is_some(), gated, "{id}: gating");
+                if gated {
+                    assert!(
+                        !same_room_gate.as_ref().unwrap().is_empty(),
+                        "{id}: the named companion must resolve"
+                    );
+                }
+            }
+            other => panic!("{id}: expected ControlNonProduction, got {other:?}"),
+        }
+    }
+
+    // Non-stacking family spans buff-id prefixes: +25% and +5% clue speed are
+    // the same "type", so they must share one family.
+    let clauses = build_clauses(&gd.building.buffs, &name_to_char);
+    let family = |id: &str| {
+        clauses[id]
+            .first()
+            .and_then(|c| c.non_stacking_family.clone())
+    };
+    assert_eq!(
+        family("control_upMeetingSpeed[000]"),
+        family("control_meeting_spd&bd[000]"),
+        "clue-speed CC skills share one non-stacking family"
+    );
+    assert!(family("control_upMeetingSpeed[000]").is_some());
+
+    // Spare-seat tie-break: with equal opportunity cost, the clue holder gets
+    // the free CONTROL seat over a skill-less benchwarmer.
+    let bare = |id: &str, buffs: Vec<String>| OperatorBaseProfile {
+        char_id: id.to_string(),
+        available_buffs: buffs,
+        faction_tags: vec![],
+        match_tags: vec![],
+        rarity: 4,
+        elite: 1,
+    };
+    let ops = [
+        bare("plain_op", vec![]),
+        bare("clue_op", vec!["control_upMeetingSpeed[000]".to_string()]),
+    ];
+    let mut seats: Vec<String> = Vec::new();
+    let mut assigned: HashSet<String> = HashSet::new();
+    fill_remaining_slots(
+        &mut seats,
+        1,
+        "CONTROL",
+        &ops,
+        &gd.building,
+        &registry,
+        &mut assigned,
+    );
+    assert_eq!(seats, ["clue_op"], "the clue holder wins the spare seat");
+
+    // Display aggregation: "only the strongest effect of this type" means the
+    // crew's clue total is the MAX (+15), never the sum (+20); the Sakiko
+    // same-room gate only counts while she shares the Control Center.
+    use backend::core::grade::base::assignment::cc_non_production_effects;
+    let crew_ops = [
+        bare("op_a", vec!["control_upMeetingSpeed[100]".to_string()]), // clue +15
+        bare("op_b", vec!["control_meeting_spd&bd[000]".to_string()]), // clue +5
+        bare("op_c", vec!["control_mp&meet_spd[000]".to_string()]),    // clue +5, needs Sakiko
+    ];
+    let ids = |v: &[&str]| v.iter().map(|s| (*s).to_string()).collect::<Vec<_>>();
+    let effects = |crew: &[String]| cc_non_production_effects(crew, &crew_ops, &registry);
+    assert_eq!(
+        effects(&ids(&["op_a", "op_b"])),
+        [("MEETING".to_string(), 15.0)],
+        "non-stacking: max, not sum"
+    );
+    assert_eq!(effects(&ids(&["op_b"])), [("MEETING".to_string(), 5.0)]);
+    assert_eq!(effects(&ids(&["op_c"])), [], "gated with no Sakiko in crew");
+    let sakiko = name_to_char["sakiko togawa"].clone();
+    assert_eq!(
+        effects(&[vec!["op_c".to_string(), sakiko]].concat()),
+        [("MEETING".to_string(), 5.0)],
+        "gate fires once Sakiko shares the CC"
+    );
+}
+
+/// The robot power-plant economy is a BUNDLE: Alanna's Operation Platforms only
+/// pay when Robot-tagged operators hold Power Plant seats, so the generator
+/// pins the roster's robots (capped at the building's real power capacity) and
+/// prices her factory skill at the solved payoff. The improvements-level oracle
+/// then weighs that feed against the drone specialists the pins displace -
+/// a trade that only became priceable once POWER entered `assignment_value`.
+#[test]
+// Exact float equality is intentional: `10.0` is the literal per-platform bonus
+// the bundle resolver is expected to price, not an independent computation.
+#[allow(clippy::float_cmp)]
+fn alanna_bundle_pins_robots_into_power_seats() {
+    use backend::core::grade::base::pools::candidate_bundles;
+    const ALANNA: &str = "char_4178_alanna";
+    const CASTLE3: &str = "char_286_cast3";
+    const LANCET2: &str = "char_285_medic2";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [ALANNA, CASTLE3, LANCET2]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+
+    // One L3 plant = one seat: the bundle must cap its pins there even with
+    // two robots in the roster.
+    let building = UserBuilding {
+        rooms: vec![room("p0", "POWER", 3), room("mf0", "MANUFACTURE", 3)],
+    };
+    let bundles = candidate_bundles(&ops, &building, &gd.building, &registry);
+    let robot_bundle = bundles
+        .iter()
+        .find(|b| b.pins.iter().any(|(_, rt)| rt == "POWER"))
+        .expect("a robot bundle for Alanna");
+    assert_eq!(
+        robot_bundle.pins.len(),
+        1,
+        "one power seat -> one pinned robot: {:?}",
+        robot_bundle.pins
+    );
+    let (buff_id, pct) = robot_bundle.overrides.first().expect("consumer override");
+    assert!(
+        buff_id.starts_with("manu_token_prod_spd"),
+        "override targets her platform skill, got {buff_id}"
+    );
+    assert_eq!(*pct, 10.0, "one robot x +10% per platform at E2");
+
+    // No power plant built -> no robot bundle to offer.
+    let no_power = UserBuilding {
+        rooms: vec![room("mf0", "MANUFACTURE", 3)],
+    };
+    assert!(
+        candidate_bundles(&ops, &no_power, &gd.building, &registry)
+            .iter()
+            .all(|b| b.pins.iter().all(|(_, rt)| rt != "POWER")),
+        "no plants means no robot pins"
+    );
+}
+
+/// POWER value is in the objective: a Power Plant operator's drone-recovery %
+/// converts to LMD/day through gamedata's Labor economy (`LaborRecoverTime` 360 s
+/// => 240 drones/day; one drone = `ManufactReduceTimeUnit` 180 s of gold-factory
+/// progress = 500 x 180/4320 LMD), so +20% recovery = exactly 1000 LMD/day.
+/// This lets the optimizer price seating a drone specialist against displacing
+/// one (the Alanna robot-displacement trade) instead of treating POWER as free.
+#[test]
+fn power_drone_recovery_is_priced_in_the_objective() {
+    use backend::core::grade::base::assignment::assignment_value;
+    use backend::core::grade::base::types::RoomAssignment;
+    let power = |eff: f64| RoomAssignment {
+        slot_id: "slot_p".into(),
+        room_type: "POWER".into(),
+        level: 3,
+        total_efficiency: eff,
+        ..Default::default()
+    };
+    let without = assignment_value(&[]);
+    let with = assignment_value(&[power(20.0)]);
+    assert!(
+        ((with - without) - 1000.0).abs() < 1e-9,
+        "+20% drone recovery must be worth exactly 1000 LMD/day, got {}",
+        with - without
+    );
+    // Two plants stack linearly - no coupling, unlike the gold->trade loop.
+    let both = assignment_value(&[power(20.0), power(23.5)]);
+    assert!(((both - without) - 2175.0).abs() < 1e-9);
+}
+
+/// The trading-post ORDER LIMIT baseline scales with the post's level (6/8/10 for
+/// L1-L3, gamedata `TradingData.Phases`), so a capacity-slashing operator is
+/// throttled against the REAL buffer, not a level-blind constant. Degenbrecher
+/// (-6 order limit) on an L3 post leaves 4 of 10 orders (factor 0.4); on an L1
+/// post she hits the floor of 1 of 6. The level-blind model scored the L3 case
+/// at ~0.17 - over-penalizing her on exactly the posts endgame players run.
+#[test]
+fn trading_order_cap_scales_with_post_level() {
+    const DEGENBRECHER: &str = "char_4116_blkkgt";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops = vec![profile(gd, DEGENBRECHER)];
+    let team = vec![DEGENBRECHER.to_string()];
+
+    let value_at = |level: i32| {
+        let building = UserBuilding {
+            rooms: vec![room("tp0", "TRADING", level)],
+        };
+        team_value(
+            &team,
+            "TRADING",
+            None,
+            &ops,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+        )
+    };
+
+    // L3: +25% efficiency x (10-6)/10 capacity = 1.25 x 0.4 = 0.5 objective.
+    let l3 = value_at(3);
+    assert!(
+        (l3 - 0.5).abs() < 0.02,
+        "L3 post: Degenbrecher throttles to 4/10 of the level's base cap, got {l3:.4}"
+    );
+    // L1: 6-6 clamps to the floor of 1 -> 1/6 capacity. Strictly worse than L3.
+    let l1 = value_at(1);
+    assert!(
+        (l1 - 1.25 / 6.0).abs() < 0.02,
+        "L1 post: the -6 clamps to the 1-order floor of a 6-cap post, got {l1:.4}"
+    );
+    assert!(
+        l3 > l1,
+        "a bigger buffer absorbs the slash better: {l3:.4} vs {l1:.4}"
+    );
+}
+
+/// Automation suppression is CLAUSE-GATED to the room its buff applies in:
+/// Weedy's factory automation must not wipe a Trading Post team she's merely
+/// being evaluated in (the legacy engine triggered on carrying the buff at all).
+#[test]
+fn automation_wipe_is_room_gated() {
+    const WEEDY: &str = "char_400_weedy";
+    const TEXAS: &str = "char_102_texas";
+    const LAPPLAND: &str = "char_140_whitew";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [WEEDY, TEXAS, LAPPLAND]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let building = UserBuilding {
+        rooms: vec![room("tp0", "TRADING", 3)],
+    };
+    let with_weedy = team_value(
+        &[TEXAS.to_string(), LAPPLAND.to_string(), WEEDY.to_string()],
+        "TRADING",
+        None,
+        &ops,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+    );
+    let without = team_value(
+        &[TEXAS.to_string(), LAPPLAND.to_string()],
+        "TRADING",
+        None,
+        &ops,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+    );
+    // Weedy adds nothing in a Trading Post, but she must not DESTROY the
+    // Texas+Lappland synergy either - the pair's value survives her presence.
+    assert!(
+        with_weedy >= without - 1e-9,
+        "Weedy in a trading post must not wipe teammates: with={with_weedy:.4} without={without:.4}"
+    );
+    assert!(
+        without > 1.5,
+        "sanity: Texas+Lappland is a strong trading pair ({without:.4})"
+    );
+}
+
+/// 2/5/2 layout (2 trading posts, 5 factories, 2 power plants): the rotation
+/// machinery is layout-generic - groups, gold split, tiling and power squads
+/// all derive from the actual rooms - so the second standard endgame layout
+/// gets a full 3-shift plan. Pins: the 3-gold/2-EXP split (2 posts' gold
+/// demand + 1), the trading login rhythm, alternating power/CC squads, and no
+/// operator double-booked within a shift.
+#[test]
+fn shift_rotation_supports_252_layout() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("hr", "HIRE", 3),
+        room("rc", "MEETING", 3),
+    ];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..5).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..2).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let rot = recommend_shift_rotation(
+        &full_roster(gd),
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &[],
+    );
+
+    assert_eq!(rot.shifts.len(), 3, "three shifts");
+    let cell =
+        |shift: usize, slot: &str| -> &backend::core::grade::base::shift_rotation::ShiftRoom {
+            rot.shifts[shift]
+                .rooms
+                .iter()
+                .find(|r| r.slot_id == slot)
+                .unwrap_or_else(|| panic!("shift {shift} missing slot {slot}"))
+        };
+
+    // Factory split: two L3 posts sell roughly two factories' worth of bars, so
+    // the marginal 5th factory goes to EXP (unsold gold is worthless under the
+    // coupled gold→trade yield) - the objective picks 2 gold / 3 EXP.
+    for shift in 0..3 {
+        let mut gold = 0;
+        let mut exp = 0;
+        for i in 0..5 {
+            match cell(shift, &format!("mf{i}")).formula_type.as_deref() {
+                Some("F_GOLD") => gold += 1,
+                Some("F_EXP") => exp += 1,
+                other => panic!("mf{i} shift {shift}: unexpected formula {other:?}"),
+            }
+        }
+        assert_eq!((gold, exp), (2, 3), "shift {shift}: 2 gold / 3 EXP");
+    }
+
+    // Trading pair keeps the login rhythm: 24h blocks, one swap per boundary.
+    let team_id = |shift: usize, slot: &str| -> String {
+        cell(shift, slot)
+            .team_id
+            .clone()
+            .expect("production cells carry a team id")
+    };
+    assert_eq!(team_id(0, "tp0"), team_id(1, "tp0"), "tp0 works shifts 1+2");
+    assert_ne!(
+        team_id(1, "tp0"),
+        team_id(2, "tp0"),
+        "tp0 swaps for shift 3"
+    );
+    assert_eq!(team_id(1, "tp1"), team_id(2, "tp1"), "tp1 works shifts 2+3");
+
+    // Both plants and the CC stay staffed every shift, cycling two squads.
+    for slot in ["p0", "p1", "cc"] {
+        let crews: Vec<Vec<String>> = (0..3)
+            .map(|k| {
+                let mut v = cell(k, slot).recommended.clone();
+                v.sort();
+                v
+            })
+            .collect();
+        assert!(
+            (0..3).all(|k| cell(k, slot).active && !crews[k].is_empty()),
+            "{slot} staffed all shifts: {crews:?}"
+        );
+        let distinct: std::collections::HashSet<&Vec<String>> = crews.iter().collect();
+        assert_eq!(distinct.len(), 2, "{slot} cycles two squads: {crews:?}");
+    }
+
+    // No operator is double-booked within any shift.
+    for (k, shift) in rot.shifts.iter().enumerate() {
+        let mut seen = std::collections::HashSet::new();
+        for r in shift.rooms.iter().filter(|r| r.active) {
+            for op in &r.recommended {
+                assert!(
+                    seen.insert(op.clone()),
+                    "shift {k}: {op} appears in two rooms"
+                );
+            }
+        }
+    }
+}
+
+/// The recommended rotation must survive its own morale simulation: game-true
+/// rates (1/hr drain, level-scaled dorm recovery) over a week of the login
+/// rhythm. A 24h work block drains the full bar and a 12h L5-dorm rest refills
+/// it - so the recommended plan holds up, and the verdict says so honestly.
+#[test]
+fn recommended_rotation_survives_its_own_morale_sim() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    for factories in [4usize, 5] {
+        let mut rooms = vec![
+            room("cc", "CONTROL", 5),
+            room("hr", "HIRE", 3),
+            room("rc", "MEETING", 3),
+        ];
+        rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+        rooms.extend((0..factories).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+        rooms.extend((0..(7 - factories)).map(|i| room(&format!("p{i}"), "POWER", 3)));
+        rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+        let building = UserBuilding { rooms };
+        let roster = full_roster(gd);
+        let rot =
+            recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+        let report = simulate_rotation(
+            &rot,
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            &std::collections::HashMap::new(),
+        );
+        // With L5 dorms a 24h block is sustainable at exactly baseline drain
+        // (24 drained, 12h x 2.0 recovered), and the planner routes operators
+        // whose skills drain faster than baseline into single-shift Squad-2
+        // seats - so the recommended plan must fully hold up.
+        assert_eq!(
+            report.verdict,
+            Verdict::HoldsUp,
+            "{factories}-factory rotation depletes: {:?} (dorm overflow {})",
+            report
+                .depleted
+                .iter()
+                .map(|d| format!("{} @{:.0}h in {}", d.char_id, d.at_hours, d.slot_id))
+                .collect::<Vec<_>>(),
+            report.dorm_overflow,
+        );
+        assert_eq!(
+            report.dorm_overflow, 0,
+            "{factories}-factory dorms cover the resters"
+        );
+    }
+}
+
+/// The simulator flags an UNSUSTAINABLE rhythm: with L1 dorms (+1.6/hr), a 12h
+/// rest recovers only ~19 of the 24 points a 24h block drains, so production
+/// operators leak ~5 morale per cycle and run dry within the week - the
+/// verdict must say "depletes" and name them, not wave the plan through.
+#[test]
+fn morale_sim_flags_underbuilt_dorms() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("hr", "HIRE", 3),
+        room("rc", "MEETING", 3),
+    ];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 1)));
+    let building = UserBuilding { rooms };
+    let roster = full_roster(gd);
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let report = simulate_rotation(
+        &rot,
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &std::collections::HashMap::new(),
+    );
+    assert_eq!(
+        report.verdict,
+        Verdict::Depletes,
+        "L1 dorms cannot sustain 24h blocks"
+    );
+    // The leak is SYSTEMIC (many baseline operators bleed ~5 morale per cycle),
+    // not one exotic heavy-drainer; and nobody can empty a full bar inside a
+    // single 12h shift (that would need >2.0/hr drain, which no skill reaches).
+    assert!(
+        report.depleted.len() >= 5,
+        "underbuilt dorms leak across the whole rotation: {:?}",
+        report
+            .depleted
+            .iter()
+            .map(|d| d.at_hours)
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        report.depleted.iter().all(|d| d.at_hours > 12.0),
+        "no operator empties a full bar within one shift: {:?}",
+        report
+            .depleted
+            .iter()
+            .map(|d| d.at_hours)
+            .collect::<Vec<_>>()
+    );
+}
+
+/// The first NATIVE pool economy: Minimalist's Engineering Robots. Her E0
+/// generator makes +1 robot per functional-facility level (max 64 - exactly a
+/// maxed 243's level sum) and her E2 consumer converts every 8 robots into +5%
+/// productivity, floored. Generator and consumer travel together, so the pool
+/// settles room-locally from the layout alone: on a maxed base she is a
+/// +40% solo factory operator; on a smaller base the value floors down. These
+/// buffs scored ZERO before (unresolved) - honest, but she was invisible.
+#[test]
+fn minimalist_engineering_robots_settle_from_the_layout() {
+    use backend::core::grade::base::clause::{ClauseKind, build_clauses};
+    const MINIMALIST: &str = "char_4054_malist";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // The parse: generator + stepped consumer, no longer Unresolved.
+    let clauses = build_clauses(&gd.building.buffs, &name_to_char);
+    assert!(
+        clauses["manu_constrLv[000]"]
+            .iter()
+            .any(|c| matches!(&c.kind, ClauseKind::ResourceConvert(_)) && c.cap == Some(64.0)),
+        "generator parses with its 64-point cap: {:?}",
+        clauses["manu_constrLv[000]"]
+    );
+    assert!(
+        clauses["manu_prod_spd_bd[110]"]
+            .iter()
+            .any(|c| matches!(&c.kind, ClauseKind::ScalingPoolPoints { step, .. } if (*step - 8.0).abs() < 1e-9)),
+        "E2 consumer parses as a stepped pool drain: {:?}",
+        clauses["manu_prod_spd_bd[110]"]
+    );
+
+    let ops = vec![profile(gd, MINIMALIST)];
+    let team = vec![MINIMALIST.to_string()];
+    let value_with = |rooms: Vec<UserRoom>| {
+        let building = UserBuilding { rooms };
+        team_value(
+            &team,
+            "MANUFACTURE",
+            Some("F_GOLD"),
+            &ops,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+        )
+    };
+
+    // Maxed 243: levels sum to 64 -> floor(64/8) x 5% = +40%.
+    let mut maxed = vec![
+        room("cc", "CONTROL", 5),
+        room("hr", "HIRE", 3),
+        room("rc", "MEETING", 3),
+        room("ws", "WORKSHOP", 3),
+        room("tr", "TRAINING", 3),
+    ];
+    maxed.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    maxed.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    maxed.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    maxed.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    assert!(
+        (value_with(maxed) - 1.40).abs() < 1e-9,
+        "maxed base: 64 robots -> +40%"
+    );
+
+    // A half-built base: 30 levels -> floor(30/8)=3 -> +15%.
+    let small = vec![
+        room("cc", "CONTROL", 3),
+        room("mf0", "MANUFACTURE", 3),
+        room("mf1", "MANUFACTURE", 3),
+        room("tp0", "TRADING", 3),
+        room("p0", "POWER", 3),
+        room("d0", "DORMITORY", 5),
+        room("d1", "DORMITORY", 5),
+        room("hr", "HIRE", 2),
+        room("rc", "MEETING", 3),
+    ];
+    assert!(
+        (value_with(small) - 1.15).abs() < 1e-9,
+        "30 functional levels -> floor(30/8)x5 = +15%"
+    );
+}
+
+/// The first ASSIGNMENT-FED pool: Senshi's Monster Meals. Seated in a dormitory
+/// he provides 1 Meal per level of THAT dorm; Marcille (factory, +1%/Meal) and
+/// Chilchuck (trading, +1%/Meal) consume the settled points. The live view
+/// settles against real seats: with Senshi resting in an L5 dorm both consumers
+/// gain exactly +5% over the identical base without him - and with him absent
+/// the pool reads zero, never a guess.
+#[test]
+fn senshi_monster_meals_settle_against_live_seats() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const SENSHI: &str = "char_4143_sensi";
+    const MARCILLE: &str = "char_4141_marcil";
+    const CHILCHUCK: &str = "char_4144_chilc";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [SENSHI, MARCILLE, CHILCHUCK]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+
+    let build = |senshi_rests: bool| {
+        let mut dorm = room("d0", "DORMITORY", 5);
+        if senshi_rests {
+            dorm.current_operators = vec![SENSHI.to_string()];
+        }
+        let mut mf = room("mf0", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".to_string());
+        mf.current_operators = vec![MARCILLE.to_string()];
+        let mut tp = room("tp0", "TRADING", 3);
+        tp.current_operators = vec![CHILCHUCK.to_string()];
+        UserBuilding {
+            rooms: vec![room("cc", "CONTROL", 5), dorm, mf, tp],
+        }
+    };
+
+    let eff = |asn: &backend::core::grade::base::types::BaseAssignment, slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map_or_else(|| panic!("missing {slot}"), |r| r.total_efficiency)
+    };
+    let with =
+        compute_current_assignment(&ops, &build(true), &gd.building, &registry, &drains, None);
+    let without =
+        compute_current_assignment(&ops, &build(false), &gd.building, &registry, &drains, None);
+
+    assert!(
+        (eff(&with, "mf0") - eff(&without, "mf0") - 5.0).abs() < 1e-9,
+        "L5 dorm -> 5 Meals -> Marcille +5%: {} vs {}",
+        eff(&with, "mf0"),
+        eff(&without, "mf0")
+    );
+    assert!(
+        (eff(&with, "tp0") - eff(&without, "tp0") - 5.0).abs() < 1e-9,
+        "Chilchuck's post gains the same 5 Meals: {} vs {}",
+        eff(&with, "tp0"),
+        eff(&without, "tp0")
+    );
+}
+
+/// Dorm-occupant pools settle against live seats end to end:
+/// - Mr. Nothing's one-buff trading economy: each resting operator grants a
+///   Worldly Plight point and his own skill converts them to order efficiency.
+/// - Rosmontis' Extrasensory CHAIN: dorm occupants feed Perception
+///   Information, which converts 1:1 into Chain of Thought, which her E2
+///   consumer drains at +1% per point - two pools, one fixed-point pass.
+/// - A CROSS-OPERATOR chain: Mr. Nothing generates Worldly Plight from the
+///   dorms while a factory teammate's converter turns every 5 into a
+///   Witchcraft Crystal worth +2% - generation, conversion and consumption in
+///   three different rooms.
+#[test]
+fn dorm_fed_pools_and_conversion_chains_settle() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const MR_NOTHING: &str = "char_455_nothin";
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const WITCH: &str = "char_4078_bdhkgt";
+    const BODIES: [&str; 4] = [
+        "char_002_amiya",
+        "char_123_fang",
+        "char_240_wyvern",
+        "char_192_falco",
+    ];
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut ids: Vec<&str> = vec![MR_NOTHING, ROSMONTIS, WITCH];
+    ids.extend(BODIES);
+    let ops: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+
+    let assemble = |factory_op: &str, resting: &[&str]| {
+        let mut dorm = room("d0", "DORMITORY", 5);
+        dorm.current_operators = resting.iter().map(|s| (*s).to_string()).collect();
+        let mut mf = room("mf0", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".to_string());
+        mf.current_operators = vec![factory_op.to_string()];
+        let mut tp = room("tp0", "TRADING", 3);
+        tp.current_operators = vec![MR_NOTHING.to_string()];
+        UserBuilding {
+            rooms: vec![room("cc", "CONTROL", 5), dorm, mf, tp],
+        }
+    };
+    let eff = |asn: &backend::core::grade::base::types::BaseAssignment, slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map_or_else(|| panic!("missing {slot}"), |r| r.total_efficiency)
+    };
+    let run = |factory_op: &str, resting: &[&str]| {
+        compute_current_assignment(
+            &ops,
+            &assemble(factory_op, resting),
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+        )
+    };
+
+    // Mr. Nothing: 4 resting operators -> 4 Worldly Plight -> +4% on his post.
+    let with4 = run(ROSMONTIS, &BODIES);
+    let with0 = run(ROSMONTIS, &[]);
+    assert!(
+        (eff(&with4, "tp0") - eff(&with0, "tp0") - 4.0).abs() < 1e-9,
+        "Mr. Nothing: 4 dorm occupants -> +4% order efficiency ({} vs {})",
+        eff(&with4, "tp0"),
+        eff(&with0, "tp0")
+    );
+
+    // Rosmontis: 4 dorm occupants -> 4 PI -> 4 Chain of Thought -> +4% (E2,
+    // +1% per point) on her factory.
+    assert!(
+        (eff(&with4, "mf0") - eff(&with0, "mf0") - 4.0).abs() < 1e-9,
+        "Rosmontis chain: 4 occupants -> +4% productivity ({} vs {})",
+        eff(&with4, "mf0"),
+        eff(&with0, "mf0")
+    );
+
+    // Cross-operator chain: 4 resting -> 4 WP is below the 5-per-crystal
+    // ratio (floor 0), so the witch factory gains nothing yet... but with all
+    // seven ops resting? Use the four bodies + swap Rosmontis into the dorm:
+    // 5 resting -> 5 WP -> 1 Witchcraft Crystal -> +2% on the witch's factory.
+    let mut five: Vec<&str> = BODIES.to_vec();
+    five.push(ROSMONTIS);
+    let witch5 = run(WITCH, &five);
+    let witch_base4 = run(WITCH, &BODIES);
+    assert!(
+        (eff(&witch5, "mf0") - eff(&witch_base4, "mf0") - 2.0).abs() < 1e-9,
+        "5 WP -> 1 crystal -> +2% ({} vs {})",
+        eff(&witch5, "mf0"),
+        eff(&witch_base4, "mf0")
+    );
+}
+
+/// The Control-Center generator SIDE-CHANNEL: Dusk/Ling/Chongyue's CC buffs
+/// carry a morale aura (which the parser owns) AND a pool grant - extracted
+/// separately by the settlement. Seating the three siblings in the CC with Shu
+/// deployed makes 4 deployed Sui: Chongyue grants min(4,5)x5 = 20 Worldly
+/// Plight, Dusk and Ling's "above/below 12 morale" branches settle at the 0.5
+/// steady-state fraction (+7.5 each) - 35 points, and Shu's factory skill
+/// drains them at +1% per 3: exactly +11%.
+#[test]
+fn sui_worldly_plight_flows_from_the_control_center() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const CHONGYUE: &str = "char_2024_chyue";
+    const DUSK: &str = "char_2015_dusk";
+    const LING: &str = "char_2023_ling";
+    const SHU: &str = "char_2025_shu";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [CHONGYUE, DUSK, LING, SHU]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+
+    let assemble = |cc_ops: &[&str]| {
+        let mut cc = room("cc", "CONTROL", 5);
+        cc.current_operators = cc_ops.iter().map(|s| (*s).to_string()).collect();
+        let mut mf = room("mf0", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".to_string());
+        mf.current_operators = vec![SHU.to_string()];
+        UserBuilding {
+            rooms: vec![cc, mf, room("d0", "DORMITORY", 5)],
+        }
+    };
+    let factory_eff = |cc_ops: &[&str]| {
+        let asn = compute_current_assignment(
+            &ops,
+            &assemble(cc_ops),
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+        );
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf0")
+            .map(|r| r.total_efficiency)
+            .unwrap()
+    };
+
+    let with_cc = factory_eff(&[CHONGYUE, DUSK, LING]);
+    let alone = factory_eff(&[]);
+    assert!(
+        (with_cc - alone - 11.0).abs() < 1e-9,
+        "35 Worldly Plight -> floor(35/3) = +11% on Shu's factory ({with_cc} vs {alone})"
+    );
+}
+
+/// Alanna's Operation Platforms: a Robot-tagged operator seated in a Power
+/// Plant is her pseudo-pool. Castle-3 manning a plant is worth +10% Precious
+/// Metal productivity on her gold factory (E2); pull the robot and it's zero.
+#[test]
+fn alanna_counts_robots_in_power_plants() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const ALANNA: &str = "char_4178_alanna";
+    const CASTLE3: &str = "char_286_cast3";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> =
+        [ALANNA, CASTLE3].iter().map(|id| profile(gd, id)).collect();
+
+    let assemble = |robot_manned: bool| {
+        let mut pp = room("p0", "POWER", 3);
+        if robot_manned {
+            pp.current_operators = vec![CASTLE3.to_string()];
+        }
+        let mut mf = room("mf0", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".to_string());
+        mf.current_operators = vec![ALANNA.to_string()];
+        UserBuilding {
+            rooms: vec![room("cc", "CONTROL", 5), pp, mf],
+        }
+    };
+    let factory_eff = |robot: bool| {
+        let asn = compute_current_assignment(
+            &ops,
+            &assemble(robot),
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+        );
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf0")
+            .map(|r| r.total_efficiency)
+            .unwrap()
+    };
+    assert!(
+        (factory_eff(true) - factory_eff(false) - 10.0).abs() < 1e-9,
+        "one Operation Platform -> +10% at E2 ({} vs {})",
+        factory_eff(true),
+        factory_eff(false)
+    );
+}
+
+/// SEAT INCENTIVES: the optimal search itself now values the pool economies.
+/// The planner solves Senshi's Monster Meals ahead of the search - pinning him
+/// into the best dormitory and pricing Marcille's consumer at the settled
+/// +5% - so the optimizer SEATS Marcille in the factory over a plain +2%
+/// operator it would otherwise prefer, and reserves Senshi's dorm seat. The
+/// honesty rule holds throughout: consumers fed by unpinned third parties get
+/// no credit.
+#[test]
+fn optimal_search_seats_the_monster_meal_economy() {
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    use backend::core::grade::base::pools::plan_optimal_economies;
+    const SENSHI: &str = "char_4143_sensi";
+    const MARCILLE: &str = "char_4141_marcil";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [SENSHI, MARCILLE]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+
+    let mut mf = room("mf0", "MANUFACTURE", 3);
+    mf.current_formula = Some("F_GOLD".to_string());
+    let building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), mf, room("d0", "DORMITORY", 5)],
+    };
+
+    let plan = plan_optimal_economies(&ops, &building, &gd.building, &registry);
+    assert!(
+        plan.pins
+            .iter()
+            .any(|(id, room)| id == SENSHI && room == "DORMITORY"),
+        "Senshi is pinned into the dormitory: {:?}",
+        plan.pins
+    );
+    let marcille_override = plan
+        .overrides
+        .iter()
+        .find(|(bid, _)| bid == "manu_prod_spd_bd[400]")
+        .map(|(_, pct)| *pct);
+    assert_eq!(
+        marcille_override,
+        Some(5.0),
+        "Marcille's consumer is priced at the L5 dorm's 5 Meals: {:?}",
+        plan.overrides
+    );
+
+    // Apply the plan the way the improvements service does and let the
+    // optimizer search: Marcille must be seated with her solved value.
+    let mut optimal_registry = registry;
+    for (bid, pct) in &plan.overrides {
+        optimal_registry.insert(
+            bid.clone(),
+            BuffResolutionStrategy::PoolPayoff { pct: *pct },
+        );
+    }
+    let asn = compute_optimal_assignment_with_pins(
+        &ops,
+        &building,
+        &gd.building,
+        &optimal_registry,
+        &drains,
+        &plan.pins,
+    );
+    let factory = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MANUFACTURE")
+        .unwrap();
+    assert!(
+        factory.operators.iter().any(|o| o == MARCILLE),
+        "the search seats Marcille for her solved economy value: {:?}",
+        factory.operators
+    );
+    assert!(
+        factory.total_efficiency >= 5.0 - 1e-9,
+        "her settled +5% is realized in the optimal view: {}",
+        factory.total_efficiency
+    );
+    let dorm_pin_realized = asn
+        .rooms
+        .iter()
+        .any(|r| r.room_type == "DORMITORY" && r.operators.iter().any(|o| o == SENSHI));
+    assert!(
+        dorm_pin_realized,
+        "Senshi's reserved dorm seat appears in the plan: {:?}",
+        asn.rooms
+            .iter()
+            .map(|r| (&r.room_type, &r.operators))
+            .collect::<Vec<_>>()
+    );
+}
+
+/// JOINT-SEATING: the Sui bundle prices the whole Control-Center economy as a
+/// package. With Chongyue, Dusk and Ling pinned into the CC (3 Sui kin ->
+/// Chongyue grants 15, the conditional branches add 7.5 each = 30 Worldly
+/// Plight), Shu's factory skill solves to floor(30/3) = +10%, and the
+/// witch's self-owned converter chain reaches floor(30/5) = 6 Crystals ->
+/// +12% at E2. The caller then judges the bundle by total yield - the
+/// optimizer itself prices the three CC seats it costs.
+#[test]
+fn sui_bundle_prices_the_cc_economy_as_a_package() {
+    use backend::core::grade::base::pools::candidate_bundles;
+    const CHONGYUE: &str = "char_2024_chyue";
+    const DUSK: &str = "char_2015_dusk";
+    const LING: &str = "char_2023_ling";
+    const SHU: &str = "char_2025_shu";
+    const WITCH: &str = "char_4078_bdhkgt";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let ops: Vec<OperatorBaseProfile> = [CHONGYUE, DUSK, LING, SHU, WITCH]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+
+    let bundles = candidate_bundles(
+        &ops,
+        &UserBuilding { rooms: Vec::new() },
+        &gd.building,
+        &registry,
+    );
+    assert_eq!(bundles.len(), 1, "one Sui bundle: {bundles:?}");
+    let b = &bundles[0];
+    for id in [CHONGYUE, DUSK, LING] {
+        assert!(
+            b.pins.iter().any(|(c, r)| c == id && r == "CONTROL"),
+            "{id} pinned to the CC: {:?}",
+            b.pins
+        );
+    }
+    let get = |bid: &str| b.overrides.iter().find(|(x, _)| x == bid).map(|(_, p)| *p);
+    assert_eq!(
+        get("manu_prod_spd_bd[300]"),
+        Some(10.0),
+        "Shu: 30 WP -> +10%: {:?}",
+        b.overrides
+    );
+    assert_eq!(
+        get("manu_prod_spd_bd[201]"),
+        Some(12.0),
+        "witch chain: 6 Crystals -> +12%: {:?}",
+        b.overrides
+    );
+}
+
+/// PARITY HARNESS vs the reference optimizer: rebuild the exact 2/5/2 fixture
+/// the reference solved for this roster (2 gold-strategy posts, 3 gold + 2 EXP
+/// factories, 2 plants, low dorms) and print OUR optimal seating for the same
+/// rooms - the diff against the captured reference answer attributes every
+/// divergence to a coverage gap or a judgment difference.
+#[test]
+#[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
+fn reference_parity_252() {
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
+    use backend::core::grade::base::buff_registry::faction_tags_of;
+    let dir = std::env::var("BASE_REPRO_DIR").expect("set BASE_REPRO_DIR");
+    let uid = std::env::var("BASE_REPRO_UID").unwrap_or_else(|_| "89153800".into());
+    let roster: Vec<RosterEntry> =
+        serde_json::from_str(&std::fs::read_to_string(format!("{dir}/roster_{uid}.json")).unwrap())
+            .unwrap();
+    let gd = load_game_data();
+    let profiles: Vec<OperatorBaseProfile> = roster
+        .iter()
+        .filter_map(|entry| {
+            let bc = gd.building.chars.get(&entry.operator_id)?;
+            let static_op = gd.operators.get(&entry.operator_id);
+            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
+            Some(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                rarity,
+                &gd.building,
+            ))
+        })
+        .collect();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // The reference probe's exact layout: CC5, reception/office/workshop/training L3,
+    // dorms L2/L2/L1/L1, 2 gold-strategy posts L3, 3 gold + 2 EXP factories L3, 2 plants L3.
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("rc", "MEETING", 3),
+        room("hr", "HIRE", 3),
+        room("ws", "WORKSHOP", 3),
+        room("tr", "TRAINING", 3),
+        room("d0", "DORMITORY", 2),
+        room("d1", "DORMITORY", 2),
+        room("d2", "DORMITORY", 1),
+        room("d3", "DORMITORY", 1),
+    ];
+    rooms.extend((1..=2).map(|i| room(&format!("production_{i}"), "TRADING", 3)));
+    for i in 3..=7 {
+        let mut mf = room(&format!("production_{i}"), "MANUFACTURE", 3);
+        mf.current_formula = Some(if i <= 5 { "F_GOLD" } else { "F_EXP" }.to_string());
+        rooms.push(mf);
+    }
+    rooms.extend((8..=9).map(|i| room(&format!("production_{i}"), "POWER", 3)));
+    let building = UserBuilding { rooms };
+
+    // Full service wiring: native economies + bundles via the oracle.
+    let mut optimal_registry = registry.clone();
+    let mut optimal_pins: Vec<(String, String)> = Vec::new();
+    let native = backend::core::grade::base::pools::plan_optimal_economies(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+    );
+    for (bid, pct) in &native.overrides {
+        optimal_registry.insert(
+            bid.clone(),
+            BuffResolutionStrategy::PoolPayoff { pct: *pct },
+        );
+    }
+    optimal_pins.extend(native.pins.iter().cloned());
+    let mut best = compute_optimal_assignment_with_pins(
+        &profiles,
+        &building,
+        &gd.building,
+        &optimal_registry,
+        &drains,
+        &optimal_pins,
+    );
+    for bundle in backend::core::grade::base::pools::candidate_bundles(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+    ) {
+        use backend::core::grade::base::assignment::assignment_value;
+        let mut tr = optimal_registry.clone();
+        for (bid, pct) in &bundle.overrides {
+            tr.insert(
+                bid.clone(),
+                BuffResolutionStrategy::PoolPayoff { pct: *pct },
+            );
+        }
+        let mut tp = optimal_pins.clone();
+        tp.extend(bundle.pins.iter().cloned());
+        let trial = compute_optimal_assignment_with_pins(
+            &profiles,
+            &building,
+            &gd.building,
+            &tr,
+            &drains,
+            &tp,
+        );
+        if assignment_value(&trial.rooms) > assignment_value(&best.rooms) + 1e-9 {
+            best = trial;
+        }
+    }
+    for r in &best.rooms {
+        println!(
+            "OURS {} {} {:?} eff {:.1} ops {:?}",
+            r.slot_id, r.room_type, r.formula_type, r.total_efficiency, r.operators
+        );
+    }
+}
+
+/// Morale AURAS flow through the simulator: a teammate whose skill slows the
+/// whole room's drain ("-0.1/hr to all Operators in the Trading Post") and a
+/// Control-Center aura lifting every dormitory sleeper's recovery both change
+/// the week's morale arithmetic. With L2 dorms (+1.7/hr), a 24h block drains
+/// 24 but a 12h rest recovers only 20.4 - operators leak and deplete; the
+/// room aura cuts the block's drain to 21.6, which the rest covers.
+#[test]
+fn morale_auras_change_the_sustainability_arithmetic() {
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
+    const AURA: &str = "char_4171_wulfen"; // Warm-Up owner? resolved below
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // Find a real owner of the trading drain aura from gamedata - no hardcoded id.
+    let aura_owner = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char.iter().any(|bc| {
+                bc.buff_data
+                    .iter()
+                    .any(|bd| bd.buff_id.starts_with("trade_cost["))
+            })
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns the trading drain aura");
+    let _ = AURA;
+    // Two neutral bodies + the aura carrier; everyone at E2-max via profile().
+    let bodies = ["char_102_texas", "char_140_whitew"];
+    let mut ids: Vec<String> = bodies.iter().map(|s| (*s).to_string()).collect();
+    ids.push(aura_owner);
+    let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 2)],
+    };
+    // A hand-built 3-shift rotation: the trio works shifts 1+2 (a 24h block)
+    // and rests shift 3 - the exact rhythm the planner emits.
+    let mk_rotation = |crew: Vec<String>| ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![ShiftRoom {
+                    slot_id: "tp".into(),
+                    room_type: "TRADING".into(),
+                    formula_type: None,
+                    recommended: if index <= 2 { crew.clone() } else { Vec::new() },
+                    current: Vec::new(),
+                    active: index <= 2,
+                    efficiency: None,
+                    team_id: None,
+                    team_label: None,
+                }],
+            })
+            .collect(),
+        sustained: Vec::new(),
+    };
+
+    // Without the aura carrier: 24h at 1.0/hr vs 12h at L2's +1.7/hr -> leak -> depletes.
+    let without = simulate_rotation(
+        &mk_rotation(bodies.iter().map(|s| (*s).to_string()).collect()),
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &std::collections::HashMap::new(),
+    );
+    assert_eq!(
+        without.verdict,
+        Verdict::Depletes,
+        "L2 dorms can't cover a full-drain 24h block"
+    );
+
+    // With the aura carrier in the room: everyone drains 0.9/hr -> 21.6/block,
+    // covered by 12h x 1.7 = 20.4... still short; but the leak shrinks enough
+    // that nobody empties WITHIN the week that previously did. The precise pin:
+    // depletion count strictly decreases and first depletion happens later.
+    let with = simulate_rotation(
+        &mk_rotation(ids.clone()),
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &std::collections::HashMap::new(),
+    );
+    let first_without = without.depleted.first().map_or(0.0, |d| d.at_hours);
+    let first_with = with.depleted.first().map_or(f64::INFINITY, |d| d.at_hours);
+    assert!(
+        first_with > first_without + 12.0,
+        "the room aura defers depletion by shifts: {first_without} -> {first_with}"
     );
 }

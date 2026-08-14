@@ -388,6 +388,16 @@ export interface IRoomAssignment {
     yield_lmd_per_day: number;
     yield_gold_per_day: number;
     yield_exp_per_day: number;
+    /** Non-production effects the crew provides (Control Center only): clue /
+     *  training / HR speed in each boosted facility's own units. */
+    non_production: INonProdEffect[];
+}
+
+export interface INonProdEffect {
+    /** The boosted facility's room type ("MEETING", "TRAINING", "HIRE"). */
+    room_type: string;
+    /** Effect % in that facility's own units. */
+    value: number;
 }
 
 export interface IBaseAssignment {
@@ -402,8 +412,10 @@ export interface IBaseAssignment {
 
 export interface IRotationMember {
     operator: IAssignedOperator;
-    /** Approximate hours this operator works before you rotate it out. */
-    lasts_hours: number;
+    /** Approximate hours this operator works before you rotate it out. `null`
+     *  when the operator drains no morale (an infinite f64 serializes to JSON
+     *  null) - they can work indefinitely and never need rotating out. */
+    lasts_hours: number | null;
 }
 
 export interface IRoomRotation {
@@ -429,8 +441,6 @@ export interface IRotationSet {
 }
 
 export interface IRotation {
-    /** The main staffing - your best operators, working almost all the time. */
-    main: IBaseAssignment;
     /** Per-room rotation plan: who to swap first, when, and the backup. */
     rooms: IRoomRotation[];
     /** The small shared bench that covers every room (one swap at a time). */
@@ -499,6 +509,27 @@ export interface IShiftRotation {
     /** Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
      *  shift instead of resting the middle one. Badged as "24/7 · Fiammetta". */
     sustained: IAssignedOperator[];
+    /** A week-long morale simulation of the recommended rhythm (game-true drain and
+     *  dorm-recovery rates). Optional so older backend payloads render without it. */
+    sustainability?: ISustainability | null;
+}
+
+/** The rotation validated by a time-stepped morale simulation: honest evidence the
+ *  plan survives its own rhythm instead of an unchecked recommendation. */
+export interface ISustainability {
+    /** "holds_up" - nobody runs dry; "depletes" - someone's morale empties mid-shift. */
+    verdict: "holds_up" | "depletes";
+    horizon_hours: number;
+    /** Operators whose morale empties while working, with when and where. */
+    depleted: IDepletedOperator[];
+    /** Peak number of resting operators the dorms could not hold at once. */
+    dorm_overflow: number;
+}
+
+export interface IDepletedOperator {
+    operator: IAssignedOperator;
+    at_hours: number;
+    room_type: string;
 }
 
 /** A support operator to station outside production to feed the resource economy. */
@@ -530,8 +561,6 @@ export interface IPerceptionPlan {
 export interface IBaseImprovements {
     /** The player's current base exactly as stationed right now. */
     current: IBaseAssignment | null;
-    /** The player's planned rotation (their in-game preset shifts), if any. */
-    current_rotation: IRotation | null;
     optimal: IBaseAssignment | null;
     rotation: IRotation | null;
     layout: IRoomLayoutEntry[];

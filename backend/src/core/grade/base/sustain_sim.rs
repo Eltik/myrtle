@@ -1,0 +1,456 @@
+//! Rotation-sustainability simulator: steps the recommended 3-shift rotation
+//! through a week of 12h blocks with GAME-TRUE morale rates and reports
+//! whether any operator runs dry mid-shift. The static planner already scores
+//! output; this pass VALIDATES the rhythm - a recommendation that quietly
+//! drains its operators is flagged, not shipped as if it held up.
+//!
+//! Rates come from gamedata, not the planner's relative uptime calibration:
+//! a full morale bar is 24 points (`MaxManpower` 8,640,000 ap = 360,000 ap per
+//! point, drained over 24h baseline -> 1.0 point/hour), and a dormitory
+//! recovers `DormData.Phases[level].ManpowerRecover / 100` points/hour
+//! (1.6/hr at L1 -> 2.0/hr at L5). Furniture comfort (up to ~+0.35/hr) is NOT
+//! modeled - it isn't synced - which errs conservative: a rotation that holds
+//! up here also holds up in game.
+
+use std::collections::HashMap;
+
+use crate::core::gamedata::types::building::BuildingDataFile;
+
+use super::buff_registry::{BuffResolutionStrategy, TargetedMoraleEffect};
+use super::clause::{ClauseKind, Metric, clauses_from_strategy};
+use super::shift_rotation::ShiftRotation;
+use super::types::{OperatorBaseProfile, UserBuilding};
+use super::util::max_stationed_at_level;
+
+/// The game's full morale bar.
+pub(crate) const MORALE_MAX: f64 = 24.0;
+/// Baseline drain while working: one point per hour (8,640,000 ap over 24h).
+const GAME_BASE_MORALE_DRAIN: f64 = 1.0;
+/// Skills can slow drain but never fully stop it (matches the planner's floor).
+const MIN_MORALE_DRAIN: f64 = 0.05;
+/// One shift of the login rhythm.
+const SHIFT_HOURS: f64 = 12.0;
+/// A week of the rotation - enough cycles for slow leaks to surface.
+pub const SIM_HORIZON_HOURS: f64 = 168.0;
+
+/// Did the rotation survive the horizon?
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Verdict {
+    /// Nobody ran dry: the rhythm is sustainable as recommended.
+    HoldsUp,
+    /// At least one operator's morale hit zero mid-shift.
+    Depletes,
+}
+
+/// An operator whose morale reached zero while working.
+#[derive(Debug, Clone)]
+pub struct DepletedOperator {
+    pub char_id: String,
+    /// Hours into the simulation when the bar emptied.
+    pub at_hours: f64,
+    /// The room they were working when it happened.
+    pub slot_id: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct SustainabilityReport {
+    pub verdict: Verdict,
+    pub horizon_hours: f64,
+    /// First depletion per operator, ordered by when it happened.
+    pub depleted: Vec<DepletedOperator>,
+    /// Peak number of resting operators the dorms could NOT hold at once
+    /// (they recover nothing that block). Zero for a healthy base.
+    pub dorm_overflow: usize,
+}
+
+/// Effective working drain at GAME rates, in morale points per hour: the
+/// 1.0/hr baseline plus the operator's per-buff deltas.
+pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+    let modifier: f64 = op
+        .available_buffs
+        .iter()
+        .filter_map(|b| morale_drains.get(b))
+        .sum();
+    (GAME_BASE_MORALE_DRAIN + modifier).max(MIN_MORALE_DRAIN)
+}
+
+/// True when a full 24h block (two consecutive shifts) fits inside the
+/// operator's morale bar: 24 points over 24 hours means drain must not exceed
+/// the 1.0/hr baseline. This is BAR-feasibility only and deliberately
+/// dorm-independent - a recovery shortfall is the simulator's report, not a
+/// seating rule. The planner uses it to keep heavy-drainers out of 24h-block
+/// seats (production teams, Squad 1) while leaving them eligible for the
+/// single-shift Squad 2 positions they can genuinely work.
+pub fn sustains_24h_block(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> bool {
+    game_morale_drain(op, morale_drains) <= GAME_BASE_MORALE_DRAIN + 1e-9
+}
+
+/// Per-operator schedule across the 3-shift cycle: which shifts they work and
+/// where. Derived from the rotation's recommended cells.
+struct OpSchedule {
+    /// `slot_id` worked per shift index, `None` = resting that shift.
+    works: [Option<String>; 3],
+    /// Game-true drain per working hour.
+    drain: f64,
+}
+
+/// Simulate the rotation's login rhythm over [`SIM_HORIZON_HOURS`].
+pub fn simulate_rotation(
+    rotation: &ShiftRotation,
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    targeted: &HashMap<String, TargetedMoraleEffect>,
+) -> SustainabilityReport {
+    let profile_by_id: HashMap<&str, &OperatorBaseProfile> =
+        profiles.iter().map(|p| (p.char_id.as_str(), p)).collect();
+
+    // Targeted morale effects between CO-SEATED operators: the Ave Mujica
+    // riders raise Sakiko's drain while their owners share her room, Mortis'
+    // amnesty cancels her own rider, and Nian's faction version cancels every
+    // co-seated Sui operator's self-drain riders. Deltas accrue per
+    // (operator, shift); the owner's buff must belong to the room it fires in.
+    let own_drain_increase = |id: &str| -> f64 {
+        profile_by_id.get(id).map_or(0.0, |p| {
+            p.available_buffs
+                .iter()
+                .filter_map(|b| building_data.buffs.get(b))
+                .map(|buff| {
+                    super::buff_registry::parse_morale_drain_increase(&buff.description)
+                        .unwrap_or(0.0)
+                        + super::buff_registry::parse_morale_loss_increase(&buff.description)
+                            .unwrap_or(0.0)
+                })
+                .sum()
+        })
+    };
+    // An operator's aura clauses of one metric, summed (their room-wide drain
+    // aura / their dorm-recovery aura), derived from the same clause registry
+    // the scorer reads.
+    let aura_total = |id: &str, metric: &Metric| -> f64 {
+        profile_by_id.get(id).map_or(0.0, |p| {
+            p.available_buffs
+                .iter()
+                .filter_map(|b| {
+                    let buff = building_data.buffs.get(b)?;
+                    let strategy = registry.get(b)?;
+                    Some(
+                        clauses_from_strategy(b, buff, strategy)
+                            .into_iter()
+                            .filter(|c| &c.metric == metric)
+                            .filter(|c| matches!(c.kind, ClauseKind::SelfValue))
+                            .map(|c| c.value)
+                            .sum::<f64>(),
+                    )
+                })
+                .sum()
+        })
+    };
+
+    // Per (slot, shift): the summed room drain aura its members carry, and per
+    // shift the best dorm-recovery aura among that shift's workers (the
+    // non-stacking clause: only the strongest applies).
+    let mut room_aura: HashMap<(String, usize), f64> = HashMap::new();
+    let mut dorm_aura_by_shift = [0.0f64; 3];
+    for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
+        for room in shift.rooms.iter().filter(|r| r.active) {
+            let aura: f64 = room
+                .recommended
+                .iter()
+                .map(|id| aura_total(id, &Metric::MoraleDrainAura))
+                .sum();
+            if aura != 0.0 {
+                room_aura.insert((room.slot_id.clone(), k), aura);
+            }
+            for id in &room.recommended {
+                let d = aura_total(id, &Metric::DormRecoveryAura);
+                if d > dorm_aura_by_shift[k] {
+                    dorm_aura_by_shift[k] = d;
+                }
+            }
+        }
+    }
+
+    // Targeted per-operator effects, resolved per (operator, shift) once the
+    // room auras are known: the Ave Mujica riders and amnesties, Waaifu's
+    // room-aura immunity, and Cement's formula-conditional drain. Every
+    // effect's buff must belong to the room type it fires in.
+    let mut targeted_delta: HashMap<(String, usize), f64> = HashMap::new();
+    for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
+        for room in shift.rooms.iter().filter(|r| r.active) {
+            for owner_id in &room.recommended {
+                let Some(p) = profile_by_id.get(owner_id.as_str()) else {
+                    continue;
+                };
+                for b in &p.available_buffs {
+                    let Some(eff) = targeted.get(b) else { continue };
+                    let applies_here = building_data
+                        .buffs
+                        .get(b)
+                        .is_some_and(|buff| buff.room_type == room.room_type);
+                    if !applies_here {
+                        continue;
+                    }
+                    match eff {
+                        TargetedMoraleEffect::Rider {
+                            target: Some(t),
+                            delta,
+                        } if room.recommended.contains(t) => {
+                            *targeted_delta.entry((t.clone(), k)).or_insert(0.0) += delta;
+                        }
+                        TargetedMoraleEffect::NegatesOwnLoss { target: Some(t) }
+                            if room.recommended.contains(t) =>
+                        {
+                            *targeted_delta.entry((t.clone(), k)).or_insert(0.0) -=
+                                own_drain_increase(t);
+                        }
+                        TargetedMoraleEffect::NegatesFactionOwnLoss { faction } => {
+                            for member in &room.recommended {
+                                let is_kin = profile_by_id
+                                    .get(member.as_str())
+                                    .is_some_and(|m| m.faction_tags.iter().any(|t| t == faction));
+                                if is_kin {
+                                    *targeted_delta.entry((member.clone(), k)).or_insert(0.0) -=
+                                        own_drain_increase(member);
+                                }
+                            }
+                        }
+                        TargetedMoraleEffect::SelfAuraImmunity => {
+                            // Cancel the room aura for the owner alone.
+                            let aura = room_aura
+                                .get(&(room.slot_id.clone(), k))
+                                .copied()
+                                .unwrap_or(0.0);
+                            if aura != 0.0 {
+                                *targeted_delta.entry((owner_id.clone(), k)).or_insert(0.0) -= aura;
+                            }
+                        }
+                        TargetedMoraleEffect::SelfFormulaDrain { targets, delta } => {
+                            let produces_target = room
+                                .formula_type
+                                .as_deref()
+                                .is_some_and(|f| targets.iter().any(|t| t == f));
+                            if produces_target {
+                                *targeted_delta.entry((owner_id.clone(), k)).or_insert(0.0) +=
+                                    delta;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+
+    // Control-Center recovery auras, per shift: the `control_mp_cost` family
+    // ("+0.05/hr to all Operators in the Control Center") offsets the CC's own
+    // workers' drain, while the "other buildings" auras (Chongyue's) offset
+    // every NON-CC worker instead. Only CONTROL-room buffs count - a dorm
+    // recovery skill on a CC-seated operator does nothing outside its room.
+    let cc_recovery_total = |id: &str, base_wide: bool| -> f64 {
+        profile_by_id.get(id).map_or(0.0, |p| {
+            p.available_buffs
+                .iter()
+                .filter_map(|b| {
+                    let buff = building_data.buffs.get(b)?;
+                    (buff.room_type == "CONTROL").then_some(())?;
+                    let strategy = registry.get(b)?;
+                    Some(
+                        clauses_from_strategy(b, buff, strategy)
+                            .into_iter()
+                            .filter(|c| c.metric == Metric::MoraleRecovery { base_wide })
+                            .filter(|c| matches!(c.kind, ClauseKind::SelfValue))
+                            .map(|c| c.value)
+                            .sum::<f64>(),
+                    )
+                })
+                .sum()
+        })
+    };
+    let mut cc_room_recovery = [0.0f64; 3];
+    let mut base_wide_recovery = [0.0f64; 3];
+    let mut cc_slot: [Option<String>; 3] = [None, None, None];
+    for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
+        if let Some(cc) = shift
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "CONTROL" && r.active)
+        {
+            cc_slot[k] = Some(cc.slot_id.clone());
+            cc_room_recovery[k] = cc
+                .recommended
+                .iter()
+                .map(|id| cc_recovery_total(id, false))
+                .sum();
+            base_wide_recovery[k] = cc
+                .recommended
+                .iter()
+                .map(|id| cc_recovery_total(id, true))
+                .sum();
+        }
+    }
+
+    // Working drain per operator: game baseline plus their buffs' per-hour
+    // deltas (the same per-buff numbers the planner's uptime model reads).
+    let op_drain = |id: &str| -> f64 {
+        profile_by_id.get(id).map_or(GAME_BASE_MORALE_DRAIN, |p| {
+            game_morale_drain(p, morale_drains)
+        })
+    };
+
+    let mut schedules: HashMap<String, OpSchedule> = HashMap::new();
+    for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
+        for room in shift.rooms.iter().filter(|r| r.active) {
+            for id in &room.recommended {
+                let entry = schedules.entry(id.clone()).or_insert_with(|| OpSchedule {
+                    works: [None, None, None],
+                    drain: op_drain(id),
+                });
+                entry.works[k] = Some(room.slot_id.clone());
+            }
+        }
+    }
+
+    // Fiammetta-held 24/7 operators are morale-swapped every login; they never
+    // drain and never occupy a dorm slot.
+    for id in &rotation.sustained {
+        schedules.remove(id);
+    }
+
+    let recovery_per_hour = dorm_recovery_rate(building, building_data);
+    let dorm_capacity = dorm_capacity(building, building_data);
+
+    let mut morale: HashMap<String, f64> = schedules
+        .keys()
+        .map(|id| (id.clone(), MORALE_MAX))
+        .collect();
+    let mut depleted: Vec<DepletedOperator> = Vec::new();
+    let mut dorm_overflow = 0usize;
+
+    let blocks = (SIM_HORIZON_HOURS / SHIFT_HOURS) as usize;
+    for block in 0..blocks {
+        let shift = block % 3;
+        let t0 = block as f64 * SHIFT_HOURS;
+
+        // Workers drain. Running dry STRICTLY inside a block is a depletion;
+        // landing on exactly zero at the block boundary is the intended rhythm
+        // (the bar empties right as the login swap rests the team).
+        const EPS: f64 = 1e-9;
+        for (id, sched) in &schedules {
+            let Some(slot) = &sched.works[shift] else {
+                continue;
+            };
+            // The room's drain aura (a teammate's "-0.1/hr to everyone here")
+            // shifts this block's effective drain, and the Control Center's
+            // recovery auras offset it - the CC's own aura for its workers,
+            // the "other buildings" auras for everyone else. Floor applies.
+            let aura = room_aura
+                .get(&(slot.clone(), shift))
+                .copied()
+                .unwrap_or(0.0);
+            let recovery_aura = if cc_slot[shift].as_deref() == Some(slot.as_str()) {
+                cc_room_recovery[shift]
+            } else {
+                base_wide_recovery[shift]
+            };
+            let pair_delta = targeted_delta
+                .get(&(id.clone(), shift))
+                .copied()
+                .unwrap_or(0.0);
+            let drain = (sched.drain + aura - recovery_aura + pair_delta).max(MIN_MORALE_DRAIN);
+            let m = morale.get_mut(id).expect("scheduled op has morale");
+            let before = *m;
+            *m = (before - drain * SHIFT_HOURS).max(0.0);
+            if before < drain * SHIFT_HOURS - EPS && !depleted.iter().any(|d| &d.char_id == id) {
+                depleted.push(DepletedOperator {
+                    char_id: id.clone(),
+                    at_hours: t0 + before / drain,
+                    slot_id: slot.clone(),
+                });
+            }
+        }
+
+        // Resters recover, lowest morale first, until the dorms are full;
+        // anyone beyond capacity recovers nothing this block.
+        let mut resting: Vec<&String> = schedules
+            .iter()
+            .filter(|(id, s)| s.works[shift].is_none() && morale[id.as_str()] < MORALE_MAX)
+            .map(|(id, _)| id)
+            .collect();
+        resting.sort_by(|a, b| {
+            morale[a.as_str()]
+                .partial_cmp(&morale[b.as_str()])
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.cmp(b))
+        });
+        if resting.len() > dorm_capacity {
+            dorm_overflow = dorm_overflow.max(resting.len() - dorm_capacity);
+        }
+        // A working Control-Center aura ("all Operators in Dormitories
+        // recover +0.05/hr") lifts this block's dorm recovery.
+        let block_recovery = recovery_per_hour + dorm_aura_by_shift[shift];
+        for id in resting.into_iter().take(dorm_capacity) {
+            let m = morale.get_mut(id.as_str()).expect("rester has morale");
+            *m = (*m + block_recovery * SHIFT_HOURS).min(MORALE_MAX);
+        }
+    }
+
+    depleted.sort_by(|a, b| {
+        a.at_hours
+            .partial_cmp(&b.at_hours)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    SustainabilityReport {
+        verdict: if depleted.is_empty() {
+            Verdict::HoldsUp
+        } else {
+            Verdict::Depletes
+        },
+        horizon_hours: SIM_HORIZON_HOURS,
+        depleted,
+        dorm_overflow,
+    }
+}
+
+/// Capacity-weighted average recovery rate of the base's dormitories, in
+/// morale points per hour, straight from gamedata `DormData`.
+fn dorm_recovery_rate(building: &UserBuilding, building_data: &BuildingDataFile) -> f64 {
+    let phases = &building_data.dorm_data.phases;
+    let mut weighted = 0.0;
+    let mut slots = 0.0;
+    for room in building.rooms.iter().filter(|r| r.room_type == "DORMITORY") {
+        let idx = (room.level.max(1) as usize - 1).min(phases.len().saturating_sub(1));
+        let Some(phase) = phases.get(idx) else {
+            continue;
+        };
+        let cap = f64::from(max_stationed_at_level(
+            building_data,
+            "DORMITORY",
+            room.level,
+        ));
+        weighted += f64::from(phase.manpower_recover) / 100.0 * cap;
+        slots += cap;
+    }
+    if slots > 0.0 {
+        weighted / slots
+    } else {
+        // No dorms at all: the game still trickles morale back very slowly for
+        // idle operators; model that as the lowest dorm tier heavily derated.
+        phases
+            .first()
+            .map_or(1.6, |p| f64::from(p.manpower_recover) / 100.0)
+            * 0.25
+    }
+}
+
+/// Total resting slots across the base's dormitories.
+fn dorm_capacity(building: &UserBuilding, building_data: &BuildingDataFile) -> usize {
+    building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| max_stationed_at_level(building_data, "DORMITORY", r.level) as usize)
+        .sum()
+}

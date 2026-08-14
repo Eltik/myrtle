@@ -32,6 +32,13 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     if let Some(t) = &op.team_id {
         push(t);
     }
+    // Robot-class operators (Lancet-2, Castle-3, Friston-3, ...) carry the
+    // "Robot" recruitment tag; the base's robot economies (Alanna's Operation
+    // Platforms, Overclock) count them, so expose it as a match tag. No base
+    // skill uses a "robot" faction token, so this cannot collide.
+    if op.tag_list.iter().any(|s| s == "Robot") {
+        push("robot");
+    }
     tags
 }
 
@@ -67,6 +74,180 @@ static RE_KW_NUMBER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>(\
 
 static RE_VDOWN_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vdown>[+-]?([\d.]+)%?</>").unwrap());
+
+/// Layout-derived pool generator: "gain +N <Resource> per level per building
+/// ... max CAP" (the resource key is the `$cc.bd_*` term id).
+static RE_POOL_GEN_LEVELS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"gain <@cc\.vup>\+?([\d.]+)</>\s*<@cc\.kw><\$cc\.([a-z0-9_]+)>[^<]*</></>\s*per level per building.*max <@cc\.vup>([\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// Stepped pool consumer: "for every PER <Resource> present, productivity +PCT%".
+static RE_POOL_CONSUME: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.vup>\+?([\d.]+)</>\s*<@cc\.kw><\$cc\.([a-z0-9_]+)>[^<]*</></>\s*present, productivity <@cc\.vup>\+([\d.]+)%</>",
+    )
+    .unwrap()
+});
+
+/// Stepped pool consumer, reversed word order: "{metric phrase} +PCT% for
+/// every PER <Resource>" (the Dungeon Meshi crew's Monster Meal skills).
+static RE_POOL_CONSUME_REV: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"<@cc\.vup>\+([\d.]+)%</>[^<]{0,30}for every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([a-z0-9_]+)>",
+    )
+    .unwrap()
+});
+
+/// Own-room-level pool generator: "provide N <Resource> for every level of the
+/// current Dormitory" (Senshi).
+static RE_POOL_GEN_OWN_ROOM: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"provide <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,60}for every level of the current",
+    )
+    .unwrap()
+});
+
+/// Stepped pool consumer, direct form: "for every N (points of) <Resource>...,
+/// productivity +PCT%" (Chain of Thought, Witchcraft Crystal, Worldly Plight).
+static RE_POOL_CONSUME_POINTS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.vup>([\d.]+)</>\s*(?:points? of )?<\$cc\.([A-Za-z0-9_]+)>.{0,60}?[Pp]roductivity <@cc\.vup>\+([\d.]+)%</>",
+    )
+    .unwrap()
+});
+
+/// Mr. Nothing's one-buff dorm economy: "each Operator in the Dormitory grants
+/// <Resource>+G, and for every P point <Resource>, grant +PCT% order
+/// acquisition efficiency".
+static RE_POOL_DORM_ECONOMY: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"Operator in the Dormitory grants\s*<\$cc\.([A-Za-z0-9_]+)>[^%]{0,40}?<@cc\.vup>\+([\d.]+)</>, and for every <@cc\.vup>([\d.]+)</>\s*points?<\$cc\.[A-Za-z0-9_]+>.{0,40}?grant <@cc\.vup>\+([\d.]+)%</> order",
+    )
+    .unwrap()
+});
+
+/// A dorm-occupant generator whose points convert onward (Rosmontis'
+/// Extrasensory: PI -> Chain of Thought; Musicianship: PI -> Soundless
+/// Resonance): "for every 1 operator(s) in the Dormitory/ies, <GenResource>
+/// +G ... every P (points of) <GenResource> is converted into/to 1 <To>".
+static RE_POOL_GEN_DORM_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.(?:kw|vup)>1</>\s*[Oo]perators? in the Dormitor(?:y|ies),\s*<\$cc\.([A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>.{0,30}?every <@cc\.vup>([\d.]+)</>\s*(?:points? of )?<\$cc\.[A-Za-z0-9_]+>.{0,60}?converted (?:in)?to <@cc\.vup>1</>\s*(?:points? of )?<\$cc\.([A-Za-z0-9_]+)>",
+    )
+    .unwrap()
+});
+
+/// Alanna's robot counter: "productivity +PCT% for every <tag.op> Operation
+/// Platform assigned to a Power Plant" - a pseudo-pool the settlement fills
+/// with the count of Robot-tagged operators seated in POWER rooms.
+static RE_POOL_CONSUME_ROBOTS_POWER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"productivity <@cc\.vup>\+([\d.]+)%</> for <@cc\.vup>every</>\s*<\$cc\.tag\.op>.{0,60}?assigned to a Power Plant",
+    )
+    .unwrap()
+});
+
+/// A room-wide drain aura: "Morale consumed per hour of all Operators in the
+/// <room> -X" / "Morale loss of Operators in the <room> -X per hour".
+static RE_MORALE_ROOM_AURA: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"Morale (?:consumed per hour of all Operators|loss of Operators) in the [A-Za-z ]{3,20}?\s*<@cc\.vup>(-?[\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// A pool-scaling tail on a production skill: "plus an additional
+/// <Productivity|order acquisition efficiency> +X% for every [N] <bd_ res>".
+/// Audited 2026-08-13: captures exactly `manu_prod_spd&limit&bd[000]` and
+/// `trade_ord_spd&limit&bd[000]` (the Felvine consumers).
+static RE_POOL_TAIL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?:plus an )?additional (?:Productivity|order acquisition efficiency) <@cc\.vup>\+([\d.]+)%</> for every (?:<@cc\.vup>([\d.]+)</>\s*)?<\$cc\.(bd_[A-Za-z0-9_]+)>",
+    )
+    .unwrap()
+});
+
+/// Pool-scaled Control-Center globals. Shape A: "for every N <res>, ... all
+/// <Rooms>' order efficiency +P%" (Sakiko). Shape B: "of all <Rooms> +B%, with
+/// an additional +P% for every N <res>" (Mortis).
+static RE_GLOBAL_POOL_A: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.vup>([\d.]+)</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>.{0,120}?all (Trading Posts|Factories)'? (?:order )?(?:efficiency|productivity)?\s*<@cc\.vup>\+([\d.]+)%</>",
+    )
+    .unwrap()
+});
+static RE_GLOBAL_POOL_B: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"of all (Factories|Trading Posts) <@cc\.vup>\+([\d.]+)%</>, with an additional <@cc\.vup>\+([\d.]+)%</> for every <@cc\.vup>([\d.]+)</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>",
+    )
+    .unwrap()
+});
+
+/// Global-target label -> internal room type ("Trading Posts" / "Factories").
+fn room_type_from_global_label(label: &str) -> &'static str {
+    if label.starts_with("Trading") {
+        "TRADING"
+    } else {
+        "MANUFACTURE"
+    }
+}
+
+/// Non-production Control-Center skill effects, each in its own facility's
+/// units: clue collection speed (Reception Room), Specialization training
+/// speed (Training Room), HR contacting speed (HR Office).
+static RE_CC_CLUE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"clue collection speed <@cc\.vup>\+([\d.]+)%</>").unwrap());
+static RE_CC_TRAIN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"Specialization training speed <@cc\.vup>\+([\d.]+)%</>").unwrap()
+});
+static RE_CC_HIRE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"HR contacting speed <@cc\.vup>\+([\d.]+)%</>").unwrap());
+/// A same-room companion gate: "assigned to the Control Center with <op>".
+static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"assigned to the Control Center with <@cc\.kw>([^<]+)</>").unwrap()
+});
+
+/// A CC dorm-recovery aura: "all Operators in Dormitories recover +X Morale per hour".
+static RE_DORM_RECOVERY_AURA: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"all Operators in Dormitories recover <@cc\.vup>\+([\d.]+)</>\s*Morale per hour")
+        .unwrap()
+});
+
+/// A per-teammate aura: "other Operators (working) in the <room> have +X%".
+static RE_PER_TEAMMATE_EFF: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"other Operators (?:working )?in the [A-Za-z ]{3,20} have <@cc\.vup>\+([\d.]+)%</>")
+        .unwrap()
+});
+
+/// Stepped pool consumer, order-efficiency form: "for every PER <Resource>,
+/// +PCT% order (acquisition) efficiency" (the band's Soundless Resonance).
+static RE_POOL_CONSUME_ORDER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,60}?,\s*<@cc\.vup>\+([\d.]+)%</> order (?:acquisition )?efficiency",
+    )
+    .unwrap()
+});
+
+/// A speed/capacity trade ("productivity -5%, capacity limit +16" - the
+/// Craftsmanship family): signed productivity plus a flat capacity grant. The
+/// morale-cost rider is captured separately by the drains side-map.
+static RE_SPEED_CAPACITY_TRADE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"productivity <@cc\.(vup|vdown)>([+-]?[\d.]+)%</>,\s*capacity limit <@cc\.vup>\+([\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// A standalone converter: "every F <From> is converted to 1 <To>".
+static RE_POOL_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,50}?is converted to <@cc\.vup>1</>\s*<\$cc\.([A-Za-z0-9_]+)>",
+    )
+    .unwrap()
+});
 
 static RE_PER_HOUR_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%?</>\s*per hour").unwrap());
@@ -121,7 +302,7 @@ static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vup>-?([\d.]+)</>").unwrap()
 });
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BuffResolutionStrategy {
     /// Efficiency field is the bonus %. Value = efficiency as f64.
     DirectEfficiency { value: f64 },
@@ -186,6 +367,30 @@ pub enum BuffResolutionStrategy {
     /// deployed in a work area (two-pass), so the scorer treats it as base-only on its own.
     ConditionalOnBaseWide {
         required_char_ids: Vec<String>,
+        base_efficiency: f64,
+        bonus_efficiency: f64,
+    },
+
+    /// Deployment-context gate: the bonus applies only while a named operator (or enough
+    /// operators of a faction) is stationed in a specific ROOM TYPE anywhere in the base.
+    /// e.g. "if Kal'tsit is assigned to the Control Center, drone recovery +5%" (Roberta),
+    /// "and Gummy is in a Trading Post, Battle Record formula productivity +35%",
+    /// "if another Laterano Operator is assigned to a Power Plant, +5%".
+    /// Like `ConditionalOnBaseWide`, the optimizer collapses this to a flat efficiency via
+    /// `resolve_room_presence` once the deployment is known; unresolved contexts credit
+    /// the base only (never guess).
+    ConditionalOnRoomPresence {
+        /// Named-operator form: any of these deployed in `room_type` unlocks the bonus.
+        /// Empty when the named operator couldn't be resolved (bonus then stays off).
+        required_char_ids: Vec<String>,
+        /// Faction form: lowercased faction token; at least `required_count` operators
+        /// carrying it must be deployed in `room_type`.
+        required_faction: Option<String>,
+        /// 2 for the "another <faction> Operator" phrasing - the buff only applies while
+        /// its (same-faction) owner works that room type, so "owner + another" = 2 total.
+        required_count: usize,
+        /// Internal room type ("TRADING", "CONTROL", "TRAINING", "POWER", ...).
+        room_type: String,
         base_efficiency: f64,
         bonus_efficiency: f64,
     },
@@ -287,6 +492,22 @@ pub enum BuffResolutionStrategy {
 
     /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
+    /// A Control-Center global whose strength scales with a POOL: "for every 8
+    /// Passion, all Trading Posts' order efficiency +1%" (Sakiko), "all
+    /// Factories +1%, with an additional +1% for every 20 Passion" (Mortis).
+    /// Context-free scoring credits `base_pct` only; the settlement resolves
+    /// the pool part by registry rewrite (`resolve_global_pool`) once the
+    /// points are known - current view from live seats, bundles from pinned
+    /// generators.
+    GlobalPoolScaling {
+        target_room: String,
+        base_pct: f64,
+        /// +`pct`% per `per` points of `resource` (floored, stepped counter).
+        pct: f64,
+        per: f64,
+        resource: String,
+    },
+
     GlobalEffect {
         target_room: String, // "MANUFACTURE", "TRADING"
         bonus_pct: f64,
@@ -322,6 +543,11 @@ pub enum BuffResolutionStrategy {
     MoraleModifier {
         recovery_per_hour: f64, // positive = recovery, negative = drain
         is_self_only: bool,     // true for single-target, false for AoE
+        /// True only for Control-Center auras reaching OTHER buildings' workers
+        /// (Chongyue's "Operators working in other buildings recover +0.05").
+        /// False for the CC-room-only `control_mp_cost` family ("all Operators
+        /// in the Control Center") and every dormitory skill.
+        base_wide: bool,
     },
 
     /// Only affects the room's capacity/order limit, not speed. `order_limit` is the cap it
@@ -333,6 +559,21 @@ pub enum BuffResolutionStrategy {
     /// Store the efficiency or parsed value for secondary scoring.
     NonProduction { value: f64 },
 
+    /// A Control-Center skill that boosts a NON-PRODUCTION facility metric
+    /// (clue collection, HR contacting, training speed), priced in its OWN
+    /// units with zero LMD weight - the objective stays production-pure (both
+    /// reference implementations silo or zero these; an LMD conversion would
+    /// be an invented weight). Feeds the CC spare-seat tie-break and display.
+    /// `same_room_gate`: None = unconditional; Some(chars) = only while one of
+    /// the named operators shares the Control Center (empty = the named
+    /// operator couldn't be resolved, so the gate never fires - never guess).
+    ControlNonProduction {
+        /// The boosted facility's room type ("MEETING", "TRAINING", "HIRE").
+        target_room: String,
+        value: f64,
+        same_room_gate: Option<Vec<String>>,
+    },
+
     /// Fallback for truly complex buffs we can't cleanly parse.
     /// Stores a conservative estimate.
     Complex { estimated_pct: f64 },
@@ -340,6 +581,98 @@ pub enum BuffResolutionStrategy {
     /// Efficiency changes over the course of a shift based on time/morale.
     /// Stores the time-averaged value over a full 24hr shift.
     MoraleDecayEfficiency { time_averaged_value: f64 },
+
+    /// Generates points of a named pool resource from the base's LAYOUT: "+N
+    /// <Resource> per level per building, max CAP" (Minimalist's Engineering
+    /// Robots). The basis is the summed level of the functional facilities, so
+    /// the points are known without an assignment.
+    PoolGenerateBuildingLevels {
+        /// Stable resource key from the `$cc.bd_*` term id, not the display name.
+        resource: String,
+        per_level: f64,
+        cap: f64,
+    },
+
+    /// Consumes settled pool points: "+PCT% productivity for every PER
+    /// <Resource>". Floored by PER, like every stepped game counter.
+    /// A pool-scaling TAIL on an otherwise ordinary production skill:
+    /// "...capacity limit +8, Productivity +5%, plus an additional +1% for
+    /// every <Felvine>". The base strategy prices the flat parts; the tail
+    /// adds a `ScalingPoolPoints` clause on the same buff so the pool
+    /// machinery feeds it - no half-parse where the tail silently drops.
+    PoolTail {
+        base: Box<Self>,
+        resource: String,
+        /// +`pct`% per `per` points of `resource`.
+        pct: f64,
+        per: f64,
+    },
+
+    PoolPointsScaling {
+        resource: String,
+        per: f64,
+        pct: f64,
+    },
+
+    /// Generates pool points from the level of the room the OWNER is seated in
+    /// (Senshi: "provide 1 Monster Meal for every level of the current
+    /// Dormitory"). Settled at assignment scope, where the seat is known.
+    PoolGenerateOwnRoomLevel { resource: String, per_level: f64 },
+
+    /// A one-buff dorm economy (Mr. Nothing): every dorm occupant grants
+    /// `per_occupant` points, and the SAME buff consumes them at `pct` per
+    /// `per` points.
+    PoolDormEconomy {
+        resource: String,
+        per_occupant: f64,
+        per: f64,
+        pct: f64,
+    },
+
+    /// A one-buff generator + converter (Rosmontis' Extrasensory): dorm
+    /// occupants feed `gen_resource`, which converts 1:`from_per` into
+    /// `to_resource`.
+    PoolGenerateDormAndConvert {
+        gen_resource: String,
+        per_occupant: f64,
+        to_resource: String,
+        from_per: f64,
+    },
+
+    /// A room-wide morale-drain aura: every occupant of the owner's room
+    /// (the owner included) drains `delta` more per hour (negative = slower).
+    MoraleRoomAura { delta: f64 },
+
+    /// A Control-Center aura raising dormitory sleepers' recovery
+    /// (non-stacking: the strongest applies).
+    DormRecoveryAura { rate: f64 },
+
+    /// A per-teammate room aura: every OTHER occupant of the room gains
+    /// `per_teammate_pct` of the room's speed metric ("other Operators working
+    /// in the Trading Post have +15% order acquisition efficiency"), which the
+    /// room total sees as value x (occupants - 1).
+    PerTeammateEfficiency { per_teammate_pct: f64 },
+
+    /// A standalone pool converter (Ancient Witchcraft: "every 5 Worldly
+    /// Plight is converted to 1 Witchcraft Crystal").
+    ///
+    /// NOTE: the Control-Center WP/PI generators (Chongyue's Sui counter,
+    /// Dusk/Ling's morale-conditional grants) are NOT parsed yet - those buffs
+    /// carry a morale aura the CONTROL arm already claims, and a second effect
+    /// needs a side-channel like `morale_drains`. Their consumers parse now
+    /// and read an unfed pool (zero) until that lands.
+    PoolConvert {
+        from: String,
+        to: String,
+        from_per: f64,
+    },
+
+    /// A SOLVED resource-pool payoff (the perception-economy integration
+    /// seam): the pool solver has already settled how much this consumer's
+    /// buff drains, and `pct` is that drain as productivity. Distinct from
+    /// `DirectEfficiency` so the scorer knows this is pool output - it rides
+    /// the ledger's pool-drain channel, not a parsed flat skill.
+    PoolPayoff { pct: f64 },
 }
 
 pub fn build_registry(
@@ -357,6 +690,23 @@ pub fn build_registry(
     for (buff_id, buff) in buffs {
         // Strip the tier suffix: "manu_prod_spd&power[000]" → "manu_prod_spd&power".
         let prefix = buff_id.split('[').next().unwrap_or(buff_id);
+
+        // Morale-drain extraction runs FIRST, before any parse branch can
+        // `continue` past it - a buff's cost rider must be captured no matter
+        // which strategy family claims its productivity half.
+        let mut drain = 0.0;
+        if let Some(val) = parse_morale_drain_increase(&buff.description) {
+            drain += val;
+        }
+        if let Some(val) = parse_morale_loss_increase(&buff.description) {
+            drain += val;
+        }
+        if let Some(val) = parse_morale_drain_decrease(&buff.description) {
+            drain -= val;
+        }
+        if drain != 0.0 {
+            morale_drains.insert(buff_id.clone(), drain);
+        }
 
         // Facility-count enablers (Greyy the Lightningbearer E2 "Power Plant +1", Eunectes E2
         // "+2") raise a room type's EFFECTIVE facility count - they grant no productivity but
@@ -386,6 +736,175 @@ pub fn build_registry(
             continue;
         }
 
+        // Layout-derived pool economies (Minimalist's Engineering Robots): a
+        // generator whose points come purely from the base's LAYOUT ("+N per
+        // level per building, max CAP") and its stepped consumers ("for every
+        // PER <Resource> present, productivity +PCT%"). The resource key is the
+        // stable `$cc.bd_*` term id, never the display text. Economies whose
+        // points depend on the ASSIGNMENT (dorm occupants, resting operators)
+        // stay Unresolved until the assignment-scope pool pass lands.
+        if let Some(c) = RE_POOL_GEN_LEVELS.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolGenerateBuildingLevels {
+                    resource: c[2].to_string(),
+                    per_level: c[1].parse().unwrap_or(0.0),
+                    cap: c[3].parse().unwrap_or(f64::INFINITY),
+                },
+            );
+            continue;
+        }
+        // Pool consumers are room-scored clauses; a CONTROL-room "+X% per N
+        // <pool>" is a GLOBAL that fans out to other rooms (Ave Mujica's
+        // "Plentiful Work Experience") and stays with the CC-global machinery.
+        if buff.room_type != "CONTROL" {
+            if let Some(c) = RE_POOL_CONSUME.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPointsScaling {
+                        resource: c[2].to_string(),
+                        per: c[1].parse().unwrap_or(1.0),
+                        pct: c[3].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+            if let Some(c) = RE_POOL_CONSUME_REV.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPointsScaling {
+                        resource: c[3].to_string(),
+                        per: c[2].parse().unwrap_or(1.0),
+                        pct: c[1].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+            if let Some(c) = RE_POOL_CONSUME_POINTS.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPointsScaling {
+                        resource: c[2].to_string(),
+                        per: c[1].parse().unwrap_or(1.0),
+                        pct: c[3].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+            if let Some(c) = RE_POOL_CONSUME_ROBOTS_POWER.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPointsScaling {
+                        resource: crate::core::grade::base::pools::ROBOTS_IN_POWER.to_string(),
+                        per: 1.0,
+                        pct: c[1].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+        }
+        if let Some(c) = RE_POOL_GEN_OWN_ROOM.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolGenerateOwnRoomLevel {
+                    resource: c[2].to_string(),
+                    per_level: c[1].parse().unwrap_or(0.0),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_POOL_GEN_DORM_CONVERT.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolGenerateDormAndConvert {
+                    gen_resource: c[1].to_string(),
+                    per_occupant: c[2].parse().unwrap_or(0.0),
+                    from_per: c[3].parse().unwrap_or(1.0),
+                    to_resource: c[4].to_string(),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_POOL_DORM_ECONOMY.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolDormEconomy {
+                    resource: c[1].to_string(),
+                    per_occupant: c[2].parse().unwrap_or(0.0),
+                    per: c[3].parse().unwrap_or(1.0),
+                    pct: c[4].parse().unwrap_or(0.0),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_POOL_CONVERT.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolConvert {
+                    from: c[2].to_string(),
+                    from_per: c[1].parse().unwrap_or(1.0),
+                    to: c[3].to_string(),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_MORALE_ROOM_AURA.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::MoraleRoomAura {
+                    delta: c[1].parse().unwrap_or(0.0),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_DORM_RECOVERY_AURA.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::DormRecoveryAura {
+                    rate: c[1].parse().unwrap_or(0.0),
+                },
+            );
+            continue;
+        }
+        if buff.room_type != "CONTROL" {
+            if let Some(c) = RE_PER_TEAMMATE_EFF.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PerTeammateEfficiency {
+                        per_teammate_pct: c[1].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+            if let Some(c) = RE_POOL_CONSUME_ORDER.captures(&buff.description) {
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPointsScaling {
+                        resource: c[2].to_string(),
+                        per: c[1].parse().unwrap_or(1.0),
+                        pct: c[3].parse().unwrap_or(0.0),
+                    },
+                );
+                continue;
+            }
+            if let Some(c) = RE_SPEED_CAPACITY_TRADE.captures(&buff.description) {
+                let magnitude: f64 = c[2].trim_start_matches('+').parse().unwrap_or(0.0);
+                let signed = if &c[1] == "vdown" {
+                    -magnitude.abs()
+                } else {
+                    magnitude
+                };
+                registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::EfficiencyWithOrderLimit {
+                        efficiency: signed,
+                        order_limit: c[3].parse().unwrap_or(0),
+                    },
+                );
+                continue;
+            }
+        }
+
         let strategy = match buff.room_type.as_str() {
             "MEETING" => {
                 // Clue-search speed. Most reception buffs carry it in `efficiency`, but several put
@@ -413,11 +932,40 @@ pub fn build_registry(
                 BuffResolutionStrategy::MoraleModifier {
                     recovery_per_hour: recovery,
                     is_self_only,
+                    base_wide: false,
                 }
             }
             "CONTROL" => {
                 let desc_lower = buff.description.to_lowercase();
-                if prefix.contains("_fraction") || prefix.contains("_tag") {
+                // Pool-scaled globals FIRST, so the plain-global branches below
+                // don't claim them at their flat base value. Audited 2026-08-13:
+                // shape A captures exactly control_mp_bd&trade[000], shape B
+                // exactly control_prod_bd_spd[000]/[010].
+                if let Some(c) = RE_GLOBAL_POOL_A.captures(&buff.description) {
+                    BuffResolutionStrategy::GlobalPoolScaling {
+                        target_room: room_type_from_global_label(&c[3]).to_string(),
+                        base_pct: 0.0,
+                        pct: c[4].parse().unwrap_or(0.0),
+                        per: c[1].parse().unwrap_or(1.0),
+                        resource: c[2].to_string(),
+                    }
+                } else if let Some(c) = RE_GLOBAL_POOL_B.captures(&buff.description) {
+                    BuffResolutionStrategy::GlobalPoolScaling {
+                        target_room: room_type_from_global_label(&c[1]).to_string(),
+                        base_pct: c[2].parse().unwrap_or(0.0),
+                        pct: c[3].parse().unwrap_or(0.0),
+                        per: c[4].parse().unwrap_or(1.0),
+                        resource: c[5].to_string(),
+                    }
+                } else if prefix.contains("_fraction")
+                    || prefix.contains("_tag")
+                    // Per-operator faction globals outside the _fraction/_tag id
+                    // family (audited: exactly control_bd_spd's "for each
+                    // <Blacksteel Worldwide> Operator assigned to Factories,
+                    // productivity +5%"; its drain rider rides the side-map).
+                    || (buff.description.contains("for each <$cc.g.")
+                        && (desc_lower.contains("factor") || desc_lower.contains("trading")))
+                {
                     let tag = parse_tag_keyword(&buff.description).unwrap_or_default();
                     let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
                     // Production tag buffs (Viviana: "+7% Knights in Factories")
@@ -450,12 +998,14 @@ pub fn build_registry(
                     || prefix.contains("_cost")
                     || prefix.contains("allCost")
                 {
-                    // Base-wide morale recovery. Skips perception-resource generation that the
-                    // morale parser would otherwise misread (Chongyue's "Worldly Plight +5").
+                    // Control-Center morale recovery. Only the "other buildings"
+                    // phrasing reaches workers base-wide; the `control_mp_cost`
+                    // family ("all Operators in the Control Center") is CC-room-only.
                     let recovery = parse_morale_recovery(&buff.description).unwrap_or(0.0);
                     BuffResolutionStrategy::MoraleModifier {
                         recovery_per_hour: recovery,
                         is_self_only: false,
+                        base_wide: desc_lower.contains("other building"),
                     }
                 } else if prefix.contains("_prod_")
                     || prefix.contains("_tra_")
@@ -499,6 +1049,39 @@ pub fn build_registry(
                             bonus_pct: bonus,
                         }
                     }
+                } else if let Some((target_room, c)) = [
+                    ("MEETING", &RE_CC_CLUE),
+                    ("TRAINING", &RE_CC_TRAIN),
+                    ("HIRE", &RE_CC_HIRE),
+                ]
+                .iter()
+                .find_map(|(room, rx)| rx.captures(&buff.description).map(|c| (*room, c)))
+                    && !buff.description.contains("assigned to the Reception Room")
+                {
+                    // Non-production CC skill (clue / training / HR), priced in its
+                    // own units - see ControlNonProduction. Placed last so every
+                    // production branch keeps priority. Audited 2026-08-13: within
+                    // CONTROL this captures upMeetingSpeed x2, meeting_spd&bd,
+                    // mp&meet_spd (Sakiko same-room gate), meeting&mp_cost x2
+                    // (their drain rides the hoisted extraction), train_spd x3,
+                    // hire_spd&bd. The Reception-Room guard excludes meeting&ord
+                    // x2 - their clue part is gated on Ines elsewhere and their
+                    // order-limit part targets Hoederer's post, cross-room
+                    // machinery we don't price: whole-buff unresolved beats a
+                    // half-parse. control_hire_spd's aggregate-state conditional
+                    // self-excludes by phrasing.
+                    let same_room_gate = RE_CC_WITH.captures(&buff.description).map(|w| {
+                        name_to_char
+                            .get(&w[1].to_lowercase())
+                            .cloned()
+                            .into_iter()
+                            .collect()
+                    });
+                    BuffResolutionStrategy::ControlNonProduction {
+                        target_room: target_room.to_string(),
+                        value: c[1].parse().unwrap_or(0.0),
+                        same_room_gate,
+                    }
                 } else {
                     // Other buffs
                     let value = parse_first_pct(&buff.description).unwrap_or(0.0);
@@ -519,7 +1102,17 @@ pub fn build_registry(
                     .contains("Work Area")
                     .then(|| find_all_operator_char_ids(&buff.description, name_to_char))
                     .filter(|(ids, _)| !ids.is_empty());
-                if let Some((required_char_ids, name_end)) = base_wide {
+                // Deployment-context gate: the bonus needs a specific operator (or faction)
+                // stationed in a specific room TYPE somewhere in the base, not this room.
+                // Must precede the base-wide/teammate branches (its "is assigned to a
+                // <Room>" phrasing carries no "Work Area"/"same" marker to catch it).
+                if let Some(gate) = parse_room_presence_gate(
+                    &buff.description,
+                    f64::from(buff.efficiency),
+                    name_to_char,
+                ) {
+                    gate
+                } else if let Some((required_char_ids, name_end)) = base_wide {
                     let base_efficiency = f64::from(buff.efficiency);
                     let bonus_efficiency =
                         parse_first_pct_from(&buff.description, name_end).unwrap_or(0.0);
@@ -952,18 +1545,23 @@ pub fn build_registry(
             _ => BuffResolutionStrategy::CapacityOnly { order_limit: 0 },
         };
 
-        let mut drain = 0.0;
-        if let Some(val) = parse_morale_drain_increase(&buff.description) {
-            drain += val;
-        }
-        if let Some(val) = parse_morale_drain_decrease(&buff.description) {
-            drain -= val;
-        }
-
-        if drain != 0.0 {
-            morale_drains.insert(buff_id.clone(), drain);
-        }
-
+        // A pool-scaling tail ("plus an additional +X% for every <res>")
+        // composes over whatever the base parse produced, so the flat parts
+        // keep their pricing and the tail becomes a ScalingPoolPoints clause.
+        let strategy = match RE_POOL_TAIL.captures(&buff.description) {
+            Some(c) if buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING" => {
+                BuffResolutionStrategy::PoolTail {
+                    base: Box::new(strategy),
+                    resource: c[3].to_string(),
+                    pct: c[1].parse().unwrap_or(0.0),
+                    per: c
+                        .get(2)
+                        .and_then(|m| m.as_str().parse().ok())
+                        .unwrap_or(1.0),
+                }
+            }
+            _ => strategy,
+        };
         registry.insert(buff_id.clone(), strategy);
     }
 
@@ -1106,6 +1704,84 @@ fn find_all_operator_char_ids(
     (ids, last_end)
 }
 
+/// Room labels as they appear in buff text -> internal room type. A documented
+/// text-identifier binding (like the facility-count enabler mapping): gamedata
+/// carries no label->room-type table.
+fn room_type_from_label(label: &str) -> Option<&'static str> {
+    Some(match label {
+        "Factory" => "MANUFACTURE",
+        "Trading Post" => "TRADING",
+        "Control Center" => "CONTROL",
+        "Power Plant" => "POWER",
+        "Training Room" => "TRAINING",
+        "Dormitory" => "DORMITORY",
+        "Reception Room" => "MEETING",
+        "Office" => "HIRE",
+        "Workshop" => "WORKSHOP",
+        _ => return None,
+    })
+}
+
+/// Deployment-context gates: "if <op> is assigned to the <Room>", "and <op> is
+/// in a <Room>", "if another <faction> Operator is assigned to a <Room>".
+/// Audited across all gamedata buffs (2026-08-13): within the production room
+/// arms the named form captures exactly `manu_formula_spd_P[000]` (Gummy in a
+/// Trading Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in the Control
+/// Center, Logos as the Trainer); the faction form captures exactly
+/// `power_rec_spd_ext&faction[000]` (another Laterano op in a Power Plant).
+fn parse_room_presence_gate(
+    desc: &str,
+    base_efficiency: f64,
+    name_to_char: &HashMap<String, String>,
+) -> Option<BuffResolutionStrategy> {
+    static RE_GATE_CHAR: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"(?:[Aa]nd|[Ii]f) <@cc\.kw>([^<]+)</> is (?:assigned to be the Trainer in|assigned to|in) (?:a|an|the) (Factory|Trading Post|Control Center|Power Plant|Training Room|Dormitory|Reception Room|Office|Workshop)",
+        )
+        .unwrap()
+    });
+    static RE_GATE_FACTION: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"[Ii]f another <\$cc\.g\.([a-z0-9]+)><@cc\.kw>[^<]+</></> Operator is assigned to (?:a|an|the) (Factory|Trading Post|Control Center|Power Plant|Training Room)",
+        )
+        .unwrap()
+    });
+    if let Some(c) = RE_GATE_CHAR.captures(desc) {
+        let room_type = room_type_from_label(&c[2])?;
+        let end = c.get(0)?.end();
+        // An unresolvable name leaves the char list empty: the gate then never
+        // fires and only the base is credited (never guess).
+        return Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
+            required_char_ids: name_to_char
+                .get(&c[1].to_lowercase())
+                .cloned()
+                .into_iter()
+                .collect(),
+            required_faction: None,
+            required_count: 1,
+            room_type: room_type.to_string(),
+            base_efficiency,
+            bonus_efficiency: parse_first_pct_from(desc, end).unwrap_or(0.0),
+        });
+    }
+    if let Some(c) = RE_GATE_FACTION.captures(desc) {
+        let room_type = room_type_from_label(&c[2])?;
+        let end = c.get(0)?.end();
+        return Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
+            required_char_ids: Vec::new(),
+            required_faction: Some(c[1].to_lowercase()),
+            // "another <faction> Operator": the buff only matters while its
+            // same-faction owner works that room type too, so owner + another
+            // = 2 matching operators deployed there.
+            required_count: 2,
+            room_type: room_type.to_string(),
+            base_efficiency,
+            bonus_efficiency: parse_first_pct_from(desc, end).unwrap_or(0.0),
+        });
+    }
+    None
+}
+
 /// First faction marker (`<$cc.g.glasgow>` etc.) in the text. Returns the token
 /// and the byte offset just past it, so the caller can read the bonus % that
 /// follows the faction mention.
@@ -1244,4 +1920,143 @@ pub fn parse_morale_drain_decrease(desc: &str) -> Option<f64> {
     RE_MORALE_DECREASE
         .captures(desc)
         .and_then(|c| c[1].parse().ok())
+}
+
+/// A morale effect one operator's buff applies to a DIFFERENT co-seated
+/// operator - the Ave Mujica drama riders ("Morale consumed per hour by
+/// Sakiko Togawa +0.1" while sharing the Control Center), Mortis' amnesty
+/// ("ignores the self Morale loss effect from her own base skill"), and
+/// Nian's faction-wide version ("remove any Morale reduction effects from
+/// Sui Operators ... that affect themselves").
+#[derive(Clone, Debug, PartialEq)]
+pub enum TargetedMoraleEffect {
+    /// The named target drains `delta` more per hour while the owner shares
+    /// the room. `None` target = the name didn't resolve; the effect is inert.
+    Rider { target: Option<String>, delta: f64 },
+    /// The named target's OWN self-drain-increase riders are negated while
+    /// the owner shares the room.
+    NegatesOwnLoss { target: Option<String> },
+    /// Every co-seated operator carrying the faction tag has their own
+    /// self-drain-increase riders negated (the owner included).
+    NegatesFactionOwnLoss { faction: String },
+    /// The owner ignores every morale effect TEAMMATES project into the room
+    /// (Waaifu's Team Spirit: room drain auras don't touch her, in either
+    /// direction).
+    SelfAuraImmunity,
+    /// The owner's drain shifts by `delta` while their room produces one of
+    /// `targets` (Cement's Vlog: -0.25 while making Battle Records).
+    SelfFormulaDrain { targets: Vec<String>, delta: f64 },
+}
+
+static RE_TARGETED_RIDER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"Morale consumed per hour by <@cc\.kw>([^<]+)</>\s*<@cc\.(?:vup|vdown)>\+?([\d.]+)</>",
+    )
+    .unwrap()
+});
+static RE_NEGATES_OWN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"ignores? the self Morale loss effect").unwrap());
+static RE_NEGATES_FACTION: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<@cc\.kw>remove</> any Morale reduction effects from <\$cc\.g\.([a-z0-9_]+)>")
+        .unwrap()
+});
+static RE_AURA_IMMUNITY: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"<@cc\.kw>ignore</> the effects of any Operators stationed in (?:that|the) Factory that would affect the Morale consumption of <@cc\.kw>this Operator",
+    )
+    .unwrap()
+});
+static RE_FORMULA_DRAIN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"Morale consumed when producing <@cc\.kw>[^<]+</> is reduced by <@cc\.vup>-([\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// True when the buff carries any targeted morale effect - used by the
+/// unresolved-inventory relabel: a buff whose whole effect the targeted
+/// side-channel prices needs no Unresolved marker.
+pub fn has_targeted_morale_effect(desc: &str) -> bool {
+    RE_TARGETED_RIDER.is_match(desc)
+        || RE_NEGATES_OWN.is_match(desc)
+        || RE_NEGATES_FACTION.is_match(desc)
+        || RE_AURA_IMMUNITY.is_match(desc)
+        || RE_FORMULA_DRAIN.is_match(desc)
+}
+
+/// Extract every targeted morale effect from the buff table. Audited
+/// 2026-08-13: riders = `control_mp&meet_spd`[000] (+0.05 on Sakiko) and
+/// `control_dorm_rec2`[000] (+0.1 on Sakiko); own-loss negation =
+/// `control_mp_cost_reset`[000] (Mortis, companion-gated on Sakiko); faction
+/// negation = `control_facCostReset`[000] (Sui).
+pub fn targeted_morale_effects(
+    buffs: &HashMap<String, Buff>,
+    name_to_char: &HashMap<String, String>,
+) -> HashMap<String, TargetedMoraleEffect> {
+    let mut out = HashMap::new();
+    for (buff_id, buff) in buffs {
+        if let Some(c) = RE_TARGETED_RIDER.captures(&buff.description) {
+            out.insert(
+                buff_id.clone(),
+                TargetedMoraleEffect::Rider {
+                    target: name_to_char.get(&c[1].to_lowercase()).cloned(),
+                    delta: c[2].parse().unwrap_or(0.0),
+                },
+            );
+        } else if RE_NEGATES_OWN.is_match(&buff.description) {
+            // The protected companion is the "assigned ... with <op>" name.
+            let target = RE_CC_WITH
+                .captures(&buff.description)
+                .and_then(|w| name_to_char.get(&w[1].to_lowercase()).cloned());
+            out.insert(
+                buff_id.clone(),
+                TargetedMoraleEffect::NegatesOwnLoss { target },
+            );
+        } else if let Some(c) = RE_NEGATES_FACTION.captures(&buff.description) {
+            out.insert(
+                buff_id.clone(),
+                TargetedMoraleEffect::NegatesFactionOwnLoss {
+                    faction: c[1].to_lowercase(),
+                },
+            );
+        } else if RE_AURA_IMMUNITY.is_match(&buff.description) {
+            out.insert(buff_id.clone(), TargetedMoraleEffect::SelfAuraImmunity);
+        } else if let Some(c) = RE_FORMULA_DRAIN.captures(&buff.description) {
+            // The produced good is the buff's Targets entry (F_EXP for
+            // Battle Records) - no product-name mapping needed.
+            out.insert(
+                buff_id.clone(),
+                TargetedMoraleEffect::SelfFormulaDrain {
+                    targets: buff.targets.clone(),
+                    delta: -c[1].parse().unwrap_or(0.0),
+                },
+            );
+        }
+    }
+    out
+}
+
+/// The alternative self-drain phrasing: "self Morale loss per hour
+/// <@cc.vdown>+N</>". Companion-gated forms ("when assigned together with
+/// <op>, ... Morale loss +N") are SKIPPED - capturing them flat would charge
+/// drain the operator only pays alongside a partner, fabricating depletion
+/// warnings. Audited 2026-08-13: captures exactly `control_bd_spd`[000],
+/// `control_mp_cost&bd_up`[000] (Chongyue +0.5), `control_mp_cost&bd2`[010]
+/// (+0.5), and `control_mp_cost&bd3`[000] (Sakiko +0.05, whose TRAILING
+/// "when Passion is 40 or higher" condition holds at any committed plan's
+/// steady-state pool - the flat capture is the steady-state model).
+pub fn parse_morale_loss_increase(desc: &str) -> Option<f64> {
+    static RE_MORALE_LOSS: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"[Ss]elf Morale loss per hour <@cc\.vdown>\+([\d.]+)</>").unwrap()
+    });
+    let c = RE_MORALE_LOSS.captures(desc)?;
+    let start = c.get(0)?.start();
+    let mut from = start.saturating_sub(120);
+    while from > 0 && !desc.is_char_boundary(from) {
+        from -= 1;
+    }
+    if desc[from..start].contains("together with") {
+        return None;
+    }
+    c[1].parse().ok()
 }

@@ -2,11 +2,12 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IBaseAssignment, IRoomAssignment } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
-import { assignmentTotals, compactNum, roomYield, roomYieldLabel, signedCompact } from "./baseYield";
-import { roomAccent, roomLabel } from "./roomColors";
-import { TEXT_BADGE, TEXT_KICKER, TEXT_META } from "./shared";
+import { TEXT_BADGE, TEXT_KICKER, TEXT_META } from "../shared";
+import { formulaTag, roomAccent, roomLabel } from "./roomColors";
+import { assignmentTotals, compactNum, nonProductionLabel, roomYield, roomYieldLabel, signedCompact, signedPct } from "./yield";
 
-/** The resource a room produces - so the comparison only lines up like-for-like. */
+/** The resource a room produces - so the comparison only lines up like-for-like.
+ *  An unconfigured factory (no formula set) buckets into the generic group. */
 function resourceKey(room: IRoomAssignment): string {
     if (room.room_type === "TRADING") return "TRADING";
     if (room.room_type === "MANUFACTURE") {
@@ -21,7 +22,7 @@ const RESOURCE_GROUPS: { key: string; label: string }[] = [
     { key: "TRADING", label: "Trading Posts (LMD)" },
     { key: "GOLD", label: "Gold factories" },
     { key: "EXP", label: "EXP factories" },
-    { key: "FACTORY", label: "Factories" },
+    { key: "FACTORY", label: "Factories (no formula set)" },
 ];
 
 interface IProps {
@@ -29,14 +30,13 @@ interface IProps {
     current: IBaseAssignment;
     /** The optimizer's peak (main) staffing. */
     optimal: IBaseAssignment | null;
-    accent: string;
 }
 
 /**
  * Side-by-side comparison of the player's current base against the optimizer's
  * peak staffing - Control Center and room by room. Rooms line up by resource.
  */
-export function BaseComparison({ current, optimal, accent }: IProps) {
+export function ComparisonSection({ current, optimal }: IProps) {
     if (!optimal) return null;
 
     const cur = assignmentTotals(current);
@@ -67,16 +67,16 @@ export function BaseComparison({ current, optimal, accent }: IProps) {
 
             {/* Headline totals */}
             <div className="grid grid-cols-3 gap-2">
-                <TotalTile label="LMD / day" cur={cur.lmd} opt={opt.lmd} accent={accent} />
-                <TotalTile label="EXP / day" cur={cur.exp} opt={opt.exp} accent={accent} />
-                <TotalTile label="Total value / day" cur={cur.value} opt={opt.value} accent={accent} highlight />
+                <TotalTile label="LMD / day" cur={cur.lmd} opt={opt.lmd} />
+                <TotalTile label="EXP / day" cur={cur.exp} opt={opt.exp} />
+                <TotalTile label="Total value / day" cur={cur.value} opt={opt.value} highlight />
             </div>
 
             {/* Per-resource comparison (gold→gold, EXP→EXP, trading→trading) */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-2">
                 <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>Yours (now)</span>
                 <span className="w-3" />
-                <span className={cn(TEXT_KICKER, "text-right")} style={{ color: `color-mix(in oklch, ${accent} 65%, var(--foreground))` }}>
+                <span className={cn(TEXT_KICKER, "text-right")} style={{ color: "color-mix(in oklch, var(--imp-accent) 65%, var(--foreground))" }}>
                     Optimal peak
                 </span>
             </div>
@@ -84,14 +84,14 @@ export function BaseComparison({ current, optimal, accent }: IProps) {
                 {(curCC || optCC) && (
                     <div className="flex flex-col gap-1.5">
                         <GroupLabel roomType="CONTROL" label="Control Center (global buff)" />
-                        <CompareRow current={curCC} optimal={optCC} accent={accent} />
+                        <CompareRow current={curCC} optimal={optCC} />
                     </div>
                 )}
                 {groups.map((g) => (
                     <div key={g.key} className="flex flex-col gap-1.5">
                         <GroupLabel roomType={g.key === "TRADING" ? "TRADING" : "MANUFACTURE"} label={g.label} />
                         {g.pairs.map((pair, i) => (
-                            <CompareRow key={`${g.key}-${pair.cur?.slot_id ?? pair.opt?.slot_id ?? i}`} current={pair.cur} optimal={pair.opt} accent={accent} />
+                            <CompareRow key={`${g.key}-${pair.cur?.slot_id ?? pair.opt?.slot_id ?? i}`} current={pair.cur} optimal={pair.opt} />
                         ))}
                     </div>
                 ))}
@@ -111,7 +111,7 @@ function GroupLabel({ roomType, label }: { roomType: string; label: string }) {
     );
 }
 
-function TotalTile({ label, cur, opt, accent, highlight }: { label: string; cur: number; opt: number; accent: string; highlight?: boolean }) {
+function TotalTile({ label, cur, opt, highlight }: { label: string; cur: number; opt: number; highlight?: boolean }) {
     const delta = opt - cur;
     return (
         <div className={cn("flex flex-col gap-0.5 rounded-md border px-2.5 py-2", highlight ? "border-border/60 bg-muted/25" : "border-border/40 bg-muted/10")}>
@@ -119,7 +119,7 @@ function TotalTile({ label, cur, opt, accent, highlight }: { label: string; cur:
             <div className="flex items-baseline gap-1.5">
                 <span className="font-mono text-muted-foreground/70 text-xs tabular-nums">{compactNum(cur)}</span>
                 <span className="text-muted-foreground/50">→</span>
-                <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
+                <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: "color-mix(in oklch, var(--imp-accent) 70%, var(--foreground))" }}>
                     {compactNum(opt)}
                 </span>
             </div>
@@ -128,7 +128,7 @@ function TotalTile({ label, cur, opt, accent, highlight }: { label: string; cur:
     );
 }
 
-function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; optimal?: IRoomAssignment; accent: string }) {
+function CompareRow({ current, optimal }: { current?: IRoomAssignment; optimal?: IRoomAssignment }) {
     const curIds = new Set((current?.operators ?? []).map((o) => o.operator_id));
 
     // The Control Center produces no resource yield - its metric is the global
@@ -148,7 +148,7 @@ function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; o
 
     return (
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md border border-border/35 bg-muted/10 px-2 py-1.5">
-            <RoomSide room={current} accent={accent} muted />
+            <RoomSide room={current} muted />
             <div className="flex min-w-18 flex-col items-center gap-0.5">
                 {unit ? (
                     // Yield-bearing room: yield delta primary, % delta secondary.
@@ -158,39 +158,39 @@ function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; o
                         </span>
                         {pctDelta !== null && (
                             <span className={cn(TEXT_BADGE, "text-muted-foreground/55")}>
-                                {pctDelta >= 0 ? "+" : "−"}
-                                {Math.abs(pctDelta).toFixed(0)}% {pctLabel}
+                                {signedPct(pctDelta)} {pctLabel}
                             </span>
                         )}
                     </>
                 ) : pctDelta !== null ? (
                     // No yield (Control Center): the % buff delta is the primary metric.
                     <span className={cn("font-mono font-semibold text-xs tabular-nums", pctColor(pctDelta))}>
-                        {pctDelta >= 0 ? "+" : "−"}
-                        {Math.abs(pctDelta).toFixed(0)}% {pctLabel}
+                        {signedPct(pctDelta)} {pctLabel}
                     </span>
                 ) : (
                     <span className="text-muted-foreground/50 text-xs">→</span>
                 )}
             </div>
-            <RoomSide room={optimal} accent={accent} highlightIds={curIds} />
+            <RoomSide room={optimal} highlightIds={curIds} />
         </div>
     );
 }
 
-function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignment; accent: string; muted?: boolean; highlightIds?: Set<string> }) {
+function RoomSide({ room, muted, highlightIds }: { room?: IRoomAssignment; muted?: boolean; highlightIds?: Set<string> }) {
     if (!room) {
         return <span className={cn(TEXT_BADGE, "text-muted-foreground/40")}>- none -</span>;
     }
     const yieldLabel = roomYieldLabel(room);
+    const nonProd = nonProductionLabel(room);
     const a = roomAccent(room.room_type);
+    const formula = formulaTag(room.formula_type);
     return (
         <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center justify-between gap-1.5">
                 <span className={cn(TEXT_BADGE, "flex items-center gap-1 truncate")} style={{ color: a.text }}>
                     <span className="size-1.5 shrink-0 rounded-xs" style={{ background: a.color }} />
                     {roomLabel(room.room_type)}
-                    {room.formula_type ? ` · ${room.formula_type}` : ""}
+                    {formula ? ` · ${formula}` : ""}
                 </span>
                 <span className={cn("shrink-0 font-mono font-semibold tabular-nums", TEXT_BADGE)} style={{ color: a.strong }}>
                     +{room.total_efficiency.toFixed(0)}%
@@ -205,7 +205,7 @@ function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignmen
                         <Tooltip key={op.operator_id}>
                             <TooltipTrigger
                                 render={
-                                    <span className={cn("relative size-5 overflow-hidden rounded-sm border", isNew ? "border-2" : "border-border/40", muted && "opacity-70")} style={isNew ? { borderColor: `color-mix(in oklch, ${accent} 70%, transparent)` } : undefined}>
+                                    <span className={cn("relative size-5 overflow-hidden rounded-sm border", isNew ? "border-2" : "border-border/40", muted && "opacity-70")} style={isNew ? { borderColor: "color-mix(in oklch, var(--imp-accent) 70%, transparent)" } : undefined}>
                                         <OperatorAvatar charId={op.operator_id} name={op.name} />
                                     </span>
                                 }
@@ -220,7 +220,7 @@ function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignmen
                     );
                 })}
             </div>
-            {yieldLabel && <span className={cn(TEXT_BADGE, "text-muted-foreground/70")}>{yieldLabel}</span>}
+            {(yieldLabel || nonProd) && <span className={cn(TEXT_BADGE, "text-muted-foreground/70")}>{[yieldLabel, nonProd].filter(Boolean).join(" · ")}</span>}
         </div>
     );
 }

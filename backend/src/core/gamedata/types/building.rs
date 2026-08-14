@@ -82,7 +82,7 @@ pub struct BuildingDataFile {
 // ─── Buffs ───────────────────────────────────────────────────────────────────
 
 /// A single base skill/buff definition.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Buff {
     pub buff_id: String,
@@ -269,7 +269,7 @@ pub struct ManufactPhase {
 }
 
 /// A factory recipe definition.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ManufactFormula {
     pub formula_id: String,

@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { cn } from "#/lib/utils";
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
@@ -78,6 +80,31 @@ export function SectionHeader({ title, count, accent }: { title: string; count?:
             </span>
             {count !== undefined && <span className={cn(TEXT_BADGE, "rounded-md border border-border/40 bg-muted/30 px-1.5 py-0.5 text-muted-foreground")}>{count}</span>}
         </div>
+    );
+}
+
+/**
+ * A collapsible section with the same chrome as `SectionHeader` (kicker +
+ * optional count badge) plus a chevron - for secondary sections that should
+ * stay one click away instead of stretching the panel.
+ */
+export function CollapsibleSection({ title, count, accent, defaultOpen = false, children }: { title: string; count?: ReactNode; accent: string; defaultOpen?: boolean; children: ReactNode }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <Collapsible open={open} onOpenChange={setOpen} className="flex flex-col gap-3">
+            <CollapsibleTrigger className="flex items-center justify-between gap-2 border-border/40 border-b pb-1.5 text-left transition-colors hover:border-border">
+                <span className={cn(TEXT_KICKER)} style={{ color: `color-mix(in oklch, ${accent} 60%, var(--foreground))` }}>
+                    {title}
+                </span>
+                <span className="flex items-center gap-2">
+                    {count !== undefined && <span className={cn(TEXT_BADGE, "rounded-md border border-border/40 bg-muted/30 px-1.5 py-0.5 text-muted-foreground")}>{count}</span>}
+                    <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+                </span>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <div className="flex flex-col gap-3 pt-0.5">{children}</div>
+            </CollapsibleContent>
+        </Collapsible>
     );
 }
 
