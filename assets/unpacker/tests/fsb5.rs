@@ -1,3 +1,4 @@
+#![allow(clippy::unreadable_literal)]
 use unpacker::export::fsb5::{
     VORBIS_HEADERS, extract_block_flags, fsb5_to_ogg, lookup_vorbis_setup,
 };

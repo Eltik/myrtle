@@ -1,4 +1,4 @@
-//! Diagnostic: print the GameObject hierarchy of a bundle — name, `m_IsActive`, local +
+//! Diagnostic: print the `GameObject` hierarchy of a bundle — name, `m_IsActive`, local +
 //! accumulated position/scale, and the component class IDs on each node.
 //!
 //! Motivation: when a visible element of the in-game render has no counterpart in the
@@ -6,7 +6,15 @@
 //! contains it and under which parent — the exported JSONs are anonymous (indices only),
 //! so there is no way to answer that from the output alone.
 //!
-//! Usage: cargo run --release --example probe_tree -- <bundle.ab> [name-filter]
+//! Usage: cargo run --release --example `probe_tree` -- <bundle.ab> [name-filter]
+#![allow(
+    // mul_add/hypot change float rounding, not just spelling; never worth it for byte-exact
+    // parity output, even in a throwaway diagnostic.
+    clippy::suboptimal_flops,
+    clippy::imprecise_flops,
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -27,7 +35,7 @@ fn vec3(v: Option<&Value>) -> [f64; 3] {
     [g("x"), g("y"), g("z")]
 }
 
-fn class_name(id: i32) -> &'static str {
+const fn class_name(id: i32) -> &'static str {
     match id {
         1 => "GameObject",
         4 => "Transform",
@@ -75,7 +83,7 @@ fn main() {
             }
             match v.get("m_Father").and_then(pid) {
                 Some(f) if f != 0 && all.contains_key(&f) => {
-                    children.entry(f).or_default().push(*tp)
+                    children.entry(f).or_default().push(*tp);
                 }
                 _ => roots.push(*tp),
             }

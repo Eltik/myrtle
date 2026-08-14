@@ -7,7 +7,8 @@
 //!
 //! Prints each `lua/` asset's bundle, and a bundle->count rollup so the fetch list is obvious.
 //!
-//! Usage: cargo run --release --example probe_luabundles -- <path-to.idx> [path-substring]
+//! Usage: cargo run --release --example `probe_luabundles` -- <path-to.idx> [path-substring]
+#![allow(clippy::cast_sign_loss)]
 
 use std::collections::BTreeMap;
 
@@ -25,7 +26,11 @@ fn main() {
 
     let bundles: Vec<String> = m
         .bundles()
-        .map(|b| b.iter().map(|x| x.name().unwrap_or("?").to_string()).collect())
+        .map(|b| {
+            b.iter()
+                .map(|x| x.name().unwrap_or("?").to_string())
+                .collect()
+        })
         .unwrap_or_default();
     println!("bundles in manifest: {}", bundles.len());
 
@@ -35,7 +40,7 @@ fn main() {
     };
     let mut per_bundle: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut total = 0usize;
-    for a in list.iter() {
+    for a in list {
         let path = a.path().unwrap_or("");
         if !path.contains(&want) {
             continue;
@@ -47,10 +52,16 @@ fn main() {
         }
         total += 1;
         let bi = a.bundleIndex() as usize;
-        let bn = bundles.get(bi).cloned().unwrap_or_else(|| format!("<oob {bi}>"));
+        let bn = bundles
+            .get(bi)
+            .cloned()
+            .unwrap_or_else(|| format!("<oob {bi}>"));
         per_bundle.entry(bn).or_default().push(path.to_string());
     }
-    println!("matching assets: {total}   distinct bundles: {}\n", per_bundle.len());
+    println!(
+        "matching assets: {total}   distinct bundles: {}\n",
+        per_bundle.len()
+    );
     for (b, paths) in &per_bundle {
         println!("{b}   ({} assets)", paths.len());
         for p in paths.iter().take(6) {

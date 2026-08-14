@@ -1,3 +1,4 @@
+#![allow(clippy::manual_let_else)]
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -14,7 +15,7 @@ fn test_output_dir(name: &str) -> PathBuf {
     dir
 }
 
-/// Parse a portrait bundle: collect MonoBehaviours + decode Texture2Ds by path_id.
+/// Parse a portrait bundle: collect `MonoBehaviours` + decode `Texture2Ds` by `path_id`.
 fn load_portrait_bundle(
     bundle_path: &str,
 ) -> (
@@ -76,14 +77,11 @@ fn load_portrait_bundle(
     // Decode all claimed textures (need resources for stream data)
     let mut decoded: HashMap<i64, DecodedTexture> = HashMap::new();
     for (pid, (class_id, val)) in &all_objects {
-        if *class_id == 28 && claimed.contains(pid) {
-            match decode_texture_object(val, &resources) {
-                Ok(Some(tex)) => {
-                    decoded.insert(*pid, tex);
-                }
-                Ok(None) => {}
-                Err(_) => {}
-            }
+        if *class_id == 28
+            && claimed.contains(pid)
+            && let Ok(Some(tex)) = decode_texture_object(val, &resources)
+        {
+            decoded.insert(*pid, tex);
         }
     }
 
@@ -115,7 +113,7 @@ fn test_portrait_extraction_pack12() {
     // Check that individual portrait files exist
     let pngs: Vec<_> = std::fs::read_dir(&dir)
         .unwrap()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.path().extension().is_some_and(|ext| ext == "png"))
         .collect();
     assert!(

@@ -1,5 +1,5 @@
-//! THROWAWAY diagnostic: print the `m_SortingOrder` of every MeshRenderer in a bundle, keyed by
-//! its GameObject name.
+//! THROWAWAY diagnostic: print the `m_SortingOrder` of every `MeshRenderer` in a bundle, keyed by
+//! its `GameObject` name.
 //!
 //! Motivation: the entrance LETTERBOX is detected geometrically (`find_letterbox`) and exported
 //! as a bare rect, so the renderer draws it as four synthetic quads ON TOP of everything. That is
@@ -8,7 +8,12 @@
 //! through a fade the game takes to 0.99 alpha. The bars have a real sorting order like every
 //! other quad; this prints it so it can be exported and honoured.
 //!
-//! Usage: cargo run --release --example probe_barsort -- <bundle.ab> [name-substring]
+//! Usage: cargo run --release --example `probe_barsort` -- <bundle.ab> [name-substring]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::or_fun_call,
+    clippy::too_many_lines
+)]
 
 use std::collections::HashMap;
 
@@ -40,7 +45,9 @@ fn main() {
         let mut go_tf: HashMap<i64, i64> = HashMap::new();
         let mut tf: HashMap<i64, (i64, Mat4)> = HashMap::new();
         for obj in &sf.objects {
-            let Ok(v) = read_object(&sf, obj) else { continue };
+            let Ok(v) = read_object(&sf, obj) else {
+                continue;
+            };
             if matches!(obj.class_id, 4 | 224) {
                 if let Some(g) = v.get("m_GameObject").and_then(path_id) {
                     go_tf.insert(g, obj.path_id);
@@ -104,10 +111,7 @@ fn main() {
         }
         rends.sort_by_key(|r| r.1);
         for (g, order, layer, class) in rends {
-            let (name, active) = go
-                .get(&g)
-                .cloned()
-                .unwrap_or_else(|| ("?".into(), true));
+            let (name, active) = go.get(&g).cloned().unwrap_or_else(|| ("?".into(), true));
             if !want.is_empty() && !name.to_ascii_lowercase().contains(&want) {
                 continue;
             }
@@ -117,7 +121,9 @@ fn main() {
             let mut stack: Vec<i64> = Vec::new();
             let mut cur = go_tf.get(&g).copied().unwrap_or(0);
             for _ in 0..64 {
-                let Some(&(father, _)) = tf.get(&cur) else { break };
+                let Some(&(father, _)) = tf.get(&cur) else {
+                    break;
+                };
                 stack.push(cur);
                 if father == 0 {
                     break;

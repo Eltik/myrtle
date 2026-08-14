@@ -1,9 +1,18 @@
-//! THROWAWAY diagnostic: enumerate every Camera (class 20), AnimationClip (class 74),
-//! Animator/Animation/PlayableDirector, and MonoScript in a dynchar dynillust bundle,
+//! THROWAWAY diagnostic: enumerate every Camera (class 20), `AnimationClip` (class 74),
+//! Animator/Animation/PlayableDirector, and `MonoScript` in a dynchar dynillust bundle,
 //! and decode every Transform position/euler/scale curve that touches a camera-related
-//! GameObject — to decide whether a baked "plunge" camera animation exists.
+//! `GameObject` — to decide whether a baked "plunge" camera animation exists.
 //!
-//! Usage: cargo run --release --example dump_entrance_cams -- <bundle.ab> [more.ab ...]
+//! Usage: cargo run --release --example `dump_entrance_cams` -- <bundle.ab> [more.ab ...]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::manual_checked_ops,
+    clippy::or_fun_call
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -235,7 +244,7 @@ fn analyze(path: &str) {
             "   externals: {:?}",
             sf.externals
                 .iter()
-                .map(|x| x.cab_name())
+                .map(unpacker::unity::serialized_file::FileIdentifier::cab_name)
                 .collect::<Vec<_>>()
         );
 

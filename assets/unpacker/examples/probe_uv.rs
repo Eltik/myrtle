@@ -7,11 +7,14 @@
 //! distributes it, and `spine.rs` BAKES the material's `_MainTex_ST` into the UVs at export.
 //! So: print the raw mesh UVs and the ST, to see whether the baked result is faithful.
 //!
-//! Usage: cargo run --release --example probe_uv -- <bundle.ab> [vertcount]
+//! Usage: cargo run --release --example `probe_uv` -- <bundle.ab> [vertcount]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 use serde_json::Value;
 use std::collections::HashMap;
 use unpacker::export::mesh::parse_mesh;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
     let mut a = std::env::args().skip(1);
@@ -24,7 +27,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
             if let Ok(v) = read_object(&sf, o) {
@@ -35,11 +40,13 @@ fn main() {
             if *cid != 43 {
                 continue;
             }
-            let Some(m) = parse_mesh(v, &HashMap::new()) else { continue };
-            if let Some(w) = want {
-                if m.uvs.len() != w {
-                    continue;
-                }
+            let Some(m) = parse_mesh(v, &HashMap::new()) else {
+                continue;
+            };
+            if let Some(w) = want
+                && m.uvs.len() != w
+            {
+                continue;
             }
             if m.uvs.is_empty() {
                 continue;

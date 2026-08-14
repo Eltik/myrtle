@@ -1,5 +1,5 @@
-//! THROWAWAY diagnostic: for a named emitter GameObject, print the RAW `startSize` from the
-//! ParticleSystem module, the full transform chain with each local scale, and the accumulated
+//! THROWAWAY diagnostic: for a named emitter `GameObject`, print the RAW `startSize` from the
+//! `ParticleSystem` module, the full transform chain with each local scale, and the accumulated
 //! world scale — so the exported `startSize` can be reconciled against the prefab.
 //!
 //! Motivation: Wiš'adel's `stroke_01 (1)` exports `startSize` 1185.8 px, which on her framing
@@ -8,7 +8,13 @@
 //! `inv_scale`, and this project already has two bugs of that family (the anisotropic basis, and
 //! a 0.0025-scale emitter inflating particles ~400x). This says which factor produced 1185.8.
 //!
-//! Usage: cargo run --release --example probe_emscale -- <bundle.ab> <go-name>
+//! Usage: cargo run --release --example `probe_emscale` -- <bundle.ab> <go-name>
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::or_fun_call,
+    clippy::too_many_lines,
+    clippy::type_complexity
+)]
 
 use std::collections::HashMap;
 
@@ -49,7 +55,9 @@ fn main() {
         let mut tf: HashMap<i64, (i64, [f32; 3], [f32; 3], [f32; 4], i64)> = HashMap::new();
         let mut systems: Vec<(i64, serde_json::Value)> = Vec::new();
         for obj in &sf.objects {
-            let Ok(v) = read_object(&sf, obj) else { continue };
+            let Ok(v) = read_object(&sf, obj) else {
+                continue;
+            };
             match obj.class_id {
                 1 => {
                     go_name.insert(obj.path_id, v["m_Name"].as_str().unwrap_or("").to_string());
@@ -120,12 +128,18 @@ fn main() {
             for &t in &chain {
                 let (_, _, sc, _, owner) = tf[&t];
                 let nm = go_name.get(&owner).cloned().unwrap_or_default();
-                println!("      {nm:38} localScale=({:.4}, {:.4}, {:.4})", sc[0], sc[1], sc[2]);
+                println!(
+                    "      {nm:38} localScale=({:.4}, {:.4}, {:.4})",
+                    sc[0], sc[1], sc[2]
+                );
                 acc[0] *= sc[0];
                 acc[1] *= sc[1];
                 acc[2] *= sc[2];
             }
-            println!("   ACCUMULATED world scale = ({:.5}, {:.5}, {:.5})", acc[0], acc[1], acc[2]);
+            println!(
+                "   ACCUMULATED world scale = ({:.5}, {:.5}, {:.5})",
+                acc[0], acc[1], acc[2]
+            );
             // Full world matrix, root-first, and the screen-plane axis lengths the exporter uses.
             let mut m = Mat4::identity();
             for &t in chain.iter().rev() {
@@ -135,14 +149,14 @@ fn main() {
             let o = m.point([0.0, 0.0, 0.0]);
             let ex = m.point([1.0, 0.0, 0.0]);
             let ey = m.point([0.0, 1.0, 0.0]);
-            let lx = ((ex[0] - o[0]).powi(2) + (ex[1] - o[1]).powi(2)).sqrt();
-            let ly = ((ey[0] - o[0]).powi(2) + (ey[1] - o[1]).powi(2)).sqrt();
+            let lx = (ex[0] - o[0]).hypot(ex[1] - o[1]);
+            let ly = (ey[0] - o[0]).hypot(ey[1] - o[1]);
             println!("   world basis, SCREEN-PLANE axis lengths: |X|={lx:.5}  |Y|={ly:.5}");
             if let Some(s) = scalar {
                 println!(
                     "   raw {s:.4}  x  meanAxis {:.5}  = {:.4}  (before the global inv_scale)",
-                    (lx + ly) / 2.0,
-                    s * f64::from((lx + ly) / 2.0)
+                    f32::midpoint(lx, ly),
+                    s * f64::from(f32::midpoint(lx, ly))
                 );
             }
         }

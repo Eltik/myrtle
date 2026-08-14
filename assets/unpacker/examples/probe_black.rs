@@ -1,13 +1,20 @@
-//! THROWAWAY diagnostic: enumerate EVERY renderer (class 23 MeshRenderer / 137 SkinnedMesh)
+//! THROWAWAY diagnostic: enumerate EVERY renderer (class 23 `MeshRenderer` / 137 `SkinnedMesh`)
 //! in a dynchar bundle with its GO name, static active flag, sorting order, material shader,
-//! material colour properties, and whether any AnimationClip binds its `m_IsActive` or a
+//! material colour properties, and whether any `AnimationClip` binds its `m_IsActive` or a
 //! material colour channel.
 //!
 //! Motivation: Skadi2 fades to full black at tt11/tt14.8 and the `BG_black_01..04` planes were
 //! dismissed as "no colour channels" — but a plane can produce a TIMED blackout purely by
 //! `m_IsActive` toggling, or by an untextured solid-colour material the mesh exporter drops.
 //!
-//! Usage: cargo run --release --example probe_black -- <bundle.ab> [name-filter]
+//! Usage: cargo run --release --example `probe_black` -- <bundle.ab> [name-filter]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::for_kv_map,
+    clippy::format_push_string,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -81,10 +88,10 @@ fn main() {
                         tf_go.insert(*p, g);
                         go_tf.insert(g, *p);
                     }
-                    if let Some(f) = v.get("m_Father").and_then(pid) {
-                        if f != 0 {
-                            tf_father.insert(*p, f);
-                        }
+                    if let Some(f) = v.get("m_Father").and_then(pid)
+                        && f != 0
+                    {
+                        tf_father.insert(*p, f);
                     }
                 }
                 _ => {}
@@ -132,13 +139,11 @@ fn main() {
                     let h = c
                         .get("path")
                         .and_then(Value::as_u64)
-                        .map(|n| n as u32)
-                        .unwrap_or_else(|| crc32(p.as_bytes()));
+                        .map_or_else(|| crc32(p.as_bytes()), |n| n as u32);
                     let attr = c
                         .get("attribute")
                         .and_then(Value::as_str)
-                        .map(str::to_string)
-                        .unwrap_or_else(|| key.to_string());
+                        .map_or_else(|| key.to_string(), str::to_string);
                     bound
                         .entry(h)
                         .or_default()
@@ -175,7 +180,7 @@ fn main() {
 
         println!("\n########## {} ##########", entry.path);
         let mut rows: Vec<String> = Vec::new();
-        for (p, (cid, v)) in &all {
+        for (_p, (cid, v)) in &all {
             if *cid != 23 && *cid != 137 {
                 continue;
             }

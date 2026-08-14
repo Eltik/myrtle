@@ -3,6 +3,11 @@
 // below are intentional noise here: pervasive byte/bit casts, long parser/codegen
 // functions, single-char math vars, indicatif template strings, and internal-only
 // docs. Generated FB modules are exempted separately at their `mod` declarations.
+//
+// `suboptimal_flops`/`imprecise_flops` (mul_add, hypot, ...) are excluded on purpose: they
+// change the actual floating-point rounding of the result, not just the spelling, which is
+// unacceptable for an asset-unpacking pipeline whose output must reproduce the game's numbers
+// exactly.
 #![allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -26,7 +31,9 @@
     clippy::many_single_char_names,
     clippy::unreadable_literal,
     clippy::format_push_string,
-    clippy::literal_string_with_formatting_args
+    clippy::literal_string_with_formatting_args,
+    clippy::suboptimal_flops,
+    clippy::imprecise_flops
 )]
 
 pub mod export;

@@ -1,5 +1,5 @@
 //! THROWAWAY diagnostic: dump every Material's texture-property (`m_TexEnvs`) slots, with the
-//! size of each referenced Texture2D.
+//! size of each referenced `Texture2D`.
 //!
 //! Motivation: Ch'en the Holungday's sky is one 4-vertex quad whose exported texture is 100%
 //! OPAQUE (alphaMin 255), yet the game confines the art to a ragged cut-out. The silhouette is
@@ -7,11 +7,19 @@
 //! alpha companion under a name the exporter never reads (it only consults `_AlphaTex`), that
 //! is where the shape lives.
 //!
-//! Usage: cargo run --release --example probe_scenemat -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_scenemat` -- <bundle.ab>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::many_single_char_names,
+    clippy::too_many_lines,
+    clippy::type_complexity
+)]
 
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -21,7 +29,10 @@ fn pid(v: &Value) -> Option<i64> {
 /// (`{first,second}`) and the positional one (`[k, v]`).
 fn tex_envs(mat: &Value) -> Vec<(String, i64)> {
     let mut out = Vec::new();
-    let Some(te) = mat.get("m_SavedProperties").and_then(|sp| sp.get("m_TexEnvs")) else {
+    let Some(te) = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_TexEnvs"))
+    else {
         return out;
     };
     // Unity serialises this as a MAP (property name -> {m_Texture, m_Scale, m_Offset}). An
@@ -98,7 +109,11 @@ fn main() {
                         mat_seen += 1;
                         match read_object(&sf, obj) {
                             Ok(v) => {
-                                let n = v.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string();
+                                let n = v
+                                    .get("m_Name")
+                                    .and_then(Value::as_str)
+                                    .unwrap_or("?")
+                                    .to_string();
                                 mats.push((obj.path_id, n, tex_envs(&v)));
                             }
                             Err(e) => {
@@ -114,7 +129,10 @@ fn main() {
                             tex.insert(
                                 obj.path_id,
                                 (
-                                    v.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string(),
+                                    v.get("m_Name")
+                                        .and_then(Value::as_str)
+                                        .unwrap_or("?")
+                                        .to_string(),
                                     v.get("m_Width").and_then(Value::as_i64).unwrap_or(0),
                                     v.get("m_Height").and_then(Value::as_i64).unwrap_or(0),
                                 ),
@@ -124,7 +142,11 @@ fn main() {
                     _ => {}
                 }
             }
-            println!("  materials seen: {mat_seen}  read OK: {}  failed: {mat_err}  textures: {}", mats.len(), tex.len());
+            println!(
+                "  materials seen: {mat_seen}  read OK: {}  failed: {mat_err}  textures: {}",
+                mats.len(),
+                tex.len()
+            );
             // STRUCTURE PROBE: the TexEnvs path came back empty for every material, so print the
             // real shape of one before trusting any accessor.
             if let Some(obj) = sf.objects.iter().find(|o| o.class_id == 21)
@@ -144,7 +166,12 @@ fn main() {
                         println!("  m_TexEnvs (first 600 chars): {}", &s[..s.len().min(600)]);
                     }
                 } else {
-                    println!("  m_SavedProperties: ABSENT or not an object -> {}", serde_json::to_string(&v).map(|s| s.chars().take(500).collect::<String>()).unwrap_or_default());
+                    println!(
+                        "  m_SavedProperties: ABSENT or not an object -> {}",
+                        serde_json::to_string(&v)
+                            .map(|s| s.chars().take(500).collect::<String>())
+                            .unwrap_or_default()
+                    );
                 }
             }
 
@@ -154,7 +181,10 @@ fn main() {
                     *key_counts.entry(k.clone()).or_default() += 1;
                 }
             }
-            println!("\n  DISTINCT texture-property names ({}):", key_counts.len());
+            println!(
+                "\n  DISTINCT texture-property names ({}):",
+                key_counts.len()
+            );
             for (k, n) in &key_counts {
                 println!("      {k:<28} on {n} materials");
             }
@@ -164,20 +194,32 @@ fn main() {
             // rule out a per-skin material tint.
             println!("\n  NON-DEFAULT colours / floats per material:");
             for obj in sf.objects.iter().filter(|o| o.class_id == 21) {
-                let Ok(v) = read_object(&sf, obj) else { continue };
+                let Ok(v) = read_object(&sf, obj) else {
+                    continue;
+                };
                 let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
                 let sp = v.get("m_SavedProperties");
                 let mut bits: Vec<String> = Vec::new();
-                if let Some(cols) = sp.and_then(|x| x.get("m_Colors")).and_then(Value::as_object) {
+                if let Some(cols) = sp
+                    .and_then(|x| x.get("m_Colors"))
+                    .and_then(Value::as_object)
+                {
                     for (k, c) in cols {
                         let g = |n: &str| c.get(n).and_then(Value::as_f64).unwrap_or(1.0);
                         let (r, gg, b, a) = (g("r"), g("g"), g("b"), g("a"));
-                        if (r - 1.0).abs() > 1e-3 || (gg - 1.0).abs() > 1e-3 || (b - 1.0).abs() > 1e-3 || (a - 1.0).abs() > 1e-3 {
+                        if (r - 1.0).abs() > 1e-3
+                            || (gg - 1.0).abs() > 1e-3
+                            || (b - 1.0).abs() > 1e-3
+                            || (a - 1.0).abs() > 1e-3
+                        {
                             bits.push(format!("{k}=[{r:.3},{gg:.3},{b:.3},{a:.3}]"));
                         }
                     }
                 }
-                if let Some(fl) = sp.and_then(|x| x.get("m_Floats")).and_then(Value::as_object) {
+                if let Some(fl) = sp
+                    .and_then(|x| x.get("m_Floats"))
+                    .and_then(Value::as_object)
+                {
                     for (k, f) in fl {
                         let x = f.as_f64().unwrap_or(0.0);
                         if x.abs() > 1e-6 {
@@ -194,7 +236,9 @@ fn main() {
             // meaningful, and the non-default filter above would hide it.
             println!("\n  STENCIL / MASK / CUTOFF properties, with each material's _MainTex:");
             for obj in sf.objects.iter().filter(|o| o.class_id == 21) {
-                let Ok(v) = read_object(&sf, obj) else { continue };
+                let Ok(v) = read_object(&sf, obj) else {
+                    continue;
+                };
                 let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
                 let sp = v.get("m_SavedProperties");
                 let mut hits: Vec<String> = Vec::new();
@@ -202,8 +246,15 @@ fn main() {
                     if let Some(o) = sp.and_then(|x| x.get(field)).and_then(Value::as_object) {
                         for (k, val) in o {
                             let lk = k.to_ascii_lowercase();
-                            if lk.contains("stencil") || lk.contains("mask") || lk.contains("cutoff") || lk.contains("clip") {
-                                hits.push(format!("{k}={}", serde_json::to_string(val).unwrap_or_default()));
+                            if lk.contains("stencil")
+                                || lk.contains("mask")
+                                || lk.contains("cutoff")
+                                || lk.contains("clip")
+                            {
+                                hits.push(format!(
+                                    "{k}={}",
+                                    serde_json::to_string(val).unwrap_or_default()
+                                ));
                             }
                         }
                     }
@@ -219,7 +270,9 @@ fn main() {
                 }
             }
 
-            println!("\n  Materials with MORE THAN ONE bound texture (a mask/alpha companion would appear here):");
+            println!(
+                "\n  Materials with MORE THAN ONE bound texture (a mask/alpha companion would appear here):"
+            );
             for (p, name, envs) in &mats {
                 let bound: Vec<&(String, i64)> = envs.iter().filter(|(_, t)| *t != 0).collect();
                 if bound.len() < 2 {
@@ -227,9 +280,10 @@ fn main() {
                 }
                 println!("    MAT '{name}' (pid {p})");
                 for (k, t) in bound {
-                    let d = tex
-                        .get(t)
-                        .map_or_else(|| format!("pid {t} (external/absent)"), |(n, w, h)| format!("{n} {w}x{h}"));
+                    let d = tex.get(t).map_or_else(
+                        || format!("pid {t} (external/absent)"),
+                        |(n, w, h)| format!("{n} {w}x{h}"),
+                    );
                     println!("        {k:<24} = {d}");
                 }
             }

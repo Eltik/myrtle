@@ -1,6 +1,6 @@
 use base64::Engine as _;
-use resvg::usvg::{Options, Tree};
 use resvg::tiny_skia;
+use resvg::usvg::{Options, Tree};
 use std::fmt::Write as _;
 
 use ::serenity::builder::CreateEmbed;
@@ -269,7 +269,7 @@ pub async fn user(
     let png_bytes = build_profile_card_png(&data.http_client, base_url, &s).await?;
     let embed = CreateEmbed::new()
         .author(CreateEmbedAuthor::new("myrtle.moe").url("https://myrtle.moe"))
-        .title(format!("User {}", user_id))
+        .title(format!("User {user_id}"))
         .image("attachment://profile.png")
         .timestamp(Timestamp::now());
 
@@ -352,6 +352,16 @@ async fn fetch_avatar_data_url(client: &reqwest::Client, url: Option<String>) ->
     Some(format!("data:{mime};base64,{b64}"))
 }
 
+// This builds one SVG template out of many display-only numeric fields; splitting it
+// apart would scatter the markup without making anything clearer, and the casts below
+// are all on values already clamped/rounded to fit their target range (grades, levels,
+// UI pixel sizes) — precision loss / truncation / wrap there is expected, not a bug.
+#[allow(
+    clippy::too_many_lines,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_wrap
+)]
 fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
     const WIDTH: i32 = 1200;
     const HEIGHT: i32 = 520;
@@ -393,20 +403,20 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
     } else {
         user.server.as_str()
     };
-    let level = user.level.unwrap_or(0).max(0) as i32;
+    let level = i32::from(user.level.unwrap_or(0).max(0));
     let total_score = user.total_score.unwrap_or(0.0).max(0.0).round() as i64;
     let grade = user.grade.as_deref().unwrap_or("").trim().to_uppercase();
     let resume = user.resume.as_deref().unwrap_or("No signature set.").trim();
 
-    let sanity = user.sanity.unwrap_or(0).max(0) as i64;
-    let max_sanity = user.max_sanity.unwrap_or(0).max(0) as i64;
+    let sanity = i64::from(user.sanity.unwrap_or(0).max(0));
+    let max_sanity = i64::from(user.max_sanity.unwrap_or(0).max(0));
     let operator_count = user.operator_count.unwrap_or(0).max(0);
     let skin_count = user.skin_count.unwrap_or(0).max(0);
     let non_default_skin_count = user.non_default_skin_count.unwrap_or(0).max(0);
     let item_count = user.item_count.unwrap_or(0).max(0);
-    let signin = user.cumulative_signin.unwrap_or(0).max(0) as i64;
-    let orundum = user.orundum.unwrap_or(0).max(0) as i64;
-    let lmd = user.lmd.unwrap_or(0).max(0) as i64;
+    let signin = i64::from(user.cumulative_signin.unwrap_or(0).max(0));
+    let orundum = i64::from(user.orundum.unwrap_or(0).max(0));
+    let lmd = i64::from(user.lmd.unwrap_or(0).max(0));
 
     let esc = |s: &str| {
         s.replace('&', "&amp;")
@@ -447,8 +457,7 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .ok()
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+            .map_or(0, |d| d.as_secs() as i64);
         let d = now - ts;
         if d <= 0 {
             "just now".to_string()
@@ -468,8 +477,7 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .ok()
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+            .map_or(0, |d| d.as_secs() as i64);
         match user.last_online_ts {
             Some(ts) if ts > 0 => {
                 let m = (now - ts) / 60;
@@ -484,31 +492,32 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
             _ => FAINT,
         }
     };
+    // `S` is spelled out explicitly (even though it matches the `_` fallback) so the
+    // rank->color mapping stays readable as a complete table, not S-falls-through-by-accident.
+    #[allow(clippy::match_same_arms)]
     let grade_color = match grade.chars().next() {
         Some('S') => ACCENT,
         Some('A') => "#4ade80",
         Some('B') => "#38bdf8",
-        Some('C') | Some('D') => "#94a3b8",
+        Some('C' | 'D') => "#94a3b8",
         _ => ACCENT,
     };
 
     let id_x = 248;
     let content_right = WIDTH - 56;
     let usable_w = WIDTH - 112;
-    let level_ratio = ((level as f64) / MAX_LEVEL).clamp(0.0, 1.0);
-    let fill_w = ((usable_w as f64) * level_ratio)
+    let level_ratio = (f64::from(level) / MAX_LEVEL).clamp(0.0, 1.0);
+    let fill_w = (f64::from(usable_w) * level_ratio)
         .round()
         .max(if level > 0 { 12.0 } else { 0.0 }) as i32;
-    let at_max = (level as f64) >= MAX_LEVEL;
+    let at_max = f64::from(level) >= MAX_LEVEL;
     let level_right = if at_max {
         "MAX".to_string()
     } else {
         format!("Lv {level} / {}", MAX_LEVEL as i32)
     };
 
-    let avatar_image = avatar_href
-        .map(|h| format!(r#"<image href="{}" x="56" y="84" width="152" height="152" preserveAspectRatio="xMidYMid slice" clip-path="url(#avatarClip)"/>"#, esc(h)))
-        .unwrap_or_else(|| r##"<rect x="56" y="84" width="152" height="152" rx="20" fill="#17171a"/>"##.to_string());
+    let avatar_image = avatar_href.map_or_else(|| r##"<rect x="56" y="84" width="152" height="152" rx="20" fill="#17171a"/>"##.to_string(), |h| format!(r#"<image href="{}" x="56" y="84" width="152" height="152" preserveAspectRatio="xMidYMid slice" clip-path="url(#avatarClip)"/>"#, esc(h)));
 
     let grade_badge = if grade.is_empty() {
         String::new()
@@ -536,8 +545,7 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
     let footer = format!(
         "Registered {}   ·   Last online {}   ·   Sanity {} / {}",
         user.register_ts
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| "—".to_string()),
+            .map_or_else(|| "—".to_string(), |v| v.to_string()),
         relative(user.last_online_ts),
         comma(sanity),
         comma(max_sanity)
@@ -622,10 +630,10 @@ fn build_profile_svg(user: &UserProfile, avatar_href: Option<&str>) -> String {
         fill_w = fill_w,
         usable_w = usable_w,
         footer = esc(&footer),
-        operators = comma(operator_count as i64),
-        skins = comma(skin_count as i64),
-        nonskins = comma(non_default_skin_count as i64),
-        items = comma(item_count as i64),
+        operators = comma(operator_count),
+        skins = comma(skin_count),
+        nonskins = comma(non_default_skin_count),
+        items = comma(item_count),
         signin = comma(signin),
         orundum = compact(orundum),
         lmd = compact(lmd),

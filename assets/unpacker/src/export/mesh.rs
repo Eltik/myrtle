@@ -415,7 +415,8 @@ impl Mat4 {
     #[must_use]
     pub fn inverse_affine(&self) -> Self {
         let m = &self.0;
-        let det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+        let det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+            - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
             + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
         if det.abs() < 1e-12 {
             return Self::identity();
@@ -432,8 +433,8 @@ impl Mat4 {
         r[2][1] = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * inv_det;
         r[2][2] = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * inv_det;
         // t' = -R⁻¹ · t
-        for i in 0..3 {
-            r[i][3] = -(r[i][0] * m[0][3] + r[i][1] * m[1][3] + r[i][2] * m[2][3]);
+        for row in r.iter_mut().take(3) {
+            row[3] = -(row[0] * m[0][3] + row[1] * m[1][3] + row[2] * m[2][3]);
         }
         r[3][3] = 1.0;
         Self(r)

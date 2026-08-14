@@ -8,28 +8,47 @@
 //! `_MainColor`. If this material carries `_MainColor` at the un-doubled value, the gate is
 //! missing it.
 //!
-//! Usage: cargo run --release --example probe_l16 -- <bundle.ab> [colour-substring]
+//! Usage: cargo run --release --example `probe_l16` -- <bundle.ab> [colour-substring]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::format_push_string
+)]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
-    let path = std::env::args().nth(1).expect("usage: probe_l16 <bundle.ab> [substr]");
+    let path = std::env::args()
+        .nth(1)
+        .expect("usage: probe_l16 <bundle.ab> [substr]");
     let want = std::env::args().nth(2);
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
     for entry in &bundle.files {
         let lower = entry.path.to_ascii_lowercase();
-        if lower.ends_with(".ress") || lower.ends_with(".resource") { continue; }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        if lower.ends_with(".ress") || lower.ends_with(".resource") {
+            continue;
+        }
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
-            if let Ok(v) = read_object(&sf, o) { all.insert(o.path_id, (o.class_id, v)); }
+            if let Ok(v) = read_object(&sf, o) {
+                all.insert(o.path_id, (o.class_id, v));
+            }
         }
         for (pid, (cid, v)) in &all {
-            if *cid != 21 { continue; }   // Material
+            if *cid != 21 {
+                continue;
+            } // Material
             let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("");
-            let shader = v.get("m_Shader").and_then(|s| s.get("m_PathID")).and_then(Value::as_i64)
+            let shader = v
+                .get("m_Shader")
+                .and_then(|s| s.get("m_PathID"))
+                .and_then(Value::as_i64)
                 .and_then(|sp| all.get(&sp))
                 .and_then(|(_, sv)| sv.get("m_Name").and_then(Value::as_str))
                 .unwrap_or("?");
@@ -38,14 +57,24 @@ fn main() {
             let mut line = String::new();
             let entries: Vec<(String, String)> = match cols {
                 Value::Object(m) => m.iter().map(|(k, c)| (k.clone(), fmt(c))).collect(),
-                Value::Array(a) => a.iter().filter_map(|e| {
-                    let k = e.get("first")?.as_str()?.to_string();
-                    Some((k, fmt(e.get("second")?)))
-                }).collect(),
+                Value::Array(a) => a
+                    .iter()
+                    .filter_map(|e| {
+                        let k = e.get("first")?.as_str()?.to_string();
+                        Some((k, fmt(e.get("second")?)))
+                    })
+                    .collect(),
                 _ => vec![],
             };
-            for (k, val) in &entries { line.push_str(&format!("  {k}={val}")); }
-            if let Some(w) = &want { if !line.contains(w.as_str()) && !name.contains(w.as_str()) { continue; } }
+            for (k, val) in &entries {
+                line.push_str(&format!("  {k}={val}"));
+            }
+            if let Some(w) = &want
+                && !line.contains(w.as_str())
+                && !name.contains(w.as_str())
+            {
+                continue;
+            }
             println!("mat pid {pid} name={name:<26} shader={shader}");
             println!("   {line}");
         }

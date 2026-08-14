@@ -93,7 +93,7 @@ fn decompress_first_data_block() {
     r.align(16);
 
     let block_data = r.read_bytes(comp as usize).unwrap();
-    let result = decompress(&block_data, uncomp as usize, (bflags & 0x3F) as u32);
+    let result = decompress(&block_data, uncomp as usize, u32::from(bflags & 0x3F));
     assert!(result.is_ok(), "first data block decompression failed");
     assert_eq!(result.unwrap().len(), uncomp as usize);
 }

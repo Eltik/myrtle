@@ -1,11 +1,27 @@
 //! THROWAWAY diagnostic (cello entrance audit): COMPLETE enumeration of the `_Start`
-//! prefab's timeline — every binding of every `*start*` AnimationClip (all typeIDs, all
+//! prefab's timeline — every binding of every `*start*` `AnimationClip` (all typeIDs, all
 //! sub-clips, WITH cubic coefficients), the director `_effects[]` `_delayTime` schedule,
 //! and a dense cubic-evaluated resample of the camera-chain curves — to adversarially
 //! re-test whether the "apple-fall plunge" camera move is in the data and faithfully
 //! extracted.
 //!
-//! Usage: cargo run --release --example dump_start_full -- <bundle.ab>
+//! Usage: cargo run --release --example `dump_start_full` -- <bundle.ab>
+#![allow(
+    // mul_add/hypot change float rounding, not just spelling; never worth it for byte-exact
+    // parity output, even in a throwaway diagnostic.
+    clippy::suboptimal_flops,
+    clippy::imprecise_flops,
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::format_push_string,
+    clippy::manual_checked_ops,
+    clippy::or_fun_call,
+    clippy::too_many_lines,
+    clippy::while_float
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -228,9 +244,7 @@ fn summarize(pts: &[(f32, f32)]) -> String {
             changes.push(format!("{:.2}s:{:.4}->{:.4}", w[1].0, w[0].1, w[1].1));
         }
     }
-    if !varies {
-        format!("CONST {:.5} ({} keys)", pts[0].1, pts.len())
-    } else {
+    if varies {
         format!(
             "{} keys [{:.3}..{:.3}] min={:.4} max={:.4} changes: {}",
             pts.len(),
@@ -240,6 +254,8 @@ fn summarize(pts: &[(f32, f32)]) -> String {
             mx,
             changes.join(" ")
         )
+    } else {
+        format!("CONST {:.5} ({} keys)", pts[0].1, pts.len())
     }
 }
 
@@ -419,11 +435,6 @@ fn main() {
             }
             if let Some(dt) = v.get("_delayTime").and_then(Value::as_f64) {
                 let go = v.get("m_GameObject").and_then(pid).unwrap_or(0);
-                let mut keys: Vec<&String> = v
-                    .as_object()
-                    .map(|o| o.keys().collect())
-                    .unwrap_or_default();
-                keys.sort();
                 let small = v
                     .as_object()
                     .map(|o| {

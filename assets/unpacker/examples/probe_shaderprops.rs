@@ -3,7 +3,8 @@
 //! `Torappu/Particles-L2D/Additive` really declares `_TintColor` (the Unity legacy
 //! particle ×2 convention) or whether a material's `_TintColor` is an inert leftover.
 //!
-//! Usage: cargo run --release --example probe_shaderprops -- <shaders.ab> <name-filter>
+//! Usage: cargo run --release --example `probe_shaderprops` -- <shaders.ab> <name-filter>
+#![allow(clippy::cast_possible_truncation)]
 
 use unpacker::unity::{bundle::BundleFile, serialized_file::SerializedFile};
 
@@ -62,7 +63,7 @@ fn main() {
             let mut i = 0usize;
             while i + 4 < seg.len() {
                 let len = u32::from_le_bytes([seg[i], seg[i + 1], seg[i + 2], seg[i + 3]]) as usize;
-                if len >= 2 && len <= 48 && i + 4 + len <= seg.len() && seg[i + 4] == b'_' {
+                if (2..=48).contains(&len) && i + 4 + len <= seg.len() && seg[i + 4] == b'_' {
                     let s = &seg[i + 4..i + 4 + len];
                     if s.iter().all(|&b| b.is_ascii_alphanumeric() || b == b'_') {
                         // SerializedProperty: m_Name, m_Description, m_Attributes(vec<string>),

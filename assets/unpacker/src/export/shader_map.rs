@@ -1,13 +1,13 @@
 //! Resolve a material's **external** shader reference to the shader's name.
 //!
 //! Particle materials in dynchar bundles reference their shader by an external
-//! PPtr (`m_Shader = {m_FileID, m_PathID}`) into the shared `[uc]shaders.ab`
+//! `PPtr` (`m_Shader = {m_FileID, m_PathID}`) into the shared `[uc]shaders.ab`
 //! bundle, so the name isn't present in the dynchar bundle. We pre-scan the
 //! shader bundles once into a `(CAB, path_id) -> name` map, then resolve each
-//! material's ref via its SerializedFile's `externals` table.
+//! material's ref via its `SerializedFile`'s `externals` table.
 //!
 //! Needed to tell apart the HG "flow" shaders that share one pathID: e.g.
-//! `Torappu/Particles-L2D/Ram/VertexDisturb(CustomData)` drives both SilverAsh
+//! `Torappu/Particles-L2D/Ram/VertexDisturb(CustomData)` drives both `SilverAsh`
 //! the Reignfrost's procedural targeting-ring reticles (external `_MainTex`) and
 //! ordinary slash sprites (in-bundle `_MainTex`).
 
@@ -52,6 +52,8 @@ fn scan_shader_name(data: &[u8], start: usize, size: usize) -> Option<String> {
 
 /// True for a filename that looks like a shader bundle (`[uc]shaders.ab`,
 /// `[uc]uishaders.ab`, `shaders/other.ab`, …).
+// `name` is already lowercased below, so this is case-insensitive by construction.
+#[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn is_shader_bundle(path: &Path) -> bool {
     let name = path
         .file_name()
@@ -101,8 +103,8 @@ pub fn build_shader_map(files: &[PathBuf]) -> ShaderMap {
     map
 }
 
-/// Resolve a material's `m_Shader` PPtr (`file_id`, `path_id`) to a shader name,
-/// following the SerializedFile's `externals` table. `file_id == 0` means the
+/// Resolve a material's `m_Shader` `PPtr` (`file_id`, `path_id`) to a shader name,
+/// following the `SerializedFile`'s `externals` table. `file_id == 0` means the
 /// shader is in this same file (dynchars never inline shaders, so unresolved).
 #[must_use]
 pub fn resolve_shader<'a>(

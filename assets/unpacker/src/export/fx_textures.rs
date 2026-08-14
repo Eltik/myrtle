@@ -73,6 +73,10 @@ pub struct FxTextures {
 ///    way; without it those refs stay `tex: null` (e.g. Virtuosa's standing-window
 ///    rain). It's a sibling of the per-skin `arts/dynchars/char_*.ab`, so a full
 ///    extraction always has it available.
+// `p` is already lowercased below, so these are case-insensitive by construction; the
+// `Path::extension()` rewrite clippy suggests is not equivalent for a path with no filename
+// component (e.g. a bare `.ab`), so it's not a safe drop-in replacement here.
+#[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn is_fx_bundle(path: &Path) -> bool {
     let p = path.to_string_lossy().to_ascii_lowercase();
     p.ends_with(".ab")
@@ -150,6 +154,7 @@ impl FxTextures {
         Self { map, materials }
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
     }
@@ -157,7 +162,7 @@ impl FxTextures {
     /// Resolve an external MATERIAL ref (`file_id`,`path_id`, via the referencing
     /// file's `externals`) → `(the material's own bundle CAB, its JSON)`. The CAB
     /// lets the caller decode the material's `_MainTex`, which lives in that SAME FX
-    /// bundle, via {@link texture_by_cab}. `None` when in-bundle or unresolvable.
+    /// bundle, via {@link `texture_by_cab`}. `None` when in-bundle or unresolvable.
     #[must_use]
     pub fn resolve_material_ref(
         &self,
@@ -177,7 +182,7 @@ impl FxTextures {
     /// Decode an external material's own `_MainTex` given the MATERIAL's bundle CAB +
     /// its external-CAB names: the texture is either in the SAME bundle (`file_id==0`
     /// → `mat_cab`) or in a FURTHER bundle the material references (`file_id>0` →
-    /// `mat_ext_cabs[file_id-1]`). Gated like {@link resolve_decode} (opaque field
+    /// `mat_ext_cabs[file_id-1]`). Gated like {@link `resolve_decode`} (opaque field
     /// maps stay out so they never stamp a grey box). `None` if the bundle isn't loaded.
     #[must_use]
     pub fn material_texture(

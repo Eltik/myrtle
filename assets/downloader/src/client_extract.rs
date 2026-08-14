@@ -95,7 +95,7 @@ pub enum MachOStatus {
     FairPlayEncrypted { cryptid: u32 },
     /// Encryption command present with `cryptid == 0` (already decrypted).
     NotEncrypted,
-    /// No encryption load command at all (never a FairPlay binary).
+    /// No encryption load command at all (never a `FairPlay` binary).
     NoEncryptionCommand,
 }
 
@@ -129,7 +129,7 @@ fn read_u32(data: &[u8], off: usize, big_endian: bool) -> Result<u32> {
     })
 }
 
-/// Analyze a Mach-O (thin or fat/universal) for FairPlay encryption.
+/// Analyze a Mach-O (thin or fat/universal) for `FairPlay` encryption.
 ///
 /// Fat binaries are resolved to their arm64 slice first. Endianness is derived
 /// from the header magic.
@@ -543,7 +543,7 @@ pub fn print_report(report: &ExtractReport) {
                  metadata reader supports this version."
             );
         }
-        Some(MetadataStatus::LikelyEncrypted { .. }) | Some(MetadataStatus::TooShort) | None => {
+        Some(MetadataStatus::LikelyEncrypted { .. } | MetadataStatus::TooShort) | None => {
             println!(
                 "  - static metadata is unusable; use the Frida memory-dump runbook \
                  (dump libil2cpp.so + global-metadata.dat from a running process on a \
@@ -604,7 +604,7 @@ mod tests {
     }
 
     /// Build a minimal 64-bit arm64 Mach-O with a single
-    /// LC_ENCRYPTION_INFO_64 command and the given cryptid.
+    /// `LC_ENCRYPTION_INFO_64` command and the given cryptid.
     fn minimal_macho_arm64(cryptid: u32) -> Vec<u8> {
         let mut v = Vec::new();
         // mach_header_64
@@ -651,7 +651,7 @@ mod tests {
         v.extend_from_slice(&0u32.to_be_bytes()); // cpusubtype
         let offset: u32 = 8 + 20; // header + one fat_arch
         v.extend_from_slice(&offset.to_be_bytes()); // offset
-        v.extend_from_slice(&(thin.len() as u32).to_be_bytes()); // size
+        v.extend_from_slice(&u32::try_from(thin.len()).unwrap().to_be_bytes()); // size
         v.extend_from_slice(&0u32.to_be_bytes()); // align
         // pad to offset
         while v.len() < offset as usize {

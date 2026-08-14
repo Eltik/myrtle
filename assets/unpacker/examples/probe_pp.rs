@@ -1,25 +1,28 @@
-//! THROWAWAY diagnostic: dump the entrance camera's POST-PROCESS stack — the PostProcessVolume
-//! on the `pp` GameObject, the `pp Profile` asset it points at, and every effect-settings
-//! MonoBehaviour the profile holds.
+//! THROWAWAY diagnostic: dump the entrance camera's POST-PROCESS stack — the `PostProcessVolume`
+//! on the `pp` `GameObject`, the `pp Profile` asset it points at, and every effect-settings
+//! `MonoBehaviour` the profile holds.
 //!
 //! Motivation: Mlynar's t=4 warm deficit and t=13 bottom deficit both reduce to "a localised
 //! brightening the exported scene does not contain", and the residual is BLUR-INVARIANT — a
-//! light or a colour transform, not missing art. `probe_grade` found a full PostProcessLayer on
+//! light or a colour transform, not missing art. `probe_grade` found a full `PostProcessLayer` on
 //! `.../03/Dummy002/Main Camera` plus a `pp` volume and a `pp Profile`, none of which the
 //! exporter reads. A colour-grading profile is exactly the mechanism that produces a warm,
 //! low-frequency, region-weighted difference with no corresponding drawn layer.
 //!
-//! Usage: cargo run --release --example probe_pp -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_pp` -- <bundle.ab>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
 }
 
-/// Walk a GameObject's parent chain into a readable path.
+/// Walk a `GameObject`'s parent chain into a readable path.
 fn go_path(all: &HashMap<i64, (i32, Value)>, go: i64) -> String {
     let mut parts: Vec<String> = Vec::new();
     let mut cur = Some(go);
@@ -30,7 +33,12 @@ fn go_path(all: &HashMap<i64, (i32, Value)>, go: i64) -> String {
             break;
         }
         let Some((_, gv)) = all.get(&g) else { break };
-        parts.push(gv.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string());
+        parts.push(
+            gv.get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("?")
+                .to_string(),
+        );
         // GameObject -> its Transform -> parent Transform -> that transform's GameObject
         let tr = gv
             .get("m_Component")
@@ -62,7 +70,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let skip: HashSet<i32> = [28, 43, 48, 49, 83, 128, 213].into_iter().collect();
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for obj in &sf.objects {

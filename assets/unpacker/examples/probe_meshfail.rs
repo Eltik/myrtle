@@ -1,18 +1,21 @@
-//! THROWAWAY diagnostic: for every `renderMode: mesh` ParticleSystem, report WHY its mesh
+//! THROWAWAY diagnostic: for every `renderMode: mesh` `ParticleSystem`, report WHY its mesh
 //! geometry failed to export.
 //!
 //! Motivation: 1195 of 1818 mesh-particle systems in the corpus (65.7%, across 59 of 92
 //! skins) ship with no geometry and are silently dropped by the frontend — including 76 on
-//! Virtuosa alone. The exporter only accepts a mesh whose PPtr resolves to a class-43 object
+//! Virtuosa alone. The exporter only accepts a mesh whose `PPtr` resolves to a class-43 object
 //! IN THE SAME serialized file, so the failures are expected to split into: an EXTERNAL
-//! reference (m_FileID != 0), a null PPtr, a missing local object, or a mesh that
+//! reference (`m_FileID` != 0), a null `PPtr`, a missing local object, or a mesh that
 //! `parse_mesh` cannot decode (streamed / compressed vertices).
 //!
-//! Usage: cargo run --release --example probe_meshfail -- <bundle.ab> [<bundle.ab>...]
+//! Usage: cargo run --release --example `probe_meshfail` -- <bundle.ab> [<bundle.ab>...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -26,14 +29,20 @@ fn main() {
     let mut ok = 0usize;
     let mut total = 0usize;
     for path in std::env::args().skip(1) {
-        let Ok(data) = std::fs::read(&path) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(data) = std::fs::read(&path) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let skip: HashSet<i32> = [28, 48, 49, 83, 128, 213].into_iter().collect();
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for obj in &sf.objects {
@@ -45,7 +54,7 @@ fn main() {
                 }
             }
             // ParticleSystemRenderer is class 199; find those whose render mode is Mesh (4).
-            for (_, (cid, v)) in &all {
+            for (cid, v) in all.values() {
                 if *cid != 199 {
                     continue;
                 }
@@ -74,7 +83,9 @@ fn main() {
                         if unpacker::export::mesh::parse_mesh(mv, &HashMap::new()).is_some() {
                             ok += 1;
                         } else {
-                            *tally.entry("class 43 but parse_mesh failed (streamed/compressed)").or_default() += 1;
+                            *tally
+                                .entry("class 43 but parse_mesh failed (streamed/compressed)")
+                                .or_default() += 1;
                         }
                     }
                     Some((c, _)) => {

@@ -1,7 +1,7 @@
-//! THROWAWAY diagnostic: dump the raw `CustomDataModule` of named ParticleSystems.
+//! THROWAWAY diagnostic: dump the raw `CustomDataModule` of named `ParticleSystems`.
 //!
 //! Motivation: the Ram shader's dissolve threshold is `vs_TEXCOORD2.x + _Amount`, and
-//! `vs_TEXCOORD2` is a Unity Custom Vertex Stream — so the CustomData value decides how much of
+//! `vs_TEXCOORD2` is a Unity Custom Vertex Stream — so the `CustomData` value decides how much of
 //! the quad survives the dissolve. Civilight Eterna's `guangyun01` lens flare exports a threshold
 //! curve of 0.392 -> 0.465 against a dissolve texture averaging 0.622, which renders the flare at
 //! ~20% intensity where the game saturates it.
@@ -10,7 +10,7 @@
 //! the shape of the `frameOverTime` bug (a constant read as a curve), so print the state, the
 //! scalar and both curves for every component and let the data say which it is.
 //!
-//! Usage: cargo run --release --example probe_customdata -- <bundle.ab> [name-substring]
+//! Usage: cargo run --release --example `probe_customdata` -- <bundle.ab> [name-substring]
 
 use std::collections::HashMap;
 
@@ -25,7 +25,7 @@ fn f(v: &serde_json::Value, k: &str) -> String {
 }
 
 /// `minMaxState`: 0 = constant (uses `scalar`), 1 = curve, 2 = two curves, 3 = two constants.
-fn state_name(s: i64) -> &'static str {
+const fn state_name(s: i64) -> &'static str {
     match s {
         0 => "CONSTANT (scalar)",
         1 => "curve",
@@ -76,26 +76,39 @@ fn main() {
         let mut go_name: HashMap<i64, String> = HashMap::new();
         let mut go_streams: HashMap<i64, String> = HashMap::new();
         for obj in &sf.objects {
-            let Ok(v) = read_object(&sf, obj) else { continue };
+            let Ok(v) = read_object(&sf, obj) else {
+                continue;
+            };
             if obj.class_id == 1 {
                 go_name.insert(obj.path_id, v["m_Name"].as_str().unwrap_or("").to_string());
-            } else if obj.class_id == 199 {
-                if let Some(g) = v.get("m_GameObject").and_then(|x| x.get("m_PathID")).and_then(serde_json::Value::as_i64) {
-                    let st = v
-                        .get("m_VertexStreams")
-                        .map(|s| format!("{s}"))
-                        .unwrap_or_else(|| "-".into());
-                    go_streams.insert(g, st);
-                }
+            } else if obj.class_id == 199
+                && let Some(g) = v
+                    .get("m_GameObject")
+                    .and_then(|x| x.get("m_PathID"))
+                    .and_then(serde_json::Value::as_i64)
+            {
+                let st = v
+                    .get("m_VertexStreams")
+                    .map_or_else(|| "-".into(), |s| format!("{s}"));
+                go_streams.insert(g, st);
             }
         }
         for obj in &sf.objects {
             if obj.class_id != 198 {
                 continue; // ParticleSystem
             }
-            let Ok(ps) = read_object(&sf, obj) else { continue };
-            let gid = ps.get("m_GameObject").and_then(|x| x.get("m_PathID")).and_then(serde_json::Value::as_i64).unwrap_or(0);
-            let name = go_name.get(&gid).cloned().unwrap_or_else(|| ps["m_Name"].as_str().unwrap_or("").to_string());
+            let Ok(ps) = read_object(&sf, obj) else {
+                continue;
+            };
+            let gid = ps
+                .get("m_GameObject")
+                .and_then(|x| x.get("m_PathID"))
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(0);
+            let name = go_name
+                .get(&gid)
+                .cloned()
+                .unwrap_or_else(|| ps["m_Name"].as_str().unwrap_or("").to_string());
             if !want.is_empty() && !name.to_ascii_lowercase().contains(&want) {
                 continue;
             }
@@ -112,7 +125,10 @@ fn main() {
                         != 0
                 });
             println!("\n=== {name}   CustomDataModule enabled={enabled}");
-            println!("   renderer m_VertexStreams: {}", go_streams.get(&gid).map_or("-", String::as_str));
+            println!(
+                "   renderer m_VertexStreams: {}",
+                go_streams.get(&gid).map_or("-", String::as_str)
+            );
             for stream in 0..2 {
                 let mode = cdm
                     .get(format!("mode{stream}").as_str())

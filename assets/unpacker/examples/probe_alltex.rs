@@ -1,4 +1,4 @@
-//! THROWAWAY diagnostic: enumerate EVERY Texture2D in a bundle with name, size and
+//! THROWAWAY diagnostic: enumerate EVERY `Texture2D` in a bundle with name, size and
 //! (optionally) a PNG dump, so the raw asset inventory can be diffed against what the
 //! exporter actually wrote.
 //!
@@ -8,7 +8,12 @@
 //! exporter is dropping a texture, or the art is bound somewhere the scene/particle
 //! exporters never look. This answers which by listing the ground truth.
 //!
-//! Usage: cargo run --release --example probe_alltex -- <bundle.ab> [outdir]
+//! Usage: cargo run --release --example `probe_alltex` -- <bundle.ab> [outdir]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_precision_loss,
+    clippy::many_single_char_names
+)]
 
 use unpacker::export::texture::decode_texture_object;
 use unpacker::unity::{
@@ -69,9 +74,9 @@ fn main() {
                     let px = d.rgba.len() / 4;
                     let mut sum = 0u64;
                     for i in 0..px {
-                        let r = d.rgba[i * 4] as u64;
-                        let g = d.rgba[i * 4 + 1] as u64;
-                        let b = d.rgba[i * 4 + 2] as u64;
+                        let r = u64::from(d.rgba[i * 4]);
+                        let g = u64::from(d.rgba[i * 4 + 1]);
+                        let b = u64::from(d.rgba[i * 4 + 2]);
                         sum += (r * 299 + g * 587 + b * 114) / 1000;
                     }
                     print!(" lum={:>5.1}", sum as f64 / px.max(1) as f64);
@@ -80,7 +85,13 @@ fn main() {
                         // and `save_decoded_texture` would silently overwrite them.
                         let safe: String = name
                             .chars()
-                            .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+                            .map(|c| {
+                                if c.is_alphanumeric() || c == '_' {
+                                    c
+                                } else {
+                                    '_'
+                                }
+                            })
                             .collect();
                         let out = format!("{dir}/{}__{}.png", obj.path_id, safe);
                         if image::save_buffer(

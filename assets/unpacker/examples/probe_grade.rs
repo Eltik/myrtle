@@ -1,13 +1,19 @@
 //! THROWAWAY diagnostic: hunt for any colour-transform data (post-processing / colour
-//! grading MonoBehaviours, Camera HDR/clear-flags, LUT-like textures, grading/tonemap/
+//! grading `MonoBehaviours`, Camera HDR/clear-flags, LUT-like textures, grading/tonemap/
 //! composite materials) in a dynchar bundle. Motivation: our renderer is measured to be
 //! systematically too bright vs the in-game capture, and the per-pixel error fits a pure
 //! sRGB gamma whose magnitude differs per skin — which smells like a per-scene colour
 //! transform (post-process volume / LUT / camera property) our exporter isn't reading.
 //!
-//! Usage: cargo run --release --example probe_grade -- <bundle.ab> [shaders_dir]
+//! Usage: cargo run --release --example `probe_grade` -- <bundle.ab> [`shaders_dir`]
 //! `shaders_dir` defaults to assets/ArkAssets/en (where `[uc]shaders.ab` lives), used only
 //! to resolve external material shader names.
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -104,7 +110,10 @@ fn main() {
         println!("-- entry {} : {} objects", entry.path, sf.objects.len());
         println!(
             "   externals: {:?}",
-            sf.externals.iter().map(|x| x.cab_name()).collect::<Vec<_>>()
+            sf.externals
+                .iter()
+                .map(unpacker::unity::serialized_file::FileIdentifier::cab_name)
+                .collect::<Vec<_>>()
         );
 
         // Skip only heavy binary-blob classes we don't need (keep Texture2D=28 for
@@ -282,7 +291,10 @@ fn main() {
             let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("");
             let w = v.get("m_Width").and_then(Value::as_i64).unwrap_or(-1);
             let h = v.get("m_Height").and_then(Value::as_i64).unwrap_or(-1);
-            let fmt = v.get("m_TextureFormat").and_then(Value::as_i64).unwrap_or(-1);
+            let fmt = v
+                .get("m_TextureFormat")
+                .and_then(Value::as_i64)
+                .unwrap_or(-1);
             all_tex.push(format!("{name} ({w}x{h} fmt{fmt})"));
             let low = name.to_ascii_lowercase();
             if low.contains("lut")
@@ -312,7 +324,15 @@ fn main() {
                 .unwrap_or("<unresolved-or-local>");
             let low = shader_name.to_ascii_lowercase();
             for k in [
-                "grad", "lut", "tone", "post", "blit", "composite", "copy", "screen", "final",
+                "grad",
+                "lut",
+                "tone",
+                "post",
+                "blit",
+                "composite",
+                "copy",
+                "screen",
+                "final",
             ] {
                 if low.contains(k) {
                     println!(

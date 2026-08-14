@@ -1,4 +1,4 @@
-//! THROWAWAY scan: map each ParticleSystem to its RENDERER's material — shader name,
+//! THROWAWAY scan: map each `ParticleSystem` to its RENDERER's material — shader name,
 //! `_MainColor` / `_TintColor`, and the `_MainTex` dimensions — in the SAME order the
 //! exporter emits systems, so a system index in `[particles].json` can be tied to the
 //! material that actually draws it.
@@ -11,13 +11,16 @@
 //! drawn un-modulated. Both questions need the system→material link, which no exported file
 //! carries.
 //!
-//! Usage: cargo run --release --example scan_psmat -- <bundle.ab>
+//! Usage: cargo run --release --example `scan_psmat` -- <bundle.ab>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use unpacker::export::shader_map::{build_shader_map, resolve_shader};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -27,11 +30,13 @@ fn col(mat: &Value, key: &str) -> String {
     mat.get("m_SavedProperties")
         .and_then(|sp| sp.get("m_Colors"))
         .and_then(|c| c.get(key))
-        .map(|c| {
-            let g = |k: &str| c.get(k).and_then(Value::as_f64).unwrap_or(-1.0);
-            format!("({:.3},{:.3},{:.3},{:.3})", g("r"), g("g"), g("b"), g("a"))
-        })
-        .unwrap_or_else(|| "-".into())
+        .map_or_else(
+            || "-".into(),
+            |c| {
+                let g = |k: &str| c.get(k).and_then(Value::as_f64).unwrap_or(-1.0);
+                format!("({:.3},{:.3},{:.3},{:.3})", g("r"), g("g"), g("b"), g("a"))
+            },
+        )
 }
 
 fn main() {
@@ -45,7 +50,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for obj in &sf.objects {
             if let Ok(v) = read_object(&sf, obj) {
@@ -85,7 +92,7 @@ fn main() {
                     let sid = pid(s)?;
                     resolve_shader(&sf.externals, fid, sid, &map)
                 })
-                .unwrap_or_else(|| "?".into());
+                .unwrap_or("?");
             // `_MainTex` dimensions — a uniform-colour texture is a warp input, not a sprite.
             let tex = mat
                 .get("m_SavedProperties")
@@ -94,14 +101,16 @@ fn main() {
                 .and_then(|t| t.get("m_Texture"))
                 .and_then(pid)
                 .and_then(|tp| all.get(&tp))
-                .map(|(_, t)| {
-                    format!(
-                        "{}x{}",
-                        t.get("m_Width").and_then(Value::as_i64).unwrap_or(-1),
-                        t.get("m_Height").and_then(Value::as_i64).unwrap_or(-1)
-                    )
-                })
-                .unwrap_or_else(|| "none".into());
+                .map_or_else(
+                    || "none".into(),
+                    |(_, t)| {
+                        format!(
+                            "{}x{}",
+                            t.get("m_Width").and_then(Value::as_i64).unwrap_or(-1),
+                            t.get("m_Height").and_then(Value::as_i64).unwrap_or(-1)
+                        )
+                    },
+                );
             println!(
                 "  ps#{n:<3} '{:<28}' {:<52} main={:<26} tint={:<26} tex={tex}",
                 &name[..name.len().min(28)],

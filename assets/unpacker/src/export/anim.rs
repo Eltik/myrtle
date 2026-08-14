@@ -1,4 +1,4 @@
-//! Evaluate a dynchar scene's **idle** AnimationClip at its first frame, so the
+//! Evaluate a dynchar scene's **idle** `AnimationClip` at its first frame, so the
 //! painted mesh quads can be exported at their settled display pose rather than
 //! their scattered prefab bind pose.
 //!
@@ -7,14 +7,14 @@
 //! `m_MuscleClip.m_Clip.data.{m_StreamedClip,m_DenseClip,m_ConstantClip}`,
 //! indexed by `m_ClipBindingConstant.genericBindings`. Many scenes' idle loops
 //! drive the local position (and occasionally euler rotation) of a handful of
-//! quad GameObjects — e.g. Nearl "Evolved Art"'s sword/petal shards assemble
+//! quad `GameObjects` — e.g. Nearl "Evolved Art"'s sword/petal shards assemble
 //! from an exploded bind pose. We only need the pose at t=0 (the loop start), so
 //! we read the first real streamed frame plus the constant curves and apply the
 //! resulting local position/euler overrides when accumulating world matrices.
 //!
 //! Scope intentionally narrow (matches what these scenes actually use): Transform
 //! position (attribute 1) and euler (attribute 4). Scale, quaternion rotation,
-//! and GameObject active-state curves are ignored — the quads render statically
+//! and `GameObject` active-state curves are ignored — the quads render statically
 //! regardless of active-state, and none of the observed scenes animate scale.
 
 use serde_json::Value;
@@ -31,7 +31,7 @@ pub struct IdlePose {
     /// Overridden local rotation as euler degrees (x, y, z); takes precedence
     /// over the prefab quaternion when present.
     pub euler: HashMap<i64, [f32; 3]>,
-    /// GameObject `path_id` → animated `m_IsActive` state at the idle pose.
+    /// `GameObject` `path_id` → animated `m_IsActive` state at the idle pose.
     /// Sampled only from the base idle-loop clip (not soul/interact transitions),
     /// so flash/overlay quads the idle animation switches off are dropped from the
     /// exported scene, and any the idle animation switches on are kept.
@@ -39,6 +39,7 @@ pub struct IdlePose {
 }
 
 impl IdlePose {
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.pos.is_empty() && self.euler.is_empty() && self.active.is_empty()
     }
@@ -59,7 +60,7 @@ fn crc32(bytes: &[u8]) -> u32 {
     !crc
 }
 
-/// `CRC32("m_IsActive")` — the binding attribute Unity uses for a GameObject's
+/// `CRC32("m_IsActive")` — the binding attribute Unity uses for a `GameObject`'s
 /// active-state curve (verified against the runtime data and `crc32` below).
 const M_IS_ACTIVE_CRC: i64 = 2_086_281_974;
 
@@ -125,7 +126,7 @@ fn clip_stop_time(clip: &Value) -> Option<f32> {
         .map(|s| s as f32)
 }
 
-/// A GameObject's serialized (prefab) `m_IsActive` state — what it reverts to when an
+/// A `GameObject`'s serialized (prefab) `m_IsActive` state — what it reverts to when an
 /// animated active-state override expires at its clip's end.
 fn prefab_active(all_objects: &HashMap<i64, (i32, Value)>, go: i64) -> bool {
     all_objects
@@ -187,7 +188,9 @@ fn camera_motion_clips(all_objects: &HashMap<i64, (i32, Value)>) -> HashSet<i64>
             _ => {}
         }
     }
-    let Some(cg) = cam_go else { return HashSet::new() };
+    let Some(cg) = cam_go else {
+        return HashSet::new();
+    };
     // Names camera -> root, then every CONTIGUOUS subpath, because a binding path is relative to
     // whichever Animator plays the clip and we do not know which that is yet.
     let mut names: Vec<String> = Vec::new();
@@ -218,7 +221,9 @@ fn camera_motion_clips(all_objects: &HashMap<i64, (i32, Value)>) -> HashSet<i64>
         if *cid != 74 {
             continue;
         }
-        let Some(bindings) = generic_bindings(v) else { continue };
+        let Some(bindings) = generic_bindings(v) else {
+            continue;
+        };
         let drives = bindings.iter().any(|b| {
             let (type_id, attr, path) = binding_fields(b);
             hashes.contains(&path) && (type_id == 20 || (type_id == 4 && (1..=4).contains(&attr)))
@@ -294,7 +299,7 @@ fn read_streamed(data: &[u32]) -> Vec<Vec<StreamedKey>> {
         .collect()
 }
 
-/// Like {@link read_streamed} but keeps each frame's TIME (seconds) — needed to find
+/// Like {@link `read_streamed`} but keeps each frame's TIME (seconds) — needed to find
 /// WHEN an `m_IsActive` curve toggles on, for the entrance's per-layer reveal timeline.
 fn read_streamed_timed(data: &[u32]) -> Vec<(f32, Vec<StreamedKey>)> {
     let mut frames = Vec::new();
@@ -332,7 +337,7 @@ fn read_streamed_timed(data: &[u32]) -> Vec<(f32, Vec<StreamedKey>)> {
 /// prefab's clips that starts OFF and toggles ON, the time it turns on. The `_Start`
 /// cinematic sequences its scene elements this way (the cathedral shows first, the
 /// mirror-world + crystal throne switch on later), so a scene-mesh layer under such a
-/// GameObject must not render until its reveal time. GOs never toggled on (always
+/// `GameObject` must not render until its reveal time. GOs never toggled on (always
 /// active) are absent → treated as visible from t=0.
 #[must_use]
 pub fn active_timelines(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, f32> {
@@ -342,16 +347,16 @@ pub fn active_timelines(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64
         .collect()
 }
 
-/// A GameObject's ENTRANCE visibility window: `(activeFrom, activeUntil)` in seconds.
+/// A `GameObject`'s ENTRANCE visibility window: `(activeFrom, activeUntil)` in seconds.
 /// `activeFrom = None` → visible from t=0 (starts on); `activeUntil = None` → never hidden
-/// (ends on). A scene-mesh layer under such a GameObject renders only while
+/// (ends on). A scene-mesh layer under such a `GameObject` renders only while
 /// `activeFrom <= t < activeUntil`. This captures BOTH the mirror-world / crystal-throne
 /// switch-ON (cathedral shows first, they appear later) AND the cathedral switch-OFF (the
 /// bright cathedral deactivates when the mirror world takes over) — the environment SWAP
 /// the `_Start` cinematic performs, which a reveal-only timeline misses.
 pub type ActiveWindow = (Option<f32>, Option<f32>);
 
-/// A GameObject's FULL visibility schedule: the ordered, disjoint `[from, until)` windows the
+/// A `GameObject`'s FULL visibility schedule: the ordered, disjoint `[from, until)` windows the
 /// clip switches it on for. Almost every object has exactly one, but a cinematic is free to
 /// flash something twice, and a single `(from, until)` pair silently truncates that to the
 /// first window — hiding everything after the first switch-off for the rest of the entrance.
@@ -396,10 +401,10 @@ fn intersect_windows(a: &[ActiveWindow], b: &[ActiveWindow]) -> ActiveWindowList
                 (x, y) => x.or(y),
             };
             // Drop windows the intersection collapsed to nothing.
-            if let (Some(f), Some(u)) = (from, until) {
-                if u <= f {
-                    continue;
-                }
+            if let (Some(f), Some(u)) = (from, until)
+                && u <= f
+            {
+                continue;
             }
             out.push((from, until));
         }
@@ -412,7 +417,7 @@ fn intersect_windows(a: &[ActiveWindow], b: &[ActiveWindow]) -> ActiveWindowList
 /// (Executor's camera clip stops at 6.100 against a duration of 6.500; Mlynar's at 15.967
 /// against 16.500). The director's end-of-entrance fade is anchored to this, not to `duration`.
 ///
-/// Identified STRUCTURALLY via {@link camera_motion_clips}, not by name: three skins do not use
+/// Identified STRUCTURALLY via {@link `camera_motion_clips`}, not by name: three skins do not use
 /// the `start|entrance|enter` vocabulary, and a name-gated scan picks up short prop clips
 /// instead (Lappland's longest name-admitted clip stops at 0.833 on a 14.5 s entrance, which
 /// would truncate her whole cinematic).
@@ -423,7 +428,9 @@ pub fn entrance_clip_stop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f3
         .iter()
         .filter(|(pid, (cid, _))| *cid == 74 && cam_clips.contains(pid))
         .filter_map(|(_, (_, v))| clip_stop_time(v))
-        .fold(None, |acc: Option<f32>, s| Some(acc.map_or(s, |a| a.max(s))))
+        .fold(None, |acc: Option<f32>, s| {
+            Some(acc.map_or(s, |a| a.max(s)))
+        })
 }
 
 #[must_use]
@@ -525,7 +532,7 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
 }
 
 /// Per-GameObject ENTRANCE emission-rate curves: the `_Start` cinematic can animate a
-/// ParticleSystem's `EmissionModule.rateOverTime.scalar` directly (Mlynar "Fields of
+/// `ParticleSystem`'s `EmissionModule.rateOverTime.scalar` directly (Mlynar "Fields of
 /// Ruination"'s sword clips hold the confetti/star emitters at 0 and spike them 8–200/s
 /// during the ~7–13s flourish, while the SERIALIZED rates are a constant 8–150/s).
 /// Without these curves such systems emit at full rate from t=0. Times are absolute
@@ -533,12 +540,12 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
 ///
 /// Identical sibling rigs (the three sword clones) can bind the same RELATIVE transform
 /// subpath. Each binding is therefore disambiguated within its own clip by the other
-/// hashes that clip binds, and only then are curves for the same resolved GameObject
+/// hashes that clip binds, and only then are curves for the same resolved `GameObject`
 /// merged into a MAX ENVELOPE.
 ///
 /// Unlike `entrance_transform_curves`' ctrl target (an ANCESTOR of the clip's other
 /// bound GOs, so descendant-scoring finds a real winner), a rate-curve binding's path
-/// names the ParticleSystem's OWN GameObject — a LEAF, sibling to the clip's other
+/// names the `ParticleSystem`'s OWN `GameObject` — a LEAF, sibling to the clip's other
 /// bound systems under the same generic `ctrl`, not their ancestor. Descendant-scoring
 /// therefore often can't find a unique winner here (every sibling scores 0 against every
 /// other sibling). Dropping such a binding outright would be WORSE than the bug this
@@ -699,7 +706,9 @@ pub fn entrance_transform_curves(
         // BEFORE the scale filter below discards the pure-position ones. Scene mesh quads
         // consume no transform curve at all, so a pure-position host is invisible to them —
         // which is the shape of Mlynar's left-half displacement.
-        if std::env::var("DYNCHAR_POSCURVE_DEBUG").is_ok() && (!pos_x.is_empty() || !pos_y.is_empty()) {
+        if std::env::var("DYNCHAR_POSCURVE_DEBUG").is_ok()
+            && (!pos_x.is_empty() || !pos_y.is_empty())
+        {
             let rng = |c: &Vec<(f32, f32)>| {
                 let mn = c.iter().map(|&(_, v)| v).fold(f32::MAX, f32::min);
                 let mx = c.iter().map(|&(_, v)| v).fold(f32::MIN, f32::max);
@@ -761,9 +770,9 @@ pub fn entrance_transform_curves(
     out
 }
 
-/// Build a predicate that reports whether its first GameObject is an ancestor of
+/// Build a predicate that reports whether its first `GameObject` is an ancestor of
 /// (or equal to) its second, following Transform `m_Father` links.
-/// GameObject → parent GameObject, via the transform `m_Father` chain.
+/// `GameObject` → parent `GameObject`, via the transform `m_Father` chain.
 fn build_go_parent(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, i64> {
     let mut go_parent: HashMap<i64, i64> = HashMap::new();
     let mut tr_go: HashMap<i64, i64> = HashMap::new();
@@ -786,7 +795,7 @@ fn build_go_parent(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, i64
     go_parent
 }
 
-/// A GameObject's ancestor chain, root first, ending at the object itself.
+/// A `GameObject`'s ancestor chain, root first, ending at the object itself.
 fn root_path(go: i64, go_parent: &HashMap<i64, i64>) -> Vec<i64> {
     let mut chain = vec![go];
     let mut cur = go;
@@ -816,12 +825,12 @@ fn build_ancestor_check(
     }
 }
 
-/// Map every AnimationClip (`path_id`) to the GameObject(s) whose Animator plays it.
+/// Map every `AnimationClip` (`path_id`) to the GameObject(s) whose Animator plays it.
 ///
-/// A clip's binding path hashes are relative to the GameObject carrying the **Animator**
-/// that plays the clip — so that GameObject's subtree is the only scope in which a hash
+/// A clip's binding path hashes are relative to the `GameObject` carrying the **Animator**
+/// that plays the clip — so that `GameObject`'s subtree is the only scope in which a hash
 /// may be resolved. The linkage is serialized in full: Animator (class 95) `m_Controller`
-/// → AnimatorController (class 91) `m_AnimationClips`, an array of `{m_FileID, m_PathID}`
+/// → `AnimatorController` (class 91) `m_AnimationClips`, an array of `{m_FileID, m_PathID}`
 /// references to clips (class 74).
 ///
 /// Mlynar "Fields of Ruination" is the case this exists for: the bundle ships twelve
@@ -876,7 +885,7 @@ fn build_clip_animator_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<
 }
 
 /// Narrow a binding hash's colliding candidates to the Animator subtree(s) that play the
-/// clip: keep only candidates that ARE an animator GameObject or a descendant of one.
+/// clip: keep only candidates that ARE an animator `GameObject` or a descendant of one.
 ///
 /// This can only ever shrink an ambiguous set. It falls back to the untouched candidate
 /// list when the clip is listed by no Animator (an externally-referenced controller, or a
@@ -1030,7 +1039,7 @@ fn disambiguate_owner_near(
         .map(|(candidate, _)| candidate)
 }
 
-/// GameObjects whose ParticleSystem `EmissionModule.rateOverTime` is ANIMATED by a
+/// `GameObjects` whose `ParticleSystem` `EmissionModule.rateOverTime` is ANIMATED by a
 /// state/transition clip other than the steady idle loop. In the MAIN (idle) scene
 /// such emitters are QUIET at the steady state: the binding clips are one-shot
 /// transitions/flourishes whose curves gate the big SERIALIZED constant (0 outside
@@ -1159,7 +1168,7 @@ fn merge_curves_max(curves: &[(Vec<(f32, f32)>, f32)]) -> Vec<(f32, f32)> {
 /// entrance dolly ZOOM (verified: the cello `start_animation_02` clip keys it 1.87→1.50→1.91).
 const ORTHO_SIZE_CRC: i64 = 2_389_637_943;
 
-/// The set of GameObject `path_id`s on the CAMERA's ancestor chain (the class-20 Camera's GO and
+/// The set of `GameObject` `path_id`s on the CAMERA's ancestor chain (the class-20 Camera's GO and
 /// every `m_Father` above it). A camera dolly is authored as a Transform-position curve on one of
 /// these (Virtuosa: the parent "Dummy002"), NOT on the Camera GO itself — which is why a
 /// camera-GO-only scan misses it.
@@ -1210,12 +1219,20 @@ fn camera_ancestor_gos(all_objects: &HashMap<i64, (i32, Value)>) -> std::collect
 /// position is animated. Fully generic — no per-skin constants; the rig's rotations/scales are
 /// honoured, so a differently-oriented camera projects correctly.
 ///
-/// SPACE: the chain walk stops *before* any spine-root transform (a GameObject carrying the
-/// `skeletonDataAsset` MonoBehaviour), exactly like the scene-mesh `accumulate_matrix`, so the
+/// SPACE: the chain walk stops *before* any spine-root transform (a `GameObject` carrying the
+/// `skeletonDataAsset` `MonoBehaviour`), exactly like the scene-mesh `accumulate_matrix`, so the
 /// centre curve is expressed in the SAME spine-root-local frame as the exported `[scene]` quads.
 /// Accumulating past the root into absolute world space breaks rigs whose entrance prefab root is
 /// authored away from the origin (skadi2 "Iteration": root at (8.53, 25.19) → the camera track
 /// landed ~2500 px below the scene and the whole entrance framed empty space).
+/// Centre trajectory `[(t, cx, cy)]`, roll `[(t, degrees)]`, and aperture `([l,r,t,b], mode)` for
+/// an entrance camera track — see `entrance_camera_track`.
+pub type CameraTrack = (
+    Option<Vec<(f32, f32, f32)>>,
+    Option<Vec<(f32, f32)>>,
+    Option<([f32; 4], i32)>,
+);
+
 #[must_use]
 /// The ENTRANCE camera's frame-CENTRE trajectory and, when the rig is rolled, its ROLL.
 ///
@@ -1227,11 +1244,7 @@ pub fn entrance_camera_track(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
     view_half: Option<f64>,
-) -> (
-    Option<Vec<(f32, f32, f32)>>,
-    Option<Vec<(f32, f32)>>,
-    Option<([f32; 4], i32)>,
-) {
+) -> CameraTrack {
     use super::mesh::Mat4;
     // Ordered chain camera→root (transform pids) + maps.
     let mut go_to_tf: HashMap<i64, i64> = HashMap::new();
@@ -1287,7 +1300,11 @@ pub fn entrance_camera_track(
     // Static local TRS of each chain transform. `unit_scale` builds the same node with scale 1
     // on every axis — used ONLY to derive the screen basis (see `axis` below), never to place the
     // camera.
-    let local_trs = |tf: i64, pos_override: Option<[f32; 3]>, rot_override: Option<[f32; 4]>, unit_scale: bool| -> Mat4 {
+    let local_trs = |tf: i64,
+                     pos_override: Option<[f32; 3]>,
+                     rot_override: Option<[f32; 4]>,
+                     unit_scale: bool|
+     -> Mat4 {
         let Some((_, v)) = all_objects.get(&tf) else {
             return Mat4::identity();
         };
@@ -1322,7 +1339,11 @@ pub fn entrance_camera_track(
         // columns, and a collapsed column normalises to garbage. That is fixed properly by taking
         // the basis from a UNIT-SCALE build of the same chain: an orthonormal basis belongs to the
         // rotation, not to the scale.
-        let s = if unit_scale { [1.0, 1.0, 1.0] } else { vec3("m_LocalScale", 1.0) };
+        let s = if unit_scale {
+            [1.0, 1.0, 1.0]
+        } else {
+            vec3("m_LocalScale", 1.0)
+        };
         Mat4::trs(pos, q, s)
     };
     // Find EVERY animated chain transform + its 3-component position curve. A camera dolly may split
@@ -1345,6 +1366,9 @@ pub fn entrance_camera_track(
     // ROTATION curves on the same chain, keyed transform pid -> (is_euler, per-component curves).
     // Wiš'adel's `_Start` animates her camera parent's EULER Z from 11.338° to 29.556° over the
     // first 2.4 s; reading only `attr == 1` froze the shot at its opening roll.
+    // One-off internal accumulator (transform pid -> (is_euler, per-component curves)); a named
+    // alias for this single use site would add indirection rather than clarity.
+    #[allow(clippy::type_complexity)]
     let mut animated_rot: HashMap<i64, (bool, Vec<Vec<(f32, f32)>>)> = HashMap::new();
     let cam_clips = camera_motion_clips(all_objects);
     for (clip_pid, (cid, v)) in all_objects {
@@ -1375,9 +1399,12 @@ pub fn entrance_camera_track(
                     .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
                 && let Some(&tf) = go_to_tf.get(&go)
             {
-                let cs: Vec<Option<Vec<(f32, f32)>>> = (0..count).map(|i| decode_curve_at(v, gidx + i)).collect();
+                let cs: Vec<Option<Vec<(f32, f32)>>> =
+                    (0..count).map(|i| decode_curve_at(v, gidx + i)).collect();
                 if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() > 1)) {
-                    let entry = animated_rot.entry(tf).or_insert_with(|| (attr == 4, vec![Vec::new(); count]));
+                    let entry = animated_rot
+                        .entry(tf)
+                        .or_insert_with(|| (attr == 4, vec![Vec::new(); count]));
                     for (i, c) in cs.into_iter().enumerate() {
                         if let Some(c) = c
                             && i < entry.1.len()
@@ -1430,7 +1457,12 @@ pub fn entrance_camera_track(
         .flatten()
         .map(|(t, _)| *t)
         .collect();
-    times.extend(animated_rot.values().flat_map(|(_, cs)| cs.iter().flatten()).map(|(t, _)| *t));
+    times.extend(
+        animated_rot
+            .values()
+            .flat_map(|(_, cs)| cs.iter().flatten())
+            .map(|(t, _)| *t),
+    );
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     times.dedup();
     if is_static {
@@ -1461,18 +1493,15 @@ pub fn entrance_camera_track(
     };
     // A transform's static local position (fallback for its un-animated axes).
     let static_pos = |tf: i64| -> [f32; 3] {
-        all_objects
-            .get(&tf)
-            .map(|(_, v)| {
-                let g = |k: &str| {
-                    v.get("m_LocalPosition")
-                        .and_then(|x| x.get(k))
-                        .and_then(Value::as_f64)
-                        .unwrap_or(0.0) as f32
-                };
-                [g("x"), g("y"), g("z")]
-            })
-            .unwrap_or([0.0; 3])
+        all_objects.get(&tf).map_or([0.0; 3], |(_, v)| {
+            let g = |k: &str| {
+                v.get("m_LocalPosition")
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0) as f32
+            };
+            [g("x"), g("y"), g("z")]
+        })
     };
     // An animated transform's local position at time t (animated axes sampled, others static).
     let sample_tf = |tf: i64, t: f32| -> [f32; 3] {
@@ -1491,7 +1520,9 @@ pub fn entrance_camera_track(
     let sample_rot_tf = |tf: i64, t: f32| -> Option<[f32; 4]> {
         let (is_euler, cs) = animated_rot.get(&tf)?;
         if *is_euler {
-            let e: Vec<f32> = (0..3).map(|i| cs.get(i).map_or(0.0, |c| sample(c, t, 0.0))).collect();
+            let e: Vec<f32> = (0..3)
+                .map(|i| cs.get(i).map_or(0.0, |c| sample(c, t, 0.0)))
+                .collect();
             let (rx, ry, rz) = (e[0].to_radians(), e[1].to_radians(), e[2].to_radians());
             let (cx, sx) = ((rx * 0.5).cos(), (rx * 0.5).sin());
             let (cy, sy) = ((ry * 0.5).cos(), (ry * 0.5).sin());
@@ -1505,7 +1536,10 @@ pub fn entrance_camera_track(
                 ]
             };
             // Unity's Quaternion.Euler(x, y, z) composes as Ry * Rx * Rz.
-            Some(qmul(qmul([0.0, sy, 0.0, cy], [sx, 0.0, 0.0, cx]), [0.0, 0.0, sz, cz]))
+            Some(qmul(
+                qmul([0.0, sy, 0.0, cy], [sx, 0.0, 0.0, cx]),
+                [0.0, 0.0, sz, cz],
+            ))
         } else {
             let q: Vec<f32> = (0..4)
                 .map(|i| {
@@ -1557,7 +1591,8 @@ pub fn entrance_camera_track(
     // `None` and its exported scene JSON stays byte-identical.
     let rolled = rolls.iter().any(|(_, r)| r.abs() > 0.01);
     let cam0 = world_at(times[0], false).point([0.0, 0.0, 0.0]);
-    let aperture = view_half.and_then(|vh| find_letterbox(all_objects, [cam0[0], cam0[1]], inv, vh as f32));
+    let aperture =
+        view_half.and_then(|vh| find_letterbox(all_objects, [cam0[0], cam0[1]], inv, vh as f32));
     (Some(out), rolled.then_some(rolls), aperture)
 }
 
@@ -1569,7 +1604,7 @@ pub fn entrance_camera_track(
 /// `BG_black_04` stops at y +7.09, `BG_black_03` starts at y +22.90 — a 28.09 x 15.81 window,
 /// aspect **1.777**, whose height equals her `entranceViewPx` (15.80) exactly. She is the only
 /// entrance skin that ships them; the other twelve have none, which is why every universal rule
-/// ever tried (director, `_maxSize`, camera count, skin_table, release date) came back identical.
+/// ever tried (director, `_maxSize`, camera count, `skin_table`, release date) came back identical.
 ///
 /// Detected GEOMETRICALLY, never by name: a quad is a bar when it spans the camera centre on one
 /// axis and lies wholly to one side on the other. The aperture is the intersection of the inner
@@ -1606,16 +1641,24 @@ fn find_letterbox(
         }
     }
     let local_of = |tf: i64| -> Mat4 {
-        let Some((_, v)) = all_objects.get(&tf) else { return Mat4::identity() };
+        let Some((_, v)) = all_objects.get(&tf) else {
+            return Mat4::identity();
+        };
         let vec3 = |field: &str, d: f32| {
             let g = |k: &str| {
-                v.get(field).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                v.get(field)
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(d.into()) as f32
             };
             [g("x"), g("y"), g("z")]
         };
         let q = {
             let g = |k: &str, d: f32| {
-                v.get("m_LocalRotation").and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                v.get("m_LocalRotation")
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(d.into()) as f32
             };
             [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
         };
@@ -1625,7 +1668,7 @@ fn find_letterbox(
     // ordered on. Read here rather than assumed, so the bars take their authored place in the
     // draw order instead of being pinned to the top.
     let mut go_sort: HashMap<i64, i32> = HashMap::new();
-    for (_, (cid, v)) in all_objects {
+    for (cid, v) in all_objects.values() {
         if *cid != 23 {
             continue; // MeshRenderer
         }
@@ -1637,23 +1680,48 @@ fn find_letterbox(
         }
     }
     // (left inner, right inner, bottom inner, top inner) in WORLD units
-    let (mut li, mut ri, mut bi, mut ti) = (f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY);
+    let (mut li, mut ri, mut bi, mut ti) = (
+        f32::NEG_INFINITY,
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+        f32::INFINITY,
+    );
     let mut bars = 0usize;
     // The bars share one sorting order in practice; take the HIGHEST so the exported value is the
     // one that must be cleared for a layer to draw over the whole frame.
     let mut bar_sort = i32::MIN;
-    for (_pid, (cid, v)) in all_objects {
+    for (cid, v) in all_objects.values() {
         if *cid != 33 {
             continue; // MeshFilter
         }
-        let Some(go) = v.get("m_GameObject").and_then(get_path_id) else { continue };
+        let Some(go) = v.get("m_GameObject").and_then(get_path_id) else {
+            continue;
+        };
         // the owning GameObject must be active, else it paints nothing
-        if !all_objects.get(&go).and_then(|(_, gv)| gv.get("m_IsActive")).and_then(Value::as_bool).unwrap_or(true) {
+        if !all_objects
+            .get(&go)
+            .and_then(|(_, gv)| gv.get("m_IsActive"))
+            .and_then(Value::as_bool)
+            .unwrap_or(true)
+        {
             continue;
         }
-        let Some((_, mv)) = v.get("m_Mesh").and_then(get_path_id).and_then(|m| all_objects.get(&m)) else { continue };
-        let Some(ab) = mv.get("m_LocalAABB") else { continue };
-        let g = |f: &str, k: &str| ab.get(f).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+        let Some((_, mv)) = v
+            .get("m_Mesh")
+            .and_then(get_path_id)
+            .and_then(|m| all_objects.get(&m))
+        else {
+            continue;
+        };
+        let Some(ab) = mv.get("m_LocalAABB") else {
+            continue;
+        };
+        let g = |f: &str, k: &str| {
+            ab.get(f)
+                .and_then(|x| x.get(k))
+                .and_then(Value::as_f64)
+                .unwrap_or(0.0) as f32
+        };
         let (cx, cy) = (g("m_Center", "x"), g("m_Center", "y"));
         let (ex, ey) = (g("m_Extent", "x"), g("m_Extent", "y"));
         if ex <= 0.0 || ey <= 0.0 {
@@ -1673,7 +1741,12 @@ fn find_letterbox(
             m = m.mul(&local_of(tf));
         }
         // world AABB from the four transformed corners (rotation matters — the rigs are rotated)
-        let (mut x0, mut x1, mut y0, mut y1) = (f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY);
+        let (mut x0, mut x1, mut y0, mut y1) = (
+            f32::INFINITY,
+            f32::NEG_INFINITY,
+            f32::INFINITY,
+            f32::NEG_INFINITY,
+        );
         for sx in [-1.0f32, 1.0] {
             for sy in [-1.0f32, 1.0] {
                 let p = m.point([cx + sx * ex, cy + sy * ey, 0.0]);
@@ -1714,7 +1787,14 @@ fn find_letterbox(
         }
     }
     // All FOUR bars, or it is not a frame.
-    if bars < 4 || !li.is_finite() || !ri.is_finite() || !bi.is_finite() || !ti.is_finite() || ri <= li || ti <= bi {
+    if bars < 4
+        || !li.is_finite()
+        || !ri.is_finite()
+        || !bi.is_finite()
+        || !ti.is_finite()
+        || ri <= li
+        || ti <= bi
+    {
         return None;
     }
     // A LETTERBOX crops the WIDTH and preserves the camera's view HEIGHT — that is what makes it
@@ -1741,19 +1821,18 @@ fn find_letterbox(
 /// along one axis — the vertical follow of seated→standing). The frontend replays it as the pan
 /// timing between the measured seated & standing framings — the game's exact camera-move timing,
 /// no hardcoding. `None` when no camera-ancestor position is animated.
-#[must_use]
 /// CRC32("weight") — the animated `PostProcessVolume.weight` the entrance clips drive.
 const PP_WEIGHT_CRC: u32 = 0x07cd_5541;
 
 /// The entrance POST-PROCESS chain: which effect the `_Start` cinematic runs, how strong it is,
 /// and the animated volume weight that fades it in and out.
 ///
-/// Every dyn-illust entrance ships a GameObject named `pp` carrying a Unity `PostProcessVolume`
+/// Every dyn-illust entrance ships a `GameObject` named `pp` carrying a Unity `PostProcessVolume`
 /// (`isGlobal: 1`, `weight: 0.0` at rest) pointing at a per-skin `sharedProfile`, plus the
 /// `Hidden/PostProcessing/*` shaders. The `_Start` clip then animates the volume's **weight**, so
 /// the effect ramps in over the cinematic. We were reproducing none of it.
 ///
-/// Whislash the Decadenza's profile is **HGGreyScale at intensity 1.0**, and her capture is
+/// Whislash the Decadenza's profile is **`HGGreyScale` at intensity 1.0**, and her capture is
 /// objectively monochrome early on — mean saturation **0.000 at beat 2 and 0.006 at beat 4** —
 /// while we render full colour. Desaturating our render at a constant full weight already takes
 /// her 77.51 -> 71.52.
@@ -1764,17 +1843,22 @@ const PP_WEIGHT_CRC: u32 = 0x07cd_5541;
 ///
 /// ⚠️ Iterates objects in `path_id` order, never a `HashMap`: the probe that found this printed a
 /// different matching clip on each run because it walked hash order.
+/// `(effect_name, intensity, weight_curve[(t, weight)])` — see `entrance_post_fx`. Also used by
+/// `SpineAssets::bg_entrance_post_fx`.
+pub type EntrancePostFx = (String, f32, Vec<(f32, f32)>);
+
 #[must_use]
-pub fn entrance_post_fx(
-    all_objects: &HashMap<i64, (i32, Value)>,
-) -> Option<(String, f32, Vec<(f32, f32)>)> {
+pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<EntrancePostFx> {
     let ordered = super::spine::objects_by_path_id_pub(all_objects);
     // The `pp` volume: a MonoBehaviour carrying `sharedProfile` + `isGlobal`.
     let (vol_go, profile_pid) = ordered.iter().find_map(|(_, (cid, v))| {
         if *cid != 114 {
             return None;
         }
-        let prof = v.get("sharedProfile").and_then(get_path_id).filter(|&p| p != 0)?;
+        let prof = v
+            .get("sharedProfile")
+            .and_then(get_path_id)
+            .filter(|&p| p != 0)?;
         let go = v.get("m_GameObject").and_then(get_path_id)?;
         Some((go, prof))
     })?;
@@ -1806,14 +1890,18 @@ pub fn entrance_post_fx(
         if *cid != 74 {
             continue;
         }
-        let Some(bindings) = generic_bindings(v) else { continue };
+        let Some(bindings) = generic_bindings(v) else {
+            continue;
+        };
         let animator_gos = clip_animators.get(clip_pid).map(Vec::as_slice);
         let mut gidx = 0usize;
         for b in bindings {
             let (type_id, attr, path) = binding_fields(b);
             let count = binding_curve_count(type_id, attr);
             if type_id == 114 && (attr as u32) == PP_WEIGHT_CRC {
-                let hits = hash_to_gos.get(&path).map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
+                let hits = hash_to_gos
+                    .get(&path)
+                    .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
                 if hits.as_deref().is_some_and(|g| g.contains(&vol_go))
                     && let Some(curve) = decode_curve_at(v, gidx)
                     && curve.len() > 1
@@ -1904,7 +1992,7 @@ pub fn entrance_pan_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Ve
 }
 
 /// Decode the streamed curve at global index `idx` into `(time, value)` (streamed only —
-/// enough for the camera curves). Boundary frames skipped. See {@link decode_streamed_curve}
+/// enough for the camera curves). Boundary frames skipped. See {@link `decode_streamed_curve`}
 /// for the key/easing semantics.
 fn decode_curve_at(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
     let data = clip_data(clip)?;
@@ -1912,7 +2000,7 @@ fn decode_curve_at(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
     decode_streamed_curve(&streamed_raw, idx)
 }
 
-/// Dense-resample rate (Hz) for eased segments in {@link decode_streamed_curve}: high
+/// Dense-resample rate (Hz) for eased segments in {@link `decode_streamed_curve}`: high
 /// enough that the frontend's linear interpolation between samples reproduces the
 /// authored cubic easing, low enough to keep the exported curves small.
 const CURVE_RESAMPLE_HZ: f32 = 30.0;
@@ -1926,7 +2014,7 @@ const CURVE_RESAMPLE_HZ: f32 = 30.0;
 ///   camera plunge (keys at 6.07s → 10.07s) became a hold-until-8.57s-then-linear jerk;
 /// - between consecutive keys the segment cubic `v(dt) = c0·dt³ + c1·dt² + c2·dt + v0`
 ///   (`dt` = seconds since the segment's start key, coefficients from that key) is densely
-///   resampled at ~{@link CURVE_RESAMPLE_HZ}, skipped when it doesn't deviate from the
+///   resampled at ~{@link `CURVE_RESAMPLE_HZ`}, skipped when it doesn't deviate from the
 ///   straight chord (constant / linear segments need only their endpoints).
 ///
 /// The boundary padding frame (index 0) and the ±inf sentinel frames are skipped, as before.
@@ -1971,7 +2059,7 @@ fn decode_streamed_curve(streamed_raw: &[u32], idx: usize) -> Option<Vec<(f32, f
     (!out.is_empty()).then_some(out)
 }
 
-/// The ENTRANCE camera dolly, extracted from the `_Start` AnimationClip that animates the
+/// The ENTRANCE camera dolly, extracted from the `_Start` `AnimationClip` that animates the
 /// Main Camera's orthographic size: `(time_seconds, orthographic_size)` keyframes. This is the
 /// game's actual data-driven camera zoom (hold → zoom in on the transform → zoom out to the
 /// standing reveal) — there is NO positional camera pan (no Transform curve on the camera).
@@ -1999,7 +2087,6 @@ fn decode_streamed_curve(streamed_raw: &[u32], idx: usize) -> Option<Vec<(f32, f
 /// 0.45 -> 72.1). Predicted and measured optimum agree to two digits.
 ///
 /// Returns `None` for an orthographic camera, so every existing skin is untouched by construction.
-#[must_use]
 pub fn entrance_dolly_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
     let cam_pid = super::spine::entrance_camera_pid(all_objects)?;
     // Orthographic cameras keep the ortho path; only a perspective rig dollies.
@@ -2041,17 +2128,22 @@ pub fn entrance_dolly_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<
                 .copied()
                 .unwrap_or(0);
             // Position on the CAMERA's own GameObject; component 2 is Z.
-            if type_id == 4 && attr == 1 && go == cam_go && count > 2 {
-                if let Some(curve) = decode_curve_at(v, gidx + 2) {
-                    let (mn, mx) = curve
-                        .iter()
-                        .fold((f32::MAX, f32::MIN), |(a, b), &(_, val)| (a.min(val), b.max(val)));
-                    // A camera whose Z never changes carries no dolly; prefer the moving one.
-                    let range = mx - mn;
-                    if range > best_range && curve.iter().all(|&(_, d)| d > 0.0) {
-                        best_range = range;
-                        best = Some(curve);
-                    }
+            if type_id == 4
+                && attr == 1
+                && go == cam_go
+                && count > 2
+                && let Some(curve) = decode_curve_at(v, gidx + 2)
+            {
+                let (mn, mx) = curve
+                    .iter()
+                    .fold((f32::MAX, f32::MIN), |(a, b), &(_, val)| {
+                        (a.min(val), b.max(val))
+                    });
+                // A camera whose Z never changes carries no dolly; prefer the moving one.
+                let range = mx - mn;
+                if range > best_range && curve.iter().all(|&(_, d)| d > 0.0) {
+                    best_range = range;
+                    best = Some(curve);
                 }
             }
             gidx += count;
@@ -2060,6 +2152,7 @@ pub fn entrance_dolly_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<
     best
 }
 
+#[must_use]
 pub fn entrance_ortho_curve(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Vec<(f32, f32)>> {
     let cam_clips = camera_motion_clips(all_objects);
     let mut best: Option<Vec<(f32, f32)>> = None;
@@ -2104,7 +2197,7 @@ pub fn decode_scalar_curve(
 }
 
 /// Decode the animation curve at GLOBAL index `idx` from whichever sub-clip holds it
-/// (streamed / dense / constant) — the per-index core of {@link decode_scalar_curve},
+/// (streamed / dense / constant) — the per-index core of {@link `decode_scalar_curve`},
 /// for bindings located by path (per-renderer material-colour channels) rather than by
 /// `(type, attribute)`.
 fn decode_curve_any(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
@@ -2160,11 +2253,11 @@ fn decode_curve_any(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
 /// Unity's `customType` for a renderer MATERIAL-property binding.
 const MATERIAL_CUSTOM_TYPE: i64 = 22;
 
-/// One animated material-colour channel on a renderer's GameObject, from the `_Start`
+/// One animated material-colour channel on a renderer's `GameObject`, from the `_Start`
 /// clip(s). A colour-channel binding (`customType` 22) encodes its target as
 /// `attribute = (crc32(propName) & 0x0FFF_FFFF) | ((4 + channel) << 28)`, channel 0..3 =
 /// r,g,b,a — verified on Mlynar "Fields of Ruination": the white flash's `_TintColor`
-/// alpha binding is `0x7100_F6C6` (crc32("_TintColor") = `0x6100_F6C6`) and particle
+/// alpha binding is `0x7100_F6C6` (crc32("_`TintColor`") = `0x6100_F6C6`) and particle
 /// `_MainColor` bindings ladder `0x456C_062A..0x756C_062A` across r/g/b/a.
 pub struct MaterialColorChannel {
     /// `crc32(property_name) & 0x0FFF_FFFF` — matched against the layer material's own
@@ -2185,7 +2278,7 @@ pub fn animates_prop(channels: &[MaterialColorChannel], prop: &str) -> bool {
 }
 
 /// Every ANIMATED material-colour channel in the `_Start` entrance clip(s), keyed by the
-/// renderer's GameObject `path_id`. Only genuinely-varying curves are kept (a constant
+/// renderer's `GameObject` `path_id`. Only genuinely-varying curves are kept (a constant
 /// channel adds nothing over the static tint). Drives per-layer colour/alpha replay —
 /// e.g. Mlynar's white flash ramps `_TintColor.a` 0→0.671 over 13→15s, which a static
 /// tint can only render as a held opaque white-wash.
@@ -2258,7 +2351,7 @@ pub fn entrance_material_color_channels(
                             .find(|c| c.prop_crc28 == prop_crc28 && c.channel == channel)
                         {
                             if curve.len() > existing.curve.len() {
-                                existing.curve = curve.clone();
+                                existing.curve.clone_from(&curve);
                             }
                         } else {
                             entry.push(MaterialColorChannel {
@@ -2283,7 +2376,7 @@ const MAINTEX_ST_CRC28: u32 = 0x0686_C589;
 type StChannels = [Option<Vec<(f32, f32)>>; 4];
 
 /// Every ANIMATED `_MainTex_ST` component curve in the `_Start` entrance clip(s), keyed by
-/// the renderer's GameObject `path_id`. A `customType == 22` binding whose low-28 attribute
+/// the renderer's `GameObject` `path_id`. A `customType == 22` binding whose low-28 attribute
 /// bits equal `MAINTEX_ST_CRC28` and whose top nibble is 0..3 (0=scaleX,1=scaleY,2=offsetX,
 /// 3=offsetY) is an ST-component binding. The owning GO is disambiguated among colliding
 /// subpath hashes exactly like `entrance_transform_curves` (lone candidate accepted; else the
@@ -2419,7 +2512,7 @@ pub fn layer_st_curve(channels: &StChannels, static_st: [f32; 4]) -> Option<Vec<
 /// Assemble one scene layer's full RGBA colour curve `(t, [r, g, b, a])` from its
 /// renderer's animated material-colour channels. `props` are the material's saved
 /// colour properties `(name, rgba)` and `tint_prop` names the one the exported static
-/// `tint` came from ({@link super::spine::material_tint}). Of the animated properties,
+/// `tint` came from ({@link `super::spine::material_tint`}). Of the animated properties,
 /// the most-keyed one is used; its keyed channels REPLACE the static tint channel when
 /// it IS the tint property (the tint already holds that property's static value), and
 /// MULTIPLY onto the tint otherwise (the shader multiplies its colour properties). For an
@@ -2691,7 +2784,7 @@ fn f32_array(v: Option<&Value>) -> Vec<f32> {
         .unwrap_or_default()
 }
 
-/// Build a map from CRC32(transform-subpath) → GameObject `path_id`, registering
+/// Build a map from CRC32(transform-subpath) → `GameObject` `path_id`, registering
 /// every ancestor-relative subpath (Unity may hash against any root). On a hash
 /// collision (identical sibling rigs) the smallest `path_id` wins, deterministically.
 fn build_hash_to_go(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, i64> {
@@ -2701,7 +2794,7 @@ fn build_hash_to_go(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, i6
         .collect()
 }
 
-/// Like {@link build_hash_to_go} but keeps EVERY GameObject matching a subpath hash
+/// Like {@link `build_hash_to_go`} but keeps EVERY `GameObject` matching a subpath hash
 /// (sorted by `path_id`) — identical sibling rigs (Mlynar's three sword clones) bind
 /// the same relative subpath, and per-rig consumers need all candidates.
 fn build_hash_to_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, Vec<i64>> {
@@ -2765,7 +2858,7 @@ fn build_hash_to_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, V
     hash_to_gos
 }
 
-/// Idle AnimationClips (class 74) among the bundle: any clip whose name contains
+/// Idle `AnimationClips` (class 74) among the bundle: any clip whose name contains
 /// "idle" and none of the non-idle-state markers. A scene may split into several
 /// sub-state-machines each with its own idle loop (e.g. Ines "Melodic Flutter":
 /// a `bg` idle and a `web` idle), so **all** matching clips are returned and

@@ -1,3 +1,4 @@
+#![allow(clippy::unreadable_literal)]
 use std::collections::HashMap;
 use std::path::PathBuf;
 

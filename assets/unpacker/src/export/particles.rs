@@ -234,7 +234,7 @@ fn curve_eval(curve: &Value, t: f64) -> f64 {
     if t <= first.0 {
         return first.1;
     }
-    let last = keys.last().map(&read).unwrap_or(first);
+    let last = keys.last().map_or(first, &read);
     if t >= last.0 {
         return last.1;
     }
@@ -308,10 +308,7 @@ fn decode_gradient(g: &Value) -> Vec<Value> {
     let mut col_keys: Vec<(f64, [f64; 3])> = Vec::new();
     for idx in 0..n_col {
         let t = fd(g, &format!("ctime{idx}"), 0.0) / 65535.0;
-        let c = g
-            .get(format!("key{idx}"))
-            .map(read_color)
-            .unwrap_or([1.0; 4]);
+        let c = g.get(format!("key{idx}")).map_or([1.0; 4], read_color);
         col_keys.push((t, [c[0], c[1], c[2]]));
     }
     let mut alpha_keys: Vec<(f64, f64)> = Vec::new();
@@ -392,7 +389,7 @@ fn mmgradient(v: &Value) -> Value {
     // maxGradient. (For the two-GRADIENT state we still take the "max" side.)
     match i(v, "minMaxState").unwrap_or(0) {
         0 => {
-            let c = v.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
+            let c = v.get("maxColor").map_or([1.0; 4], read_color);
             json!({ "mode": "color", "r": c[0], "g": c[1], "b": c[2], "a": c[3] })
         }
         // RandomBetweenTwoColors: Unity draws ONE colour per particle uniformly between
@@ -401,8 +398,8 @@ fn mmgradient(v: &Value) -> Value {
         // max = cyan, so every thread we drew was locked cyan. Export BOTH endpoints and
         // let the frontend pick per particle.
         2 => {
-            let mx = v.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
-            let mn = v.get("minColor").map(read_color).unwrap_or(mx);
+            let mx = v.get("maxColor").map_or([1.0; 4], read_color);
+            let mn = v.get("minColor").map_or(mx, read_color);
             json!({
                 "mode": "twoColors",
                 "min": { "r": mn[0], "g": mn[1], "b": mn[2], "a": mn[3] },
@@ -420,7 +417,7 @@ fn mmgradient(v: &Value) -> Value {
 }
 
 /// Map a Unity `ShapeModule.type` int to the schema's shape family.
-fn shape_type_name(t: i64) -> &'static str {
+const fn shape_type_name(t: i64) -> &'static str {
     match t {
         0 | 1 => "sphere",
         2 | 3 => "hemisphere",
@@ -433,7 +430,7 @@ fn shape_type_name(t: i64) -> &'static str {
 }
 
 /// Map a Unity `ParticleSystemRenderMode` int to the schema's render mode.
-fn render_mode_name(m: i64) -> &'static str {
+const fn render_mode_name(m: i64) -> &'static str {
     match m {
         1 => "stretch",
         4 => "mesh",
@@ -462,7 +459,7 @@ pub(crate) struct RootScope<'a> {
 
 /// The `_Start`-cinematic animation context for a particle collection pass: the
 /// per-GameObject reveal windows, animated emission-rate curves, event-driven-rate
-/// GameObjects (idle path), and effect-host transform (scale/position) curves. All
+/// `GameObjects` (idle path), and effect-host transform (scale/position) curves. All
 /// empty for the idle/main scene (which plays none of these clips).
 pub(crate) struct EntranceCtx<'a> {
     pub windows: &'a HashMap<i64, super::anim::ActiveWindowList>,
@@ -511,7 +508,7 @@ fn apply_followbone_reveal_inheritance(out: &mut [ParticleData]) {
             continue;
         }
 
-        gated.sort_by(|a, b| a.total_cmp(b));
+        gated.sort_by(f64::total_cmp);
         let mut reveal_value = gated[0];
         let mut largest_count = 0;
         for &candidate in &gated {
@@ -534,9 +531,9 @@ fn apply_followbone_reveal_inheritance(out: &mut [ParticleData]) {
 /// Parse every enabled, emitting `ParticleSystem` in a dynchar prefab into
 /// [`ParticleData`]. `inv_scale` is `1.0 / skeletonScale` (Unity units → px).
 ///
-/// Emits are skipped (and counted by the caller) when: the InitialModule is
-/// disabled, the emitter GameObject is inactive, the renderer is disabled, or the
-/// EmissionModule is disabled with no bursts (nothing is emitted).
+/// Emits are skipped (and counted by the caller) when: the `InitialModule` is
+/// disabled, the emitter `GameObject` is inactive, the renderer is disabled, or the
+/// `EmissionModule` is disabled with no bursts (nothing is emitted).
 #[must_use]
 /// Per-reason tally of `ParticleSystem`s dropped by [`collect_dynchar_particles`].
 ///
@@ -564,7 +561,7 @@ pub(crate) struct ParticleSkips {
 }
 
 impl ParticleSkips {
-    pub(crate) fn total(&self) -> usize {
+    pub(crate) const fn total(&self) -> usize {
         self.no_gameobject
             + self.inactive_group
             + self.cross_root
@@ -776,18 +773,15 @@ pub(crate) fn collect_dynchar_particles(
         // changed skins with no capture (Kalt'sits, Chongyue, Passenger) were QA-rendered at 5
         // beats before and after: mean|diff| ≤ 1.51, no BLANK/DEGENERATE flags.
         // `DYNCHAR_CROSSROOT_UNIQUE=0` restores the old behaviour.
-        let admit_positional_unique = crossroot_unique
-            && cross_root
-            && entrance.is_entrance
-            && {
-                let o = host.world_of_go(all_objects, go_pid).point([0.0, 0.0, 0.0]);
-                let my_name = host.go_name(all_objects, go_pid);
-                !own_positions.iter().any(|(x, y, n)| {
-                    (x - o[0]).abs() <= 3.0f32
-                        && (y - o[1]).abs() <= 3.0f32
-                        && (!crossroot_namekey || *n == my_name)
-                })
-            };
+        let admit_positional_unique = crossroot_unique && cross_root && entrance.is_entrance && {
+            let o = host.world_of_go(all_objects, go_pid).point([0.0, 0.0, 0.0]);
+            let my_name = host.go_name(all_objects, go_pid);
+            !own_positions.iter().any(|(x, y, n)| {
+                (x - o[0]).abs() <= 3.0f32
+                    && (y - o[1]).abs() <= 3.0f32
+                    && (!crossroot_namekey || *n == my_name)
+            })
+        };
         let admit_cross_root = (cross_root && transform_host.is_some())
             || admit_entrance_root
             || admit_start_only_cross_root
@@ -1045,7 +1039,10 @@ pub(crate) fn collect_dynchar_particles(
                         let l = c.curve.last().map_or(f32::NAN, |&(_, v)| v);
                         let t0 = c.curve.first().map_or(f32::NAN, |&(t, _)| t);
                         let t1 = c.curve.last().map_or(f32::NAN, |&(t, _)| t);
-                        format!("ch{} {:.2}->{:.2} over {:.1}-{:.1}s", c.channel, f, l, t0, t1)
+                        format!(
+                            "ch{} {:.2}->{:.2} over {:.1}-{:.1}s",
+                            c.channel, f, l, t0, t1
+                        )
                     })
                     .collect();
                 eprintln!(
@@ -1197,19 +1194,21 @@ pub(crate) fn collect_dynchar_particles(
         // (own 1.0 under a 0.5 ancestor).
         // The `narrow` bound also guards the bone-follower path: it can only ever REMOVE an
         // ancestor's contribution, never introduce the system's own scale.
-        let narrow = follows_bone || std::env::var("DYNCHAR_SCALING_MODE").is_ok_and(|v| v == "narrow");
+        let narrow =
+            follows_bone || std::env::var("DYNCHAR_SCALING_MODE").is_ok_and(|v| v == "narrow");
         let wsx = match scaling_mode {
             // Local: the system's OWN local scale, ancestors excluded.
-            1 => host
-                .local_scale_pos_of_go(all_objects, go_pid)
-                .map_or(world_axis_mean, |(sc, _)| {
+            1 => host.local_scale_pos_of_go(all_objects, go_pid).map_or(
+                world_axis_mean,
+                |(sc, _)| {
                     let own = 0.5 * (f64::from(sc[0].abs()) + f64::from(sc[1].abs()));
                     if narrow && (own - 1.0).abs() > 0.02 {
                         world_axis_mean
                     } else {
                         own
                     }
-                }),
+                },
+            ),
             // Shape: particle size is not scaled by the transform at all.
             2 => 1.0,
             // Hierarchy (and anything unrecognised): the accumulated world basis.
@@ -1560,18 +1559,17 @@ pub(crate) fn collect_dynchar_particles(
         let rate = if event_quiet {
             json!({ "mode": "const", "v": 0.0 })
         } else {
-            emission
-                .get("rateOverTime")
-                .map(|r| mmscalar(r, 1.0))
-                .unwrap_or_else(|| json!({ "mode": "const", "v": 0.0 }))
+            emission.get("rateOverTime").map_or_else(
+                || json!({ "mode": "const", "v": 0.0 }),
+                |r| mmscalar(r, 1.0),
+            )
         };
         let bursts: Vec<Value> = bursts_raw
             .iter()
             .map(|bu| {
                 let count = bu
                     .get("countCurve")
-                    .map(|c| mmscalar_repr(c, 1.0))
-                    .unwrap_or(0.0)
+                    .map_or(0.0, |c| mmscalar_repr(c, 1.0))
                     .round() as i64;
                 json!({ "t": fd(bu, "time", 0.0), "count": count })
             })
@@ -1692,7 +1690,7 @@ pub(crate) fn collect_dynchar_particles(
                     return Vec::new();
                 };
                 let scalar = fd(vc, "scalar", 1.0);
-                let pts = sample_curve(mc, if scalar != 0.0 { scalar } else { 1.0 }, 1.0);
+                let pts = sample_curve(mc, if scalar == 0.0 { 1.0 } else { scalar }, 1.0);
                 if pts.len() > 1 {
                     pts.iter()
                         .map(|p| (fd(p, "t", 0.0), fd(p, "v", 0.0)))
@@ -1720,7 +1718,11 @@ pub(crate) fn collect_dynchar_particles(
                     for w in c.windows(2) {
                         if t <= w[1].0 {
                             let span = w[1].0 - w[0].0;
-                            let f = if span > 1e-9 { (t - w[0].0) / span } else { 0.0 };
+                            let f = if span > 1e-9 {
+                                (t - w[0].0) / span
+                            } else {
+                                0.0
+                            };
                             return w[0].1 + (w[1].1 - w[0].1) * f;
                         }
                     }
@@ -1754,7 +1756,11 @@ pub(crate) fn collect_dynchar_particles(
         if let Some(cdm) = ps.get("CustomDataModule")
             && b(cdm, "enabled", false)
         {
-            for stream in sent_stream.into_iter() {
+            // `sent_stream` is an `Option`, so this loop runs 0 or 1 times by construction; kept
+            // as a `for` (rather than `if let`/`while let`) because the body's `continue`/`break`
+            // rely on an actual loop construct.
+            #[allow(for_loops_over_fallibles)]
+            for stream in sent_stream {
                 if i(cdm, &format!("mode{stream}")).unwrap_or(0) != 1 {
                     continue;
                 }
@@ -1762,7 +1768,7 @@ pub(crate) fn collect_dynchar_particles(
                     && let Some(mc) = v0.get("maxCurve")
                 {
                     let scalar = fd(v0, "scalar", 1.0);
-                    let pts = sample_curve(mc, if scalar != 0.0 { scalar } else { 1.0 }, 1.0);
+                    let pts = sample_curve(mc, if scalar == 0.0 { 1.0 } else { scalar }, 1.0);
                     if pts.len() > 1 {
                         sys["ramDissolveCurve"] = json!(pts);
                     }
@@ -1932,9 +1938,15 @@ pub(crate) fn collect_dynchar_particles(
                     eprintln!(
                         "    [vel] {:<24} bx=({:.1},{:.1}) rx={:.3}  by=({:.1},{:.1}) ry={:.3}  bz=({:.1},{:.1}) rz={:.3}",
                         host.go_name(all_objects, go_pid),
-                        bx[0], bx[1], r(bx, len3(ex)),
-                        by[0], by[1], r(by, len3(ey)),
-                        bz[0], bz[1], r(bz, len3(ez)),
+                        bx[0],
+                        bx[1],
+                        r(bx, len3(ex)),
+                        by[0],
+                        by[1],
+                        r(by, len3(ey)),
+                        bz[0],
+                        bz[1],
+                        r(bz, len3(ez)),
                     );
                     // Does the DIRECTION turn over the lifetime, or only the magnitude? The
                     // flattening below keeps a single vector whenever the motion never
@@ -2029,13 +2041,17 @@ pub(crate) fn collect_dynchar_particles(
                         .filter(|s| s.1.hypot(s.2) > VELOCITY_TURN_MIN_FRAC * mag)
                         .map(|s| {
                             let m = s.1.hypot(s.2);
-                            ((s.1 * rep.1 + s.2 * rep.2) / (m * mag)).clamp(-1.0, 1.0).acos() * RAD_TO_DEG
+                            ((s.1 * rep.1 + s.2 * rep.2) / (m * mag))
+                                .clamp(-1.0, 1.0)
+                                .acos()
+                                * RAD_TO_DEG
                         })
                         .fold(0.0f64, f64::max);
                     eprintln!(
                         "    [vel2] {:<24} rep=({:.1},{:.1}) |rep|={mag:.1} maxdev={maxdev:.1}deg reverses={reverses} turns={turns}",
                         host.go_name(all_objects, go_pid),
-                        rep.1, rep.2
+                        rep.1,
+                        rep.2
                     );
                 }
                 if reverses || turns {
@@ -2055,8 +2071,8 @@ pub(crate) fn collect_dynchar_particles(
                 if nonzero_xy && in_world {
                     // Already in the skeleton world frame.
                     sys["velocityOverLife"] = json!({
-                        "x": vx.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
-                        "y": vy.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "x": vx.map_or(0.0, |v| mmscalar_repr(v, inv_scale)),
+                        "y": vy.map_or(0.0, |v| mmscalar_repr(v, inv_scale)),
                         "space": "world",
                     });
                 } else if nonzero_xy {
@@ -2120,8 +2136,8 @@ pub(crate) fn collect_dynchar_particles(
             if nonzero {
                 if b(fm, "inWorldSpace", false) {
                     sys["forceOverLife"] = json!({
-                        "x": fx.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
-                        "y": fy.map(|v| mmscalar_repr(v, inv_scale)).unwrap_or(0.0),
+                        "x": fx.map_or(0.0, |v| mmscalar_repr(v, inv_scale)),
+                        "y": fy.map_or(0.0, |v| mmscalar_repr(v, inv_scale)),
                         "space": "world",
                     });
                 } else {
@@ -2220,14 +2236,12 @@ pub(crate) fn collect_dynchar_particles(
                     1 => {
                         let scalar = fd(fr, "scalar", 1.0);
                         fr.get("maxCurve")
-                            .map(|mc| json!(sample_curve(mc, scalar, 1.0)))
-                            .unwrap_or(Value::Null)
+                            .map_or(Value::Null, |mc| json!(sample_curve(mc, scalar, 1.0)))
                     }
                     2 => {
                         let scalar = fd(fr, "scalar", 1.0);
                         fr.get("maxCurve")
-                            .map(|mc| json!(sample_curve(mc, scalar, 1.0)))
-                            .unwrap_or(Value::Null)
+                            .map_or(Value::Null, |mc| json!(sample_curve(mc, scalar, 1.0)))
                     }
                     // 0 = constant, 3 = two constants. Unity stores the value in `scalar` (the
                     // curves are empty), so emit it as a two-point flat curve.
@@ -2404,7 +2418,9 @@ fn resolve_material(
     // here renders untextured, so which exit fired decides whether there is anything to fix.
     let dbg = std::env::var("SCENE_ATTRIB").is_ok();
     let Some(mat_pid) = get_path_id(mat_ref).filter(|&p| p != 0) else {
-        if dbg { eprintln!("  [ptcl-mat] no material PPtr"); }
+        if dbg {
+            eprintln!("  [ptcl-mat] no material PPtr");
+        }
         return None;
     };
     let Some((21, mat)) = all_objects.get(&mat_pid) else {
@@ -2422,7 +2438,9 @@ fn resolve_material(
         .and_then(|sp| sp.get("m_TexEnvs"))
         .and_then(Value::as_object)
     else {
-        if dbg { eprintln!("  [ptcl-mat] '{mat_name}' has no m_TexEnvs"); }
+        if dbg {
+            eprintln!("  [ptcl-mat] '{mat_name}' has no m_TexEnvs");
+        }
         return None;
     };
     let Some(main_pid) = tex_envs
@@ -2434,7 +2452,9 @@ fn resolve_material(
         if dbg {
             eprintln!(
                 "  [ptcl-mat] '{mat_name}' shader='{}' binds NO _MainTex (slots: {:?}) dissolveBound={}",
-                mat.get("_shaderName").and_then(Value::as_str).unwrap_or("?"),
+                mat.get("_shaderName")
+                    .and_then(Value::as_str)
+                    .unwrap_or("?"),
                 tex_envs.keys().collect::<Vec<_>>(),
                 tex_envs
                     .get("_DissolveTex")
@@ -2512,7 +2532,9 @@ fn particle_color_curve(
     let materials = renderer?.get("m_Materials")?.as_array()?;
     let mat = materials.iter().find_map(|mat_ref| {
         let pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
-        let (21, m) = all_objects.get(&pid)? else { return None };
+        let (21, m) = all_objects.get(&pid)? else {
+            return None;
+        };
         Some(m)
     })?;
     // Skip the Ram family: it carries its own `mainColorCurve` on the Ram colour path, and
@@ -2530,7 +2552,12 @@ fn particle_color_curve(
         channels,
         &props,
         tint_prop.as_deref(),
-        [base[0] as f32, base[1] as f32, base[2] as f32, base[3] as f32],
+        [
+            base[0] as f32,
+            base[1] as f32,
+            base[2] as f32,
+            base[3] as f32,
+        ],
         1.0,
         false,
         additive,
@@ -2590,7 +2617,7 @@ pub(crate) fn mat_color(mat: &Value, name: &str, default: [f64; 4]) -> [f64; 4] 
 }
 
 /// Read a texture slot `m_SavedProperties.m_TexEnvs.<slot>` →
-/// `(path_id, Texture2D value, [scaleX,scaleY,offsetX,offsetY])`. The path_id /
+/// `(path_id, Texture2D value, [scaleX,scaleY,offsetX,offsetY])`. The `path_id` /
 /// value are `None` when the slot is empty or its texture is not resolvable
 /// (in another bundle); the ST tuple always falls back to `[1,1,0,0]`.
 pub(super) fn mat_texenv(
@@ -2757,7 +2784,9 @@ fn resolve_ram(
         eprintln!(
             "  [ptcl-notex] mat='{}' shader='{}' ram={} dist={} diss={} | m_TexEnvs keys: {:?}",
             mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
-            mat.get("_shaderName").and_then(Value::as_str).unwrap_or("?"),
+            mat.get("_shaderName")
+                .and_then(Value::as_str)
+                .unwrap_or("?"),
             ram_pid.is_some(),
             dist_pid.is_some(),
             diss_pid.is_some(),
@@ -2886,7 +2915,7 @@ fn parse_noise(nm: &Value, inv_scale: f64) -> Value {
 /// material's blend class. The `tex` index is left null here and filled by
 /// [`export_particles`] after texture dedup.
 ///
-/// Both `ParticleSystemTrailMode`s are exported. **PerParticle** (0) drags one ribbon
+/// Both `ParticleSystemTrailMode`s are exported. **`PerParticle`** (0) drags one ribbon
 /// behind each particle. **Ribbon** (1) is a different primitive: ONE polyline threaded
 /// through the system's live particles ordered by age, `ribbonCount` of them interleaved.
 /// Mode 1 used to be dropped to `trail: null`, which silently deleted every emitter whose
@@ -2909,7 +2938,7 @@ fn parse_trail(tm: &Value, inv_scale: f64, blend: bool) -> Value {
     // default white constant (the trail then inherits the particle's own colour).
     let reduce_color = |g: &Value| match i(g, "minMaxState").unwrap_or(0) {
         0 | 2 => {
-            let c = g.get("maxColor").map(read_color).unwrap_or([1.0; 4]);
+            let c = g.get("maxColor").map_or([1.0; 4], read_color);
             if c.iter().all(|x| (*x - 1.0).abs() < 1e-6) {
                 Value::Null
             } else {
@@ -2946,6 +2975,9 @@ fn parse_trail(tm: &Value, inv_scale: f64, blend: bool) -> Value {
 /// the number of files written. Textures are deduped by source `path_id`, mirror
 /// of [`super::spine`]'s scene export.
 #[must_use]
+// Grouping these into a params struct would touch every call site for a purely cosmetic gain;
+// the 8 arguments are each independently meaningful inputs to the export.
+#[allow(clippy::too_many_arguments)]
 pub fn export_particles(
     name: &str,
     particles: &[ParticleData],
@@ -2991,10 +3023,7 @@ pub fn export_particles(
             // MESH renderer is flat bars instead of the authored strip.
             let dbg_notex = std::env::var("SCENE_ATTRIB").is_ok();
             if dbg_notex && (pid.is_none() || tex_val.is_none()) {
-                eprintln!(
-                    "  [ptcl-tex] MISS pid={pid:?} deref={}",
-                    tex_val.is_some()
-                );
+                eprintln!("  [ptcl-tex] MISS pid={pid:?} deref={}", tex_val.is_some());
             }
             let (pid, tex_val) = (pid?, tex_val.as_ref()?);
             if let Some(&idx) = tex_index.get(&pid) {
@@ -3031,7 +3060,8 @@ pub fn export_particles(
                 eprintln!(
                     "    [ptcl-tex] idx={idx} pid={pid} name={:?} {}x{}",
                     tex_val.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
-                    tex.width, tex.height
+                    tex.width,
+                    tex.height
                 );
             }
             tex_index.insert(pid, idx);
@@ -3064,7 +3094,7 @@ pub fn export_particles(
             None => Value::Null,
         };
         // Fill trail.tex when the system has a trail with a distinct material.
-        if sys.get("trail").is_some_and(|t| t.is_object()) {
+        if sys.get("trail").is_some_and(serde_json::Value::is_object) {
             let trail_idx = resolve_tex(p.trail_tex_pid, &p.trail_tex_val, &p.trail_alpha_val);
             sys["trail"]["tex"] = match trail_idx {
                 Some(idx) => json!(idx),

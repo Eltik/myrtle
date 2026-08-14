@@ -27,7 +27,7 @@ struct FlatNode {
 /// Read one serialized type's type-tree blob. An EMPTY blob (zero nodes) is legal —
 /// a stripped type carries no tree — and yields `Ok(None)` rather than an error: the
 /// blob's bytes are still consumed, so the rest of the file parses. Failing it aborted
-/// the WHOLE SerializedFile, which silently dropped every object in
+/// the WHOLE `SerializedFile`, which silently dropped every object in
 /// `refs/fx/sharedbattle.ab` — the shared FX materials some dynchar emitters reference
 /// externally (Skadi2 iteration's `crossStar_01 (2)` star-sparkles exported `tex: null`
 /// and the frontend dropped the system).

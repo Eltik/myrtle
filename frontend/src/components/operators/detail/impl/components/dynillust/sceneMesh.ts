@@ -552,7 +552,7 @@ function encodeTint(t: readonly number[]): [number, number, number, number] {
     const g = tintGamma();
     if (g === 1) return [t[0], t[1], t[2], t[3]];
     const e = 1 / g;
-    return [Math.pow(t[0], e), Math.pow(t[1], e), Math.pow(t[2], e), t[3]];
+    return [t[0] ** e, t[1] ** e, t[2] ** e, t[3]];
 }
 
 const EFFECT_SCENE_GAIN = 0.3;

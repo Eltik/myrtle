@@ -12,13 +12,20 @@
 //! target height-fit onto a 19.5:9 screen. Two candidates carry that:
 //!   * a `Camera` (class 20) with a non-full `m_NormalizedViewPortRect` or a forced aspect,
 //!   * a `RenderTexture` (class 84) asset with a fixed 16:9 size the entrance composites into.
-//! This dumps both, plus any MonoBehaviour field whose name smells of aspect/viewport/rect,
+//! This dumps both, plus any `MonoBehaviour` field whose name smells of aspect/viewport/rect,
 //! so cet and eyja can be diffed directly.
 //!
-//! Usage: cargo run --release --example probe_viewport -- <bundle.ab> [<bundle.ab> ...]
+//! Usage: cargo run --release --example `probe_viewport` -- <bundle.ab> [<bundle.ab> ...]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_precision_loss,
+    clippy::doc_lazy_continuation
+)]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 /// Walk a serde value and yield `(dotted.path, scalar)` for every leaf whose path mentions one
 /// of `needles`. Keeps the probe generic -- we do not know the field names up front.
@@ -26,7 +33,11 @@ fn collect_matching(v: &Value, path: &str, needles: &[&str], out: &mut Vec<(Stri
     match v {
         Value::Object(m) => {
             for (k, sub) in m {
-                let p = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };
+                let p = if path.is_empty() {
+                    k.clone()
+                } else {
+                    format!("{path}.{k}")
+                };
                 collect_matching(sub, &p, needles, out);
             }
         }
@@ -59,7 +70,15 @@ fn main() {
     assert!(!paths.is_empty(), "usage: probe_viewport <bundle.ab> [...]");
     // Field-name needles. `aspect`/`viewport`/`rect` cover Unity's own camera fields; the rest
     // cover whatever HG named a letterbox helper, if one exists at all.
-    let needles = ["aspect", "viewport", "letterbox", "pillar", "safearea", "rendertexture", "targettexture"];
+    let needles = [
+        "aspect",
+        "viewport",
+        "letterbox",
+        "pillar",
+        "safearea",
+        "rendertexture",
+        "targettexture",
+    ];
 
     for path in &paths {
         println!("\n######## {path}");
@@ -76,7 +95,9 @@ fn main() {
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for o in &sf.objects {
                 if let Ok(v) = read_object(&sf, o) {
@@ -85,11 +106,17 @@ fn main() {
             }
 
             // --- Cameras (class 20) -------------------------------------------------------
-            let mut cams: Vec<(i64, &Value)> =
-                all.iter().filter(|(_, (cid, _))| *cid == 20).map(|(p, (_, v))| (*p, v)).collect();
+            let mut cams: Vec<(i64, &Value)> = all
+                .iter()
+                .filter(|(_, (cid, _))| *cid == 20)
+                .map(|(p, (_, v))| (*p, v))
+                .collect();
             cams.sort_unstable_by_key(|(p, _)| *p);
             for (pid, v) in &cams {
-                println!("  [Camera pid={pid}] go={:?} — ALL FIELDS:", go_name(&all, v));
+                println!(
+                    "  [Camera pid={pid}] go={:?} — ALL FIELDS:",
+                    go_name(&all, v)
+                );
                 let mut fields = Vec::new();
                 collect_matching(v, "", &[""], &mut fields); // empty needle matches every leaf
                 fields.sort();
@@ -99,8 +126,11 @@ fn main() {
             }
 
             // --- RenderTextures (class 84) ------------------------------------------------
-            let mut rts: Vec<(i64, &Value)> =
-                all.iter().filter(|(_, (cid, _))| *cid == 84).map(|(p, (_, v))| (*p, v)).collect();
+            let mut rts: Vec<(i64, &Value)> = all
+                .iter()
+                .filter(|(_, (cid, _))| *cid == 84)
+                .map(|(p, (_, v))| (*p, v))
+                .collect();
             rts.sort_unstable_by_key(|(p, _)| *p);
             for (pid, v) in &rts {
                 let w = v.get("m_Width").and_then(Value::as_i64).unwrap_or(-1);

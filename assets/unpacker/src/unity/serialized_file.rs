@@ -13,12 +13,12 @@ pub struct SerializedFile {
     pub enable_type_tree: bool,
     pub data: Vec<u8>,
     pub big_endian: bool,
-    /// External file dependencies (`m_Externals`), indexed by a PPtr's
+    /// External file dependencies (`m_Externals`), indexed by a `PPtr`'s
     /// `m_FileID`: `m_FileID == 0` is this file, `n` is `externals[n-1]`.
     pub externals: Vec<FileIdentifier>,
 }
 
-/// One entry of a SerializedFile's `m_Externals` dependency table.
+/// One entry of a `SerializedFile`'s `m_Externals` dependency table.
 pub struct FileIdentifier {
     /// The referenced file's path (e.g. a CAB name like `CAB-<hash>`), used to
     /// locate the bundle that actually holds an externally-referenced object.

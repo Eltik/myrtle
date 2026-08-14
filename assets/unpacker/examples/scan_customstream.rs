@@ -1,4 +1,4 @@
-//! Corpus scan: which `m_VertexStreams` ids accompany which CustomData SLOT/COMPONENT that
+//! Corpus scan: which `m_VertexStreams` ids accompany which `CustomData` SLOT/COMPONENT that
 //! actually carries a curve?
 //!
 //! The exporter maps `30..=33 -> slot 0 (Custom1)` and `34..=37 -> slot 1 (Custom2)`. That mapping
@@ -9,7 +9,14 @@
 //! Rather than pick a Unity enum from memory, print the joint distribution and let the corpus say
 //! which offset is consistent with every skin at once.
 //!
-//! Usage: cargo run --release --example scan_customstream -- <bundle.ab> [<bundle.ab>...]
+//! Usage: cargo run --release --example `scan_customstream` -- <bundle.ab> [<bundle.ab>...]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::or_fun_call,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -33,14 +40,20 @@ fn main() {
 
     for path in &paths {
         let short = path.rsplit('/').next().unwrap_or(path).to_string();
-        let Ok(data) = std::fs::read(path) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(data) = std::fs::read(path) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let skip: HashSet<i32> = [28, 43, 48, 49, 83, 128, 213].into_iter().collect();
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for obj in &sf.objects {
@@ -57,7 +70,11 @@ fn main() {
                 if *cid != 199 {
                     continue; // ParticleSystemRenderer
                 }
-                let Some(go) = v.get("m_GameObject").and_then(|g| g.get("m_PathID")).and_then(Value::as_i64) else {
+                let Some(go) = v
+                    .get("m_GameObject")
+                    .and_then(|g| g.get("m_PathID"))
+                    .and_then(Value::as_i64)
+                else {
                     continue;
                 };
                 let ids: Vec<i64> = v
@@ -71,11 +88,17 @@ fn main() {
                 if *cid != 198 {
                     continue; // ParticleSystem
                 }
-                let Some(cdm) = v.get("CustomDataModule") else { continue };
+                let Some(cdm) = v.get("CustomDataModule") else {
+                    continue;
+                };
                 if !b(cdm, "enabled") {
                     continue;
                 }
-                let Some(go) = v.get("m_GameObject").and_then(|g| g.get("m_PathID")).and_then(Value::as_i64) else {
+                let Some(go) = v
+                    .get("m_GameObject")
+                    .and_then(|g| g.get("m_PathID"))
+                    .and_then(Value::as_i64)
+                else {
                     continue;
                 };
                 let ids = streams_by_go.get(&go).cloned().unwrap_or_default();
@@ -150,21 +173,34 @@ fn main() {
     }
     println!("\n== per REFERENCE skin ==");
     let refs = [
-        "char_1012_skadi2_iteration#2", "char_1032_excu2_sale#12", "char_245_cello_sale#12",
-        "char_4064_mlynar_epoque#28", "char_249_mlyss_boc#8", "char_1016_agoat2_epoque#34",
-        "char_4134_cetsyr_epoque#50", "char_1035_wisdel_sale#14", "char_1038_whitw2_sale#15",
+        "char_1012_skadi2_iteration#2",
+        "char_1032_excu2_sale#12",
+        "char_245_cello_sale#12",
+        "char_4064_mlynar_epoque#28",
+        "char_249_mlyss_boc#8",
+        "char_1016_agoat2_epoque#34",
+        "char_4134_cetsyr_epoque#50",
+        "char_1035_wisdel_sale#14",
+        "char_1038_whitw2_sale#15",
     ];
     for r in refs {
         let f = format!("{r}.ab");
         let row: Vec<String> = (1..=8)
-            .filter_map(|pp| payload_by_skin.get(&(f.clone(), pp)).map(|n| format!("p{pp}={n}")))
+            .filter_map(|pp| {
+                payload_by_skin
+                    .get(&(f.clone(), pp))
+                    .map(|n| format!("p{pp}={n}"))
+            })
             .collect();
         if !row.is_empty() {
             println!("   {:34} {}", r, row.join("  "));
         }
     }
     println!();
-    println!("{:<22} {:>5} {:>5} {:>7}   example", "customVertexStreams", "slot", "comp", "count");
+    println!(
+        "{:<22} {:>5} {:>5} {:>7}   example",
+        "customVertexStreams", "slot", "comp", "count"
+    );
     for ((ids, slot, comp), n) in &joint {
         println!(
             "{:<22} {:>5} {:>5} {:>7}   {}",
@@ -172,7 +208,10 @@ fn main() {
             slot,
             comp,
             n,
-            examples.get(&(ids.clone(), *slot, *comp)).cloned().unwrap_or_default()
+            examples
+                .get(&(ids.clone(), *slot, *comp))
+                .cloned()
+                .unwrap_or_default()
         );
     }
 }

@@ -8,16 +8,19 @@
 //! (scene layers carry a single `pos`).
 //!
 //! This dumps the three things needed to settle it:
-//!   1. every AnimationClip and the object PATHS its position/scale/float curves bind,
-//!   2. every mesh-drawing GameObject and its full hierarchy path,
+//!   1. every `AnimationClip` and the object PATHS its position/scale/float curves bind,
+//!   2. every mesh-drawing `GameObject` and its full hierarchy path,
 //!   3. which of those paths a curve actually targets.
 //!
-//! Usage: cargo run --release --example probe_rimanim -- <bundle.ab> [name-filter]
+//! Usage: cargo run --release --example `probe_rimanim` -- <bundle.ab> [name-filter]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
-/// Full "a/b/c" hierarchy path of a GameObject, walking Transform parents.
+/// Full "a/b/c" hierarchy path of a `GameObject`, walking Transform parents.
 fn go_path(all: &HashMap<i64, (i32, Value)>, go_pid: i64) -> String {
     let mut parts: Vec<String> = Vec::new();
     let mut cur = Some(go_pid);
@@ -28,7 +31,12 @@ fn go_path(all: &HashMap<i64, (i32, Value)>, go_pid: i64) -> String {
             break;
         }
         let Some((_, gv)) = all.get(&pid) else { break };
-        parts.push(gv.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string());
+        parts.push(
+            gv.get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("?")
+                .to_string(),
+        );
         // GameObject -> its Transform -> parent Transform -> that transform's GameObject
         let tf = gv
             .get("m_Component")
@@ -60,15 +68,24 @@ fn collect_paths(v: &Value, key: &str, out: &mut Vec<String>) {
         for c in arr {
             if let Some(p) = c.get("path").and_then(Value::as_str) {
                 let attr = c.get("attribute").and_then(Value::as_str).unwrap_or("");
-                out.push(if attr.is_empty() { p.to_string() } else { format!("{p}  [{attr}]") });
+                out.push(if attr.is_empty() {
+                    p.to_string()
+                } else {
+                    format!("{p}  [{attr}]")
+                });
             }
         }
     }
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("usage: probe_rimanim <bundle.ab> [filter]");
-    let filter = std::env::args().nth(2).unwrap_or_default().to_ascii_lowercase();
+    let path = std::env::args()
+        .nth(1)
+        .expect("usage: probe_rimanim <bundle.ab> [filter]");
+    let filter = std::env::args()
+        .nth(2)
+        .unwrap_or_default()
+        .to_ascii_lowercase();
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
     for entry in &bundle.files {
@@ -76,7 +93,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
             if let Ok(v) = read_object(&sf, o) {
@@ -85,20 +104,41 @@ fn main() {
         }
 
         // --- 1. AnimationClips and what they bind -------------------------------------------
-        let mut clips: Vec<(i64, &Value)> =
-            all.iter().filter(|(_, (cid, _))| *cid == 74).map(|(p, (_, v))| (*p, v)).collect();
+        let mut clips: Vec<(i64, &Value)> = all
+            .iter()
+            .filter(|(_, (cid, _))| *cid == 74)
+            .map(|(p, (_, v))| (*p, v))
+            .collect();
         clips.sort_unstable_by_key(|(p, _)| *p);
         println!("== {} AnimationClip(s)", clips.len());
         for (_pid, v) in &clips {
             let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
             let mut paths = Vec::new();
-            for k in ["m_PositionCurves", "m_ScaleCurves", "m_RotationCurves", "m_EulerCurves", "m_FloatCurves", "m_PPtrCurves"] {
+            for k in [
+                "m_PositionCurves",
+                "m_ScaleCurves",
+                "m_RotationCurves",
+                "m_EulerCurves",
+                "m_FloatCurves",
+                "m_PPtrCurves",
+            ] {
                 collect_paths(v, k, &mut paths);
             }
             paths.sort();
             paths.dedup();
-            let shown: Vec<&String> = paths.iter().filter(|p| filter.is_empty() || p.to_ascii_lowercase().contains(&filter)).collect();
-            println!("   [{name}]  {} bound path(s){}", paths.len(), if filter.is_empty() { "" } else { ", matching filter:" });
+            let shown: Vec<&String> = paths
+                .iter()
+                .filter(|p| filter.is_empty() || p.to_ascii_lowercase().contains(&filter))
+                .collect();
+            println!(
+                "   [{name}]  {} bound path(s){}",
+                paths.len(),
+                if filter.is_empty() {
+                    ""
+                } else {
+                    ", matching filter:"
+                }
+            );
             for p in shown.iter().take(40) {
                 println!("        {p}");
             }
@@ -107,11 +147,17 @@ fn main() {
         // --- 2. mesh-drawing GameObjects, with their hierarchy paths -------------------------
         println!("\n== mesh-drawing GameObjects");
         let mut rows: Vec<String> = Vec::new();
-        for (_pid, (cid, v)) in &all {
+        for (cid, v) in all.values() {
             if *cid != 23 && *cid != 33 {
                 continue; // MeshRenderer / MeshFilter
             }
-            let Some(go) = v.get("m_GameObject").and_then(|g| g.get("m_PathID")).and_then(Value::as_i64) else { continue };
+            let Some(go) = v
+                .get("m_GameObject")
+                .and_then(|g| g.get("m_PathID"))
+                .and_then(Value::as_i64)
+            else {
+                continue;
+            };
             let p = go_path(&all, go);
             if !filter.is_empty() && !p.to_ascii_lowercase().contains(&filter) {
                 continue;

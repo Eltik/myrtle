@@ -2,22 +2,28 @@
 //!
 //! Motivation: every `Particles-L2D` port writes alpha as `Zero OneMinusSrcAlpha`
 //! (`dstA = dstA * (1 - srcA)` — drawing REMOVES destination alpha), with `Mask/Erase` the one
-//! corpus-wide exception. If the scene composites into an alpha-bearing RenderTexture that the UI
+//! corpus-wide exception. If the scene composites into an alpha-bearing `RenderTexture` that the UI
 //! then draws over its white backdrop, that carved alpha IS Ch'en's ragged silhouette and needs no
 //! mask geometry. That only holds if the target actually carries alpha AND the camera clears to a
 //! transparent colour — an opaque target makes every alpha write inert.
 //!
 //! Prints, for each Camera (class 20): clear flags, background colour (ALPHA is the tell),
-//! HDR/MSAA, and any `m_TargetTexture`; plus every RenderTexture (class 84) with its format and
-//! depth, and every GameObject-owned Canvas/RawImage-ish MonoBehaviour is ignored (out of scope).
+//! HDR/MSAA, and any `m_TargetTexture`; plus every `RenderTexture` (class 84) with its format and
+//! depth, and every GameObject-owned Canvas/RawImage-ish `MonoBehaviour` is ignored (out of scope).
 //!
-//! Usage: cargo run --release --example probe_rt -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_rt` -- <bundle.ab>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::many_single_char_names
+)]
 
 use serde_json::Value;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 /// Unity `Camera.clearFlags`.
-fn clear_flags(n: i64) -> &'static str {
+const fn clear_flags(n: i64) -> &'static str {
     match n {
         1 => "Skybox",
         2 => "SolidColor",
@@ -29,7 +35,7 @@ fn clear_flags(n: i64) -> &'static str {
 
 /// The subset of `RenderTextureFormat` that can appear here; the tell is whether the format
 /// carries an alpha channel at all.
-fn rt_format(n: i64) -> &'static str {
+const fn rt_format(n: i64) -> &'static str {
     match n {
         0 => "ARGB32 (alpha)",
         1 => "Depth",
@@ -66,11 +72,15 @@ fn main() {
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             for obj in &sf.objects {
                 match obj.class_id {
                     20 => {
-                        let Ok(v) = read_object(&sf, obj) else { continue };
+                        let Ok(v) = read_object(&sf, obj) else {
+                            continue;
+                        };
                         let cf = v.get("m_ClearFlags").and_then(Value::as_i64).unwrap_or(-1);
                         let bg = v.get("m_BackGroundColor");
                         let (r, g, b, a) = bg.map_or((-1.0, -1.0, -1.0, -1.0), |c| {
@@ -94,13 +104,19 @@ fn main() {
                             clear_flags(cf)
                         );
                         if a == 0.0 && cf == 2 {
-                            println!("      -> clears to TRANSPARENT: target is alpha-bearing and composited by the UI");
+                            println!(
+                                "      -> clears to TRANSPARENT: target is alpha-bearing and composited by the UI"
+                            );
                         } else if cf == 2 {
-                            println!("      -> clears to an OPAQUE colour: alpha writes never reach a backdrop");
+                            println!(
+                                "      -> clears to an OPAQUE colour: alpha writes never reach a backdrop"
+                            );
                         }
                     }
                     84 => {
-                        let Ok(v) = read_object(&sf, obj) else { continue };
+                        let Ok(v) = read_object(&sf, obj) else {
+                            continue;
+                        };
                         let n = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
                         let fmt = v.get("m_ColorFormat").and_then(Value::as_i64).unwrap_or(-1);
                         println!(

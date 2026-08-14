@@ -4,7 +4,13 @@
 //! `entrance_camera_track` output range, and (4) the scene mesh-quad translation
 //! span — to pin down the coordinate-space mismatch that blanks skadi2.
 //!
-//! Usage: cargo run --release --example diag_cam_space -- <bundle.ab> [...]
+//! Usage: cargo run --release --example `diag_cam_space` -- <bundle.ab> [...]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::items_after_statements,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::HashMap;
@@ -145,7 +151,8 @@ fn main() {
         let inv = 1.0 / skel_scale;
         println!("-- skel_scale={skel_scale} inv={inv}");
         // Current camera track
-        match anim::entrance_camera_track(&all, inv) {
+        let (cam_track, _cam_roll, _cam_aperture) = anim::entrance_camera_track(&all, inv, None);
+        match cam_track {
             Some(track) => {
                 let (mut ymin, mut ymax, mut xmin, mut xmax) =
                     (f32::MAX, f32::MIN, f32::MAX, f32::MIN);

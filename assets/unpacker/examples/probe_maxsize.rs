@@ -10,13 +10,16 @@
 //! i.e. the FIRST controller that carries one. The same `find_map`-takes-the-first pattern has
 //! already bitten on `_adjustes`, where the first controller's entries all parse to None and the
 //! exporter never looks at another. A bundle can ship several controllers, so this dumps them
-//! ALL -- with the owning GameObject and whether it is the own-prefab-root one -- so the picked
+//! ALL -- with the owning `GameObject` and whether it is the own-prefab-root one -- so the picked
 //! controller can be compared against the rest.
 //!
-//! Usage: cargo run --release --example probe_maxsize -- <bundle.ab> [<bundle.ab> ...]
+//! Usage: cargo run --release --example `probe_maxsize` -- <bundle.ab> [<bundle.ab> ...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
     let paths: Vec<String> = std::env::args().skip(1).collect();
@@ -37,7 +40,9 @@ fn main() {
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for o in &sf.objects {
                 if let Ok(v) = read_object(&sf, o) {
@@ -74,10 +79,13 @@ fn main() {
                     (Some(x), Some(y)) if y > 0.0 => format!("{:.4}", x / y),
                     _ => "-".to_string(),
                 };
-                let picked = if i == 0 && ms.is_some() { "  <== find_map picks this" } else { "" };
+                let picked = if i == 0 && ms.is_some() {
+                    "  <== find_map picks this"
+                } else {
+                    ""
+                };
                 println!(
-                    "   [{i}] pid={pid:>21} go={go:34} _maxSize={:?}x{:?} aspect={asp:>7} _cameraSize={:?}{picked}",
-                    x, y, cs
+                    "   [{i}] pid={pid:>21} go={go:34} _maxSize={x:?}x{y:?} aspect={asp:>7} _cameraSize={cs:?}{picked}"
                 );
             }
         }

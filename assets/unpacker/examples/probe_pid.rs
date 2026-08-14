@@ -1,6 +1,7 @@
 //! THROWAWAY diagnostic: dump the full JSON of specific objects by pathID (any class).
 //!
-//! Usage: cargo run --release --example probe_pid -- <bundle.ab> <pathID> [<pathID>...]
+//! Usage: cargo run --release --example `probe_pid` -- <bundle.ab> <pathID> [<pathID>...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use unpacker::unity::{

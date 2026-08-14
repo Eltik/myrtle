@@ -1,4 +1,4 @@
-//! THROWAWAY diagnostic: corpus census of the two ParticleSystem main-module fields the
+//! THROWAWAY diagnostic: corpus census of the two `ParticleSystem` main-module fields the
 //! exporter has never read — `simulationSpeed` and `prewarm`.
 //!
 //! Motivation: Virtuosa's nested diamond frames (`sys55`) sit at `simulationSpeed 0.3`, i.e.
@@ -8,13 +8,21 @@
 //! is exported, which is enough on its own to put every ring at the wrong radius and angle.
 //! Before changing the exporter, measure how much of the corpus this touches.
 //!
-//! Usage: cargo run --release --example probe_simspeed -- <dir-of-bundles>
+//! Usage: cargo run --release --example `probe_simspeed` -- <dir-of-bundles>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
-    let dir = std::env::args().nth(1).expect("usage: probe_simspeed <dir-or-bundle>");
+    let dir = std::env::args()
+        .nth(1)
+        .expect("usage: probe_simspeed <dir-or-bundle>");
     let dirp = std::path::PathBuf::from(&dir);
     // A single .ab dumps PER-SYSTEM detail (the startDelay question); a directory censuses.
     let detail = dirp.is_file();
@@ -37,10 +45,17 @@ fn main() {
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             for o in sf.objects.iter().filter(|o| o.class_id == 198) {
-                let Ok(ps) = read_object(&sf, o) else { continue };
-                let sp = ps.get("simulationSpeed").and_then(Value::as_f64).unwrap_or(1.0);
+                let Ok(ps) = read_object(&sf, o) else {
+                    continue;
+                };
+                let sp = ps
+                    .get("simulationSpeed")
+                    .and_then(Value::as_f64)
+                    .unwrap_or(1.0);
                 let pw = ps.get("prewarm").and_then(Value::as_bool).unwrap_or(false);
                 if (sp - 1.0).abs() <= 1e-3 && !pw {
                     continue;
@@ -48,7 +63,11 @@ fn main() {
                 // `startDelay` is a MinMaxCurve; the constant lives in `scalar`.
                 let sd = ps
                     .get("startDelay")
-                    .and_then(|v| v.get("scalar").and_then(Value::as_f64).or_else(|| v.as_f64()))
+                    .and_then(|v| {
+                        v.get("scalar")
+                            .and_then(Value::as_f64)
+                            .or_else(|| v.as_f64())
+                    })
                     .unwrap_or(0.0);
                 println!(
                     "  pathID {:>20}  simSpeed {sp:6.3}  prewarm {:<5}  startDelay {sd:7.3}  looping {}",
@@ -61,23 +80,33 @@ fn main() {
         return;
     }
 
-    let (mut total, mut slow, mut fast, mut prewarm, mut slow_and_prewarm) = (0usize, 0usize, 0usize, 0usize, 0usize);
+    let (mut total, mut slow, mut fast, mut prewarm, mut slow_and_prewarm) =
+        (0usize, 0usize, 0usize, 0usize, 0usize);
     let mut skins_touched: Vec<(String, usize, usize)> = Vec::new();
 
     for f in &files {
         let Ok(data) = std::fs::read(f) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         let (mut n_skin_slow, mut n_skin_pre) = (0usize, 0usize);
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             for o in sf.objects.iter().filter(|o| o.class_id == 198) {
-                let Ok(ps) = read_object(&sf, o) else { continue };
+                let Ok(ps) = read_object(&sf, o) else {
+                    continue;
+                };
                 total += 1;
-                let sp = ps.get("simulationSpeed").and_then(Value::as_f64).unwrap_or(1.0);
+                let sp = ps
+                    .get("simulationSpeed")
+                    .and_then(Value::as_f64)
+                    .unwrap_or(1.0);
                 let pw = ps.get("prewarm").and_then(Value::as_bool).unwrap_or(false);
                 if (sp - 1.0).abs() > 1e-3 {
                     if sp < 1.0 {
@@ -97,12 +126,19 @@ fn main() {
             }
         }
         if n_skin_slow > 0 || n_skin_pre > 0 {
-            let name = f.file_stem().and_then(|s| s.to_str()).unwrap_or("?").to_string();
+            let name = f
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("?")
+                .to_string();
             skins_touched.push((name, n_skin_slow, n_skin_pre));
         }
     }
 
-    println!("\nparticle systems scanned: {total}   bundles: {}", files.len());
+    println!(
+        "\nparticle systems scanned: {total}   bundles: {}",
+        files.len()
+    );
     println!("  simulationSpeed < 1 : {slow}");
     println!("  simulationSpeed > 1 : {fast}");
     println!("  prewarm = true      : {prewarm}");

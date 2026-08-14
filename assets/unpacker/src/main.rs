@@ -241,7 +241,7 @@ fn is_resource_entry(path: &str) -> bool {
     path.ends_with(".resS") || path.ends_with(".resource")
 }
 
-/// The `(m_FileID, m_PathID)` pair of a PPtr JSON object; `None` when either
+/// The `(m_FileID, m_PathID)` pair of a `PPtr` JSON object; `None` when either
 /// field is missing.
 fn pptr_ids(v: &serde_json::Value) -> Option<(i64, i64)> {
     Some((
@@ -255,14 +255,14 @@ fn pptr_ids(v: &serde_json::Value) -> Option<(i64, i64)> {
 /// 21=Material, 28=Texture2D
 const SPINE_CLASS_IDS: &[i32] = &[1, 114, 49, 21, 28];
 
-/// Dynchars additionally need Transform (4), MeshRenderer (23), MeshFilter (33)
+/// Dynchars additionally need Transform (4), `MeshRenderer` (23), `MeshFilter` (33)
 /// and Mesh (43) to locate, place and rasterize the background scene quads, plus
-/// AnimationClip (74) to evaluate the idle pose the quads settle into, and
-/// ParticleSystem (198) + ParticleSystemRenderer (199) + Camera (20) for the
+/// `AnimationClip` (74) to evaluate the idle pose the quads settle into, and
+/// `ParticleSystem` (198) + `ParticleSystemRenderer` (199) + Camera (20) for the
 /// `[particles]` export.
 ///
-/// Animator (95) + AnimatorController (91) carry the clip→rig linkage: a clip's
-/// binding path hashes are relative to the GameObject holding the Animator that
+/// Animator (95) + `AnimatorController` (91) carry the clip→rig linkage: a clip's
+/// binding path hashes are relative to the `GameObject` holding the Animator that
 /// plays it (`m_Controller` → `m_AnimationClips`). Without them a hash that
 /// collides across identical sibling rigs — Mlynar "Fields of Ruination" ships six
 /// `static_offset/fixed/scale_01/scale02/glow_01` blade quads — cannot be scoped to

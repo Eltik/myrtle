@@ -1501,6 +1501,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // does not stick — this has to run after each update.
                 reseatSeparatorWash(spineRef.current, separatorWashRef.current);
                 if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepdbg") === "1") {
+                    // biome-ignore lint/suspicious/noExplicitAny: ad hoc ?sepdbg=1 introspection of pixi-spine internals (slotContainers) not present in its public type
                     const sk: any = spineRef.current as any;
                     const kids = sk.children.length;
                     const conts = new Set(sk.slotContainers ?? []);
@@ -1548,10 +1549,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // CAMERA-vs-CONTENT timing skew from a global clock error — a global error moves
                 // both and is already ruled out for cello by a trim sweep that minimises sharply
                 // at her shipped offset. Inert at 0. Twin of `?ortholead=` for the zoom.
-                const camLead =
-                    typeof window !== "undefined"
-                        ? parseFloat(new URLSearchParams(window.location.search).get("camlead") ?? "0") || 0
-                        : 0;
+                const camLead = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("camlead") ?? "0") || 0 : 0;
                 const c = sampleCurveXY(ef.camCenter, tt + camLead, ef.camCuts) ?? [0, 0];
                 // Camera SIZE: the gamedata frame extent (`_adjustes` view px) × the ortho-size ratio,
                 // so the character grows into the frame exactly as the authored zoom dictates.
@@ -1813,12 +1811,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const lr = 0.299 * (1 - sat);
                 const lg = 0.587 * (1 - sat);
                 const lb = 0.114 * (1 - sat);
-                pfx.filter.matrix = [
-                    lr + sat, lg, lb, 0, 0,
-                    lr, lg + sat, lb, 0, 0,
-                    lr, lg, lb + sat, 0, 0,
-                    0, 0, 0, 1, 0,
-                ];
+                pfx.filter.matrix = [lr + sat, lg, lb, 0, 0, lr, lg + sat, lb, 0, 0, lr, lg, lb + sat, 0, 0, 0, 0, 0, 1, 0];
                 pfx.target.filters = w > 0.001 ? [pfx.filter] : null;
             }
             const efd = entranceFadeRef.current;
@@ -1848,7 +1841,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         efd.sprite.parent?.removeChild(efd.sprite);
                         efd.sprite.destroy();
                         entrancePostFxRef.current = null;
-            entranceFadeRef.current = null;
+                        entranceFadeRef.current = null;
                     }
                 } else {
                     // The ramp COMPLETES at `duration - HOLD`, not at `duration`: the capture is
@@ -2576,9 +2569,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const gapFill = !useStatic && gapFillOn() && !(settledGroundOn() && settledRef.current) && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
-                    const bdAblated =
-                        typeof window !== "undefined" &&
-                        (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
+                    const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     if (bdAblated) bd.renderable = false;
                     if (gapFill) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff

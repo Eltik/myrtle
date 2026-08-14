@@ -5,11 +5,17 @@
 //! pivot at all, so any non-zero one is a silent per-particle misplacement. Before adding a
 //! field to the schema, find out whether the corpus actually uses it.
 //!
-//! Usage: cargo run --release --example probe_pivot -- <dir-of-bundles>
+//! Usage: cargo run --release --example `probe_pivot` -- <dir-of-bundles>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::many_single_char_names
+)]
 
 use serde_json::Value;
 use std::path::PathBuf;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
     let dir = std::env::args().nth(1).expect("bundle dir");
@@ -21,19 +27,27 @@ fn main() {
     files.sort();
     let (mut total, mut nonzero) = (0usize, 0usize);
     for path in &files {
-        let Ok(data) = std::fs::read(path) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(data) = std::fs::read(path) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             for obj in &sf.objects {
                 if obj.class_id != 199 {
                     continue; // ParticleSystemRenderer
                 }
-                let Ok(v) = read_object(&sf, obj) else { continue };
+                let Ok(v) = read_object(&sf, obj) else {
+                    continue;
+                };
                 let Some(p) = v.get("m_Pivot") else { continue };
                 total += 1;
                 let g = |k: &str| p.get(k).and_then(Value::as_f64).unwrap_or(0.0);

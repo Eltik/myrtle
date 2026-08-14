@@ -7,13 +7,20 @@
 //! particle textures — so it is drawn by a component the exporter's quad/spine/particle model does
 //! not cover. This dumps every component class present and anything mask-shaped.
 //!
-//! Usage: cargo run --release --example probe_mask -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_mask` -- <bundle.ab>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::format_push_string,
+    clippy::too_many_lines
+)]
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 /// Unity class ids worth calling out by name when they appear.
-fn class_name(id: i32) -> &'static str {
+const fn class_name(id: i32) -> &'static str {
     match id {
         1 => "GameObject",
         4 => "Transform",
@@ -21,7 +28,7 @@ fn class_name(id: i32) -> &'static str {
         23 => "MeshRenderer",
         33 => "MeshFilter",
         43 => "Mesh",
-        materials if materials == 21 => "Material",
+        21 => "Material",
         28 => "Texture2D",
         114 => "MonoBehaviour",
         115 => "MonoScript",
@@ -35,7 +42,9 @@ fn class_name(id: i32) -> &'static str {
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("usage: probe_mask <bundle.ab>");
+    let path = std::env::args()
+        .nth(1)
+        .expect("usage: probe_mask <bundle.ab>");
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
     for entry in &bundle.files {
@@ -43,7 +52,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
             if let Ok(v) = read_object(&sf, o) {
@@ -62,13 +73,20 @@ fn main() {
         let mut line = String::new();
         for (cid, n) in &counts {
             let nm = class_name(*cid);
-            line.push_str(&format!("{cid}{}x{n}  ", if nm.is_empty() { String::new() } else { format!("({nm})") }));
+            line.push_str(&format!(
+                "{cid}{}x{n}  ",
+                if nm.is_empty() {
+                    String::new()
+                } else {
+                    format!("({nm})")
+                }
+            ));
         }
         println!("   classes: {line}");
 
         // 2. MonoBehaviour script names — this is where a UI Mask / RectMask2D would hide
         let mut scripts: BTreeMap<String, usize> = BTreeMap::new();
-        for (_, (cid, v)) in &all {
+        for (cid, v) in all.values() {
             if *cid != 114 {
                 continue;
             }
@@ -93,35 +111,79 @@ fn main() {
             if *cid != 222 && *cid != 224 && *cid != 223 {
                 continue;
             }
-            let go = v.get("m_GameObject").and_then(|g| g.get("m_PathID")).and_then(Value::as_i64)
-                .and_then(|g| all.get(&g)).and_then(|(_, gv)| gv.get("m_Name")).and_then(Value::as_str).unwrap_or("?");
-            println!("   UI pathID {pid} class {cid}({}) GO {go}", class_name(*cid));
+            let go = v
+                .get("m_GameObject")
+                .and_then(|g| g.get("m_PathID"))
+                .and_then(Value::as_i64)
+                .and_then(|g| all.get(&g))
+                .and_then(|(_, gv)| gv.get("m_Name"))
+                .and_then(Value::as_str)
+                .unwrap_or("?");
+            println!(
+                "   UI pathID {pid} class {cid}({}) GO {go}",
+                class_name(*cid)
+            );
         }
         // external shader references, by (fileID,pathID) — resolve against [uc]shaders.ab
         let mut ext: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for (_, (cid, v)) in &all {
-            if *cid != 21 { continue; }
+        for (cid, v) in all.values() {
+            if *cid != 21 {
+                continue;
+            }
             let sh = v.get("m_Shader");
-            let fid = sh.and_then(|s| s.get("m_FileID")).and_then(Value::as_i64).unwrap_or(-1);
-            let pid = sh.and_then(|s| s.get("m_PathID")).and_then(Value::as_i64).unwrap_or(0);
-            let nm = v.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string();
-            ext.entry(format!("fileID {fid} pathID {pid}")).or_default().push(nm);
+            let fid = sh
+                .and_then(|s| s.get("m_FileID"))
+                .and_then(Value::as_i64)
+                .unwrap_or(-1);
+            let pid = sh
+                .and_then(|s| s.get("m_PathID"))
+                .and_then(Value::as_i64)
+                .unwrap_or(0);
+            let nm = v
+                .get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("?")
+                .to_string();
+            ext.entry(format!("fileID {fid} pathID {pid}"))
+                .or_default()
+                .push(nm);
         }
-        println!("   material -> external shader ref ({} distinct):", ext.len());
+        println!(
+            "   material -> external shader ref ({} distinct):",
+            ext.len()
+        );
         for (k, ns) in &ext {
-            println!("      {k}  x{}  e.g. {}", ns.len(), ns.iter().take(3).cloned().collect::<Vec<_>>().join(", "));
+            println!(
+                "      {k}  x{}  e.g. {}",
+                ns.len(),
+                ns.iter().take(3).cloned().collect::<Vec<_>>().join(", ")
+            );
         }
         let mut shaders: BTreeMap<String, usize> = BTreeMap::new();
-        for (_, (cid, v)) in &all {
-            if *cid != 21 { continue; }
-            let s = v.get("m_Shader").and_then(|s| s.get("m_PathID")).and_then(Value::as_i64)
-                .and_then(|p| all.get(&p)).and_then(|(_, sv)| sv.get("m_ParsedForm").and_then(|f| f.get("m_Name")).or_else(|| sv.get("m_Name")))
-                .and_then(Value::as_str).unwrap_or("<external>").to_string();
+        for (cid, v) in all.values() {
+            if *cid != 21 {
+                continue;
+            }
+            let s = v
+                .get("m_Shader")
+                .and_then(|s| s.get("m_PathID"))
+                .and_then(Value::as_i64)
+                .and_then(|p| all.get(&p))
+                .and_then(|(_, sv)| {
+                    sv.get("m_ParsedForm")
+                        .and_then(|f| f.get("m_Name"))
+                        .or_else(|| sv.get("m_Name"))
+                })
+                .and_then(Value::as_str)
+                .unwrap_or("<external>")
+                .to_string();
             let nm = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
             *shaders.entry(format!("{s}  [e.g. {nm}]")).or_default() += 1;
         }
         println!("   materials by shader:");
-        for (s, c) in &shaders { println!("      {c:>3}x  {s}"); }
+        for (s, c) in &shaders {
+            println!("      {c:>3}x  {s}");
+        }
 
         // 3. anything whose FIELDS mention masking / stencil / radius, whatever the class
         for (pid, (cid, v)) in &all {
@@ -130,7 +192,10 @@ fn main() {
                 .keys()
                 .filter(|k| {
                     let l = k.to_ascii_lowercase();
-                    l.contains("mask") || l.contains("stencil") || l.contains("radius") || l.contains("circle")
+                    l.contains("mask")
+                        || l.contains("stencil")
+                        || l.contains("radius")
+                        || l.contains("circle")
                 })
                 .collect();
             if hits.is_empty() {
@@ -144,9 +209,23 @@ fn main() {
                 .and_then(|(_, gv)| gv.get("m_Name"))
                 .and_then(Value::as_str)
                 .unwrap_or("?");
-            println!("   MASK-ISH pathID {pid} class {cid}{} GO {go}", if class_name(*cid).is_empty() { String::new() } else { format!("({})", class_name(*cid)) });
+            println!(
+                "   MASK-ISH pathID {pid} class {cid}{} GO {go}",
+                if class_name(*cid).is_empty() {
+                    String::new()
+                } else {
+                    format!("({})", class_name(*cid))
+                }
+            );
             for h in hits {
-                println!("        {h} = {}", serde_json::to_string(&obj[h]).unwrap_or_default().chars().take(160).collect::<String>());
+                println!(
+                    "        {h} = {}",
+                    serde_json::to_string(&obj[h])
+                        .unwrap_or_default()
+                        .chars()
+                        .take(160)
+                        .collect::<String>()
+                );
             }
         }
     }

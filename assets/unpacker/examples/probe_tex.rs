@@ -1,4 +1,4 @@
-//! THROWAWAY diagnostic: decode a Texture2D by path ID out of a bundle and report its
+//! THROWAWAY diagnostic: decode a `Texture2D` by path ID out of a bundle and report its
 //! channel statistics (plus an optional PNG dump).
 //!
 //! Motivation: a scene layer's material can reference maps the scene exporter never
@@ -6,7 +6,11 @@
 //! entirely on what those maps CONTAIN — a dissolve whose red channel sits near zero
 //! masks almost the whole sheet away, one near white does nothing.
 //!
-//! Usage: cargo run --release --example probe_tex -- <bundle.ab> <pathID> [outdir]
+//! Usage: cargo run --release --example `probe_tex` -- <bundle.ab> <pathID> [outdir]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_precision_loss
+)]
 
 use unpacker::export::texture::{decode_texture_object, save_decoded_texture};
 use unpacker::unity::{

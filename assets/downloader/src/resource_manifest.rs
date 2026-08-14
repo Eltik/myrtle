@@ -8,12 +8,12 @@
 //! `arts/maps/effect.ab`, or a shared shader in `shaders/special.ab`), it is
 //! silently skipped and the referencing asset renders with missing pieces.
 //!
-//! This module parses just enough of the FlatBuffer (`ResourceManifest`
+//! This module parses just enough of the `FlatBuffer` (`ResourceManifest`
 //! -> `bundles[]` with each `BundleMeta { name, allDependencies }`) to expand a
 //! kept name-set into its full dependency closure, so those shared bundles are
 //! downloaded too.
 //!
-//! We hand-roll the tiny bit of FlatBuffer decoding rather than pull the full
+//! We hand-roll the tiny bit of `FlatBuffer` decoding rather than pull the full
 //! `flatbuffers` crate + generated schema (which live in the `unpacker` crate)
 //! into the downloader — only two fields on one table type are needed.
 
@@ -29,7 +29,7 @@ const BM_VT_NAME: u16 = 4; // BundleMeta.name
 const BM_VT_ALLDEPENDENCIES: u16 = 10; // BundleMeta.allDependencies
 
 /// The resource manifest is prefixed with a fixed-size RSA signature before the
-/// FlatBuffer root.
+/// `FlatBuffer` root.
 const SIGNATURE_LEN: usize = 128;
 
 /// Parsed bundle dependency graph from a resource manifest.
@@ -62,7 +62,7 @@ impl ResourceManifest {
     ///
     /// # Errors
     ///
-    /// Returns an error if the file cannot be read or the FlatBuffer is
+    /// Returns an error if the file cannot be read or the `FlatBuffer` is
     /// malformed / truncated.
     pub fn load(idx_path: &Path) -> Result<Self> {
         let data = std::fs::read(idx_path)
@@ -160,10 +160,8 @@ impl ResourceManifest {
 /// A resource manifest `.idx` is named `<32-hex-md5>.idx`, distinguishing it
 /// from `hot_update_list.idx`.
 fn is_manifest_idx_name(name: &str) -> bool {
-    match name.strip_suffix(".idx") {
-        Some(stem) => stem.len() == 32 && stem.bytes().all(|b| b.is_ascii_hexdigit()),
-        None => false,
-    }
+    name.strip_suffix(".idx")
+        .is_some_and(|stem| stem.len() == 32 && stem.bytes().all(|b| b.is_ascii_hexdigit()))
 }
 
 // --- minimal little-endian FlatBuffer primitives ---
@@ -193,8 +191,9 @@ fn read_uoffset(buf: &[u8], pos: usize) -> Result<usize> {
 fn table_field_offset(buf: &[u8], table: usize, vt_offset: u16) -> Result<Option<usize>> {
     // A table starts with a signed soffset to its vtable.
     let soffset = read_i32(buf, table)?;
+    let table_i64 = i64::try_from(table).context("table position out of range")?;
     let vtable =
-        usize::try_from(table as i64 - i64::from(soffset)).context("vtable position underflow")?;
+        usize::try_from(table_i64 - i64::from(soffset)).context("vtable position underflow")?;
     let vt_size = read_u16(buf, vtable)?;
     if vt_offset >= vt_size {
         return Ok(None);
@@ -221,8 +220,8 @@ fn read_i32_vector(buf: &[u8], field_pos: usize) -> Result<Vec<usize>> {
     let mut out = Vec::with_capacity(len);
     for i in 0..len {
         let v = read_i32(buf, vec_pos + 4 + i * 4)?;
-        if v >= 0 {
-            out.push(v as usize);
+        if let Ok(v) = usize::try_from(v) {
+            out.push(v);
         }
     }
     Ok(out)

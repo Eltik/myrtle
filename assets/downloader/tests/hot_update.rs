@@ -3,8 +3,8 @@ use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn hot_update_json(
-    pack_infos: serde_json::Value,
-    ab_infos: serde_json::Value,
+    pack_infos: &serde_json::Value,
+    ab_infos: &serde_json::Value,
 ) -> serde_json::Value {
     serde_json::json!({
         "packInfos": pack_infos,
@@ -17,10 +17,10 @@ async fn groups_by_pack_id() {
     let server = MockServer::start().await;
 
     let body = hot_update_json(
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "arts_chararts" }
         ]),
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "char_002_amiya.ab", "totalSize": 1024, "md5": "aaa", "pid": "arts_chararts" },
             { "name": "char_003_kalts.ab", "totalSize": 2048, "md5": "bbb", "pid": "arts_chararts" }
         ]),
@@ -48,10 +48,10 @@ async fn orphan_files_go_to_other() {
     let server = MockServer::start().await;
 
     let body = hot_update_json(
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "arts_chararts" }
         ]),
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "grouped.ab", "totalSize": 100, "md5": "aaa", "pid": "arts_chararts" },
             { "name": "orphan.ab", "totalSize": 200, "md5": "bbb", "pid": null },
             { "name": "unknown_pack.ab", "totalSize": 300, "md5": "ccc", "pid": "nonexistent_pack" }
@@ -81,12 +81,12 @@ async fn sorted_by_total_size_desc() {
     let server = MockServer::start().await;
 
     let body = hot_update_json(
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "small_pack" },
             { "name": "large_pack" },
             { "name": "medium_pack" }
         ]),
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "s.ab", "totalSize": 100, "md5": "a", "pid": "small_pack" },
             { "name": "l.ab", "totalSize": 9000, "md5": "b", "pid": "large_pack" },
             { "name": "m.ab", "totalSize": 500, "md5": "c", "pid": "medium_pack" }
@@ -121,10 +121,10 @@ async fn underscore_to_slash_in_names() {
     let server = MockServer::start().await;
 
     let body = hot_update_json(
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "gamedata_excel" }
         ]),
-        serde_json::json!([
+        &serde_json::json!([
             { "name": "table.ab", "totalSize": 100, "md5": "a", "pid": "gamedata_excel" }
         ]),
     );
@@ -148,7 +148,7 @@ async fn underscore_to_slash_in_names() {
 async fn empty_response() {
     let server = MockServer::start().await;
 
-    let body = hot_update_json(serde_json::json!([]), serde_json::json!([]));
+    let body = hot_update_json(&serde_json::json!([]), &serde_json::json!([]));
 
     Mock::given(method("GET"))
         .and(path("/v1/hot_update_list.json"))

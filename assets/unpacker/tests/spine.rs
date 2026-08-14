@@ -1,3 +1,4 @@
+#![allow(clippy::manual_let_else, clippy::needless_collect)]
 use std::collections::HashMap;
 use std::path::Path;
 

@@ -7,19 +7,22 @@
 //! and does NOT pillarbox on the same route.
 //!
 //! Already cleared: Camera `m_NormalizedViewPortRect` is 1x1 on both, neither bundle ships a
-//! RenderTexture, no MonoBehaviour names an aspect/viewport/letterbox field, skin_table has
+//! `RenderTexture`, no `MonoBehaviour` names an aspect/viewport/letterbox field, `skin_table` has
 //! nothing, and the entrance director itself carries only `_effects`, `_mainCamera` and
 //! `_params{charVoiceOffset,duration,fadeColor}` -- zero rendering params.
 //!
-//! Remaining candidate: the entrance GameObject also carries a MeshFilter + MeshRenderer, i.e.
+//! Remaining candidate: the entrance `GameObject` also carries a `MeshFilter` + `MeshRenderer`, i.e.
 //! the entrance draws through a QUAD. If that quad is authored 16:9 for Civilight Eterna and
 //! wider for Eyjafjalla, then the aperture is simply "the entrance quad's aspect, height-fit"
 //! -- a scalable rule rather than a per-skin constant. This dumps the quad's local AABB.
 //!
-//! Usage: cargo run --release --example probe_entmesh -- <bundle.ab> [<bundle.ab> ...]
+//! Usage: cargo run --release --example `probe_entmesh` -- <bundle.ab> [<bundle.ab> ...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn f(v: Option<&Value>) -> f64 {
     v.and_then(Value::as_f64).unwrap_or(f64::NAN)
@@ -31,14 +34,20 @@ fn main() {
 
     for path in &paths {
         println!("\n######## {path}");
-        let Ok(data) = std::fs::read(path) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(data) = std::fs::read(path) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for o in &sf.objects {
                 if let Ok(v) = read_object(&sf, o) {
@@ -48,8 +57,11 @@ fn main() {
 
             // Every mesh in the bundle, with its AABB aspect -- the entrance quad will stand out
             // as a large, near-flat, single-quad mesh.
-            let mut meshes: Vec<(i64, &Value)> =
-                all.iter().filter(|(_, (cid, _))| *cid == 43).map(|(p, (_, v))| (*p, v)).collect();
+            let mut meshes: Vec<(i64, &Value)> = all
+                .iter()
+                .filter(|(_, (cid, _))| *cid == 43)
+                .map(|(p, (_, v))| (*p, v))
+                .collect();
             meshes.sort_unstable_by_key(|(p, _)| *p);
             println!("  {} mesh(es)", meshes.len());
             for (pid, v) in &meshes {
@@ -72,7 +84,10 @@ fn main() {
                 if *cid != 33 {
                     continue; // MeshFilter
                 }
-                let go = v.get("m_GameObject").and_then(|g| g.get("m_PathID")).and_then(Value::as_i64);
+                let go = v
+                    .get("m_GameObject")
+                    .and_then(|g| g.get("m_PathID"))
+                    .and_then(Value::as_i64);
                 let go_name = go
                     .and_then(|g| all.get(&g))
                     .and_then(|(_, gv)| gv.get("m_Name"))
@@ -81,7 +96,10 @@ fn main() {
                 if !go_name.to_ascii_lowercase().contains("entrance") {
                     continue;
                 }
-                let mesh_pid = v.get("m_Mesh").and_then(|m| m.get("m_PathID")).and_then(Value::as_i64);
+                let mesh_pid = v
+                    .get("m_Mesh")
+                    .and_then(|m| m.get("m_PathID"))
+                    .and_then(Value::as_i64);
                 println!("   ==> MeshFilter pid={pid} on {go_name} -> mesh pid={mesh_pid:?}");
             }
         }

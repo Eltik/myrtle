@@ -6,30 +6,45 @@
 //! director's `_effects` array IS the activation set — on cello all 13 inactive rigs are in it.
 //! A rig that is inactive AND absent from that list is content the game never switches on, yet
 //! the exporter admits it today. This counts them, and — per the standing rule that a corpus scan
-//! must count CONSEQUENCES, not layers — also reports how many ParticleSystems and MeshRenderers
+//! must count CONSEQUENCES, not layers — also reports how many `ParticleSystems` and `MeshRenderers`
 //! actually live under each such rig.
 //!
-//! Usage: cargo run --release --example scan_effects -- <dir-of-bundles>...
+//! Usage: cargo run --release --example `scan_effects` -- <dir-of-bundles>...
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
 }
 
 fn scan(path: &std::path::Path) {
-    let Ok(data) = std::fs::read(path) else { return };
-    let Ok(bundle) = BundleFile::parse(data) else { return };
-    let skin = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    let Ok(data) = std::fs::read(path) else {
+        return;
+    };
+    let Ok(bundle) = BundleFile::parse(data) else {
+        return;
+    };
+    let skin = path
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_default();
 
     for entry in &bundle.files {
         let lower = entry.path.to_ascii_lowercase();
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for obj in &sf.objects {
             if let Ok(v) = read_object(&sf, obj) {
@@ -60,12 +75,14 @@ fn scan(path: &std::path::Path) {
         let parent_go = |go: i64| -> Option<i64> {
             let tr = *go_tr.get(&go)?;
             let f = pid(all.get(&tr)?.1.get("m_Father")?)?;
-            (f != 0).then(|| pid(all.get(&f)?.1.get("m_GameObject")?)).flatten()
+            (f != 0)
+                .then(|| pid(all.get(&f)?.1.get("m_GameObject")?))
+                .flatten()
         };
         // descendants of a GO, via the transform tree
         let children_of = {
             let mut m: HashMap<i64, Vec<i64>> = HashMap::new();
-            for (g, _) in go_tr.iter() {
+            for g in go_tr.keys() {
                 if let Some(p) = parent_go(*g) {
                     m.entry(p).or_default().push(*g);
                 }
@@ -101,13 +118,21 @@ fn scan(path: &std::path::Path) {
             (ps, mr)
         };
 
-        let Some((_, dir)) = all.values().find(|(cid, v)| *cid == 114 && v.get("_mainCamera").is_some()) else {
+        let Some((_, dir)) = all
+            .values()
+            .find(|(cid, v)| *cid == 114 && v.get("_mainCamera").is_some())
+        else {
             continue;
         };
         let members: Vec<i64> = dir
             .get("_effects")
             .and_then(Value::as_array)
-            .map(|l| l.iter().filter_map(|e| pid(e).or_else(|| e.get("m_GameObject").and_then(pid))).filter(|&g| g != 0).collect())
+            .map(|l| {
+                l.iter()
+                    .filter_map(|e| pid(e).or_else(|| e.get("m_GameObject").and_then(pid)))
+                    .filter(|&g| g != 0)
+                    .collect()
+            })
             .unwrap_or_default();
 
         let mut listed = 0usize;
@@ -118,8 +143,7 @@ fn scan(path: &std::path::Path) {
             }
             let act = gv
                 .get("m_IsActive")
-                .map(|x| x.as_bool().unwrap_or_else(|| x.as_i64().unwrap_or(1) != 0))
-                .unwrap_or(true);
+                .is_none_or(|x| x.as_bool().unwrap_or_else(|| x.as_i64().unwrap_or(1) != 0));
             if act {
                 continue;
             }
@@ -170,8 +194,14 @@ fn scan(path: &std::path::Path) {
 
 fn main() {
     for dir in std::env::args().skip(1) {
-        let Ok(rd) = std::fs::read_dir(&dir) else { continue };
-        let mut files: Vec<_> = rd.filter_map(Result::ok).map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e == "ab")).collect();
+        let Ok(rd) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        let mut files: Vec<_> = rd
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|e| e == "ab"))
+            .collect();
         files.sort();
         eprintln!("scanning {} bundles in {dir}", files.len());
         for f in files {

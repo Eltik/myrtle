@@ -1,19 +1,25 @@
-//! THROWAWAY diagnostic: resolve the entrance DIRECTOR's `_effects` list to GameObject NAMES,
+//! THROWAWAY diagnostic: resolve the entrance DIRECTOR's `_effects` list to `GameObject` NAMES,
 //! and check every statically-inactive entrance rig for membership.
 //!
 //! Motivation: entrance rigs ship `m_IsActive = 0` and something activates them at runtime, so
 //! the prefab flag alone cannot say which ones actually draw (honouring it deletes the whole
-//! cinematic — cello goes from 58 particle systems to 0). The director MonoBehaviour that owns
-//! `_mainCamera` / `_params.duration` also carries an `_effects` array of GameObject refs. If
+//! cinematic — cello goes from 58 particle systems to 0). The director `MonoBehaviour` that owns
+//! `_mainCamera` / `_params.duration` also carries an `_effects` array of `GameObject` refs. If
 //! that list is the activation set, then a rig ABSENT from it is one the game never switches on
 //! — which is exactly the shape needed to explain Virtuosa's ten `..._Wing_*_start(Clone)`
 //! particle rigs painting a pink glow the game does not show.
 //!
-//! Usage: cargo run --release --example probe_effects -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_effects` -- <bundle.ab>
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -29,7 +35,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for obj in &sf.objects {
             if let Ok(v) = read_object(&sf, obj) {
@@ -61,7 +69,9 @@ fn main() {
         let parent_go = |go: i64| -> Option<i64> {
             let tr = *go_tr.get(&go)?;
             let f = pid(all.get(&tr)?.1.get("m_Father")?)?;
-            (f != 0).then(|| pid(all.get(&f)?.1.get("m_GameObject")?)).flatten()
+            (f != 0)
+                .then(|| pid(all.get(&f)?.1.get("m_GameObject")?))
+                .flatten()
         };
 
         for (p, (cid, v)) in &all {
@@ -69,7 +79,9 @@ fn main() {
                 continue;
             }
             println!("DIRECTOR pathID={p}");
-            let Some(list) = v.get("_effects").and_then(Value::as_array) else { continue };
+            let Some(list) = v.get("_effects").and_then(Value::as_array) else {
+                continue;
+            };
             println!("  _effects: {} entries", list.len());
             let mut members: Vec<i64> = Vec::new();
             for e in list {
@@ -78,11 +90,15 @@ fn main() {
                 match gp {
                     Some(g) if g != 0 => {
                         members.push(g);
-                        let act = all
-                            .get(&g)
-                            .and_then(|(_, gv)| gv.get("m_IsActive"))
-                            .map(|x| x.as_bool().map(i64::from).or_else(|| x.as_i64()).unwrap_or(-1))
-                            .unwrap_or(-1);
+                        let act =
+                            all.get(&g)
+                                .and_then(|(_, gv)| gv.get("m_IsActive"))
+                                .map_or(-1, |x| {
+                                    x.as_bool()
+                                        .map(i64::from)
+                                        .or_else(|| x.as_i64())
+                                        .unwrap_or(-1)
+                                });
                         // walk to the topmost ancestor: is this entry on the ENTRANCE root or
                         // the IDLE root? That is exactly the cross-root admission question.
                         let mut r = g;
@@ -92,9 +108,16 @@ fn main() {
                                 None => break,
                             }
                         }
-                        println!("    '{}'  pathID={g}  m_IsActive={act}  ROOT='{}'", name_of(g), name_of(r));
+                        println!(
+                            "    '{}'  pathID={g}  m_IsActive={act}  ROOT='{}'",
+                            name_of(g),
+                            name_of(r)
+                        );
                     }
-                    _ => println!("    (unresolved: {})", serde_json::to_string(e).unwrap_or_default()),
+                    _ => println!(
+                        "    (unresolved: {})",
+                        serde_json::to_string(e).unwrap_or_default()
+                    ),
                 }
             }
 
@@ -108,8 +131,7 @@ fn main() {
                 }
                 let act = gv
                     .get("m_IsActive")
-                    .map(|x| x.as_bool().unwrap_or_else(|| x.as_i64().unwrap_or(1) != 0))
-                    .unwrap_or(true);
+                    .is_none_or(|x| x.as_bool().unwrap_or_else(|| x.as_i64().unwrap_or(1) != 0));
                 if act {
                     continue;
                 }
@@ -135,9 +157,17 @@ fn main() {
             }
             rows.sort();
             for (n, inlist) in &rows {
-                println!("    {:<58} in _effects: {}", n, if *inlist { "YES" } else { "no" });
+                println!(
+                    "    {:<58} in _effects: {}",
+                    n,
+                    if *inlist { "YES" } else { "no" }
+                );
             }
-            println!("\n  {} inactive entrance rigs, {} in the list", rows.len(), rows.iter().filter(|r| r.1).count());
+            println!(
+                "\n  {} inactive entrance rigs, {} in the list",
+                rows.len(),
+                rows.iter().filter(|r| r.1).count()
+            );
         }
     }
 }

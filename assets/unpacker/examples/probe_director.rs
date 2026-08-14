@@ -1,10 +1,11 @@
-//! Diagnostic: dump the entrance DIRECTOR MonoBehaviour's `_params` (duration,
+//! Diagnostic: dump the entrance DIRECTOR `MonoBehaviour`'s `_params` (duration,
 //! charVoiceOffset, fadeColor) and its `_effects` list.
 //!
 //! `fadeColor` is documented in `spine.rs` but never read by the exporter — this prints it
 //! so a director-driven screen fade can be checked against the recordings.
 //!
-//! Usage: cargo run --release --example probe_director -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_director` -- <bundle.ab>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -52,7 +53,7 @@ fn main() {
         }
         // Every authored `_delayTime` in the prefab, with its owner.
         let mut delays: Vec<(f64, String)> = Vec::new();
-        for (_, (cid, v)) in &all {
+        for (cid, v) in all.values() {
             if *cid == 114
                 && let Some(dt) = v.get("_delayTime").and_then(Value::as_f64)
             {

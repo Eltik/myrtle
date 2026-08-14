@@ -10,7 +10,11 @@
 //! compared instead of guessed at. Nothing is hardcoded per skin: it walks every material
 //! in every bundle handed to it.
 //!
-//! Usage: cargo run --release --example scan_disturb -- <bundle.ab> [<bundle.ab>...]
+//! Usage: cargo run --release --example `scan_disturb` -- <bundle.ab> [<bundle.ab>...]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -106,7 +110,9 @@ fn main() {
                 let active = tog("_ToggleUseDissolve") != 0.0 || tog("_ToggleUseDisturb2") != 0.0;
                 let has_short = names_here.iter().any(|n| n.starts_with("_DisturTex"));
                 if has_short && active {
-                    *tex_counts.entry("ZZ_SHORT_AND_ACTIVE".to_string()).or_default() += 1;
+                    *tex_counts
+                        .entry("ZZ_SHORT_AND_ACTIVE".to_string())
+                        .or_default() += 1;
                     *per_bundle.entry(short_name.clone()).or_default() += 1;
                     // The toggles alone do NOT mean the effect does anything: the decompiled
                     // GLSL makes dissolve a no-op at `_Amount == 0` (roundEven(0.5)==0 makes the
@@ -124,7 +130,9 @@ fn main() {
                         *tex_counts.entry("ZZ_WARP_NONZERO".to_string()).or_default() += 1;
                     }
                     if dissolves {
-                        *tex_counts.entry("ZZ_DISSOLVE_NONZERO".to_string()).or_default() += 1;
+                        *tex_counts
+                            .entry("ZZ_DISSOLVE_NONZERO".to_string())
+                            .or_default() += 1;
                     }
                     if warps || dissolves {
                         *effective.entry(short_name.clone()).or_default() += 1;
@@ -164,19 +172,30 @@ fn main() {
     for b in short_only_bundles.iter().take(20) {
         println!("    {b}");
     }
-    println!("distinct shaders on short-only materials: {}", shaders_with_short.len());
-    println!("\n-- SHORT-spelling materials with dissolve/disturb2 ACTUALLY ENABLED, per bundle --");
+    println!(
+        "distinct shaders on short-only materials: {}",
+        shaders_with_short.len()
+    );
+    println!(
+        "\n-- SHORT-spelling materials with dissolve/disturb2 ACTUALLY ENABLED, per bundle --"
+    );
     let mut v: Vec<_> = per_bundle.iter().collect();
     v.sort_by(|a, b| b.1.cmp(a.1));
     for (b, n) in v.iter().take(25) {
         println!("  {n:4}  {b}");
     }
-    println!("bundles with at least one ACTIVE short material: {}", per_bundle.len());
+    println!(
+        "bundles with at least one ACTIVE short material: {}",
+        per_bundle.len()
+    );
     println!("\n-- materials where the effect is NON-TRIVIAL (nonzero warp or dissolve amount) --");
     let mut e: Vec<_> = effective.iter().collect();
     e.sort_by(|a, b| b.1.cmp(a.1));
     for (b, n) in e.iter().take(20) {
         println!("  {n:4}  {b}");
     }
-    println!("bundles with a NON-TRIVIAL short material: {}", effective.len());
+    println!(
+        "bundles with a NON-TRIVIAL short material: {}",
+        effective.len()
+    );
 }

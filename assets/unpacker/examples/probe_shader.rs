@@ -5,7 +5,8 @@
 //! two visually identical wind sheets can take completely different tint paths. `probe_mat`
 //! only sees `m_Shader = <external PPtr>` and cannot tell them apart.
 //!
-//! Usage: cargo run --release --example probe_shader -- <bundle.ab> <shaders-dir> [name-filter]
+//! Usage: cargo run --release --example `probe_shader` -- <bundle.ab> <shaders-dir> [name-filter]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::HashMap;

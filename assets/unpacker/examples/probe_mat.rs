@@ -1,7 +1,8 @@
 //! THROWAWAY diagnostic: dump the RAW material JSON for every renderer on a named GO,
 //! following external material refs, so we can see exactly what `_MainTex`/`_Color` hold.
 //!
-//! Usage: cargo run --release --example probe_mat -- <bundle.ab> <go-name> [<go-name>...]
+//! Usage: cargo run --release --example `probe_mat` -- <bundle.ab> <go-name> [<go-name>...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -76,7 +77,7 @@ fn main() {
                             println!("{}", serde_json::to_string_pretty(mv).unwrap_or_default());
                         }
                         Some((c, _)) => {
-                            println!("--- pathID={mp} is class {c}, not a material ---")
+                            println!("--- pathID={mp} is class {c}, not a material ---");
                         }
                         None => println!("--- material pathID={mp} NOT IN BUNDLE (external) ---"),
                     }

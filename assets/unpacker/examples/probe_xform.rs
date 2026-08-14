@@ -1,12 +1,17 @@
 //! Diagnostic: list every TRANSFORM (typeID 4) binding in the entrance clips — position,
-//! scale, rotation — with the GameObjects each path hash resolves to.
+//! scale, rotation — with the `GameObjects` each path hash resolves to.
 //!
 //! Motivation: Skadi the Corrupting Heart's background fish are baked at the SEATED form's
-//! location and sit far below frame once she reforms standing. They carry no BoneFollower,
+//! location and sit far below frame once she reforms standing. They carry no `BoneFollower`,
 //! so if the game moves them it must animate their rig root's Transform — which the
 //! exporter would have to capture as an effect-host curve.
 //!
-//! Usage: cargo run --release --example probe_xform -- <bundle.ab> [go-name-filter]
+//! Usage: cargo run --release --example `probe_xform` -- <bundle.ab> [go-name-filter]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -34,7 +39,7 @@ fn pid(v: &Value) -> Option<i64> {
 }
 
 /// Unity Transform binding attributes.
-fn attr_name(a: u64) -> &'static str {
+const fn attr_name(a: u64) -> &'static str {
     match a {
         1 => "position",
         2 => "rotation",

@@ -85,12 +85,12 @@ pub struct SpineAsset {
     pub separator_slots: Vec<String>,
     /// Sorting orders of this skeleton's separator PARTS, ascending — the depths the game gives
     /// the submeshes. Virtuosa: [0, 20]. A `bg_*` sheet whose own sort lands between two parts
-    /// belongs in that gap (bg_ref 3, bg_tint_01 10, air_01 12); one above the last part is
-    /// genuinely in front of the character (bg_rain_01 25, her rain). The blanket
+    /// belongs in that gap (`bg_ref` 3, `bg_tint_01` 10, `air_01` 12); one above the last part is
+    /// genuinely in front of the character (`bg_rain_01` 25, her rain). The blanket
     /// `isBackdropParticle` demotion gets BOTH of those wrong.
     pub separator_part_sorts: Vec<i64>,
     /// ENTRANCE (`_Start`) cinematic total length in seconds, from the entrance
-    /// director MonoBehaviour's `_params.duration` (the client plays the whole
+    /// director `MonoBehaviour`'s `_params.duration` (the client plays the whole
     /// `_Start` set over this span, then hands off to the settled idle). `None`
     /// for the main set or a skin without an entrance director.
     pub bg_entrance_duration: Option<f64>,
@@ -98,9 +98,9 @@ pub struct SpineAsset {
     /// which can precede the director's nominal `duration`. See `anim::entrance_clip_stop`.
     pub bg_entrance_clip_stop: Option<f32>,
     /// ENTRANCE post-process: `(effect_name, intensity, weight_curve)` from the `pp`
-    /// PostProcessVolume whose weight the `_Start` clip animates. `None` when the skin ships no
+    /// `PostProcessVolume` whose weight the `_Start` clip animates. `None` when the skin ships no
     /// volume or no clip drives it. See `anim::entrance_post_fx`.
-    pub bg_entrance_post_fx: Option<(String, f32, Vec<(f32, f32)>)>,
+    pub bg_entrance_post_fx: Option<super::anim::EntrancePostFx>,
     /// ENTRANCE screen-fade colour, from the director's `_params.fadeColor` (premultiplied
     /// straight RGBA, 0..1). The client fades the whole view to this colour as the entrance
     /// ends and then cuts to the settled idle — the recordings show Virtuosa reaching pure
@@ -157,11 +157,11 @@ pub struct SpineAsset {
 /// roughly three times the area the game gives them. The particle exporter has carried
 /// this since day one (`particles::resolve_ram`); this is the same data for a mesh quad.
 pub struct SceneRam {
-    /// `_DissolveTex` `Texture2D` + its path_id and `[sx, sy, ox, oy]`.
+    /// `_DissolveTex` `Texture2D` + its `path_id` and `[sx, sy, ox, oy]`.
     pub dissolve_pid: Option<i64>,
     pub dissolve_val: Option<Value>,
     pub dissolve_st: [f64; 4],
-    /// `_DisturbTex` `Texture2D` + its path_id and `[sx, sy, ox, oy]`.
+    /// `_DisturbTex` `Texture2D` + its `path_id` and `[sx, sy, ox, oy]`.
     pub disturb_pid: Option<i64>,
     pub disturb_val: Option<Value>,
     pub disturb_st: [f64; 4],
@@ -230,7 +230,7 @@ pub struct BgQuad {
     pub sort: i64,
     /// World-space Z of the quad origin (draw-order tie-break).
     pub z: f32,
-    /// `_MainTex` `Texture2D` path_id (for claiming against later phases).
+    /// `_MainTex` `Texture2D` `path_id` (for claiming against later phases).
     pub tex_pid: i64,
     /// Static `_MainTex_ST` `[scaleX, scaleY, offsetX, offsetY]` — WHICH SUB-RECT of
     /// `tex_pid` this quad samples. Already baked into `mesh.uvs` (unless an `st_curve`
@@ -252,11 +252,11 @@ pub struct BgQuad {
     /// capture's radius to ~1% at four of five beats, so this is the missing input rather than an
     /// anchoring error. See `entrance_transform_curves`.
     pub scale_curve: Option<Vec<(f32, f32)>>,
-    /// ENTRANCE reveal time (seconds) — when this layer's GameObject (or a nearest
+    /// ENTRANCE reveal time (seconds) — when this layer's `GameObject` (or a nearest
     /// ancestor group) is switched ON by an `m_IsActive` curve in the `_Start` clips.
     /// `None` = always active (visible from t=0). Only `_Start` scenes carry non-None.
     pub active_from: Option<f32>,
-    /// ENTRANCE hide time (seconds) — when this layer's GameObject (or nearest ancestor)
+    /// ENTRANCE hide time (seconds) — when this layer's `GameObject` (or nearest ancestor)
     /// is switched OFF by an `m_IsActive` curve in the `_Start` clips (the cinematic's
     /// environment SWAP). `None` = never hidden (visible to the end). Only `_Start` scenes.
     pub active_until: Option<f32>,
@@ -278,7 +278,7 @@ pub struct BgQuad {
     /// SHADER UV-SCROLL (Capability A): the Ram flowing-light shader family
     /// (`Torappu/Particles-L2D/Ram/{Disturb,VertexDisturb}`, `_shaderName` contains
     /// `"Ram/"`) scrolls `_MainTex` continuously against Unity `_Time` via the STATIC
-    /// material floats `_MainUSpeed`/`_MainVSpeed` (UV/sec, no AnimationClip). Baking only
+    /// material floats `_MainUSpeed`/`_MainVSpeed` (UV/sec, no `AnimationClip`). Baking only
     /// the static ST froze it; this carries the per-second UV velocity `[u, v]` (Unity UV
     /// space) so the frontend re-adds `_Time · speed` each frame. `None` unless the
     /// material is a Ram-family shader with a non-zero `_Main*Speed`.
@@ -297,23 +297,23 @@ pub struct BgQuad {
     /// at runtime, so its serialized transform (and therefore the baked `pos` above) is
     /// only an editor pose. `None` = a world-fixed scene quad (the common case).
     pub follow: Option<BgFollow>,
-    /// SOURCE GameObject path_id, for diagnostics only — never emitted to JSON.
+    /// SOURCE `GameObject` `path_id`, for diagnostics only — never emitted to JSON.
     ///
     /// Scene layers export ANONYMOUSLY (`idx`/`pos`/`sort`/`tex`/`tint`/`uv` and nothing else),
     /// so there is no way to ask "which object is layer 23?" from the output. That gap silently
-    /// invalidated a corpus scan: matching scroller GameObjects against exported layer names
+    /// invalidated a corpus scan: matching scroller `GameObjects` against exported layer names
     /// returned 0 hits on all nine references — not because the objects were unexported, but
     /// because layers carry no name to match. `DYNCHAR_LAYERMAP=1` prints the mapping at the
     /// emission site so attribution is possible without guessing at index alignment (which
     /// the drop heuristics break anyway).
     pub go_pid: i64,
-    /// Source GameObject name, resolved at construction (where the object map is in scope).
+    /// Source `GameObject` name, resolved at construction (where the object map is in scope).
     /// Diagnostics only — never emitted.
     pub go_name: String,
 }
 
 /// A scene quad's runtime bone attachment (spine-unity `BoneFollower`). At runtime the
-/// follower snaps its GameObject onto `bone`, so the quad's true world matrix is
+/// follower snaps its `GameObject` onto `bone`, so the quad's true world matrix is
 /// `bone(t) · followerWorld⁻¹ · quadWorld` — the frontend replays exactly that delta
 /// against the baked geometry.
 pub struct BgFollow {
@@ -321,10 +321,10 @@ pub struct BgFollow {
     pub bone: String,
     /// The follower's `followBoneRotation`: false = translation-only tracking.
     pub rot: bool,
-    /// The follower GameObject's world ORIGIN in the spine root's frame (Unity units,
+    /// The follower `GameObject`'s world ORIGIN in the spine root's frame (Unity units,
     /// Y-up); scaled to authored px at emit time.
     pub origin: [f32; 2],
-    /// The follower GameObject's world 2×2 LINEAR basis (Y-up), row-major
+    /// The follower `GameObject`'s world 2×2 LINEAR basis (Y-up), row-major
     /// `[m00, m01, m10, m11]`. Scale-invariant, so it needs no unit conversion.
     pub basis: [f32; 4],
 }
@@ -387,11 +387,11 @@ pub(crate) fn get_path_id(val: &Value) -> Option<i64> {
     val.get("m_PathID").and_then(serde_json::Value::as_i64)
 }
 
-/// Whether a GameObject is shown in the IDLE display — i.e. no Transform ancestor
+/// Whether a `GameObject` is shown in the IDLE display — i.e. no Transform ancestor
 /// is `m_IsActive=0` NOR a state-only effect group. Dynchar prefabs bucket effects
 /// into groups ("Start Only Effects" / "Interact Only Effects" / "Special Only
 /// Effects" / "General Effects") that the game shows only during that state; the
-/// groups stay m_IsActive=1 in the prefab (gated at runtime by the animator), so
+/// groups stay `m_IsActive=1` in the prefab (gated at runtime by the animator), so
 /// we exclude by NAME too. Descendants of a non-idle group must not appear in the
 /// idle scene/particles, else every state's effects render at once → noise.
 /// Animation states whose `<State> Only Effects` groups the prefab ships switched OFF.
@@ -399,7 +399,7 @@ const STATE_ONLY: &[&str] = &[
     "start", "interact", "special", "skill", "attack", "die", "assist",
 ];
 
-/// Is this GameObject inside a `<State> Only Effects` group for a state that is NOT the one
+/// Is this `GameObject` inside a `<State> Only Effects` group for a state that is NOT the one
 /// being exported? Such a group is switched on only while the game plays that state, so its
 /// contents belong to neither the idle scene nor the `_Start` cinematic — and unlike an
 /// ordinary inactive object, an animated colour curve must NOT be able to resurrect it
@@ -511,7 +511,7 @@ pub(crate) fn go_effectively_active(
     true
 }
 
-/// Does this GameObject sit under a `Start Only Effects` group?
+/// Does this `GameObject` sit under a `Start Only Effects` group?
 ///
 /// The `<State> Only Effects` groups are authored on the IDLE prefab and switched on by the game
 /// only while that state plays. A start-only system therefore falls through BOTH particle gates:
@@ -527,7 +527,9 @@ pub(crate) fn has_start_only_ancestor(
     go_pid: i64,
     go_to_transform: &HashMap<i64, i64>,
 ) -> bool {
-    let Some(&mut_tr) = go_to_transform.get(&go_pid) else { return false };
+    let Some(&mut_tr) = go_to_transform.get(&go_pid) else {
+        return false;
+    };
     let mut cur_tr = mut_tr;
     for _ in 0..256 {
         let tf = match all_objects.get(&cur_tr) {
@@ -577,7 +579,11 @@ pub(crate) fn blocking_ancestor(
         if let Some(go) = tf.get("m_GameObject").and_then(get_path_id)
             && let Some((1, gv)) = all_objects.get(&go)
         {
-            let name = gv.get("m_Name").and_then(Value::as_str).unwrap_or("").to_string();
+            let name = gv
+                .get("m_Name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
             let lower = name.to_ascii_lowercase();
             match idle_active.get(&go) {
                 Some(false) => return Some((name, "idle-clip switches it OFF")),
@@ -692,23 +698,28 @@ pub fn collect_spine_assets(
         // convention, and keep the filename test as the fallback. Corpus-wide this changes
         // exactly the one skin: every other entrance skeleton is already `_Start`-named, so
         // `root_is_entrance` and the filename test agree and nothing moves.
-        let is_dyn_illust =
-            category == SpineCategory::DynIllust && base_name.to_lowercase().starts_with("dyn_illust_");
+        let is_dyn_illust = category == SpineCategory::DynIllust
+            && base_name.to_lowercase().starts_with("dyn_illust_");
         let root_is_entrance = is_dyn_illust && {
             let h = BgParticleHost::new(all_objects);
             mecanim_val
                 .get("m_GameObject")
                 .and_then(get_path_id)
                 .and_then(|go| h.prefab_root_of_go(all_objects, go))
-                .is_some_and(|r| h.go_name(all_objects, r).to_lowercase().starts_with("dyn_entrance_"))
+                .is_some_and(|r| {
+                    h.go_name(all_objects, r)
+                        .to_lowercase()
+                        .starts_with("dyn_entrance_")
+                })
         };
         // The name the asset set is written under. An entrance-root skeleton that is not
         // already `_Start`-named must not collide with its idle twin.
-        let export_name: String = if root_is_entrance && !base_name.to_lowercase().contains("_start") {
-            format!("{base_name}_Start")
-        } else {
-            base_name.to_string()
-        };
+        let export_name: String =
+            if root_is_entrance && !base_name.to_lowercase().contains("_start") {
+                format!("{base_name}_Start")
+            } else {
+                base_name.to_string()
+            };
         let is_entrance_set = export_name.to_lowercase().contains("_start");
 
         let (scene, skel_scale, particles) = if is_dyn_illust {
@@ -897,7 +908,8 @@ pub fn collect_spine_assets(
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects)
                 .or_else(|| super::anim::entrance_dolly_curve(all_objects));
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
-            let (cam_center, cam_roll, aperture) = super::anim::entrance_camera_track(all_objects, inv, ortho);
+            let (cam_center, cam_roll, aperture) =
+                super::anim::entrance_camera_track(all_objects, inv, ortho);
             (
                 dur,
                 fade,
@@ -914,7 +926,9 @@ pub fn collect_spine_assets(
                 post_fx,
             )
         } else {
-            (None, None, None, None, None, None, None, None, None, None, None, None, None)
+            (
+                None, None, None, None, None, None, None, None, None, None, None, None, None,
+            )
         };
 
         assets.push(SpineAsset {
@@ -967,6 +981,9 @@ pub fn collect_spine_assets(
 /// libgdx atlas format: a page is a bare filename line followed by `size: W,H`. The frontend
 /// scales every region's UVs by these numbers, so a written PNG whose dimensions disagree
 /// silently misplaces every attachment.
+// `t` here is a line of libgdx `.atlas` text (always emitted lowercase by the Spine exporter),
+// not a filesystem path, so this isn't the case-insensitive-extension situation the lint targets.
+#[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn atlas_page_sizes(atlas_text: &str) -> HashMap<String, (u32, u32)> {
     let mut out = HashMap::new();
     let mut page: Option<String> = None;
@@ -1039,7 +1056,7 @@ pub fn detect_dynchar_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
     path_lower.contains("arts/dynchars")
 }
 
-/// ENTRANCE visibility window for a GameObject: the window of the nearest ancestor
+/// ENTRANCE visibility window for a `GameObject`: the window of the nearest ancestor
 /// (self first) present in `reveal` — walks `m_Father` up the transform chain.
 /// `(None, None)` when neither the object nor any ancestor is toggled (→ always visible).
 fn reveal_of_go(
@@ -1230,15 +1247,27 @@ fn collect_dynchar_bg_quads(
                 if v.get("m_GameObject").and_then(get_path_id) != Some(*skel_go) {
                     continue;
                 }
-                let Some(parts) = v.get("partsRenderers").and_then(serde_json::Value::as_array) else { continue };
+                let Some(parts) = v
+                    .get("partsRenderers")
+                    .and_then(serde_json::Value::as_array)
+                else {
+                    continue;
+                };
                 for e in parts {
-                    let Some(rp) = e.get("m_PathID").and_then(serde_json::Value::as_i64) else { continue };
-                    let Some((_, rv)) = all_objects.get(&rp) else { continue };
-                    let Some(go) = rv.get("m_GameObject").and_then(get_path_id) else { continue };
+                    let Some(rp) = e.get("m_PathID").and_then(serde_json::Value::as_i64) else {
+                        continue;
+                    };
+                    let Some((_, rv)) = all_objects.get(&rp) else {
+                        continue;
+                    };
+                    let Some(go) = rv.get("m_GameObject").and_then(get_path_id) else {
+                        continue;
+                    };
                     for (cid2, v2) in all_objects.values() {
                         if *cid2 == 23
                             && v2.get("m_GameObject").and_then(get_path_id) == Some(go)
-                            && let Some(o) = v2.get("m_SortingOrder").and_then(serde_json::Value::as_i64)
+                            && let Some(o) =
+                                v2.get("m_SortingOrder").and_then(serde_json::Value::as_i64)
                         {
                             sorts.push(o);
                         }
@@ -1319,7 +1348,7 @@ fn collect_dynchar_bg_quads(
             let adjustes = v.get("_adjustes")?.as_array()?;
             let (o0, s0) = parse_adjust(adjustes.first()?);
             // The tight endpoint is optional (some controllers ship a single adjust).
-            let (o1, s1) = adjustes.get(1).map(parse_adjust).unwrap_or((None, None));
+            let (o1, s1) = adjustes.get(1).map_or((None, None), parse_adjust);
             Some((o0, s0, o1, s1))
         })
         .unwrap_or((None, None, None, None));
@@ -1413,7 +1442,7 @@ fn collect_dynchar_bg_quads(
         // A colour-reveal admission must not override the state gate: a group the game
         // reserves for another state stays out no matter what its curves do.
         let state_blocked = state_only_blocked(all_objects, go_pid, &go_to_transform, is_entrance);
-        if !eff_active && window.is_empty() && !(has_color_reveal && !state_blocked) {
+        if !eff_active && window.is_empty() && (!has_color_reveal || state_blocked) {
             skipped_inactive += 1;
             if attrib_dbg {
                 let (by, why) = blocking_ancestor(
@@ -1483,8 +1512,7 @@ fn collect_dynchar_bg_quads(
             // otherwise a warm-ring/god-ray reveal painted on an external texture is
             // lost. Non-reveal meshExt quads without a window stay dropped (they'd be
             // always-on frozen fx polluting the idle scene).
-            if mat.get("_meshExtResolved").is_some() && window.is_empty() && !has_color_reveal
-            {
+            if mat.get("_meshExtResolved").is_some() && window.is_empty() && !has_color_reveal {
                 continue;
             }
             // _MainTex slot: texture + its Scale/Offset (ST). Unresolvable
@@ -1537,15 +1565,13 @@ fn collect_dynchar_bg_quads(
             // `ram_tint_scale` exist to stop the clamp flattening a RAMP; a curve whose rgb is
             // CONSTANT has no ramp to protect, so the clamp costs nothing there. Data-derived —
             // it reads the curve, not the skin.
-            let rgb_constant = color_channels
-                .get(&go_pid)
-                .map(|chs| {
-                    chs.iter().filter(|c| c.channel < 3).all(|c| {
-                        let mut it = c.curve.iter().map(|&(_, v)| v);
-                        it.next().is_none_or(|f| it.all(|v| (v - f).abs() <= 0.5 / 255.0))
-                    })
+            let rgb_constant = color_channels.get(&go_pid).is_some_and(|chs| {
+                chs.iter().filter(|c| c.channel < 3).all(|c| {
+                    let mut it = c.curve.iter().map(|&(_, v)| v);
+                    it.next()
+                        .is_none_or(|f| it.all(|v| (v - f).abs() <= 0.5 / 255.0))
                 })
-                .unwrap_or(false);
+            });
             let animated_peak = color_channels.get(&go_pid).map(|chs| {
                 chs.iter()
                     .filter(|c| c.channel < 3)
@@ -1658,7 +1684,12 @@ fn collect_dynchar_bg_quads(
                 // conclusion still doesn't follow.
                 if std::env::var("DYNCHAR_MC_X2").is_ok() && main_color_doubles(mat) {
                     (
-                        [mc[0] * 2.0, mc[1] * 2.0, mc[2] * 2.0, (mc[3] * 2.0).min(1.0)],
+                        [
+                            mc[0] * 2.0,
+                            mc[1] * 2.0,
+                            mc[2] * 2.0,
+                            (mc[3] * 2.0).min(1.0),
+                        ],
                         2.0,
                         true,
                     )
@@ -1693,7 +1724,8 @@ fn collect_dynchar_bg_quads(
                 // reference it touches, which is not enough to justify a corpus-wide
                 // reclassification unmeasured elsewhere -- see `dynchar-veil-frame-coverage`.
                 // Turn it on only together with a corpus render of the affected skins.
-                let wide = std::env::var("DYNCHAR_UVSCROLL_ALL").is_ok() && is_l2d_compositor(shader);
+                let wide =
+                    std::env::var("DYNCHAR_UVSCROLL_ALL").is_ok() && is_l2d_compositor(shader);
                 if shader.contains("Ram/") || wide {
                     let us = blend("_MainUSpeed", 0.0) as f32;
                     let vs = blend("_MainVSpeed", 0.0) as f32;
@@ -1776,7 +1808,11 @@ fn collect_dynchar_bg_quads(
                     };
                     // A two-map material states its intent by BINDING the maps; it carries no
                     // `_ToggleUseDissolve` at all, so the switch must not veto it.
-                    let toggle_default = if shader.contains("Ram/") || two_map { 1.0 } else { 0.0 };
+                    let toggle_default = if shader.contains("Ram/") || two_map {
+                        1.0
+                    } else {
+                        0.0
+                    };
                     // `DYNCHAR_DISSOLVE_GATE=1`: honour `_ToggleUseDissolve` only on the shaders
                     // that actually DECLARE it. Dumping the property block of every
                     // dissolve-capable `Particles*` shader shows just three do — the
@@ -1885,14 +1921,34 @@ fn collect_dynchar_bg_quads(
                             dissolve2_val: diss2_val,
                             dissolve2_st: diss2_st,
                             edge_color: shader.to_ascii_lowercase().contains("edge").then(|| {
-                                let c = super::particles::mat_color(mat, "_Edgecolor", [1.0, 1.0, 1.0, 1.0]);
+                                let c = super::particles::mat_color(
+                                    mat,
+                                    "_Edgecolor",
+                                    [1.0, 1.0, 1.0, 1.0],
+                                );
                                 [c[0] as f32, c[1] as f32, c[2] as f32, c[3] as f32]
                             }),
                             edge_pow: blend("_pow", 1.0) as f32,
-                            amount2: if two_map { blend("_Amount_02", 0.0) as f32 } else { 0.0 },
-                            border_width2: if two_map { blend("_BorderWidth_02", 0.1) as f32 } else { 0.1 },
-                            amount: if two_map { blend("_Amount_01", 0.5) } else { blend("_Amount", 0.5) } as f32,
-                            border_width: if two_map { blend("_BorderWidth_01", 0.1) } else { blend("_BorderWidth", 0.1) } as f32,
+                            amount2: if two_map {
+                                blend("_Amount_02", 0.0) as f32
+                            } else {
+                                0.0
+                            },
+                            border_width2: if two_map {
+                                blend("_BorderWidth_02", 0.1) as f32
+                            } else {
+                                0.1
+                            },
+                            amount: if two_map {
+                                blend("_Amount_01", 0.5)
+                            } else {
+                                blend("_Amount", 0.5)
+                            } as f32,
+                            border_width: if two_map {
+                                blend("_BorderWidth_01", 0.1)
+                            } else {
+                                blend("_BorderWidth", 0.1)
+                            } as f32,
                             anchor_u: blend("_AnchorU", 0.0) as f32,
                             anchor_v: blend("_AnchorV", 0.0) as f32,
                             intensity_u: blend("_IntensityU", 0.0) as f32,
@@ -2083,8 +2139,9 @@ fn collect_dynchar_bg_quads(
         // overrides applied to any animated transforms in the chain.
         let world = go_to_transform
             .get(&go_pid)
-            .map(|&tf| accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose))
-            .unwrap_or_else(super::mesh::Mat4::identity);
+            .map_or_else(super::mesh::Mat4::identity, |&tf| {
+                accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose)
+            });
         let z = world.point([0.0, 0.0, 0.0])[2];
 
         // spine-unity `BoneFollower` in the ancestry: at runtime the follower SNAPS its
@@ -2136,7 +2193,9 @@ fn collect_dynchar_bg_quads(
                     found = Some(g);
                     break;
                 }
-                let Some(tf) = go_to_transform.get(&g) else { break };
+                let Some(tf) = go_to_transform.get(&g) else {
+                    break;
+                };
                 let father = all_objects
                     .get(tf)
                     .and_then(|(_, v)| v.get("m_Father"))
@@ -2150,26 +2209,28 @@ fn collect_dynchar_bg_quads(
             }
             found
         };
-        let scale_curve = xform_owner.and_then(|owner| xform_map.get(&owner)).and_then(|et| {
-            if et.scale.len() < 2 {
-                return None;
-            }
-            // Normalise against the OWNER's prefab scale — the transform the curve belongs to,
-            // not the quad's own, or the multiplier is divided by the wrong number.
-            let base = xform_owner
-                .and_then(|owner| go_to_transform.get(&owner))
-                .and_then(|tf| all_objects.get(tf))
-                .and_then(|(_, tv)| tv.get("m_LocalScale"))
-                .and_then(|s| s.get("x"))
-                .and_then(Value::as_f64)
-                .unwrap_or(1.0) as f32;
-            if base.abs() < 1e-6 {
-                return None;
-            }
-            let c: Vec<(f32, f32)> = et.scale.iter().map(|&(t, v)| (t, v / base)).collect();
-            // All-1.0 curves carry no information and would only bloat every scene JSON.
-            c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
-        });
+        let scale_curve = xform_owner
+            .and_then(|owner| xform_map.get(&owner))
+            .and_then(|et| {
+                if et.scale.len() < 2 {
+                    return None;
+                }
+                // Normalise against the OWNER's prefab scale — the transform the curve belongs to,
+                // not the quad's own, or the multiplier is divided by the wrong number.
+                let base = xform_owner
+                    .and_then(|owner| go_to_transform.get(&owner))
+                    .and_then(|tf| all_objects.get(tf))
+                    .and_then(|(_, tv)| tv.get("m_LocalScale"))
+                    .and_then(|s| s.get("x"))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(1.0) as f32;
+                if base.abs() < 1e-6 {
+                    return None;
+                }
+                let c: Vec<(f32, f32)> = et.scale.iter().map(|&(t, v)| (t, v / base)).collect();
+                // All-1.0 curves carry no information and would only bloat every scene JSON.
+                c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
+            });
         // DIAGNOSTIC (`DYNCHAR_XFORM_DEBUG=1`): which GO owns each quad, and did it find a
         // curve? The curve map is keyed by the clip's DISAMBIGUATED ctrl, which need not be the
         // clone the quad was collected from — that mismatch is why Executor's scope rim exports
@@ -2198,7 +2259,11 @@ fn collect_dynchar_bg_quads(
             scale_curve,
             active_from: window.first().and_then(|w| w.0),
             active_until: window.first().and_then(|w| w.1),
-            active_windows: if window.len() > 1 { window.clone() } else { Vec::new() },
+            active_windows: if window.len() > 1 {
+                window.clone()
+            } else {
+                Vec::new()
+            },
             root_reveal_from: cross_from,
             color_curve,
             uv_scroll,
@@ -2481,6 +2546,7 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
 /// opposed to the plain blend modes (`Particles-L2D/AlphaBlend`, `…/Additive`) that have
 /// nothing below the namespace. Membership alone implies nothing about WHICH maps a given
 /// material binds — every caller pairs this with a test on the material's own properties.
+#[must_use]
 pub fn is_l2d_compositor(shader: &str) -> bool {
     shader
         .rfind("Particles-L2D/")
@@ -2648,7 +2714,7 @@ type EntranceTiming = (
 );
 
 /// Read the entrance (`_Start`) cinematic timing from the prefab's director
-/// MonoBehaviour. The director is the class-114 that owns `_mainCamera` + `_params`
+/// `MonoBehaviour`. The director is the class-114 that owns `_mainCamera` + `_params`
 /// (`{ duration, charVoiceOffset, fadeColor }`). Returns
 /// `(duration, transform, camera_ortho, voice, background_reveal)`:
 /// - `duration`  = `_params.duration` — the whole entrance span.
@@ -2676,7 +2742,9 @@ type EntranceTiming = (
 /// Deterministic object order for sibling modules (see `anim::entrance_post_fx`, which must not
 /// walk hash order — the probe that found the post-process volume printed a different clip on
 /// every run because it did).
-pub(crate) fn objects_by_path_id_pub(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<(&i64, &(i32, Value))> {
+pub(crate) fn objects_by_path_id_pub(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> Vec<(&i64, &(i32, Value))> {
     objects_by_path_id(all_objects)
 }
 
@@ -2789,7 +2857,7 @@ fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTim
     (Some(dur), transform, cam_ortho, voice, background_reveal)
 }
 
-/// Accumulate a GameObject's world TRANSLATION by summing `m_LocalPosition` up the
+/// Accumulate a `GameObject`'s world TRANSLATION by summing `m_LocalPosition` up the
 /// transform `m_Father` chain (rotation/scale ignored — the camera/root chain in these
 /// prefabs is identity-rotated at unit scale). Used to find the entrance camera's aim
 /// point relative to the skeleton root.
@@ -2838,20 +2906,20 @@ fn find_entrance_camera_offset(all_objects: &HashMap<i64, (i32, Value)>) -> Opti
 
 /// Shared scene-graph context for placing non-spine objects (background quads,
 /// particle emitters) in the spine root's local frame: the GameObject→Transform
-/// map, the set of spine-root GameObjects (the walk stops before them), and the
+/// map, the set of spine-root `GameObjects` (the walk stops before them), and the
 /// evaluated idle pose. Built once per dynchar prefab.
 pub(crate) struct BgParticleHost {
     go_to_transform: HashMap<i64, i64>,
     spine_gos: HashSet<i64>,
-    /// GameObject `path_id` → the `_delayTime` (seconds) of a delay/activator
-    /// MonoBehaviour on it. The `_Start` cinematic sequences its effect GROUPS by
+    /// `GameObject` `path_id` → the `_delayTime` (seconds) of a delay/activator
+    /// `MonoBehaviour` on it. The `_Start` cinematic sequences its effect GROUPS by
     /// activating them after a delay; a particle system's own start delay is its
-    /// nearest such ancestor's value (see {@link delay_of_go}).
+    /// nearest such ancestor's value (see {@link `delay_of_go`}).
     go_delay: HashMap<i64, f64>,
-    /// GameObject `path_id` → spine-unity `BoneFollower` on it: `(boneName,
+    /// `GameObject` `path_id` → spine-unity `BoneFollower` on it: `(boneName,
     /// followBoneRotation)`. Effect-prefab CLONE roots (the director `_effects`,
     /// e.g. Virtuosa's `start_apple_01(Clone)`) ride a SPINE BONE at runtime via
-    /// this MonoBehaviour — their serialized transform is only an editor pose the
+    /// this `MonoBehaviour` — their serialized transform is only an editor pose the
     /// follower overrides. Identified by field shape (`boneName` +
     /// `followXYPosition`), no script whitelist.
     go_follower: HashMap<i64, (String, bool)>,
@@ -2914,7 +2982,7 @@ impl BgParticleHost {
         }
     }
 
-    /// Nearest `BoneFollower` in the GameObject's transform ancestry (self first,
+    /// Nearest `BoneFollower` in the `GameObject`'s transform ancestry (self first,
     /// stopping at the spine root): `(boneName, followBoneRotation, follower GO)`.
     /// The follower's GO is returned so the caller can bake the emitter's local
     /// offset WITHIN the followed rig (the follower snaps that GO onto the bone).
@@ -2946,7 +3014,7 @@ impl BgParticleHost {
         None
     }
 
-    /// Topmost ancestor GameObject of `go_pid` — the prefab-INSTANCE root its
+    /// Topmost ancestor `GameObject` of `go_pid` — the prefab-INSTANCE root its
     /// subtree belongs to. Dynchar bundles ship SEVERAL sibling prefab roots
     /// (`dyn_illust_*` idle + `dyn_entrance_*` cinematic), each with its own
     /// skeleton and effect rigs; membership decisions must compare these roots.
@@ -2975,7 +3043,7 @@ impl BgParticleHost {
             .and_then(get_path_id)
     }
 
-    /// Whether the GameObject and every ancestor are active (see `go_effectively_active`).
+    /// Whether the `GameObject` and every ancestor are active (see `go_effectively_active`).
     pub(crate) fn effectively_active(
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
@@ -2991,7 +3059,7 @@ impl BgParticleHost {
         )
     }
 
-    /// Is this GameObject under a `Start Only Effects` group? See [`has_start_only_ancestor`].
+    /// Is this `GameObject` under a `Start Only Effects` group? See [`has_start_only_ancestor`].
     pub(crate) fn has_start_only_ancestor(
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
@@ -3016,7 +3084,7 @@ impl BgParticleHost {
         )
     }
 
-    /// World matrix of a GameObject's Transform, in the spine root's local frame.
+    /// World matrix of a `GameObject`'s Transform, in the spine root's local frame.
     pub(crate) fn world_of_go(
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
@@ -3029,7 +3097,7 @@ impl BgParticleHost {
             })
     }
 
-    /// The GameObject's transform accumulated to the TOP of the prefab — the spine-root stop
+    /// The `GameObject`'s transform accumulated to the TOP of the prefab — the spine-root stop
     /// is NOT applied, so a root's own transform is included and two different roots become
     /// directly comparable.
     ///
@@ -3050,11 +3118,11 @@ impl BgParticleHost {
             })
     }
 
-    /// The world matrix of the GameObject's Transform PARENT (its `m_Father` chain,
+    /// The world matrix of the `GameObject`'s Transform PARENT (its `m_Father` chain,
     /// up to but excluding the spine root). Used to project a child's animated LOCAL
     /// position (in the parent's frame) into the spine-root world frame — the pivot
     /// offset of an entrance-driven effect host (see `entrance_transform_curves`).
-    /// `None` when the GameObject has no transform or its transform has no parent.
+    /// `None` when the `GameObject` has no transform or its transform has no parent.
     pub(crate) fn parent_world_of_go(
         &self,
         all_objects: &HashMap<i64, (i32, Value)>,
@@ -3074,7 +3142,7 @@ impl BgParticleHost {
         ))
     }
 
-    /// The GameObject's serialized local `(scale, position)` from its Transform. Used
+    /// The `GameObject`'s serialized local `(scale, position)` from its Transform. Used
     /// to normalise an entrance SCALE curve into a multiplier of the baked (resting)
     /// pose and to reference the animated POSITION delta.
     pub(crate) fn local_scale_pos_of_go(
@@ -3096,7 +3164,7 @@ impl BgParticleHost {
         Some((vec3("m_LocalScale", 1.0), vec3("m_LocalPosition", 0.0)))
     }
 
-    /// The nearest ancestor GameObject of `go_pid` (self first, up to the spine root)
+    /// The nearest ancestor `GameObject` of `go_pid` (self first, up to the spine root)
     /// that the `_Start` cinematic drives with a Transform-scale curve (present in
     /// `curves`). This is the effect-host whose animated scale/position the emitter
     /// rides — Virtuosa's crown `ctrl` above the `spark_small` glow host. `None` when
@@ -3127,8 +3195,11 @@ impl BgParticleHost {
         None
     }
 
-    /// The GameObject's own `m_Name`, or `"?"`. Diagnostics only: the exported JSONs
+    /// The `GameObject`'s own `m_Name`, or `"?"`. Diagnostics only: the exported JSONs
     /// are anonymous, so attributing a layer/system back to an authored node needs this.
+    // Kept as a method (rather than an associated fn) for call-site symmetry with its several
+    // `host.go_name(...)` / `self.go_name(...)` call sites elsewhere in this impl.
+    #[allow(clippy::unused_self)]
     pub(crate) fn go_name(&self, all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> String {
         all_objects
             .get(&go_pid)
@@ -3138,7 +3209,7 @@ impl BgParticleHost {
             .to_string()
     }
 
-    /// `go_name` of the GameObject's prefab-INSTANCE root — which of a dynchar bundle's
+    /// `go_name` of the `GameObject`'s prefab-INSTANCE root — which of a dynchar bundle's
     /// sibling roots (`dyn_illust_*` idle / `dyn_entrance_*` cinematic) it belongs to.
     pub(crate) fn root_name_of_go(
         &self,
@@ -3149,14 +3220,14 @@ impl BgParticleHost {
             .map_or_else(|| "?".to_string(), |r| self.go_name(all_objects, r))
     }
 
-    /// The GameObject `m_Name` of every ancestor of `go_pid`, nearest-first,
+    /// The `GameObject` `m_Name` of every ancestor of `go_pid`, nearest-first,
     /// walking `m_Father` up to (but excluding) the spine root. In-game, a
     /// particle emitter that drifts with the character is parented under a
-    /// spine-driven bone GameObject (spine-unity's `SkeletonUtilityBone`, named
+    /// spine-driven bone `GameObject` (spine-unity's `SkeletonUtilityBone`, named
     /// after the bone it mirrors); its name therefore appears in this chain. The
     /// frontend matches these names against the loaded skeleton's bone names to
     /// decide which emitters follow a bone (and which stay world-fixed). The
-    /// emitter's own GameObject name is included first so a directly-on-bone
+    /// emitter's own `GameObject` name is included first so a directly-on-bone
     /// emitter still resolves.
     pub(crate) fn ancestor_go_names(
         &self,
@@ -3188,7 +3259,7 @@ impl BgParticleHost {
         names
     }
 
-    /// Start delay (seconds) of the GameObject's effect, from `_delayTime` activators
+    /// Start delay (seconds) of the `GameObject`'s effect, from `_delayTime` activators
     /// in its transform ancestry (self included, up to but excluding the spine root).
     /// Nested activators COMPOUND — a group enabled at 2s that in turn enables a child
     /// delayed 1s fires at 3s — so the delays are SUMMED. `0.0` when none apply.
@@ -3226,12 +3297,12 @@ impl BgParticleHost {
 
     /// ENTRANCE reveal time (s) of a particle emitter: the `activeFrom` of the nearest
     /// ancestor (self first) that the `_Start` cinematic's `m_IsActive` curves switch ON
-    /// (`windows`, from {@link super::anim::active_windows}). The apple/glow/wing spark
+    /// (`windows`, from {@link `super::anim::active_windows`}). The apple/glow/wing spark
     /// emitters start OFF and are toggled on mid-cinematic (Virtuosa ~4.8–9.8s); without
     /// this their `_delayTime` is 0 so they'd wrongly emit from t=0 (during the seated
     /// intro) and be spent before the apple falls. `None` when no ancestor is toggled.
     /// The FULL `m_IsActive` window `(from, until)` of the nearest gated ancestor — the
-    /// counterpart of {@link entrance_reveal_of_go}, which returns only the reveal. Diagnostic
+    /// counterpart of {@link `entrance_reveal_of_go`}, which returns only the reveal. Diagnostic
     /// for the "particles never switch off" gap.
     pub(crate) fn entrance_window_of_go(
         &self,
@@ -3315,7 +3386,9 @@ fn accumulate_matrix(
         // these prefabs contain them, so a chain that passes through one would be accumulated
         // only partially — a constant position error for exactly those layers.
         if std::env::var("DYNCHAR_TFCHAIN").is_ok() && all_objects.get(&tf_pid).is_none() {
-            eprintln!("  [tfchain] MISSING transform pid {tf_pid} at depth={guard} — chain truncated");
+            eprintln!(
+                "  [tfchain] MISSING transform pid {tf_pid} at depth={guard} — chain truncated"
+            );
         }
         if std::env::var("DYNCHAR_TFCHAIN").is_ok()
             && let Some((cid, v)) = all_objects.get(&tf_pid)
@@ -3328,7 +3401,9 @@ fn accumulate_matrix(
                 .and_then(|(_, o)| o.get("m_Name"))
                 .and_then(Value::as_str)
                 .unwrap_or("?");
-            eprintln!("  [tfchain] TRUNCATED at class {cid} (pid {tf_pid}) go='{name}' depth={guard}");
+            eprintln!(
+                "  [tfchain] TRUNCATED at class {cid} (pid {tf_pid}) go='{name}' depth={guard}"
+            );
         }
         let Some((4, tf)) = all_objects.get(&tf_pid) else {
             break;
@@ -3777,7 +3852,7 @@ pub fn export_spine_assets(
         // filename the rewritten atlas now points at.
         for (from, to) in &page_renames {
             if let Some(mut tex) = decoded.remove(from) {
-                tex.name = to.clone();
+                tex.name.clone_from(to);
                 decoded.insert(to.clone(), tex);
             }
         }
@@ -3880,7 +3955,7 @@ fn opaque_luma(
 }
 
 /// Decode a Ram MASK (`_DissolveTex`/`_DisturbTex`) into the scene's shared texture
-/// list, returning its index. Deduped by source path_id alongside the drawn artwork, so
+/// list, returning its index. Deduped by source `path_id` alongside the drawn artwork, so
 /// a mask that IS the layer's own `_MainTex` costs no extra slot. Unlike the artwork it
 /// is never alpha-merged and never enters `tex_px`: the luminance classifier reads that
 /// map to judge what a layer LOOKS like, and a noise mask is shader input, not paint.
@@ -3925,7 +4000,7 @@ fn st_eq(a: [f64; 4], b: [f64; 4]) -> bool {
 /// Export the full multi-layer scene for the live renderer. Every non-character
 /// mesh quad becomes a textured 2D mesh in spine-authored pixels (Y-up, origin at
 /// the skeleton root), geometry inlined in `{name}[scene].json`, textures written
-/// to a `{name}[scene]/` folder (deduped by source path_id). The frontend draws
+/// to a `{name}[scene]/` folder (deduped by source `path_id`). The frontend draws
 /// these as Pixi meshes in `sort` order and inserts the animated character spine
 /// at `characterSort`. Returns the number of files written.
 fn export_scene(
@@ -4091,9 +4166,7 @@ fn export_scene(
 
     for quad in order {
         // Cross-root duplicate of a layer we already draw — see `own_root_keys` above.
-        if quad.root_reveal_from.is_some()
-            && own_root_keys.contains(&quad.go_name)
-        {
+        if quad.root_reveal_from.is_some() && own_root_keys.contains(&quad.go_name) {
             dropped_twins += 1;
             continue;
         }
@@ -4181,7 +4254,10 @@ fn export_scene(
                         if n == 0 {
                             return (0.0, 0.0);
                         }
-                        (v[(n as f32 * 0.02) as usize], v[((n - 1) as f32 * 0.98) as usize])
+                        (
+                            v[(n as f32 * 0.02) as usize],
+                            v[((n - 1) as f32 * 0.98) as usize],
+                        )
                     };
                     let (xlo, xhi) = pct(pos.iter().step_by(2).copied().collect());
                     let (ylo, yhi) = pct(pos.iter().skip(1).step_by(2).copied().collect());
@@ -4475,7 +4551,8 @@ fn export_scene(
         // when the `_Start` clips actually animate this transform, so an unanimated corpus stays
         // byte-identical.
         if let Some(sc) = &quad.scale_curve {
-            layer["scaleCurve"] = serde_json::json!(sc.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+            layer["scaleCurve"] =
+                serde_json::json!(sc.iter().map(|&p| <[f32; 2]>::from(p)).collect::<Vec<_>>());
         }
         // ENTRANCE reveal time (s) — the layer is hidden until its `m_IsActive` switches
         // ON in the `_Start` cinematic (cathedral first, mirror-world + throne later).
@@ -4519,8 +4596,8 @@ fn export_scene(
         // SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space)
         // for Ram-family scene layers; the frontend offsets the layer's UVs by `t · [u,v]`
         // each frame. Omitted for every non-scroll layer.
-        if let Some(uv) = quad.uv_scroll {
-            layer["uvScroll"] = serde_json::json!([uv[0], uv[1]]);
+        if let Some([uv_0, uv_1]) = quad.uv_scroll {
+            layer["uvScroll"] = serde_json::json!([uv_0, uv_1]);
         }
         // Ram DISSOLVE/DISTURB masking (see [`SceneRam`]): the mask indices join the
         // scene's own texture list, so the frontend loader needs no new plumbing.
@@ -4657,7 +4734,11 @@ fn export_scene(
         let bbox_key = |l: &serde_json::Value| -> Option<(i64, i64, i64, i64)> {
             let p = l.get("pos")?.as_array()?;
             let xs = p.iter().step_by(2).filter_map(serde_json::Value::as_f64);
-            let ys = p.iter().skip(1).step_by(2).filter_map(serde_json::Value::as_f64);
+            let ys = p
+                .iter()
+                .skip(1)
+                .step_by(2)
+                .filter_map(serde_json::Value::as_f64);
             let (mut x0, mut x1) = (f64::INFINITY, f64::NEG_INFINITY);
             let (mut y0, mut y1) = (f64::INFINITY, f64::NEG_INFINITY);
             for x in xs {
@@ -4713,10 +4794,19 @@ fn export_scene(
                 // tell a genuine undriven twin from a DIFFERENT quad that merely shares an
                 // atlas and a depth. The bbox is what distinguishes them.
                 let bb = l.get("pos").and_then(serde_json::Value::as_array).map(|p| {
-                    let xs: Vec<f64> = p.iter().step_by(2).filter_map(serde_json::Value::as_f64).collect();
-                    let ys: Vec<f64> = p.iter().skip(1).step_by(2).filter_map(serde_json::Value::as_f64).collect();
-                    let mn = |v: &Vec<f64>| v.iter().cloned().fold(f64::INFINITY, f64::min);
-                    let mx = |v: &Vec<f64>| v.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+                    let xs: Vec<f64> = p
+                        .iter()
+                        .step_by(2)
+                        .filter_map(serde_json::Value::as_f64)
+                        .collect();
+                    let ys: Vec<f64> = p
+                        .iter()
+                        .skip(1)
+                        .step_by(2)
+                        .filter_map(serde_json::Value::as_f64)
+                        .collect();
+                    let mn = |v: &Vec<f64>| v.iter().copied().fold(f64::INFINITY, f64::min);
+                    let mx = |v: &Vec<f64>| v.iter().copied().fold(f64::NEG_INFINITY, f64::max);
                     (mn(&xs), mn(&ys), mx(&xs), mx(&ys))
                 });
                 eprintln!("  DROP[undriven-sibling] tex/sort={key:?} bbox={bb:?}");

@@ -1,5 +1,5 @@
 //! THROWAWAY diagnostic: dump the raw Texture Sheet Animation (`UVModule`) of every
-//! ParticleSystem in a bundle.
+//! `ParticleSystem` in a bundle.
 //!
 //! Motivation: Civilight Eterna's background planes sit on ONE tile of a 1x2 sheet for the
 //! whole 5.5-12.0 s life of the planes in the capture, while we flip every ~0.5 s. The
@@ -8,20 +8,21 @@
 //! the renderer as `null` and be re-interpreted as "animate by life fraction". This prints
 //! the fields that decide it.
 //!
-//! Usage: cargo run --release --example probe_tsa -- <bundle.ab> [name-substring]
+//! Usage: cargo run --release --example `probe_tsa` -- <bundle.ab> [name-substring]
+#![allow(clippy::or_fun_call, clippy::too_many_lines)]
 
 use unpacker::unity::{
     bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
 };
 
 fn f(v: &serde_json::Value, k: &str) -> String {
-    v.get(k)
-        .map(|x| {
+    v.get(k).map_or_else(
+        || "-".into(),
+        |x| {
             x.as_f64()
-                .map(|n| format!("{n:.4}"))
-                .unwrap_or_else(|| x.to_string())
-        })
-        .unwrap_or_else(|| "-".into())
+                .map_or_else(|| x.to_string(), |n| format!("{n:.4}"))
+        },
+    )
 }
 
 fn main() {
@@ -49,8 +50,15 @@ fn main() {
             let Some(uv) = ps.get("UVModule") else {
                 continue;
             };
-            let enabled = uv.get("enabled").and_then(|x| x.as_bool()).unwrap_or(false)
-                || uv.get("enabled").and_then(|x| x.as_i64()).unwrap_or(0) != 0;
+            let enabled = uv
+                .get("enabled")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false)
+                || uv
+                    .get("enabled")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(0)
+                    != 0;
             if !enabled {
                 continue;
             }
@@ -58,7 +66,11 @@ fn main() {
                 continue;
             }
             n += 1;
-            println!("=== {} (pathID {}) ===", if name.is_empty() { "<unnamed>" } else { &name }, obj.path_id);
+            println!(
+                "=== {} (pathID {}) ===",
+                if name.is_empty() { "<unnamed>" } else { &name },
+                obj.path_id
+            );
             println!(
                 "   tilesX={} tilesY={} cycles={} animationType={} rowMode={} rowIndex={} randomRow={} uvChannelMask={}",
                 f(uv, "tilesX"),
@@ -77,7 +89,8 @@ fn main() {
                 f(uv, "mode"),
                 f(uv, "timeMode"),
                 f(uv, "fps"),
-                uv.get("speedRange").map(|x| x.to_string()).unwrap_or("-".into()),
+                uv.get("speedRange")
+                    .map_or("-".into(), std::string::ToString::to_string),
                 f(uv, "flipU"),
                 f(uv, "flipV"),
             );
@@ -86,7 +99,10 @@ fn main() {
             for key in ["frameOverTime", "startFrame"] {
                 match uv.get(key) {
                     Some(c) => {
-                        let state = c.get("minMaxState").and_then(|x| x.as_i64()).unwrap_or(-1);
+                        let state = c
+                            .get("minMaxState")
+                            .and_then(serde_json::Value::as_i64)
+                            .unwrap_or(-1);
                         let label = match state {
                             0 => "CONSTANT",
                             1 => "curve",

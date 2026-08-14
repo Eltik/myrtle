@@ -7,12 +7,18 @@
 //! sweeping streak (texture `skadi2_06`) measures ~4x too dim. Before touching that gate, read
 //! the material's real tint: if it is the 0.5 neutral, the gate is not the cause.
 //!
-//! Usage: cargo run --release --example probe_texmat -- <bundle.ab> <shaders-dir> <tex-name>...
+//! Usage: cargo run --release --example `probe_texmat` -- <bundle.ab> <shaders-dir> <tex-name>...
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::unnecessary_lazy_evaluations
+)]
 
 use serde_json::Value;
 use std::collections::HashMap;
 use unpacker::export::shader_map::{build_shader_map, resolve_shader};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -33,7 +39,9 @@ fn col(mat: &Value, key: &str) -> String {
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let path = args.next().expect("usage: probe_texmat <bundle.ab> <shaders-dir> <tex-name>...");
+    let path = args
+        .next()
+        .expect("usage: probe_texmat <bundle.ab> <shaders-dir> <tex-name>...");
     let shaders = args.next().expect("shaders dir");
     let wanted: Vec<String> = args.map(|s| s.to_ascii_lowercase()).collect();
 
@@ -46,18 +54,28 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         // Texture pathID -> name, so a material's `_MainTex` ref can be named.
         let mut tex: HashMap<i64, String> = HashMap::new();
         for o in &sf.objects {
             if o.class_id == 28
                 && let Ok(v) = read_object(&sf, o)
             {
-                tex.insert(o.path_id, v.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string());
+                tex.insert(
+                    o.path_id,
+                    v.get("m_Name")
+                        .and_then(Value::as_str)
+                        .unwrap_or("?")
+                        .to_string(),
+                );
             }
         }
         for o in sf.objects.iter().filter(|o| o.class_id == 21) {
-            let Ok(mat) = read_object(&sf, o) else { continue };
+            let Ok(mat) = read_object(&sf, o) else {
+                continue;
+            };
             let main = mat
                 .get("m_SavedProperties")
                 .and_then(|sp| sp.get("m_TexEnvs"))
@@ -74,7 +92,7 @@ fn main() {
                 .get("m_Shader")
                 .and_then(|s| Some((s.get("m_FileID")?.as_i64()?, s.get("m_PathID")?.as_i64()?)))
                 .and_then(|(f, p)| resolve_shader(&sf.externals, f, p, &smap))
-                .unwrap_or_else(|| "<unresolved>".into());
+                .unwrap_or_else(|| "<unresolved>");
             println!(
                 "MAT '{}'  _MainTex={main}\n    shader={shader}\n    _TintColor={}  _MainColor={}  _Color={}",
                 mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
@@ -95,7 +113,9 @@ fn walkdir(root: &std::path::Path) -> Vec<std::path::PathBuf> {
             out.push(d);
             continue;
         }
-        let Ok(rd) = std::fs::read_dir(&d) else { continue };
+        let Ok(rd) = std::fs::read_dir(&d) else {
+            continue;
+        };
         for e in rd.flatten() {
             stack.push(e.path());
         }

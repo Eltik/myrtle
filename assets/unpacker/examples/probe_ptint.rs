@@ -8,12 +8,15 @@
 //! visibly dimmer than the game's. Before touching that gate, read what the materials actually
 //! carry: if every non-additive tint is the 0.5 neutral, the gate costs nothing.
 //!
-//! Usage: cargo run --release --example probe_ptint -- <bundle.ab> <shaders-dir>
+//! Usage: cargo run --release --example `probe_ptint` -- <bundle.ab> <shaders-dir>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::HashMap;
 use unpacker::export::shader_map::{build_shader_map, resolve_shader};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn col(mat: &Value, key: &str) -> Option<[f64; 4]> {
     let c = mat.get("m_SavedProperties")?.get("m_Colors")?.get(key)?;
@@ -23,7 +26,9 @@ fn col(mat: &Value, key: &str) -> Option<[f64; 4]> {
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let path = args.next().expect("usage: probe_ptint <bundle.ab> <shaders-dir>");
+    let path = args
+        .next()
+        .expect("usage: probe_ptint <bundle.ab> <shaders-dir>");
     let shaders = args.next().expect("shaders dir");
     let smap = build_shader_map(&walkdir(&std::path::PathBuf::from(&shaders)));
 
@@ -37,22 +42,32 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut tex: HashMap<i64, String> = HashMap::new();
         for o in &sf.objects {
             if o.class_id == 28
                 && let Ok(v) = read_object(&sf, o)
             {
-                tex.insert(o.path_id, v.get("m_Name").and_then(Value::as_str).unwrap_or("?").to_string());
+                tex.insert(
+                    o.path_id,
+                    v.get("m_Name")
+                        .and_then(Value::as_str)
+                        .unwrap_or("?")
+                        .to_string(),
+                );
             }
         }
         for o in sf.objects.iter().filter(|o| o.class_id == 21) {
-            let Ok(mat) = read_object(&sf, o) else { continue };
+            let Ok(mat) = read_object(&sf, o) else {
+                continue;
+            };
             let shader = mat
                 .get("m_Shader")
                 .and_then(|s| Some((s.get("m_FileID")?.as_i64()?, s.get("m_PathID")?.as_i64()?)))
                 .and_then(|(f, p)| resolve_shader(&sf.externals, f, p, &smap))
-                .unwrap_or_else(|| "<unresolved>".into());
+                .unwrap_or("<unresolved>");
             let sl = shader.to_ascii_lowercase();
             if !sl.contains("particles") {
                 continue;
@@ -88,14 +103,22 @@ fn main() {
                 mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
                 additive,
                 neutral,
-                t[0], t[1], t[2], t[3],
-                t[0] * 2.0, t[1] * 2.0, t[2] * 2.0, t[3] * 2.0,
+                t[0],
+                t[1],
+                t[2],
+                t[3],
+                t[0] * 2.0,
+                t[1] * 2.0,
+                t[2] * 2.0,
+                t[3] * 2.0,
                 main,
                 shader
             );
         }
     }
-    println!("\nparticle materials: {n_total}   NON-additive with a NON-neutral _TintColor: {n_nonneutral_nonadd}");
+    println!(
+        "\nparticle materials: {n_total}   NON-additive with a NON-neutral _TintColor: {n_nonneutral_nonadd}"
+    );
 }
 
 fn walkdir(root: &std::path::Path) -> Vec<std::path::PathBuf> {
@@ -106,7 +129,9 @@ fn walkdir(root: &std::path::Path) -> Vec<std::path::PathBuf> {
             out.push(d);
             continue;
         }
-        let Ok(rd) = std::fs::read_dir(&d) else { continue };
+        let Ok(rd) = std::fs::read_dir(&d) else {
+            continue;
+        };
         for e in rd.flatten() {
             stack.push(e.path());
         }

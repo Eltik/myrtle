@@ -6,13 +6,20 @@
 //! a haze instead of cutting a hole. Before adding a third state, read the real blend factors
 //! (and colour mask) out of the shader rather than assuming `Zero, OneMinusSrcAlpha`.
 //!
-//! Usage: cargo run --release --example probe_maskblend -- <shaders.ab> [name-filter]
+//! Usage: cargo run --release --example `probe_maskblend` -- <shaders.ab> [name-filter]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::similar_names
+)]
 
 use serde_json::Value;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 /// Unity's `RenderingCommandBuffer` blend-factor enum, as serialised in `m_State`.
-fn blend_factor(n: i64) -> &'static str {
+const fn blend_factor(n: i64) -> &'static str {
     match n {
         0 => "Zero",
         1 => "One",
@@ -41,8 +48,13 @@ fn state_num(v: &Value, key: &str) -> Option<i64> {
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let path = args.next().expect("usage: probe_maskblend <shaders.ab> [filter]");
-    let filter = args.next().unwrap_or_else(|| "mask/erase".into()).to_ascii_lowercase();
+    let path = args
+        .next()
+        .expect("usage: probe_maskblend <shaders.ab> [filter]");
+    let filter = args
+        .next()
+        .unwrap_or_else(|| "mask/erase".into())
+        .to_ascii_lowercase();
 
     let data = std::fs::read(&path).expect("read bundle");
     let bundle = BundleFile::parse(data).expect("parse bundle");
@@ -52,12 +64,16 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         for obj in &sf.objects {
             if obj.class_id != 48 {
                 continue; // Shader
             }
-            let Ok(v) = read_object(&sf, obj) else { continue };
+            let Ok(v) = read_object(&sf, obj) else {
+                continue;
+            };
             let name = v
                 .get("m_ParsedForm")
                 .and_then(|p| p.get("m_Name"))
@@ -96,17 +112,23 @@ fn main() {
                 .cloned()
                 .unwrap_or_default();
             for (si, sub) in subs.iter().enumerate() {
-                let passes = sub.get("m_Passes").and_then(Value::as_array).cloned().unwrap_or_default();
+                let passes = sub
+                    .get("m_Passes")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
                 for (pi, pass) in passes.iter().enumerate() {
-                    let Some(st) = pass.get("m_State") else { continue };
+                    let Some(st) = pass.get("m_State") else {
+                        continue;
+                    };
                     let rt0 = st
                         .get("rtBlend0")
                         .or_else(|| st.get("m_RtBlend0"))
                         .unwrap_or(st);
-                    let src = state_num(rt0, "srcBlend").map(blend_factor).unwrap_or("-");
-                    let dst = state_num(rt0, "destBlend").map(blend_factor).unwrap_or("-");
-                    let srca = state_num(rt0, "srcBlendAlpha").map(blend_factor).unwrap_or("-");
-                    let dsta = state_num(rt0, "destBlendAlpha").map(blend_factor).unwrap_or("-");
+                    let src = state_num(rt0, "srcBlend").map_or("-", blend_factor);
+                    let dst = state_num(rt0, "destBlend").map_or("-", blend_factor);
+                    let srca = state_num(rt0, "srcBlendAlpha").map_or("-", blend_factor);
+                    let dsta = state_num(rt0, "destBlendAlpha").map_or("-", blend_factor);
                     let mask = state_num(rt0, "colMask").unwrap_or(-1);
                     let zw = state_num(st, "zWrite").unwrap_or(-1);
                     let pname = st.get("m_Name").and_then(Value::as_str).unwrap_or("");

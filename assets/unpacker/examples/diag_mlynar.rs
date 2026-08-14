@@ -1,5 +1,26 @@
 //! THROWAWAY: Mlynar entrance parity diagnosis (Gap A camera descent, Gap B white flash).
-//! Usage: cargo run --release --example diag_mlynar -- <bundle.ab>
+//! Usage: cargo run --release --example `diag_mlynar` -- <bundle.ab>
+#![allow(
+    // mul_add/hypot change float rounding, not just spelling; never worth it for byte-exact
+    // parity output, even in a throwaway diagnostic.
+    clippy::suboptimal_flops,
+    clippy::imprecise_flops,
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::manual_checked_ops,
+    clippy::manual_let_else,
+    clippy::many_single_char_names,
+    clippy::needless_range_loop,
+    clippy::option_if_let_else,
+    clippy::or_fun_call,
+    clippy::similar_names,
+    clippy::too_many_lines,
+    clippy::unreadable_literal,
+    clippy::while_float
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -153,7 +174,7 @@ fn tf_total(clip: &Value) -> usize {
     clip.get("m_ClipBindingConstant")
         .and_then(|b| b.get("genericBindings"))
         .and_then(Value::as_array)
-        .map(|bs| {
+        .map_or(0, |bs| {
             bs.iter()
                 .map(|b| {
                     let (t, a, _) = binding_fields(b);
@@ -161,20 +182,19 @@ fn tf_total(clip: &Value) -> usize {
                 })
                 .sum()
         })
-        .unwrap_or(0)
 }
 
 #[derive(Clone)]
 struct M(pub [[f32; 4]; 4]);
 impl M {
-    fn id() -> M {
+    fn id() -> Self {
         let mut m = [[0.0; 4]; 4];
         for i in 0..4 {
             m[i][i] = 1.0;
         }
-        M(m)
+        Self(m)
     }
-    fn trs(pos: [f32; 3], q: [f32; 4], s: [f32; 3]) -> M {
+    fn trs(pos: [f32; 3], q: [f32; 4], s: [f32; 3]) -> Self {
         let [x, y, z, w] = q;
         let (xx, yy, zz) = (x * x, y * y, z * z);
         let (xy, xz, yz) = (x * y, x * z, y * z);
@@ -192,9 +212,9 @@ impl M {
             m[i][3] = pos[i];
         }
         m[3][3] = 1.0;
-        M(m)
+        Self(m)
     }
-    fn mul(&self, o: &M) -> M {
+    fn mul(&self, o: &Self) -> Self {
         let mut m = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
@@ -205,7 +225,7 @@ impl M {
                 m[i][j] = s;
             }
         }
-        M(m)
+        Self(m)
     }
     fn point(&self, p: [f32; 3]) -> [f32; 3] {
         let m = &self.0;
@@ -332,7 +352,7 @@ fn main() {
                 v.get(field)
                     .and_then(|x| x.get(k))
                     .and_then(Value::as_f64)
-                    .unwrap_or(d as f64) as f32
+                    .unwrap_or(f64::from(d)) as f32
             };
             [g("x"), g("y"), g("z")]
         };
@@ -341,7 +361,7 @@ fn main() {
             v.get("m_LocalRotation")
                 .and_then(|x| x.get(k))
                 .and_then(Value::as_f64)
-                .unwrap_or(d as f64) as f32
+                .unwrap_or(f64::from(d)) as f32
         };
         let q = [gr("x", 0.0), gr("y", 0.0), gr("z", 0.0), gr("w", 1.0)];
         let mut s = g3("m_LocalScale", 1.0);
@@ -354,11 +374,11 @@ fn main() {
     };
 
     let mut cams: Vec<i64> = Vec::new();
-    for (_p, (cid, v)) in &all {
-        if *cid == 20 {
-            if let Some(go) = v.get("m_GameObject").and_then(pid) {
-                cams.push(go);
-            }
+    for (cid, v) in all.values() {
+        if *cid == 20
+            && let Some(go) = v.get("m_GameObject").and_then(pid)
+        {
+            cams.push(go);
         }
     }
     println!("=== CAMERAS ({}) ===", cams.len());
@@ -454,46 +474,46 @@ fn main() {
         for b in bindings {
             let (tid, attr, path) = binding_fields(b);
             let count = bcount(tid, attr);
-            if tid == 4 && attr == 1 {
-                if let Some(&go) = hash_to_go.get(&path) {
-                    if chain_gos.contains(&go) {
-                        for axis in 0..3 {
-                            let gi = gidx + axis;
-                            let loc = if gi < sc {
-                                "STREAM"
-                            } else if gi < sc + dc {
-                                "DENSE"
-                            } else {
-                                "CONST"
-                            };
-                            let c = decode_curve(v, gi, total);
-                            let (mn, mx) = c
-                                .iter()
-                                .fold((f32::MAX, f32::MIN), |(a, b), &(_, x)| (a.min(x), b.max(x)));
-                            println!(
-                                "  clip '{}' GO '{}' axis{} gidx={} [{}] keys={} t=[{:.2}..{:.2}] v0={:.4} vN={:.4} min={:.4} max={:.4} range={:.4}",
-                                cname,
-                                name_of(go),
-                                axis,
-                                gi,
-                                loc,
-                                c.len(),
-                                c.first().map(|x| x.0).unwrap_or(0.0),
-                                c.last().map(|x| x.0).unwrap_or(0.0),
-                                c.first().map(|x| x.1).unwrap_or(0.0),
-                                c.last().map(|x| x.1).unwrap_or(0.0),
-                                mn,
-                                mx,
-                                mx - mn
-                            );
-                            if c.len() > 1 {
-                                let e = animated
-                                    .entry(go_tf[&go])
-                                    .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
-                                if c.len() > e[axis].len() {
-                                    e[axis] = c;
-                                }
-                            }
+            if tid == 4
+                && attr == 1
+                && let Some(&go) = hash_to_go.get(&path)
+                && chain_gos.contains(&go)
+            {
+                for axis in 0..3 {
+                    let gi = gidx + axis;
+                    let loc = if gi < sc {
+                        "STREAM"
+                    } else if gi < sc + dc {
+                        "DENSE"
+                    } else {
+                        "CONST"
+                    };
+                    let c = decode_curve(v, gi, total);
+                    let (mn, mx) = c
+                        .iter()
+                        .fold((f32::MAX, f32::MIN), |(a, b), &(_, x)| (a.min(x), b.max(x)));
+                    println!(
+                        "  clip '{}' GO '{}' axis{} gidx={} [{}] keys={} t=[{:.2}..{:.2}] v0={:.4} vN={:.4} min={:.4} max={:.4} range={:.4}",
+                        cname,
+                        name_of(go),
+                        axis,
+                        gi,
+                        loc,
+                        c.len(),
+                        c.first().map_or(0.0, |x| x.0),
+                        c.last().map_or(0.0, |x| x.0),
+                        c.first().map_or(0.0, |x| x.1),
+                        c.last().map_or(0.0, |x| x.1),
+                        mn,
+                        mx,
+                        mx - mn
+                    );
+                    if c.len() > 1 {
+                        let e = animated
+                            .entry(go_tf[&go])
+                            .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
+                        if c.len() > e[axis].len() {
+                            e[axis] = c;
                         }
                     }
                 }
@@ -586,8 +606,7 @@ fn main() {
             if !is_transform_geo {
                 let goname = hash_to_go
                     .get(&path)
-                    .map(|g| go_path(*g))
-                    .unwrap_or_else(|| format!("hash{path}"));
+                    .map_or_else(|| format!("hash{path}"), |g| go_path(*g));
                 for c_i in 0..count {
                     let gi = gidx + c_i;
                     let loc = if gi < sc {
@@ -605,7 +624,7 @@ fn main() {
                         if (mx - mn).abs() > 1e-4 {
                             let peak =
                                 c.iter()
-                                    .cloned()
+                                    .copied()
                                     .fold((0.0f32, f32::MIN), |(pt, pv), (t, x)| {
                                         if x > pv { (t, x) } else { (pt, pv) }
                                     });
@@ -618,10 +637,10 @@ fn main() {
                                 c_i,
                                 loc,
                                 c.len(),
-                                c.first().map(|x| x.0).unwrap_or(0.0),
-                                c.last().map(|x| x.0).unwrap_or(0.0),
-                                c.first().map(|x| x.1).unwrap_or(0.0),
-                                c.last().map(|x| x.1).unwrap_or(0.0),
+                                c.first().map_or(0.0, |x| x.0),
+                                c.last().map_or(0.0, |x| x.0),
+                                c.first().map_or(0.0, |x| x.1),
+                                c.last().map_or(0.0, |x| x.1),
                                 mn,
                                 mx,
                                 peak.0
@@ -710,35 +729,38 @@ fn main() {
         for b in bindings {
             let (tid, attr, path) = binding_fields(b);
             let count = bcount(tid, attr);
-            if tid == 1 && attr == 2086281974 {
-                if let Some(&go) = hash_to_go.get(&path) {
-                    let nm = name_of(go);
-                    if nm.to_ascii_lowercase().contains("zhuanchang") {
-                        let c = decode_curve(v, gidx.min(sc.saturating_sub(1)), total);
-                        // print first on->off transition
-                        let mut rev = None;
-                        let mut prev: Option<bool> = None;
-                        for (fi, (t, val)) in c.iter().enumerate() {
-                            let on = *val >= 0.5;
-                            if fi == 0 {
-                                prev = Some(on);
-                                continue;
-                            }
-                            if let Some(p) = prev {
-                                if !p && on && rev.is_none() {
-                                    rev = Some(*t);
-                                }
-                            }
+            if tid == 1
+                && attr == 2086281974
+                && let Some(&go) = hash_to_go.get(&path)
+            {
+                let nm = name_of(go);
+                if nm.to_ascii_lowercase().contains("zhuanchang") {
+                    let c = decode_curve(v, gidx.min(sc.saturating_sub(1)), total);
+                    // print first on->off transition
+                    let mut rev = None;
+                    let mut prev: Option<bool> = None;
+                    for (fi, (t, val)) in c.iter().enumerate() {
+                        let on = *val >= 0.5;
+                        if fi == 0 {
                             prev = Some(on);
+                            continue;
                         }
-                        println!(
-                            "    clip m_IsActive '{}' keys={} v0={:.2} reveal@={:?}",
-                            nm,
-                            c.len(),
-                            c.first().map(|x| x.1).unwrap_or(-1.0),
-                            rev
-                        );
+                        if let Some(p) = prev
+                            && !p
+                            && on
+                            && rev.is_none()
+                        {
+                            rev = Some(*t);
+                        }
+                        prev = Some(on);
                     }
+                    println!(
+                        "    clip m_IsActive '{}' keys={} v0={:.2} reveal@={:?}",
+                        nm,
+                        c.len(),
+                        c.first().map_or(-1.0, |x| x.1),
+                        rev
+                    );
                 }
             }
             gidx += count;
@@ -784,7 +806,7 @@ fn main() {
         }
         (true, "maxdepth".into())
     };
-    for (_p, (cid, v)) in &all {
+    for (cid, v) in all.values() {
         if *cid != 23 {
             continue;
         }
@@ -805,11 +827,11 @@ fn main() {
     }
 
     println!("\n=== RENDERERS (23 MeshRenderer / 212 SpriteRenderer / 137 Skinned) ===");
-    for (_p, (cid, v)) in &all {
-        if [23i32, 212, 137].contains(cid) {
-            if let Some(go) = v.get("m_GameObject").and_then(pid) {
-                println!("  class{} GO '{}' path={}", cid, name_of(go), go_path(go));
-            }
+    for (cid, v) in all.values() {
+        if [23i32, 212, 137].contains(cid)
+            && let Some(go) = v.get("m_GameObject").and_then(pid)
+        {
+            println!("  class{} GO '{}' path={}", cid, name_of(go), go_path(go));
         }
     }
 }

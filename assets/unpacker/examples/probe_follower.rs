@@ -1,11 +1,16 @@
 //! THROWAWAY diagnostic: for every MESH renderer (class 23/33/137) in a dynchar bundle,
-//! print its GameObject path and the nearest spine-unity `BoneFollower` in its ancestry.
+//! print its `GameObject` path and the nearest spine-unity `BoneFollower` in its ancestry.
 //!
 //! Motivation: scene-mesh quads are exported with a STATIC baked world matrix. If a quad's
-//! GameObject rides a spine bone via `BoneFollower`, that serialized transform is only an
+//! `GameObject` rides a spine bone via `BoneFollower`, that serialized transform is only an
 //! editor pose and the exported quad lands nowhere near the bone it should track.
 //!
-//! Usage: cargo run --release --example probe_follower -- <bundle.ab> [go-name-filter]
+//! Usage: cargo run --release --example `probe_follower` -- <bundle.ab> [go-name-filter]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::or_fun_call,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};

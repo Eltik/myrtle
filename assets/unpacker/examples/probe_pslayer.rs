@@ -1,4 +1,4 @@
-//! Diagnostic: for EVERY GameObject carrying a ParticleSystem, print its `m_Layer` together
+//! Diagnostic: for EVERY `GameObject` carrying a `ParticleSystem`, print its `m_Layer` together
 //! with the name of its top-level ancestor (the entrance / idle / main root it belongs to).
 //!
 //! Motivation: Virtuosa's ten `wing_p` mesh rigs render a pink membrane the game shows nowhere,
@@ -6,11 +6,12 @@
 //! 0.502 half-neutral, the `Torappu/Particles-L2D/AlphaBlend` fragment program, `maxParticles`,
 //! mesh geometry, renderer `m_Enabled`/`m_RenderMode`, director activation, and the rendered
 //! alpha itself (1.07x the authored texture alpha, i.e. correct). The one field never read is
-//! the GameObject's LAYER, which is what a Unity camera's culling mask selects on. If the
+//! the `GameObject`'s LAYER, which is what a Unity camera's culling mask selects on. If the
 //! systems the game draws sit on one layer and the invisible ones on another, the culling mask
 //! — not any particle property — is the discriminator.
 //!
-//! Usage: cargo run --release --example probe_pslayer -- <bundle.ab>
+//! Usage: cargo run --release --example `probe_pslayer` -- <bundle.ab>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::HashMap;
@@ -23,7 +24,9 @@ fn pid(v: &Value) -> Option<i64> {
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("usage: probe_pslayer <bundle.ab>");
+    let path = std::env::args()
+        .nth(1)
+        .expect("usage: probe_pslayer <bundle.ab>");
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
 
@@ -32,7 +35,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
             if let Ok(v) = read_object(&sf, o) {
@@ -42,7 +47,9 @@ fn main() {
         // Transform pathID -> GameObject pathID, and GameObject -> its Transform.
         let mut tf_go: HashMap<i64, i64> = HashMap::new();
         for (p, (cid, v)) in &all {
-            if *cid == 4 && let Some(g) = v.get("m_GameObject").and_then(pid) {
+            if *cid == 4
+                && let Some(g) = v.get("m_GameObject").and_then(pid)
+            {
                 tf_go.insert(*p, g);
             }
         }
@@ -66,17 +73,22 @@ fn main() {
             let Some((_, gv)) = all.get(&g) else { continue };
             let layer = gv.get("m_Layer").and_then(Value::as_i64).unwrap_or(-1);
             // Walk to the top-level ancestor.
-            let mut tf = gv.get("m_Component").and_then(Value::as_array).and_then(|cs| {
-                cs.iter().find_map(|c| {
-                    let q = c.get("component").unwrap_or(c);
-                    let id = pid(q)?;
-                    matches!(all.get(&id), Some((4, _))).then_some(id)
-                })
-            });
+            let mut tf = gv
+                .get("m_Component")
+                .and_then(Value::as_array)
+                .and_then(|cs| {
+                    cs.iter().find_map(|c| {
+                        let q = c.get("component").unwrap_or(c);
+                        let id = pid(q)?;
+                        matches!(all.get(&id), Some((4, _))).then_some(id)
+                    })
+                });
             let mut root = g;
             while let Some(t) = tf {
                 let Some((_, tv)) = all.get(&t) else { break };
-                let Some(pt) = tv.get("m_Father").and_then(pid).filter(|&x| x != 0) else { break };
+                let Some(pt) = tv.get("m_Father").and_then(pid).filter(|&x| x != 0) else {
+                    break;
+                };
                 let Some(&pg) = tf_go.get(&pt) else { break };
                 root = pg;
                 tf = Some(pt);

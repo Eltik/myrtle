@@ -3498,10 +3498,7 @@ class RamEmitter {
             const dis = d.ramDissolveCurve ? sampleCurve(d.ramDissolveCurve, lf) : 0;
             // Payload 6. Same unvalidated-sibling category as the main/disturb UV offsets: the
             // three skins that author it have no capture, so it stays behind `?customuv=1`.
-            const dInt =
-                customUVOn() && d.ramDisturbIntensityCurve
-                    ? sampleCurve(d.ramDisturbIntensityCurve, lf)
-                    : 0;
+            const dInt = customUVOn() && d.ramDisturbIntensityCurve ? sampleCurve(d.ramDisturbIntensityCurve, lf) : 0;
             // Per-particle UV offsets, decoded positionally out of the CustomData payload
             // (1,2 -> main · 3,4 -> dissolve · 7,8 -> disturb). All default to 0, so a system
             // that authors none renders exactly as before.

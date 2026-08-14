@@ -1,4 +1,4 @@
-//! THROWAWAY diagnostic: print the STATIC `m_IsActive` of named GameObjects and their whole
+//! THROWAWAY diagnostic: print the STATIC `m_IsActive` of named `GameObjects` and their whole
 //! ancestor chain.
 //!
 //! Motivation: Virtuosa's two biggest prewarm-sensitive emitters (`rainbow_large_01`,
@@ -7,11 +7,14 @@
 //! game hides it would swamp any phase argument. `probe_active` only reports ANIMATED
 //! `m_IsActive` windows; this reports the static flag, which is what group gating uses.
 //!
-//! Usage: cargo run --release --example probe_goactive -- <bundle.ab> <go-substr>...
+//! Usage: cargo run --release --example `probe_goactive` -- <bundle.ab> <go-substr>...
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -19,7 +22,9 @@ fn pid(v: &Value) -> Option<i64> {
 
 fn main() {
     let mut a = std::env::args().skip(1);
-    let path = a.next().expect("usage: probe_goactive <bundle.ab> <go-substr>...");
+    let path = a
+        .next()
+        .expect("usage: probe_goactive <bundle.ab> <go-substr>...");
     let want: Vec<String> = a.map(|s| s.to_lowercase()).collect();
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
@@ -29,7 +34,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
         for o in &sf.objects {
             if let Ok(v) = read_object(&sf, o) {
@@ -39,7 +46,9 @@ fn main() {
         // Transform pathID -> its GameObject pathID, so a parent Transform can be named.
         let mut tf_go: HashMap<i64, i64> = HashMap::new();
         for (p, (cid, v)) in &all {
-            if *cid == 4 && let Some(g) = v.get("m_GameObject").and_then(pid) {
+            if *cid == 4
+                && let Some(g) = v.get("m_GameObject").and_then(pid)
+            {
                 tf_go.insert(*p, g);
             }
         }
@@ -52,8 +61,12 @@ fn main() {
         let active = |g: i64| -> i64 {
             all.get(&g)
                 .and_then(|(_, v)| v.get("m_IsActive"))
-                .map(|x| x.as_bool().map(i64::from).or_else(|| x.as_i64()).unwrap_or(-1))
-                .unwrap_or(-1)
+                .map_or(-1, |x| {
+                    x.as_bool()
+                        .map(i64::from)
+                        .or_else(|| x.as_i64())
+                        .unwrap_or(-1)
+                })
         };
         for (p, (cid, v)) in &all {
             if *cid != 1 {

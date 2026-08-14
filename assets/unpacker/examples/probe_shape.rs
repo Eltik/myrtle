@@ -1,11 +1,15 @@
-//! Diagnostic: dump every ParticleSystem's RAW `ShapeModule` (unmapped Unity type int,
+//! Diagnostic: dump every `ParticleSystem`'s RAW `ShapeModule` (unmapped Unity type int,
 //! radii, arc) plus its `VelocityOverLifetimeModule` orbital/radial terms.
 //!
 //! Motivation: `shape_type_name` folds Unity's Donut (17) / Rectangle (18) / Sprite (19)
 //! into "none", and orbital velocity is what turns a scattered emission into a moving ring.
 //! Either would silently flatten a uniform halo into a static scatter.
 //!
-//! Usage: cargo run --release --example probe_shape -- <bundle.ab> [name-filter]
+//! Usage: cargo run --release --example `probe_shape` -- <bundle.ab> [name-filter]
+#![allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::too_many_lines
+)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -21,7 +25,7 @@ fn f(v: &Value, k: &str) -> f64 {
     v.get(k).and_then(Value::as_f64).unwrap_or(f64::NAN)
 }
 
-/// A Unity MinMaxCurve serializes as `{minMaxState, scalar, minScalar, ...}`.
+/// A Unity `MinMaxCurve` serializes as `{minMaxState, scalar, minScalar, ...}`.
 fn mmc(v: Option<&Value>) -> String {
     let Some(v) = v else { return "-".into() };
     if let Some(x) = v.as_f64() {
@@ -100,10 +104,10 @@ fn main() {
                         tf_go.insert(*p, g);
                         go_tf.insert(g, *p);
                     }
-                    if let Some(fa) = v.get("m_Father").and_then(pid) {
-                        if fa != 0 {
-                            tf_father.insert(*p, fa);
-                        }
+                    if let Some(fa) = v.get("m_Father").and_then(pid)
+                        && fa != 0
+                    {
+                        tf_father.insert(*p, fa);
                     }
                 }
                 _ => {}
@@ -185,7 +189,7 @@ fn main() {
             ));
         }
         let mut cs: Vec<_> = counts.into_iter().collect();
-        cs.sort();
+        cs.sort_unstable();
         println!(
             "shape-type census: {}",
             cs.iter()

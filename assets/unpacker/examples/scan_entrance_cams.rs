@@ -10,12 +10,32 @@
 //! expected to be non-monotonic — e.g. cello 1.87→1.50→1.91 — and is NOT a plunge signal).
 //!
 //! Usage:
-//!   cargo run --release --example scan_entrance_cams                     # default roots
-//!   cargo run --release --example scan_entrance_cams -- <dir-or-.ab>...  # explicit inputs
+//!   cargo run --release --example `scan_entrance_cams`                     # default roots
+//!   cargo run --release --example `scan_entrance_cams` -- <dir-or-.ab>...  # explicit inputs
 //!
 //! Default roots: `assets/ArkAssets/{en,cn}/arts/dynchars/char_*.ab`, deduped by bundle
 //! basename (EN preferred). Writes `assets/il2cpp-work/entrance_camera_catalog.json` and
 //! prints a per-skin table + flagged-plunge summary. Read-only over the bundles.
+#![allow(
+    // mul_add/hypot change float rounding, not just spelling; never worth it for byte-exact
+    // parity output, even in a throwaway diagnostic.
+    clippy::suboptimal_flops,
+    clippy::imprecise_flops,
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::index_refutable_slice,
+    clippy::items_after_statements,
+    clippy::manual_checked_ops,
+    clippy::many_single_char_names,
+    clippy::option_if_let_else,
+    clippy::or_fun_call,
+    clippy::similar_names,
+    clippy::struct_excessive_bools,
+    clippy::too_many_lines
+)]
 
 use rayon::prelude::*;
 use serde::Serialize;
@@ -544,7 +564,7 @@ fn analyze_entry(sf: &SerializedFile) -> EntryAnalysis {
                         }
                     }
                 }
-            } else if tid == 4 && matches!(attr, 2 | 3 | 4) && on_chain {
+            } else if tid == 4 && matches!(attr, 2..=4) && on_chain {
                 // Rotation/scale on the camera chain: note if it actually varies.
                 let varies = (0..n).any(|c| {
                     let cu = decode_curve(v, gidx + c, total);
@@ -592,17 +612,15 @@ fn analyze_entry(sf: &SerializedFile) -> EntryAnalysis {
             c[c.len() - 1].1
         };
         let static_pos = |tf: i64| -> [f32; 3] {
-            all.get(&tf)
-                .map(|(_, v)| {
-                    let g = |k: &str| {
-                        v.get("m_LocalPosition")
-                            .and_then(|x| x.get(k))
-                            .and_then(Value::as_f64)
-                            .unwrap_or(0.0) as f32
-                    };
-                    [g("x"), g("y"), g("z")]
-                })
-                .unwrap_or([0.0; 3])
+            all.get(&tf).map_or([0.0; 3], |(_, v)| {
+                let g = |k: &str| {
+                    v.get("m_LocalPosition")
+                        .and_then(|x| x.get(k))
+                        .and_then(Value::as_f64)
+                        .unwrap_or(0.0) as f32
+                };
+                [g("x"), g("y"), g("z")]
+            })
         };
         let local_trs = |tf: i64, pos_override: Option<[f32; 3]>| -> Mat4 {
             let Some((_, v)) = all.get(&tf) else {
@@ -739,8 +757,9 @@ fn analyze_bundle(path: &Path, region: &str) -> SkinRecord {
     };
     // Analyze each serialized entry; keep the best (entrance clip + camera > entrance > any).
     let mut best: Option<EntryAnalysis> = None;
-    let score =
-        |a: &EntryAnalysis| (!a.entrance_clips.is_empty()) as u32 * 2 + (a.camera_count > 0) as u32;
+    let score = |a: &EntryAnalysis| {
+        u32::from(!a.entrance_clips.is_empty()) * 2 + u32::from(a.camera_count > 0)
+    };
     for entry in &bundle.files {
         let lower = entry.path.to_ascii_lowercase();
         if lower.ends_with(".ress") || lower.ends_with(".resource") {

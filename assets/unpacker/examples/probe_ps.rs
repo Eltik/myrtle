@@ -1,12 +1,13 @@
 //! Diagnostic: dump the COMPLETE raw `ParticleSystem` object (every module, unmapped) for
-//! each GameObject whose name matches, plus its renderer's sorting/render mode.
+//! each `GameObject` whose name matches, plus its renderer's sorting/render mode.
 //!
-//! Motivation: the exported `[particles]` JSON is a lossy projection — a MinMaxCurve is
+//! Motivation: the exported `[particles]` JSON is a lossy projection — a `MinMaxCurve` is
 //! flattened to a scalar, a module we do not read vanishes entirely. When a system renders
 //! at the wrong density or amplitude the only way to tell "we read it wrong" from "the data
 //! says that" is to look at the untouched module.
 //!
-//! Usage: cargo run --release --example probe_ps -- <bundle.ab> <go-name> [<go-name>...]
+//! Usage: cargo run --release --example `probe_ps` -- <bundle.ab> <go-name> [<go-name>...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};

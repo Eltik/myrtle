@@ -1,3 +1,4 @@
+#![allow(clippy::manual_let_else, clippy::needless_collect)]
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -7,7 +8,7 @@ use unpacker::unity::bundle::BundleFile;
 use unpacker::unity::object_reader::read_object;
 use unpacker::unity::serialized_file::SerializedFile;
 
-/// Helper: parse a bundle and decode all Texture2D objects into a HashMap.
+/// Helper: parse a bundle and decode all `Texture2D` objects into a `HashMap`.
 fn decode_all_textures(bundle_path: &str) -> HashMap<String, DecodedTexture> {
     let data = match std::fs::read(bundle_path) {
         Ok(d) => d,

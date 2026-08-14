@@ -1,14 +1,17 @@
-//! THROWAWAY diagnostic: for every GameObject that owns a spine skeleton
-//! (`skeletonDataAsset`), dump its MeshRenderer's material shader + `_Color`/`_TintColor`.
+//! THROWAWAY diagnostic: for every `GameObject` that owns a spine skeleton
+//! (`skeletonDataAsset`), dump its `MeshRenderer`'s material shader + `_Color`/`_TintColor`.
 //!
 //! Motivation: the exporter reads the spine renderer's `m_SortingOrder` but never its
 //! material colour, so a skeleton-wide tint would be silently dropped.
 //!
-//! Usage: cargo run --release --example probe_skelmat -- <bundle.ab> [<bundle.ab>...]
+//! Usage: cargo run --release --example `probe_skelmat` -- <bundle.ab> [<bundle.ab>...]
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
@@ -25,7 +28,9 @@ fn colors(mat: &Value) -> Vec<(String, Vec<f64>)> {
     };
     for e in arr {
         let (Some(k), Some(v)) = (
-            e.get("first").and_then(Value::as_str).or_else(|| e.get(0).and_then(Value::as_str)),
+            e.get("first")
+                .and_then(Value::as_str)
+                .or_else(|| e.get(0).and_then(Value::as_str)),
             e.get("second").or_else(|| e.get(1)),
         ) else {
             continue;
@@ -41,15 +46,21 @@ fn colors(mat: &Value) -> Vec<(String, Vec<f64>)> {
 
 fn main() {
     for path in std::env::args().skip(1) {
-        let Ok(data) = std::fs::read(&path) else { continue };
-        let Ok(bundle) = BundleFile::parse(data) else { continue };
+        let Ok(data) = std::fs::read(&path) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
         println!("\n===== {path}");
         for entry in &bundle.files {
             let lower = entry.path.to_ascii_lowercase();
             if lower.ends_with(".ress") || lower.ends_with(".resource") {
                 continue;
             }
-            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+            let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                continue;
+            };
             let skip: HashSet<i32> = [28, 43, 48, 49, 83, 128, 213].into_iter().collect();
             let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
             for obj in &sf.objects {
@@ -63,7 +74,13 @@ fn main() {
             let mut go_name: HashMap<i64, String> = HashMap::new();
             for (p, (cid, v)) in &all {
                 if *cid == 1 {
-                    go_name.insert(*p, v.get("m_Name").and_then(Value::as_str).unwrap_or("").to_string());
+                    go_name.insert(
+                        *p,
+                        v.get("m_Name")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                    );
                 }
             }
             let spine_gos: HashSet<i64> = all
@@ -75,14 +92,23 @@ fn main() {
                 if *cid != 23 {
                     continue;
                 }
-                let Some(go) = v.get("m_GameObject").and_then(pid) else { continue };
+                let Some(go) = v.get("m_GameObject").and_then(pid) else {
+                    continue;
+                };
                 if !spine_gos.contains(&go) {
                     continue;
                 }
                 let name = go_name.get(&go).cloned().unwrap_or_default();
-                let sort = v.get("m_SortingOrder").and_then(Value::as_i64).unwrap_or(-999);
+                let sort = v
+                    .get("m_SortingOrder")
+                    .and_then(Value::as_i64)
+                    .unwrap_or(-999);
                 println!("  renderer pid={rp} GO='{name}' sort={sort}");
-                for m in v.get("m_Materials").and_then(Value::as_array).unwrap_or(&vec![]) {
+                for m in v
+                    .get("m_Materials")
+                    .and_then(Value::as_array)
+                    .unwrap_or(&vec![])
+                {
                     let Some(mp) = pid(m) else { continue };
                     match all.get(&mp) {
                         Some((21, mv)) => {
