@@ -1,0 +1,169 @@
+import { EnemyCardGrid } from "frontend";
+
+// Real handbook rows (api.myrtle.moe /static/enemies), enriched the way
+// `enrichEnemy` does before the list renders them.
+const base = {
+    enemyTags: null as string[] | null,
+    attackType: null,
+    ability: null,
+    isInvalidKilled: false,
+    overrideKillCntInfos: null,
+    hideInHandbook: false,
+    hideInStage: true,
+    abilityList: [],
+    linkEnemies: [],
+    invisibleDetail: false,
+    stats: null,
+    immunities: { stun: false, silence: false, sleep: false, frozen: false, levitate: false },
+};
+
+const slug = {
+    ...base,
+    enemyId: "enemy_1007_slime",
+    enemyIndex: "B1",
+    enemyTags: ["infection"],
+    sortId: 1,
+    name: "Originium Slug",
+    enemyLevel: "NORMAL",
+    description: "An infected wild creature.",
+    damageType: ["PHYSIC"],
+    portrait: "/textures/spritepack/icon_enemies_0/enemy_1007_slime.png",
+    flatStats: { maxHp: 550, atk: 130, def: 0, res: 0, aspd: 100, ms: 1, weight: 0, baseAttackTime: 1.7, hpRecoveryPerSec: 0 },
+    applyWay: "MELEE",
+    race: "Infected Creature",
+};
+
+const sentinel = {
+    ...base,
+    enemyId: "enemy_1073_dscout",
+    enemyIndex: "S11",
+    enemyTags: ["sarkaz"],
+    sortId: 138,
+    name: "Sarkaz Sentinel",
+    enemyLevel: "NORMAL",
+    description: "A Sarkaz mercenary responsible for scouting.",
+    damageType: ["NO_DAMAGE"],
+    portrait: "/textures/spritepack/icon_enemies_0/enemy_1073_dscout.png",
+    flatStats: { maxHp: 4000, atk: 0, def: 100, res: 30, aspd: 100, ms: 0.5, weight: 1, baseAttackTime: 1, hpRecoveryPerSec: 0 },
+    applyWay: "NONE",
+    race: "Sarkaz",
+};
+
+const crossbow = {
+    ...base,
+    enemyId: "enemy_1012_dcross",
+    enemyIndex: "S3",
+    enemyTags: ["sarkaz"],
+    sortId: 45,
+    name: "Sarkaz Crossbowman",
+    enemyLevel: "ELITE",
+    description: "A mercenary from Sarkaz.",
+    damageType: ["PHYSIC"],
+    portrait: "/textures/spritepack/icon_enemies_0/enemy_1012_dcross.png",
+    flatStats: { maxHp: 6000, atk: 450, def: 200, res: 50, aspd: 100, ms: 0.8, weight: 2, baseAttackTime: 3, hpRecoveryPerSec: 0 },
+    applyWay: "RANGED",
+    race: "Sarkaz",
+};
+
+const lancer = {
+    ...base,
+    enemyId: "enemy_1072_dlancer_2",
+    enemyIndex: "S10",
+    enemyTags: ["sarkaz"],
+    sortId: 44,
+    name: "Sarkaz Lancer Leader",
+    enemyLevel: "ELITE",
+    description: "A veteran Sarkaz lancer.",
+    damageType: ["PHYSIC"],
+    portrait: "/textures/spritepack/icon_enemies_0/enemy_1072_dlancer_2.png",
+    flatStats: { maxHp: 8000, atk: 500, def: 230, res: 40, aspd: 100, ms: 0.3, weight: 3, baseAttackTime: 4, hpRecoveryPerSec: 0 },
+    applyWay: "MELEE",
+    race: "Sarkaz",
+};
+
+const skulsr = {
+    ...base,
+    enemyId: "enemy_1500_skulsr",
+    enemyIndex: "SS",
+    sortId: 1297,
+    name: "Skullshatterer",
+    enemyLevel: "BOSS",
+    description: "One of Reunion's squad leaders.",
+    damageType: ["PHYSIC"],
+    portrait: "/textures/spritepack/icon_enemies_2/enemy_1500_skulsr.png",
+    flatStats: { maxHp: 10500, atk: 1000, def: 150, res: 30, aspd: 100, ms: 0.6, weight: 5, baseAttackTime: 3, hpRecoveryPerSec: 0 },
+    applyWay: "MELEE",
+    race: null,
+};
+
+const mandra = {
+    ...base,
+    enemyId: "enemy_1523_mandra",
+    enemyIndex: "MD",
+    sortId: 1320,
+    name: "Mandragora",
+    enemyLevel: "BOSS",
+    description: "One of the leaders of the Dublinn forces.",
+    damageType: ["PHYSIC", "MAGIC"],
+    portrait: "/textures/spritepack/icon_enemies_2/enemy_1523_mandra.png",
+    flatStats: { maxHp: 50000, atk: 640, def: 520, res: 35, aspd: 100, ms: 0.4, weight: 7, baseAttackTime: 1.8, hpRecoveryPerSec: 0 },
+    applyWay: "MELEE",
+    race: null,
+};
+
+const dscout2 = {
+    ...base,
+    enemyId: "enemy_1073_dscout_2",
+    enemyIndex: "S12",
+    enemyTags: ["sarkaz"],
+    sortId: 139,
+    name: "Sarkaz Sentinel Leader",
+    enemyLevel: "NORMAL",
+    description: "A Sarkaz mercenary responsible for scouting.",
+    damageType: ["NO_DAMAGE"],
+    portrait: "/textures/spritepack/icon_enemies_0/enemy_1073_dscout_2.png",
+    flatStats: { maxHp: 4500, atk: 0, def: 150, res: 40, aspd: 100, ms: 0.5, weight: 1, baseAttackTime: 1, hpRecoveryPerSec: 0 },
+    applyWay: "NONE",
+    race: "Sarkaz",
+};
+
+// Scoped the way `computeStatMaxByLevel` does — the tier maxima of the cohort
+// currently on screen, so each bar reads as "heavy for its threat tier".
+const statMax = {
+    NORMAL: { hp: 4500, atk: 800, def: 400 },
+    ELITE: { hp: 12000, atk: 1200, def: 700 },
+    BOSS: { hp: 60000, atk: 3000, def: 1000 },
+};
+
+export const NormalTier = () => (
+    <div className="grid w-full max-w-md grid-cols-2 gap-2.5">
+        <EnemyCardGrid enemy={slug} statMax={statMax} />
+        <EnemyCardGrid enemy={sentinel} statMax={statMax} />
+    </div>
+);
+
+export const ThreatSpread = () => (
+    <div className="grid w-full max-w-3xl grid-cols-4 gap-2.5">
+        <EnemyCardGrid enemy={slug} statMax={statMax} />
+        <EnemyCardGrid enemy={crossbow} statMax={statMax} />
+        <EnemyCardGrid enemy={lancer} statMax={statMax} />
+        <EnemyCardGrid enemy={skulsr} statMax={statMax} />
+    </div>
+);
+
+export const BossTier = () => (
+    <div className="grid w-full max-w-md grid-cols-2 gap-2.5">
+        <EnemyCardGrid enemy={mandra} statMax={statMax} />
+        <EnemyCardGrid enemy={skulsr} statMax={statMax} />
+    </div>
+);
+
+export const DenseGrid = () => (
+    <div className="grid w-full grid-cols-5 gap-2.5">
+        <EnemyCardGrid enemy={slug} statMax={statMax} />
+        <EnemyCardGrid enemy={sentinel} statMax={statMax} />
+        <EnemyCardGrid enemy={dscout2} statMax={statMax} />
+        <EnemyCardGrid enemy={crossbow} statMax={statMax} />
+        <EnemyCardGrid enemy={mandra} statMax={statMax} />
+    </div>
+);

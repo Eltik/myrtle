@@ -1,0 +1,24 @@
+/* Tailwind entry used ONLY by the design-sync export (compiled by build-css.mjs).
+ *
+ * The app's own src/styles.css is the source of truth for tokens, fonts and base
+ * styles; this file wraps it and widens what the compiler is allowed to emit.
+ *
+ * Two problems it solves, both invisible at build time — an unknown Tailwind
+ * utility is not an error, the element simply renders unstyled:
+ *
+ *  1. Tailwind's auto source detection scans src/ only, so a class used in a
+ *     preview card but nowhere in the app would not be compiled.
+ *  2. Designs built with this system in claude.ai/design are NOT run through
+ *     Tailwind — they consume this stylesheet as-is. Anything the design agent
+ *     writes that the app never happened to use would silently do nothing, so
+ *     the safelist below pre-emits the common layout/typography/token
+ *     vocabulary. Keep it in sync with the class families documented in
+ *     .design-sync/conventions.md.
+ */
+
+@import "../src/styles.css";
+
+@source "../src";
+@source "./previews";
+
+@source "./.cache/safelist.txt";

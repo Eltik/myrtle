@@ -1,0 +1,41 @@
+// Path map used ONLY by the design-sync converter's esbuild pass.
+//
+// It mirrors the repo tsconfig's aliases — the converter's paths plugin
+// JSON.parses this file directly and does not follow `extends` — and adds stubs
+// for server-only modules, which otherwise pull node builtins and the whole
+// route tree into a browser bundle and break the build. See .design-sync/stubs/.
+//
+// KEY ORDER MATTERS: the plugin takes the first matching rule, so every exact
+// entry must precede the `#/*` wildcard. The exact `#/lib/<dir>` entries exist
+// because the plugin's extension probe tests `existsSync(stem)` before
+// `stem/index.ts`, and a directory satisfies that — esbuild then reports
+// "Cannot read file ...: is a directory".
+//
+// Comments must be `//` line comments: the plugin's comment stripper mangles a
+// `"//": "..."` JSON key into invalid JSON and silently disables path mapping.
+{
+    "compilerOptions": {
+        "baseUrl": "..",
+        "paths": {
+            "@tanstack/react-start": [".design-sync/stubs/tanstack-react-start.ts"],
+            "@tanstack/react-start/server": [".design-sync/stubs/tanstack-react-start-server.ts"],
+            "node:crypto": [".design-sync/stubs/node-crypto.ts"],
+            "#/env": [".design-sync/stubs/env.ts"],
+            "#/hooks/use-auth": [".design-sync/stubs/use-auth.ts"],
+
+            "#/routes/tools.recruitment": [".design-sync/stubs/route.ts"],
+            "#/routes/user.leaderboard": [".design-sync/stubs/route.ts"],
+            "#/routes/user.search": [".design-sync/stubs/route.ts"],
+            "#/routes/tier-lists": [".design-sync/stubs/route.ts"],
+            "#/routes/tier-lists_.$id": [".design-sync/stubs/route.ts"],
+
+            "#/lib/export": ["./src/lib/export/index.ts"],
+            "#/lib/markdown": ["./src/lib/markdown/index.ts"],
+            "#/lib/og": ["./src/lib/og/index.ts"],
+            "#/lib/api/admin": ["./src/lib/api/admin/index.ts"],
+
+            "#/*": ["./src/*"],
+            "@/*": ["./src/*"]
+        }
+    }
+}
