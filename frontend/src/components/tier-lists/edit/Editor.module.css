@@ -169,8 +169,7 @@
         opacity 140ms ease;
 }
 
-:global(.light) .opTile,
-:global([data-theme="light"]) .opTile {
+:global(.light) .opTile {
     background: oklch(0.93 0.005 285);
     color: var(--foreground);
 }

@@ -83,7 +83,7 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
 
             {officialCount > 0 && (
                 <p className="mt-3 inline-flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[oklch(0.78_0.15_92)]" aria-hidden="true" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
                     {officialCount} official {officialCount === 1 ? "list" : "lists"} included
                 </p>
             )}

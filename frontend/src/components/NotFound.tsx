@@ -10,7 +10,7 @@ export function NotFound() {
         <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden py-16 text-center">
             <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
                 <div className="absolute top-1/2 left-1/2 h-87.5 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.08] blur-[80px]" style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }} />
-                <div className="absolute top-1/2 left-1/2 h-50 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05] blur-2xl" style={{ background: "radial-gradient(circle, oklch(0.696 0.17 162) 0%, transparent 70%)" }} />
+                <div className="absolute top-1/2 left-1/2 h-50 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05] blur-2xl" style={{ background: "radial-gradient(circle, var(--chart-2) 0%, transparent 70%)" }} />
             </div>
 
             <div className="relative z-10 mx-auto flex max-w-lg flex-col items-center px-4">

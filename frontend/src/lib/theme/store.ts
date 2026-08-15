@@ -51,13 +51,10 @@ function applyMode(mode: ThemeMode): ResolvedTheme {
     if (typeof document === "undefined") return resolveMode(mode);
     const resolved = resolveMode(mode);
     const root = document.documentElement;
+    // The `.light`/`.dark` class is the only theme switch: Tailwind's `dark:` variant,
+    // the semantic tokens in styles.css and the CSS modules all key off it.
     root.classList.remove("light", "dark");
     root.classList.add(resolved);
-    if (mode === "auto") {
-        root.removeAttribute("data-theme");
-    } else {
-        root.setAttribute("data-theme", mode);
-    }
     root.style.colorScheme = resolved;
     return resolved;
 }

@@ -10,6 +10,7 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Fraunces", Georgia, serif;
 }
 
 :root {
@@ -24,7 +25,6 @@
   --surface-strong: rgba(255, 255, 255, 0.9);
   --line: rgba(23, 58, 64, 0.14);
   --inset-glint: rgba(255, 255, 255, 0.82);
-  --kicker: rgba(47, 106, 74, 0.9);
   --bg-base: #e7f3ec;
   --header-bg: rgba(251, 255, 248, 0.84);
   --chip-bg: rgba(255, 255, 255, 0.8);
@@ -32,7 +32,7 @@
   --link-bg-hover: rgba(255, 255, 255, 0.9);
   --hero-a: rgba(79, 184, 178, 0.36);
   --hero-b: rgba(47, 106, 74, 0.2);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: var(--color-red-700);
   --info: var(--color-blue-500);
   --info-foreground: var(--color-blue-700);
   --success: var(--color-emerald-500);
@@ -77,8 +77,6 @@
   --glow-primary: oklch(0.58 0.22 25 / 0.35);
   --glow-primary-intense: oklch(0.58 0.22 25 / 0.55);
 
-  --font-display: "Fraunces", Georgia, serif;
-
   --rarity-6: #f7a452;
   --rarity-5: #f7e79e;
   --rarity-4: #bcabdb;
@@ -94,52 +92,6 @@
   --dmg-magic: #b78fe6;
   --dmg-heal: #7ed3a2;
   --dmg-none: #8a8a8a;
-}
-
-:root[data-theme="dark"] {
-  --sea-ink: #d7ece8;
-  --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
-  --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sea-ink: #d7ece8;
-    --sea-ink-soft: #afcdc8;
-    --lagoon: #60d7cf;
-    --lagoon-deep: #8de5db;
-    --palm: #6ec89a;
-    --sand: #0f1a1e;
-    --foam: #101d22;
-    --surface: rgba(16, 30, 34, 0.8);
-    --surface-strong: rgba(15, 27, 31, 0.92);
-    --line: rgba(141, 229, 219, 0.18);
-    --inset-glint: rgba(194, 247, 238, 0.14);
-    --kicker: #b8efe5;
-    --bg-base: #0a1418;
-    --header-bg: rgba(10, 20, 24, 0.8);
-    --chip-bg: rgba(13, 28, 32, 0.9);
-    --chip-line: rgba(141, 229, 219, 0.24);
-    --link-bg-hover: rgba(24, 44, 49, 0.8);
-    --hero-a: rgba(96, 215, 207, 0.18);
-    --hero-b: rgba(110, 200, 154, 0.12);
-  }
 }
 
 * {
@@ -327,12 +279,27 @@ pre code {
 }
 
 .dark {
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --info: var(--color-blue-500);
+  --sea-ink: #d7ece8;
+  --sea-ink-soft: #afcdc8;
+  --lagoon: #60d7cf;
+  --lagoon-deep: #8de5db;
+  --palm: #6ec89a;
+  --sand: #0f1a1e;
+  --foam: #101d22;
+  --surface: rgba(16, 30, 34, 0.8);
+  --surface-strong: rgba(15, 27, 31, 0.92);
+  --line: rgba(141, 229, 219, 0.18);
+  --inset-glint: rgba(194, 247, 238, 0.14);
+  --bg-base: #0a1418;
+  --header-bg: rgba(10, 20, 24, 0.8);
+  --chip-bg: rgba(13, 28, 32, 0.9);
+  --chip-line: rgba(141, 229, 219, 0.24);
+  --link-bg-hover: rgba(24, 44, 49, 0.8);
+  --hero-a: rgba(96, 215, 207, 0.18);
+  --hero-b: rgba(110, 200, 154, 0.12);
+  --destructive-foreground: var(--color-red-400);
   --info-foreground: var(--color-blue-400);
-  --success: var(--color-emerald-500);
   --success-foreground: var(--color-emerald-400);
-  --warning: var(--color-amber-500);
   --warning-foreground: var(--color-amber-400);
   --accent: oklch(0.22 0.005 285);
   --accent-foreground: oklch(0.97 0.005 285);
@@ -358,7 +325,6 @@ pre code {
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --code: color-mix(in srgb, var(--background) 98%, var(--color-white));
-  --code-foreground: var(--foreground);
   --code-highlight: --alpha(var(--color-white) / 4%);
   --sidebar: oklch(0.15 0.005 285);
   --sidebar-accent: oklch(0.22 0.005 285);
@@ -370,22 +336,8 @@ pre code {
   --sidebar-ring: oklch(0.75 0.15 25);
   --glow-primary: oklch(0.75 0.15 25 / 0.5);
   --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
-
-  --rarity-6: #f7a452;
-  --rarity-5: #f7e79e;
-  --rarity-4: #bcabdb;
-  --rarity-3: #88c8e3;
-  --rarity-2: #7ef2a3;
-  --rarity-1: #ffffff;
-
   --enemy-normal: oklch(0.75 0.01 285);
-  --enemy-elite: oklch(0.72 0.14 75);
   --enemy-boss: oklch(0.75 0.15 25);
-
-  --dmg-physic: #d39e6a;
-  --dmg-magic: #b78fe6;
-  --dmg-heal: #7ed3a2;
-  --dmg-none: #8a8a8a;
 }
 
 @layer base {

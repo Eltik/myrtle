@@ -50,8 +50,7 @@
     background: oklch(0.15 0.005 285);
     isolation: isolate;
 }
-:global(.light) .thumb,
-:global([data-theme="light"]) .thumb {
+:global(.light) .thumb {
     background: oklch(0.97 0.005 285);
 }
 

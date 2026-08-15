@@ -12,7 +12,7 @@ export function PageHeader({ computedAt }: IPageHeaderProps) {
             <div className="flex max-w-180 flex-col items-start">
                 <Kicker>Site · overview</Kicker>
                 <h1 className="m-0 mb-3 text-balance font-bold font-sans text-[32px] text-foreground leading-[1.05] tracking-[-0.03em] sm:text-[38px] sm:leading-[1.03] sm:tracking-[-0.035em] lg:text-[44px] lg:leading-[1.02]">
-                    A count of <em className="font-(--font-display) text-primary italic">everything</em> on myrtle.moe.
+                    A count of <em className="font-display text-primary italic">everything</em> on myrtle.moe.
                 </h1>
                 <p className="m-0 max-w-[62ch] font-sans text-muted-foreground">Live snapshot of the game catalog we index, the tier lists the community maintains, and the rosters players have synced with their Yostar accounts.</p>
             </div>
