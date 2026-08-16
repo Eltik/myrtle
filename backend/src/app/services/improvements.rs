@@ -1247,8 +1247,11 @@ async fn build_base_improvements(
     let has_conditional_generator = profiles.iter().any(|op| {
         crate::core::grade::base::pools::has_morale_conditional_grant(op, &game_data.building)
     });
-    let manager_pin =
-        crate::core::grade::base::dorms::morale_manager_pin(&profiles, &user_building, &game_data.building);
+    let manager_pin = crate::core::grade::base::dorms::morale_manager_pin(
+        &profiles,
+        &user_building,
+        &game_data.building,
+    );
     let rotation_manager = manager_pin.as_ref().map(|(id, _)| id.clone());
     if let Some(pin) = manager_pin {
         optimal_pins.push(pin);

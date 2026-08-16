@@ -396,7 +396,7 @@ fn rotation_core(
     // morale simulation runs on the result and reports honestly if that 24/7
     // presence doesn't hold.
     let roster_ids: HashSet<&str> = operators.iter().map(|o| o.char_id.as_str()).collect();
-    let pinned_ids: HashSet<String> = pins
+    let mut pinned_ids: HashSet<String> = pins
         .iter()
         .filter(|(id, _)| roster_ids.contains(id.as_str()))
         .map(|(id, _)| id.clone())
@@ -406,6 +406,22 @@ fn rotation_core(
         .filter(|(id, rt)| rt == "CONTROL" && pinned_ids.contains(id))
         .map(|(id, _)| id.clone())
         .collect();
+
+    // The morale-swap manager is reserved by the ROTATION ITSELF, not left to
+    // the caller's pins: its 24/7 sustains (preset-derived or the proactive
+    // trading top-up) assume her swap, and the swap only works while she STAYS
+    // parked in a dormitory. Whenever she exists and the building can host her
+    // (her seat + a free swap seat), she is held out of every working pool and
+    // the dormitory pass below seats her in every shift.
+    let manager_resident: Option<String> =
+        if super::dorms::building_hosts_manager(building, building_data) {
+            super::assignment::morale_swap_enabler(operators, building_data)
+        } else {
+            None
+        };
+    if let Some(m) = &manager_resident {
+        pinned_ids.insert(m.clone());
+    }
 
     // Control Center Squad 1 (with its global bonuses / faction conditions) and the
     // balanced production teams, re-selecting the CC when one of its operators turns
@@ -446,9 +462,7 @@ fn rotation_core(
         preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
     let op_index = build_op_index(operators);
-    if sustained.len() < managers
-        && super::dorms::building_hosts_manager(building, building_data)
-    {
+    if sustained.len() < managers && super::dorms::building_hosts_manager(building, building_data) {
         let recovery = morale_recovery(building);
         // Swap feasibility: the manager can only hold an operator whose drain
         // doesn't outrun her own recharge (Fiammetta: one full-bar swap per
@@ -1139,12 +1153,19 @@ fn rotation_core(
             .collect();
         // The morale-swap manager works FROM a dormitory: her pinned seat is
         // permanent. She takes the worst dorm, keeping the good ones for the
-        // operators whose recovery actually depends on the rate.
-        let dorm_pinned: Vec<String> = pins
+        // operators whose recovery actually depends on the rate. The
+        // rotation's own reservation joins any caller-pinned dorm residents.
+        let mut dorm_pinned: Vec<String> = pins
             .iter()
             .filter(|(id, rt)| rt == "DORMITORY" && !seated.contains(id))
             .map(|(id, _)| id.clone())
             .collect();
+        if let Some(m) = &manager_resident
+            && !dorm_pinned.contains(m)
+            && !seated.contains(m)
+        {
+            dorm_pinned.push(m.clone());
+        }
         let peak_rest = resters_by_shift.iter().map(Vec::len).max().unwrap_or(0);
         let capacity: usize = dorms.iter().map(|d| d.capacity).sum();
         // A pinned morale-swap manager consumes TWO seats' worth of headroom:

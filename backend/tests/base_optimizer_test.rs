@@ -2785,8 +2785,15 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
         .map(|id| profile(gd, id))
         .collect();
     let main = compute_optimal_assignment(&base, &building, &gd.building, &registry, &drains);
-    let none =
-        morale_sustained_beneficiaries(&main, &base, &drains, recovery, &building, &registry, &gd.building);
+    let none = morale_sustained_beneficiaries(
+        &main,
+        &base,
+        &drains,
+        recovery,
+        &building,
+        &registry,
+        &gd.building,
+    );
     assert!(
         none.is_empty(),
         "no manager -> no sustained operator, got {none:?}"
@@ -2797,8 +2804,15 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     let mut with = base;
     with.push(profile(gd, FIAMMETTA));
     let main2 = compute_optimal_assignment(&with, &building, &gd.building, &registry, &drains);
-    let benef =
-        morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &building, &registry, &gd.building);
+    let benef = morale_sustained_beneficiaries(
+        &main2,
+        &with,
+        &drains,
+        recovery,
+        &building,
+        &registry,
+        &gd.building,
+    );
     assert_eq!(
         benef.len(),
         1,
@@ -3074,6 +3088,16 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
             shift.index,
             tp.active,
             tp.recommended
+        );
+        // The manager makes that possible only by STAYING in a dormitory -
+        // the rotation reserves her seat itself, with no caller pins.
+        const FIAMMETTA: &str = "char_300_phenxi";
+        assert!(
+            shift.rooms.iter().any(|r| {
+                r.room_type == "DORMITORY" && r.recommended.iter().any(|o| o == FIAMMETTA)
+            }),
+            "shift {}: Fiammetta must hold her dormitory seat while Proviso runs 24/7",
+            shift.index
         );
     }
 }
@@ -3440,6 +3464,8 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
     let building = UserBuilding {
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
+    // Six trading BODIES besides the manager: Fiammetta is reserved into the
+    // dorms by the rotation itself now, so she must not double as a filler.
     let roster: Vec<_> = [
         SHAMARE,
         TEQUILA,
@@ -3447,6 +3473,7 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
         EXUSIAI,
         "char_502_nblade",
         "char_185_frncat",
+        "char_123_fang",
     ]
     .iter()
     .map(|id| profile(gd, id))
@@ -4270,9 +4297,10 @@ fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
         &[(FIAMMETTA.to_string(), "DORMITORY".to_string())],
     );
     for shift in &rot.shifts {
-        let in_dorm = shift.rooms.iter().any(|r| {
-            r.room_type == "DORMITORY" && r.recommended.iter().any(|id| id == FIAMMETTA)
-        });
+        let in_dorm = shift
+            .rooms
+            .iter()
+            .any(|r| r.room_type == "DORMITORY" && r.recommended.iter().any(|id| id == FIAMMETTA));
         assert!(
             in_dorm,
             "shift {}: Fiammetta must hold her dormitory seat",
@@ -5476,13 +5504,14 @@ fn recommended_rotation_survives_its_own_morale_sim() {
         // Dorm pressure, not dorm comfort. This asserted exactly 0 until the
         // empty-team backfill landed: the 5-factory case used to leave one
         // factory unstaffed, and an empty room needs no beds - so the old zero
-        // was partly an artefact of the bug. Staffing it adds a crew that has to
-        // rest somewhere, and 4xL5 dorms (20 beds) come up one short at peak.
-        // The invariant that matters is the verdict above (nobody actually runs
-        // dry over the week); overflow is a pressure gauge, so hold it to a
-        // small bound instead of zero.
+        // was partly an artefact of the bug. Staffing it adds a crew that has
+        // to rest somewhere, and 4xL5 dorms (20 beds) run short at peak - one
+        // bed for the extra crew, one more for Fiammetta's permanent seat now
+        // that the rotation genuinely parks her in a dormitory. The invariant
+        // that matters is the verdict above (nobody actually runs dry over the
+        // week); overflow is a pressure gauge, so hold it to a small bound.
         assert!(
-            report.dorm_overflow <= 1,
+            report.dorm_overflow <= 2,
             "{factories}-factory dorms are {} beds short at peak",
             report.dorm_overflow
         );

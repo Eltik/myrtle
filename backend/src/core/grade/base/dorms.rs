@@ -160,21 +160,19 @@ pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
 /// assigned to that Dormitory"), and the swap needs a free seat beside her
 /// for the drained operator's visit. No dormitory with two seats, no 24/7
 /// sustain - owning Fiammetta is not enough.
-pub fn building_hosts_manager(
-    building: &UserBuilding,
-    building_data: &BuildingDataFile,
-) -> bool {
+pub fn building_hosts_manager(building: &UserBuilding, building_data: &BuildingDataFile) -> bool {
     dorm_list(building, building_data)
         .iter()
         .any(|d| d.capacity >= 2)
 }
 
-/// The `(manager, "DORMITORY")` pin a plan should reserve when the roster owns
-/// both a morale-conditional generator (Ling's "when own Morale is above/below
-/// N" grants) and a morale-swap manager (Fiammetta) - the manager works FROM a
-/// dormitory seat, holding the generator's morale where its grant fires.
-/// `None` when either half is missing; the flag for "you'd want one but don't
-/// own one" is the caller's `has_conditional && pin.is_none()`.
+/// The `(manager, "DORMITORY")` pin a plan should reserve whenever the roster
+/// owns a morale-swap manager (Fiammetta) and the building can host her - she
+/// works FROM a dormitory seat, whether she's holding a morale-conditional
+/// generator (Ling) at the right side of its bar or sustaining a production
+/// operator 24/7. Her own kit has no other use, so reserving her costs
+/// nothing. `None` when she's missing or no dorm can host her; the "you'd
+/// want one but don't own one" flag is the caller's concern.
 pub fn morale_manager_pin(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -183,12 +181,6 @@ pub fn morale_manager_pin(
     // She has to STAY in a dormitory for the swap to fire - a base with no
     // dorm (or no seat beside her) cannot use a manager at all.
     if !building_hosts_manager(building, registry_building_data) {
-        return None;
-    }
-    let has_conditional = profiles
-        .iter()
-        .any(|op| super::pools::has_morale_conditional_grant(op, registry_building_data));
-    if !has_conditional {
         return None;
     }
     super::assignment::morale_swap_enabler(profiles, registry_building_data)
