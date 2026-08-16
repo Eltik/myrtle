@@ -445,6 +445,22 @@ pub struct SustainabilityDto {
     pub depleted: Vec<DepletedOperatorDto>,
     /// Peak number of resting operators the dorms could not hold at once.
     pub dorm_overflow: usize,
+    /// Every simulated operator's morale over the week, sampled at 12h block
+    /// boundaries - the "morale over time" chart. Most-at-risk first.
+    pub timeline: Vec<MoraleTimelineDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MoraleTimelineDto {
+    pub operator: AssignedOperator,
+    /// The room they call home in the rotation (most-worked slot; a permanent
+    /// dorm resident's dormitory).
+    pub room_type: String,
+    pub slot_id: String,
+    /// Morale at every 12h boundary, `samples[0]` = t=0 = 24.0.
+    pub samples: Vec<f64>,
+    /// The final sample - the bar they end the week on.
+    pub end: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1232,7 +1248,7 @@ async fn build_base_improvements(
         crate::core::grade::base::pools::has_morale_conditional_grant(op, &game_data.building)
     });
     let manager_pin =
-        crate::core::grade::base::dorms::morale_manager_pin(&profiles, &game_data.building);
+        crate::core::grade::base::dorms::morale_manager_pin(&profiles, &user_building, &game_data.building);
     let rotation_manager = manager_pin.as_ref().map(|(id, _)| id.clone());
     if let Some(pin) = manager_pin {
         optimal_pins.push(pin);
@@ -1855,6 +1871,27 @@ pub fn shift_rotation_to_dto(
             })
             .collect(),
         dorm_overflow: sim.dorm_overflow,
+        timeline: {
+            let mut rows: Vec<MoraleTimelineDto> = sim
+                .timeline
+                .iter()
+                .map(|t| MoraleTimelineDto {
+                    operator: assigned_operator(&t.char_id, game_data),
+                    room_type: room_type_of(&t.home_slot_id),
+                    slot_id: t.home_slot_id.clone(),
+                    end: t.samples.last().copied().unwrap_or(0.0),
+                    samples: t.samples.clone(),
+                })
+                .collect();
+            // Most-at-risk first: the lowest week-end bar leads the chart.
+            rows.sort_by(|a, b| {
+                a.end
+                    .partial_cmp(&b.end)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then_with(|| a.operator.name.cmp(&b.operator.name))
+            });
+            rows
+        },
     };
 
     ShiftRotationDto {

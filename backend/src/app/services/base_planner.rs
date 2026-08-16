@@ -634,7 +634,7 @@ pub async fn rotation(
     // morale-conditional generator - the planner and the Score tab must
     // never disagree about her.
     if let Some(pin) =
-        crate::core::grade::base::dorms::morale_manager_pin(&candidates, &game_data.building)
+        crate::core::grade::base::dorms::morale_manager_pin(&candidates, &building, &game_data.building)
         && !pins.iter().any(|(id, _)| id == &pin.0)
     {
         pins.push(pin);

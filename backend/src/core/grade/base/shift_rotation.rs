@@ -124,7 +124,9 @@ fn preset_sustained_operators(
     building_data: &BuildingDataFile,
 ) -> HashSet<String> {
     let managers = num_morale_swap_managers(operators, building_data);
-    if managers == 0 {
+    // No manager, or no dormitory that can host one (her seat + the swap
+    // seat): nobody can be held 24/7 - she has to STAY in a dorm to work.
+    if managers == 0 || !super::dorms::building_hosts_manager(building, building_data) {
         return HashSet::new();
     }
     // The manager's swap needs HER at full morale first (Fiammetta recharges
@@ -154,15 +156,12 @@ fn preset_sustained_operators(
         }
         for op in presets[0] {
             if presets.iter().all(|p| p.contains(op)) {
-                let feasible = operators
-                    .iter()
-                    .find(|o| &o.char_id == op)
-                    .is_none_or(|o| {
-                        super::dorms::manager_can_sustain(
-                            swap_rate,
-                            super::sustain_sim::game_morale_drain(o, morale_drains),
-                        )
-                    });
+                let feasible = operators.iter().find(|o| &o.char_id == op).is_none_or(|o| {
+                    super::dorms::manager_can_sustain(
+                        swap_rate,
+                        super::sustain_sim::game_morale_drain(o, morale_drains),
+                    )
+                });
                 if feasible {
                     candidates.insert(op.clone());
                 }
@@ -447,7 +446,9 @@ fn rotation_core(
         preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
     let op_index = build_op_index(operators);
-    if sustained.len() < managers {
+    if sustained.len() < managers
+        && super::dorms::building_hosts_manager(building, building_data)
+    {
         let recovery = morale_recovery(building);
         // Swap feasibility: the manager can only hold an operator whose drain
         // doesn't outrun her own recharge (Fiammetta: one full-bar swap per

@@ -2771,7 +2771,10 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     use std::collections::HashSet;
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    let building = trading_post(3);
+    // The manager has to STAY in a dormitory for the swap to work, so the
+    // fixture needs one for anyone to be sustainable at all.
+    let mut building = trading_post(3);
+    building.rooms.push(room("d0", "DORMITORY", 2));
     let recovery = morale_recovery(&building);
     const PROVISO: &str = "char_4032_provs";
     const FIAMMETTA: &str = "char_300_phenxi"; // swaps morale with another operator
@@ -2782,7 +2785,8 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
         .map(|id| profile(gd, id))
         .collect();
     let main = compute_optimal_assignment(&base, &building, &gd.building, &registry, &drains);
-    let none = morale_sustained_beneficiaries(&main, &base, &drains, recovery, &registry, &gd.building);
+    let none =
+        morale_sustained_beneficiaries(&main, &base, &drains, recovery, &building, &registry, &gd.building);
     assert!(
         none.is_empty(),
         "no manager -> no sustained operator, got {none:?}"
@@ -2793,7 +2797,8 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     let mut with = base;
     with.push(profile(gd, FIAMMETTA));
     let main2 = compute_optimal_assignment(&with, &building, &gd.building, &registry, &drains);
-    let benef = morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &registry, &gd.building);
+    let benef =
+        morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &building, &registry, &gd.building);
     assert_eq!(
         benef.len(),
         1,
@@ -3033,6 +3038,9 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
             ..Default::default()
         }],
     };
+    // The manager has to STAY in a dormitory for the swap to work.
+    let mut building = building;
+    building.rooms.push(room("d0", "DORMITORY", 2));
     let roster: Vec<_> = [
         PROVISO,
         FIAMMETTA,
@@ -4244,6 +4252,50 @@ fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
     assert!(
         !manager_can_sustain(0.0, 0.5),
         "no manager, no sustain - rate 0 holds nobody"
+    );
+
+    // She has to STAY in the dorm for the swap to work: pinned into the
+    // rotation, she holds a dormitory seat in EVERY shift and never appears
+    // anywhere else.
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let (registry2, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = full_roster(gd);
+    let building = generic_base();
+    let rot = recommend_shift_rotation(
+        &roster,
+        &building,
+        &gd.building,
+        &registry2,
+        &drains,
+        &[(FIAMMETTA.to_string(), "DORMITORY".to_string())],
+    );
+    for shift in &rot.shifts {
+        let in_dorm = shift.rooms.iter().any(|r| {
+            r.room_type == "DORMITORY" && r.recommended.iter().any(|id| id == FIAMMETTA)
+        });
+        assert!(
+            in_dorm,
+            "shift {}: Fiammetta must hold her dormitory seat",
+            shift.index
+        );
+        for room in shift.rooms.iter().filter(|r| r.room_type != "DORMITORY") {
+            assert!(
+                !room.recommended.iter().any(|id| id == FIAMMETTA),
+                "shift {}: Fiammetta must never leave the dorm ({})",
+                shift.index,
+                room.room_type
+            );
+        }
+    }
+
+    // A base with no dormitory cannot host her at all - no pin, no sustain.
+    use backend::core::grade::base::dorms::morale_manager_pin;
+    let no_dorms = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+    };
+    assert!(
+        morale_manager_pin(&roster, &no_dorms, &gd.building).is_none(),
+        "no dorm, no manager pin - owning her is not enough"
     );
 }
 

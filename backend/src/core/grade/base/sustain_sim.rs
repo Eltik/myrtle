@@ -60,6 +60,21 @@ pub struct SustainabilityReport {
     /// Peak number of resting operators the dorms could NOT hold at once
     /// (they recover nothing that block). Zero for a healthy base.
     pub dorm_overflow: usize,
+    /// Every simulated operator's morale over the horizon - the data behind a
+    /// "morale over time" chart.
+    pub timeline: Vec<OperatorMoraleTimeline>,
+}
+
+/// One operator's simulated morale, sampled at every 12h block boundary
+/// (`samples[0]` is t=0 = a full bar; one more sample per block).
+#[derive(Debug, Clone)]
+pub struct OperatorMoraleTimeline {
+    pub char_id: String,
+    /// The room they work most often - their "home" for display. A permanent
+    /// dorm resident's home is their dormitory; a sustained 24/7 operator's is
+    /// the room the rotation pins them to.
+    pub home_slot_id: String,
+    pub samples: Vec<f64>,
 }
 
 /// Effective working drain at GAME rates, in morale points per hour: the
@@ -368,6 +383,11 @@ pub fn simulate_rotation(
         .collect();
     let mut depleted: Vec<DepletedOperator> = Vec::new();
     let mut dorm_overflow = 0usize;
+    // Morale sampled per operator at every block boundary (t=0 is full).
+    let mut samples: HashMap<String, Vec<f64>> = schedules
+        .keys()
+        .map(|id| (id.clone(), vec![MORALE_MAX]))
+        .collect();
 
     let blocks = (SIM_HORIZON_HOURS / SHIFT_HOURS) as usize;
     for block in 0..blocks {
@@ -451,6 +471,69 @@ pub fn simulate_rotation(
         }
         unseated += queue.count();
         dorm_overflow = dorm_overflow.max(unseated);
+
+        // Sample everyone at the block boundary.
+        for (id, track) in &mut samples {
+            track.push(morale.get(id.as_str()).copied().unwrap_or(MORALE_MAX));
+        }
+    }
+
+    // The chart data: every scheduled operator's sampled bar, homed to the
+    // slot they work most; permanent dorm residents and 24/7-sustained
+    // operators ride along as flat full bars (residents never drain, the
+    // manager's swap keeps a sustained operator topped up by definition).
+    let flat = vec![MORALE_MAX; blocks + 1];
+    let mut timeline: Vec<OperatorMoraleTimeline> = samples
+        .into_iter()
+        .map(|(char_id, track)| {
+            let home = schedules
+                .get(&char_id)
+                .and_then(|s| {
+                    let mut counts: HashMap<&String, usize> = HashMap::new();
+                    for slot in s.works.iter().flatten() {
+                        *counts.entry(slot).or_insert(0) += 1;
+                    }
+                    counts
+                        .into_iter()
+                        .max_by_key(|(slot, n)| (*n, std::cmp::Reverse(slot.as_str())))
+                        .map(|(slot, _)| slot.clone())
+                })
+                .unwrap_or_default();
+            OperatorMoraleTimeline {
+                char_id,
+                home_slot_id: home,
+                samples: track,
+            }
+        })
+        .collect();
+    for ((slot, k), ids) in &residents {
+        if *k != 0 {
+            continue;
+        }
+        for id in ids {
+            timeline.push(OperatorMoraleTimeline {
+                char_id: id.clone(),
+                home_slot_id: slot.clone(),
+                samples: flat.clone(),
+            });
+        }
+    }
+    for id in &rotation.sustained {
+        let home = rotation
+            .shifts
+            .first()
+            .and_then(|s| {
+                s.rooms
+                    .iter()
+                    .find(|r| r.recommended.iter().any(|o| o == id))
+                    .map(|r| r.slot_id.clone())
+            })
+            .unwrap_or_default();
+        timeline.push(OperatorMoraleTimeline {
+            char_id: id.clone(),
+            home_slot_id: home,
+            samples: flat.clone(),
+        });
     }
 
     depleted.sort_by(|a, b| {
@@ -467,5 +550,6 @@ pub fn simulate_rotation(
         horizon_hours: SIM_HORIZON_HOURS,
         depleted,
         dorm_overflow,
+        timeline,
     }
 }

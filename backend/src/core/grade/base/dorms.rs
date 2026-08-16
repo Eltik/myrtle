@@ -154,6 +154,21 @@ pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
     swap_rate > 0.0 && drain_per_hour <= swap_rate + 1e-9
 }
 
+/// True when the building can actually HOST a morale-swap manager: her swap
+/// only works while she STAYS parked in a dormitory ("When this Operator is
+/// assigned to a Dormitory, ... swaps Morale with the previous Operator
+/// assigned to that Dormitory"), and the swap needs a free seat beside her
+/// for the drained operator's visit. No dormitory with two seats, no 24/7
+/// sustain - owning Fiammetta is not enough.
+pub fn building_hosts_manager(
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+) -> bool {
+    dorm_list(building, building_data)
+        .iter()
+        .any(|d| d.capacity >= 2)
+}
+
 /// The `(manager, "DORMITORY")` pin a plan should reserve when the roster owns
 /// both a morale-conditional generator (Ling's "when own Morale is above/below
 /// N" grants) and a morale-swap manager (Fiammetta) - the manager works FROM a
@@ -162,8 +177,14 @@ pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
 /// own one" is the caller's `has_conditional && pin.is_none()`.
 pub fn morale_manager_pin(
     profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
     registry_building_data: &BuildingDataFile,
 ) -> Option<(String, String)> {
+    // She has to STAY in a dormitory for the swap to fire - a base with no
+    // dorm (or no seat beside her) cannot use a manager at all.
+    if !building_hosts_manager(building, registry_building_data) {
+        return None;
+    }
     let has_conditional = profiles
         .iter()
         .any(|op| super::pools::has_morale_conditional_grant(op, registry_building_data));

@@ -1,6 +1,7 @@
 import type { IShift, IShiftRotation } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { TEXT_META } from "../shared";
+import { MoraleOverTime } from "./MoraleOverTime";
 import { TEXT_MICRO } from "./parts";
 import { ShiftRoomBlock } from "./ShiftCell";
 import { SustainabilityBanner } from "./SustainabilityBanner";
@@ -51,6 +52,7 @@ export function ShiftPoster({ rotation }: { rotation: IShiftRotation }) {
             </p>
             {rotation.sustainability && <SustainabilityBanner sim={rotation.sustainability} />}
             <ShiftGrid rotation={rotation} interactive className="grid-cols-1 sm:grid-cols-3" />
+            {rotation.sustainability && <MoraleOverTime timeline={rotation.sustainability.timeline ?? []} />}
         </div>
     );
 }

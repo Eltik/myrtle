@@ -1136,11 +1136,16 @@ pub fn morale_sustained_beneficiaries(
     operators: &[OperatorBaseProfile],
     morale_drains: &HashMap<String, f64>,
     recovery: f64,
+    building: &UserBuilding,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> HashSet<String> {
     let managers = num_morale_swap_managers(operators, building_data);
-    if managers == 0 {
+    // No manager, or no dormitory that can host one (her seat plus a free
+    // swap seat): the manager has to STAY parked in a dorm to work.
+    if managers == 0
+        || !crate::core::grade::base::dorms::building_hosts_manager(building, building_data)
+    {
         return HashSet::new();
     }
     // The swap hands over a full bar once per manager recharge (Fiammetta:
@@ -1302,8 +1307,15 @@ pub fn compute_sustained_assignment(
     // A morale-swap manager (Fiammetta) holds one working operator at full morale 24/7 - so that
     // operator (e.g. a Proviso the player keeps running) never rests: it isn't discounted by the
     // rotation, adds no rest demand, and is never the one swapped out.
-    let morale_sustained =
-        morale_sustained_beneficiaries(&main, operators, morale_drains, recovery, registry, building_data);
+    let morale_sustained = morale_sustained_beneficiaries(
+        &main,
+        operators,
+        morale_drains,
+        recovery,
+        building,
+        registry,
+        building_data,
+    );
 
     // Sustained 24/7 output: each production room's peak efficiency scaled by how
     // well its team holds up under rotation (low morale drain / low-level dorms ->

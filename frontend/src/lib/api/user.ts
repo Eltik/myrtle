@@ -524,6 +524,20 @@ export interface ISustainability {
     depleted: IDepletedOperator[];
     /** Peak number of resting operators the dorms could not hold at once. */
     dorm_overflow: number;
+    /** Every simulated operator's morale over the week, sampled at 12h block
+     *  boundaries. Most-at-risk (lowest week-end bar) first. */
+    timeline: IMoraleTimeline[];
+}
+
+export interface IMoraleTimeline {
+    operator: IAssignedOperator;
+    /** The room they call home in the rotation. */
+    room_type: string;
+    slot_id: string;
+    /** Morale at every 12h boundary; samples[0] = t=0 = 24. */
+    samples: number[];
+    /** The bar they end the week on. */
+    end: number;
 }
 
 export interface IDepletedOperator {
