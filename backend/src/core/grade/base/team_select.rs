@@ -39,6 +39,52 @@ const EXTENSIONS_PER_SLOT: usize = 24;
 /// Local-search polish passes after the beam.
 const POLISH_PASSES: usize = 4;
 
+/// A set of operators, as a fixed-width bitset.
+///
+/// The beam search tests team disjointness millions of times, so the set has to
+/// be a couple of machine words rather than a `HashSet`. 256 bits covers the
+/// worst-case universe: three production groups, each enumerating from a pool of
+/// `BASE_POOL + POOL_PER_EXTRA_TEAM × (teams − 1)` operators (~72 at 5 rooms),
+/// so ~216 distinct operators at the extreme.
+///
+/// This replaced a bare `u128`, whose 128-bit budget the union across all three
+/// groups could exceed - every candidate team containing an operator past the
+/// budget was then silently discarded, shrinking the pool the rotation could
+/// draw on without any signal that it had happened.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct OpMask([u64; 4]);
+
+impl OpMask {
+    pub(crate) const EMPTY: Self = Self([0; 4]);
+    /// Distinct operators representable. Indices at or past this are rejected.
+    pub(crate) const CAPACITY: usize = 256;
+
+    const fn set(&mut self, bit: usize) {
+        self.0[bit / 64] |= 1u64 << (bit % 64);
+    }
+
+    fn intersects(&self, other: &Self) -> bool {
+        self.0.iter().zip(&other.0).any(|(a, b)| a & b != 0)
+    }
+
+    fn union(&self, other: &Self) -> Self {
+        let mut out = *self;
+        for (o, b) in out.0.iter_mut().zip(&other.0) {
+            *o |= *b;
+        }
+        out
+    }
+
+    /// Everything in `self` that is not in `other`.
+    fn difference(&self, other: &Self) -> Self {
+        let mut out = *self;
+        for (o, b) in out.0.iter_mut().zip(&other.0) {
+            *o &= !*b;
+        }
+        out
+    }
+}
+
 /// One production group to staff: rooms making the same product.
 pub struct GroupSpec {
     pub(crate) room_type: String,
@@ -285,28 +331,32 @@ fn select_balanced_teams(
         })
         .collect();
 
-    // Operator universe → bit indices for u128 disjointness masks. The pools are
-    // bounded well under 128 (≤ ~40 per group); anything past 128 is dropped.
-    let mut bit_of: HashMap<String, u32> = HashMap::new();
+    // Operator universe → bit indices for the disjointness masks. The universe is
+    // the UNION across every group's candidate pool, which on a full base
+    // (gold + EXP + trading, each up to `BASE_POOL + 8×extra` operators) runs to
+    // ~200 - so [`OpMask`] is sized to hold it rather than dropping the overflow.
+    let mut bit_of: HashMap<String, usize> = HashMap::new();
     for teams in &per_group {
         for t in teams {
             for op in &t.ops {
-                let next = bit_of.len() as u32;
-                if next < 128 {
+                let next = bit_of.len();
+                if next < OpMask::CAPACITY {
                     bit_of.entry(op.clone()).or_insert(next);
                 }
             }
         }
     }
-    let mask_of = |ops: &[String]| -> Option<u128> {
-        let mut m = 0u128;
+    let mask_of = |ops: &[String]| -> Option<OpMask> {
+        let mut m = OpMask::EMPTY;
         for op in ops {
-            m |= 1u128 << bit_of.get(op.as_str())?;
+            m.set(*bit_of.get(op.as_str())?);
         }
         Some(m)
     };
-    // (candidates, masks) per group, dropping teams past the bit budget.
-    let masked: Vec<Vec<(CandidateTeam, u128)>> = per_group
+    // (candidates, masks) per group. A team can only fail to mask if the universe
+    // overflowed `OpMask::CAPACITY`, which the sizing above makes unreachable in
+    // practice; dropping it is still safer than mis-scoring a collision.
+    let masked: Vec<Vec<(CandidateTeam, OpMask)>> = per_group
         .into_iter()
         .map(|teams| {
             teams
@@ -336,18 +386,18 @@ fn select_balanced_teams(
     // Beam search over slots. State: (used ops mask, weighted total, pick per slot).
     #[derive(Clone)]
     struct State {
-        mask: u128,
+        mask: OpMask,
         total: f64,
         picks: Vec<Option<usize>>,
     }
     let mut beam = vec![State {
-        mask: 0,
+        mask: OpMask::EMPTY,
         total: 0.0,
         picks: vec![None; slots.len()],
     }];
     for (si, &(g, ordinal)) in slots.iter().enumerate() {
         let weight = weights[g][ordinal] as f64;
-        let mut next: HashMap<u128, State> = HashMap::new();
+        let mut next: HashMap<OpMask, State> = HashMap::new();
         let mut push = |st: State| {
             next.entry(st.mask)
                 .and_modify(|cur| {
@@ -363,11 +413,11 @@ fn select_balanced_teams(
             push(st.clone());
             let mut taken = 0usize;
             for (ci, (cand, mask)) in masked[g].iter().enumerate() {
-                if mask & st.mask != 0 {
+                if mask.intersects(&st.mask) {
                     continue;
                 }
                 let mut new = st.clone();
-                new.mask |= mask;
+                new.mask = new.mask.union(mask);
                 new.total += cand.score * weight;
                 new.picks[si] = Some(ci);
                 push(new);
@@ -388,7 +438,7 @@ fn select_balanced_teams(
         beam = states;
     }
     let mut best = beam.into_iter().next().unwrap_or(State {
-        mask: 0,
+        mask: OpMask::EMPTY,
         total: 0.0,
         picks: Vec::new(),
     });
@@ -418,15 +468,15 @@ fn select_balanced_teams(
         for (si, &(g, ordinal)) in slots.iter().enumerate() {
             let weight = weights[g][ordinal] as f64;
             let cur_pick = best.picks[si];
-            let cur_mask = cur_pick.map_or(0, |ci| masked[g][ci].1);
+            let cur_mask = cur_pick.map_or(OpMask::EMPTY, |ci| masked[g][ci].1);
             let cur_score = cur_pick.map_or(0.0, |ci| masked[g][ci].0.score);
-            let rest = best.mask & !cur_mask;
+            let rest = best.mask.difference(&cur_mask);
             for (ci, (cand, mask)) in masked[g].iter().enumerate() {
-                if mask & rest != 0 {
+                if mask.intersects(&rest) {
                     continue;
                 }
                 if cand.score > cur_score + 1e-9 {
-                    best.mask = rest | mask;
+                    best.mask = rest.union(mask);
                     best.total += (cand.score - cur_score) * weight;
                     best.picks[si] = Some(ci);
                     improved = true;
@@ -471,8 +521,9 @@ fn select_balanced_teams(
 
     // Materialize: per group, selected teams sorted strongest-first onto the
     // ordinals sorted widest-block-first, so any trailing 1-cell block gets the
-    // weakest team. Missing picks become empty teams (the block rests dark).
-    specs
+    // weakest team. Missing picks leave an empty team, which `backfill_empty_teams`
+    // then fills - an unstaffed production room is never the right answer.
+    let mut groups: Vec<PlannedGroup> = specs
         .iter()
         .enumerate()
         .map(|(g, spec)| {
@@ -516,7 +567,112 @@ fn select_balanced_teams(
                 cells: tile_group(n),
             }
         })
-        .collect()
+        .collect();
+
+    backfill_empty_teams(
+        &mut groups,
+        operators,
+        assigned,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        cc_conditions,
+        morale_drains,
+    );
+    groups
+}
+
+/// Seat anyone still free in a team the beam left empty.
+///
+/// Rotation teams work 24-hour blocks, so their candidate pool excludes every
+/// operator whose morale drain outpaces the bar (`require_24h_sustain`). On a
+/// wide base that pool runs dry - a roster can own plenty of Trading Post
+/// operators and still leave the third team of a two-post group empty, which
+/// tiles into a production room standing dark for two of three shifts.
+///
+/// That trade is backwards. An unstaffed production room generates nothing at
+/// all: a certain, total loss for every hour it is dark. A heavy drainer working
+/// that block produces at full rate until their bar empties, and morale is
+/// recoverable in a dormitory. So when the sustainable pool is exhausted, relax
+/// the 24h requirement rather than resting the room - "someone imperfect" beats
+/// "nobody" every time.
+///
+/// This only fires where the beam already failed to fill a block, so bases whose
+/// sustainable pool is deep enough are completely unaffected.
+#[allow(clippy::too_many_arguments)]
+fn backfill_empty_teams(
+    groups: &mut [PlannedGroup],
+    operators: &[OperatorBaseProfile],
+    assigned: &HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    cc_conditions: &[CcCondition],
+    morale_drains: &HashMap<String, f64>,
+) {
+    if !groups
+        .iter()
+        .any(|g| g.teams.iter().any(|t| t.ops.is_empty()))
+    {
+        return;
+    }
+
+    // Teams must stay genuinely disjoint: an operator seated by the beam, or
+    // already committed elsewhere in the base, is not available here.
+    let mut used: HashSet<String> = assigned.clone();
+    for g in groups.iter() {
+        for t in &g.teams {
+            used.extend(t.ops.iter().cloned());
+        }
+    }
+
+    for g in groups.iter_mut() {
+        let capacity = g
+            .rooms
+            .iter()
+            .map(|(_, level)| max_stationed_at_level(building_data, &g.room_type, *level).max(0))
+            .min()
+            .unwrap_or(0);
+        if capacity <= 0 {
+            continue;
+        }
+        let min_level = g.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
+
+        for ordinal in 0..g.teams.len() {
+            if !g.teams[ordinal].ops.is_empty() {
+                continue;
+            }
+            let relaxed = enumerate_candidate_teams(
+                &g.room_type,
+                min_level,
+                g.formula_type.as_deref(),
+                operators,
+                &used,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                capacity,
+                cc_conditions,
+                morale_drains,
+                false,
+                BASE_POOL,
+                g.room_type == "MANUFACTURE",
+                // The whole point of the pass: consider the operators the strict
+                // rotation pool threw away.
+                false,
+            );
+            let Some(team) = relaxed.into_iter().find(|t| !t.ops.is_empty()) else {
+                // Genuinely nobody left with an applicable skill - resting the
+                // room really is all that's on offer.
+                break;
+            };
+            used.extend(team.ops.iter().cloned());
+            g.teams[ordinal] = team;
+        }
+    }
 }
 
 /// Team size for a group: bounded by its smallest room so a team fits any room its

@@ -15,9 +15,8 @@ use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment_with_pins, compute_sustained_assignment,
 };
-use crate::core::grade::base::buff_registry::{
-    BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
-};
+use crate::core::grade::base::buff_registry::{BuffResolutionStrategy, build_name_to_char};
+use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::shift_rotation::ShiftRotation;
 use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
 use crate::core::grade::base::types::{
@@ -1206,27 +1205,13 @@ async fn build_base_improvements(
         return Ok(BaseImprovements::default());
     }
 
-    // Roster → base-skill profiles. Drops operators with no entry in
-    // building_data.chars (e.g. tokens, drones).
-    let profiles: Vec<OperatorBaseProfile> = roster
-        .iter()
-        .filter_map(|entry| {
-            let bc = game_data.building.chars.get(&entry.operator_id)?;
-            let static_op = game_data.operators.get(&entry.operator_id);
-            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
-            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
-            Some(OperatorBaseProfile::build(
-                entry,
-                bc,
-                faction_tags,
-                rarity,
-                &game_data.building,
-            ))
-        })
-        .collect();
-
-    let name_to_char = build_name_to_char(&game_data.operators);
-    let (registry, morale_drains) = build_registry(&game_data.building.buffs, &name_to_char);
+    // Roster → base-skill profiles, buff registry, morale drains. Shared with
+    // the interactive planner endpoints so both read a roster the same way.
+    let BaseContext {
+        profiles,
+        registry,
+        morale_drains,
+    } = BaseContext::build(roster, game_data);
 
     // For a 243 base, evaluate the base-wide resource economy (Rosmontis / Ebenholz /
     // Mr. Nothing "Perception Information" system, and anything shaped like it) ONCE: its
@@ -1246,16 +1231,11 @@ async fn build_base_improvements(
     let has_conditional_generator = profiles.iter().any(|op| {
         crate::core::grade::base::pools::has_morale_conditional_grant(op, &game_data.building)
     });
-    let rotation_manager = has_conditional_generator
-        .then(|| {
-            crate::core::grade::base::assignment::morale_swap_enabler(
-                &profiles,
-                &game_data.building,
-            )
-        })
-        .flatten();
-    if let Some(manager) = &rotation_manager {
-        optimal_pins.push((manager.clone(), "DORMITORY".to_string()));
+    let manager_pin =
+        crate::core::grade::base::dorms::morale_manager_pin(&profiles, &game_data.building);
+    let rotation_manager = manager_pin.as_ref().map(|(id, _)| id.clone());
+    if let Some(pin) = manager_pin {
+        optimal_pins.push(pin);
     }
 
     // Native pool economies (Senshi's Monster Meals, Mr. Nothing's and
@@ -1884,7 +1864,7 @@ pub fn shift_rotation_to_dto(
     }
 }
 
-fn base_assignment_to_dto(
+pub(crate) fn base_assignment_to_dto(
     asn: &BaseAssignment,
     game_data: &GameData,
     profiles: &[OperatorBaseProfile],

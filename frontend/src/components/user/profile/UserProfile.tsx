@@ -10,6 +10,7 @@ import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
 import { EnemiesTab } from "./impl/components/tabs/Enemies/EnemiesTab";
 import { ItemsTab } from "./impl/components/tabs/Items/ItemsTab";
+import { OptimizerTab } from "./impl/components/tabs/Optimizer/OptimizerTab";
 import { PlansTab } from "./impl/components/tabs/Plans/PlansTab";
 import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
 import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
@@ -74,6 +75,7 @@ export function UserProfile() {
                 label: "Enemies",
                 count: encounteredEnemies?.encounteredCount ?? undefined,
             },
+            { id: "optimizer" as TabId, label: "Optimizer" },
         ],
         [data, roster, inventory, encounteredEnemies, publicPlans],
     );
@@ -169,6 +171,7 @@ export function UserProfile() {
                 {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                 {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} server={data.server} uid={id} />}
                 {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
+                {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
             </main>
         </DynamicArtProvider>
     );

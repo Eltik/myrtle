@@ -1,0 +1,276 @@
+import { queryOptions } from "@tanstack/react-query";
+import { createServerFn } from "@tanstack/react-start";
+import { backendFetch } from "#/lib/fetch";
+import { optionalSiteToken } from "./_shared.server";
+import type { IAssignedOperator, IBaseAssignment, IShiftRotation } from "./user";
+
+/**
+ * The interactive base planner.
+ *
+ * Every number here comes from the Rust clause engine - the same one behind
+ * `/user/improvements`. This module deliberately contains no scoring math: it
+ * ships the drafted layout to the backend and renders what comes back. If you
+ * find yourself wanting to "just estimate" an efficiency client-side, that's the
+ * seam where the two engines start to disagree.
+ */
+
+/** Game room constants, as they appear in `building_data`. */
+export type RoomType = "CONTROL" | "MANUFACTURE" | "TRADING" | "POWER" | "DORMITORY" | "MEETING" | "HIRE" | "TRAINING" | "WORKSHOP";
+
+export type FormulaType = "F_GOLD" | "F_EXP" | "F_DIAMOND";
+
+/** One room of a layout the player is editing. */
+export interface IDraftRoom {
+    slot_id: string;
+    room_type: RoomType;
+    level: number;
+    operators: string[];
+    formula_type?: FormulaType | null;
+}
+
+export interface IPower {
+    generated: number;
+    consumed: number;
+    net: number;
+}
+
+/**
+ * One operator's endurance in the room the draft puts them in. Drain is the
+ * game's own per-hour figure, so this is not an estimate.
+ */
+export interface ISustainEntry {
+    operator_id: string;
+    name: string;
+    slot_id: string;
+    room_type: RoomType;
+    drain_per_hour: number;
+    /** Hours from full morale to empty. `null` = never depletes. */
+    lasts_hours: number | null;
+}
+
+/**
+ * The dormitories' contribution. They produce nothing, so they never appear in
+ * a `BaseAssignment` - but they set recovery speed and how many operators can
+ * rest at once, which is what decides whether a staffing survives its rhythm.
+ */
+export interface IDorms {
+    count: number;
+    /** Sum of dorm levels - the `&dorm&lv` scaling the clause engine reads. */
+    total_levels: number;
+    /** Operators the base can rest at once. */
+    total_capacity: number;
+    /** Morale restored per hour to a resting operator. */
+    recovery_per_hour: number;
+}
+
+export interface IEvaluateResponse {
+    assignment: IBaseAssignment;
+    power: IPower;
+    sustain: ISustainEntry[];
+    dorms: IDorms;
+}
+
+export interface IRoomDiff {
+    slot_id: string;
+    room_type: RoomType;
+    before: string[];
+    after: string[];
+    efficiency_before: number;
+    efficiency_after: number;
+    yield_before: number;
+    yield_after: number;
+}
+
+export interface IOptimizeResponse {
+    proposal: IBaseAssignment;
+    baseline: IBaseAssignment;
+    room_diffs: IRoomDiff[];
+    power: IPower;
+}
+
+export interface IOptimizeInput {
+    uid: string;
+    layout: IDraftRoom[];
+    /** Slot ids the optimizer may restaff. Empty = every room. */
+    scope?: string[];
+    /** Operators pinned exactly where the draft puts them. */
+    locked?: string[];
+    /** Operators the plan may not seat anywhere. */
+    excluded?: string[];
+}
+
+export interface ICatalogPhase {
+    level: number;
+    max_stationed: number;
+    /** Positive generates, negative consumes. */
+    electricity: number;
+    manpower_cost: number;
+}
+
+export interface ICatalogRoom {
+    room_type: RoomType;
+    name: string;
+    category: string;
+    /** -1 means unlimited. */
+    max_count: number;
+    size_col: number;
+    size_row: number;
+    /** Index = level - 1. */
+    phases: ICatalogPhase[];
+}
+
+export interface ICatalogFormula {
+    formula_type: FormulaType;
+    label: string;
+}
+
+export interface ICatalogResponse {
+    rooms: ICatalogRoom[];
+    formulas: ICatalogFormula[];
+}
+
+export const evaluateLayoutFn = createServerFn({ method: "POST" })
+    .inputValidator((data: { uid: string; layout: IDraftRoom[]; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, layout, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/base/evaluate?uid=${encodeURIComponent(uid)}`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ layout }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to evaluate layout: ${res.status}`);
+        }
+        return (await res.json()) as IEvaluateResponse;
+    });
+
+export const optimizeLayoutFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IOptimizeInput & { bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, layout, scope, locked, excluded, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/base/optimize?uid=${encodeURIComponent(uid)}`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({
+                layout,
+                scope: scope ?? [],
+                locked: locked ?? [],
+                excluded: excluded ?? [],
+            }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to optimize layout: ${res.status}`);
+        }
+        return (await res.json()) as IOptimizeResponse;
+    });
+
+export interface IRotationInput {
+    uid: string;
+    layout: IDraftRoom[];
+    locked?: string[];
+    excluded?: string[];
+}
+
+export interface IRotationResponse {
+    rotation: IShiftRotation;
+    /** Shifts per day the rotation assumes - never hardcode it. */
+    shift_count: number;
+}
+
+export const rotationPlanFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IRotationInput & { bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, layout, locked, excluded, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/base/rotation?uid=${encodeURIComponent(uid)}`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ layout, locked: locked ?? [], excluded: excluded ?? [] }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to plan rotation: ${res.status}`);
+        }
+        return (await res.json()) as IRotationResponse;
+    });
+
+export interface ILayoutResponse {
+    rooms: IDraftRoom[];
+}
+
+export const getBaseLayoutFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/base/layout?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        if (!res.ok) {
+            if (res.status === 404 || res.status === 403) return null;
+            throw new Error(`Failed to load base layout: ${res.status}`);
+        }
+        return (await res.json()) as ILayoutResponse;
+    });
+
+/**
+ * The player's real stationed base - every built slot, not just the rooms a
+ * plan has an opinion about. This is the planner's seed; a `BaseAssignment`
+ * from `/user/improvements` is NOT a substitute, because it carries only
+ * production rooms and a staffed Control Center.
+ */
+export function baseLayoutQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["base", "layout", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getBaseLayoutFn({ data: { uid, bearerToken } }),
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export const getBaseCatalogFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/base/catalog");
+    if (!res.ok) throw new Error(`Failed to load base catalog: ${res.status}`);
+    return (await res.json()) as ICatalogResponse;
+});
+
+/**
+ * Facility definitions. Roster-independent and changes only when the game
+ * does, so it is cached for the session rather than refetched per edit.
+ */
+export function baseCatalogQueryOptions() {
+    return queryOptions({
+        queryKey: ["base", "catalog"],
+        queryFn: () => getBaseCatalogFn(),
+        staleTime: Number.POSITIVE_INFINITY,
+    });
+}
+
+/**
+ * Score a drafted layout. Keyed by the layout itself, so react-query dedupes
+ * repeat edits that land back on an arrangement already scored - dragging an
+ * operator out and back costs nothing.
+ */
+export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["base", "evaluate", uid, layoutKey(layout), bearerToken ? "auth" : "anon"],
+        queryFn: () => evaluateLayoutFn({ data: { uid, layout, bearerToken } }),
+        enabled: layout.length > 0,
+        staleTime: 5 * 60 * 1000,
+        // A draft in progress is a sequence of near-identical layouts; keeping
+        // the previous answer on screen avoids a flash of empty rooms between
+        // one edit and the next.
+        placeholderData: (prev) => prev,
+    });
+}
+
+/**
+ * A stable identity for a layout: room shape plus crew, order-insensitive
+ * within a room. Two drafts that differ only in seat order score identically,
+ * so they should share a cache entry.
+ */
+function layoutKey(layout: IDraftRoom[]): string {
+    return layout
+        .map((r) => `${r.slot_id}:${r.room_type}:${r.level}:${r.formula_type ?? ""}:${[...r.operators].sort().join(",")}`)
+        .sort()
+        .join("|");
+}
+
+export type { IAssignedOperator, IBaseAssignment, IShiftRotation };

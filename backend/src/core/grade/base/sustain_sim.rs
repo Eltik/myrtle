@@ -20,7 +20,6 @@ use super::buff_registry::{BuffResolutionStrategy, TargetedMoraleEffect};
 use super::clause::{ClauseKind, Metric, clauses_from_strategy};
 use super::shift_rotation::ShiftRotation;
 use super::types::{OperatorBaseProfile, UserBuilding};
-use super::util::max_stationed_at_level;
 
 /// The game's full morale bar.
 pub(crate) const MORALE_MAX: f64 = 24.0;
@@ -301,8 +300,13 @@ pub fn simulate_rotation(
     };
 
     let mut schedules: HashMap<String, OpSchedule> = HashMap::new();
+    let mut dorm_cells: HashMap<(String, usize), Vec<String>> = HashMap::new();
     for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
         for room in shift.rooms.iter().filter(|r| r.active) {
+            if room.room_type == "DORMITORY" {
+                dorm_cells.insert((room.slot_id.clone(), k), room.recommended.clone());
+                continue;
+            }
             for id in &room.recommended {
                 let entry = schedules.entry(id.clone()).or_insert_with(|| OpSchedule {
                     works: [None, None, None],
@@ -313,14 +317,50 @@ pub fn simulate_rotation(
         }
     }
 
+    // Dormitory RESIDENTS per (dorm slot, shift): the dorm-cell members who
+    // never work a shift - permanent staff (aura holders, single-target
+    // healers, a parked morale-swap manager). A dorm seat is rest, not work:
+    // residents never drain, they hold seats and project their dorm skills
+    // onto whoever rests beside them. Workers the rotation SHOWS resting in a
+    // dorm cell are not residents - the simulator re-derives their rest from
+    // the schedule and assigns them to dorms by live morale below.
+    let residents: HashMap<(String, usize), Vec<String>> = dorm_cells
+        .into_iter()
+        .map(|(key, ids)| {
+            let pure: Vec<String> = ids
+                .into_iter()
+                .filter(|id| !schedules.contains_key(id))
+                .collect();
+            (key, pure)
+        })
+        .collect();
+
     // Fiammetta-held 24/7 operators are morale-swapped every login; they never
     // drain and never occupy a dorm slot.
     for id in &rotation.sustained {
         schedules.remove(id);
     }
 
-    let recovery_per_hour = dorm_recovery_rate(building, building_data);
-    let dorm_capacity = dorm_capacity(building, building_data);
+    // The base's dorms, best first - the neediest rester always gets the
+    // highest-recovery dorm, exactly the assignment a player makes. Per (dorm,
+    // shift): seats already held by residents, the strongest whole-dorm aura
+    // among them, and the strongest single-target heal (both non-stacking
+    // within their type, so the max IS the whole effect).
+    let dorm_list = super::dorms::dorm_list(building, building_data);
+    let resident_aura = |slot: &str, k: usize, single: bool| -> f64 {
+        residents.get(&(slot.to_string(), k)).map_or(0.0, |ids| {
+            ids.iter()
+                .filter_map(|id| profile_by_id.get(id.as_str()))
+                .map(|p| {
+                    if single {
+                        super::dorms::dorm_single_value(p, registry, building_data)
+                    } else {
+                        super::dorms::dorm_aura_value(p, registry, building_data)
+                    }
+                })
+                .fold(0.0, f64::max)
+        })
+    };
 
     let mut morale: HashMap<String, f64> = schedules
         .keys()
@@ -372,8 +412,12 @@ pub fn simulate_rotation(
             }
         }
 
-        // Resters recover, lowest morale first, until the dorms are full;
-        // anyone beyond capacity recovers nothing this block.
+        // Resters recover lowest-morale first, filling the BEST dorm's free
+        // seats before the next: each recovers at that dorm's own level rate,
+        // plus its residents' whole-dorm aura, plus the working Control-Center
+        // aura ("all Operators in Dormitories recover +0.05/hr"). The dorm's
+        // single-target healer tops up its neediest rester. Anyone beyond the
+        // last free seat recovers nothing that block.
         let mut resting: Vec<&String> = schedules
             .iter()
             .filter(|(id, s)| s.works[shift].is_none() && morale[id.as_str()] < MORALE_MAX)
@@ -385,16 +429,28 @@ pub fn simulate_rotation(
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| a.cmp(b))
         });
-        if resting.len() > dorm_capacity {
-            dorm_overflow = dorm_overflow.max(resting.len() - dorm_capacity);
+        let mut queue = resting.into_iter();
+        let mut unseated = 0usize;
+        for dorm in &dorm_list {
+            let held = residents
+                .get(&(dorm.slot_id.clone(), shift))
+                .map_or(0, Vec::len);
+            let free = dorm.capacity.saturating_sub(held);
+            let rate = dorm.recovery_per_hour
+                + resident_aura(&dorm.slot_id, shift, false)
+                + dorm_aura_by_shift[shift];
+            let single = resident_aura(&dorm.slot_id, shift, true);
+            for taken in 0..free {
+                let Some(id) = queue.next() else { break };
+                // The queue is needy-first, so the dorm's first intake is its
+                // neediest occupant - the single-target heal lands there.
+                let boost = if taken == 0 { single } else { 0.0 };
+                let m = morale.get_mut(id.as_str()).expect("rester has morale");
+                *m = (*m + (rate + boost) * SHIFT_HOURS).min(MORALE_MAX);
+            }
         }
-        // A working Control-Center aura ("all Operators in Dormitories
-        // recover +0.05/hr") lifts this block's dorm recovery.
-        let block_recovery = recovery_per_hour + dorm_aura_by_shift[shift];
-        for id in resting.into_iter().take(dorm_capacity) {
-            let m = morale.get_mut(id.as_str()).expect("rester has morale");
-            *m = (*m + block_recovery * SHIFT_HOURS).min(MORALE_MAX);
-        }
+        unseated += queue.count();
+        dorm_overflow = dorm_overflow.max(unseated);
     }
 
     depleted.sort_by(|a, b| {
@@ -412,45 +468,4 @@ pub fn simulate_rotation(
         depleted,
         dorm_overflow,
     }
-}
-
-/// Capacity-weighted average recovery rate of the base's dormitories, in
-/// morale points per hour, straight from gamedata `DormData`.
-fn dorm_recovery_rate(building: &UserBuilding, building_data: &BuildingDataFile) -> f64 {
-    let phases = &building_data.dorm_data.phases;
-    let mut weighted = 0.0;
-    let mut slots = 0.0;
-    for room in building.rooms.iter().filter(|r| r.room_type == "DORMITORY") {
-        let idx = (room.level.max(1) as usize - 1).min(phases.len().saturating_sub(1));
-        let Some(phase) = phases.get(idx) else {
-            continue;
-        };
-        let cap = f64::from(max_stationed_at_level(
-            building_data,
-            "DORMITORY",
-            room.level,
-        ));
-        weighted += f64::from(phase.manpower_recover) / 100.0 * cap;
-        slots += cap;
-    }
-    if slots > 0.0 {
-        weighted / slots
-    } else {
-        // No dorms at all: the game still trickles morale back very slowly for
-        // idle operators; model that as the lowest dorm tier heavily derated.
-        phases
-            .first()
-            .map_or(1.6, |p| f64::from(p.manpower_recover) / 100.0)
-            * 0.25
-    }
-}
-
-/// Total resting slots across the base's dormitories.
-fn dorm_capacity(building: &UserBuilding, building_data: &BuildingDataFile) -> usize {
-    building
-        .rooms
-        .iter()
-        .filter(|r| r.room_type == "DORMITORY")
-        .map(|r| max_stationed_at_level(building_data, "DORMITORY", r.level) as usize)
-        .sum()
 }

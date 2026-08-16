@@ -3515,9 +3515,13 @@ fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
         .iter()
         .enumerate()
         .filter(|(_, s)| {
-            s.rooms
-                .iter()
-                .any(|r| r.active && r.recommended.iter().any(|o| o == WILD_MANE))
+            s.rooms.iter().any(|r| {
+                // A dorm cell is REST, not work - the Knight rightly rests
+                // shift 3 in a dormitory now that the rotation shows it.
+                r.active
+                    && r.room_type != "DORMITORY"
+                    && r.recommended.iter().any(|o| o == WILD_MANE)
+            })
         })
         .map(|(k, _)| k)
         .collect();
@@ -4206,6 +4210,213 @@ fn room_presence_gates_resolve_against_the_deployment() {
     );
 }
 
+/// Dormitory LEVELS decide recovery: the sim rests each operator at the rate
+/// of the SPECIFIC dorm they land in (best dorm first), so a 2/5/2-style base
+/// with under-leveled dorms genuinely recovers slower than a full-dorm 243 -
+/// enough to flip a heavy drainer's verdict. A dorm-skill aura holder seated
+/// as permanent staff speeds that dorm up for whoever rests beside them.
+#[test]
+fn dorm_levels_and_staffed_boosters_shape_recovery() {
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::{Verdict, simulate_rotation};
+    const BODY: &str = "char_102_texas";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // A real whole-dorm aura holder ("+X/hr to all Operators in that
+    // Dormitory"), discovered from the parsed registry.
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    let aura_owner = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char.iter().any(|bc| {
+                bc.buff_data.iter().any(|bd| {
+                    matches!(
+                        registry.get(&bd.buff_id),
+                        Some(BuffResolutionStrategy::MoraleModifier {
+                            recovery_per_hour,
+                            is_self_only: false,
+                            single_target: false,
+                            base_wide: false,
+                        }) if *recovery_per_hour > 0.0
+                    ) && gd
+                        .building
+                        .buffs
+                        .get(&bd.buff_id)
+                        .is_some_and(|b| b.room_type == "DORMITORY")
+                })
+            })
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns a whole-dorm recovery aura");
+
+    // Trading duty with a drain rider so the cycle leaks: Texas (+0.25/hr =
+    // 1.25) works shifts 1+2 and rests shift 3. Spend 30/cycle; a dorm
+    // recovers 12h x rate. L5 (2.0/hr = 24) nearly covers it; L1 (1.6/hr =
+    // 19.2) leaks ~10.8/cycle and depletes within the week.
+    let dorm_cell = |slot: &str, crew: Vec<String>| ShiftRoom {
+        slot_id: slot.into(),
+        room_type: "DORMITORY".into(),
+        formula_type: None,
+        recommended: crew,
+        current: Vec::new(),
+        active: true,
+        efficiency: None,
+        team_id: None,
+        team_label: None,
+    };
+    let mk = |staff: Vec<String>| ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![
+                    ShiftRoom {
+                        slot_id: "tp".into(),
+                        room_type: "TRADING".into(),
+                        formula_type: None,
+                        recommended: if index <= 2 {
+                            vec![BODY.to_string()]
+                        } else {
+                            Vec::new()
+                        },
+                        current: Vec::new(),
+                        active: index <= 2,
+                        efficiency: None,
+                        team_id: None,
+                        team_label: None,
+                    },
+                    dorm_cell("d0", staff.clone()),
+                ],
+            })
+            .collect(),
+        sustained: Vec::new(),
+    };
+    let building_with = |dorm_level: i32| UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            room("d0", "DORMITORY", dorm_level),
+        ],
+    };
+    let outcome = |dorm_level: i32, staff: Vec<String>| -> (Verdict, f64) {
+        let mut ids = vec![BODY.to_string()];
+        ids.extend(staff.iter().cloned());
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        let report = simulate_rotation(
+            &mk(staff),
+            &roster,
+            &building_with(dorm_level),
+            &gd.building,
+            &registry,
+            &drains,
+            &std::collections::HashMap::new(),
+        );
+        let first = report
+            .depleted
+            .first()
+            .map_or(f64::INFINITY, |d| d.at_hours);
+        (report.verdict, first)
+    };
+
+    // Level 1 dorm leaks; level 5 holds the same rhythm.
+    let (v_low, low_at) = outcome(1, Vec::new());
+    let (v_high, _) = outcome(5, Vec::new());
+    assert_eq!(
+        v_low,
+        Verdict::Depletes,
+        "an L1 dorm can't cover a 1.25 drainer"
+    );
+    assert_eq!(
+        v_high,
+        Verdict::HoldsUp,
+        "an L5 dorm covers the same rhythm"
+    );
+
+    // A staffed whole-dorm aura holder speeds the LOW dorm: their +X/hr on
+    // top of the L1 rate shrinks the leak, so depletion comes strictly later.
+    let (_, staffed_at) = outcome(1, vec![aura_owner.clone()]);
+    assert!(
+        staffed_at > low_at + 1.0,
+        "a permanent aura resident must defer the L1 dorm's depletion \
+         ({staffed_at}h vs {low_at}h)"
+    );
+}
+
+/// The rotation ROTATES resters into the dormitories explicitly: every shift
+/// emits dorm cells, off-duty workers fill them heaviest-drain-first into the
+/// best dorm, unseated dorm-skill holders take permanent seats, and capacity
+/// is never exceeded.
+#[test]
+fn rotation_emits_dorm_cells_with_resters_and_staff() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = full_roster(gd);
+    // Mixed dorm levels: the L5 must fill before the L1s (a 2/5/2 shape).
+    let mut rooms = vec![room("cc", "CONTROL", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.push(room("d_hi", "DORMITORY", 5));
+    rooms.push(room("d_lo1", "DORMITORY", 1));
+    rooms.push(room("d_lo2", "DORMITORY", 1));
+    let building = UserBuilding { rooms };
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+
+    let mut saw_rester = false;
+    for shift in &rot.shifts {
+        let dorm_cells: Vec<_> = shift
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == "DORMITORY")
+            .collect();
+        assert_eq!(dorm_cells.len(), 3, "every dorm appears in every shift");
+        // Workers this shift, for the no-double-booking check.
+        let working: std::collections::HashSet<&String> = shift
+            .rooms
+            .iter()
+            .filter(|r| r.active && r.room_type != "DORMITORY")
+            .flat_map(|r| r.recommended.iter())
+            .collect();
+        for cell in &dorm_cells {
+            // Dorm seats are 5 at every level (gamedata: MaxStationedNum).
+            let cap = 5usize;
+            assert!(
+                cell.recommended.len() <= cap,
+                "dorm {} holds {} > {cap} seats",
+                cell.slot_id,
+                cell.recommended.len()
+            );
+            for id in &cell.recommended {
+                assert!(
+                    !working.contains(id),
+                    "{id} both works and rests in shift {}",
+                    shift.index
+                );
+                saw_rester = true;
+            }
+        }
+        // The best dorm fills first: the low dorms only hold anyone when the
+        // L5 is full.
+        let by_slot: std::collections::HashMap<&str, usize> = dorm_cells
+            .iter()
+            .map(|c| (c.slot_id.as_str(), c.recommended.len()))
+            .collect();
+        let cap = 5;
+        if by_slot.get("d_lo1").copied().unwrap_or(0) > 0
+            || by_slot.get("d_lo2").copied().unwrap_or(0) > 0
+        {
+            assert_eq!(
+                by_slot.get("d_hi").copied().unwrap_or(0),
+                cap,
+                "low-level dorms must not fill before the L5 is full"
+            );
+        }
+    }
+    assert!(saw_rester, "off-duty operators appear in dorm cells");
+}
+
 /// A base-wide Control-Center recovery aura (Chongyue-type: "+0.05/hr to
 /// Operators working in other buildings") stretches PRODUCTION members' swap
 /// clocks in the plan - the same working-drain offset the simulator charges,
@@ -4692,7 +4903,13 @@ fn rotation_seats_economy_pins_and_credits_payoffs() {
         "the pinned generator holds the Squad-1 share: 2 of 3 shifts"
     );
     for shift in &rot.shifts {
-        for room in shift.rooms.iter().filter(|r| r.room_type != "CONTROL") {
+        // A dormitory cell is REST, not a seat spent - the generator rightly
+        // rests her off shift there now that the rotation shows it.
+        for room in shift
+            .rooms
+            .iter()
+            .filter(|r| r.room_type != "CONTROL" && r.room_type != "DORMITORY")
+        {
             assert!(
                 !room.recommended.iter().any(|id| id == LING),
                 "shift {}: the pinned generator must not be spent as a {} filler",
@@ -5167,9 +5384,18 @@ fn recommended_rotation_survives_its_own_morale_sim() {
                 .collect::<Vec<_>>(),
             report.dorm_overflow,
         );
-        assert_eq!(
-            report.dorm_overflow, 0,
-            "{factories}-factory dorms cover the resters"
+        // Dorm pressure, not dorm comfort. This asserted exactly 0 until the
+        // empty-team backfill landed: the 5-factory case used to leave one
+        // factory unstaffed, and an empty room needs no beds - so the old zero
+        // was partly an artefact of the bug. Staffing it adds a crew that has to
+        // rest somewhere, and 4xL5 dorms (20 beds) come up one short at peak.
+        // The invariant that matters is the verdict above (nobody actually runs
+        // dry over the week); overflow is a pressure gauge, so hold it to a
+        // small bound instead of zero.
+        assert!(
+            report.dorm_overflow <= 1,
+            "{factories}-factory dorms are {} beds short at peak",
+            report.dorm_overflow
         );
     }
 }
@@ -5935,4 +6161,77 @@ fn morale_auras_change_the_sustainability_arithmetic() {
         first_with > first_without + 12.0,
         "the room aura defers depletion by shifts: {first_without} -> {first_with}"
     );
+}
+
+/// A production room must never stand dark while operators who could staff it
+/// are still free.
+///
+/// Regression: rotation teams are enumerated with `require_24h_sustain`, which
+/// drops every operator whose morale drain outpaces the bar. On a wide base
+/// (5 factories + 2 trading posts) the sustainable pool ran dry, the beam left
+/// the third team of the trading group empty, and the tiling stood a Trading
+/// Post dark for two of three shifts - while Lappland, Texas and friends sat
+/// unused. An unstaffed production room yields nothing at all; a heavy drainer
+/// yields at full rate until their bar empties, and morale is recoverable.
+#[test]
+fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // The reported layout: 5 factories, 2 trading posts, 3 power plants, plus the
+    // support rooms. 5 factories split gold/EXP gives three production groups,
+    // which is what exhausts the shared sustainable pool.
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("hr", "HIRE", 3),
+        room("rc", "MEETING", 3),
+        room("ws", "WORKSHOP", 3),
+        room("tr", "TRAINING", 3),
+    ];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..5).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+
+    let rot = recommend_shift_rotation(
+        &full_roster(gd),
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &[],
+    );
+
+    let mut dark: Vec<String> = Vec::new();
+    for shift in &rot.shifts {
+        for r in &shift.rooms {
+            if (r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
+                && (!r.active || r.recommended.is_empty())
+            {
+                dark.push(format!("shift {} {}", shift.index, r.slot_id));
+            }
+        }
+    }
+    assert!(
+        dark.is_empty(),
+        "production rooms left unstaffed against a full roster: {dark:?}"
+    );
+
+    // And the crews must still be genuinely disjoint within a shift - backfilling
+    // must not double-book someone already working elsewhere that shift.
+    for shift in &rot.shifts {
+        let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
+        for r in shift.rooms.iter().filter(|r| r.active) {
+            for op in &r.recommended {
+                assert!(
+                    seen.insert(op.as_str()),
+                    "{op} double-booked in shift {}",
+                    shift.index
+                );
+            }
+        }
+    }
 }

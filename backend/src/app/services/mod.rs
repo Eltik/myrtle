@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod base_planner;
 pub mod dps;
 pub mod gacha;
 pub mod game_session;

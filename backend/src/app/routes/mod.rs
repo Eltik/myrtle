@@ -46,6 +46,7 @@ pub(crate) async fn resolve_user_id(
 
 pub mod assets;
 pub mod auth;
+pub mod base;
 pub mod chibis;
 pub mod dps;
 pub mod enemies;
@@ -120,6 +121,11 @@ pub fn router() -> Router<AppState> {
             "/user/improvements",
             get(improvements::get_user_improvements),
         )
+        .route("/base/catalog", get(base::get_catalog))
+        .route("/base/layout", get(base::get_layout))
+        .route("/base/evaluate", post(base::evaluate_layout))
+        .route("/base/optimize", post(base::optimize_layout))
+        .route("/base/rotation", post(base::rotation_plan))
         .route("/get-user-supports", get(roster::get_supports))
         .route("/inventory", get(inventory::get_inventory))
         .route("/user-skins", get(skins::get_owned_skins))

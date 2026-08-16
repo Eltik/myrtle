@@ -1,0 +1,100 @@
+use axum::Json;
+use axum::extract::{Query, State};
+use serde::Deserialize;
+
+use crate::app::error::ApiError;
+use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::services::base_planner::{
+    CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse, OptimizeRequest,
+    OptimizeResponse, RotationRequest, RotationResponse, catalog, evaluate, layout, optimize,
+    rotation,
+};
+use crate::app::state::AppState;
+use crate::database::queries::users::find_by_id;
+
+#[derive(Deserialize)]
+pub struct PlannerParams {
+    /// Whose roster to plan with. Omitted = the signed-in user's own.
+    pub uid: Option<String>,
+}
+
+/// The viewer's own profile id, when signed in. Used to decide whether a
+/// private profile may be planned against.
+async fn viewer_id(state: &AppState, auth: &MaybeAuthUser) -> Option<uuid::Uuid> {
+    let auth = auth.0.as_ref()?;
+    let user_uuid = auth.user_uuid().ok()?;
+    find_by_id(&state.db, user_uuid)
+        .await
+        .ok()
+        .flatten()
+        .map(|u| u.id)
+}
+
+/// Resolve which roster to plan against: the requested uid, or the caller's own
+/// when none is given (which then requires being signed in).
+async fn resolve_uid(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+) -> Result<String, ApiError> {
+    if let Some(uid) = uid_param {
+        return Ok(uid.to_string());
+    }
+    let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+    let user_uuid: uuid::Uuid = auth.user_uuid()?;
+    let profile = find_by_id(&state.db, user_uuid)
+        .await?
+        .ok_or(ApiError::Unauthorized)?;
+    Ok(profile.uid)
+}
+
+/// The player's real stationed base, as the planner's starting draft.
+pub async fn get_layout(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<PlannerParams>,
+) -> Result<Json<LayoutResponse>, ApiError> {
+    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let viewer = viewer_id(&state, &auth).await;
+    Ok(Json(layout(&state, &uid, viewer).await?))
+}
+
+pub async fn evaluate_layout(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<PlannerParams>,
+    Json(body): Json<EvaluateRequest>,
+) -> Result<Json<EvaluateResponse>, ApiError> {
+    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let viewer = viewer_id(&state, &auth).await;
+    Ok(Json(evaluate(&state, &uid, viewer, body).await?))
+}
+
+pub async fn optimize_layout(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<PlannerParams>,
+    Json(body): Json<OptimizeRequest>,
+) -> Result<Json<OptimizeResponse>, ApiError> {
+    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let viewer = viewer_id(&state, &auth).await;
+    Ok(Json(optimize(&state, &uid, viewer, body).await?))
+}
+
+/// A two-squad, three-shift rotation for the drafted layout.
+pub async fn rotation_plan(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<PlannerParams>,
+    Json(body): Json<RotationRequest>,
+) -> Result<Json<RotationResponse>, ApiError> {
+    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let viewer = viewer_id(&state, &auth).await;
+    Ok(Json(rotation(&state, &uid, viewer, body).await?))
+}
+
+/// Facility definitions from `building_data`. Roster-independent and stable, so
+/// it needs no auth and the client can cache it hard.
+pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse> {
+    Json(catalog(&state))
+}

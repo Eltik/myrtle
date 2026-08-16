@@ -210,6 +210,12 @@ static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"assigned to the Control Center with <@cc\.kw>([^<]+)</>").unwrap()
 });
 
+/// A dormitory single-target healer: "restores +X to an(other) Operator in
+/// that Dormitory (whose Morale is not full)".
+static RE_DORM_SINGLE_TARGET: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"to an(?:other)? Operator (?:assigned to|in) (?:that|the) Dorm(?:itory)?").unwrap()
+});
+
 /// A CC dorm-recovery aura: "all Operators in Dormitories recover +X Morale per hour".
 static RE_DORM_RECOVERY_AURA: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"all Operators in Dormitories recover <@cc\.vup>\+([\d.]+)</>\s*Morale per hour")
@@ -542,12 +548,18 @@ pub enum BuffResolutionStrategy {
     /// Morale recovery or morale drain modifier (dormitory/control).
     MoraleModifier {
         recovery_per_hour: f64, // positive = recovery, negative = drain
-        is_self_only: bool,     // true for single-target, false for AoE
+        is_self_only: bool,     // true when only the holder benefits
         /// True only for Control-Center auras reaching OTHER buildings' workers
         /// (Chongyue's "Operators working in other buildings recover +0.05").
         /// False for the CC-room-only `control_mp_cost` family ("all Operators
         /// in the Control Center") and every dormitory skill.
         base_wide: bool,
+        /// Dormitory skills only: true for the "restores +X to ANOTHER Operator
+        /// in that Dormitory whose Morale is not full" single-target healers
+        /// (+0.55-class), false for whole-dorm auras ("to all Operators in
+        /// that Dormitory", +0.15-class). Both carry the game's non-stacking
+        /// "only the strongest effect of this type" rule within their type.
+        single_target: bool,
     },
 
     /// Only affects the room's capacity/order limit, not speed. `order_limit` is the cap it
@@ -927,12 +939,16 @@ pub fn build_registry(
                 let desc_lower = buff.description.to_lowercase();
                 let is_self_only = desc_lower.contains("self")
                     || desc_lower.contains("oneself")
-                    || prefix.contains("_oneself")
-                    || prefix.contains("_single");
+                    || prefix.contains("_oneself");
+                // "restores +X to another Operator in that Dormitory" - one
+                // beneficiary, not the whole room (audited: 25 single-target
+                // vs 39 whole-dorm captures, disjoint).
+                let single_target = RE_DORM_SINGLE_TARGET.is_match(&buff.description);
                 BuffResolutionStrategy::MoraleModifier {
                     recovery_per_hour: recovery,
-                    is_self_only,
+                    is_self_only: is_self_only && !single_target,
                     base_wide: false,
+                    single_target,
                 }
             }
             "CONTROL" => {
@@ -1006,6 +1022,7 @@ pub fn build_registry(
                         recovery_per_hour: recovery,
                         is_self_only: false,
                         base_wide: desc_lower.contains("other building"),
+                        single_target: false,
                     }
                 } else if prefix.contains("_prod_")
                     || prefix.contains("_tra_")

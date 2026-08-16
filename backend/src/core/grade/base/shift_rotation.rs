@@ -1053,6 +1053,106 @@ fn rotation_core(
         });
     }
 
+    // ── Dormitories ─────────────────────────────────────────────────────────
+    // Rest is a seat, not an absence: each shift's off-duty workers go INTO
+    // specific dormitories - the heaviest drainers into the highest-recovery
+    // dorm (a 2/5/2's one good dorm is exactly why levels matter) - and
+    // dorm-skill holders the plan left unseated take permanent dorm seats to
+    // speed everyone else's recovery. A pinned morale-swap manager (Fiammetta)
+    // keeps her dormitory seat in every shift. The sustainability simulator
+    // reads these same cells, so the verdict and the display agree.
+    let dorms = super::dorms::dorm_list(building, building_data);
+    if !dorms.is_empty() {
+        let mut seated: HashSet<String> = HashSet::new();
+        let mut working: Vec<HashSet<String>> = vec![HashSet::new(); SHIFT_COUNT];
+        for (k, shift) in shifts.iter().enumerate() {
+            for room in shift.rooms.iter().filter(|r| r.active) {
+                for id in &room.recommended {
+                    seated.insert(id.clone());
+                    working[k].insert(id.clone());
+                }
+            }
+        }
+        let sustained_set: HashSet<&str> = sustained_label.iter().map(String::as_str).collect();
+        // Off-duty workers per shift, heaviest drain first - they need the
+        // best dorm most.
+        let resters_by_shift: Vec<Vec<String>> = (0..SHIFT_COUNT)
+            .map(|k| {
+                let mut r: Vec<String> = seated
+                    .iter()
+                    .filter(|id| {
+                        !working[k].contains(id.as_str()) && !sustained_set.contains(id.as_str())
+                    })
+                    .cloned()
+                    .collect();
+                r.sort_by(|a, b| {
+                    let da = op_index.get(a.as_str()).map_or(0.0, |op| {
+                        super::sustain_sim::game_morale_drain(op, morale_drains)
+                    });
+                    let db = op_index.get(b.as_str()).map_or(0.0, |op| {
+                        super::sustain_sim::game_morale_drain(op, morale_drains)
+                    });
+                    db.partial_cmp(&da)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .then_with(|| a.cmp(b))
+                });
+                r
+            })
+            .collect();
+        // The morale-swap manager works FROM a dormitory: her pinned seat is
+        // permanent. She takes the worst dorm, keeping the good ones for the
+        // operators whose recovery actually depends on the rate.
+        let dorm_pinned: Vec<String> = pins
+            .iter()
+            .filter(|(id, rt)| rt == "DORMITORY" && !seated.contains(id))
+            .map(|(id, _)| id.clone())
+            .collect();
+        let peak_rest = resters_by_shift.iter().map(Vec::len).max().unwrap_or(0);
+        let capacity: usize = dorms.iter().map(|d| d.capacity).sum();
+        let headroom = capacity
+            .saturating_sub(peak_rest)
+            .saturating_sub(dorm_pinned.len());
+        let leftovers: Vec<&OperatorBaseProfile> = operators
+            .iter()
+            .filter(|op| !seated.contains(&op.char_id))
+            .filter(|op| !dorm_pinned.iter().any(|id| id == &op.char_id))
+            .filter(|op| !sustained_set.contains(op.char_id.as_str()))
+            .collect();
+        let mut staffing =
+            super::dorms::plan_dorm_staffing(&dorms, &leftovers, headroom, registry, building_data);
+        // Manager into the worst dorm with a spare permanent seat.
+        for id in &dorm_pinned {
+            if let Some((_, crew)) = staffing.iter_mut().rev().find(|(slot, crew)| {
+                let cap = dorms
+                    .iter()
+                    .find(|d| &d.slot_id == slot)
+                    .map_or(0, |d| d.capacity);
+                crew.len() < cap
+            }) {
+                crew.push(id.clone());
+            }
+        }
+        for (k, shift) in shifts.iter_mut().enumerate() {
+            let mut queue = resters_by_shift[k].iter();
+            for (di, dorm) in dorms.iter().enumerate() {
+                let mut crew = staffing[di].1.clone();
+                let free = dorm.capacity.saturating_sub(crew.len());
+                crew.extend(queue.by_ref().take(free).cloned());
+                shift.rooms.push(ShiftRoom {
+                    slot_id: dorm.slot_id.clone(),
+                    room_type: "DORMITORY".to_string(),
+                    formula_type: None,
+                    active: !crew.is_empty(),
+                    recommended: crew,
+                    current: preset_for(&dorm.slot_id, k),
+                    efficiency: None,
+                    team_id: Some(format!("DORMITORY:{}", dorm.slot_id)),
+                    team_label: Some("Resting".to_string()),
+                });
+            }
+        }
+    }
+
     ShiftRotation {
         shifts,
         sustained: sustained_label,
