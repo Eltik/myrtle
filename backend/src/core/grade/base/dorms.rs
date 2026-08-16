@@ -114,6 +114,46 @@ fn dorm_skill_value(
         .fold(0.0, f64::max)
 }
 
+/// A morale-swap manager's own recovery rate, parsed from her dormitory kit.
+///
+/// Fiammetta's "Self-Discipline": "self Morale recovered +2 per hour, and
+/// cannot gain Morale recovery from any other source" - the exclusivity makes
+/// this her WHOLE rate, regardless of dorm level, auras or ambience (which is
+/// also why parking her in the worst dorm costs nothing). Her "Communal
+/// Suffering" swap fires only at FULL morale, so one swap takes
+/// `MORALE_MAX / rate` hours to recharge - 12h at +2/hr, exactly one login.
+pub fn manager_swap_rate(
+    manager: &OperatorBaseProfile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    manager
+        .available_buffs
+        .iter()
+        .filter_map(|b| {
+            let buff = building_data.buffs.get(b)?;
+            (buff.room_type == "DORMITORY").then_some(())?;
+            match registry.get(b) {
+                Some(BuffResolutionStrategy::MoraleModifier {
+                    recovery_per_hour,
+                    is_self_only: true,
+                    ..
+                }) if *recovery_per_hour > 0.0 => Some(*recovery_per_hour),
+                _ => None,
+            }
+        })
+        .fold(0.0, f64::max)
+}
+
+/// True when the manager can hold `drain` at full morale around the clock: the
+/// swap hands over a full 24-point bar once per `MORALE_MAX / swap_rate` hours
+/// (her recharge), so the sustained operator must not spend the bar faster
+/// than she refills hers - `drain <= swap_rate`. Fiammetta (+2/hr) sustains
+/// anything up to 2.0/hr; an Enforcer-class 3.0/hr drainer outruns her.
+pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
+    swap_rate > 0.0 && drain_per_hour <= swap_rate + 1e-9
+}
+
 /// The `(manager, "DORMITORY")` pin a plan should reserve when the roster owns
 /// both a morale-conditional generator (Ling's "when own Morale is above/below
 /// N" grants) and a morale-swap manager (Fiammetta) - the manager works FROM a

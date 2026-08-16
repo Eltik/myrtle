@@ -1136,12 +1136,22 @@ pub fn morale_sustained_beneficiaries(
     operators: &[OperatorBaseProfile],
     morale_drains: &HashMap<String, f64>,
     recovery: f64,
+    registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> HashSet<String> {
     let managers = num_morale_swap_managers(operators, building_data);
     if managers == 0 {
         return HashSet::new();
     }
+    // The swap hands over a full bar once per manager recharge (Fiammetta:
+    // +2/hr exclusive self-recovery -> one swap per 12h login). An operator
+    // draining faster than she recharges outruns the swap and CANNOT be held
+    // 24/7 - they must keep rotating.
+    let swap_rate = morale_swap_enabler(operators, building_data)
+        .and_then(|id| operators.iter().find(|o| o.char_id == id))
+        .map_or(0.0, |m| {
+            crate::core::grade::base::dorms::manager_swap_rate(m, registry, building_data)
+        });
     let op_index = build_op_index(operators);
     let mut ranked: Vec<(String, f64)> = Vec::new();
     for r in main
@@ -1154,6 +1164,12 @@ pub fn morale_sustained_beneficiaries(
         let room_mag = r.total_efficiency + r.order_value;
         for id in &r.operators {
             if let Some(op) = op_index.get(id.as_str()) {
+                if !crate::core::grade::base::dorms::manager_can_sustain(
+                    swap_rate,
+                    crate::core::grade::base::sustain_sim::game_morale_drain(op, morale_drains),
+                ) {
+                    continue;
+                }
                 let up = op_uptime(op, morale_drains, recovery);
                 let gain = room_mag * (1.0 - up) * (1.0 - coverage) / n;
                 if gain > 1e-9 {
@@ -1287,7 +1303,7 @@ pub fn compute_sustained_assignment(
     // operator (e.g. a Proviso the player keeps running) never rests: it isn't discounted by the
     // rotation, adds no rest demand, and is never the one swapped out.
     let morale_sustained =
-        morale_sustained_beneficiaries(&main, operators, morale_drains, recovery, building_data);
+        morale_sustained_beneficiaries(&main, operators, morale_drains, recovery, registry, building_data);
 
     // Sustained 24/7 output: each production room's peak efficiency scaled by how
     // well its team holds up under rotation (low morale drain / low-level dorms ->

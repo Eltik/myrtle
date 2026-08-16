@@ -2782,7 +2782,7 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
         .map(|id| profile(gd, id))
         .collect();
     let main = compute_optimal_assignment(&base, &building, &gd.building, &registry, &drains);
-    let none = morale_sustained_beneficiaries(&main, &base, &drains, recovery, &gd.building);
+    let none = morale_sustained_beneficiaries(&main, &base, &drains, recovery, &registry, &gd.building);
     assert!(
         none.is_empty(),
         "no manager -> no sustained operator, got {none:?}"
@@ -2793,7 +2793,7 @@ fn morale_swap_manager_sustains_one_operator_at_full_uptime() {
     let mut with = base;
     with.push(profile(gd, FIAMMETTA));
     let main2 = compute_optimal_assignment(&with, &building, &gd.building, &registry, &drains);
-    let benef = morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &gd.building);
+    let benef = morale_sustained_beneficiaries(&main2, &with, &drains, recovery, &registry, &gd.building);
     assert_eq!(
         benef.len(),
         1,
@@ -4207,6 +4207,43 @@ fn room_presence_gates_resolve_against_the_deployment() {
         resolved_two.get(gate_id),
         Some(&BuffResolutionStrategy::DirectEfficiency { value: 5.0 }),
         "two Laterano operators in Power Plants unlock the bonus"
+    );
+}
+
+/// Fiammetta's swap mechanic, as her own skills describe it: "Self-Discipline"
+/// recharges her at +2/hr EXCLUSIVELY (no dorm level, aura or ambience helps),
+/// and "Communal Suffering" swaps her full bar with the operator assigned into
+/// her dormitory. One swap therefore takes 24/2 = 12h to recharge - exactly one
+/// login - so she can only hold an operator whose drain won't outrun that
+/// cadence: drain <= 2.0/hr sustains, faster does not.
+#[test]
+fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
+    use backend::core::grade::base::dorms::{manager_can_sustain, manager_swap_rate};
+    const FIAMMETTA: &str = "char_300_phenxi";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let fia = profile(gd, FIAMMETTA);
+    let rate = manager_swap_rate(&fia, &registry, &gd.building);
+    assert!(
+        (rate - 2.0).abs() < 1e-9,
+        "Self-Discipline parses to +2/hr exclusive self-recovery, got {rate}"
+    );
+    assert!(
+        manager_can_sustain(rate, 1.25),
+        "a 1.25/hr drainer survives the 12h between swaps"
+    );
+    assert!(
+        manager_can_sustain(rate, 2.0),
+        "2.0/hr spends the bar exactly as she recharges - boundary sustains"
+    );
+    assert!(
+        !manager_can_sustain(rate, 3.0),
+        "an Enforcer-class 3.0/hr drainer outruns the swap cadence"
+    );
+    assert!(
+        !manager_can_sustain(0.0, 0.5),
+        "no manager, no sustain - rate 0 holds nobody"
     );
 }
 

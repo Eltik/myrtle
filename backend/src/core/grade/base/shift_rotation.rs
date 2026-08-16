@@ -120,12 +120,21 @@ fn preset_sustained_operators(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
     morale_drains: &HashMap<String, f64>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> HashSet<String> {
     let managers = num_morale_swap_managers(operators, building_data);
     if managers == 0 {
         return HashSet::new();
     }
+    // The manager's swap needs HER at full morale first (Fiammetta recharges
+    // at +2/hr exclusive -> one swap per 12h login), so she can only hold an
+    // operator whose drain doesn't outrun that cadence.
+    let swap_rate = super::assignment::morale_swap_enabler(operators, building_data)
+        .and_then(|id| operators.iter().find(|o| o.char_id == id))
+        .map_or(0.0, |m| {
+            super::dorms::manager_swap_rate(m, registry, building_data)
+        });
     // 24/7 candidates: operators present in every (non-empty) saved preset of a production room. Two
     // distinct presets are required - a single saved preset is just "the current team", not a swap
     // the player deliberately holds around the clock.
@@ -145,7 +154,18 @@ fn preset_sustained_operators(
         }
         for op in presets[0] {
             if presets.iter().all(|p| p.contains(op)) {
-                candidates.insert(op.clone());
+                let feasible = operators
+                    .iter()
+                    .find(|o| &o.char_id == op)
+                    .is_none_or(|o| {
+                        super::dorms::manager_can_sustain(
+                            swap_rate,
+                            super::sustain_sim::game_morale_drain(o, morale_drains),
+                        )
+                    });
+                if feasible {
+                    candidates.insert(op.clone());
+                }
             }
         }
     }
@@ -424,17 +444,34 @@ fn rotation_core(
     // whose order-value multiplier vanishes), scaled by the extra uptime the pin buys
     // (a fast-draining operator gains more from never resting).
     let mut sustained =
-        preset_sustained_operators(building, operators, morale_drains, building_data);
+        preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
     let op_index = build_op_index(operators);
     if sustained.len() < managers {
         let recovery = morale_recovery(building);
+        // Swap feasibility: the manager can only hold an operator whose drain
+        // doesn't outrun her own recharge (Fiammetta: one full-bar swap per
+        // 12h at +2/hr exclusive self-recovery).
+        let swap_rate = super::assignment::morale_swap_enabler(operators, building_data)
+            .and_then(|id| operators.iter().find(|o| o.char_id == id))
+            .map_or(0.0, |m| {
+                super::dorms::manager_swap_rate(m, registry, building_data)
+            });
         let mut cands: Vec<(String, f64)> = Vec::new();
         for g in groups.iter().filter(|g| g.room_type == "TRADING") {
             for team in g.teams.iter().filter(|t| !t.ops.is_empty()) {
                 let team_score = room_search_score(&g.room_type, team.speed, team.value);
                 for id in &team.ops {
                     if sustained.contains(id) {
+                        continue;
+                    }
+                    let feasible = op_index.get(id.as_str()).is_none_or(|o| {
+                        super::dorms::manager_can_sustain(
+                            swap_rate,
+                            super::sustain_sim::game_morale_drain(o, morale_drains),
+                        )
+                    });
+                    if !feasible {
                         continue;
                     }
                     let without: Vec<String> =
@@ -1109,9 +1146,14 @@ fn rotation_core(
             .collect();
         let peak_rest = resters_by_shift.iter().map(Vec::len).max().unwrap_or(0);
         let capacity: usize = dorms.iter().map(|d| d.capacity).sum();
+        // A pinned morale-swap manager consumes TWO seats' worth of headroom:
+        // her own, and a free slot beside her - the swap only fires when the
+        // drained operator is assigned INTO her dormitory ("swaps Morale with
+        // the previous Operator assigned to that Dormitory"), so a dorm packed
+        // solid around her breaks the mechanic.
         let headroom = capacity
             .saturating_sub(peak_rest)
-            .saturating_sub(dorm_pinned.len());
+            .saturating_sub(dorm_pinned.len() * 2);
         let leftovers: Vec<&OperatorBaseProfile> = operators
             .iter()
             .filter(|op| !seated.contains(&op.char_id))
