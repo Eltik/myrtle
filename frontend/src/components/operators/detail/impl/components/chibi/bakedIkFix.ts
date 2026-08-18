@@ -4,7 +4,7 @@ import type { Spine } from "pixi-spine";
  * Drop REDUNDANT IK constraints back to the baked FK pose (dynamic-illustration
  * L2D only).
  *
- * ⚠️ **INERT BY DEFAULT — see `bakedIkEnabled` below.** The "safe by construction"
+ * ⚠️ **INERT BY DEFAULT - see `bakedIkEnabled` below.** The "safe by construction"
  * reasoning in this header was measured and is FALSE: Spine applies constraints at
  * runtime, so an animation's keys are the PRE-constraint local transforms and the IK
  * is load-bearing even when every bone it poses is keyed. Disabling this is worth
@@ -13,18 +13,18 @@ import type { Spine } from "pixi-spine";
  * Arknights dyn_illust skeletons ship FULLY-BAKED animations: every bone is keyed
  * every frame (rotate/translate/scale/shear timelines for all 800+ bones), so the
  * FK pose alone fully defines the illustration. On top of that they ALSO carry IK
- * constraints (authoring rigs the animator used). When both are present, IK wins —
+ * constraints (authoring rigs the animator used). When both are present, IK wins -
  * it overrides the constrained bones' FK rotation toward the IK target. That's fine
  * when the runtime solves the IK the same way the authoring tool baked it, but
  * pixi-spine's 3.8 IK mis-solves some complex layered arm chains (Archetto "Glory
  * of the Devout": her clasp-controller bone lands at the wrong world position, so
  * the arm IK poses her arms DOWN instead of the baked praying clasp). The baked FK
- * is the source of truth, so we detect IK that is REDUNDANT — every bone it poses
- * is already FK-rotation-keyed by the playing animation — and zero its mix, falling
+ * is the source of truth, so we detect IK that is REDUNDANT - every bone it poses
+ * is already FK-rotation-keyed by the playing animation - and zero its mix, falling
  * back to the authoritative FK.
  *
  * Safe by construction:
- *  - Gated to DynIllust skeletons (see caller) — battle/dorm chibis untouched.
+ *  - Gated to DynIllust skeletons (see caller) - battle/dorm chibis untouched.
  *  - An IK is only dropped when ALL its posed bones are rotation-keyed by the
  *    CURRENT animation, i.e. FK already defines them → dropping is LOSSLESS for
  *    correctly-solved rigs and only ever removes a wrong override.
@@ -90,7 +90,7 @@ function animatedIkMixIndices(anim: AnimLike): Set<number> {
     return s;
 }
 
-/** **DEFAULT OFF since 2026-08-05 — the premise below was MEASURED FALSE.** Opt in with
+/** **DEFAULT OFF since 2026-08-05 - the premise below was MEASURED FALSE.** Opt in with
  *  `?bakedik=1`.
  *
  *  The argument for the drop was that it is LOSSLESS: dynchar animations are fully baked, every
@@ -99,7 +99,7 @@ function animatedIkMixIndices(anim: AnimLike): Set<number> {
  *  NOTHING.
  *
  *  It changes cello by 1.8 MADC. Spine applies constraints at RUNTIME and an animation's keys
- *  are the authored LOCAL transforms — so when an animator poses through IK, the keys are the
+ *  are the authored LOCAL transforms - so when an animator poses through IK, the keys are the
  *  PRE-constraint values and the constraint is load-bearing. "Every bone it poses is keyed" is
  *  not evidence of redundancy; on these rigs it is the normal case.
  *
@@ -108,12 +108,12 @@ function animatedIkMixIndices(anim: AnimLike): Set<number> {
  *
  *  Found by symmetric block matching, which localised cello's late-beat error to her INSTRUMENT
  *  swinging 6-8px sideways (sign flipping per beat) while her body stayed pixel-aligned. With
- *  the patch off the leftover displacement collapses from 2.06-2.72 MAE to 0.47-0.77 — the
+ *  the patch off the leftover displacement collapses from 2.06-2.72 MAE to 0.47-0.77 - the
  *  mechanism, not just the score.
  *
  *  Archetto, the skin this was written for, does NOT regress: rendered both ways at t=6..30 she
  *  is praying in every frame either way, differing only across a small patch at her hands. An
- *  18-skin render sweep (both variants, 4 beats each) found no blow-out — the largest mover is
+ *  18-skin render sweep (both variants, 4 beats each) found no blow-out - the largest mover is
  *  1.5 mean / 3.3% of pixels, localised to a hand or held prop, with two skins bit-identical.
  *
  *  Kept rather than deleted: if a skin ever does hit a genuine pixi-spine mis-solve, this is the

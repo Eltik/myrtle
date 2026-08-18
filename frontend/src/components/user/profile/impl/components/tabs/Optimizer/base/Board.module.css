@@ -1,26 +1,3 @@
-/*
- * The board is a fixed-proportion schematic - 24 tracks and six storeys - so at
- * full size it is wider than the page it sits on and would scroll on every
- * normal desktop. One step down in the half-tile unit buys back the ~130px that
- * costs, at a size where a 12px room name still fits comfortably. Narrower than
- * that and it scrolls, which for a map is better than shrinking the labels out
- * of legibility.
- */
-/*
- * The stage.
- *
- * The rooms are charcoal in both themes, because that is what the production
- * rails and the level pips need to read against. Dropping charcoal tiles
- * straight onto a white card makes them look like a rendering fault rather than
- * a design - the reference never has to solve this, because its board sits on a
- * dark backdrop of its own.
- *
- * So the board gets that backdrop: one dark panel, constant in both themes,
- * that the tiles belong to. The card around it still follows the page. That
- * makes the whole board a single deliberate instrument surface instead of an
- * accident of contrast - and it means everything inside here, ticks and shafts
- * included, is stated against the panel rather than against the page.
- */
 .riic-board-fit {
     --stage: #191919;
 
@@ -65,16 +42,6 @@
     --tile-icon: none;
     --tile-plate: none;
 
-    /*
-     * The slab is a fixed dark object in both themes - the reference keeps its
-     * rooms charcoal and lets only the page around them go light. Inverting it
-     * with the theme washes the board out and, worse, guts the contrast the
-     * production rails and the level pips rely on to mean anything.
-     *
-     * So everything painted ON the slab is stated here in absolute terms, while
-     * the tile's shell - border, corner ticks, lift-shaft marks - keeps its
-     * theme tokens, because that chrome sits on the page, not on the slab.
-     */
     --slab: #323232;
     --slab-ink: #fff;
     --slab-ink-dim: rgb(255 255 255 / 0.55);
@@ -121,13 +88,6 @@ button.riic-tile:focus-visible {
     outline-offset: 1px;
 }
 
-/*
- * A slot with nothing in it recedes by going flatter and darker, not by going
- * translucent. The reference fades these to .55, which works on its permanently
- * dark page but on a light one drags the slab toward the background and takes
- * the white label with it - the tile ends up mid-grey with unreadable text.
- * Holding the slab opaque and dimming its ink instead survives both themes.
- */
 .riic-tile-empty,
 .riic-tile-unbuilt {
     --slab: #262626;
@@ -157,13 +117,6 @@ button.riic-tile:focus-visible {
     background: var(--slab);
 }
 
-/*
- * Blueprint tooth. The cell has to be small enough to repeat on both axes
- * inside a tile: at the reference's 70px it never got a horizontal line into a
- * 64px row, so what should have been a mesh came out as a single bright seam
- * down the middle of every room - stripes, not texture. 16px gives four bands
- * either way, and at this alpha it reads as surface rather than as structure.
- */
 .riic-tile-room-grid {
     background-image: repeating-linear-gradient(0deg, transparent 0 15px, rgb(255 255 255 / 0.05) 15px 16px), repeating-linear-gradient(90deg, transparent 0 15px, rgb(255 255 255 / 0.05) 15px 16px);
 }
@@ -212,8 +165,6 @@ button.riic-tile:focus-visible {
 
 .riic-tile-name {
     min-width: 0;
-    /* Shrink only under pressure, so the pips stay next to the name rather than
-       being flung to the far edge of a wide tile. */
     flex: 0 1 auto;
     overflow: hidden;
     font-size: 11px;
@@ -231,6 +182,54 @@ button.riic-tile:focus-visible {
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+.riic-tile-ops {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    display: flex;
+    gap: 1px;
+}
+
+.riic-tile-op-chip,
+.riic-tile-op-seat {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+
+.riic-tile-op-chip {
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.65);
+    background: var(--slab);
+    font-size: 7px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+}
+.riic-tile-op-chip img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 15%;
+}
+
+.riic-tile-op-chip[data-change="added"] {
+    border-color: var(--tile-accent, #c3ff43);
+    box-shadow: 0 0 0 1px var(--tile-accent, #c3ff43);
+}
+.riic-tile-op-chip[data-change="removed"] {
+    border-style: dashed;
+    border-color: rgb(255 255 255 / 0.3);
+    filter: grayscale(1);
+    opacity: 0.4;
+}
+
+.riic-tile-op-seat {
+    border: 1px dashed rgb(255 255 255 / 0.28);
 }
 
 .riic-tile-level-pips {
@@ -266,7 +265,6 @@ button.riic-tile:focus-visible {
     inset: calc(50% - 7px) calc(50% - 7px);
 }
 
-/* A walkway is a slab too; a lift shaft is only a mark on the page. */
 .riic-tile-path {
     background-color: var(--slab);
 }
@@ -290,6 +288,10 @@ button.riic-tile:focus-visible {
     gap: 10px;
     inset: 2px;
     pointer-events: none;
+}
+
+.riic-tile-fixed .riic-cc-badge {
+    bottom: 24px;
 }
 
 .riic-cc-bracket {

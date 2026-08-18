@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "#/hooks/use-debounce";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { baseCatalogQueryOptions, baseLayoutQueryOptions, evaluateLayoutQueryOptions, type FacilityType, type ICatalogRoom, type ICatalogSlot, type IDraftRoom, type IOptimizeResponse, type IRotationResponse, optimizeLayoutFn, rotationPlanFn } from "#/lib/api/base";
+import { baseCatalogQueryOptions, baseLayoutQueryOptions, evaluateLayoutQueryOptions, type FacilityType, type ICatalogFormula, type ICatalogRoom, type ICatalogSlot, type IDraftRoom, type IOptimizeResponse, type IRotationResponse, type ISlotPresets, optimizeLayoutFn, rotationPlanFn } from "#/lib/api/base";
 import type { IShiftRoom } from "#/lib/api/user";
 import { type Catalog, isPlannable, seatsOf } from "./layout";
 
@@ -23,6 +23,16 @@ export interface IOptimizerApi {
     catalog: Catalog;
     /** The floorplan every base shares - the board's geometry. */
     slots: ICatalogSlot[];
+    /** The factory recipes, named by the game rather than by us. */
+    formulas: ICatalogFormula[];
+    /** The player's own saved shift rotation, per slot. Empty if they never set one. */
+    presets: ISlotPresets[];
+    /**
+     * Shifts in a base day, from the engine. Not derived from the player's
+     * queues: rooms queue independently and most queue fewer presets than there
+     * are shifts, so counting them would hide a shift that genuinely exists.
+     */
+    shiftCount: number;
     /**
      * Every room the board draws: the player's real base with the draft laid
      * over it. Wider than `layout`, which drops the structure before the engine
@@ -74,7 +84,13 @@ export interface IOptimizerApi {
     runOptimize: (scope: string[]) => void;
     acceptRoom: (slotId: string) => void;
     acceptAll: () => void;
-    discardProposal: () => void;
+    /**
+     * Throw away the optimizer's answer and go back to the player's own base.
+     * One run produces both a staffing and the rotation that services it, so
+     * both go together - dropping only the staffing would leave the board
+     * showing planned shifts with no plan behind them.
+     */
+    discardPlan: () => void;
 
     /** Return the draft to the player's real in-game base. */
     reset: () => void;
@@ -93,8 +109,10 @@ interface IPersisted {
 // v2: v1 drafts were seeded from `improvements.base.current`, a production-only
 // view that omitted dormitories and power plants. Those drafts are wrong at the
 // root, so they are abandoned rather than migrated.
-/** Stable identity, so an unloaded catalogue does not re-derive the board every render. */
+/** Stable identities, so an unloaded catalogue does not re-derive the board every render. */
 const EMPTY_SLOTS: ICatalogSlot[] = [];
+const EMPTY_FORMULAS: ICatalogFormula[] = [];
+const EMPTY_PRESETS: ISlotPresets[] = [];
 
 function storageKey(uid: string): string {
     return `base-optimizer:${uid}:v2`;
@@ -121,6 +139,7 @@ export function useOptimizer(uid: string): IOptimizerApi {
         return map;
     }, [catalogQuery.data]);
     const slots = catalogQuery.data?.slots ?? EMPTY_SLOTS;
+    const formulas = catalogQuery.data?.formulas ?? EMPTY_FORMULAS;
 
     // Structure (corridors, elevators, activity rooms) is dropped here rather
     // than on the board, so it never reaches the engine either. That is safe
@@ -134,8 +153,16 @@ export function useOptimizer(uid: string): IOptimizerApi {
         excluded: [],
     });
 
-    // The real base arrives asynchronously; adopt it as the draft the first
-    // time it lands, and leave an in-progress draft alone thereafter.
+    /*
+     * The real base arrives asynchronously; adopt it as the draft the first
+     * time it lands, and leave a plan in progress alone thereafter.
+     *
+     * Accepting an optimizer proposal writes here, so a stored plan has to
+     * survive a reload - which also means a plan can drift from the real base
+     * with no way back. `reset` is that way back, and the board surfaces it
+     * whenever `dirty` is true. Without a visible reset this guard strands the
+     * player on a plan they can neither see the origin of nor undo.
+     */
     useEffect(() => {
         // Wait for the catalogue: adopting before it lands would persist an
         // unfiltered layout that never gets cleaned up.
@@ -149,9 +176,16 @@ export function useOptimizer(uid: string): IOptimizerApi {
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
 
     const boardRooms = useMemo(() => {
+        const real = layoutQuery.data?.rooms ?? [];
+        // The real base carries the structure the plan drops, so it leads. But
+        // when that fetch has failed the plan is still a complete set of rooms -
+        // drawing it beats drawing an empty base next to a scored headline.
+        if (real.length === 0) return layout;
         const drafted = new Map(layout.map((room) => [room.slot_id, room]));
-        return (layoutQuery.data?.rooms ?? []).map((room) => drafted.get(room.slot_id) ?? room);
+        return real.map((room) => drafted.get(room.slot_id) ?? room);
     }, [layoutQuery.data, layout]);
+
+    const presets = layoutQuery.data?.presets ?? EMPTY_PRESETS;
 
     const evaluation = useEvaluation(uid, layout);
 
@@ -240,6 +274,10 @@ export function useOptimizer(uid: string): IOptimizerApi {
     );
 
     const [rotation, setRotation] = useState<IRotationResponse | null>(null);
+
+    // The rotation's own count wins once it has run; before that the catalogue
+    // carries the constant. Zero only while the catalogue is still loading.
+    const shiftCount = rotation?.shift_count ?? catalogQuery.data?.shift_count ?? 0;
     const [viewShift, setViewShift] = useState<number | null>(null);
 
     const rotationMutation = useMutation({
@@ -309,7 +347,10 @@ export function useOptimizer(uid: string): IOptimizerApi {
         setProposal(null);
     }, [proposal, applyRooms]);
 
-    const discardProposal = useCallback(() => setProposal(null), []);
+    const discardPlan = useCallback(() => {
+        setProposal(null);
+        setRotation(null);
+    }, []);
 
     const reset = useCallback(() => {
         setPersisted({ layout: realLayout, locked: [], excluded: [] });
@@ -344,6 +385,9 @@ export function useOptimizer(uid: string): IOptimizerApi {
         dirty,
         catalog,
         slots,
+        formulas,
+        presets,
+        shiftCount,
         boardRooms,
         catalogLoading: catalogQuery.isLoading,
         // Both must land before the board is meaningful: the catalogue decides
@@ -378,7 +422,7 @@ export function useOptimizer(uid: string): IOptimizerApi {
         runOptimize,
         acceptRoom,
         acceptAll,
-        discardProposal,
+        discardPlan,
         reset,
     };
 }
@@ -389,7 +433,7 @@ export function useOptimizer(uid: string): IOptimizerApi {
  */
 function layoutIdentity(rooms: IDraftRoom[]): string {
     return rooms
-        .map((r) => `${r.slot_id}:${r.level}:${r.formula_type ?? ""}:${[...r.operators].sort().join(",")}`)
+        .map((r) => `${r.slot_id}:${r.room_type}:${r.level}:${r.formula_type ?? ""}:${[...r.operators].sort().join(",")}`)
         .sort()
         .join("|");
 }

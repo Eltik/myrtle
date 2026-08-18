@@ -40,14 +40,14 @@ interface ISceneIllustProps {
     fit?: ISpineFit;
     /**
      * How to frame a mesh-backed scene. "character" (default) frames to the
-     * character's visible bounds — prominent character, good for the narrow card.
+     * character's visible bounds - prominent character, good for the narrow card.
      * "authored" uses the game's `_adjustes` display frame (full-scene, square
-     * viewport) — for the large fullscreen viewer.
+     * viewport) - for the large fullscreen viewer.
      */
     framing?: "character" | "authored";
     /**
      * Static skin illustration URL. Some dynamic assets omit the full painted
-     * backdrop (sky/interior) that the static art has — the game's archive
+     * backdrop (sky/interior) that the static art has - the game's archive
      * viewer composites the static illustration behind the animated spine. When
      * given, we draw it as a backdrop layer aligned to the authored camera frame
      * and frame the whole scene to that frame, so the animated spine overlays its
@@ -60,15 +60,15 @@ interface ISceneIllustProps {
 const IDLE_ANIMATION = "Idle";
 
 /** Visible-pixel bounds of the illustration at rest, plus alpha-mass landmarks
- *  (centroid, solid head/feet rows) — see {@link measureVisibleBounds}. */
+ *  (centroid, solid head/feet rows) - see {@link measureVisibleBounds}. */
 type IVisBounds = IAnimationBounds & {
     centroid?: { cx: number; cy: number };
-    /** Y (container space) of the character's SOLID head top — the first row (from the
+    /** Y (container space) of the character's SOLID head top - the first row (from the
      *  top) whose alpha mass exceeds a fraction of the densest row. Unlike the bbox top,
      *  this SKIPS thin protrusions above the head (a raised rifle, wispy hair, effects),
      *  so it's a pose-robust anchor for the head. */
     headTop?: number;
-    /** Y (container space) of the character's SOLID base — the last dense row (from the
+    /** Y (container space) of the character's SOLID base - the last dense row (from the
      *  bottom), skipping thin trailing hair/dress tails. */
     feetBottom?: number;
 };
@@ -82,15 +82,15 @@ const FEET_ROW_FRAC = 0.07;
  * Bounds of the actually-VISIBLE pixels of the illustration at its resting frame.
  * The skeleton's geometry bounds (`getLocalBounds`) can be wildly inflated by
  * invisible/off-screen attachments (bounding boxes, huge transparent effect
- * quads) — that shrinks the illustration into a corner. So we render the resting
+ * quads) - that shrinks the illustration into a corner. So we render the resting
  * pose to a small offscreen texture, read back its alpha, and take the tight
- * bounding box of non-transparent pixels — the real illustration extent, centred.
+ * bounding box of non-transparent pixels - the real illustration extent, centred.
  * Returns null (caller falls back to geometry bounds) if it can't be measured.
  */
 function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spine").Spine, idleAnim: string): IVisBounds | null {
     // Measure at rate 1 but RESTORE the caller's rate afterwards. Leaving it at 1 permanently
     // clobbers whatever the composite set, which silently disables any animation-rate control
-    // downstream — `measureAnimationBounds` in chibi/helpers.ts already saves and restores for
+    // downstream - `measureAnimationBounds` in chibi/helpers.ts already saves and restores for
     // exactly this reason. Currently metric-neutral (ANIMATION_SPEED is 1, so both paths land on
     // 1), which is why it went unnoticed; it is a correctness fix, not a measured win.
     const prevTimeScale = spine.state.timeScale;
@@ -150,7 +150,7 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
         }
         const centroid = sw > 0 ? { cx: geom.x + sx / sw / scale, cy: geom.y + sy / sw / scale } : undefined;
         // Pose-robust head/feet: the first/last row (top-down / bottom-up) whose alpha mass
-        // reaches SOLID_ROW_FRAC of the densest row — skipping thin protrusions (a raised
+        // reaches SOLID_ROW_FRAC of the densest row - skipping thin protrusions (a raised
         // rifle above the head, wispy hair/dress tails below the feet) that the bbox includes.
         let maxRow = 0;
         for (let y = y0; y <= y1; y++) if (rowMass[y] > maxRow) maxRow = rowMass[y];
@@ -186,11 +186,11 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
 }
 
 /** How much the "authored" framing zooms OUT from the character's visible bounds,
- * so the subject reads at ~half the frame with the surrounding scene around it —
+ * so the subject reads at ~half the frame with the surrounding scene around it -
  * matching the in-game archive view. Character-adaptive: a lone character gets
  * breathing room, while an E2 whose creatures/scene ARE the visible bounds is shown
  * whole at the same factor. 1.7 frames the skin character at ~40% with the FULL
- * mirror-world scene around her (1.3 cropped the scene sides — read as "too zoomed";
+ * mirror-world scene around her (1.3 cropped the scene sides - read as "too zoomed";
  * a fixed 2× camera-height framed her too small at ~35%). */
 const SCENE_ZOOM_OUT = 1.7;
 
@@ -202,17 +202,17 @@ const SCENE_ZOOM_OUT = 1.7;
  *  99.94% of it), so anything at the art's edge is off-frame entirely; and the whole-art
  *  framing is derived from PAINTED content, so every `?abl=` ablation silently re-frames the
  *  shot and an ablated render cannot be compared with an unablated one. A fixed box is
- *  independent of both — identical across every ablation, and wide enough to include the
+ *  independent of both - identical across every ablation, and wide enough to include the
  *  silhouette boundary. Rendered with a `contain` fit so the whole box is visible.
  *
  *  Returns null when absent or malformed, leaving the normal framing untouched. */
 /** Draw the skin's static illustration, DEFOCUSED, behind a scene that does not span the camera
- *  view — filling the bare canvas the game fills with vista. **SHIPPED, default ON; `?gapfill=0`
+ *  view - filling the bare canvas the game fills with vista. **SHIPPED, default ON; `?gapfill=0`
  *  disables.**
  *
  *  Virtuosa's entrance scene genuinely does not reach the frame (0 of 132 layers span the view,
  *  the largest reaches 0.88) and nothing is dropped by the exporter, so the uncovered margin falls
- *  through to bare canvas — a hard-edged near-black wedge where the game shows misty vista. What
+ *  through to bare canvas - a hard-edged near-black wedge where the game shows misty vista. What
  *  fell through was our own invention: a flat neutral #4d4d4e studio fill, a colour the game never
  *  shows. Replacing it with the skin's own art, blurred, does exactly what it should:
  *
@@ -220,25 +220,25 @@ const SCENE_ZOOM_OUT = 1.7;
  *      mly  17.721 -> 17.721     bit-identical
  *      ska  10.505 -> 10.505     bit-identical
  *
- *  The two beats that move are the two with the camera at its widest — exactly where the scene
+ *  The two beats that move are the two with the camera at its widest - exactly where the scene
  *  leaves the most frame unfilled. Everything else is untouched to the bit.
  *
  *  **Why blurred.** The static illustration contains the CHARACTER, so drawn sharp behind a
  *  translucent scene it can ghost her, misregistered. That cannot be masked away: the art sits at
  *  index 0 and the spine draws in FRONT of it, so a spine-shaped mask can only remove pixels that
- *  were already hidden — built and measured, it moved 786 px of 374400 on `lin_nian#10`, all of
+ *  were already hidden - built and measured, it moved 786 px of 374400 on `lin_nian#10`, all of
  *  them antialiasing at the spine's edge. The ghost lives precisely where the spine ISN'T. But the
  *  art is only here to be a distant vista, and a vista needs its low-frequency colour and
  *  luminance, not its detail. Defocusing keeps the fill and destroys the recognisable second
  *  character.
  *
  *  The radius is a fraction of the art's own on-screen height, so it is a spatial-frequency cutoff
- *  rather than a pixel constant, and it is not a fitted one — the parity win is a broad plateau,
+ *  rather than a pixel constant, and it is not a fitted one - the parity win is a broad plateau,
  *  19.270 to 19.284 over the whole range 1/48 to 1/6, and every value from 1/96 to 1/3 beats the
  *  unblurred 19.361.
  *
  *  Refuted variants are recorded in `hdrTonemap.ts` so none is retried. NOTE for the harness:
- *  `rec.js` must be given `&backdrop=<url>` or this whole path is inert — the production viewer
+ *  `rec.js` must be given `&backdrop=<url>` or this whole path is inert - the production viewer
  *  always passes it (`SkinsContent.tsx`), the recorder does not. */
 function gapFillOn(): boolean {
     if (typeof window === "undefined") return true;
@@ -278,7 +278,7 @@ function gapBlurFraction(): number {
     return Number.isFinite(v) && v > 0 ? v : GAP_BLUR_FRACTION;
 }
 
-/** `?matlead=<seconds>` — offset applied to material colour-curve sampling only. Inert (0) by
+/** `?matlead=<seconds>` - offset applied to material colour-curve sampling only. Inert (0) by
  *  default; exists to test whether those curves run on the camera's clock rather than the
  *  spine's. Parsed once per frame at most, which is why it is a plain function rather than a
  *  per-layer lookup inside the loop. */
@@ -298,13 +298,13 @@ function frameBoxParam(): IAnimationBounds | null {
 }
 
 /** DIAGNOSTIC (`?statcam=1`): skip the `_Start` cinematic and render the STANDING IDLE under a
- *  camera that never moves — the shot the game's OWN skin preview shows.
+ *  camera that never moves - the shot the game's OWN skin preview shows.
  *
  *  **Why this exists: it is the only uncontaminated reference we can obtain.** Every parity number
  *  to date is measured against a salvaged CRF36 recording whose encode damage is 40-57% of the
  *  score ([[dynchar-degradation-floor-real-headroom]]), and no renderer-side change can reach past
  *  that floor. The game's skin preview (FLOT Lookbook → skin → magnifier) can be captured at
- *  2340x1080 / 100 Mbps for ANY skin including unowned ones, so it is clean — but it is NOT the
+ *  2340x1080 / 100 Mbps for ANY skin including unowned ones, so it is clean - but it is NOT the
  *  entrance, and pointing the entrance renderer at it would be comparing two different shots.
  *
  *  What the preview actually plays was established by measurement, not assumption:
@@ -319,10 +319,10 @@ function frameBoxParam(): IAnimationBounds | null {
  *
  *  So the target shot is: standing idle, settled framing, camera locked. That is exactly the path
  *  the 70 dynchar skins with no `_Start` already take, which is why this flag only has to decline
- *  to build the entrance composite — `openStandingIdle()` with no `fromEntrance` and no
+ *  to build the entrance composite - `openStandingIdle()` with no `fromEntrance` and no
  *  `entrancePullOut` is already static, and is the most-exercised framing path in the file.
  *
- *  Composes with `?framebox=x,y,w,h`, which wins over the settled box (see `openStandingIdle`) —
+ *  Composes with `?framebox=x,y,w,h`, which wins over the settled box (see `openStandingIdle`) -
  *  use that to search for the preview's framing if the authored `_adjustes` box turns out not to
  *  match it. Off by default; the production viewer and every existing measurement are untouched. */
 function staticCamOn(): boolean {
@@ -334,23 +334,23 @@ function staticCamOn(): boolean {
  *  own centre by `zoom` and shift it by `dx,dy` box-space px. Inert unless `?statcam=1`.
  *
  *  Exists to PIN a measured residual to its gamedata source rather than bake it in. Against the
- *  preview captures, the authored tight box is right in kind but leaves a consistent shortfall —
+ *  preview captures, the authored tight box is right in kind but leaves a consistent shortfall -
  *  the render must be enlarged ~1.27x (ska 1.26, mly 1.30-1.32, cel 1.24), with a per-skin
  *  translation whose sign differs between skins (ska dx-46/dy+82, mly dx-34/dy-68, cel dx+32/
  *  dy-26, in 900x416 px). Those are real, not noise: mly and cel reproduce their offsets EXACTLY
  *  at two different times, and the phase-matched fits peak at 7.6 sigma.
  *
  *  The translation almost certainly comes from `bodyFrameBox` building the tight box on the WIDE
- *  stop's centre — the gamedata ships a separate `cameraOffsetPx2` for `_adjustes[1]` which we
+ *  stop's centre - the gamedata ships a separate `cameraOffsetPx2` for `_adjustes[1]` which we
  *  never read. That is the first thing to test with this knob. It is deliberately NOT applied as a
  *  default: a fitted zoom constant is exactly the sort of thing this codebase refuses to ship
  *  (see the fitted-gradient and clamp-ceiling findings), and one frame per skin cannot calibrate
  *  a constant that must hold for 82.
  *
- *  Measure with a PHASE-MATCHED pair — game time = viewer-open time + our track time (open is
+ *  Measure with a PHASE-MATCHED pair - game time = viewer-open time + our track time (open is
  *  2.07/2.18/2.00 s for mly/cel/ska). Comparing arbitrary times silently halves the correlation
  *  and moves the fitted scale. */
-/** `?tightoff=0` — under `?statcam=1`, DON'T re-seat the tight box on the tight `_adjustes[1]`
+/** `?tightoff=0` - under `?statcam=1`, DON'T re-seat the tight box on the tight `_adjustes[1]`
  *  stop's own centre. Exists purely so the shift can be A/B'd against the old shared-centre
  *  behaviour; default on, and inert outside statcam. */
 function tightOffOn(): boolean {
@@ -373,23 +373,23 @@ function staticCamBox(b: IAnimationBounds): IAnimationBounds {
 }
 
 /** Frame a no-entrance skin to everything it PAINTS rather than to its authored `_adjustes`
- *  camera. **DISABLED by default — the target is real but only ONE reference exists.**
+ *  camera. **DISABLED by default - the target is real but only ONE reference exists.**
  *
  *  The observation is solid. 70 of the 82 dynchar skins have no `_Start`, and for those the
  *  game's viewer shows the whole cut-out with margins while the authored `_adjustes[0]` box
- *  crops well inside it — content exceeds the authored view on 61 of 80 skins (Ch'en the
+ *  crops well inside it - content exceeds the authored view on 61 of 80 skins (Ch'en the
  *  Holungday 2690x1789 against a 1171 px view; Virtuosa 2.7x; Ch'en Wei 3.8x). Against the
  *  in-game recording of Ch'en, framing the painted content is plainly the better match.
  *
  *  It is off because ONE reference cannot calibrate 70 skins, and two concrete problems
  *  remain:
- *    • `fitRef` is `mode: "height"` for authored framing, which CROPS the width — so a
+ *    • `fitRef` is `mode: "height"` for authored framing, which CROPS the width - so a
  *      content box wider than the viewport still does not show the whole art. Needs a
  *      "contain" fit, which changes layout for every skin.
  *    • `paintedLocalBounds`' alpha floor is a tuned constant. At >8/255 it catches faint
  *      haze that extends far past the visible composition: Nian's painted box comes out
  *      3037x2267 against a 1640 px authored view, dropping her art from 45% of the frame to
- *      25%. Her authored crop already showed the whole composition — but that judgement is
+ *      25%. Her authored crop already showed the whole composition - but that judgement is
  *      aesthetic, not measured, because there is no recording of her to check against.
  *
  *  TO ENABLE: capture 2-3 in-game recordings of no-entrance skins with DIFFERENT content
@@ -418,7 +418,7 @@ function paintedAlphaMin(): number {
  *  the whole composition).
  *
  *  So render the container once into a small offscreen target and measure where the alpha
- *  actually is. Model-free and fully general — no per-skin data, no assumptions about which
+ *  actually is. Model-free and fully general - no per-skin data, no assumptions about which
  *  layers matter. Done once at load; the readback is a few tens of KB at this size.
  *
  *  Returns null when nothing is painted or the renderer cannot do the pass. */
@@ -438,12 +438,12 @@ function paintedLocalBounds(renderer: PIXI.IRenderer, target: PIXI.Container, ma
     const savedSY = target.scale.y;
     // NOTE FOR DIAGNOSTICS: this box is measured from what is currently drawable, so a `?abl=`
     // ablation shrinks it and silently RE-FRAMES the shot. An ablated render compared against
-    // a full one then measures the ZOOM CHANGE, not the ablated element — which inverted a
+    // a full one then measures the ZOOM CHANGE, not the ablated element - which inverted a
     // real result once: Ch'en's foreground read as DARKENING the art by 11.2 when, framed
     // identically, it BRIGHTENS it by 11.4 (verified by bounding box: the content-fit pair was
     // framed differently, the authored pair identically). **Always pass `wholeart=0` on BOTH
     // sides of an ablation comparison.** Forcing children renderable here was tried and does
-    // NOT fix it — the ablation is applied before this runs, through more than one flag.
+    // NOT fix it - the ablation is applied before this runs, through more than one flag.
     try {
         rt = PIXI.RenderTexture.create({ width: w, height: h, resolution: 1 });
         target.position.set(0, 0);
@@ -517,7 +517,7 @@ function isDarkBackdropSlot(name: string): boolean {
  *  Pepe's black shadow-cat sits BEHIND the purple nebula in the art). But the
  *  spine re-draws those dark elements as flat, opaque slots ON TOP of the static,
  *  blotting out the nebula/wall behind them. Since the static provides them
- *  faithfully — and the animated character still renders over the static — we hide
+ *  faithfully - and the animated character still renders over the static - we hide
  *  the spine's dark backdrop silhouettes so the correctly-composited static shows
  *  through. Light, well-aligned backdrop elements (doves, streamers, petals) are
  *  left animating; the character's own attached shadows aren't `BG_`-prefixed, so
@@ -573,35 +573,35 @@ interface ILoadedBackdrop {
  * A fully-built, framed dynamic-illustration composite (character spine + its
  * optional mesh-scene layers + particle systems), ready to be shown but not yet
  * attached to the stage or started. Building it as a self-contained unit lets the
- * loader assemble MORE THAN ONE — a special "_Start" ENTRANCE composite and the
- * settled main L2D — and hand off between them (play the entrance once, then swap
+ * loader assemble MORE THAN ONE - a special "_Start" ENTRANCE composite and the
+ * settled main L2D - and hand off between them (play the entrance once, then swap
  * to the main idle cycle) without duplicating the compositing/framing machinery.
  */
 interface IComposite {
     spine: import("pixi-spine").Spine;
-    /** The object to add to the stage (or point the HDR pass at) and lay out — the
+    /** The object to add to the stage (or point the HDR pass at) and lay out - the
      *  scene container when there are mesh layers/particles, else the bare spine. */
     root: PIXI.Container;
     /** True when `root` is a scene container (mesh layers/particles), false when it
      *  is the bare spine (spine-only art with no separate scene). */
     isScene: boolean;
     /** The scene's authored orthographic camera size in px (`cameraSize × 100`). Drives the
-     *  composite transfer — see {@link sceneCompositeGamma}. Null for spine-only art. */
+     *  composite transfer - see {@link sceneCompositeGamma}. Null for spine-only art. */
     cameraSizePx: number | null;
     /** Union of everything the composite actually draws (all mesh layers + the skeleton), in
      *  the same space as {@link bounds}. The authored `_adjustes` camera CROPS INTO this for
-     *  most skins — content is larger than the authored view on 61 of 80 — which is right for
+     *  most skins - content is larger than the authored view on 61 of 80 - which is right for
      *  a skin whose entrance cinematic frames a shot, and wrong for one that has none, where
      *  the game's viewer fits the whole cut-out. Null for spine-only art. */
     contentBounds: IAnimationBounds | null;
     /** True when the scene owns a DARK opaque painted backdrop (see
-     *  {@link ILoadedScene.hasDarkBackdrop}) — the scene supplies its own environment, so the
+     *  {@link ILoadedScene.hasDarkBackdrop}) - the scene supplies its own environment, so the
      *  light-grey studio gradient must NOT be composited behind it (it would bleed through the
      *  frame's un-covered edges and wash the deep colour to grey). */
     hasDarkBackdrop: boolean;
     bounds: IAnimationBounds | null;
     /** The game's AUTHORED display frame in frontend coords (`cameraViewPx` square
-     *  centred on the Y-flipped `cameraOffsetPx`) — the exact camera the in-game
+     *  centred on the Y-flipped `cameraOffsetPx`) - the exact camera the in-game
      *  viewer frames these skins with. Used to frame the special-entry entrance skins
      *  (and their idle) to match the game rather than the character-bounds heuristic.
      *  Null for spine-only art with no authored camera. */
@@ -610,7 +610,7 @@ interface IComposite {
     separatorWash: ISeparatorWash[];
     authoredDisplayBounds: IAnimationBounds | null;
     /** The game's TIGHT/zoomed-in display frame (`_adjustes[1]`, e.g. Virtuosa 1246 vs
-     *  the 1929 wide) in frontend coords — the close-up the in-game viewer opens on and
+     *  the 1929 wide) in frontend coords - the close-up the in-game viewer opens on and
      *  dollies OUT from. Same vis centre as {@link authoredDisplayBounds}, shifted by the
      *  authored offset delta (the game's small pan). Null when the skin has no tight
      *  endpoint; the opener then derives the tight box from the 0.646 game ratio. */
@@ -619,17 +619,17 @@ interface IComposite {
      *  render/vis px (`(offsetPx2 − offsetPx) × RCAL`, Y flipped to screen-down).
      *
      *  `bodyFrameBox` builds BOTH boxes on the same body-measured centre, because the raw
-     *  `_adjustes` offset is unusable for centring — it points ~650 px BELOW the body in export
+     *  `_adjustes` offset is unusable for centring - it points ~650 px BELOW the body in export
      *  space (see the note there). Their DIFFERENCE is still meaningful in that space though, so
      *  the two stops' relative move survives even though neither absolute position does. This is
      *  the same cross-space-additive convention `centerBlend` and the hand-off delta already use.
      *
      *  Null when the skin ships no second stop. Consumed only by `?statcam=1` (see
-     *  `staticCamOn`) — applying it to `authoredTightBounds` itself would move the ENTRANCE
+     *  `staticCamOn`) - applying it to `authoredTightBounds` itself would move the ENTRANCE
      *  framing on the 12 skins that have one, including all three references, and silently
      *  invalidate every recorded baseline. */
     authoredTightShift: [number, number] | null;
-    /** The game's SKIN-PREVIEW framing box — half the wide `_adjustes[0]` view. Consumed only by
+    /** The game's SKIN-PREVIEW framing box - half the wide `_adjustes[0]` view. Consumed only by
      *  `?statcam=1`; see the derivation where it is built. Null for skins with no authored view. */
     previewBounds: IAnimationBounds | null;
     /** The TIGHT `_adjustes[1]` stop as a FRACTION of the wide display view (`viewPx2/viewPx`).
@@ -640,31 +640,31 @@ interface IComposite {
      *  and the `transform` reform beat. Non-null only for a "_Start" entrance composite;
      *  drives the tight→wide camera dolly length and the hand-off time. */
     entranceDuration: number | null;
-    /** Where the end-of-entrance fade finishes ramping — `min(duration, clipStop)`.
+    /** Where the end-of-entrance fade finishes ramping - `min(duration, clipStop)`.
      *  See {@link entranceFadeEnd}. */
     entranceFadeEnd: number | null;
     /** Straight RGBA of the director's end-of-entrance screen fade (`_params.fadeColor`), or
      *  null when the skin ships no entrance director. See {@link ENTRANCE_FADE_IN}. */
     entranceFade: [number, number, number, number] | null;
     entranceTransform: number | null;
-    /** The `_Start` camera dolly ZOOM curve (`[t_s, ortho]` keyframes) — the game's actual
+    /** The `_Start` camera dolly ZOOM curve (`[t_s, ortho]` keyframes) - the game's actual
      *  data-driven camera motion (extracted from the clip animating the Main Camera's orthographic
      *  size). Scales the entrance frame relative to its base extent as the shot pushes in/out. */
     entranceOrthoCurve: [number, number][] | null;
     /** ENTRANCE post-process volume (see {@link entrancePostFxRef}). */
     entrancePostFx: { effect: string; intensity: number; weightCurve: [number, number][] } | null;
-    /** The `_Start` camera's ABSOLUTE frame-centre track (`[t_s, cx, cy]`, mesh px) — the game's
+    /** The `_Start` camera's ABSOLUTE frame-centre track (`[t_s, cx, cy]`, mesh px) - the game's
      *  own camera rig (the animated camera-parent Transform) accumulated by the Rust exporter into
      *  a world-space centre curve. Drives the entrance pan/dolly directly; no measured bounds. */
     entranceCamCenterCurve: [number, number, number][] | null;
     entranceCamRollCurve: [number, number][] | null;
-    /** The entrance frame EXTENT in mesh px — the `_Start` camera's view at its ANIMATED t=0
+    /** The entrance frame EXTENT in mesh px - the `_Start` camera's view at its ANIMATED t=0
      *  ortho size (`2·ortho₀/skeletonScale`, falling back to the static `entranceViewPx`, then the
-     *  tight `_adjustes[1]` stop) — the base frame size the live camera holds, scaled by the
+     *  tight `_adjustes[1]` stop) - the base frame size the live camera holds, scaled by the
      *  ortho-size ratio each tick. Same 100 px/world-unit scale as
      *  {@link entranceCamCenterCurve}, so they compose directly. */
     entranceFrameSize: number | null;
-    /** The entrance's scene-mesh containers (background + foreground) — carry the per-layer
+    /** The entrance's scene-mesh containers (background + foreground) - carry the per-layer
      *  `m_IsActive` gating meshes. Entrance-only. */
     sceneLayers: PIXI.Container[] | null;
     /** The circular VIEWPORT APERTURE this entrance is watched through (Executor's rifle
@@ -684,12 +684,12 @@ interface IComposite {
      *  scenes with no masked layers. */
     ramLayers: PIXI.Mesh[];
     /** The scene's BONE-FOLLOWING layer meshes (spine-unity `BoneFollower` in their Unity
-     *  ancestry — Mlynar's sword flare). The always-running tick rebases them onto their
+     *  ancestry - Mlynar's sword flare). The always-running tick rebases them onto their
      *  live bone each frame, after the spine update. Empty for scenes with none. */
     followLayers: PIXI.Mesh[];
     /** When the authored SCENE timeline outlasts the spine's own "Start" animation
      *  (Mlynar: the spine ends at 14.33s but the white-flash plane + camera run to the
-     *  clip stop 15.97s), the time (track seconds) the entrance actually ends — the
+     *  clip stop 15.97s), the time (track seconds) the entrance actually ends - the
      *  spine `complete` listener defers and the tick fires {@link requestEntranceEnd}
      *  at this clock. `null` = the spine animation is the longer one (fire on
      *  `complete` as usual). Entrance-only. */
@@ -710,7 +710,7 @@ interface IComposite {
 
 /** Load the static illustration as a texture AND compute its opaque centroid, so
  *  it can be registered centroid-to-centroid against the spine (both depict the
- *  same art, so their mass centres correspond — robust to composition, unlike a
+ *  same art, so their mass centres correspond - robust to composition, unlike a
  *  bounding-box centre which the arch/railing skew). */
 function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
     return new Promise((resolve, reject) => {
@@ -759,7 +759,7 @@ function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
 }
 
 /** Build the static-illustration backdrop sprite. The static art is the camera's
- *  view of the scene — it spans `2 × cameraSizePx` of scene height — so we scale
+ *  view of the scene - it spans `2 × cameraSizePx` of scene height - so we scale
  *  it to that and centre it on the animated character's visible bounds (the focal
  *  point both the static art and the spine are composed around). This aligns the
  *  spine over its own static counterpart so the missing backdrop fills in behind. */
@@ -792,7 +792,7 @@ function fadeParam(name: string, dflt: number): number {
  *
  *  **0.20 is Executor's own MEASURED ramp** (0.183 s, taken off her capture at 60 fps as the
  *  10 %→90 % crossing toward white). It was 0.85, a value measured on Virtuosa alone, and the
- *  cost of shortening it used to be prohibitive — Executor went +13.3 — because her ramp END was
+ *  cost of shortening it used to be prohibitive - Executor went +13.3 - because her ramp END was
  *  0.4 s late. Anchoring the fade to the camera clip's stop fixed the end, and with the end right
  *  she is now **completely insensitive** to this constant (11.018 at 0.85, 0.60, 0.45, 0.30 and
  *  0.20 alike). That unblocked it.
@@ -804,14 +804,14 @@ function fadeParam(name: string, dflt: number): number {
  *
  *  Four independent numbers from two skins, which is why this is a measurement rather than a fit.
  *
- *  ⚠️ The ramps genuinely DIFFER per skin — 0.183 (exc), 0.533 (wis), 0.600 (eyja), ~0.67 (cel)
- *  — and nothing exported predicts them, so one global cannot serve all four. Virtuosa pays
+ *  ⚠️ The ramps genuinely DIFFER per skin - 0.183 (exc), 0.533 (wis), 0.600 (eyja), ~0.67 (cel)
+ *  - and nothing exported predicts them, so one global cannot serve all four. Virtuosa pays
  *  **+0.165** for this (her ramp is the longest); Wiš'adel gains **6.96**. Everything else is
  *  bit-identical. `?fadein=` still sweeps it. */
 const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
 /** Seconds the fade holds at full before lifting (covers the idle swap). `?fadehold=`. */
 const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
-/** Seconds spent lifting the fade once the idle is live — Mlynar's capture is fully white at
+/** Seconds spent lifting the fade once the idle is live - Mlynar's capture is fully white at
  *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
 const ENTRANCE_FADE_OUT = 0.35;
 
@@ -819,7 +819,7 @@ const ENTRANCE_FADE_OUT = 0.35;
  *  director fade a double-count?
  *
  *  Every skin authors a white overlay for the transition, so "has a fade layer" cannot be the
- *  test — all four benchmarks have one. What separates them is whether that layer SPANS THE
+ *  test - all four benchmarks have one. What separates them is whether that layer SPANS THE
  *  CAMERA VIEW, i.e. whether it can white out the frame on its own:
  *
  *    Mlynar   L17  1.73x view, alpha already 1.000 when the director ramp starts
@@ -831,7 +831,7 @@ const ENTRANCE_FADE_OUT = 0.35;
  *  `1-(1-a1)(1-a2)`, which reaches white early and steeply. Measured on Skadi, whose authored
  *  ramp and the director ramp overlap almost exactly (20.4-22.4 vs 21.28-22.13): stacking put us
  *  +32.7 luma over the capture at t=21.6 and saturated at 21.87 while the game was still at
- *  236.5 — the user-visible "the glow is instant instead of fading". Mlynar is unaffected either
+ *  236.5 - the user-visible "the glow is instant instead of fading". Mlynar is unaffected either
  *  way (his layer is already opaque white through the whole ramp, so the director fade adds
  *  nothing to add), which is what makes this safe to apply by rule rather than per skin.
  *
@@ -840,7 +840,7 @@ const ENTRANCE_FADE_OUT = 0.35;
  *
  *  The director ships a nominal `duration`, but the cinematic's authored content ends when its
  *  CAMERA CLIP stops, and the two are not the same: Executor's camera clip stops at 6.100
- *  against a duration of 6.500, and her capture saturates to white at exactly 5.900 —
+ *  against a duration of 6.500, and her capture saturates to white at exactly 5.900 -
  *  `clipStop − HOLD`, to a frame. Anchoring on `duration` put our ramp 0.400 s late, which a
  *  time-offset sweep rules out as a reference-trim artefact (0 is the optimum in both
  *  directions, ±0.2 s costs 8–24 MADC).
@@ -872,13 +872,13 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
 /** Render density for the dyn illust, in both paths.
  *
  *  The client never draws a dynamic illustration at the coarse density a browser hands us by
- *  default. Its IDLE viewer renders into a SQUARE 2048 target — `AdaptiveRenderStrategy`
+ *  default. Its IDLE viewer renders into a SQUARE 2048 target - `AdaptiveRenderStrategy`
  *  returns `*w = *h = 2048` unconditionally, `LegacyRenderStrategy` returns
  *  `max(platformCap, 2048)`, and a live Frida trace reports
- *  `Camera.set_orthographicSize … aspect=1.00000 pixel=2048x2048` — then rebuilds the on-screen
+ *  `Camera.set_orthographicSize … aspect=1.00000 pixel=2048x2048` - then rebuilds the on-screen
  *  quad from it every frame. Its ENTRANCE takes a different route (the quad rebuild rate drops to
  *  0/s for the whole cinematic while `Camera.allCamerasCount` goes 3 -> 5: the entrance prefab's
- *  own cameras render DIRECTLY) but still lands on a full-resolution surface — `Camera.main` stays
+ *  own cameras render DIRECTLY) but still lands on a full-resolution surface - `Camera.main` stays
  *  `ui_camera` at **2340x1080** throughout. See `dynchar-il2cpp-render-path`.
  *
  *  Either way the client resolves far more than we did: our frames carried ~0.80x the capture's
@@ -886,7 +886,7 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
  *  points at ~3x smaller size for the same total lit area. So drive the renderer at the density
  *  that puts 2048 device pixels across the illust's frame, for the entrance as well as the idle.
  *
- *  Applied ONCE at construction and on container resize — never switched mid-session. That is
+ *  Applied ONCE at construction and on container resize - never switched mid-session. That is
  *  deliberate: changing `renderer.resolution` at runtime invalidates the same state a container
  *  resize does, and re-laying out to recover it overwrites whatever framing the caller was about
  *  to apply (statcam's preview box, the hand-off's standing-idle dolly).
@@ -894,7 +894,7 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
  *  `RES_CAP` bounds the buffer for small containers (a 200px-tall thumbnail would otherwise ask
  *  for 10x); the floor keeps us at no less than the display's own density. `?rt2048=0` reverts. */
 const DYN_RT_SIZE = 2048;
-/** The client's ENTRANCE does not go through the square RT — it renders through `ui_camera`
+/** The client's ENTRANCE does not go through the square RT - it renders through `ui_camera`
  *  straight onto the screen surface, measured at **2340x1080**. So its faithful target is that
  *  screen HEIGHT, not the RT's 2048. Lower than the idle's target, and correspondingly cheaper. */
 const DYN_SCREEN_H = 1080;
@@ -911,12 +911,12 @@ function dynRenderResolution(cssHeight: number, path: "entrance" | "idle"): numb
 function entranceFadeEnd(data: ISceneData | null): number | null {
     const dur = data?.entranceDuration ?? null;
     if (dur == null) return null;
-    // `?fadeend=<seconds>` overrides the anchor outright. DIAGNOSTIC ONLY — it exists to price the
+    // `?fadeend=<seconds>` overrides the anchor outright. DIAGNOSTIC ONLY - it exists to price the
     // prize before anyone invests in deriving a better anchor, because nothing the game ships
     // predicts one: the director's `_params` is just { duration, charVoiceOffset, fadeColor }, with
     // no fade timing at all, so `duration − HOLD` is our own inference. It holds on Executor
     // (clipStop 6.100 − HOLD = 5.900, matching her capture to the frame) and fails badly on
-    // Muelsyse, whose capture saturates at 16.767 against an anchor of 20.0 — 3.0s late, and 61%
+    // Muelsyse, whose capture saturates at 16.767 against an anchor of 20.0 - 3.0s late, and 61%
     // of her worst beat. ⚠️ Do NOT promote a measured value here into a shipped constant; that is
     // per-skin overfitting of exactly the kind this project keeps having to retract.
     if (typeof window !== "undefined") {
@@ -931,7 +931,7 @@ function entranceFadeEnd(data: ISceneData | null): number | null {
 function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     const fade = data?.entranceFade;
     // `?scenefade=0` forces the DIRECTOR fade back on even when a scene layer looks like it
-    // drives the ramp — the A/B for skins where the layer cannot reach the whole screen.
+    // drives the ramp - the A/B for skins where the layer cannot reach the whole screen.
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("scenefade") === "0") return false;
     // Same anchor the ramp itself uses, so the "does the layer beat the director?" test stays
     // consistent with when the director actually finishes.
@@ -943,7 +943,7 @@ function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     return data.layers.some((l: ISceneLayer) => {
         const cc = l.colorCurve;
         if (!cc?.length) return false;
-        // Spans the camera view on BOTH axes — only then can it white out the frame alone.
+        // Spans the camera view on BOTH axes - only then can it white out the frame alone.
         let x0 = Infinity;
         let x1 = -Infinity;
         let y0 = Infinity;
@@ -963,7 +963,7 @@ function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
 /** Additive blending must contribute LIGHT, not COVERAGE.
  *
  *  PIXI's premultiplied ADD is `gl.blendFunc(ONE, ONE)`, which adds the source colour to the
- *  destination — correct — and also adds the source ALPHA to the destination alpha. On an opaque
+ *  destination - correct - and also adds the source ALPHA to the destination alpha. On an opaque
  *  canvas that is invisible. Inside the HDR pass it is not: the scene renders into a half-float
  *  RGBA target and the tonemap composite honours that alpha, so every additive fragment OCCLUDES
  *  the environment behind it in proportion to its own alpha. A DARK additive sprite therefore
@@ -971,12 +971,12 @@ function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
  *
  *  Measured on Civilight Eterna's `guangyun01` halo before the equivalent fix in the Ram shader:
  *  writing premultiplied black at alpha 0.8 took the frame 63.40 -> 12.43, a factor of
- *  0.196 = 1 - 0.8 — exactly a NORMAL over-blend. With `?nohdr=1` the same write was a perfect
+ *  0.196 = 1 - 0.8 - exactly a NORMAL over-blend. With `?nohdr=1` the same write was a perfect
  *  no-op, and forcing `blendMode = ADD` changed nothing, so neither the blend flag nor PIXI's
  *  blend map was at fault: only the alpha channel.
  *
  *  Fixing it in the shader only reaches the Ram path. Patching the blend FUNC reaches every
- *  additive draw — batched sprites included, whose fragments belong to PIXI's own batch shader —
+ *  additive draw - batched sprites included, whose fragments belong to PIXI's own batch shader -
  *  by switching ADD to `blendFuncSeparate(ONE, ONE, ZERO, ONE)`: colour adds, destination alpha
  *  is left alone. `?addalpha=0` reverts.
  */
@@ -1007,7 +1007,7 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
     // CONTAIN, not cover. Covering the visible rect was tried to kill the neutral fill showing
     // beyond a contained backdrop (Muelsyse's settled frame is mostly bare canvas on a 2.16:1
     // viewport) and is REFUTED: the game's surround there is a flat NEUTRAL grey/gradient, while
-    // the blurred art is coloured — a cover fill puts (84,142,161) blue where the game holds
+    // the blurred art is coloured - a cover fill puts (84,142,161) blue where the game holds
     // neutral. The surround is the viewer's own chrome, not the skin's art scaled up.
     sprite.scale.set((2 * frame.cameraSizePx) / Math.max(texture.width || 1, texture.height || 1));
     sprite.position.set(spineCentroid.x, spineCentroid.y);
@@ -1016,38 +1016,38 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
 
 /** The in-game viewer composites the illustration over its OWN backdrop, and that backdrop
  *  is a flat NEUTRAL DARK GREY. Every skin's dynchar camera clears with `m_ClearFlags: 2`
- *  (solid colour) and `m_BackGroundColor.a = 0` — the skin renders into a TRANSPARENT
+ *  (solid colour) and `m_BackGroundColor.a = 0` - the skin renders into a TRANSPARENT
  *  target, so nothing in the scene fills the frame its art doesn't reach; whatever shows
  *  there belongs to the viewer, not to the skin. Measured on the in-game captures of three
  *  skins with three completely different worlds (Mlynar "Fields of Ruination", Virtuosa
  *  "Diversity Oneness", Skadi2 "Iteration") across ten beats: every uncovered corner reads
- *  32–39 in ALL channels — one neutral tone, the same for every skin at every time.
+ *  32–39 in ALL channels - one neutral tone, the same for every skin at every time.
  *
  *  This supersedes two earlier guesses. A bright studio gradient (`#dddee2`) was ~3× too
  *  bright. Deriving the tone from the SCENE (the mean colour of its largest painted
- *  backdrop) made Mlynar's frame edges a light blue-GREY (73,81,95) — wrong in hue as well as
+ *  backdrop) made Mlynar's frame edges a light blue-GREY (73,81,95) - wrong in hue as well as
  *  level, because his backdrop bakes its vignette INTO the texture, so an alpha-weighted mean
  *  reports the lit painted INTERIOR. Any per-scene derivation is wrong in principle here: the
  *  tone is not the scene's to supply. `resizeEnvironmentBg` keeps it covering the viewport.
  *
  *  CORRECTED 2026-07-28: the level was `#232324` (35,35,36), taken from "every uncovered
  *  corner reads 32–39". Those corners were not uncovered. At almost every beat the art reaches
- *  the frame edge — sampled across all three captures, the margins are strongly coloured and
+ *  the frame edge - sampled across all three captures, the margins are strongly coloured and
  *  vary 43→208 with the camera, i.e. they are painted scenery, and a dark corner of scenery
  *  reads ~35 exactly like a dark fill. The fill is genuinely exposed only at Mlynar's widest
  *  entrance framing, and there it is unambiguous: flat, neutral, and 76–83 down the FULL height
- *  of both margins and in all four corners. Sampling only the pre-flash window matters — from
+ *  of both margins and in all four corners. Sampling only the pre-flash window matters - from
  *  t≈13.2 his white transition flash ramps those same margins 79 → 125 → 202 → 255, so a
  *  sample taken a few frames later reads the flash, not the fill.
  *
  *  Measured over the frame INTERIOR this is a clean win with no cost anywhere: Mlynar 20.878 →
  *  19.733 (t=13 −5.57, t=12.4 −3.41, every other beat flat to ±0.02) and Skadi bit-identical,
- *  since his fill is never exposed. Virtuosa is untouched — she takes the `dark` branch.
+ *  since his fill is never exposed. Virtuosa is untouched - she takes the `dark` branch.
  *
  *  Scored over the FULL frame it instead reads −0.12/+0.03, with apparent ~0.5 regressions at
  *  t=7 and t=11.8. That is an artifact of the metric, not of this constant: the default window
  *  includes columns 0–35 and 864–899, which are the CAPTURE'S OWN dark UI chrome (temporal SD
- *  ~1.0 vs ~70 in the interior — no renderer signal at all), so raising the fill is scored as a
+ *  ~1.0 vs ~70 in the interior - no renderer signal at all), so raising the fill is scored as a
  *  growing mismatch against a black border that is not ours to match. Confirmed by measuring the
  *  art's transmittance to this fill directly, from two renders that differ only in its value:
  *  it is 0 or 1 and never in between (≥99.5% of interior pixels fully opaque at t=4…11, the
@@ -1056,7 +1056,7 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
 // Fresh per-app texture (the app is destroyed with `texture: true`, so a shared/cached
 // texture would be torn down under later mounts).
 const VIEWER_BACKDROP = "#4d4d4e";
-/** The ground the game shows once the entrance has passed its transform beat — a flat near-white,
+/** The ground the game shows once the entrance has passed its transform beat - a flat near-white,
  *  measured off the captures, not assumed: Muelsyse's surround settles to (252.7, 252.5, 252.3)
  *  with a per-channel std of ~10. Flat is the tell that it is a ground and not content, and its
  *  boundary follows the art's own silhouette, so it shows through the illustration's ALPHA rather
@@ -1064,14 +1064,14 @@ const VIEWER_BACKDROP = "#4d4d4e";
 const SETTLED_GROUND = "#fcfcfc";
 
 /** Past the entrance's transform beat the game paints a flat near-white ground and stops showing
- *  the static art's vista behind the scene — so the gap fill must stop there too.
+ *  the static art's vista behind the scene - so the gap fill must stop there too.
  *
  *  The two are ONE defect and neither half works alone: on Muelsyse's t=18, dropping the gap fill
  *  alone is WORSE (49.142 -> 52.632) because the region it vacates falls through to the studio
  *  grey, and whitening the ground alone leaves blurred art over 18.5% of frame. Together:
  *  **49.142 -> 26.910**.
  *
- *  ⚠️ Anchored on `entranceTransform`, NOT on the end-fade ramp and NOT on the hand-off — both are
+ *  ⚠️ Anchored on `entranceTransform`, NOT on the end-fade ramp and NOT on the hand-off - both are
  *  provably out of reach. `entranceFadeEnd` is min(duration, clipStop) = 20.0 for her, so with
  *  FADE_IN/FADE_HOLD at 0.2 the ramp runs 19.6-19.8 and the hand-off fires at 20.0, while the
  *  scored beat is t=18 and the capture's ground finishes at 16.767. The fade anchor IS the value
@@ -1080,7 +1080,7 @@ const SETTLED_GROUND = "#fcfcfc";
  *
  *  🔑 Leading is safe, and this was measured rather than assumed. The risk was saturating to white
  *  while the capture is still mid-ramp, so t=15 (corner ~104) was priced: 32.596 -> 31.357, it
- *  IMPROVES. The reason is that the studio fill is only 2.6% of frame there against 10.3% at t=18 —
+ *  IMPROVES. The reason is that the studio fill is only 2.6% of frame there against 10.3% at t=18 -
  *  an early switch has almost no surface to act on while the scene still covers the frame.
  *
  *  ⚠️ Gap fill is worth real parity DURING the entrance (cello t=2 -0.678), so this gates rather
@@ -1100,7 +1100,7 @@ function createEnvironmentBgTexture(dark = false, fill: string = VIEWER_BACKDROP
         if (dark) {
             // A scene that owns a self-lit DARK painted world (`hasDarkBackdrop`, Virtuosa's
             // mirror-world) composites that world SEMI-TRANSPARENTLY over this fill, so here the
-            // fill is not only the frame surround but also a light LEAK through the art — and our
+            // fill is not only the frame surround but also a light LEAK through the art - and our
             // layer alphas run thinner than the game's. Its measured optimum therefore sits below
             // the viewer's own grey (Virtuosa MAD 31.89 with this dark gradient vs 32.01 with the
             // viewer grey), so that family keeps the fill as measured.
@@ -1122,8 +1122,8 @@ function resizeEnvironmentBg(sprite: PIXI.Sprite, w: number, h: number): void {
 
 /**
  * Plays an operator's dynamic (L2D) illustration. The `dyn_illust_*.skel`
- * skeleton already contains the ENTIRE scene — painted background, effect/glass
- * layers, sparkles — as Spine slots (with their blend modes baked in) and mesh
+ * skeleton already contains the ENTIRE scene - painted background, effect/glass
+ * layers, sparkles - as Spine slots (with their blend modes baked in) and mesh
  * attachments, so we simply render the skeleton and frame it to its own animation
  * bounds (the same approach as the reference aklive2d renderer). pixi-spine
  * honours each slot's blend mode, reproducing the game's compositing.
@@ -1137,7 +1137,7 @@ interface ISeparatorWash {
 /** Put the `isBackdropParticle` wash between the spine's SEPARATOR parts.
  *
  *  Virtuosa's `bg_*` haze sheets are authored ABOVE `characterSort`, so Unity draws them in
- *  front of the whole skeleton — but the game does not wash her body, because the game SPLITS
+ *  front of the whole skeleton - but the game does not wash her body, because the game SPLITS
  *  the skeleton: `SkeletonRenderer.separatorSlotNames` + `SkeletonRenderSeparator` render it as
  *  two submeshes with the sheet interleaved. Demoting the sheet behind the entire spine (what
  *  `isBackdropParticle` does) therefore fixes the character and breaks the background: her
@@ -1148,14 +1148,14 @@ interface ISeparatorWash {
  *  `spine.update()` rebuilds `children` from `skeleton.drawOrder` each frame, so the wash is
  *  re-seated every tick rather than parented once.
  *
- *  SHIPPED (`?sepwash=0` disables). The per-frame re-seat once LEAKED — `spine.update()` re-appends slot
+ *  SHIPPED (`?sepwash=0` disables). The per-frame re-seat once LEAKED - `spine.update()` re-appends slot
  *  containers each frame, so re-seating grows `spine.children` without bound: cello reaches
  *  849 children by t=17 against ~329 slots, one leaked per frame. Fix the leak before
  *  re-enabling; the 15.190 measurement below was taken WITH the leak active.
  *
  *  Previously shipped (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
  *  against the game's 193.8 with NO ghosting (her darks 26.8 vs the game's 25.5; undemoting
- *  gives 151.9). Seating all four sheets regressed the frame (21.969 -> 24.671) — the fix was
+ *  gives 151.9). Seating all four sheets regressed the frame (21.969 -> 24.671) - the fix was
  *  to bind each sheet by SORT to the parts' own depths (see `sheetTarget` in particles.ts),
  *  which puts bg_ref/bg_tint_01/air_01 in the gap and leaves bg_rain_01 genuinely in front.
  *  cel 18.844 -> 17.167, ska 10.500 -> 10.465, mly bit-identical (ships no separator).
@@ -1180,7 +1180,7 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     if (!conts) return;
     // pixi-spine re-adds every slot container each `update()` to restore `skeleton.drawOrder`.
     // With a FOREIGN child spliced in, its index bookkeeping stops matching and containers get
-    // appended instead of moved, so `children` grows one per frame — cello reached 849 against
+    // appended instead of moved, so `children` grows one per frame - cello reached 849 against
     // 328 slots by t=17 (a leak plus a per-frame traversal cost on every render).
     //
     // Dedupe in place before re-seating, keeping the LAST occurrence of each child: the last
@@ -1239,7 +1239,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // screen via `hdr.mesh`. `hdrSceneRef` is the container rendered into it.
     const hdrRef = useRef<IHDRScene | null>(null);
     /** The gap-fill backdrop sprite, when it is composited by the tonemap threshold rather than
-     *  drawn inline — rendered alone into `hdr.bdTarget` each frame (see the tick). */
+     *  drawn inline - rendered alone into `hdr.bdTarget` each frame (see the tick). */
     const hdrSceneRef = useRef<PIXI.Container | null>(null);
     /** The backdrop wash re-parented inside the spine (see {@link reseatSeparatorWash}). */
     const separatorWashRef = useRef<ISeparatorWash[]>([]);
@@ -1255,7 +1255,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     const settledRef = useRef(false);
     // Every composite built for the current skin (usually one; two while a "_Start"
     // entrance is playing before it hands off to the settled main L2D). Tracked so
-    // cleanup frees them all — under the HDR pass their containers live OUTSIDE the
+    // cleanup frees them all - under the HDR pass their containers live OUTSIDE the
     // stage, so app.destroy() can't reach them.
     const compositesRef = useRef<IComposite[]>([]);
     // Set when the entrance's "Start" completes; the tick runs it AFTER the spine
@@ -1263,18 +1263,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // there would corrupt the in-progress update).
     const doSwapRef = useRef<(() => void) | null>(null);
     // Camera dolly ZOOM, driven by GAMEDATA: the `_Start` clip animates the Main Camera's
-    // orthographic size (verified by extracting the curve — Virtuosa holds 1.87, zooms in to 1.50
+    // orthographic size (verified by extracting the curve - Virtuosa holds 1.87, zooms in to 1.50
     // on the transform at ~8.6s, out to 1.91 for the standing reveal). The camera itself has NO
-    // positional curve — the pan lives in the animated camera-PARENT rig (`camCenter`). Each
+    // positional curve - the pan lives in the animated camera-PARENT rig (`camCenter`). Each
     // frame we sample the curve at the clip's track time and scale the entrance frame by the ratio
     // to its t=0 value (so no world↔authored unit conversion), zooming around the frame centre.
-    /** ENTRANCE LAYER SEQUENCING — the `_Start` clip's per-layer `m_IsActive` windows,
+    /** ENTRANCE LAYER SEQUENCING - the `_Start` clip's per-layer `m_IsActive` windows,
      *  material-colour curves and UV-ST curves. Kept SEPARATE from `entranceFollowRef`
      *  because that ref only exists when the skin ships a camera-centre curve, and layer
      *  sequencing has nothing to do with the camera: gating it on the camera track left
      *  three skins (Kalt'sits "boc#6", Cetsyr, Chongyue "epoque#7") replaying their entrance
      *  with EVERY layer at its static tint. For Kalt'sits that means the closing full-frame
-     *  white flash — authored white at full alpha — paints the whole cinematic pure white. */
+     *  white flash - authored white at full alpha - paints the whole cinematic pure white. */
     const entranceSeqRef = useRef<{
         spine: import("pixi-spine").Spine;
         sceneLayers: PIXI.Container[];
@@ -1291,7 +1291,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         /** Authored camera roll, degrees. Null for every rig whose basis is axis-aligned. */
         camRoll: [number, number][] | null;
         /** Segment end-indices in `camCenter` that are HARD CUTS (Skadi the Corrupting Heart's
-         *  rig repositions) — the sampler STEPS through these instead of interpolating, so an
+         *  rig repositions) - the sampler STEPS through these instead of interpolating, so an
          *  instant reposition isn't smeared into a visible pan. Empty for cut-free curves. */
         camCuts: Set<number>;
         frameSize: number;
@@ -1299,19 +1299,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
          *  baked rig-centre curve swings the hero into the right third (its X excursion) and the
          *  game instead holds him CENTRED, letting only the ortho zoom widen the shot. We HOLD the
          *  horizontal centre at the settle-open box centre (`cx0`), KEEP the rig's vertical motion
-         *  re-based so it lands on `cy0` at the rig's end (`cy0 + (rigY − rigEndY)` — needed so the
+         *  re-based so it lands on `cy0` at the rig's end (`cy0 + (rigY − rigEndY)` - needed so the
          *  tight t=0 frame catches the reforming head), and let the ortho zoom pull out to full body
-         *  uncapped (the wide→tight idle handoff hides behind the white flash — same settle centre).
+         *  uncapped (the wide→tight idle handoff hides behind the white flash - same settle centre).
          *  Null = pure rig camera (cello, skadi2). */
         centerBlend: { cx0: number; cy0: number; rigEndY: number } | null;
         /** The live rig camera's `camCenter` sample at track-time 0, captured once at build
-         *  time — the reference point for `lastLiveCenter` below, so `swapToMainIdle` can
+         *  time - the reference point for `lastLiveCenter` below, so `swapToMainIdle` can
          *  compute how far the camera panned by hand-off (see Sf handoff-continuity fix in
          *  `openStandingIdle`). */
         startCenter: [number, number];
         /** The most recently sampled live camera centre (refreshed every tick, same value
          *  used to build `liveDisplayBox`). Read by `swapToMainIdle` at the exact hand-off
-         *  instant — BEFORE this ref is nulled — so the post-handoff dolly can start from
+         *  instant - BEFORE this ref is nulled - so the post-handoff dolly can start from
          *  where the entrance camera actually ended rather than a value re-derived
          *  independently from the idle skeleton's own static bounds. Null until the first
          *  tick runs. */
@@ -1324,14 +1324,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         fireEnd: (() => void) | null;
     } | null>(null);
     // Crossfade the `_Start` cinematic OUT (frozen at its dissolved final frame) while the main
-    // gala idle fades IN — so the character is never absent during the transformation (the game
+    // gala idle fades IN - so the character is never absent during the transformation (the game
     // overlaps the reform with the dissolve). Both roots are wrapped in one container the HDR
     // pass renders; the tick ramps their alphas, then detaches the main and frees the entrance.
     // END-OF-ENTRANCE SCREEN FADE. The director carries the COLOUR (`_params.fadeColor`) and the
     // END TIME (`_params.duration`) as data; only the ramp lengths are client behaviour, and they
-    // are measured, not guessed. Virtuosa is the one reference where the fade is unconfounded —
+    // are measured, not guessed. Virtuosa is the one reference where the fade is unconfounded -
     // Mlynar's own white-transition plane already holds the frame white from t=15.0, and Skadi
-    // reaches white through her authored fade LAYERS — and her recording runs
+    // reaches white through her authored fade LAYERS - and her recording runs
     // 134 → 146 → 178 → 211 → 240 → 254 over `duration - 1.0s` → `duration - 0.2s`.
     /** Gap-fill sprite + the layers CAPABLE of covering the frame. Whether one actually covers is
      *  re-evaluated every entrance frame from its clip window and animated alpha, so a transition
@@ -1344,7 +1344,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  why her CHROMA error dwarfed every other skin's (15.5 vs ~2).
      *
      *  Driven off the entrance clock like the fade, and gated on the exported data, so a skin
-     *  with no volume — or one whose volume is never opened — is untouched. Civilight Eterna
+     *  with no volume - or one whose volume is never opened - is untouched. Civilight Eterna
      *  ships an `HGMobileBlur` profile whose weight measures 0 at every scored beat, and she is
      *  bit-identical with this in place. */
     const entrancePostFxRef = useRef<{ filter: PIXI.ColorMatrixFilter; curve: [number, number][]; intensity: number; target: PIXI.Container } | null>(null);
@@ -1356,7 +1356,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
     // and zooms OUT to the steady framing over a fraction of a second, then holds. This
     // interpolates the entrance's framing from `from` (close) to `to` (steady) over
-    // `duration` seconds of REAL time (not animation progress — the zoom is a fixed
+    // `duration` seconds of REAL time (not animation progress - the zoom is a fixed
     // ~0.7s regardless of the 17s entrance), then clears itself so the framing holds.
     const entranceZoomRef = useRef<{ container: PIXI.Container; from: IAnimationBounds; to: IAnimationBounds; elapsed: number; duration: number; delay: number } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -1364,7 +1364,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     const loadIdRef = useRef(0);
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
-    // "authored" (the in-game viewer) scales the crop to the container HEIGHT — the character
+    // "authored" (the in-game viewer) scales the crop to the container HEIGHT - the character
     // fills a constant fraction of the frame height on ANY container aspect (tall mobile card,
     // wide desktop card, fullscreen dialog), and the excess/short width shows more/less scene.
     // A square+`cover` would instead inflate the character with the container's aspect ratio
@@ -1397,7 +1397,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         let animationFrameId: number | null = null;
 
         /** Step to the idle target when the idle path takes over: the hand-off, or load completion
-         *  for a skin that plays no cinematic. Resizes the density-dependent targets ONLY —
+         *  for a skin that plays no cinematic. Resizes the density-dependent targets ONLY -
          *  re-laying out here would overwrite the framing the caller is about to apply (statcam's
          *  preview box, the hand-off's standing-idle dolly). Idempotent. */
         const raiseToIdleResolution = () => {
@@ -1463,12 +1463,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             backgroundAlpha: 0,
             antialias: true,
             // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
-            // steps up to the square-2048 RT target when the idle path takes over — which is
+            // steps up to the square-2048 RT target when the idle path takes over - which is
             // exactly where the client itself switches between the two.
             resolution: dynRenderResolution(container.clientHeight || 450, staticCamOn() ? "idle" : "entrance"),
             autoDensity: true,
-            // The tick below drives EVERYTHING — clock, spine, particles, and both render
-            // passes — so PIXI's own ticker must not render as well. Left on it did two
+            // The tick below drives EVERYTHING - clock, spine, particles, and both render
+            // passes - so PIXI's own ticker must not render as well. Left on it did two
             // things: it drew `app.stage` a second time every frame (double the GPU work for
             // the whole viewer), and it could draw the stage BEFORE the frame's scene pass
             // had written the HDR target, so the tonemap quad sampled a render target that
@@ -1486,7 +1486,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             if (!mountedRef.current) return;
             const dt = Math.min((now - lastTick) / 1000, 0.1);
             lastTick = now;
-            // Capability A — continuous shader UV-scroll. The Ram-family scene layers scroll
+            // Capability A - continuous shader UV-scroll. The Ram-family scene layers scroll
             // their `_MainTex` UVs against Unity `_Time` (seconds since load); replay that with
             // a monotonic scene clock for BOTH idle and entrance composites. Cheap CPU rewrite.
             sceneClock += dt;
@@ -1498,7 +1498,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 spineRef.current.update(dt);
                 // Re-seat the backdrop wash BETWEEN the spine's parts. `spine.update()` rebuilds
                 // `children` from `skeleton.drawOrder` every frame, so a one-time `addChildAt`
-                // does not stick — this has to run after each update.
+                // does not stick - this has to run after each update.
                 reseatSeparatorWash(spineRef.current, separatorWashRef.current);
                 if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sepdbg") === "1") {
                     // biome-ignore lint/suspicious/noExplicitAny: ad hoc ?sepdbg=1 introspection of pixi-spine internals (slotContainers) not present in its public type
@@ -1531,8 +1531,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // seated form reforms into the standing form ~3300px higher; the Rust exporter accumulates
             // that camera chain into an ABSOLUTE frame-centre curve (`entranceCamCenterCurve`, mesh px)
             // and pairs it with the authored ortho-size zoom. We sample the centre and scale the frame
-            // by the ortho ratio — no measured bounds, no easing, no tuning: purely the rig's motion.
-            // Live authored display box for particle edge-clip culling this frame — the
+            // by the ortho ratio - no measured bounds, no easing, no tuning: purely the rig's motion.
+            // Live authored display box for particle edge-clip culling this frame - the
             // entrance camera's live zoom/pan box when driving, the opening zoom-out dolly's
             // box when THAT'S driving, else the active composite's own settled `bounds`. Same
             // coordinate space `layoutSpine` already frames the scene with.
@@ -1543,10 +1543,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const tt = tr?.trackTime ?? 0;
                 const { width: sw, height: sh } = appRef.current.screen;
                 // Camera CENTRE: sample the accumulated gamedata camera track at the clip time. Its
-                // keyframe timing IS the game's dolly/pan — replay it directly.
+                // keyframe timing IS the game's dolly/pan - replay it directly.
                 // DIAGNOSTIC (`?camlead=<seconds>`): sample the camera CENTRE at `tt + lead`
                 // while leaving the spine, scene layers and particles on `tt`. This isolates a
-                // CAMERA-vs-CONTENT timing skew from a global clock error — a global error moves
+                // CAMERA-vs-CONTENT timing skew from a global clock error - a global error moves
                 // both and is already ruled out for cello by a trim sweep that minimises sharply
                 // at her shipped offset. Inert at 0. Twin of `?ortholead=` for the zoom.
                 const camLead = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("camlead") ?? "0") || 0 : 0;
@@ -1569,7 +1569,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // the character HORIZONTALLY into the right third (its X excursion reaches ~-355 off
                 // the settle centre at t≈7) and its Y curve parks the reforming form low. The in-game
                 // operator viewer instead holds the hero CENTRED the whole entrance and lets only the
-                // ortho zoom widen the shot — pulling out to a near-FULL-BODY frame (feet + campfire)
+                // ortho zoom widen the shot - pulling out to a near-FULL-BODY frame (feet + campfire)
                 // by t≈12-13, then the post-flash idle settles back tighter. So we:
                 //  - FOLLOW the rig's horizontal curve RAW (`cx = rigX`). Measured against the
                 //    recording at nine beats spanning t=7→14, the game's horizontal framing tracks
@@ -1578,19 +1578,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //    (t=7 predicts 441, measures 450; t=9.5 predicts 89, measures 85; t=13 predicts
                 //    39, measures 40). Two earlier readings were wrong in opposite directions: the
                 //    RE-BASED form `cx0 + (rigX − rigEndX)` added a constant ~+81 px (`cx0` sits
-                //    that far from `rigEndX`) and threw the hero right, and the reaction to that —
-                //    holding `cx0` — discarded a real authored pan. The raw curve is the one the
+                //    that far from `rigEndX`) and threw the hero right, and the reaction to that -
+                //    holding `cx0` - discarded a real authored pan. The raw curve is the one the
                 //    game replays;
                 //  - KEEP the rig's VERTICAL motion re-based onto the settle centre (`cy = cy0 +
-                //    (rigY − rigEndY)`) — required, or the tight t=0 frame clips the reforming head
+                //    (rigY − rigEndY)`) - required, or the tight t=0 frame clips the reforming head
                 //    (the rig lifts the frame to catch the pose, which sits higher than the idle rest).
                 //    Y is NOT raw: raw `rigY` mispredicts by ~250 px where the re-based form is
                 //    within ~20;
-                //  - follow the ortho zoom-out to full body (NO size cap) — the wide→tight step at the
+                //  - follow the ortho zoom-out to full body (NO size cap) - the wide→tight step at the
                 //    idle handoff lands behind the white flash (both frames share the settle centre, so
                 //    it is a pure scale change) + the 0.45s crossfade, matching the game.
                 // All gamedata-derived, no magic constant. Skins WITH an authored transform beat (cello,
-                // skadi2) keep the pure rig camera — `centerBlend` is null for them (verified parity).
+                // skadi2) keep the pure rig camera - `centerBlend` is null for them (verified parity).
                 let cxShift = 0;
                 let cy = c[1];
                 const cb = ef.centerBlend;
@@ -1599,8 +1599,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
                 // DIAGNOSTIC (`?camdx=` / `?camdy=`, authored px): shift the entrance camera centre
                 // by a constant. A constant framing offset is invisible to BOTH of the obvious
-                // tests — a pan-delta comparison sees only differences, and a scale sweep sees only
-                // zoom — so it needs its own probe. This is what localised Muelsyse's defect: a
+                // tests - a pan-delta comparison sees only differences, and a scale sweep sees only
+                // zoom - so it needs its own probe. This is what localised Muelsyse's defect: a
                 // sharp optimum at +300 px in Y and exactly 0 in X (MADC 87.168 -> 23.699), which
                 // then matched her rig's Main Camera local Y of +2.9947 units to within the
                 // sampling grid and led to the zero-scale bug in `entrance_camera_track`.
@@ -1617,7 +1617,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
                 // DIAGNOSTIC (`?camroll=<deg>`): ROLL the frame about its centre. Wiš'adel's
                 // `_Start` clip animates her camera parent's euler Z from 11.34° to 29.56° over
-                // the first 2.4s, and `entrance_camera_track` only samples POSITION curves — so
+                // the first 2.4s, and `entrance_camera_track` only samples POSITION curves - so
                 // the authored roll is frozen at its t=0 value. A roll cannot be approximated by
                 // the `?camdx=`/`?camdy=` probe, which is why that one found a wrong-signed
                 // optimum. Position is re-solved so the camera centre stays centred.
@@ -1644,7 +1644,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         tt,
                         // The spine track's OWN animation length, next to the director clock it is
                         // being driven against. A skeleton whose `Start` is not `entranceDuration`
-                        // long drifts in the middle while still lining up at both ends — exactly
+                        // long drifts in the middle while still lining up at both ends - exactly
                         // Whislash the Decadenza's signature.
                         animDur: (ef.spine.state.tracks[0] as unknown as { animation?: { duration?: number } } | null)?.animation?.duration ?? null,
                         animName: (ef.spine.state.tracks[0] as unknown as { animation?: { name?: string } } | null)?.animation?.name ?? null,
@@ -1665,7 +1665,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
             }
             // ENTRANCE LAYER SEQUENCING. Runs for ANY live entrance composite, independent of
-            // whether the skin ships a camera track — see `entranceSeqRef`.
+            // whether the skin ships a camera track - see `entranceSeqRef`.
             const eseq = entranceSeqRef.current;
             if (eseq && spineRef.current === eseq.spine) {
                 const st = eseq.spine.state.tracks[0] as unknown as { trackTime?: number } | null;
@@ -1678,7 +1678,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // DIAGNOSTIC (`?gapcover=0`): keep the vista visible regardless of the
                     // coverage test. The test asks whether any layer in `covers` is at alpha
                     // >= 0.99, which is a claim about OPACITY, not about whether that layer
-                    // actually reaches the pixels the vista is filling — so a spanning-but-
+                    // actually reaches the pixels the vista is filling - so a spanning-but-
                     // elsewhere layer can suppress the fill over a region it never paints.
                     let covered = false;
                     for (const l of gf.covers) {
@@ -1704,14 +1704,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // so the radius has to follow. Scaling the whole plate is safe: the hole is
                     // centred on the graphic's origin, and the 50000-wide plate still covers the
                     // frame at every multiplier. Decoded from the entrance clip and validated
-                    // against the capture — at t=4.0 the multiplier is 0.669 where the measured
+                    // against the capture - at t=4.0 the multiplier is 0.669 where the measured
                     // width/camera-scale ratio is 0.667. `?apscale=0` restores the frozen radius.
                     if (ap.scaleCurve?.length && apertureScaleOn()) {
                         const m = sampleScalar(ap.scaleCurve, tt);
                         if (Number.isFinite(m) && m > 0) eseq.apertureMask.scale.set(m);
                     }
-                    // The rim's own curve carries the whole beat — black hold, then the WHITE
-                    // reveal flash, then alpha 0 — so replay it rather than inferring an end.
+                    // The rim's own curve carries the whole beat - black hold, then the WHITE
+                    // reveal flash, then alpha 0 - so replay it rather than inferring an end.
                     if (ap.curve?.length) {
                         const [r, g, b, a] = sampleColorCurve(ap.curve, tt);
                         const q = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
@@ -1731,7 +1731,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         const af = mm.__activeFrom;
                         const au = mm.__activeUntil;
                         // DIAGNOSTIC `?actwin=0`: ignore the exported windows and leave every
-                        // layer on. Virtuosa hides 74 of 132 layers at t=2/5/8 this way —
+                        // layer on. Virtuosa hides 74 of 132 layers at t=2/5/8 this way -
                         // including 28 flank layers (authored x -770..-332 and +1039..+1208)
                         // that sit exactly where her background is ~80 luma too dark.
                         // A multi-window schedule supersedes the `af`/`au` pair (which carries only
@@ -1747,7 +1747,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // hypothesis that the game cuts from the `_Start` scene to the IDLE scene
                         // mid-cinematic: the idle copies of Civilight Eterna's three lavender
                         // fields carry no window and no colour curve, so after her t=12.0 cut they
-                        // would come back at full static tint. `?nowin=1` cannot test this — it
+                        // would come back at full static tint. `?nowin=1` cannot test this - it
                         // leaves the colour curve driving, and these curves end at alpha 0.
                         if (staticTailOn() && !aws?.length && au != null && tt >= au && mm.__staticTint) {
                             m.renderable = true;
@@ -1764,14 +1764,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // that clip is the one measured to run ~0.165 s out of step with the
                         // spine. We nevertheless sample it at the SPINE's track time. If the
                         // curves are genuinely on the camera's clock, their error should
-                        // minimise away from 0 — and if it minimises AT 0, that is a clean kill.
+                        // minimise away from 0 - and if it minimises AT 0, that is a clean kill.
                         if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
                 }
                 // Deferred entrance end: the spine's own "Start" animation ended before the
                 // authored scene timeline, so its `complete` listener held off and the handoff
-                // waits on the track clock instead — a hair EARLY so the dissolve starts on the
+                // waits on the track clock instead - a hair EARLY so the dissolve starts on the
                 // flash's final HELD frame rather than a one-frame scene pop after it closes.
                 //
                 // This MUST live here rather than in the camera-follow tick. Gated on the camera
@@ -1856,7 +1856,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 ez.elapsed += dt;
                 const active = Math.max(0, ez.elapsed - ez.delay); // hold at `from` during the delay
                 const t = Math.min(1, active / ez.duration);
-                const e = t * t * (3 - 2 * t); // smoothstep — symmetric ease for the dolly-out
+                const e = t * t * (3 - 2 * t); // smoothstep - symmetric ease for the dolly-out
                 const from = ez.from;
                 const to = ez.to;
                 const b = {
@@ -1895,7 +1895,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             }
             // The particle off-screen cull must test what is actually VISIBLE, not the FRAMING
             // box. `layoutSpine` fits that box by its smaller axis, so the 2.16:1 viewport shows
-            // ~2.16x its width — culling against the box itself throws away particles sitting
+            // ~2.16x its width - culling against the box itself throws away particles sitting
             // plainly on screen. Skadi the Corrupting Heart's crown fish are the proof: 30 of her
             // 36 fish systems never spawned a SINGLE particle across the whole entrance, because
             // the square framing box rejected their spawn->death segment before it was created.
@@ -1942,7 +1942,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
 
         // Build one framed dynamic-illustration composite (character spine + optional
         // mesh-scene layers + particles) from a skel/atlas pair. It is fully laid out
-        // but NOT yet attached to the stage or started — the orchestrator below decides
+        // but NOT yet attached to the stage or started - the orchestrator below decides
         // attach + playback so a special "_Start" ENTRANCE composite can play first and
         // hand off to the settled main L2D. Returns "unsupported" when the MAIN set has
         // no resting frame (entrance-only skeleton → keep the static charart), or null
@@ -1952,7 +1952,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             try {
                 spine = await loadSpineWithEncodedURLs(cSkel, cAtlas, server);
             } catch (e) {
-                // An entrance set is OPTIONAL — a missing/failed "_Start" just means the
+                // An entrance set is OPTIONAL - a missing/failed "_Start" just means the
                 // skin has no cinematic entrance. A main-set failure propagates.
                 if (opts.mode === "entrance") return null;
                 throw e;
@@ -1970,7 +1970,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             spine.autoUpdate = false;
             // DIAGNOSTIC (`?animspeed=<f>`): scale the spine track rate. A `_Start` skeleton whose
             // animation is LONGER than the director's `entranceDuration` must be fitted into the
-            // cinematic somehow — compressed or truncated — and the two look identical at both
+            // cinematic somehow - compressed or truncated - and the two look identical at both
             // ends while differing through the middle. Whislash the Decadenza's Start runs 18.667s
             // against a 14.5s entrance (ratio 1.2874); every other reference is within 2.4%.
             const animSpeedQ = typeof window !== "undefined" ? parseFloat(new URLSearchParams(window.location.search).get("animspeed") ?? "") : Number.NaN;
@@ -1982,7 +1982,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             const idle = animations.includes(IDLE_ANIMATION) ? IDLE_ANIMATION : (animations[0] ?? IDLE_ANIMATION);
 
             // A MAIN skeleton with no looping "Idle" (only a one-shot "Start" entrance)
-            // has no resting frame to display — the entrance never settles into the
+            // has no resting frame to display - the entrance never settles into the
             // illustration (e.g. Kal'tsit "Remnant", whose pieces stay converged).
             // Silently fall back to the static charart.
             if (opts.mode === "main" && !animations.includes(IDLE_ANIMATION)) {
@@ -1991,7 +1991,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             }
 
             // Periodic "Special" sequences the in-game archive interleaves with the idle
-            // loop — the L2D isn't a single static loop, it performs dramatic beats over
+            // loop - the L2D isn't a single static loop, it performs dramatic beats over
             // time (Hoshiguma the Breacher's sword flourishes / sakura "Special_Flower"
             // storm). Collect every non-idle SPECIAL clip (skip the one-shot Start
             // entrance and the tap-only Interact, which isn't auto-played in the archive).
@@ -2002,7 +2002,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // Set (below, once the scene loads) when the authored scene timeline outlasts
             // the spine's own "Start" animation: the `complete` listener then DEFERS the
             // handoff and the tick fires it at this track time instead (Mlynar's spine
-            // anim ends 14.33s while the white-flash plane runs to the clip stop 15.97s —
+            // anim ends 14.33s while the white-flash plane runs to the clip stop 15.97s -
             // handing off on `complete` cut the white-out ~1.6s early).
             let deferEndUntil: number | null = null;
             const fireEntranceEnd = () => {
@@ -2034,7 +2034,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // with the opening camera dolly), then settles into the looping idle. Play it
                 // once when present, else start straight on the idle loop. When handing off FROM
                 // the `_Start` cinematic (skipStart), go straight to the idle so the gala cellist
-                // appears promptly as the cinematic dissolves — no slow second intro beat.
+                // appears promptly as the cinematic dissolves - no slow second intro beat.
                 if (!playOpts?.skipStart && animations.includes("Start") && idle !== "Start") {
                     state.setAnimation(0, "Start", false);
                     state.addAnimation(0, idle, true, 0);
@@ -2110,12 +2110,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const particlesUrl = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server);
                     const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server);
                     // Union of the character's own geometry bounds across its FULL played
-                    // animation (idle loop, or the "Start" entrance clip) — used by particles.ts
+                    // animation (idle loop, or the "Start" entrance clip) - used by particles.ts
                     // to detect a world-space background particle system whose static spawn disc
                     // sits on the character's own body (Mlynar's dominant rain system) so it can
                     // be un-occluded. A full-clip union (not a single-frame snapshot) is needed
                     // because the character's OWN pose/position moves substantially during the
-                    // "Start" reform — a single frame would miss most of the overlap.
+                    // "Start" reform - a single frame would miss most of the overlap.
                     const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
                     particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust, characterBounds, scene.hasDarkBackdrop);
                     if (aborted()) {
@@ -2135,7 +2135,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // character prominent. Measured first (renders the spine to its own
                 // offscreen RT) so the static-backdrop decision can register against the
                 // character's centroid. Skipped when a framingOverride is supplied (the
-                // entrance reuses the main's bounds — see the orchestrator).
+                // entrance reuses the main's bounds - see the orchestrator).
                 const vis = opts.framingOverride ? null : (measureVisibleBounds(app.renderer, spine, idle) ?? measureAnimationBounds(spine, idle));
                 const spineCentroid = (() => {
                     const vc = vis && (vis as IVisBounds).centroid;
@@ -2147,12 +2147,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // behind everything (z=0); placed there it fills wherever the dynamic is
                 // transparent. That's what we want when the dynamic OMITS its backdrop (Siege:
                 // floating character; Surtr/Pepe: sparse/translucent vista). But when the
-                // dynamic carries its OWN painted scene meshes it is self-composed — the static
+                // dynamic carries its OWN painted scene meshes it is self-composed - the static
                 // would re-draw the character offset from the L2D one (the "two of her"
-                // duplicate: svash2's ice, Nearl "Relight"'s seated throne — the static's
+                // duplicate: svash2's ice, Nearl "Relight"'s seated throne - the static's
                 // character peeks beyond the spine silhouette in the scene's open areas, and no
                 // centroid registration lands it exactly when a full scene competes). So: any
-                // scene layer at all ⇒ drop the static. Only spine-only art (Siege — a BARE
+                // scene layer at all ⇒ drop the static. Only spine-only art (Siege - a BARE
                 // `[scene].json`, 0 layers, or no scene) keeps it.
                 const sceneLayerCount = scene ? (scene.background?.children?.length ?? 0) + (scene.foreground?.children?.length ?? 0) : 0;
                 const useStatic = hasBackdrop && !!backdropData && !!backdropFrame && !!vis && sceneLayerCount === 0;
@@ -2166,7 +2166,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // layers → front-particles. When the static art stands in for the background
                 // we DROP the scene's background layers so the two don't double/dim.
                 // An ENTRANCE composite's scene meshes must not clutter the cinematic's early
-                // phases (the settled scene — Virtuosa's crystal throne — is exported identical
+                // phases (the settled scene - Virtuosa's crystal throne - is exported identical
                 // to the main scene but only materialises mid-cinematic): each entrance layer
                 // carries a per-mesh `m_IsActive` window from the `_Start` clips, applied every
                 // frame by the tick (see entranceFollowRef), so layers show exactly when the
@@ -2188,12 +2188,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 let separatorWash: ISeparatorWash[] = [];
                 {
                     const sepNames = scene?.data.separatorSlots;
-                    // ON by default; `?sepwash=0` disables. Data-gated — a skin with no
+                    // ON by default; `?sepwash=0` disables. Data-gated - a skin with no
                     // `separatorSlots` is untouched (Mlynar ships none and is bit-identical).
                     const on = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("sepwash") !== "0" : true;
                     if (on && particles && sepNames && sepNames.length > 0) {
                         const slots = (spine as unknown as { skeleton: { slots: { data: { name: string } }[] } }).skeleton.slots;
-                        // Draw indices of the split slots, ASCENDING — gap k sits at the k-th
+                        // Draw indices of the split slots, ASCENDING - gap k sits at the k-th
                         // separator in draw order, which is the same ordering as the ascending
                         // `separatorPartSorts` (a lower sort draws earlier). Index 0 would put a
                         // wash behind everything, which the plain demotion already does.
@@ -2222,7 +2222,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 if (particles) sceneContainer.addChild(particles.foreground);
                 // The container split draws ALL front-particles above ALL foreground scene
                 // layers, but Unity orders both by the same `m_SortingOrder` scale: a scene
-                // layer authored ABOVE every particle system must cover the particles too —
+                // layer authored ABOVE every particle system must cover the particles too -
                 // Mlynar's white transition flash is a sort-100 plane that whites out the
                 // whole frame, crystals and sparks included, while his particle systems top
                 // out at sort 2. Hoist such above-every-emitter layers over the particle
@@ -2239,7 +2239,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // NOTE: a container-alpha knob here does NOT work, and the reason is worth
                         // recording. These hoisted layers draw through a CUSTOM shader whose
                         // `uColor` is PREMULTIPLIED (Mlynar's blue sheet dumps
-                        // `uColor=[0.121, 0.137, 0.294]`, `tint=None` — i.e. tint x alpha), and
+                        // `uColor=[0.121, 0.137, 0.294]`, `tint=None` - i.e. tint x alpha), and
                         // that shader never reads `worldAlpha`. Setting `overlay.alpha` changed
                         // exactly 0 pixels while ablating the same container changed 511,028.
                         // Scaling one of these layers means scaling its `uColor`, not any alpha.
@@ -2272,7 +2272,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // `bg:<i>` drops one background layer, `bgonly:<i>` keeps only that one;
                         // `fg:` / `fgonly:` do the same for the foreground. Ranges allowed
                         // (`bgonly:4-7`). Per-layer isolation is the only way to attribute a
-                        // symptom to ONE layer — see the Ch'en silhouette hunt.
+                        // symptom to ONE layer - see the Ch'en silhouette hunt.
                         for (const tok of off) {
                             const m = /^(bg|fg)(only)?:(\d+)(?:-(\d+))?$/.exec(tok);
                             if (!m || !scene) continue;
@@ -2286,7 +2286,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 else if (inRange) c.renderable = false;
                                 // The entrance tick REWRITES `renderable` every frame for any
                                 // layer carrying an `m_IsActive` window, which silently undid this
-                                // ablation for exactly those layers — so a windowed layer always
+                                // ablation for exactly those layers - so a windowed layer always
                                 // measured as "contributes 0 px" no matter what it drew, while
                                 // window-less siblings ablated fine. Clear the window on the
                                 // layers this token touches so the tick leaves them alone.
@@ -2296,7 +2296,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     rt.__activeUntil = undefined;
                                     // The multi-window schedule SUPERSEDES the `af`/`au` pair, and
                                     // clearing only the pair left the tick re-deriving `renderable`
-                                    // from the windows every frame — so a windowed layer measured
+                                    // from the windows every frame - so a windowed layer measured
                                     // as "contributes 0 px" no matter what it drew. Civilight
                                     // Eterna's whole foreground reads that way: every `fg:<i>`
                                     // moved the frame by 0.00 while ablating the container moved
@@ -2306,7 +2306,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             });
                         }
                         // `on:bg:<i>` / `on:fg:<i>` clears a layer's `m_IsActive` window so it
-                        // stays drawn — tests whether missing content is a mis-timed window.
+                        // stays drawn - tests whether missing content is a mis-timed window.
                         // NOTE THE SECOND COLON: the regex is `on:(bg|fg):(\d+)`. Written
                         // `on:bg12` the token silently does not match, the ablation is a no-op,
                         // and the run reads as "this layer contributes nothing".
@@ -2437,7 +2437,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         const cache = (PIXI.utils as unknown as { BaseTextureCache: Record<string, PIXI.BaseTexture> }).BaseTextureCache;
                         // `b.mipmap` is only the REQUESTED mode. PIXI silently falls back to no
                         // mipmap chain where GL cannot build one (an NPOT page on WebGL1), so
-                        // also report what actually reached the GPU and the context version —
+                        // also report what actually reached the GPU and the context version -
                         // an unmipmapped 2280px atlas minified ~3x at the widest camera aliases
                         // thin line art into over-dark pixels.
                         const r = appRef.current?.renderer as unknown as {
@@ -2478,7 +2478,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
                                     dbg: (m as unknown as { __blendDbg?: unknown }).__blendDbg,
                                     // An OVERBRIGHT / vertex-colour layer carries no MeshMaterial
-                                    // tint — its whole colour lives in the `uColor` uniform, so a
+                                    // tint - its whole colour lives in the `uColor` uniform, so a
                                     // dump without it cannot tell "drawn dim" from "not drawn".
                                     uColor: r.shader?.uniforms?.uColor,
                                     hasVCol: !!r.shader?.uniforms?.uColor,
@@ -2492,7 +2492,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     inList: !!m.parent,
                                     // The layer's SOURCE identity. Without it a dump row can be
                                     // matched back to the scene JSON only by guessing at its
-                                    // screen box, which does not survive the camera transform —
+                                    // screen box, which does not survive the camera transform -
                                     // and attributing an error to the wrong layer wastes a round.
                                     tex: r.__texIndex,
                                     src: r.__srcIndex,
@@ -2512,7 +2512,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // the frame where the scene does not reach. Virtuosa's entrance is the case:
                 // NO layer spans her camera view (largest reaches 0.88 of it, 0 of 132 cover
                 // both axes), so the uncovered margin and the gaps between art pieces fall
-                // through to bare canvas — a hard-edged near-black wedge where the game shows
+                // through to bare canvas - a hard-edged near-black wedge where the game shows
                 // misty vista. Gated on the geometry, not on a skin: only when no layer spans
                 // the view, so a scene that already fills the frame is untouched.
                 const viewExt = 2 * (scene?.data.cameraSizePx ?? 0);
@@ -2535,7 +2535,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                               }
                               if (!(x1 - x0 >= viewExt && y1 - y0 >= viewExt)) return false;
                               // A BOUNDING BOX IS NOT COVERAGE. Wiš'adel's backdrop is a 73-vertex mesh whose
-                              // box is 2047² against a 2000 view — so it passed — but its silhouette is cut
+                              // box is 2047² against a 2000 view - so it passed - but its silhouette is cut
                               // off diagonally and holds only 70% of the view's area. It suppressed gap-fill
                               // and left a hard-edged grey wedge across a third of her frame. Require the mesh
                               // to actually CONTAIN the view's worth of area. The 0.95 is slack for a tight
@@ -2551,8 +2551,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                               }
                               if (meshArea < 0.95 * viewExt * viewExt) return false;
                               // AND IT HAS TO BE ABLE TO OCCLUDE. Geometry alone said "covered" for layers
-                              // that never become opaque — Mlynar's layer 17 peaks at alpha 0.275, Civilight
-                              // Eterna's layer 21 at 0.298 — and for ADDITIVE layers, which cannot hide
+                              // that never become opaque - Mlynar's layer 17 peaks at alpha 0.275, Civilight
+                              // Eterna's layer 21 at 0.298 - and for ADDITIVE layers, which cannot hide
                               // anything by construction.
                               if (l.additive) return false;
                               let maxAlpha = l.tint?.[3] ?? 1;
@@ -2587,7 +2587,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (gapFill) gapFillSpritesRef.current.push(bd);
                     // ⚠️ Do NOT register the per-frame coverage toggle when this sprite has been
                     // ABLATED. The toggle below assigns `renderable` every frame, so it silently
-                    // overwrote `?abl=backdrop` and the token appeared to do nothing — which is
+                    // overwrote `?abl=backdrop` and the token appeared to do nothing - which is
                     // exactly how a gap-fill wash got mis-attributed as an unexplained base layer
                     // (`?gapfill=0` removed it; `?abl=backdrop` did not). Same failure as the
                     // `?abl=fg:` tokens that never cleared `__activeWindows`.
@@ -2596,7 +2596,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
                 // and its settled final frame aligns exactly with the idle. Otherwise:
-                // fullscreen ("authored") reproduces the game's orthographic camera — a
+                // fullscreen ("authored") reproduces the game's orthographic camera - a
                 // square of visible HEIGHT `2 × cameraSizePx` centred on the character's own
                 // visible-bounds centre (NOT the authored `cameraOffsetPx`, the mirror axis,
                 // which would crop the head). This authored-camera extent is the game's
@@ -2606,16 +2606,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const authoredFrame = scene ? sceneFrameOf(scene.data) : backdropFrame;
                 // POSE-ROBUST special-entry framing. The character is located with its SOLID body
                 // span (`headTop`/`feetBottom`, alpha-mass landmarks that skip thin protrusions the
-                // bbox catches — a raised rifle above the head, wispy hair/dress tails below the
-                // feet — the exact failure that shoved seated Executor to the frame bottom).
+                // bbox catches - a raised rifle above the head, wispy hair/dress tails below the
+                // feet - the exact failure that shoved seated Executor to the frame bottom).
                 // SIZE is SCENE-based (`cameraViewPx` = the game's `_adjustes[0]` display crop),
-                // so the painted scene fills the frame — the character's on-screen size then
+                // so the painted scene fills the frame - the character's on-screen size then
                 // follows from its size in that scene (as in-game). VERTICAL position uses the
                 // robust landmarks so the character sits right for ANY pose:
-                //   settled: FEET-anchored — the base sits ~90% down (a ground line), the body
+                //   settled: FEET-anchored - the base sits ~90% down (a ground line), the body
                 //            rises with scene headroom above. Robust to a tall standing OR a
                 //            compact seated char (both put their base on the ground line).
-                //   open:    HEAD-anchored — the head sits ~8% down (a close-up filling the top),
+                //   open:    HEAD-anchored - the head sits ~8% down (a close-up filling the top),
                 //            feet falling off the bottom; the tight endpoint the viewer dollies
                 //            OUT from. Uses the SAME landmarks, just the opposite edge.
                 // Horizontal centre = the scene camera x (symmetry axis), else the char centroid.
@@ -2626,10 +2626,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // GAMEDATA-DRIVEN framing: the settled crop SIZE is the exact per-skin
                 // `cameraViewPx` (the display controller's `_adjustes[0]` stop); the OPEN endpoint
                 // is the exact `cameraViewPx2` (`_adjustes[1]`), so the dolly MAGNITUDE the viewer
-                // animates is the game's own ratio (Virtuosa 1246/1929 = 0.646×) — no hardcoded
+                // animates is the game's own ratio (Virtuosa 1246/1929 = 0.646×) - no hardcoded
                 // per-skin numbers. Skins with NO pull-out (Mlynar) hold the tight `_adjustes[1]`
                 // stop as their steady frame; skins with a pull-out (Virtuosa/Skadi2) settle on the
-                // wide `_adjustes[0]` stop — matching the game, whose steady camera frames each
+                // wide `_adjustes[0]` stop - matching the game, whose steady camera frames each
                 // character at a DIFFERENT size within its own scene (Mlynar knees-up and large,
                 // Virtuosa smaller and lower, Skadi2 near-full-body), NOT at a constant character
                 // height. `RCAL` is a SINGLE global pipeline constant (not per-skin) that converts
@@ -2640,21 +2640,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // pillar-boxed size (Mlynar knees-up, Virtuosa full-ish body low in the frame, the
                 // scene filling around them). Combined with the "height" fit (see `fitRef`), the
                 // crop height maps to the container height, so the finite scene art leaves the
-                // game's side pillar-box slack — no stretch, no distortion. The box is CENTRED on the
-                // character body — the raw `_adjustes` OFFSET points ~650px BELOW the body in export
+                // game's side pillar-box slack - no stretch, no distortion. The box is CENTRED on the
+                // character body - the raw `_adjustes` OFFSET points ~650px BELOW the body in export
                 // space (verified), so it can't be used for centring; `VBIAS` corrects the residual
                 // hair/mass drag.
                 //
                 // Re-swept by the same method as `VBIAS` after that constant was corrected (the
                 // two interact: `cy0 = bodyCy - VBIAS*e` with `e = viewPx*RCAL`). Mlynar is again
-                // the only surface that moves — Virtuosa and Skadi2 are BIT-IDENTICAL at every
+                // the only surface that moves - Virtuosa and Skadi2 are BIT-IDENTICAL at every
                 // value tried, since they keep the pure rig camera:
                 //
                 //     rcal   0.74    0.76    0.772   0.776   0.780   0.781   0.782   0.784   0.80
                 //     MADC   29.697  25.814  22.085  20.534  19.352  19.278  19.364  19.820  24.999
                 //
                 // 0.78 was already right to ~0.1%; 0.781 is the reproducible optimum and is worth
-                // only 0.074 MADC — kept because it IS the measured minimum, but do not read it as
+                // only 0.074 MADC - kept because it IS the measured minimum, but do not read it as
                 // a meaningful parity gain the way the VBIAS correction was (-2.13).
                 const RCAL = calibrationParam("rcal", 0.781);
                 // VBIAS: shift the crop centre UP (toward the head) by this fraction of the crop
@@ -2671,7 +2671,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //
                 // History: 0.151 (calibrated when `RCAL` was 0.606) left +26 px once the frame
                 // widened to 0.78; 0.180 cut that to +1 px and was kept. That +1 px was a real
-                // residual, not noise — it held at +1.1 px on EVERY scored beat and cost ~16% of
+                // residual, not noise - it held at +1.1 px on EVERY scored beat and cost ~16% of
                 // his interior luma error. Re-swept at finer resolution against the current
                 // pipeline (frames decoded and INDEXED, never `ffmpeg -ss`, which is a frame late):
                 //
@@ -2681,7 +2681,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // 0.1815 is the optimum and drops the residual shift +1.08 px → +0.18 px
                 // (per-beat +1.2,+1.3,+1.1,+1.1,+1.1,+0.7 → +0.2,+0.2,+0.2,+0.2,+0.2,+0.1).
                 // Virtuosa and Skadi2 are BIT-IDENTICAL across the change (29.904 / 18.671 at both
-                // values) — they carry an authored transform beat, so they keep the pure rig camera
+                // values) - they carry an authored transform beat, so they keep the pure rig camera
                 // and never enter the `centerBlend` branch this constant feeds.
                 const VBIAS = calibrationParam("vbias", 0.1815);
                 const bodyCx = vb?.centroid ? vb.centroid.cx : vb ? vb.x + vb.width / 2 : frameCx;
@@ -2693,17 +2693,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 };
                 /** An authored `_adjustes` extent is only usable if it is a POSITIVE FINITE
                  *  number. Unity writes an uninitialised stop as `-FLT_MAX`
-                 *  (-3.4028235e38), which the exporter carries through verbatim — and a
+                 *  (-3.4028235e38), which the exporter carries through verbatim - and a
                  *  plain truthiness test accepts it, because it is non-zero. `bodyFrameBox`
                  *  then builds a crop 3e38 px wide, `tight` prefers it over the sane
                  *  `cameraSizePx` fallback, and the skin renders as an EMPTY frame.
                  *  Nearl the Radiant Knight "Epoque" is the one such skin in the corpus
-                 *  (both of her stops are -FLT_MAX); she rendered blank. Property-driven —
+                 *  (both of her stops are -FLT_MAX); she rendered blank. Property-driven -
                  *  a no-op for every skin whose stops are real numbers. */
                 const usableExtent = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
                 const authoredDisplayBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx) && vis ? bodyFrameBox(authoredFrame.viewPx as number) : null;
                 // The TIGHT open endpoint: the exact `cameraViewPx2` box (2nd `_adjustes` stop),
-                // same centre — the viewer dollies OUT from here. Null unless a 2nd camera stop.
+                // same centre - the viewer dollies OUT from here. Null unless a 2nd camera stop.
                 const authoredTightBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx2) && vis ? bodyFrameBox(authoredFrame.viewPx2 as number) : null;
                 // The game's SKIN-PREVIEW framing (`?statcam=1`): the CAMERA's own orthographic
                 // size, not either `_adjustes` display stop. Built through `bodyFrameBox` so the
@@ -2714,7 +2714,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // candidate framing (so no numpy resampling artefact enters the fit), each is scored
                 // against a 10-frame time-average of the settled idle (t>=9, so the character and
                 // particles wash out and only static scenery drives the match), and translation is
-                // searched exhaustively to +/-140 px — the last of which matters, since a shift
+                // searched exhaustively to +/-140 px - the last of which matters, since a shift
                 // clipped at the search boundary silently depresses EVERY scale (it hid Mlynar's
                 // true optimum and cost him a factor of 3.5 in correlation). Re-expressing each
                 // skin's fitted extent against the candidate bases:
@@ -2726,28 +2726,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //
                 // `_adjustes` are the in-game VIEWER's display crops; the preview is a plain camera
                 // render, so the camera's own size is what it should track. ska and cel land on
-                // 0.9565 EXACTLY — both peak at zoom 1.000 with sharp curves (NCC 0.715 and 0.506
+                // 0.9565 EXACTLY - both peak at zoom 1.000 with sharp curves (NCC 0.715 and 0.506
                 // against ~0.3 at +/-3%) despite unrelated `_adjustes` values, which is what makes
                 // this the basis rather than a coincidence.
                 //
                 // How exact: inverting the fits to the ortho each skin's framing implies gives
                 // **10.0000** against an authored 10.000 (ska) and **10.4997** against 10.500 (cel)
-                // — five significant figures on two independent skins. Mlynar implies 10.7768
+                // - five significant figures on two independent skins. Mlynar implies 10.7768
                 // against 11.110.
                 //
-                // ⚠️ VALIDATED ON TWO SKINS. Mlynar is a genuine 3% outlier — he peaks at
+                // ⚠️ VALIDATED ON TWO SKINS. Mlynar is a genuine 3% outlier - he peaks at
                 // 0.965-0.970, also sharply (0.677 against 0.336 at 1.000), so it is not scatter.
                 // Do NOT "fix" it by averaging: that would make all three wrong instead of one.
                 // Excluded as causes: `skeletonScale` (identical 0.01 on all three), idle-vs-`_Start`
                 // camera size (identical), content-limiting (the scene exceeds the view on all
                 // three), a second display controller (each bundle ships exactly one), `_maxSize`
-                // (2048x2048 everywhere), and every other numeric field in the scene JSON — none has
+                // (2048x2048 everywhere), and every other numeric field in the scene JSON - none has
                 // the required signature of "equal for ska and cel, 0.970x for mly".
                 //
                 // The one structural difference found: Mlynar ships **three** `_adjustes` stops
                 // (1990 / 1341 / 2808) where ska and cel ship two, and the exporter only ever reads
                 // the first two. That splits these three samples exactly along the observed outlier
-                // — but it is a class covering **46 of 82** skins, so with n=3 it is a correlation,
+                // - but it is a class covering **46 of 82** skins, so with n=3 it is a correlation,
                 // not a cause, and the magnitude is unexplained (3-stop skins' stop0/cameraSizePx
                 // does differ, 1.857 vs 1.631, but by well under one SD). The decisive test is a
                 // fresh capture of one more 2-stop and one more 3-stop skin. Until then, treat this
@@ -2756,7 +2756,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // On the 0.9565: if the preview shows exactly `cameraSizePx` of authored height,
                 // then the true authored->render conversion for this shot is 0.9565 x RCAL = 0.747,
                 // against the 0.781 `RCAL` carries. So this constant is really the gap between the
-                // preview's conversion and RCAL's — and RCAL is the suspect one: it was fitted on
+                // preview's conversion and RCAL's - and RCAL is the suspect one: it was fitted on
                 // ONE skin's entrance against CRF36 footage. If RCAL is ever recalibrated against
                 // clean data, this must move with it (ideally to 1.0, deleting itself).
                 //
@@ -2767,7 +2767,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const previewBounds: IAnimationBounds | null = authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null;
                 // Relative move between the two authored stops (see `IComposite.authoredTightShift`).
                 // Y is flipped because the authored offsets are spine-authored Y-UP and the framing
-                // boxes are screen-down — the same flip `authoredDisplayBounds` documents.
+                // boxes are screen-down - the same flip `authoredDisplayBounds` documents.
                 const o0 = authoredFrame?.offsetPx;
                 const o2 = authoredFrame?.offsetPx2;
                 const authoredTightShift: [number, number] | null = o0 && o2 ? [(o2[0] - o0[0]) * RCAL, -(o2[1] - o0[1]) * RCAL] : null;
@@ -2787,7 +2787,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     bounds = vis;
                 }
                 layoutSpine(sceneContainer, width, height, bounds, fitRef.current);
-                // Snapshot every bone's REFERENCE world matrix at the SETUP (bind) pose —
+                // Snapshot every bone's REFERENCE world matrix at the SETUP (bind) pose -
                 // the pose the exported particle `pos` values were baked at. Bone-following
                 // emitters use this as the delta reference (D = boneNow · boneRef⁻¹);
                 // anchoring it to setup makes the flame ride the sword bone from its true
@@ -2802,7 +2802,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `BoneFollower` rig that CONTINUES a spine prop (Virtuosa's falling apple:
                 // bone `L_C_Apple_F` carries the attachment of the same name, which the
                 // entrance fades out exactly as the particle copy spawns) must hand off from
-                // where the ART is, not from the bone ORIGIN — the authored `followOffset` is
+                // where the ART is, not from the bone ORIGIN - the authored `followOffset` is
                 // measured to the origin and lands the particle low by the art's own offset.
                 // Same space as `boneRest` (skeleton world, Y-down).
                 const attachRest = new Map<string, { x: number; y: number }>();
@@ -2833,7 +2833,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // ENTRANCE frame extent (authored px): the `_Start` camera's view at its ANIMATED
                 // t=0 ortho size (`2·ortho₀/skeletonScale`). The exporter's `entranceViewPx` is
                 // derived from the camera's STATIC serialized ortho, which the ortho curve overrides
-                // from frame 0 — for Virtuosa that's 598 px (ortho 2.99) vs the true animated 374 px
+                // from frame 0 - for Virtuosa that's 598 px (ortho 2.99) vs the true animated 374 px
                 // (ortho 1.87), framing the whole entrance 1.6× too wide. Measured against the game
                 // recording, the animated view matches the hold beats to <1% (the game's seated shot
                 // is a tight head-and-shoulders close-up). Fall back to the static `entranceViewPx`
@@ -2850,10 +2850,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // curves keep being keyed almost to the end of the cinematic (baked idle-hold/
                 // sway data past the real transition), so their literal last keyframe over-
                 // defers the handoff by several seconds (cello: curve tail 19.73 vs the game's
-                // actual transition at 12.0 — she's stuck in her closed-eyes "reform" pose and
+                // actual transition at 12.0 - she's stuck in her closed-eyes "reform" pose and
                 // the pull-out dolly gets crushed into the final second). Layer-derived signals
                 // (activeUntil windows, colour-curve reveals still visible at their own end) are
-                // ALWAYS folded in via max() regardless of transform presence — they're genuine
+                // ALWAYS folded in via max() regardless of transform presence - they're genuine
                 // content-completion beats, not the buggy curve-tail artifact, and Skadi2's white
                 // reveal-overlay colour curve (ending visible at 22.43, well after its own 9.5
                 // transform) depends on this to keep deferring the handoff until the flash
@@ -2877,7 +2877,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // handoff. A curve fading to alpha 0 is a hide/fade-off with no visible payload;
                         // letting it push the scene end out holds a peaked reveal-overlay opaque past the
                         // cinematic. (Skadi2: its white cover-overlay peaks at 22.43s, but two invisible
-                        // fade-to-0 layers ran to 23.67s — the opaque white then held through the handoff
+                        // fade-to-0 layers ran to 23.67s - the opaque white then held through the handoff
                         // seam and BLANKED the frame. Mlynar/cello curves all end visible → unaffected.)
                         if (cc?.length && cc[cc.length - 1][4] > 0.02) end = Math.max(end, cc[cc.length - 1][0]);
                     }
@@ -2886,14 +2886,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // beat and must floor the handoff: `entranceTransform` marks the pose/
                         // expression reform (cello 12.0), but the game holds the tight portrait
                         // through the whole entrance and snaps wide only at `entranceDuration`
-                        // (cello 18.0 — matching her voice line to ~18.3s). Firing at the raw
+                        // (cello 18.0 - matching her voice line to ~18.3s). Firing at the raw
                         // transform (12.0) snaps ~6s early and cuts the line. Fold it into the
                         // max as a floor. No-op where a later term already dominates: Skadi2's
                         // visible colour curve ends at 22.43, past its own entranceDuration
                         // (22.33), so its end is unchanged. (Mlynar has no transform → the else
                         // branch below, untouched.)
                         end = Math.max(end, scene.data.entranceDuration ?? 0);
-                        // Data-derived beat — fire the tick-driven handoff at this track time
+                        // Data-derived beat - fire the tick-driven handoff at this track time
                         // even when it's EARLIER than the spine's own natural animation
                         // completion. That's the whole point: the pose swap must not wait for
                         // the baked idle-hold tail to finish playing out.
@@ -2907,7 +2907,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         //
                         // Measured on the two captures that cover the transition, both settle to
                         // the idle at `duration + 0.35`: Mlynar (duration 16.5) is back at 16.87,
-                        // Muelsyse (duration 20.0) at 20.35. Muelsyse is the skin this fixes —
+                        // Muelsyse (duration 20.0) at 20.35. Muelsyse is the skin this fixes -
                         // her `end` runs to 20.93, deferred +0.93s by an ordinary sort-1 layer
                         // sitting at alpha 0.69, and we held pure white until 21.08 where the game
                         // was live at 20.35. Every other benchmark already lands within 0.1s of
@@ -2919,7 +2919,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (end > entAnimDur + 0.05) deferEndUntil = end;
                     }
                 }
-                // THE DIRECTOR'S `duration` IS THE AUTHORED END, whatever the spine does — and
+                // THE DIRECTOR'S `duration` IS THE AUTHORED END, whatever the spine does - and
                 // whether or not the skin ships a camera track. The block above is gated on the
                 // camera curve, so for a skin without one nothing sets a deferral at all and the
                 // handoff falls back to the spine's own `complete`. When the baked `Start`
@@ -2931,7 +2931,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // schedule the fade already runs on.
                 //
                 // Never moves an EARLIER deferral later (the min below), and engages only when
-                // the animation actually outlasts the duration — otherwise `complete` already
+                // the animation actually outlasts the duration - otherwise `complete` already
                 // lands at or before it and this is a no-op.
                 if (opts.mode === "entrance" && scene?.data.entranceDuration != null) {
                     const dur = scene.data.entranceDuration;
@@ -2940,7 +2940,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
                 // VIEWPORT APERTURE (Executor's rifle scope). Seated INSIDE the scene container
                 // so the entrance camera's pan/zoom carries it exactly as it carries the layers
-                // — the aperture is scene-fixed, and its apparent expansion is the camera pulling
+                // - the aperture is scene-fixed, and its apparent expansion is the camera pulling
                 // back, not an animation. Entrance-only: the settled idle is never scoped.
                 const aperture = opts.mode === "entrance" ? (scene?.aperture ?? null) : null;
                 let apertureMask: PIXI.Graphics | null = null;
@@ -2949,13 +2949,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // surround has to be pure black (measured max luma outside the scope: 0.0),
                     // and masking the scene alone would leave the viewer's own environment fill
                     // showing through. As the LAST child of the composite root it also covers the
-                    // static backdrop, particles and spine — everything the entrance draws.
+                    // static backdrop, particles and spine - everything the entrance draws.
                     //
                     // Drawn at the local origin and MOVED each tick onto the live camera centre
                     // (the shot tracks the scope). Seated in the scene container so the camera's
-                    // zoom scales it — the aperture's apparent growth is entirely that zoom. The
+                    // zoom scales it - the aperture's apparent growth is entirely that zoom. The
                     // plate is far wider than any authored scene so it covers at every zoom.
-                    // Filled WHITE and TINTED by the rim's authored curve — a tint multiplies, so a
+                    // Filled WHITE and TINTED by the rim's authored curve - a tint multiplies, so a
                     // black fill could never flash white. The curve supplies black, the flash and
                     // the end time (see {@link sceneAperture}).
                     const PLATE = 50000;
@@ -2981,7 +2981,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //
                 // ⚠️ The bars are NOT automatically topmost. They carry an ordinary
                 // `m_SortingOrder` like every other quad (hers is 100), and it is exactly TIED
-                // with the two full-screen `Transition_*` planes the director flashes — all six
+                // with the two full-screen `Transition_*` planes the director flashes - all six
                 // also sit at world z 0.000, so depth does not separate them either. The game
                 // paints her end-of-cinematic white fade OVER the bars: its pillarbox ramps to
                 // 0.99 alpha while ours, with the bars pinned last, stayed at 0.00 for the whole
@@ -3009,7 +3009,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (sceneOverlay && above === 0) {
                         // Every overlay layer sorts at/above the bars (Civilight Eterna: both
                         // transitions at 100, tied), so "just before the overlay" is the same
-                        // draw order — and keeps the bars OUT of the overlay container, so
+                        // draw order - and keeps the bars OUT of the overlay container, so
                         // `?abl=overlay` still attributes scene layers rather than silently
                         // deleting the pillarbox too (it read as a +6.9 luma "finding" once).
                         sceneContainer.addChildAt(bars, sceneContainer.getChildIndex(sceneOverlay));
@@ -3176,7 +3176,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // Spine CLIPPING attachments, and whether pixi-spine actually applied them.
                     // Civilight Eterna's entrance is the only captured skin the game pillarboxes
                     // (a hard 1920x1080 aperture inside 2340x1080), and hers is the only `_Start`
-                    // skeleton that ships clipping attachments — so the two need to be compared
+                    // skeleton that ships clipping attachments - so the two need to be compared
                     // directly. `applied` distinguishes "the skeleton has no clip" from "it has one
                     // and our draw-order splicing tore the clippingContainer apart", which look the
                     // same in a render but need opposite fixes.
@@ -3184,7 +3184,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // screen box of what it actually draws. Civilight Eterna's aperture EDGES are
                     // painted by the skeleton's own background attachments (ablating the spine
                     // flattens them; ablating scene or particles does not), and they go dark for
-                    // exactly the 6→12 s window her side strips are empty — so "which slot stopped
+                    // exactly the 6→12 s window her side strips are empty - so "which slot stopped
                     // drawing, and was it the alpha or the attachment" is the question this answers.
                     const w3 = window as unknown as { __dynSlots?: () => unknown };
                     w3.__dynSlots = () => {
@@ -3267,7 +3267,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // the skin's camera clears to alpha 0, so this is what the game shows wherever the art
                 // doesn't reach. Added here (after the scene has loaded) so it appears WITH the
                 // illustration rather than covering the static load placeholder, and behind every
-                // scene layer so they composite over it as they do in game. ALWAYS created — even a
+                // scene layer so they composite over it as they do in game. ALWAYS created - even a
                 // scene that owns its own dark painted backdrop has real coverage gaps at its widest
                 // camera framing (the opening pan, the post-handoff wide settle) where this is the
                 // ONLY fill; omitting it reopens black voids there. Only the fill's COLOUR is gated,
@@ -3275,7 +3275,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 envBgDarkRef.current = !!main.hasDarkBackdrop;
                 const envBg = new PIXI.Sprite(createEnvironmentBgTexture(main.hasDarkBackdrop));
                 // DIAGNOSTIC (`?fill=RRGGBB`): repaint the viewer fill so the spine's EFFECTIVE
-                // transparency can be measured — the mean shifts by (fillDelta x uncovered area).
+                // transparency can be measured - the mean shifts by (fillDelta x uncovered area).
                 if (typeof window !== "undefined") {
                     const f = new URLSearchParams(window.location.search).get("fill");
                     if (f) envBg.tint = parseInt(f, 16);
@@ -3294,7 +3294,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // of) that pass. The non-HDR path already exists for non-scene composites.
                 const noHdr = typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("nohdr");
                 // The composite transfer rides on this pass because it IS the final assembly
-                // of the frame — the stage it was measured on. Derived per scene from the
+                // of the frame - the stage it was measured on. Derived per scene from the
                 // authored camera size; `?gamma=1` disables it, `?gamma=<f>` forces a value.
                 const hdr = main.isScene && !noHdr ? createHDRScene(app.renderer, width, height, app.renderer.resolution, undefined, sceneCompositeGamma(main.cameraSizePx)) : null;
                 if (hdr) {
@@ -3351,11 +3351,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 };
 
                 // `authoredDisplayBounds` is null whenever the skin's `_adjustes[0]` extent is
-                // unusable — Unity writes an uninitialised stop as -FLT_MAX, which `usableExtent`
+                // unusable - Unity writes an uninitialised stop as -FLT_MAX, which `usableExtent`
                 // (above) correctly rejects. That guard was necessary but not sufficient: EVERY
                 // path below runs through `openStandingIdle`, which bailed on a null `gameFrame`
                 // BEFORE calling `attach()`, so the composite root was never added to the stage
-                // and the skin rendered as a completely EMPTY frame — a healthy skeleton with 205
+                // and the skin rendered as a completely EMPTY frame - a healthy skeleton with 205
                 // renderable meshes and valid textures, simply never drawn. The composite has
                 // already computed a sane framing box for exactly this case (the authored
                 // `cameraSizePx` square centred on the visible art), so fall back to it. Same
@@ -3365,7 +3365,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `_adjustes[0]` one (`?settletight=0` reverts).
                 //
                 // This path used to disagree with itself. A skin with NO authored pull-out already
-                // settled tight — see the `fromEntrance && !entrancePullOut && openTight` branch
+                // settled tight - see the `fromEntrance && !entrancePullOut && openTight` branch
                 // below, which carries "verified against the recording, the steady settle is a
                 // knees-up shot, not a full-body pull-out". A skin WITH one dollied out to the wide
                 // box instead, purely because it happened to have a usable `entranceTransform`.
@@ -3385,13 +3385,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //     ska / mue / wis / exc   wide renders small and vignetted; tight fills the
                 //                             frame at the capture's scale
                 //
-                // ⚠️ Judge this VISUALLY. Gradient-NCC is useless on the settle — our settled idle
+                // ⚠️ Judge this VISUALLY. Gradient-NCC is useless on the settle - our settled idle
                 // is also markedly darker than the capture, which pins correlation near 0.05 at
                 // every scale, and a scale search silently clips at its own search bounds.
                 // ⚠️ MADC cannot see this at all: every scored beat lands before the hand-off, so
                 // all eight baselines are bit-identical either way. That is why this survived so
                 // long.
-                // The post-entrance idle settles on the PREVIEW box (`cameraSizePx x 0.9565`) —
+                // The post-entrance idle settles on the PREVIEW box (`cameraSizePx x 0.9565`) -
                 // `?settlebasis=tight` for the `_adjustes[1]` stop, `=wide` for the old archive crop.
                 //
                 // The game returns to its SKIN-PREVIEW shot after the cinematic, and `previewBounds`
@@ -3402,7 +3402,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // Two steps got here. First the settle stopped dollying out to the WIDE archive crop
                 // (it only did so for skins that happened to carry an `entranceTransform`, which is
                 // why Mlynar looked right and Virtuosa did not). Then the residual showed up as the
-                // idle looking too DARK — which was not tone at all: our view was still wider than
+                // idle looking too DARK - which was not tone at all: our view was still wider than
                 // the game's, so dark surround was being pulled into frame. Virtuosa's periphery
                 // measured 54.7 against the capture's 143.4, with only 2.3% of it at the environment
                 // fill value, i.e. real content beyond the game's edge rather than uncovered area.
@@ -3414,7 +3414,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 //     wis           0.92     1.01
                 //     mue           0.89     0.97
                 //     cel    0.73   0.73*    0.83     (*her tight settle still ran ~1.10x wide)
-                //     mly           0.91     0.91     (no transform — unaffected by any of this)
+                //     mly           0.91     0.91     (no transform - unaffected by any of this)
                 //     exc           1.14     1.45     <- the one regression, see below
                 //
                 // ⚠️ Executor is worse on this proxy. Her entrance is a dark scope shot and her
@@ -3422,7 +3422,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // framing is no worse than the tight one, and the level difference is tonal rather
                 // than geometric. Shipped anyway because the basis is the calibrated one and four
                 // skins improve, but she is the skin to re-check if this is ever revisited.
-                // ⚠️ MADC cannot see ANY of this — every scored beat lands before the hand-off.
+                // ⚠️ MADC cannot see ANY of this - every scored beat lands before the hand-off.
                 const settleBasis = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("settlebasis") ?? "");
                 const settleBox = settleBasis === "wide" ? main.authoredDisplayBounds : settleBasis === "tight" ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : (main.previewBounds ?? main.authoredTightBounds ?? main.authoredDisplayBounds);
                 const gameFrame = settleBox ?? main.bounds;
@@ -3432,8 +3432,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // When we arrive from the `_Start` cinematic, the settled idle continues the
                 // camera move: the game HELD the tight close-up through the whole transform
                 // (seated → apple → reform) and only pulls back to the wide throne AFTERWARD.
-                // So the idle OPENS on the same tight close-up the entrance ended on — the wide
-                // frame scaled by the entrance camera's ratio (`entranceViewRatio`) — and dollies
+                // So the idle OPENS on the same tight close-up the entrance ended on - the wide
+                // frame scaled by the entrance camera's ratio (`entranceViewRatio`) - and dollies
                 // OUT to the wide throne over the POST-reform entrance time (`duration−transform`).
                 // Set by the entrance branch below; null for the no-`_Start` fallback (which opens
                 // on the idle `_adjustes[1]` tight stop instead).
@@ -3445,7 +3445,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (aborted() || !appRef.current || !gameFrame) return;
                     const { width: sw, height: sh } = appRef.current.screen;
                     // An explicit `?framebox=` wins over every other framing, and over any
-                    // dolly — the point is a camera that CANNOT move between renders.
+                    // dolly - the point is a camera that CANNOT move between renders.
                     const pinned = frameBoxParam();
                     if (pinned) {
                         main.bounds = pinned;
@@ -3456,7 +3456,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // Arriving from a `_Start` cinematic WITHOUT an authored pull-out window
                     // (no `_transform` beat in the gamedata, e.g. Mlynar): the game HOLDS the
                     // tight `_adjustes[1]` frame after the white-out (verified against the
-                    // recording — the steady settle is a knees-up shot, not a full-body pull-out).
+                    // recording - the steady settle is a knees-up shot, not a full-body pull-out).
                     // A pull-out is only performed when the data authorizes one (`entrancePullOut`,
                     // cello) or when there was no cinematic at all (the standard archive open).
                     if (opts?.fromEntrance && !entrancePullOut && openTight) {
@@ -3472,7 +3472,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // on skins that never had an entrance. A dolly is only performed for a genuine
                     // entrance hand-off (`fromEntrance`) or a data-authored pull-out (`entrancePullOut`).
                     if (!opts?.fromEntrance && !entrancePullOut) {
-                        // A skin with NO `_Start` has no authored shot to hold — the game's viewer
+                        // A skin with NO `_Start` has no authored shot to hold - the game's viewer
                         // shows the whole cut-out with margins, and the `_adjustes[0]` box crops
                         // well inside it (Ch'en the Holungday: 2704x1804 of content against a
                         // 1500 px view). Frame the drawn CONTENT instead. 70 of the 82 dynchar
@@ -3498,7 +3498,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         const preview = staticCamOn() ? staticCamBox(previewBox) : null;
                         const whole = fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
                         const settle = preview ?? whole ?? gameFrame;
-                        // The authored framing fits by HEIGHT, which crops the width — fine for a
+                        // The authored framing fits by HEIGHT, which crops the width - fine for a
                         // shot composed around the character, wrong for "show the whole picture".
                         // A content box is only meaningful CONTAINED, which is also what the game's
                         // viewer does (it letterboxes the cut-out with margins).
@@ -3510,21 +3510,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     }
                     let openFrom = entrancePullOut ? inflateBounds(gameFrame, entrancePullOut.ratio) : openTight;
                     // Hand-off continuity (Sf fix): `inflateBounds` above is a pure symmetric scale
-                    // around `gameFrame`'s OWN static centre — it has no notion of the entrance rig
+                    // around `gameFrame`'s OWN static centre - it has no notion of the entrance rig
                     // camera's actual PAN over the shot. Re-base the box by the live camera's real
                     // pan delta (hand-off centre minus its own t=0 centre, curve-space units added
-                    // directly onto `gameFrame`'s centre — the same cross-space-additive convention
+                    // directly onto `gameFrame`'s centre - the same cross-space-additive convention
                     // `centerBlend` already uses in the tick above), so the dolly starts exactly
                     // where the entrance camera actually ended instead of snapping to an
-                    // independently-recomputed box. Zero pan (or no captured delta — no `_Start`,
+                    // independently-recomputed box. Zero pan (or no captured delta - no `_Start`,
                     // or the no-pull-out branch above) leaves this byte-identical to before.
                     // SANITY BOUND: this cross-space add is only meaningful for a genuine "same shot,
                     // slightly drifted" case (Skadi2: ~370-unit lateral drift). A skin whose rig camera
                     // travels THROUGH the scene in depth (Virtuosa's shaft plunge: ~3400 authored units,
-                    // ~9× her own entrance frame size) isn't drifting off a shared reference — applying
+                    // ~9× her own entrance frame size) isn't drifting off a shared reference - applying
                     // the raw delta there blows the box off-frame entirely (verified: produced a
                     // black/void hand-off). Gate on the delta being smaller than the target frame's own
-                    // extent — a data-derived bound (not a per-skin constant), true for every drift-style
+                    // extent - a data-derived bound (not a per-skin constant), true for every drift-style
                     // pan and false for every plunge-style one measured so far.
                     if (openFrom && opts?.handoffPanDelta) {
                         const [dx, dy] = opts.handoffPanDelta;
@@ -3555,7 +3555,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     if (aborted()) return;
                     const ent = composites.find((c) => c !== main);
                     // Capture the entrance camera's actual pan (its live centre at hand-off minus
-                    // its own t=0 centre) BEFORE `entranceFollowRef` is nulled below — this is what
+                    // its own t=0 centre) BEFORE `entranceFollowRef` is nulled below - this is what
                     // lets `openStandingIdle` start the post-handoff dolly continuously from where
                     // the eye actually was, instead of an independently-recomputed box (see the Sf
                     // handoff-continuity fix there).
@@ -3569,17 +3569,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // Retire the scope with the sequencer that drives it. The cover is only ever
                     // updated from the entrance tick, so leaving it visible here would black the
                     // frame for the whole hand-off window (Executor renders pure black at 5.5s
-                    // otherwise — the reveal is at 5.2 but the composite swap comes later).
+                    // otherwise - the reveal is at 5.2 but the composite swap comes later).
                     if (entranceSeqRef.current?.apertureMask) entranceSeqRef.current.apertureMask.visible = false;
                     entranceSeqRef.current = null;
-                    // The fade is at (or near) full here — hold it briefly so the swap happens
+                    // The fade is at (or near) full here - hold it briefly so the swap happens
                     // UNDER it, then lift, which is what the recordings show.
                     if (entranceFadeRef.current) entranceFadeRef.current.out = 0;
                     activate(main, { skipStart: true }); // straight to standing idle (no second intro beat)
                     openStandingIdle({ fromEntrance: true, handoffPanDelta });
                     if (ent && hdr) {
                         // Crossfade: render BOTH roots in one wrapper (HDR renders it), main behind
-                        // fading in, the dissolved entrance on top fading out — the character reforms
+                        // fading in, the dissolved entrance on top fading out - the character reforms
                         // instead of blinking out. The tick ramps the alphas then frees the entrance.
                         const wrapper = new PIXI.Container();
                         wrapper.addChild(main.root);
@@ -3596,7 +3596,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     }
                 };
                 // `?statcam=1` declines to build the entrance at all, so the fall-through below opens
-                // the standing idle STATIC at the settled frame — the game's own preview shot. Gating
+                // the standing idle STATIC at the settled frame - the game's own preview shot. Gating
                 // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
                 // the wire, so a statcam render is not perturbed by the entrance's assets at all.
                 const entrance = staticCamOn()
@@ -3618,9 +3618,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // The game HOLDS the entrance shot steadily through the whole transform and only
                     // pulls back to the wide frame AFTERWARD, on the settled idle (see
                     // `entrancePullOut` → `openStandingIdle`). Measured against the reference
-                    // recording, the entrance holds the `_Start` camera's OWN close-up — the ANIMATED
+                    // recording, the entrance holds the `_Start` camera's OWN close-up - the ANIMATED
                     // t=0 ortho view (`entranceFrameSize`, Virtuosa 374px: a tight head-and-shoulders
-                    // shot) — TIGHTER than both the `_adjustes[1]` stop (1246px, the settled idle's
+                    // shot) - TIGHTER than both the `_adjustes[1]` stop (1246px, the settled idle's
                     // open) and the exporter's static `entranceViewPx` (598px, pre-override ortho).
                     composites.push(built);
                     activate(built);
@@ -3667,7 +3667,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // rig track (`entranceCamCenterCurve`, absolute mesh-px frame centre) for the
                         // pan/dolly, and the `_adjustes[1]` view extent (`entranceFrameSize`) × the ortho
                         // zoom for the frame size. No measured bounds, no per-skin tuning. Only when both
-                        // gamedata inputs exist — otherwise the static `tight` framing already laid out
+                        // gamedata inputs exist - otherwise the static `tight` framing already laid out
                         // above holds (spine-only / skins with no camera track).
                         if (built.entranceCamCenterCurve?.length && built.entranceFrameSize) {
                             // Steady framing (see the tick): skins WITHOUT an authored transform beat
@@ -3698,9 +3698,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             };
                         }
                     }
-                    // The "Start" clip plays STRAIGHT THROUGH to its own end — the reform, the voice
+                    // The "Start" clip plays STRAIGHT THROUGH to its own end - the reform, the voice
                     // beat and the settle all live inside the clip, and the live-follow camera
-                    // (entranceFollowRef) keeps the reformed standing form in frame — so no early
+                    // (entranceFollowRef) keeps the reformed standing form in frame - so no early
                     // cut: the hand-off fires from the spine's own `complete` (onEntranceEnd →
                     // doSwapRef).
                 } else {

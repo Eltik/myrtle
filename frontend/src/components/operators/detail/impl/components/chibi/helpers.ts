@@ -57,8 +57,8 @@ export function chibiAssetURL(path: string, server?: "en" | "cn"): string {
     return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
 }
 
-/** Atlas pages are MINIFIED heavily — a dynchar page is 2280x2280 drawn into a viewport a
- *  few hundred px tall — and PIXI's default `MIPMAP_MODES.POW2` builds no mipmap chain for a
+/** Atlas pages are MINIFIED heavily - a dynchar page is 2280x2280 drawn into a viewport a
+ *  few hundred px tall - and PIXI's default `MIPMAP_MODES.POW2` builds no mipmap chain for a
  *  non-power-of-two page, so every such page is sampled with bilinear-only minification. Fine
  *  detail in the art then aliases into shimmering vertical slivers that read as spurious
  *  "rain": measured on Virtuosa's seated set, our vertically-coherent high-frequency energy is
@@ -68,7 +68,7 @@ export function chibiAssetURL(path: string, server?: "en" | "cn"): string {
  *  Measured over the three reference skins this is worth -1.40 / -0.53 / -0.39 MADC (interior).
  *  It did NOT move the vertical-streak metric (1.57x -> 1.55x), so the aliasing it removes is
  *  general minification shimmer across the whole illustration, not those streaks, which remain
- *  unexplained. Applying the same to the SCENE textures is a measured no-op — those pages are
+ *  unexplained. Applying the same to the SCENE textures is a measured no-op - those pages are
  *  128/256/512/1024, i.e. power-of-two, so PIXI's default POW2 mode already mipmaps them; this
  *  matters only because the dynchar ATLAS pages are 2280 and fall outside that default. */
 const ATLAS_MIPMAP = PIXI.MIPMAP_MODES.ON;
@@ -167,7 +167,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
         try {
             skeletonData = new SkeletonJson(loader).readSkeletonData(JSON.parse(new TextDecoder().decode(skelBytes)));
         } catch {
-            skeletonData = null; // not actually JSON — fall through to binary
+            skeletonData = null; // not actually JSON - fall through to binary
         }
     }
     if (!skeletonData) {
@@ -299,7 +299,7 @@ export interface ISpineFit {
      * cropping overflow; `height` = scale to the canvas HEIGHT only (the box's on-screen
      * height always equals the canvas height; excess width shows more scene, narrow width
      * crops the sides). `height` makes the subject fill a constant fraction of the frame
-     * height regardless of the container's aspect ratio — the dynchar viewer uses it so the
+     * height regardless of the container's aspect ratio - the dynchar viewer uses it so the
      * character reads the same size on a tall mobile card, a wide desktop card, and a
      * fullscreen dialog alike (`cover` on a square box would inflate the subject with aspect).
      */
@@ -345,7 +345,7 @@ export function layoutSpine(target: PIXI.Container, canvasWidth: number, canvasH
  *
  * `contain`/`height` fit by ONE axis, so the other axis shows strictly MORE than `bounds`:
  * a square framing box in a 2.16∶1 viewport reveals ~2.16× its width. Anything asking "is
- * this on screen?" — particle culling above all — must test against this rect, never the
+ * this on screen?" - particle culling above all - must test against this rect, never the
  * framing box, or it discards content the viewer can plainly see.
  */
 export function visibleRect(bounds: IAnimationBounds, canvasWidth: number, canvasHeight: number, fit: ISpineFit = DEFAULT_SPINE_FIT): IAnimationBounds {

@@ -157,6 +157,12 @@ export interface ICatalogStorey {
 }
 
 export interface ICatalogResponse {
+    /**
+     * Shifts in a base day - a game constant, not a property of any one player.
+     * A base whose rooms only queue two presets still runs three shifts,
+     * alternating across them. Optional so an older backend still renders.
+     */
+    shift_count?: number;
     rooms: ICatalogRoom[];
     formulas: ICatalogFormula[];
     slots: ICatalogSlot[];
@@ -229,8 +235,22 @@ export const rotationPlanFn = createServerFn({ method: "POST" })
         return (await res.json()) as IRotationResponse;
     });
 
+/** One slot's saved rotation: the crew the player has queued for each shift. */
+export interface ISlotPresets {
+    slot_id: string;
+    shifts: string[][];
+}
+
 export interface ILayoutResponse {
     rooms: IDraftRoom[];
+    /**
+     * The player's own shift rotation, out of the game's `presetQueue`. Kept
+     * apart from `rooms` because that is the shape posted back for scoring;
+     * presets are read-only context and never travel with a draft.
+     *
+     * Optional so a backend that predates the field still renders.
+     */
+    presets?: ISlotPresets[];
 }
 
 export const getBaseLayoutFn = createServerFn({ method: "GET" })
@@ -239,7 +259,11 @@ export const getBaseLayoutFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/base/layout?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            if (res.status === 404 || res.status === 403) return null;
+            // An empty payload, not `null`: a server function's `null` comes back
+            // over the wire as `undefined`, which React Query rejects outright
+            // ("Query data cannot be undefined") - turning "this profile has no
+            // base" into a hard query error and a board with nothing on it.
+            if (res.status === 404 || res.status === 403) return { rooms: [], presets: [] } satisfies ILayoutResponse;
             throw new Error(`Failed to load base layout: ${res.status}`);
         }
         return (await res.json()) as ILayoutResponse;

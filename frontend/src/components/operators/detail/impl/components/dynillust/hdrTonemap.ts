@@ -5,7 +5,7 @@ import * as PIXI from "pixi.js";
  *
  * Dynchar scenes stack many ADDITIVE particle systems / light layers (Hoshiguma's
  * blue ice-flames, Wiš'adel's supernova bloom). Composited in an 8-bit target,
- * additive blending clips each channel at 1.0 — so a stack of blue flames
+ * additive blending clips each channel at 1.0 - so a stack of blue flames
  * `(0.3,0.6,3.0)` clips to `(1,1,1)` = a hard WHITE blob that blows out the
  * character, instead of the translucent blue glow the game shows. The game
  * accumulates in HDR and tonemaps; we do the same:
@@ -15,7 +15,7 @@ import * as PIXI from "pixi.js";
  *  2. Blit that target to the screen through a hue-preserving highlight
  *     compressor: values at/under the knee pass through untouched (the LDR
  *     backdrop + character are authored ≤1, so they're preserved), while a
- *     stack whose brightest channel exceeds 1 is scaled down as a whole —
+ *     stack whose brightest channel exceeds 1 is scaled down as a whole -
  *     preserving its HUE (blue stays blue) and rolling the peak toward 1
  *     instead of clipping to white.
  *
@@ -64,7 +64,7 @@ void main() {
     float m = max(max(rgb.r, rgb.g), rgb.b);
     // DIAGNOSTIC (?hdrprobe=<scale>): bypass the tonemap and output the RAW half-float
     // target divided by <scale>, so the captured PNG can be read back as HDR magnitude
-    // (pixel/255*scale). Answers "does anything actually exceed 1 before the knee?" —
+    // (pixel/255*scale). Answers "does anything actually exceed 1 before the knee?" -
     // which decides whether a clipped highlight is an over-bright stack or already-LDR
     // white passing through the achroma release.
     if (uProbe > 0.0) {
@@ -76,8 +76,8 @@ void main() {
         float e = (m - uKnee) / max(1e-4, 1.0 - uKnee);
         float t = uKnee + (1.0 - uKnee) * (e / (1.0 + e));
         // The knee exists to preserve HUE while taming >1 additive stacks (blue flames
-        // stay blue instead of clipping to white). An ACHROMATIC highlight — a fullscreen
-        // white reveal-flash — has no hue to preserve, yet the knee still greys it (a
+        // stay blue instead of clipping to white). An ACHROMATIC highlight - a fullscreen
+        // white reveal-flash - has no hue to preserve, yet the knee still greys it (a
         // pure-white 1.0 maps to ~0.95 = 242, never the game's opaque 255). So release the
         // compression as the pixel approaches neutral: at low saturation it passes through
         // (output-clamped to pure white), while any pixel with real chroma keeps the full
@@ -90,7 +90,7 @@ void main() {
         // near-neutral pixel at/above the knee, so ordinary bright white ART clips too:
         // Virtuosa blows 11.03% of her t=2 frame to pure white where the game blows 1.10%.
         //
-        // Magnitude cannot separate the two — measured, Mlynar's HELD FLASH sits at exactly
+        // Magnitude cannot separate the two - measured, Mlynar's HELD FLASH sits at exactly
         // 1.0 just as her interior does, and there the game DOES want 255. The only property
         // that differs is how much of the neighbourhood is white: ~12% scattered vs 100%.
         // uCov is a blurred near-white mask, so it reads ~1 inside a genuine white-out and
@@ -103,7 +103,7 @@ void main() {
         // DIAGNOSTIC (?tmclip=1): hue-preserving CLIP instead of the soft roll-off.
         //
         // The roll-off maps [knee, inf) -> [knee, 1) with 1.0 as an ASYMPTOTE, so a pixel at
-        // exactly 1.0 comes out at 0.95 — a saturated LDR colour is darkened 5% and can never
+        // exactly 1.0 comes out at 0.95 - a saturated LDR colour is darkened 5% and can never
         // reach 255, even though it is not over-bright at all. (The achroma release rescues only
         // near-NEUTRAL pixels, which is why white flashes were fixed and saturated ones were not.)
         // Measured on Virtuosa's apple: our peak red caps at 241 where the game reaches 255.
@@ -117,7 +117,7 @@ void main() {
     // match a believed "~209 corner vs 255 centre" falloff on the game's white transition
     // flash. That falloff does not exist: measured on the held flash frames (t = 14.5, 15.0,
     // 15.5, 16.0) the game is pure 255 in all four corners, at the centre, and everywhere
-    // between — min 254 over the whole inner window, 0.0% of pixels below 250. The 209 was
+    // between - min 254 over the whole inner window, 0.0% of pixels below 250. The 209 was
     // almost certainly read off a RAMP frame, where the entire frame is uniformly dim
     // (~202 at t = 14) rather than dim only at the corners. The vignette cost us the flash:
     // it held our margins at a flat 237 for the full hold. Do not reintroduce it without
@@ -137,7 +137,7 @@ void main() {
 
 // Bright-pass: sample the HALF-FLOAT scene target and keep only the energy ABOVE
 // the threshold. Because the target is HDR, painted panels authored at ≤1 fall
-// under the threshold and never bloom — only additive stacks that accumulated past
+// under the threshold and never bloom - only additive stacks that accumulated past
 // it (blades, flames, gem cores) do. Output the excess, softly.
 const BRIGHT_FRAG = `
 precision highp float;
@@ -152,7 +152,7 @@ void main() {
 `;
 
 /** Only premultiplied energy ABOVE this blooms. The tonemap keeps LDR ≤1 intact,
- *  so 1.0 means "only genuinely HDR-over-bright additive peaks glow" — painted
+ *  so 1.0 means "only genuinely HDR-over-bright additive peaks glow" - painted
  *  scene panels (authored ≤1) are excluded, keeping the bloom off backdrops. */
 const BLOOM_THRESHOLD = 1.0;
 /** DIAGNOSTIC (`?bloomthr=<f>`): lower the bright-pass threshold so painted (<=1) panels can
@@ -182,7 +182,7 @@ void main() {
 /** Near-white cut for the coverage mask. Below 1.0 on purpose: the pixels this exists to
  *  classify sit at EXACTLY 1.0, so a >=1.0 test (the bloom's) returns nothing. */
 const COVERAGE_THRESHOLD = 0.97;
-/** Coverage pass runs coarser than the bloom — it is a low-frequency signal and the wide
+/** Coverage pass runs coarser than the bloom - it is a low-frequency signal and the wide
  *  blur below is what gives it reach. */
 const COVERAGE_DOWNSCALE = 8;
 /** Blur radius (in coverage-RT px) that defines "large region". At downscale 8 this reaches
@@ -199,7 +199,7 @@ function bloomIntensity(): number {
     const v = q === null ? NaN : parseFloat(q);
     return Number.isFinite(v) ? v : BLOOM_INTENSITY;
 }
-/** Bloom RTs run at 1/N res — cheaper and gives a wider, softer glow for free. */
+/** Bloom RTs run at 1/N res - cheaper and gives a wider, softer glow for free. */
 const BLOOM_DOWNSCALE = 2;
 /** Gaussian blur strength (in bloom-RT pixels) applied to the bright-pass. */
 const BLOOM_BLUR = 10;
@@ -209,12 +209,12 @@ const BLOOM_BLUR = 10;
  *
  *  0.99, NOT the historical 0.9. The compression maps [knee, inf) -> [knee, 1) with 1.0 as an
  *  ASYMPTOTE, so every pixel between the knee and 1.0 is darkened even though it is not
- *  over-bright at all — at knee 0.9 a saturated 1.0 came out at 0.95, i.e. 242 instead of 255.
+ *  over-bright at all - at knee 0.9 a saturated 1.0 came out at 0.95, i.e. 242 instead of 255.
  *  The saturation release below rescues only near-NEUTRAL pixels, which is why white flashes were
  *  fixed by it and saturated colours were not.
  *
  *  Measured on Virtuosa's apple (its real beat is t ~ 6.27): peak red 241/244 at knee 0.9 against
- *  the game's 255, and 253/254 at knee 0.99 — position and size already matched, only the peak was
+ *  the game's 255, and 253/254 at knee 0.99 - position and size already matched, only the peak was
  *  short. Corpus cost is +0.009 mean MADC (mly +0.015, cel -0.005, ska +0.016), smaller than other
  *  corrections already shipped here.
  *
@@ -225,9 +225,9 @@ const DEFAULT_KNEE = 0.99;
 
 /** DIAGNOSTIC (`?knee=<f>`): override {@link DEFAULT_KNEE}. Raising it above 1 disables the
  *  hue-preserving compression entirely, so over-bright pixels clip PER CHANNEL the way Unity's
- *  pipeline does — which is the only mechanism that can turn a saturated warm additive stack
+ *  pipeline does - which is the only mechanism that can turn a saturated warm additive stack
  *  white. Exists to test exactly that against Skadi's crown fish. */
-/** DIAGNOSTIC (`?tmclip=1`): swap the soft roll-off for a hue-preserving clip — see the shader. */
+/** DIAGNOSTIC (`?tmclip=1`): swap the soft roll-off for a hue-preserving clip - see the shader. */
 function tonemapClip(): number {
     if (typeof window === "undefined") return 0;
     return new URLSearchParams(window.location.search).get("tmclip") === "1" ? 1 : 0;
@@ -244,7 +244,7 @@ function kneeParam(): number {
  *  RE-MEASURED 2026-08-07 against the CLEAN 2340x1080 / 100 Mbps entrance captures. The previous
  *  values were sweep minima against the SALVAGED reference, and that reference is systematically
  *  DARKER than the real game (measured +5.7 / +4.3 / +1.1 luma fresh-minus-salvage on the three
- *  skins). Tuning to it therefore darkened the renderer to match a degraded copy — the residual
+ *  skins). Tuning to it therefore darkened the renderer to match a degraded copy - the residual
  *  showed up as a per-skin gamma of ~1.04 against the clean capture, near zero at black and
  *  growing through the midtones, which is the signature of an exponent error rather than an
  *  offset. Every exponent below dropped:
@@ -257,20 +257,20 @@ function kneeParam(): number {
  *  **mly 18.77 -> 17.86, cel 18.57 -> 17.65, ska 12.89 -> 10.40**.
  *
  *  The three are still not collinear (slope -0.0004 then -0.0014 per px), so the piecewise
- *  interpolation through all three is kept — a straight line would again fit only two.
+ *  interpolation through all three is kept - a straight line would again fit only two.
  *
  *  ⚠️ This is a MUCH larger move than the previous re-anchoring (|delta gamma| up to 0.08 against
  *  0.02), and it brightens rather than darkens, so the corpus risk is highlight clipping rather
  *  than crush. See the saturation sweep recorded alongside it before widening the range further.
  *
  *  The old note here said replacing these needed "a fourth and fifth reference CAPTURE". That is
- *  no longer the binding constraint — the entrance is capturable for ANY skin, owned or not, via
+ *  no longer the binding constraint - the entrance is capturable for ANY skin, owned or not, via
  *  the FLOT Lookbook viewer's play button, so the calibration set can now be extended by capture
  *  rather than by inference. */
 const GAMMA_CAL: readonly (readonly [number, number])[] = [
     [1000, 1.04], // Skadi the Corrupting Heart
     [1050, 1.02], // Virtuosa
-    [1100, 1.02], // Muelsyse — the fourth capture this table asked for (see below)
+    [1100, 1.02], // Muelsyse - the fourth capture this table asked for (see below)
     [1111, 0.93], // Mlynar
 ];
 
@@ -279,13 +279,13 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * orthographic camera size.
  *
  * WHAT IT CORRECTS. We render the midtones brighter than the game does. The error is a
- * clean power law on the encoded value, not an offset or a multiply — pooling FLAT patches
+ * clean power law on the encoded value, not an offset or a multiply - pooling FLAT patches
  * (no edges, so no registration or filtering component) across Skadi the Corrupting Heart's
  * scored beats, the ratio `game/ours` rises 0.902 → 0.939 → 0.961 → 0.994 with level, where
  * a multiply would hold it constant. A mid-grey we draw at 117 the game draws at 106.
  * Correcting it is worth 38% of her total error (MADC 12.04 → 7.44).
  *
- * WHY cameraSizePx. The needed exponent is NOT global — it differs per skin — and no other
+ * WHY cameraSizePx. The needed exponent is NOT global - it differs per skin - and no other
  * scene quantity predicts it. Layer count, drawn-layer count, coverage-weighted overdraw,
  * spine slot count, semi-transparent slot count and summed alpha were all measured against
  * the three reference skins and none is even monotone; the "compositing depth" story runs
@@ -298,7 +298,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  *     cameraSizePx 1050 (Cello)   measured 1.070   derived 1.075
  *     cameraSizePx 1111 (Mlynar)  measured 1.020   derived 1.020
  *
- * HONEST STATUS — read this before extending, and do not restore the mechanistic reading.
+ * HONEST STATUS - read this before extending, and do not restore the mechanistic reading.
  * Three points and two parameters is an INTERPOLATION, and camera size has since been
  * **FALSIFIED as the driver**. The entrance dollies, so each skin's LIVE camera size sweeps a
  * far wider range than the between-skin spread does (Skadi 1.38→3.48, ~2.5×, against 10.0→11.11
@@ -313,7 +313,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * So the between-skin agreement is a COINCIDENCE, and this function is a bare curve fit keyed
  * on a scene scalar that does not cause the effect. It is kept only because it reproduces the
  * three measured exponents better than any single constant does (mean MADC 14.338 against
- * 15.011 for a flat 1.08, which costs Mlynar 16.993 against his 15.877) — the same
+ * 15.011 for a flat 1.08, which costs Mlynar 16.993 against his 15.877) - the same
  * calibrated-on-three-references basis as every other tuned constant in this renderer.
  *
  * Strictly, the test above rules out the LIVE camera size; it cannot rule out the authored
@@ -325,7 +325,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * delete this keying rather than adding terms to it.**
  *
  * Consequently the INPUT is clamped to the calibrated span. Extrapolated, the line is
- * catastrophic — the corpus runs from cameraSizePx 889 to 1800, and 1800 would give an
+ * catastrophic - the corpus runs from cameraSizePx 889 to 1800, and 1800 would give an
  * exponent of 0.40. Clamping bounds every scene to [1.02, 1.12], which brackets the 1.08
  * that a single global constant would have used, so a skin outside the calibrated range is
  * never worse off than under one flat number. 16% of the 115-scene corpus sits outside the
@@ -335,7 +335,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * could be checked: Nian #7 (1800 → 1.02) shifts by at most 2 code values, Texas the
  * Omertosa (889 → 1.12) by at most 11. Neither degenerates.
  *
- * 2026-08-09 — FIVE MORE CAPTURES ARRIVED, and they say two things.
+ * 2026-08-09 - FIVE MORE CAPTURES ARRIVED, and they say two things.
  *
  * Sweeping the exponent per skin against the new references gives a measured optimum for each:
  *
@@ -346,7 +346,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  *     eyja      1050              1.02             1.02     agrees
  *     mue       1100              0.946            1.02     ** WRONG by 0.074 **
  *
- * Four of the five land where the line predicts, which is real corroboration — the original
+ * Four of the five land where the line predicts, which is real corroboration - the original
  * three-point fit was not a fluke. But Muelsyse breaks it, and breaks it where it matters:
  * she and Mlynar are ELEVEN pixels apart in camera size and want exponents 0.09 apart. No
  * smooth function of this key can do that, so camera size is confirmed as a proxy rather than
@@ -389,10 +389,10 @@ function hdrProbe(): number {
     return Number.isFinite(v) && v > 0 ? v : 0;
 }
 
-/** Enable the coverage gate on the achroma release? **DISABLED — MEASURED AND REJECTED.**
+/** Enable the coverage gate on the achroma release? **DISABLED - MEASURED AND REJECTED.**
  *
  *  The diagnosis is right and the gate demonstrably works. The achroma release lets any
- *  near-neutral pixel at/above the knee pass through to an opaque 255 — needed so a white
+ *  near-neutral pixel at/above the knee pass through to an opaque 255 - needed so a white
  *  reveal FLASH reaches 255 instead of the knee's ~242, but it also clips ordinary bright
  *  white ART. Coverage is the only property separating the two (magnitude cannot: Mlynar's
  *  held flash sits at exactly 1.0 just as Virtuosa's interior does). Gating the release on a
@@ -413,14 +413,14 @@ function hdrProbe(): number {
  *      cov, knee 0.94            17.732      19.489      10.517       47.738
  *      cov, knee 0.90            17.747      19.647      10.656       48.050
  *
- *  Rolling the whites further DOWN — toward the game's p90 of 242 — is monotonically worse,
+ *  Rolling the whites further DOWN - toward the game's p90 of 242 - is monotonically worse,
  *  which is the tell: the metric is PIXELWISE while the clipping census is DISTRIBUTIONAL.
  *  Part of the game's lower p90 is the salvaged reference's own peak suppression (degrading
  *  our own frame takes 11.03% to 4.91%), so matching its distribution moves us AWAY from its
  *  pixel values where the game is still bright. A distributional win that costs pixelwise
  *  error is not a parity win.
  *
- *  Kept because the mechanism is established and the gate is correct — if the ORIGINAL
+ *  Kept because the mechanism is established and the gate is correct - if the ORIGINAL
  *  captures are ever restored, this is the first thing to re-measure, since the peak
  *  suppression that defeats it is an artifact of the salvage. `?cov=1`, plus `?covlo=`,
  *  `?covhi=`, `?covthr=`. */
@@ -440,7 +440,7 @@ const COVERAGE_HI = 0.75;
 const coverageLo = () => covParam("covlo", COVERAGE_LO);
 const coverageHi = () => covParam("covhi", COVERAGE_HI);
 
-/** GAP FILL IS NOT COMPOSITED HERE — the whole tonemap-side machinery was removed after every
+/** GAP FILL IS NOT COMPOSITED HERE - the whole tonemap-side machinery was removed after every
  *  variant it existed to serve was refuted with numbers. Kept as a record so none is retried:
  *
  *      draw-first (a plain sprite at index 0)        cel 19.422 -> 19.361   the only winner
@@ -448,7 +448,7 @@ const coverageHi = () => covParam("covhi", COVERAGE_HI);
  *                                                    NOT algebraically equal to draw-first,
  *                                                    because additive layers add colour with
  *                                                    no alpha
- *      hard alpha/luminance threshold in this pass   19.421 (no effect) — the scene target's
+ *      hard alpha/luminance threshold in this pass   19.421 (no effect) - the scene target's
  *                                                    alpha is non-zero across the frame, so
  *                                                    "covered" is 1 nearly everywhere
  *      spine-shaped ERASE mask on the static art     a NO-OP by construction: the art sits at
@@ -463,7 +463,7 @@ const coverageHi = () => covParam("covhi", COVERAGE_HI);
 export interface IHDRScene {
     /** Half-float target the scene is drawn into each frame (before tonemap). */
     target: PIXI.RenderTexture;
-    /** Full-screen quad that tonemaps `target` (+bloom) to the screen — add to the stage. */
+    /** Full-screen quad that tonemaps `target` (+bloom) to the screen - add to the stage. */
     mesh: PIXI.Mesh<PIXI.Shader>;
     /** Update the bloom texture from the current `target`. Call each frame AFTER
      *  drawing the scene into `target` and BEFORE rendering the stage. */
@@ -485,7 +485,7 @@ function supportsFloatTarget(renderer: PIXI.IRenderer): boolean {
 function makeQuad(width: number, height: number): PIXI.Geometry {
     // TL, TR, BR, BL in screen pixels, with sprite-style UVs so the render target
     // shows upright (matches how a PIXI.Sprite samples a RenderTexture). Built as a
-    // raw Geometry with explicitly-named attributes (`aVertexPosition`/`aUV`) —
+    // raw Geometry with explicitly-named attributes (`aVertexPosition`/`aUV`) -
     // PIXI.MeshGeometry names its UV attribute differently, so the shader can't bind.
     type Buf = ConstructorParameters<typeof PIXI.Buffer>[0];
     const geometry = new PIXI.Geometry();
@@ -527,7 +527,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
     }
     // A freshly-allocated framebuffer holds UNDEFINED contents until something writes to it,
     // and the stage's tonemap quad samples BOTH of these. Any stage render that happens
-    // before the first scene pass therefore reads uninitialised GPU memory — zero-filled on
+    // before the first scene pass therefore reads uninitialised GPU memory - zero-filled on
     // some drivers (so headless swiftshader shows nothing), arbitrary colour on others, which
     // is what a coloured flash on the first frames of a load actually is. Clear both once,
     // here, so the contents are always defined.
@@ -604,7 +604,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             // ⚠️ setResolution BEFORE resize, never after. `BaseTexture.setResolution` RESCALES the
             // texture's screen dimensions to preserve its pixel size (`width = width*oldRes/res`),
             // so resizing first and setting the resolution second leaves every target off by
-            // `oldRes/res`. Latent until the renderer's resolution actually changed at runtime —
+            // `oldRes/res`. Latent until the renderer's resolution actually changed at runtime -
             // which it now does when the idle path takes over the square-2048 RT density.
             target.baseTexture.setResolution(res);
             target.resize(w, h, true);

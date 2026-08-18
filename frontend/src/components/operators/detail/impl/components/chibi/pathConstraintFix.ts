@@ -8,10 +8,10 @@
  *       else if (spaces[i + 1] == 0) r = positions[p + 2];
  *       else r = Math.atan2(dy, dx);
  *
- * so when `tangents` is false (RotateMode.Chain — the common case) the whole
+ * so when `tangents` is false (RotateMode.Chain - the common case) the whole
  * block is skipped and `r` stays 0: the path-constrained bones never rotate to
  * follow their path. Weighted meshes bound to those bones then collapse into
- * horizontal smears — e.g. Zuo Le "Youthful Journey" loses his legs, which are
+ * horizontal smears - e.g. Zuo Le "Youthful Journey" loses his legs, which are
  * driven by Chain-mode path constraints (`ZL_Pelvis*` → `ZL_*_Leg_A_Path`).
  * runtime-4.1 ships the correct code, so this only touches the 3.8 class.
  *
@@ -168,7 +168,7 @@ export function patchSpine38PathConstraint(spine: unknown): void {
     if (!pcs || pcs.length === 0) return;
     const pc = pcs[0] as Record<string, unknown>;
     // 3.8 uses rotateMix/translateMix; 4.x uses mixRotate/mixX/mixY (and ships the
-    // correct code) — only touch the 3.8 class.
+    // correct code) - only touch the 3.8 class.
     if (!("rotateMix" in pc) || !("translateMix" in pc)) return;
     const proto = (pc as { constructor: { prototype: Record<string, unknown> } }).constructor.prototype;
     if (proto[PATCH_FLAG]) return;

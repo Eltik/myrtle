@@ -64,6 +64,17 @@ pub struct EvaluateRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct LayoutResponse {
     pub rooms: Vec<DraftRoomDto>,
+    /// The player's own saved shift rotation, straight out of `presetQueue`.
+    /// Separate from `rooms` because that is the round-trip shape the client
+    /// posts back; presets are read-only context and never travel with a draft.
+    pub presets: Vec<SlotPresetsDto>,
+}
+
+/// One slot's saved rotation: the crew the player has queued for each shift.
+#[derive(Debug, Clone, Serialize)]
+pub struct SlotPresetsDto {
+    pub slot_id: String,
+    pub shifts: Vec<Vec<String>>,
 }
 
 /// The serialized twin of [`DraftRoom`] - what the client sends back on every
@@ -209,6 +220,10 @@ pub struct RoomDiffDto {
 /// copy of numbers the game already publishes.
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogResponse {
+    /// Shifts in a base day. A game constant, not a property of any one
+    /// player - a base whose rooms only queue two presets still runs three
+    /// shifts, alternating across them.
+    pub shift_count: usize,
     pub rooms: Vec<CatalogRoomDto>,
     pub formulas: Vec<CatalogFormulaDto>,
     /// The floorplan every base shares - what the client draws the board from.
@@ -414,10 +429,27 @@ pub async fn layout(
 ) -> Result<LayoutResponse, ApiError> {
     let user = profile_for(state, uid, viewer_id).await?;
     let Some(building_json) = get_building(&state.db, user.id).await? else {
-        return Ok(LayoutResponse { rooms: Vec::new() });
+        return Ok(LayoutResponse {
+            rooms: Vec::new(),
+            presets: Vec::new(),
+        });
     };
 
     let building = UserBuilding::from_json(&building_json);
+
+    // An all-empty queue is the game's placeholder for "no rotation saved", so
+    // it is dropped here rather than surfacing as a row of blank shifts.
+    let mut presets: Vec<SlotPresetsDto> = building
+        .rooms
+        .iter()
+        .filter(|room| room.preset_shifts.iter().any(|shift| !shift.is_empty()))
+        .map(|room| SlotPresetsDto {
+            slot_id: room.slot_id.clone(),
+            shifts: room.preset_shifts.clone(),
+        })
+        .collect();
+    presets.sort_by(|a, b| a.slot_id.cmp(&b.slot_id));
+
     let mut rooms: Vec<DraftRoomDto> = building
         .rooms
         .into_iter()
@@ -432,7 +464,7 @@ pub async fn layout(
     // `roomSlots` is a JSON object, so its iteration order is not the base's.
     // Sort by slot so the board is stable between loads.
     rooms.sort_by(|a, b| a.slot_id.cmp(&b.slot_id));
-    Ok(LayoutResponse { rooms })
+    Ok(LayoutResponse { rooms, presets })
 }
 
 pub async fn evaluate(
@@ -870,6 +902,7 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
     storeys.sort_by(|a, b| a.storey_id.cmp(&b.storey_id));
 
     CatalogResponse {
+        shift_count: crate::core::grade::base::shift_rotation::SHIFT_COUNT,
         rooms,
         formulas,
         slots,

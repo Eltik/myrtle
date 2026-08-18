@@ -7,7 +7,6 @@ import { roomAccent, roomLabel } from "./roomColors";
 
 const MORALE_MAX = 24;
 
-/** Inline sparkline of one operator's simulated morale over the week. */
 function Sparkline({ samples }: { samples: number[] }) {
     const w = 96;
     const h = 26;
@@ -17,18 +16,12 @@ function Sparkline({ samples }: { samples: number[] }) {
     const y = (m: number) => pad + (1 - Math.max(0, Math.min(MORALE_MAX, m)) / MORALE_MAX) * (h - pad * 2);
     const points = samples.map((m, i) => `${(pad + i * step).toFixed(1)},${y(m).toFixed(1)}`).join(" ");
     return (
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden>
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-label="Label" aria-hidden>
             <polyline points={points} fill="none" stroke="var(--color-red-500, #ef4444)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
         </svg>
     );
 }
 
-/**
- * "Morale over time": one card per simulated operator - avatar, home room, a
- * week-long sparkline of their bar, and where it ends. The data is the same
- * simulation the sustainability verdict comes from, so a sawtooth here IS the
- * rotation rhythm, and a decaying line is the leak the banner warns about.
- */
 export function MoraleOverTime({ timeline }: { timeline: IMoraleTimeline[] }) {
     if (timeline.length === 0) return null;
     return (

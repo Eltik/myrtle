@@ -62,6 +62,21 @@ export function powerOf(room: IDraftRoom, catalog: Catalog): number {
  */
 export type TileKind = "fixed" | "flexible" | "path" | "elevator";
 
+/** An operator seated in a room, as the board needs to draw them. */
+export interface ITileOperator {
+    id: string;
+    name: string;
+    /**
+     * How this seat differs from what the player already had, when a plan is
+     * being compared against their own rotation. `removed` operators are drawn
+     * as ghosts: seeing who leaves is half of reading a swap.
+     */
+    change?: "added" | "removed";
+}
+
+/** Per-slot crew changes, keyed operator id -> how it differs. */
+export type BoardMarks = Map<string, Map<string, "added" | "removed">>;
+
 /** One cell of the RIIC board, floorplan geometry joined to the player's draft. */
 export interface ITile {
     slotId: string;
@@ -75,6 +90,10 @@ export interface ITile {
     maxPhase: number;
     /** False for a slot the floorplan has but this player has not excavated. */
     built: boolean;
+    /** Who is working here. */
+    operators: ITileOperator[];
+    /** Seats at this room's current level - `operators.length` short of it is understaffing. */
+    seats: number;
     /** 1-based CSS grid placement, in tracks. */
     col: number;
     row: number;
@@ -165,7 +184,7 @@ function flexibleCategories(catalog: Catalog, slots: ICatalogSlot[]): Set<string
  * what makes an unexcavated slot render as an empty cell instead of vanishing
  * and collapsing the grid around it.
  */
-export function buildBoard(slots: ICatalogSlot[], rooms: IDraftRoom[], catalog: Catalog): IBoard {
+export function buildBoard(slots: ICatalogSlot[], rooms: IDraftRoom[], catalog: Catalog, rosterNames: Map<string, string> = new Map(), marks?: BoardMarks): IBoard {
     if (slots.length === 0) return { tiles: [], templateColumns: "", templateRows: "" };
 
     const cols = measureTracks(slots.map((s) => ({ offset: s.offset_col, size: s.size_col })));
@@ -197,6 +216,10 @@ export function buildBoard(slots: ICatalogSlot[], rooms: IDraftRoom[], catalog: 
             // An unloaded catalogue should not draw a room as maxed or as empty.
             maxPhase: facility ? (catalog.get(facility)?.phases.length ?? room?.level ?? 0) : 0,
             built: room !== undefined || kind === "elevator" || kind === "path",
+            // Fall back to the raw id rather than blanking the chip: an operator
+            // the roster has not named is still one occupying a seat.
+            operators: (room?.operators ?? []).map((id) => ({ id, name: rosterNames.get(id) ?? id, change: marks?.get(slot.slot_id)?.get(id) })),
+            seats: room ? seatsOf(room, catalog) : 0,
             col: colStart + 1,
             row: rowTracks - rowEnd + 1,
             w: colEnd - colStart,
