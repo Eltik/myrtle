@@ -211,6 +211,36 @@ pub struct RoomDiffDto {
 pub struct CatalogResponse {
     pub rooms: Vec<CatalogRoomDto>,
     pub formulas: Vec<CatalogFormulaDto>,
+    /// The floorplan every base shares - what the client draws the board from.
+    pub slots: Vec<CatalogSlotDto>,
+    pub storeys: Vec<CatalogStoreyDto>,
+}
+
+/// One slot of the base floorplan, joined to a player's rooms on `slot_id`.
+///
+/// Coordinates stay in the game's own half-tile units rather than pixels or
+/// grid tracks: how a half-tile becomes a column is the board's decision, and
+/// the elevator shafts (1 unit wide where every room is 2) only make sense at
+/// this scale.
+#[derive(Debug, Clone, Serialize)]
+pub struct CatalogSlotDto {
+    pub slot_id: String,
+    /// Room category this slot accepts, matching `CatalogRoomDto::category`.
+    pub category: String,
+    pub storey_id: String,
+    pub offset_col: i32,
+    /// Absolute - the storey's Y-offset is already applied. Counts up from the
+    /// bottom of the base, so B4 is 0.
+    pub offset_row: i32,
+    pub size_col: i32,
+    pub size_row: i32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CatalogStoreyDto {
+    pub storey_id: String,
+    /// Control-centre level that unlocks this floor.
+    pub unlock_control_level: i32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -799,5 +829,50 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
         .collect();
     formulas.sort_by(|a, b| a.formula_type.cmp(&b.formula_type));
 
-    CatalogResponse { rooms, formulas }
+    // The game keys them, so take whichever is
+    // there rather than naming it - a second layout should not blank the board.
+    let layout = game_data.building.layouts.values().next();
+
+    let mut slots: Vec<CatalogSlotDto> = layout
+        .map(|l| {
+            l.slots
+                .values()
+                .map(|s| CatalogSlotDto {
+                    slot_id: s.id.clone(),
+                    category: s.category.clone(),
+                    storey_id: s.storey_id.clone(),
+                    offset_col: s.offset.col,
+                    offset_row: s.offset.row,
+                    size_col: s.size.col,
+                    size_row: s.size.row,
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    // Reading order, so the client never has to sort to lay the board out.
+    slots.sort_by(|a, b| {
+        b.offset_row
+            .cmp(&a.offset_row)
+            .then(a.offset_col.cmp(&b.offset_col))
+    });
+
+    let mut storeys: Vec<CatalogStoreyDto> = layout
+        .map(|l| {
+            l.storeys
+                .values()
+                .map(|s| CatalogStoreyDto {
+                    storey_id: s.id.clone(),
+                    unlock_control_level: s.unlock_control_level,
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    storeys.sort_by(|a, b| a.storey_id.cmp(&b.storey_id));
+
+    CatalogResponse {
+        rooms,
+        formulas,
+        slots,
+        storeys,
+    }
 }

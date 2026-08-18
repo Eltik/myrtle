@@ -77,6 +77,62 @@ pub struct BuildingDataFile {
     /// Workshop recipes/formulas.
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub workshop_formulas: HashMap<String, WorkshopFormula>,
+
+    /// Base floorplans. The game keys them as a map.
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub layouts: HashMap<String, LayoutDef>,
+}
+
+// ─── Layout ──────────────────────────────────────────────────────────────────
+
+/// One base floorplan: where every slot sits, and which storey it belongs to.
+///
+/// This is the board's geometry. A player's `roomSlots` says what is *built*
+/// in each slot but carries no coordinate, so the two have to be joined on
+/// `slot_id` before anything can be drawn.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct LayoutDef {
+    pub id: String,
+    // Tolerant rather than strict: a floorplan we cannot read should cost the
+    // board, not take the whole of `building_data` - and with it base grading -
+    // down with it.
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub slots: HashMap<String, LayoutSlotDef>,
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub storeys: HashMap<String, StoreyDef>,
+}
+
+/// A single cell of the floorplan.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct LayoutSlotDef {
+    pub id: String,
+    /// Which class of room may occupy this slot - `OUTPUT`, `CUSTOM`,
+    /// `FUNCTION`, `SPECIAL`, or the structure's own `ELEVATOR`/`CORRIDOR`.
+    /// Matches [`RoomDef::category`], not a room type.
+    pub category: String,
+    pub storey_id: String,
+    /// Position in half-tiles. `Row` is already absolute: the storey's
+    /// `y_offset` is baked in, so no join against [`StoreyDef`] is needed.
+    pub offset: RoomSize,
+    /// Extent in half-tiles. Every room is 2 rows tall; an elevator is 1 col
+    /// wide where everything else is even.
+    pub size: RoomSize,
+}
+
+/// One floor of the base.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct StoreyDef {
+    pub id: String,
+    /// `UPGROUND` for 1F, `DOWNGROUND` for the basements.
+    #[serde(rename = "Type_")]
+    pub type_: String,
+    /// Control-centre level that unlocks this floor.
+    pub unlock_control_level: i32,
+    /// Rows from the bottom of the base, in half-tiles. B4 is 0; 1F is 8.
+    pub y_offset: i32,
 }
 
 // ─── Buffs ───────────────────────────────────────────────────────────────────

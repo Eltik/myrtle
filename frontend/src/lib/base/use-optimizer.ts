@@ -2,9 +2,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "#/hooks/use-debounce";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { baseCatalogQueryOptions, baseLayoutQueryOptions, evaluateLayoutQueryOptions, type ICatalogRoom, type IDraftRoom, type IOptimizeResponse, type IRotationResponse, optimizeLayoutFn, type RoomType, rotationPlanFn } from "#/lib/api/base";
+import { baseCatalogQueryOptions, baseLayoutQueryOptions, evaluateLayoutQueryOptions, type FacilityType, type ICatalogRoom, type ICatalogSlot, type IDraftRoom, type IOptimizeResponse, type IRotationResponse, optimizeLayoutFn, rotationPlanFn } from "#/lib/api/base";
 import type { IShiftRoom } from "#/lib/api/user";
-import { isPlannable, seatsOf } from "./layout";
+import { type Catalog, isPlannable, seatsOf } from "./layout";
 
 /**
  * Planner state.
@@ -15,12 +15,20 @@ import { isPlannable, seatsOf } from "./layout";
  * engine says, or it shows the previous answer while a new one is in flight.
  */
 
-export interface OptimizerApi {
+export interface IOptimizerApi {
     /** The layout being edited. */
     layout: IDraftRoom[];
     /** True once the player has diverged from their real in-game base. */
     dirty: boolean;
-    catalog: Map<RoomType, ICatalogRoom>;
+    catalog: Catalog;
+    /** The floorplan every base shares - the board's geometry. */
+    slots: ICatalogSlot[];
+    /**
+     * Every room the board draws: the player's real base with the draft laid
+     * over it. Wider than `layout`, which drops the structure before the engine
+     * sees it - the board still has to label a corridor.
+     */
+    boardRooms: IDraftRoom[];
     catalogLoading: boolean;
     /** True while the player's real base is still being fetched. */
     layoutLoading: boolean;
@@ -72,7 +80,7 @@ export interface OptimizerApi {
     reset: () => void;
 }
 
-interface Persisted {
+interface IPersisted {
     layout: IDraftRoom[];
     locked: string[];
     excluded: string[];
@@ -85,6 +93,9 @@ interface Persisted {
 // v2: v1 drafts were seeded from `improvements.base.current`, a production-only
 // view that omitted dormitories and power plants. Those drafts are wrong at the
 // root, so they are abandoned rather than migrated.
+/** Stable identity, so an unloaded catalogue does not re-derive the board every render. */
+const EMPTY_SLOTS: ICatalogSlot[] = [];
+
 function storageKey(uid: string): string {
     return `base-optimizer:${uid}:v2`;
 }
@@ -96,7 +107,7 @@ function useEvaluation(uid: string, layout: IDraftRoom[]) {
     return useQuery(evaluateLayoutQueryOptions(uid, settled));
 }
 
-export function useOptimizer(uid: string): OptimizerApi {
+export function useOptimizer(uid: string): IOptimizerApi {
     // The player's REAL base - every built slot. Not `improvements.base.current`,
     // which carries only production rooms and a staffed Control Center; seeding
     // from that silently drops dormitories and power plants, wrecking both the
@@ -105,10 +116,11 @@ export function useOptimizer(uid: string): OptimizerApi {
 
     const catalogQuery = useQuery(baseCatalogQueryOptions());
     const catalog = useMemo(() => {
-        const map = new Map<RoomType, ICatalogRoom>();
+        const map = new Map<FacilityType, ICatalogRoom>();
         for (const room of catalogQuery.data?.rooms ?? []) map.set(room.room_type, room);
         return map;
     }, [catalogQuery.data]);
+    const slots = catalogQuery.data?.slots ?? EMPTY_SLOTS;
 
     // Structure (corridors, elevators, activity rooms) is dropped here rather
     // than on the board, so it never reaches the engine either. That is safe
@@ -116,7 +128,7 @@ export function useOptimizer(uid: string): OptimizerApi {
     // targets it - so facility counts, dorm levels and power are all unchanged.
     const realLayout = useMemo(() => (layoutQuery.data?.rooms ?? []).filter((room) => isPlannable(room.room_type, catalog)), [layoutQuery.data, catalog]);
 
-    const [persisted, setPersisted] = useLocalStorageState<Persisted>(storageKey(uid), {
+    const [persisted, setPersisted] = useLocalStorageState<IPersisted>(storageKey(uid), {
         layout: [],
         locked: [],
         excluded: [],
@@ -135,6 +147,11 @@ export function useOptimizer(uid: string): OptimizerApi {
 
     const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
+
+    const boardRooms = useMemo(() => {
+        const drafted = new Map(layout.map((room) => [room.slot_id, room]));
+        return (layoutQuery.data?.rooms ?? []).map((room) => drafted.get(room.slot_id) ?? room);
+    }, [layoutQuery.data, layout]);
 
     const evaluation = useEvaluation(uid, layout);
 
@@ -326,6 +343,8 @@ export function useOptimizer(uid: string): OptimizerApi {
         layout,
         dirty,
         catalog,
+        slots,
+        boardRooms,
         catalogLoading: catalogQuery.isLoading,
         // Both must land before the board is meaningful: the catalogue decides
         // which of the layout's rooms are plannable at all.

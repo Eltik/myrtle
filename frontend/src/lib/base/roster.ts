@@ -2,7 +2,7 @@ import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
 
 /** An operator the player owns, reduced to what the planner UI needs. */
-export interface RosterOption {
+export interface IRosterOption {
     id: string;
     name: string;
 }
@@ -14,7 +14,7 @@ export interface RosterOption {
  * builds its candidate pool from exactly this list, so the picker showing
  * anything else would offer operators the optimizer can never seat.
  */
-export function toRosterOptions(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[]): RosterOption[] {
+export function toRosterOptions(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[]): IRosterOption[] {
     const nameById = new Map<string, string>();
     for (const op of operatorsStatic) {
         if (op.id) nameById.set(op.id, op.name);

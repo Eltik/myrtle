@@ -17,6 +17,13 @@ import type { IAssignedOperator, IBaseAssignment, IShiftRotation } from "./user"
 /** Game room constants, as they appear in `building_data`. */
 export type RoomType = "CONTROL" | "MANUFACTURE" | "TRADING" | "POWER" | "DORMITORY" | "MEETING" | "HIRE" | "TRAINING" | "WORKSHOP";
 
+/**
+ * Every facility `building_data` defines - the nine staffable rooms plus the
+ * three the planner never staffs: the Activity Room, and the structure itself.
+ * The catalogue carries all twelve; only `RoomType` reaches the engine.
+ */
+export type FacilityType = RoomType | "PRIVATE" | "ELEVATOR" | "CORRIDOR";
+
 export type FormulaType = "F_GOLD" | "F_EXP" | "F_DIAMOND";
 
 /** One room of a layout the player is editing. */
@@ -108,7 +115,7 @@ export interface ICatalogPhase {
 }
 
 export interface ICatalogRoom {
-    room_type: RoomType;
+    room_type: FacilityType;
     name: string;
     category: string;
     /** -1 means unlimited. */
@@ -124,9 +131,36 @@ export interface ICatalogFormula {
     label: string;
 }
 
+/**
+ * One slot of the base floorplan.
+ *
+ * Coordinates are in the game's own half-tile units: every room is 2 units
+ * tall and an even number wide, while an elevator is 1 unit wide - which is
+ * what makes the lift shafts half-width columns on the board.
+ */
+export interface ICatalogSlot {
+    slot_id: string;
+    /** Room category this slot accepts - matches `ICatalogRoom.category`. */
+    category: string;
+    storey_id: string;
+    offset_col: number;
+    /** Absolute, counting up from the bottom of the base: B4 is 0, 1F is 8. */
+    offset_row: number;
+    size_col: number;
+    size_row: number;
+}
+
+export interface ICatalogStorey {
+    storey_id: string;
+    /** Control-centre level that unlocks this floor. */
+    unlock_control_level: number;
+}
+
 export interface ICatalogResponse {
     rooms: ICatalogRoom[];
     formulas: ICatalogFormula[];
+    slots: ICatalogSlot[];
+    storeys: ICatalogStorey[];
 }
 
 export const evaluateLayoutFn = createServerFn({ method: "POST" })

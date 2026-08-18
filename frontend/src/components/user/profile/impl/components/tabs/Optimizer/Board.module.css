@@ -1,0 +1,372 @@
+/*
+ * The board is a fixed-proportion schematic - 24 tracks and six storeys - so at
+ * full size it is wider than the page it sits on and would scroll on every
+ * normal desktop. One step down in the half-tile unit buys back the ~130px that
+ * costs, at a size where a 12px room name still fits comfortably. Narrower than
+ * that and it scrolls, which for a map is better than shrinking the labels out
+ * of legibility.
+ */
+/*
+ * The stage.
+ *
+ * The rooms are charcoal in both themes, because that is what the production
+ * rails and the level pips need to read against. Dropping charcoal tiles
+ * straight onto a white card makes them look like a rendering fault rather than
+ * a design - the reference never has to solve this, because its board sits on a
+ * dark backdrop of its own.
+ *
+ * So the board gets that backdrop: one dark panel, constant in both themes,
+ * that the tiles belong to. The card around it still follows the page. That
+ * makes the whole board a single deliberate instrument surface instead of an
+ * accident of contrast - and it means everything inside here, ticks and shafts
+ * included, is stated against the panel rather than against the page.
+ */
+.riic-board-fit {
+    --stage: #191919;
+
+    container-type: inline-size;
+    padding: 22px 16px;
+    border-radius: calc(var(--radius) - 2px);
+    background-color: var(--stage);
+    background-image: repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.016) 0 6px, transparent 6px 12px);
+}
+
+.riic-board {
+    --riic-unit: 32px;
+
+    display: grid;
+    grid-auto-rows: calc(2 * var(--riic-unit));
+    gap: 3px;
+    width: max-content;
+    margin: 0 auto;
+}
+
+@container (max-width: 1508px) {
+    .riic-board {
+        --riic-unit: 30px;
+    }
+}
+@container (max-width: 1418px) {
+    .riic-board {
+        --riic-unit: 28px;
+    }
+}
+@container (max-width: 1328px) {
+    .riic-board {
+        --riic-unit: 26px;
+    }
+}
+
+.riic-tile {
+    --tile-line: rgb(255 255 255 / 0.28);
+    --tile-edge: rgb(255 255 255 / 0.08);
+    --tile-bracket: 8px;
+    --tile-hairline: 0.5px;
+    --tile-icon: none;
+    --tile-plate: none;
+
+    /*
+     * The slab is a fixed dark object in both themes - the reference keeps its
+     * rooms charcoal and lets only the page around them go light. Inverting it
+     * with the theme washes the board out and, worse, guts the contrast the
+     * production rails and the level pips rely on to mean anything.
+     *
+     * So everything painted ON the slab is stated here in absolute terms, while
+     * the tile's shell - border, corner ticks, lift-shaft marks - keeps its
+     * theme tokens, because that chrome sits on the page, not on the slab.
+     */
+    --slab: #323232;
+    --slab-ink: #fff;
+    --slab-ink-dim: rgb(255 255 255 / 0.55);
+
+    --_b: var(--tile-bracket) var(--tile-bracket);
+    --_n: var(--tile-hairline);
+    --_f: calc(100% - var(--tile-hairline));
+
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding: 2px;
+    border: 1px solid var(--tile-edge);
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--slab-ink);
+    font-family: inherit;
+    text-align: left;
+
+    background-image:
+        conic-gradient(from 90deg at var(--_n) var(--_n), transparent 25%, var(--tile-line) 0), conic-gradient(from 180deg at var(--_f) var(--_n), transparent 25%, var(--tile-line) 0), conic-gradient(from 0deg at var(--_n) var(--_f), transparent 25%, var(--tile-line) 0),
+        conic-gradient(from 270deg at var(--_f) var(--_f), transparent 25%, var(--tile-line) 0);
+    background-repeat: no-repeat;
+    background-size: var(--_b), var(--_b), var(--_b), var(--_b);
+    background-position:
+        0 0,
+        100% 0,
+        0 100%,
+        100% 100%;
+}
+
+button.riic-tile {
+    cursor: pointer;
+    transition:
+        border-color 0.12s ease,
+        background-color 0.12s ease;
+}
+button.riic-tile:hover {
+    --tile-edge: rgb(255 255 255 / 0.4);
+    background-color: color-mix(in oklch, var(--primary) 8%, transparent);
+}
+button.riic-tile:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+}
+
+/*
+ * A slot with nothing in it recedes by going flatter and darker, not by going
+ * translucent. The reference fades these to .55, which works on its permanently
+ * dark page but on a light one drags the slab toward the background and takes
+ * the white label with it - the tile ends up mid-grey with unreadable text.
+ * Holding the slab opaque and dimming its ink instead survives both themes.
+ */
+.riic-tile-empty,
+.riic-tile-unbuilt {
+    --slab: #262626;
+    --slab-ink: rgb(255 255 255 / 0.6);
+    --slab-ink-dim: rgb(255 255 255 / 0.4);
+}
+.riic-tile-unbuilt {
+    border-style: dashed;
+}
+
+.riic-tile-room-clip {
+    position: absolute;
+    inset: 2px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.riic-tile-room-body,
+.riic-tile-room-grid,
+.riic-tile-room-accent,
+.riic-tile-room-icon {
+    position: absolute;
+    inset: 0;
+}
+
+.riic-tile-room-body {
+    background: var(--slab);
+}
+
+/*
+ * Blueprint tooth. The cell has to be small enough to repeat on both axes
+ * inside a tile: at the reference's 70px it never got a horizontal line into a
+ * 64px row, so what should have been a mesh came out as a single bright seam
+ * down the middle of every room - stripes, not texture. 16px gives four bands
+ * either way, and at this alpha it reads as surface rather than as structure.
+ */
+.riic-tile-room-grid {
+    background-image: repeating-linear-gradient(0deg, transparent 0 15px, rgb(255 255 255 / 0.05) 15px 16px), repeating-linear-gradient(90deg, transparent 0 15px, rgb(255 255 255 / 0.05) 15px 16px);
+}
+
+.riic-tile-room-accent {
+    inset: 0 auto 0 0;
+    width: 5px;
+}
+
+.riic-tile-flexible .riic-tile-room-accent {
+    background: var(--tile-accent, transparent);
+}
+.riic-tile[data-facility-type="TRADING"] {
+    --tile-accent: #38c9fe;
+}
+.riic-tile[data-facility-type="MANUFACTURE"] {
+    --tile-accent: #fec904;
+}
+.riic-tile[data-facility-type="POWER"] {
+    --tile-accent: #c3ff43;
+}
+
+.riic-tile-room-icon {
+    background-color: rgb(255 255 255 / 0.13);
+    mask-image: var(--tile-icon);
+    mask-repeat: no-repeat;
+    mask-position: left 10px bottom 6px;
+    mask-size: auto 34px;
+}
+
+.riic-tile-info {
+    position: absolute;
+    inset: 5px 6px auto 12px;
+    pointer-events: none;
+}
+.riic-tile-fixed .riic-tile-info {
+    left: 7px;
+}
+
+.riic-tile-name-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.riic-tile-name {
+    min-width: 0;
+    /* Shrink only under pressure, so the pips stay next to the name rather than
+       being flung to the far edge of a wide tile. */
+    flex: 0 1 auto;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.riic-tile-unbuilt-label {
+    margin-left: 4px;
+    color: var(--slab-ink-dim);
+    font-size: 0.68em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.riic-tile-level-pips {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.riic-tile-level-pip {
+    width: 4px;
+    height: 10px;
+    flex-shrink: 0;
+    background: rgb(255 255 255 / 0.2);
+    mask-size: 100% 100%;
+    border-radius: var(--radius-md);
+}
+.riic-tile-level-pip[data-on="true"] {
+    background: var(--tile-accent, rgb(255 255 255 / 0.85));
+}
+
+.riic-tile-elevator,
+.riic-tile-path {
+    --tile-line: rgb(255 255 255 / 0.16);
+    border-color: transparent;
+}
+
+.riic-tile-elevator::after {
+    position: absolute;
+    background:
+        linear-gradient(to right, var(--tile-line) 0 100%) center / 100% 1px no-repeat,
+        linear-gradient(to bottom, var(--tile-line) 0 100%) center / 1px 100% no-repeat;
+    content: "";
+    inset: calc(50% - 7px) calc(50% - 7px);
+}
+
+/* A walkway is a slab too; a lift shaft is only a mark on the page. */
+.riic-tile-path {
+    background-color: var(--slab);
+}
+
+.riic-tile-path::after {
+    position: absolute;
+    background-image: var(--tile-plate);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    content: "";
+    inset: 2px;
+    opacity: 0.75;
+}
+
+.riic-cc-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    inset: 2px;
+    pointer-events: none;
+}
+
+.riic-cc-bracket {
+    color: var(--slab-ink-dim);
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.riic-cc-badge-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.riic-cc-title {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.1;
+    text-transform: none;
+}
+
+.riic-cc-subtitle {
+    color: rgb(255 255 255 / 0.45);
+    font-size: 7px;
+    letter-spacing: 1.6px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.riic-cc-ver-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.riic-cc-ver-icon-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding-bottom: 6px;
+}
+
+.riic-cc-stripe-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    background: repeating-linear-gradient(-45deg, var(--slab-ink) 0 2px, transparent 2px 4px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 2px 2px 0 0 #ffb300;
+    opacity: 0.85;
+}
+
+.riic-cc-ver-label {
+    font-family: var(--font-techno);
+    color: var(--slab-ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.riic-cc-ver-num {
+    font-family: var(--font-techno);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 0.85;
+    color: #fff;
+}
+
+.riic-cc-ver-dec {
+    font-family: var(--font-techno);
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 0.85;
+    color: #fff;
+}

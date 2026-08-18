@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/orbitron";
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -11,6 +12,8 @@
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
   --font-display: "Fraunces", Georgia, serif;
+  /* Squared-off technical numerals - RIIC readouts, not body copy. */
+  --font-techno: "Orbitron Variable", var(--font-mono);
 }
 
 :root {

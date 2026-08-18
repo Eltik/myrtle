@@ -80,3 +80,66 @@ export function baseSkillIcon(skillIconStem: string, server?: AssetServer): stri
     if (!skillIconStem) return "";
     return asset(`/textures/spritepack/building_ui_buff_skills_h1_0/${skillIconStem}.png`, server);
 }
+
+export const FACILITY = {
+    CONTROL: "control_center",
+    POWER: "power_plant",
+    MANUFACTURE: "factory",
+    TRADING: "trading_post",
+    DORMITORY: "dormitory",
+    PRIVATE: "activity_room",
+    WORKSHOP: "workshop",
+    HIRE: "office",
+    TRAINING: "training_room",
+    MEETING: "reception_room",
+    ELEVATOR: "elevator",
+    CORRIDOR: "corridor",
+} as const;
+
+export type FacilityType = keyof typeof FACILITY;
+
+type IconFacility = Exclude<FacilityType, "ELEVATOR" | "CORRIDOR">;
+
+const ROOM_ICON: Record<IconFacility, string> = {
+    CONTROL: "icon_control",
+    MANUFACTURE: "icon_title_manufact",
+    TRADING: "icon_title_trading",
+    POWER: "icon_title_power",
+    DORMITORY: "icon_title_dorm",
+    MEETING: "icon_title_meeting",
+    HIRE: "icon_title_hire",
+    WORKSHOP: "icon_workshop",
+    TRAINING: "icon_training",
+    PRIVATE: "icon_title_private",
+};
+
+export function riicRoomIcon(type: FacilityType, server?: AssetServer): string {
+    const stem = ROOM_ICON[type as IconFacility];
+    if (!stem) return "";
+    return asset(`/textures/arts/building/architect/room_icon_sprite_hub/${stem}.png`, server);
+}
+
+const ROOM_BACKGROUND: Record<Exclude<FacilityType, "ELEVATOR">, string> = {
+    CONTROL: "img_center_bkg",
+    MANUFACTURE: "img_manuf_bkg",
+    TRADING: "img_shop_bkg",
+    POWER: "img_power_bkg",
+    DORMITORY: "img_dorm_bkg",
+    MEETING: "img_living_bkg",
+    HIRE: "img_hire_bkg",
+    WORKSHOP: "img_workshop_bkg",
+    TRAINING: "img_train_bkg",
+    PRIVATE: "img_private_dorm_bkg",
+    CORRIDOR: "img_corridor_bkg",
+};
+
+export const RIIC_BUILDABLE_PLATE = "room_bg_buildable";
+
+export function riicRoomPlate(stem: string, server?: AssetServer): string {
+    if (!stem) return "";
+    return asset(`/textures/building/blueprint/%5Buc%5Drooms/${stem}.png`, server);
+}
+
+export function riicRoomBackground(type: FacilityType, server?: AssetServer): string {
+    return riicRoomPlate(ROOM_BACKGROUND[type as Exclude<FacilityType, "ELEVATOR">] ?? "", server);
+}
