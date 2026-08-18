@@ -56,15 +56,15 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
 
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 font-sans text-[12.5px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
-                        {commit.author.avatarUrl ? (
-                            <img src={commit.author.avatarUrl} alt="" width={18} height={18} loading="lazy" className="size-4.5 shrink-0 rounded-full bg-muted object-cover ring-1 ring-border" />
+                        {commit.author.avatarURL ? (
+                            <img src={commit.author.avatarURL} alt="" width={18} height={18} loading="lazy" className="size-4.5 shrink-0 rounded-full bg-muted object-cover ring-1 ring-border" />
                         ) : (
                             <span className="inline-flex size-4.5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground ring-1 ring-border">
                                 <GitCommitHorizontal className="size-3" strokeWidth={2} aria-hidden="true" />
                             </span>
                         )}
-                        {commit.author.profileUrl ? (
-                            <a href={commit.author.profileUrl} target="_blank" rel="noreferrer" className="font-medium text-foreground/80 no-underline transition-colors hover:text-primary">
+                        {commit.author.profileURL ? (
+                            <a href={commit.author.profileURL} target="_blank" rel="noreferrer" className="font-medium text-foreground/80 no-underline transition-colors hover:text-primary">
                                 {commit.author.name}
                             </a>
                         ) : (

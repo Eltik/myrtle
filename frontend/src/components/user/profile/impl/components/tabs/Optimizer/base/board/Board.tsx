@@ -1,6 +1,6 @@
-import type { IBoard } from "#/lib/base/layout";
+import type { IBoard } from "#/lib/base/board";
 import styles from "./Board.module.css";
-import { RiicTile } from "./RiicTile";
+import { RiicTile } from "./tile/components/RiicTile";
 
 export function Board({ board }: { board: IBoard }) {
     return (

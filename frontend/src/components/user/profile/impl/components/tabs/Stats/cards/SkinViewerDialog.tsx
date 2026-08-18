@@ -71,7 +71,7 @@ interface ICardData {
     opName: string;
     skinName: string;
     searchable: string;
-    avatarUrl: string;
+    avatarURL: string;
     price: ISkinPrice;
 }
 
@@ -132,7 +132,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                 opName,
                 skinName: rawSkinName,
                 searchable: `${opName.toLowerCase()} ${skinNameForSearch} ${groupName.toLowerCase()}`,
-                avatarUrl: getAvatarById(s.skinId),
+                avatarURL: getAvatarById(s.skinId),
                 price: getSkinPrice(s),
             });
         }
@@ -341,7 +341,7 @@ interface ISkinCardProps {
 }
 
 const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSelect }: ISkinCardProps) {
-    const { skin, opName, skinName, price, avatarUrl } = card;
+    const { skin, opName, skinName, price, avatarURL } = card;
     const displayOpName = opName || skin.charId;
     const handleClick = () => onSelect(skin.skinId);
 
@@ -354,7 +354,7 @@ const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSele
             type="button"
         >
             <div className="relative aspect-square w-full overflow-hidden bg-muted/30">
-                <img alt="" aria-hidden className={cn("h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.04]", !owned && "opacity-60 saturate-50 group-hover:opacity-85 group-hover:saturate-75")} decoding="async" loading="lazy" src={avatarUrl} />
+                <img alt="" aria-hidden className={cn("h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.04]", !owned && "opacity-60 saturate-50 group-hover:opacity-85 group-hover:saturate-75")} decoding="async" loading="lazy" src={avatarURL} />
                 {!owned && <span aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/40 to-transparent" />}
                 {price.label && (
                     <span className="absolute top-1 left-1">
@@ -537,7 +537,7 @@ interface ISkinDetailDialogProps {
 }
 
 function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogProps) {
-    const { skin, op, skinName, price, avatarUrl } = card;
+    const { skin, op, skinName, price, avatarURL } = card;
     const opName = card.opName || skin.charId;
     const ds = skin.displaySkin;
     const groupName = ds?.skinGroupName;
@@ -548,7 +548,7 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
     const designers = ds?.designerList ?? null;
     const drawers = ds?.drawerList ?? null;
     const releaseTs = ds?.getTime ? ds.getTime * 1000 : null;
-    const heroUrl = skinTexture(skin.charId, skin.skinId);
+    const heroURL = skinTexture(skin.charId, skin.skinId);
     const [dynActive, setDynActive] = useState(false);
 
     return (
@@ -556,7 +556,7 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
             <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[5fr_4fr]">
                 <div className="relative flex items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:border-border/60 md:border-r">
-                    <img alt={`${opName} ${skinName}`} className={cn("h-full w-full object-contain object-bottom transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarUrl)} src={heroUrl} />
+                    <img alt={`${opName} ${skinName}`} className={cn("h-full w-full object-contain object-bottom transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarURL)} src={heroURL} />
                     <DynamicArtOverlay operatorCode={skin.charId} skinId={skin.skinId} fit={{ mode: "contain", align: "bottom" }} onActiveChange={setDynActive} />
                     <span className="absolute top-3 left-3">
                         <OwnershipBadge color={color} owned={owned} />

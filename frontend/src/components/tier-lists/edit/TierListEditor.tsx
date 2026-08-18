@@ -4,7 +4,7 @@ import { useCallback, useMemo, useReducer, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { ApiError } from "#/lib/api/_shared";
+import { APIError } from "#/lib/api/_shared";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, type ITierOperator, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { indexEntryToTierOperator } from "../shared";
@@ -141,7 +141,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         },
         onError: (err: unknown) => {
             setSaveProgress(null);
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
             setSaveError(message);
             toastManager.add({
                 id: `tl-edit-save-err-${Date.now()}`,
@@ -171,7 +171,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't update flair.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't update flair.";
             toastManager.add({ id: `tl-flair-err-${Date.now()}`, title: "Flair failed", description: message, type: "error" });
         },
     });
@@ -189,7 +189,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't update visibility.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't update visibility.";
             toastManager.add({ id: `tl-visibility-err-${Date.now()}`, title: "Visibility failed", description: message, type: "error" });
         },
     });
@@ -208,7 +208,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't publish version.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't publish version.";
             setPublishError(message);
         },
     });

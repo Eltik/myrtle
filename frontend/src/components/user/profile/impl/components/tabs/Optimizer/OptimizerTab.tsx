@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
 import { ComingSoon } from "./ComingSoon";
 import { OPTIMIZERS } from "./optimizers";
-import { SegmentedTabs } from "./SegmentedTabs";
 
 interface IProps {
     uid: string;
@@ -12,17 +12,24 @@ interface IProps {
 }
 
 export function OptimizerTab({ uid, roster, operatorsStatic }: IProps) {
-    const [activeId, setActiveId] = useState(OPTIMIZERS[0].id);
-    const active = OPTIMIZERS.find((o) => o.id === activeId) ?? OPTIMIZERS[0];
+    const [active, setActive] = useState(OPTIMIZERS[0].id);
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-                <SegmentedTabs active={active.id} label="Optimizers" onChange={setActiveId} segments={OPTIMIZERS.map((o) => ({ id: o.id, label: o.label }))} />
-                <p className="text-[12.5px] text-muted-foreground">{active.blurb}</p>
-            </div>
+        <Tabs className="gap-3" onValueChange={(value) => setActive(String(value))} value={active}>
+            <TabsList variant="underline">
+                {OPTIMIZERS.map((optimizer) => (
+                    <TabsTab key={optimizer.id} value={optimizer.id}>
+                        {optimizer.label}
+                    </TabsTab>
+                ))}
+            </TabsList>
 
-            {active.Component ? <active.Component operatorsStatic={operatorsStatic} roster={roster} uid={uid} /> : <ComingSoon def={active} />}
-        </div>
+            {OPTIMIZERS.map((optimizer) => (
+                <TabsPanel className="flex flex-col gap-3" key={optimizer.id} keepMounted value={optimizer.id}>
+                    <p className="text-[12.5px] text-muted-foreground">{optimizer.blurb}</p>
+                    {optimizer.Component ? <optimizer.Component operatorsStatic={operatorsStatic} roster={roster} uid={uid} /> : <ComingSoon def={optimizer} />}
+                </TabsPanel>
+            ))}
+        </Tabs>
     );
 }

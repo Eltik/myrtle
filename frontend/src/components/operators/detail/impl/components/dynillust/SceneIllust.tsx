@@ -2065,9 +2065,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // Some skins keep their painted backdrop in separate mesh layers (not the
             // spine). Load them if present; they share the spine's coordinate space, so we
             // nest the spine among them and frame the whole scene to the authored camera.
-            const sceneUrl = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server);
-            const textureBaseUrl = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server);
-            const scene = await loadSceneMeshes(sceneUrl + bust, textureBaseUrl, bust);
+            const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server);
+            const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server);
+            const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust);
             if (aborted()) {
                 spine.destroy();
                 return null;
@@ -2084,7 +2084,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // GAP FILL (?gapfill=1): also load it for the ENTRANCE, where a scene that does
             // not span the camera view leaves bare canvas the game fills with vista.
             if (backdrop && (opts.mode === "main" || gapFillOn())) {
-                backdropFrame = (scene && sceneFrameOf(scene.data)) || (await loadSceneFrame(sceneUrl + bust));
+                backdropFrame = (scene && sceneFrameOf(scene.data)) || (await loadSceneFrame(sceneURL + bust));
                 if (backdropFrame) {
                     try {
                         backdropData = await loadImageTexture(backdrop);
@@ -2107,7 +2107,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // emitters above the foreground layers.
                 let particles: ILoadedParticles | null = null;
                 if (scene) {
-                    const particlesUrl = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server);
+                    const particlesURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server);
                     const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server);
                     // Union of the character's own geometry bounds across its FULL played
                     // animation (idle loop, or the "Start" entrance clip) - used by particles.ts
@@ -2117,7 +2117,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // because the character's OWN pose/position moves substantially during the
                     // "Start" reform - a single frame would miss most of the overlap.
                     const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
-                    particles = await loadParticles(particlesUrl + bust, particlesTexBase, bust, characterBounds, scene.hasDarkBackdrop);
+                    particles = await loadParticles(particlesURL + bust, particlesTexBase, bust, characterBounds, scene.hasDarkBackdrop);
                     if (aborted()) {
                         spine.destroy();
                         particles?.destroy();

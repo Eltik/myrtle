@@ -1,20 +1,25 @@
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
-import type { ITile } from "#/lib/base/layout";
-import styles from "./Board.module.css";
+import type { ITile } from "#/lib/base/board";
+import { RoomPopover } from "../../RoomPopover";
+import { tileAriaLabel } from "../logic/tile-labels";
+import { tileStyle } from "../logic/tile-style";
 import { RoomCrew } from "./RoomCrew";
-import { RoomPopover } from "./RoomPopover";
-import { tileStyle } from "./tile-style";
+import styles from "./Tile.module.css";
+import { TileHint } from "./TileHint";
+import { TileTooltip } from "./TileTooltip";
 
 export function ControlCenterTile({ tile }: { tile: ITile }) {
     return (
         <Popover>
             <PopoverTrigger
                 render={(props) => (
-                    <button {...props} type="button" className={`${styles["riic-tile"]} ${styles["riic-tile-fixed"]}`} data-slot-id={tile.slotId} data-facility-type={tile.facility ?? undefined} title={tile.name} style={tileStyle(tile)}>
-                        <span className={styles["riic-tile-room-clip"]}>
-                            <span className={styles["riic-tile-room-body"]} />
-                            <span className={styles["riic-tile-room-grid"]} />
-                        </span>
+                    <button {...props} type="button" className={`${styles["riic-tile"]} ${styles["riic-tile-fixed"]}`} data-slot-id={tile.slotId} data-facility-type={tile.facility ?? undefined} aria-label={tileAriaLabel(tile)} style={tileStyle(tile)}>
+                        <TileTooltip label={<TileHint tile={tile} />}>
+                            <span className={styles["riic-tile-room-clip"]}>
+                                <span className={styles["riic-tile-room-body"]} />
+                                <span className={styles["riic-tile-room-grid"]} />
+                            </span>
+                        </TileTooltip>
                         <span className={styles["riic-cc-badge"]}>
                             <span className={styles["riic-cc-bracket"]}>&#10094;</span>
                             <span className={styles["riic-cc-badge-inner"]}>

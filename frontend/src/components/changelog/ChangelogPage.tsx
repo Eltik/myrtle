@@ -82,7 +82,7 @@ export function ChangelogPage() {
     const contributors = useMemo(() => new Set(filtered.map((c) => c.author.login ?? c.author.name)).size, [filtered]);
 
     const repoLabel = data?.repo ?? "GitHub";
-    const repoUrl = data?.repoUrl ?? "https://github.com";
+    const repoURL = data?.repoURL ?? "https://github.com";
 
     return (
         <main className="relative overflow-x-clip">
@@ -100,7 +100,7 @@ export function ChangelogPage() {
                             <p className="m-0 mt-2.5 max-w-[52ch] font-sans text-[15.5px] text-muted-foreground leading-[1.55]">Every commit pushed to myrtle.moe, pulled live from GitHub and grouped by day.</p>
                         </div>
                         <a
-                            href={repoUrl}
+                            href={repoURL}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg border border-border bg-card px-3 py-2 font-medium font-sans text-[13.5px] text-foreground no-underline shadow-xs/5 transition-colors hover:border-border/70 hover:bg-accent/50"

@@ -8,8 +8,8 @@ export type CommitType = "feature" | "fix" | "perf" | "refactor" | "docs" | "sty
 export interface IChangelogAuthor {
     name: string;
     login: string | null;
-    avatarUrl: string | null;
-    profileUrl: string | null;
+    avatarURL: string | null;
+    profileURL: string | null;
 }
 
 export interface IChangelogCommit {
@@ -33,7 +33,7 @@ export interface IChangelogCommit {
 export interface IChangelogResponse {
     /** Normalized "owner/repo". */
     repo: string;
-    repoUrl: string;
+    repoURL: string;
     /** Pinned branch, or null when the repo's default branch is used. */
     branch: string | null;
     commits: IChangelogCommit[];
@@ -140,8 +140,8 @@ function normalize(commit: IGitHubCommit): IChangelogCommit {
         author: {
             name: commit.commit?.author?.name ?? commit.author?.login ?? "Unknown",
             login: commit.author?.login ?? null,
-            avatarUrl: commit.author?.avatar_url ?? null,
-            profileUrl: commit.author?.html_url ?? null,
+            avatarURL: commit.author?.avatar_url ?? null,
+            profileURL: commit.author?.html_url ?? null,
         },
         verified: Boolean(commit.commit?.verification?.verified),
     };
@@ -195,7 +195,7 @@ export const getChangelogFn = createServerFn({ method: "GET" }).handler(async ()
 
     const data: IChangelogResponse = {
         repo: `${owner}/${repo}`,
-        repoUrl: `https://github.com/${owner}/${repo}`,
+        repoURL: `https://github.com/${owner}/${repo}`,
         branch,
         commits: collected.slice(0, MAX_COMMITS).map(normalize),
         fetchedAt: new Date().toISOString(),

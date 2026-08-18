@@ -42,7 +42,7 @@ export interface ISpawnRow {
 export interface IResolvedDrop {
     reward: IDisplayDetailReward;
     name: string;
-    iconUrl: string;
+    iconURL: string;
     rarity: number;
     isChar: boolean;
     occ: { label: string; level: number; tone: string };

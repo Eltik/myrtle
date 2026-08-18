@@ -39,7 +39,7 @@ function operatorDisplayName(operator: IOperatorListItem): string {
 
 interface IPlayer {
     playingId: string | null;
-    playingUrl: string | null;
+    playingURL: string | null;
     progress: number;
     downloadingId: string | null;
     erroredURLs: Set<string>;
@@ -50,7 +50,7 @@ interface IPlayer {
 function useAudioPlayer() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playingId, setPlayingId] = useState<string | null>(null);
-    const [playingUrl, setPlayingUrl] = useState<string | null>(null);
+    const [playingURL, setPlayingURL] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
@@ -73,7 +73,7 @@ function useAudioPlayer() {
 
     const resetPlayback = useCallback(() => {
         setPlayingId(null);
-        setPlayingUrl(null);
+        setPlayingURL(null);
         setProgress(0);
     }, []);
 
@@ -91,7 +91,7 @@ function useAudioPlayer() {
         (id: string, url: string) => {
             const a = audioRef.current;
             if (!a) return;
-            if (playingId === id && playingUrl === url) {
+            if (playingId === id && playingURL === url) {
                 a.pause();
                 resetPlayback();
                 return;
@@ -100,13 +100,13 @@ function useAudioPlayer() {
             a.src = url;
             setProgress(0);
             setPlayingId(id);
-            setPlayingUrl(url);
+            setPlayingURL(url);
             a.play().catch(() => {
                 markErrored(url);
                 resetPlayback();
             });
         },
-        [playingId, playingUrl, erroredURLs, markErrored, resetPlayback],
+        [playingId, playingURL, erroredURLs, markErrored, resetPlayback],
     );
 
     const download = useCallback(
@@ -137,7 +137,7 @@ function useAudioPlayer() {
         [erroredURLs, markErrored],
     );
 
-    const player: IPlayer = { playingId, playingUrl, progress, downloadingId, erroredURLs, play, download };
+    const player: IPlayer = { playingId, playingURL, progress, downloadingId, erroredURLs, play, download };
 
     return { audioRef, player, volume, setVolume, isMuted, setIsMuted, setProgress, markErrored, resetPlayback, stop };
 }
@@ -397,13 +397,13 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
 
     const playVoice = (voice: IVoice) => {
         if (!voice.id) return;
-        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
+        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceURL;
         if (!url) return;
         player.play(voice.id, audioURL(url, operator.server));
     };
 
     const downloadVoice = (voice: IVoice) => {
-        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
+        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceURL;
         if (!url || !voice.id) return;
         const langLabel = VOICE_LANGUAGE_LABELS[selectedLanguage] ?? selectedLanguage;
         player.download(voice.id, audioURL(url, operator.server), `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${fileExtension(url, "mp3")}`);
@@ -446,7 +446,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                             ) : (
                                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                                     {c.lines.map((voice) => {
-                                        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
+                                        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceURL;
                                         const fullURL = url ? audioURL(url, operator.server) : null;
                                         const isUnavailable = !url || (fullURL !== null && player.erroredURLs.has(fullURL));
                                         const categoryLabel = c.id === ALL_CATEGORY_ID ? (VOICE_CATEGORY_MAP[voice.placeType] ?? "Other") : null;
@@ -732,21 +732,21 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
     }, [item, selectedLang]);
 
     const safeIndex = Math.min(variantIndex, Math.max(0, activeVariants.length - 1));
-    const currentUrl = activeVariants[safeIndex] ?? null;
+    const currentURL = activeVariants[safeIndex] ?? null;
     const variantCount = activeVariants.length;
 
     const isRowPlaying = player.playingId === item.id;
-    const isUnavailable = !currentUrl || player.erroredURLs.has(currentUrl);
+    const isUnavailable = !currentURL || player.erroredURLs.has(currentURL);
 
     const onPlay = () => {
-        if (currentUrl) player.play(item.id, currentUrl);
+        if (currentURL) player.play(item.id, currentURL);
     };
 
     const onDownload = () => {
-        if (!currentUrl) return;
+        if (!currentURL) return;
         const langPart = selectedLang ? `_${selectedLang}` : "";
         const variantPart = variantCount > 1 ? `_v${safeIndex + 1}` : "";
-        player.download(item.id, currentUrl, `${sanitize(operatorName)}_${sanitize(item.label)}${langPart}${variantPart}.${fileExtension(currentUrl, "ogg")}`);
+        player.download(item.id, currentURL, `${sanitize(operatorName)}_${sanitize(item.label)}${langPart}${variantPart}.${fileExtension(currentURL, "ogg")}`);
     };
 
     return (
@@ -792,7 +792,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
             {expanded && variantCount > 1 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                     {activeVariants.map((url, i) => {
-                        const playingThis = player.playingId === item.id && player.playingUrl === url;
+                        const playingThis = player.playingId === item.id && player.playingURL === url;
                         const selected = i === safeIndex;
                         const errored = player.erroredURLs.has(url);
                         return (

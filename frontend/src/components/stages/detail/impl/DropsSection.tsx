@@ -42,7 +42,7 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
                 }}
             >
                 {!errored ? (
-                    <img src={drop.iconUrl} alt={drop.name} loading="lazy" decoding="async" className="h-full w-full object-contain" onError={() => setErrored(true)} />
+                    <img src={drop.iconURL} alt={drop.name} loading="lazy" decoding="async" className="h-full w-full object-contain" onError={() => setErrored(true)} />
                 ) : (
                     <span className="font-bold font-mono text-[12px]" style={{ color }}>
                         {initials}

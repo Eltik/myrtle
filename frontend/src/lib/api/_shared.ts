@@ -2,23 +2,23 @@ export interface IBackendStatus {
     status: string;
 }
 
-export class ApiError extends Error {
+export class APIError extends Error {
     constructor(
         public readonly status: number,
         message: string,
     ) {
         super(message);
-        this.name = "ApiError";
+        this.name = "APIError";
     }
 }
 
-export async function parseError(res: Response): Promise<ApiError> {
+export async function parseError(res: Response): Promise<APIError> {
     const fallback = `Request failed: ${res.status}`;
     try {
         const data = (await res.json()) as unknown;
-        return new ApiError(res.status, extractErrorMessage(data) ?? fallback);
+        return new APIError(res.status, extractErrorMessage(data) ?? fallback);
     } catch {
-        return new ApiError(res.status, fallback);
+        return new APIError(res.status, fallback);
     }
 }
 

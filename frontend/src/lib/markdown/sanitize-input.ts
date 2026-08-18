@@ -90,9 +90,9 @@ export function sanitizeMarkdownForStorage(input: string | null | undefined, opt
     s = s.replace(HTML_TAG_RE, "");
 
     // Neutralize dangerous markdown link targets.
-    s = s.replace(MARKDOWN_LINK_TARGET_RE, (_match, rawUrl: string, title: string | undefined) => {
-        const decoded = decodeEntities(rawUrl);
-        return isAllowedLinkTarget(decoded) ? `](${rawUrl}${title ?? ""})` : "](#)";
+    s = s.replace(MARKDOWN_LINK_TARGET_RE, (_match, rawURL: string, title: string | undefined) => {
+        const decoded = decodeEntities(rawURL);
+        return isAllowedLinkTarget(decoded) ? `](${rawURL}${title ?? ""})` : "](#)";
     });
 
     // Neutralize autolinks with bad schemes.

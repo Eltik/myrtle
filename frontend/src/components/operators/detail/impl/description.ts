@@ -9,7 +9,7 @@ const DESCRIPTION_COLORS = {
     skillTooltip: "#27e8e7",
 };
 
-function colorForTag(tag: string): string {
+export function colorForTag(tag: string): string {
     if (tag.startsWith("$")) return DESCRIPTION_COLORS.skillTooltip;
     // Trailing tag fragment after `@<scope>.` - `ba` is combat, `cc` is base/RIIC.
     const suffix = tag.includes(".") ? tag.slice(tag.indexOf(".") + 1) : tag;

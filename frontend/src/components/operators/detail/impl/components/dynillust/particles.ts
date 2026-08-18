@@ -4216,7 +4216,7 @@ export function particleCensus(): { emitters: number; systems: { sys: number; ev
     return PARTICLE_CENSUS.map((c) => ({ emitters: c.emitters, systems: c.snapshot() }));
 }
 
-export async function loadParticles(url: string, textureBaseUrl: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false): Promise<ILoadedParticles | null> {
+export async function loadParticles(url: string, textureBaseURL: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false): Promise<ILoadedParticles | null> {
     let data: IParticlesData;
     try {
         const res = await fetch(url);
@@ -4230,7 +4230,7 @@ export async function loadParticles(url: string, textureBaseUrl: string, bust = 
     const unskip = unskipSet();
     const bases = await Promise.all(
         Array.from({ length: data.textureCount }, (_, i) =>
-            loadTexture(`${textureBaseUrl}${i}.png${bust}`)
+            loadTexture(`${textureBaseURL}${i}.png${bust}`)
                 .then((t) => (unskip.has(i) ? { ...t, skip: false, desatPanel: false, hazePanel: false } : t))
                 .catch(() => null),
         ),

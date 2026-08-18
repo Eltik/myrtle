@@ -1,7 +1,10 @@
+import { Check } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { ITile } from "#/lib/base/layout";
-import { isProduction, powerOf } from "#/lib/base/layout";
-import { useOptimizerApi } from "./optimizer-context";
+import { type ITile, vacanciesOf } from "#/lib/base/board";
+import { isProduction, powerOf } from "#/lib/base/catalog";
+import { useBaseOptimizer } from "../base-context";
+import { BaseSkill } from "./BaseSkill";
 
 function Stat({ label, value }: { label: string; value: string }) {
     return (
@@ -13,19 +16,20 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function RoomPopover({ tile }: { tile: ITile }) {
-    const api = useOptimizerApi();
+    const api = useBaseOptimizer();
     const room = api.boardRooms.find((r) => r.slot_id === tile.slotId);
-    const scored = api.evaluation?.assignment.rooms.find((r: { slot_id: string }) => r.slot_id === tile.slotId);
+    const scored = api.evaluation?.assignment.rooms.find((r) => r.slot_id === tile.slotId);
 
     const producesOwnOutput = scored !== undefined;
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
 
     const formula = room?.formula_type ? api.formulas.find((f) => f.formula_type === room.formula_type) : undefined;
     const power = room ? powerOf(room, api.catalog) : 0;
-    const vacancies = Math.max(0, tile.seats - tile.operators.length);
+    const vacancies = vacanciesOf(tile);
+    const change = api.proposal?.room_diffs.find((d) => d.slot_id === tile.slotId && d.before.join() !== d.after.join());
 
     return (
-        <div className="flex w-62 flex-col gap-3">
+        <div className="flex w-76 flex-col gap-3">
             <header className="flex items-baseline justify-between gap-2">
                 <h2 className="font-semibold text-[13px] text-foreground">{tile.name}</h2>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
@@ -42,13 +46,22 @@ export function RoomPopover({ tile }: { tile: ITile }) {
             </dl>
 
             {tile.seats > 0 && (
-                <section className="flex flex-col gap-1 border-border border-t pt-2">
+                <section className="flex flex-col gap-2.5 border-border border-t pt-2">
                     {tile.operators.map((op) => (
-                        <div key={op.id} className="flex items-center gap-2">
-                            <span className="size-6 shrink-0 overflow-hidden rounded-sm bg-muted text-center font-bold text-[9px] leading-6">
-                                <OperatorAvatar charId={op.id} name={op.name} />
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
+                        <div key={op.id} className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="size-6 shrink-0 overflow-hidden rounded-sm bg-muted text-center font-bold text-[9px] leading-6">
+                                    <OperatorAvatar charId={op.id} name={op.name} />
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
+                            </div>
+                            {op.skills.length > 0 && (
+                                <div className="ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5">
+                                    {op.skills.map((skill) => (
+                                        <BaseSkill key={skill.buffId} skill={skill} />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                     {vacancies > 0 && <p className="text-[11px] text-muted-foreground">{vacancies === tile.seats ? "Nobody is working here." : `${vacancies} seat${vacancies === 1 ? "" : "s"} open.`}</p>}
@@ -59,6 +72,17 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">
                     {api.evaluationError ? "This layout could not be scored." : api.evaluating ? "Scoring…" : unstaffed ? "An empty room produces nothing and buffs nothing." : "Only producing rooms report an efficiency. This crew contributes through the bonuses they cast elsewhere."}
                 </p>
+            )}
+            {change && (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
+                    <span className="font-mono text-[11px] tabular-nums">
+                        {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>
+                    </span>
+                    <Button onClick={() => api.acceptRoom(tile.slotId)} size="sm" variant="outline">
+                        <Check />
+                        Apply
+                    </Button>
+                </div>
             )}
         </div>
     );

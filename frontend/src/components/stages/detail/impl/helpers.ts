@@ -152,7 +152,7 @@ export function groupDrops(stage: IStage, items: Record<string, IMaterialItem>):
         const resolved: IResolvedDrop = {
             reward,
             name: isChar ? prettyCharName(reward.id) : (mat?.name ?? reward.id),
-            iconUrl: isChar ? getAvatarById(reward.id) : itemIcon(reward.id, mat?.iconId, null),
+            iconURL: isChar ? getAvatarById(reward.id) : itemIcon(reward.id, mat?.iconId, null),
             rarity: isChar ? 5 : rarityNum(mat?.rarity),
             isChar,
             occ: OCC_META[reward.occPercent] ?? OCC_FALLBACK,

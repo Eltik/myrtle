@@ -1,21 +1,21 @@
 import { useMemo } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
-import { buildBoard } from "#/lib/base/layout";
+import { buildBoard } from "#/lib/base/board";
 import { toRosterOptions } from "#/lib/base/roster";
 import { useOptimizer } from "#/lib/base/use-optimizer";
 import type { IOptimizerProps } from "../optimizers";
-import { BoardView } from "./BoardView";
-import { OptimizerProvider } from "./optimizer-context";
+import { BasePanel } from "./BasePanel";
+import { BaseOptimizerProvider } from "./base-context";
 import { crewsForShift } from "./shift-crews";
 
 export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps) {
     const api = useOptimizer(uid);
 
-    const rosterNames = useMemo(() => new Map(toRosterOptions(roster, operatorsStatic).map((op) => [op.id, op.name])), [roster, operatorsStatic]);
+    const rosterById = useMemo(() => new Map(toRosterOptions(roster, operatorsStatic).map((op) => [op.id, op])), [roster, operatorsStatic]);
     const presetBySlot = useMemo(() => new Map(api.presets.map((p) => [p.slot_id, p.shifts])), [api.presets]);
 
-    const { rooms, marks } = useMemo(() => crewsForShift(api, presetBySlot, api.catalog), [api, presetBySlot]);
-    const board = useMemo(() => buildBoard(api.slots, rooms, api.catalog, rosterNames, marks), [api.slots, rooms, api.catalog, rosterNames, marks]);
+    const { rooms, marks } = useMemo(() => crewsForShift(api, presetBySlot), [api, presetBySlot]);
+    const board = useMemo(() => buildBoard(api.slots, rooms, api.catalog, rosterById, marks), [api.slots, rooms, api.catalog, rosterById, marks]);
 
     if (api.layoutLoading || api.catalogLoading) {
         return (
@@ -35,8 +35,8 @@ export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps)
     }
 
     return (
-        <OptimizerProvider value={api}>
-            <BoardView board={board} />
-        </OptimizerProvider>
+        <BaseOptimizerProvider value={api}>
+            <BasePanel board={board} />
+        </BaseOptimizerProvider>
     );
 }

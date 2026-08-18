@@ -59,14 +59,14 @@ export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
             <CollapsibleContent>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {sorted.map((skill) => {
-                        const iconUrl = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
+                        const iconURL = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
                         const html = descriptionToHtml(skill.description, []);
                         const targets = skill.targets.map(formatTarget);
                         return (
                             <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={skill.buffId}>
                                 <div className="flex gap-3">
                                     <div className="relative flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-md border border-border/40 bg-secondary/30">
-                                        {iconUrl ? <img alt={skill.buffName} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={iconUrl} /> : <Building2 className="h-5 w-5 text-muted-foreground" />}
+                                        {iconURL ? <img alt={skill.buffName} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={iconURL} /> : <Building2 className="h-5 w-5 text-muted-foreground" />}
                                         <Tooltip>
                                             <TooltipTrigger
                                                 render={(props) => (

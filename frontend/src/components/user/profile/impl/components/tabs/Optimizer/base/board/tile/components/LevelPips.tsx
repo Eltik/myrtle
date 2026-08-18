@@ -1,4 +1,4 @@
-import styles from "./Board.module.css";
+import styles from "./Tile.module.css";
 
 interface IProps {
     max: number;

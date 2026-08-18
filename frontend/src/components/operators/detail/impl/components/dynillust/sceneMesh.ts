@@ -1665,9 +1665,9 @@ export function sceneFrameOf(data: ISceneData): ISceneFrame | null {
 
 /** Fetch just the authored camera frame from a scene JSON (no textures). Returns
  *  null when there's no scene JSON or it lacks the frame fields. */
-export async function loadSceneFrame(sceneUrl: string): Promise<ISceneFrame | null> {
+export async function loadSceneFrame(sceneURL: string): Promise<ISceneFrame | null> {
     try {
-        const res = await fetch(sceneUrl);
+        const res = await fetch(sceneURL);
         if (!res.ok) return null;
         const data = (await res.json()) as ISceneData;
         return sceneFrameOf(data);
@@ -1737,10 +1737,10 @@ function sceneAperture(data: ISceneData, bases: ISceneTex[]): ISceneAperture | n
  * Returns null when there is no scene JSON (the common case - the skin's scene
  * is fully in the spine), so callers fall back to spine-only rendering.
  */
-export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, bust = ""): Promise<ILoadedScene | null> {
+export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, bust = ""): Promise<ILoadedScene | null> {
     let data: ISceneData;
     try {
-        const res = await fetch(sceneUrl);
+        const res = await fetch(sceneURL);
         if (!res.ok) return null;
         data = (await res.json()) as ISceneData;
     } catch {
@@ -1755,7 +1755,7 @@ export async function loadSceneMeshes(sceneUrl: string, textureBaseUrl: string, 
         return null;
     }
 
-    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseUrl}${i}.png${bust}`)));
+    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseURL}${i}.png${bust}`)));
 
     // Ram mask lookup (see {@link IRamSceneTex}). Null unless the layer carries a mask that
     // actually loaded, which is what switches it onto the Ram compositor at all.

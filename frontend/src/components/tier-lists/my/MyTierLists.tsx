@@ -7,7 +7,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
-import { ApiError } from "#/lib/api/_shared";
+import { APIError } from "#/lib/api/_shared";
 import { createTierListFn, deleteTierListFn, type ITierListBrowseItem, myTierListsDetailedQueryOptions, updateTierListFn } from "#/lib/api/tier-lists";
 import { matchesBrowseQuery, sortBrowseItems } from "../shared";
 import { CreateListDialog } from "./CreateListDialog";
@@ -20,7 +20,7 @@ import { type MyListSort, type MyListTypeFilter, MyToolbar, type MyViewMode } fr
 
 const COMMUNITY_QUOTA = 10;
 
-function buildShareUrl(slug: string): string {
+function buildShareURL(slug: string): string {
     if (typeof window === "undefined") return `/tier-lists/${slug}`;
     return `${window.location.origin}/tier-lists/${slug}`;
 }
@@ -94,7 +94,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             navigate({ to: "/tier-lists/$id", params: { id: created.slug } });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't create list.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't create list.";
             setMutationError(message);
         },
     });
@@ -113,7 +113,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
             setMutationError(message);
         },
     });
@@ -134,7 +134,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't delete list.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't delete list.";
             setMutationError(message);
         },
     });
@@ -160,7 +160,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
     );
 
     const handleCopyLink = useCallback(async (slug: string) => {
-        const url = buildShareUrl(slug);
+        const url = buildShareURL(slug);
         try {
             await navigator.clipboard.writeText(url);
             toastManager.add({
