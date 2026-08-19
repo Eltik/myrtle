@@ -3,6 +3,7 @@ import { type ITile, vacanciesOf } from "#/lib/base/board";
 import { isProduction, powerOf } from "#/lib/base/catalog";
 import { useBaseOptimizer } from "../base-context";
 import { BaseSkill } from "./BaseSkill";
+import { TileTooltip } from "./tile/components/TileTooltip";
 
 function Stat({ label, value }: { label: string; value: string }) {
     return (
@@ -60,9 +61,9 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
                                 {benched.has(op.id) && (
-                                    <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider" title="Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.">
-                                        Bench
-                                    </span>
+                                    <TileTooltip label={<span className="block max-w-56">Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.</span>}>
+                                        <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">Bench</span>
+                                    </TileTooltip>
                                 )}
                             </div>
                             {op.skills.length > 0 && (
