@@ -215,7 +215,10 @@ static RE_CC_HIRE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"HR contacting speed <@cc\.vup>\+([\d.]+)%</>").unwrap());
 /// A same-room companion gate: "assigned to the Control Center with <op>".
 static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"assigned to the Control Center with <@cc\.kw>([^<]+)</>").unwrap()
+    // Both word orders: "assigned to the Control Center with <Aak>" and
+    // Mr. Lee's "assigned together with <Aak> to the Control Center".
+    Regex::new(r"assigned (?:to the Control Center with|together with) <@cc\.kw>([^<]+)</>")
+        .unwrap()
 });
 
 /// A dormitory single-target healer: "restores +X to an(other) Operator in
@@ -1025,7 +1028,24 @@ pub fn build_registry(
                     // Control-Center morale recovery. Only the "other buildings"
                     // phrasing reaches workers base-wide; the `control_mp_cost`
                     // family ("all Operators in the Control Center") is CC-room-only.
-                    let recovery = parse_morale_recovery(&buff.description).unwrap_or(0.0);
+                    //
+                    // An aura is credited ONLY when the sentence's subject really
+                    // is an aura scope. This family also holds named-partner gates
+                    // (Mr. Lee's "together with Aak" +0.25, the Amiya pair skills)
+                    // and self-subject texts (Gladiia's Abyssal-conditional self
+                    // ±0.5, the self-drain riders) - a flat parse credited all of
+                    // them as unconditional room auras, inflating the sustain sim.
+                    // Partner-gated and self-subject variants price 0 (never-guess:
+                    // the gate/condition isn't resolvable at parse time); self
+                    // DRAINS still ride the `parse_morale_loss_increase` side-map.
+                    let partner_gated = RE_CC_WITH.is_match(&buff.description);
+                    let aura_scope = desc_lower.contains("operators in the control center")
+                        || desc_lower.contains("other building");
+                    let recovery = if partner_gated || !aura_scope {
+                        0.0
+                    } else {
+                        parse_morale_recovery(&buff.description).unwrap_or(0.0)
+                    };
                     BuffResolutionStrategy::MoraleModifier {
                         recovery_per_hour: recovery,
                         is_self_only: false,

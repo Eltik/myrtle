@@ -4372,6 +4372,40 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
     }
 }
 
+/// The Control-Center morale family credits an aura ONLY when the text's
+/// subject really is an aura scope ("all Operators in the Control Center" /
+/// "other buildings"). Named-partner gates (Mr. Lee needs Aak; the Amiya pair
+/// skills) and self-subject conditionals (Gladiia's Abyssal-dependent ±0.5)
+/// price 0 - a flat parse credited them all as unconditional room auras.
+#[test]
+fn cc_morale_auras_credit_only_true_aura_scopes() {
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let recovery = |id: &str| match registry.get(id) {
+        Some(BuffResolutionStrategy::MoraleModifier {
+            recovery_per_hour,
+            base_wide,
+            ..
+        }) => (*recovery_per_hour, *base_wide),
+        other => panic!("{id}: expected MoraleModifier, got {other:?}"),
+    };
+    // Mr. Lee's "together with Aak" +0.25: gated, prices 0 without crew context.
+    assert_eq!(recovery("control_allCost_condChar[000]"), (0.0, false));
+    // The Amiya pair skill: partner-gated AND self+Amiya scoped, not a room aura.
+    assert_eq!(recovery("control_mp_cost_double[000]"), (0.0, false));
+    // Gladiia's Abyssal-conditional SELF ±0.5: not an aura at all.
+    assert_eq!(recovery("control_mp_aegir1[000]"), (0.0, false));
+    // Her real aura stays: +0.05 to all CC operators, room-local.
+    assert_eq!(recovery("control_mp_aegir2[000]"), (0.05, false));
+    // The plain +0.05 CC-room family is untouched.
+    assert_eq!(recovery("control_mp_cost[000]"), (0.05, false));
+    // Base-wide "other buildings" auras keep their unconditional base value.
+    assert_eq!(recovery("control_mp_bd_cost_expand[000]"), (0.05, true));
+    assert_eq!(recovery("control_mp_expand_double[000]"), (0.1, true));
+}
+
 /// The rotation's Control-Center Squad 2 must run the same dead-weight rule as
 /// Squad 1. Squad 1's eviction loop drops a conditional operator whose gate the
 /// planned teams never satisfy - but its exclusion list used to stay private, so
