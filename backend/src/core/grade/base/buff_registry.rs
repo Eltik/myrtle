@@ -170,6 +170,14 @@ static RE_POOL_TAIL: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+/// "each"/"every" QUANTIFYING a faction/tag token ("for each <Glasgow Gang>
+/// Operator..."), styled or bare - the singular per-operator conditional form
+/// (Delphine), as opposed to the plural "all <Kjerag> Operators..." phrasing.
+/// Token-adjacency keeps a temporal "each hour" from ever matching.
+static RE_EACH_FACTION: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:<@cc\.vup>)?(?:each|every)(?:</>)?\s*<\$cc\.(?:g|tag)\.").unwrap()
+});
+
 /// Pool-scaled Control-Center globals. Shape A: "for every N <res>, ... all
 /// <Rooms>' order efficiency +P%" (Sakiko). Shape B: "of all <Rooms> +B%, with
 /// an additional +P% for every N <res>" (Mortis).
@@ -1057,7 +1065,7 @@ pub fn build_registry(
                             .next()
                             .is_some_and(|c| c.is_ascii_digit())
                         && (buff.description.contains("Operators")
-                            || buff.description.contains("each"))
+                            || RE_EACH_FACTION.is_match(&buff.description))
                     {
                         let required_count = RE_VUP_NUMBER
                             .captures(&buff.description)
