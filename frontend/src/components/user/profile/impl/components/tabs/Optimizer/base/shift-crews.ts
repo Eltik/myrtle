@@ -17,7 +17,7 @@ export function crewsForShift(api: IOptimizerAPI, presetBySlot: Map<string, stri
     const shift = api.viewShift;
     if (shift === null) return { rooms: api.boardRooms };
 
-    if (api.rotation === null) {
+    if (api.proposal === null || api.rotation === null) {
         return { rooms: api.boardRooms.map((room) => ({ ...room, operators: presetForShift(presetBySlot.get(room.slot_id) ?? [], shift - 1) })) };
     }
 

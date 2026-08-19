@@ -16,7 +16,7 @@ import {
     type IRotationResponse,
     type ISlotPresets,
     optimizeLayoutFn,
-    rotationPlanFn,
+    rotationPlanQueryOptions,
 } from "#/lib/api/base";
 import type { IShiftRoom } from "#/lib/api/user";
 import { type Catalog, isPlannable } from "./catalog";
@@ -68,6 +68,11 @@ function useEvaluation(uid: string, layout: IDraftRoom[]) {
     return useQuery(evaluateLayoutQueryOptions(uid, settled));
 }
 
+function useRotation(uid: string, layout: IDraftRoom[]) {
+    const settled = useDebounce(layout, 350);
+    return useQuery(rotationPlanQueryOptions(uid, settled));
+}
+
 export function useOptimizer(uid: string): IOptimizerAPI {
     const layoutQuery = useQuery(baseLayoutQueryOptions(uid));
 
@@ -108,15 +113,11 @@ export function useOptimizer(uid: string): IOptimizerAPI {
 
     const patchLayout = useCallback((fn: (rooms: IDraftRoom[]) => IDraftRoom[]) => setPersisted((prev) => ({ ...prev, layout: fn(prev.layout) })), [setPersisted]);
 
-    const [rotation, setRotation] = useState<IRotationResponse | null>(null);
+    const rotationQuery = useRotation(uid, layout);
+    const rotation = rotationQuery.data ?? null;
 
     const shiftCount = rotation?.shift_count ?? catalogQuery.data?.shift_count ?? 0;
     const [viewShift, setViewShift] = useState<number | null>(null);
-
-    const rotationMutation = useMutation({
-        mutationFn: () => rotationPlanFn({ data: { uid, layout } }),
-        onSuccess: setRotation,
-    });
 
     const optimizeMutation = useMutation({
         mutationFn: (scope: string[]) =>
@@ -126,13 +127,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
         onSuccess: setProposal,
     });
 
-    const runOptimize = useCallback(
-        (scope: string[]) => {
-            optimizeMutation.mutate(scope);
-            rotationMutation.mutate();
-        },
-        [optimizeMutation, rotationMutation],
-    );
+    const runOptimize = useCallback((scope: string[]) => optimizeMutation.mutate(scope), [optimizeMutation]);
 
     const applyRooms = useCallback(
         (slotIds: string[]) => {
@@ -167,14 +162,12 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const reset = useCallback(() => {
         setPersisted({ layout: realLayout });
         setProposal(null);
-        setRotation(null);
     }, [setPersisted, realLayout]);
 
     const identity = useMemo(() => layoutIdentity(layout), [layout]);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: the identity is not read in the body
     useEffect(() => {
-        setRotation(null);
         setViewShift(null);
     }, [identity]);
 
@@ -208,8 +201,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             setViewShift,
             shiftRoom,
             proposal,
-            optimizing: optimizeMutation.isPending || rotationMutation.isPending,
-            optimizeError: optimizeMutation.error ?? rotationMutation.error,
+            optimizing: optimizeMutation.isPending,
+            optimizeError: optimizeMutation.error ?? rotationQuery.error,
             runOptimize,
             acceptRoom,
             reset,
@@ -229,8 +222,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             evaluation.isFetching,
             evaluation.error,
             rotation,
-            rotationMutation.isPending,
-            rotationMutation.error,
+            rotationQuery.error,
             viewShift,
             shiftRoom,
             proposal,

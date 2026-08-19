@@ -68,6 +68,19 @@ export interface IDorms {
     total_capacity: number;
     /** Morale restored per hour to a resting operator. */
     recovery_per_hour: number;
+    /** Each dormitory, best first - the order resters fill them. */
+    per_dorm?: IDorm[];
+}
+
+export interface IDorm {
+    slot_id: string;
+    level: number;
+    capacity: number;
+    recovery_per_hour: number;
+    /** Strongest whole-dorm recovery aura among the occupants, non-stacking. */
+    occupant_aura_per_hour: number;
+    /** Strongest single-target recovery among the occupants. */
+    occupant_single_per_hour: number;
 }
 
 export interface IEvaluateResponse {
@@ -306,6 +319,16 @@ export function baseCatalogQueryOptions() {
  * repeat edits that land back on an arrangement already scored - dragging an
  * operator out and back costs nothing.
  */
+export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["base", "rotation", uid, layoutKey(layout), bearerToken ? "auth" : "anon"],
+        queryFn: () => rotationPlanFn({ data: { uid, layout, bearerToken } }),
+        enabled: layout.length > 0,
+        staleTime: 5 * 60 * 1000,
+        placeholderData: (prev) => prev,
+    });
+}
+
 export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], bearerToken?: string) {
     return queryOptions({
         queryKey: ["base", "evaluate", uid, layoutKey(layout), bearerToken ? "auth" : "anon"],

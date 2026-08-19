@@ -258,10 +258,6 @@ button.riic-tile:focus-visible {
     pointer-events: none;
 }
 
-.riic-tile-fixed .riic-cc-badge {
-    bottom: 24px;
-}
-
 .riic-cc-bracket {
     color: var(--slab-ink-dim);
     font-size: 32px;

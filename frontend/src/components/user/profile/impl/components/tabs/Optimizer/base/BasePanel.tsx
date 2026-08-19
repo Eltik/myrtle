@@ -7,6 +7,7 @@ import { Board } from "./board/Board";
 import { Headline } from "./controls/Headline";
 import { ShiftStrip } from "./controls/ShiftStrip";
 import { SustainabilityBadge } from "./controls/SustainabilityBadge";
+import { StatsForNerds } from "./stats/StatsForNerds";
 
 export function BasePanel({ board }: { board: IBoard }) {
     const api = useBaseOptimizer();
@@ -42,7 +43,7 @@ export function BasePanel({ board }: { board: IBoard }) {
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <ShiftStrip />
-                    {api.rotation && sustainability && <SustainabilityBadge depletedCount={sustainability.depleted.length} dormOverflow={sustainability.dorm_overflow} horizonHours={sustainability.horizon_hours} verdict={sustainability.verdict} />}
+                    {planned && sustainability && <SustainabilityBadge depletedCount={sustainability.depleted.length} dormOverflow={sustainability.dorm_overflow} horizonHours={sustainability.horizon_hours} verdict={sustainability.verdict} />}
                 </div>
 
                 {api.evaluationError && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive">This plan could not be scored: {api.evaluationError.message}</p>}
@@ -53,6 +54,8 @@ export function BasePanel({ board }: { board: IBoard }) {
                         <Board board={board} />
                     </div>
                 </div>
+
+                <StatsForNerds />
             </div>
         </TooltipProvider>
     );
