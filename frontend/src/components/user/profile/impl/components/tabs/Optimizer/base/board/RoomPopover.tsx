@@ -18,6 +18,13 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const room = api.boardRooms.find((r) => r.slot_id === tile.slotId);
     const scored = api.evaluation?.assignment.rooms.find((r) => r.slot_id === tile.slotId);
 
+    // Spare-seat picks for the crew currently displayed: the shift's rotation cell
+    // when a shift tab is active, else the optimized proposal. These operators were
+    // parked for zero opportunity cost - their skills are not why they're seated.
+    const shiftRoom = api.viewShift != null ? api.shiftRoom(tile.slotId) : undefined;
+    const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
+    const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));
+
     const producesOwnOutput = scored !== undefined;
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
 
@@ -52,9 +59,14 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                     <OperatorAvatar charId={op.id} name={op.name} />
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
+                                {benched.has(op.id) && (
+                                    <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider" title="Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.">
+                                        Bench
+                                    </span>
+                                )}
                             </div>
                             {op.skills.length > 0 && (
-                                <div className="ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5">
+                                <div className={`ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5 ${benched.has(op.id) ? "opacity-60" : ""}`}>
                                     {op.skills.map((skill) => (
                                         <BaseSkill key={skill.buffId} skill={skill} />
                                     ))}

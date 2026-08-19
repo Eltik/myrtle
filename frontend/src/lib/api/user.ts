@@ -370,6 +370,12 @@ export interface IOperatorImprovements {
 export interface IAssignedOperator {
     operator_id: string;
     name: string;
+    /**
+     * True for a spare-seat pick (Control Center bench top-up): parked for
+     * lowest opportunity cost, not for its skills. Badged so a gated skill
+     * text on a benchwarmer doesn't read as the optimizer's reasoning.
+     */
+    bench?: boolean;
 }
 
 export interface IRoomAssignment {

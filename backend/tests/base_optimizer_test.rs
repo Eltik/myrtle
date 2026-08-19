@@ -3206,6 +3206,7 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
     let rotation = ShiftRotation {
         shifts: vec![main(1), rest, main(3)],
         sustained: vec![],
+        bench: vec![],
     };
 
     let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
@@ -3295,6 +3296,7 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
             }],
         }],
         sustained: vec![],
+        bench: vec![],
     };
     let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
     let pp = &dto.shifts[0].rooms[0];
@@ -3605,6 +3607,7 @@ fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
             ],
         }],
         sustained: vec![],
+        bench: vec![],
     };
     let dto = shift_rotation_to_dto(&rotation, gd, &profiles, &building, &registry, &drains);
     let cell = |slot: &str| {
@@ -4625,6 +4628,7 @@ fn dorm_levels_and_staffed_boosters_shape_recovery() {
             })
             .collect(),
         sustained: Vec::new(),
+        bench: Vec::new(),
     };
     let building_with = |dorm_level: i32| UserBuilding {
         rooms: vec![
@@ -4849,6 +4853,7 @@ fn aura_immunity_and_formula_drain_shape_the_sim() {
             })
             .collect(),
         sustained: Vec::new(),
+        bench: Vec::new(),
     };
     let at = |crew: Vec<&str>, formula: &str, who: &str| -> f64 {
         let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
@@ -4929,6 +4934,7 @@ fn targeted_morale_effects_follow_co_seating() {
             })
             .collect(),
         sustained: Vec::new(),
+        bench: Vec::new(),
     };
     let sakiko_at = |crew: Vec<&str>| -> f64 {
         let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
@@ -5040,6 +5046,7 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
             })
             .collect(),
         sustained: Vec::new(),
+        bench: Vec::new(),
     };
     let depleted_at = |rotation: &ShiftRotation, ids: &[&str], who: &str| -> f64 {
         let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
@@ -6460,6 +6467,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
             })
             .collect(),
         sustained: Vec::new(),
+        bench: Vec::new(),
     };
 
     // Without the aura carrier: 24h at 1.0/hr vs 12h at L2's +1.7/hr -> leak -> depletes.
@@ -6723,5 +6731,6 @@ fn planner_probe() {
             }
         }
     }
+    println!("PROBE rotation bench {:?}", rot.bench);
     println!("PROBE rotation done");
 }

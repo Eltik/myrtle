@@ -454,7 +454,7 @@ fn optimal_inner_core(
     }
     // Fill any remaining CC slots with leftover operators - production has
     // already claimed everyone it benefits from, so these are true spares.
-    fill_remaining_slots(
+    let bench = fill_remaining_slots(
         &mut cc_room.operators,
         control_slots,
         "CONTROL",
@@ -549,6 +549,7 @@ fn optimal_inner_core(
     BaseAssignment {
         rooms,
         total_production_efficiency,
+        bench,
     }
 }
 
@@ -1707,6 +1708,9 @@ pub fn compute_current_assignment(
     BaseAssignment {
         rooms,
         total_production_efficiency: total,
+        // The live view mirrors what the player stationed - nobody was parked
+        // by the optimizer, so no seat is a bench seat.
+        bench: Vec::new(),
     }
 }
 
@@ -1898,7 +1902,8 @@ pub fn fill_remaining_slots(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     assigned: &mut HashSet<String>,
-) {
+) -> Vec<String> {
+    let mut added = Vec::new();
     while (slots.len() as i32) < max_slots {
         let pick = operators
             .iter()
@@ -1921,7 +1926,9 @@ pub fn fill_remaining_slots(
         let Some(op) = pick else { break };
         assigned.insert(op.char_id.clone());
         slots.push(op.char_id.clone());
+        added.push(op.char_id.clone());
     }
+    added
 }
 
 /// Aggregate non-production Control-Center effects for a seated CC crew, in

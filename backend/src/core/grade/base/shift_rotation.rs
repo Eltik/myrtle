@@ -59,6 +59,12 @@ pub struct ShiftRotation {
     /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - pinned to one
     /// room every shift instead of rotating. The frontend badges these as "24/7 - Fiammetta".
     pub sustained: Vec<String>,
+    /// Operators parked on SPARE Control-Center seats after every value-seated
+    /// pick (bonus greedy, morale reservation, economy pins): chosen for lowest
+    /// opportunity cost, not for their skills. The frontend badges them so a
+    /// gated skill text on a benchwarmer doesn't read as the optimizer's
+    /// reasoning.
+    pub bench: Vec<String>,
 }
 
 pub struct Shift {
@@ -674,8 +680,12 @@ fn rotation_core(
     // A pin that Squad 2 also picked on its own merits would work all three
     // shifts - drop it from the 12h seat so the rest shift survives.
     cc2.retain(|id| !cc_pinned.contains(id));
+    // Spare-seat picks, tracked so the UI can badge them: their skills are not
+    // why they were seated, and a gated text on a benchwarmer shouldn't read
+    // as the optimizer's reasoning.
+    let mut bench: HashSet<String> = HashSet::new();
     if !cc1.is_empty() {
-        fill_remaining_slots(
+        bench.extend(fill_remaining_slots(
             &mut cc1,
             cc_plan.control_slots,
             "CONTROL",
@@ -683,10 +693,10 @@ fn rotation_core(
             building_data,
             registry,
             &mut assigned,
-        );
+        ));
     }
     if !cc2.is_empty() {
-        fill_remaining_slots(
+        bench.extend(fill_remaining_slots(
             &mut cc2,
             cc_plan.control_slots,
             "CONTROL",
@@ -694,7 +704,7 @@ fn rotation_core(
             building_data,
             registry,
             &mut assigned,
-        );
+        ));
     }
 
     // ── Synergy phase alignment ──────────────────────────────────────────────────
@@ -1011,7 +1021,9 @@ fn rotation_core(
         // 24/7-sustained rooms outside the groups (their whole crew is kept)
         // also work this shift and can satisfy a gate.
         for (slot, ops) in &kept_by_room {
-            if !groups.iter().any(|g| g.rooms.iter().any(|(s, _)| s == slot))
+            if !groups
+                .iter()
+                .any(|g| g.rooms.iter().any(|(s, _)| s == slot))
                 && let Some(rt) = room_type_of.get(slot.as_str())
             {
                 shift_rooms.push(super::types::RoomAssignment {
@@ -1034,7 +1046,7 @@ fn rotation_core(
             })
         });
         if !cc2.is_empty() {
-            fill_remaining_slots(
+            bench.extend(fill_remaining_slots(
                 &mut cc2,
                 cc_plan.control_slots,
                 "CONTROL",
@@ -1042,7 +1054,7 @@ fn rotation_core(
                 building_data,
                 registry,
                 &mut assigned,
-            );
+            ));
         }
     }
 
@@ -1308,6 +1320,7 @@ fn rotation_core(
     ShiftRotation {
         shifts,
         sustained: sustained_label,
+        bench: bench.into_iter().collect(),
     }
 }
 

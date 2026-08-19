@@ -271,6 +271,11 @@ pub struct RoomAssignment {
 pub struct BaseAssignment {
     pub rooms: Vec<RoomAssignment>,
     pub total_production_efficiency: f64, // sum across all production rooms
+    /// Operators parked on SPARE seats (Control-Center top-up after every
+    /// value-seated pick): they were chosen for lowest opportunity cost, not
+    /// for their skills, and the UI badges them so a gated skill text on a
+    /// benchwarmer doesn't read as the optimizer's reasoning.
+    pub bench: Vec<String>,
 }
 
 /// A STAGGERED rotation: your best operators staff the base (the `main`), and you

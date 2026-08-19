@@ -409,6 +409,12 @@ pub struct NonProdEffectDto {
 pub struct AssignedOperator {
     pub operator_id: String,
     pub name: String,
+    /// True for a SPARE-seat pick (Control-Center bench top-up after every
+    /// value-seated operator): parked for lowest opportunity cost, not for its
+    /// skills. The frontend badges these so a gated skill text on a
+    /// benchwarmer doesn't read as the optimizer's reasoning.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub bench: bool,
 }
 
 /// An operator leaving a cell for another room in the SAME shift.
@@ -1659,6 +1665,8 @@ pub fn shift_rotation_to_dto(
             .map(|id| assigned_operator(id, game_data))
             .collect()
     };
+    let bench_ids: std::collections::HashSet<&str> =
+        rotation.bench.iter().map(String::as_str).collect();
     // Order-independent pairing of each recommended cell to the player's closest current team.
     let matched = match_current_teams(rotation);
     // The shifts each operator is RECOMMENDED to work (their "home" shifts). A main-team operator
@@ -1817,7 +1825,13 @@ pub fn shift_rotation_to_dto(
                 room_type: room.room_type.clone(),
                 formula_type: room.formula_type.clone(),
                 active: room.active,
-                recommended: ops(&room.recommended),
+                recommended: {
+                    let mut v = ops(&room.recommended);
+                    for o in &mut v {
+                        o.bench = bench_ids.contains(o.operator_id.as_str());
+                    }
+                    v
+                },
                 current: ops(&current),
                 matches,
                 equivalent,
@@ -1924,11 +1938,13 @@ pub(crate) fn base_assignment_to_dto(
         );
     }
 
+    let bench_ids: std::collections::HashSet<&str> =
+        asn.bench.iter().map(String::as_str).collect();
     BaseAssignmentDto {
         rooms: asn
             .rooms
             .iter()
-            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry))
+            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry, &bench_ids))
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
         yield_lmd_per_day: flows.realized_lmd(),
@@ -1945,6 +1961,7 @@ fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
             .operators
             .get(id)
             .map_or_else(|| id.to_string(), |o| o.name.clone()),
+        bench: false,
     }
 }
 
@@ -2007,6 +2024,7 @@ fn room_assignment_to_dto(
     game_data: &GameData,
     profiles: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
+    bench_ids: &std::collections::HashSet<&str>,
 ) -> RoomAssignmentDto {
     let y = room_yield(
         &room.room_type,
@@ -2038,7 +2056,11 @@ fn room_assignment_to_dto(
         operators: room
             .operators
             .iter()
-            .map(|id| assigned_operator(id, game_data))
+            .map(|id| {
+                let mut o = assigned_operator(id, game_data);
+                o.bench = bench_ids.contains(id.as_str());
+                o
+            })
             .collect(),
         yield_lmd_per_day: y.lmd_per_day,
         yield_gold_per_day: y.gold_per_day,
@@ -2106,6 +2128,7 @@ mod shift_match_tests {
                 ],
             }],
             sustained: vec![],
+            bench: vec![],
         };
         let m = match_current_teams(&rotation);
         assert_eq!(
@@ -2133,6 +2156,7 @@ mod shift_match_tests {
                 ],
             }],
             sustained: vec![],
+            bench: vec![],
         };
         let m = match_current_teams(&rotation);
         let a = &m[&(1, "a".to_string())];
