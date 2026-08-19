@@ -1938,8 +1938,7 @@ pub(crate) fn base_assignment_to_dto(
         );
     }
 
-    let bench_ids: std::collections::HashSet<&str> =
-        asn.bench.iter().map(String::as_str).collect();
+    let bench_ids: std::collections::HashSet<&str> = asn.bench.iter().map(String::as_str).collect();
     BaseAssignmentDto {
         rooms: asn
             .rooms
