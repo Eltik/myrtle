@@ -615,8 +615,24 @@ fn rotation_core(
     let aux2 = aux_squads(&mut assigned, false);
 
     // Control Center Squad 2: the best global-bonus fill from the leftovers, so the
-    // CC keeps granting bonuses while Squad 1 rests.
-    let cc_squad2 = cc_plan.squad2(operators, building_data, registry, &assigned);
+    // CC keeps granting bonuses while Squad 1 rests. It sees every production team
+    // the rotation fields, so a conditional operator whose gate no team satisfies
+    // is evicted here just as Squad 1's dead-weight loop would.
+    let team_rooms: Vec<super::types::RoomAssignment> = groups
+        .iter()
+        .flat_map(|g| {
+            g.teams
+                .iter()
+                .filter(|t| !t.ops.is_empty())
+                .map(|t| super::types::RoomAssignment {
+                    room_type: g.room_type.clone(),
+                    formula_type: g.formula_type.clone(),
+                    operators: t.ops.clone(),
+                    ..Default::default()
+                })
+        })
+        .collect();
+    let cc_squad2 = cc_plan.squad2(operators, building_data, registry, &assigned, &team_rooms);
     assigned.extend(cc_squad2.iter().cloned());
 
     // Power plants: two squads of the best leftover power specialists per plant.

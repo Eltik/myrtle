@@ -2418,35 +2418,61 @@ impl RotationCcPlan {
     /// leftover global-bonus operators, then leftover global morale-recovery
     /// operators for the spare seats (the same priority Squad 1 gets). Empty when
     /// nothing useful remains - the CC then rests dark that shift.
+    ///
+    /// `team_rooms` are ALL the production teams the rotation fields, and they
+    /// gate Squad 2 exactly like Squad 1's dead-weight loop: an operator whose
+    /// every bonus is a conditional that fires in none of them is dead weight on
+    /// any shift, so it yields its seat and the fill is re-picked. (Squad 1's
+    /// loop can't cover this: it only inspects the crew IT seats, and a
+    /// conditional operator it passed over is still face-value bait for the
+    /// leftover greedy here.)
     pub(crate) fn squad2(
         &self,
         operators: &[OperatorBaseProfile],
         building_data: &BuildingDataFile,
         registry: &HashMap<String, BuffResolutionStrategy>,
         exclude: &HashSet<String>,
+        team_rooms: &[RoomAssignment],
     ) -> Vec<String> {
+        let op_index = build_op_index(operators);
         let mut exclude = exclude.clone();
         exclude.extend(self.squad1.iter().cloned());
-        let (mut cc, _, _) = assign_control_center(
-            operators,
-            None,
-            self.control_slots,
-            registry,
-            building_data,
-            &exclude,
-            &[],
-        );
-        let mut assigned = exclude;
-        assigned.extend(cc.operators.iter().cloned());
-        reserve_cc_morale_seats(
-            &mut cc,
-            self.control_slots,
-            operators,
-            &mut assigned,
-            registry,
-            building_data,
-        );
-        cc.operators
+        loop {
+            let (mut cc, _, _) = assign_control_center(
+                operators,
+                None,
+                self.control_slots,
+                registry,
+                building_data,
+                &exclude,
+                &[],
+            );
+            let newly_dead: Vec<String> = cc
+                .operators
+                .iter()
+                .filter(|id| {
+                    op_index.get(id.as_str()).is_some_and(|op| {
+                        cc_op_is_dead(op, team_rooms, &op_index, registry, building_data)
+                    })
+                })
+                .cloned()
+                .collect();
+            if !newly_dead.is_empty() {
+                exclude.extend(newly_dead);
+                continue;
+            }
+            let mut assigned = exclude;
+            assigned.extend(cc.operators.iter().cloned());
+            reserve_cc_morale_seats(
+                &mut cc,
+                self.control_slots,
+                operators,
+                &mut assigned,
+                registry,
+                building_data,
+            );
+            return cc.operators;
+        }
     }
 }
 

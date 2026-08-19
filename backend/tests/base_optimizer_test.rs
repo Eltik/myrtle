@@ -4372,6 +4372,61 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
     }
 }
 
+/// The rotation's Control-Center Squad 2 must run the same dead-weight rule as
+/// Squad 1. Squad 1's eviction loop drops a conditional operator whose gate the
+/// planned teams never satisfy - but its exclusion list used to stay private, so
+/// the Squad-2 leftover greedy re-picked the SAME operator at face value and
+/// seated her on the third shift with nobody to receive the bonus (the uid
+/// 09525371 report: Delphine in the shift-3 CC, zero Glasgow anywhere).
+#[test]
+fn rotation_squad2_evicts_conditional_cc_ops_no_team_satisfies() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const BUFF: &str = "control_tra_limit&spd[010]";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let delphine = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char
+                .iter()
+                .any(|bc| bc.buff_data.iter().any(|bd| bd.buff_id == BUFF))
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns Delphine's skill");
+
+    // The roster OWNS a Glasgow trader (Morgan carries a TRADING buff, so the
+    // roster-level feasibility gate passes and Delphine keeps her face-value
+    // selection weight), but the base has NO Trading Post: the condition fires
+    // in no plannable team, so Delphine may hold a seat in NO shift's Control
+    // Center - squad 2's leftover fill included.
+    let building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 2)],
+    };
+    let roster: Vec<OperatorBaseProfile> = [
+        "char_103_angel",
+        "char_214_kafka",
+        "char_4032_provs",
+        "char_154_morgan",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .chain(std::iter::once(profile(gd, delphine.as_str())))
+    .collect();
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    for shift in &rot.shifts {
+        for r in shift.rooms.iter().filter(|r| r.room_type == "CONTROL") {
+            assert!(
+                !r.recommended.contains(&delphine),
+                "shift {}: Delphine seated in the CC with no Glasgow member in any team",
+                shift.index
+            );
+        }
+    }
+}
+
 /// Fiammetta's swap mechanic, as her own skills describe it: "Self-Discipline"
 /// recharges her at +2/hr EXCLUSIVELY (no dorm level, aura or ambience helps),
 /// and "Communal Suffering" swaps her full bar with the operator assigned into
@@ -6526,8 +6581,13 @@ fn planner_probe() {
         // GLASGOW_OUT=1 drops the Glasgow Gang, to probe the eviction path.
         .filter(|p| {
             std::env::var("GLASGOW_OUT").as_deref() != Ok("1")
-                || !["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"]
-                    .contains(&p.char_id.as_str())
+                || ![
+                    "char_154_morgan",
+                    "char_155_tiger",
+                    "char_157_dagda",
+                    "char_112_siege",
+                ]
+                .contains(&p.char_id.as_str())
         })
         .collect();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -6566,15 +6626,38 @@ fn planner_probe() {
     });
     println!("PROBE delphine_in_cc={delph_in_cc} glasgow_in_tp={glasgow_in_tp}");
 
-    // The rotation path too - its CC squads run their own dead-weight loop.
+    // The rotation path, wired EXACTLY like base_planner::rotation: pins for
+    // unmodeled rooms' drafted crews plus the morale-swap manager.
+    let mut pins: Vec<(String, String)> = Vec::new();
+    for room in &building.rooms {
+        if ["TRAINING", "WORKSHOP"].contains(&room.room_type.as_str()) {
+            for op in &room.current_operators {
+                pins.push((op.clone(), room.room_type.clone()));
+            }
+        }
+    }
+    if let Some(pin) =
+        backend::core::grade::base::dorms::morale_manager_pin(&profiles, &building, &gd.building)
+        && !pins.iter().any(|(id, _)| id == &pin.0)
+    {
+        pins.push(pin);
+    }
     let rot = backend::core::grade::base::shift_rotation::recommend_shift_rotation(
         &profiles,
         &building,
         &gd.building,
         &registry,
         &drains,
-        &[],
+        &pins,
     );
+    for shift in &rot.shifts {
+        for r in shift.rooms.iter().filter(|r| r.room_type == "CONTROL") {
+            println!(
+                "ROT-CC shift{} active={} crew {:?}",
+                shift.index, r.active, r.recommended
+            );
+        }
+    }
     for shift in &rot.shifts {
         for r in shift.rooms.iter().filter(|r| r.active) {
             if r.recommended.iter().any(|o| o == "char_4110_delphn") {
