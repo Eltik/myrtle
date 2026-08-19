@@ -974,6 +974,78 @@ fn rotation_core(
         std::mem::swap(&mut cc1, &mut cc2);
     }
 
+    // ── Squad-2 shift-aligned dead-weight check ──────────────────────────────────
+    // Squad 2 works exactly one shift, and the tiling is now settled, so its
+    // conditional operators can be judged against the teams working THAT shift
+    // rather than the whole rotation (the earlier all-teams check in `squad2` is
+    // only a lower bound: Jessica the Liberator's Blacksteel gate fired on the
+    // shifts-1+2 factory team while she herself sat the shift-3 seat, collecting
+    // nothing). Squad 1 needs no such pass: phase alignment moves each linked
+    // team onto Squad 1's own block by construction. Evicted seats are topped
+    // back up from the bench; evictees stay in `assigned`, so the top-up cannot
+    // re-seat them.
+    if let Some(k2) = (0..SHIFT_COUNT).find(|&k| cc_pattern.squad_at(k) == 1)
+        && !cc2.is_empty()
+    {
+        let room_type_of: HashMap<&str, &str> = building
+            .rooms
+            .iter()
+            .map(|r| (r.slot_id.as_str(), r.room_type.as_str()))
+            .collect();
+        let mut shift_rooms: Vec<super::types::RoomAssignment> = groups
+            .iter()
+            .flat_map(|g| {
+                g.rooms.iter().enumerate().filter_map(|(ri, (slot, _))| {
+                    let team = &g.teams[g.cells[ri][k2]];
+                    let mut ops = kept_by_room.get(slot).cloned().unwrap_or_default();
+                    ops.extend(team.ops.iter().cloned());
+                    (!ops.is_empty()).then(|| super::types::RoomAssignment {
+                        room_type: g.room_type.clone(),
+                        formula_type: g.formula_type.clone(),
+                        operators: ops,
+                        ..Default::default()
+                    })
+                })
+            })
+            .collect();
+        // 24/7-sustained rooms outside the groups (their whole crew is kept)
+        // also work this shift and can satisfy a gate.
+        for (slot, ops) in &kept_by_room {
+            if !groups.iter().any(|g| g.rooms.iter().any(|(s, _)| s == slot))
+                && let Some(rt) = room_type_of.get(slot.as_str())
+            {
+                shift_rooms.push(super::types::RoomAssignment {
+                    room_type: (*rt).to_string(),
+                    formula_type: None,
+                    operators: ops.clone(),
+                    ..Default::default()
+                });
+            }
+        }
+        cc2.retain(|id| {
+            op_index.get(id.as_str()).is_none_or(|op| {
+                !super::assignment::cc_op_is_dead(
+                    op,
+                    &shift_rooms,
+                    &op_index,
+                    registry,
+                    building_data,
+                )
+            })
+        });
+        if !cc2.is_empty() {
+            fill_remaining_slots(
+                &mut cc2,
+                cc_plan.control_slots,
+                "CONTROL",
+                operators,
+                building_data,
+                registry,
+                &mut assigned,
+            );
+        }
+    }
+
     // ── Emit the three shifts ────────────────────────────────────────────────────
     let team_letter = |ordinal: usize| -> String {
         char::from(b'A' + u8::try_from(ordinal % 26).unwrap_or(0)).to_string()
