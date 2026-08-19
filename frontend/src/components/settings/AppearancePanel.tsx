@@ -1,6 +1,5 @@
 import { MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Switch } from "#/components/ui/switch";
@@ -35,12 +34,7 @@ export function AppearancePanel() {
             <Card>
                 <CardHeader>
                     <CardTitle>Accent color</CardTitle>
-                    <CardDescription>
-                        Tints buttons, links, focus rings, and the active state across the whole app.{" "}
-                        <Badge variant="outline" size="sm" className="ml-1 font-mono">
-                            localStorage · myrtle-accent
-                        </Badge>
-                    </CardDescription>
+                    <CardDescription>Tints buttons, links, focus rings, and the active state across the whole app. </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SectionLabel icon={<PaletteIcon />}>Preset hue</SectionLabel>
@@ -83,12 +77,7 @@ export function AppearancePanel() {
             <Card>
                 <CardHeader>
                     <CardTitle>Dynamic art</CardTitle>
-                    <CardDescription>
-                        Animate L2D (dynamic) operator illustrations across operator and profile pages.{" "}
-                        <Badge variant="outline" size="sm" className="ml-1 font-mono">
-                            localStorage · myrtle-dynamic-art
-                        </Badge>
-                    </CardDescription>
+                    <CardDescription>Animate L2D (dynamic) operator illustrations across operator and profile pages. </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow layout="inline" title="Animate dynamic art" description="Plays multi-megabyte Spine animations in place of static art. On by default; turn it off to save bandwidth." control={<Switch checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label="Animate dynamic art" />} />

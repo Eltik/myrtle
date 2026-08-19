@@ -22,7 +22,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
 
     return (
         <article className={`${styles.card} group`} aria-labelledby={`my-tl-${tl.id}-title`}>
-            <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={styles.thumbLink}>
+            <Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} className={styles.thumbLink}>
                 <div className={styles.thumb} data-rows={hasOps ? rows.length : 0}>
                     {isEmpty && <span className={`${styles.cornerBadge} ${styles.cornerBadgeDraft}`}>Empty draft</span>}
                     {isOfficial && (
@@ -64,7 +64,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
                 <div className="flex min-w-0 items-start gap-2">
-                    <Link to="/tier-lists/$id" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
+                    <Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
                         <h3 id={`my-tl-${tl.id}-title`} className="m-0 line-clamp-1 font-sans font-semibold text-[15px] text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary" title={tl.title}>
                             {tl.title || "Untitled list"}
                         </h3>

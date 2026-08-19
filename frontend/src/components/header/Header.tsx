@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart } from "lucide-react";
+import { Heart, Settings } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { GithubIcon } from "#/components/ui/github-icon";
@@ -97,17 +97,31 @@ export default function Header() {
                                 </Link>
                             }
                         />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hidden sm:inline-flex"
-                            render={
-                                <a href={REPO_URL} target="_blank" rel="noreferrer" aria-label="GitHub">
-                                    <GithubIcon className="h-4 w-4" />
-                                    <span className="sr-only">GitHub</span>
-                                </a>
-                            }
-                        />
+                        {user !== null ? (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="hidden sm:inline-flex"
+                                render={
+                                    <a href={REPO_URL} target="_blank" rel="noreferrer" aria-label="GitHub">
+                                        <GithubIcon className="h-4 w-4" />
+                                        <span className="sr-only">GitHub</span>
+                                    </a>
+                                }
+                            />
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="hidden sm:inline-flex"
+                                render={
+                                    <Link to="/settings" aria-label="Settings">
+                                        <Settings className="h-4 w-4" />
+                                        <span className="sr-only">Settings</span>
+                                    </Link>
+                                }
+                            />
+                        )}
 
                         <UserMenu loading={loading} user={user} logout={logout} />
                     </div>
