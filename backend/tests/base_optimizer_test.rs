@@ -3802,7 +3802,6 @@ fn clause_registry_goldens_on_real_gamedata() {
 #[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
 fn real_base_repro() {
     use backend::core::grade::base::assignment::compute_current_assignment;
-    use backend::core::grade::base::buff_registry::faction_tags_of;
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
 
     let dir = std::env::var("BASE_REPRO_DIR").expect("set BASE_REPRO_DIR to the dump directory");
@@ -6203,7 +6202,6 @@ fn sui_bundle_prices_the_cc_economy_as_a_package() {
 #[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
 fn reference_parity_252() {
     use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
-    use backend::core::grade::base::buff_registry::faction_tags_of;
     let dir = std::env::var("BASE_REPRO_DIR").expect("set BASE_REPRO_DIR");
     let uid = std::env::var("BASE_REPRO_UID").unwrap_or_else(|_| "89153800".into());
     let roster: Vec<RosterEntry> =
@@ -6498,8 +6496,10 @@ fn planner_probe() {
     let uid = std::env::var("BASE_REPRO_UID").expect("BASE_REPRO_UID");
     let read = |what: &str| -> serde_json::Value {
         let path = format!("{dir}/{what}_{uid}.json");
-        serde_json::from_str(&std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}")))
-            .expect("valid json")
+        serde_json::from_str(
+            &std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}")),
+        )
+        .expect("valid json")
     };
     let building = UserBuilding::from_json(&read("building"));
     let roster: Vec<RosterEntry> = serde_json::from_value(read("roster")).expect("roster rows");
@@ -6512,21 +6512,58 @@ fn planner_probe() {
                 .map(backend::core::grade::base::buff_registry::faction_tags_of)
                 .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
-            Some(OperatorBaseProfile::build(entry, bc, faction_tags, rarity, &gd.building, true))
+            // IGNORE_PROMOTION=0 plans at real elite levels; default E2-max.
+            let ignore_promo = std::env::var("IGNORE_PROMOTION").as_deref() != Ok("0");
+            Some(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                rarity,
+                &gd.building,
+                ignore_promo,
+            ))
+        })
+        // GLASGOW_OUT=1 drops the Glasgow Gang, to probe the eviction path.
+        .filter(|p| {
+            std::env::var("GLASGOW_OUT").as_deref() != Ok("1")
+                || !["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"]
+                    .contains(&p.char_id.as_str())
         })
         .collect();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let plan = compute_optimal_assignment_with_pins(&profiles, &building, &gd.building, &registry, &drains, &[]);
+    let plan = compute_optimal_assignment_with_pins(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &[],
+    );
     for r in &plan.rooms {
         if r.room_type == "CONTROL" || r.room_type == "TRADING" {
-            println!("{} {} eff {:.1} ops {:?}", r.slot_id, r.room_type, r.total_efficiency, r.operators);
+            println!(
+                "{} {} eff {:.1} ops {:?}",
+                r.slot_id, r.room_type, r.total_efficiency, r.operators
+            );
         }
     }
-    let delph_in_cc = plan.rooms.iter().any(|r| r.room_type == "CONTROL" && r.operators.iter().any(|o| o == "char_4110_delphn"));
-    let glasgow_in_tp = plan.rooms.iter().any(|r| r.room_type == "TRADING" && r.operators.iter().any(|o| {
-        ["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"].contains(&o.as_str())
-    }));
+    let delph_in_cc = plan
+        .rooms
+        .iter()
+        .any(|r| r.room_type == "CONTROL" && r.operators.iter().any(|o| o == "char_4110_delphn"));
+    let glasgow_in_tp = plan.rooms.iter().any(|r| {
+        r.room_type == "TRADING"
+            && r.operators.iter().any(|o| {
+                [
+                    "char_154_morgan",
+                    "char_155_tiger",
+                    "char_157_dagda",
+                    "char_112_siege",
+                ]
+                .contains(&o.as_str())
+            })
+    });
     println!("PROBE delphine_in_cc={delph_in_cc} glasgow_in_tp={glasgow_in_tp}");
 
     // The rotation path too - its CC squads run their own dead-weight loop.
@@ -6547,12 +6584,24 @@ fn planner_probe() {
                 );
             }
             if r.room_type == "TRADING" {
-                let glas: Vec<&String> = r.recommended.iter().filter(|o| {
-                    ["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"]
+                let glas: Vec<&String> = r
+                    .recommended
+                    .iter()
+                    .filter(|o| {
+                        [
+                            "char_154_morgan",
+                            "char_155_tiger",
+                            "char_157_dagda",
+                            "char_112_siege",
+                        ]
                         .contains(&o.as_str())
-                }).collect();
+                    })
+                    .collect();
                 if !glas.is_empty() {
-                    println!("ROT shift{} {} TRADING glasgow {:?}", shift.index, r.slot_id, glas);
+                    println!(
+                        "ROT shift{} {} TRADING glasgow {:?}",
+                        shift.index, r.slot_id, glas
+                    );
                 }
             }
         }
