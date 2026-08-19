@@ -3827,7 +3827,9 @@ fn real_base_repro() {
         .filter_map(|entry| {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
-            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let faction_tags = static_op
+                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
                 entry,
@@ -6213,7 +6215,9 @@ fn reference_parity_252() {
         .filter_map(|entry| {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
-            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let faction_tags = static_op
+                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
                 entry,
@@ -6479,4 +6483,79 @@ fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
             }
         }
     }
+}
+
+/// Dump-driven diagnostic: the planner's plain-optimal path AND the rotation
+/// on a captured base, printing Control-Center / trading crews and where
+/// Delphine-class conditionals land.
+/// Run: BASE_REPRO_DIR=<dir> BASE_REPRO_UID=<uid> cargo test -- planner_probe --ignored --nocapture
+#[test]
+#[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
+fn planner_probe() {
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
+    let gd = load_game_data();
+    let dir = std::env::var("BASE_REPRO_DIR").expect("BASE_REPRO_DIR");
+    let uid = std::env::var("BASE_REPRO_UID").expect("BASE_REPRO_UID");
+    let read = |what: &str| -> serde_json::Value {
+        let path = format!("{dir}/{what}_{uid}.json");
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}")))
+            .expect("valid json")
+    };
+    let building = UserBuilding::from_json(&read("building"));
+    let roster: Vec<RosterEntry> = serde_json::from_value(read("roster")).expect("roster rows");
+    let profiles: Vec<OperatorBaseProfile> = roster
+        .iter()
+        .filter_map(|entry| {
+            let bc = gd.building.chars.get(&entry.operator_id)?;
+            let static_op = gd.operators.get(&entry.operator_id);
+            let faction_tags = static_op
+                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
+            Some(OperatorBaseProfile::build(entry, bc, faction_tags, rarity, &gd.building, true))
+        })
+        .collect();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let plan = compute_optimal_assignment_with_pins(&profiles, &building, &gd.building, &registry, &drains, &[]);
+    for r in &plan.rooms {
+        if r.room_type == "CONTROL" || r.room_type == "TRADING" {
+            println!("{} {} eff {:.1} ops {:?}", r.slot_id, r.room_type, r.total_efficiency, r.operators);
+        }
+    }
+    let delph_in_cc = plan.rooms.iter().any(|r| r.room_type == "CONTROL" && r.operators.iter().any(|o| o == "char_4110_delphn"));
+    let glasgow_in_tp = plan.rooms.iter().any(|r| r.room_type == "TRADING" && r.operators.iter().any(|o| {
+        ["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"].contains(&o.as_str())
+    }));
+    println!("PROBE delphine_in_cc={delph_in_cc} glasgow_in_tp={glasgow_in_tp}");
+
+    // The rotation path too - its CC squads run their own dead-weight loop.
+    let rot = backend::core::grade::base::shift_rotation::recommend_shift_rotation(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &[],
+    );
+    for shift in &rot.shifts {
+        for r in shift.rooms.iter().filter(|r| r.active) {
+            if r.recommended.iter().any(|o| o == "char_4110_delphn") {
+                println!(
+                    "ROT shift{} {} {} crew {:?}",
+                    shift.index, r.slot_id, r.room_type, r.recommended
+                );
+            }
+            if r.room_type == "TRADING" {
+                let glas: Vec<&String> = r.recommended.iter().filter(|o| {
+                    ["char_154_morgan", "char_155_tiger", "char_157_dagda", "char_112_siege"]
+                        .contains(&o.as_str())
+                }).collect();
+                if !glas.is_empty() {
+                    println!("ROT shift{} {} TRADING glasgow {:?}", shift.index, r.slot_id, glas);
+                }
+            }
+        }
+    }
+    println!("PROBE rotation done");
 }
