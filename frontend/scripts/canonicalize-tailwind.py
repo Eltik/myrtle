@@ -23,6 +23,8 @@ Handled rewrites:
   * Named line-height:   leading-[1.5]       -> leading-normal
   * Named easing:        ease-[cubic-bezier(0.4,0,0.2,1)] -> ease-in-out
   * Literal renames:     break-words         -> wrap-break-word
+                         h-[100dvh]          -> h-dvh
+                         w-[100vw]           -> w-screen
   * Prefix renames:      bg-gradient-to-t    -> bg-linear-to-t
                          bg-gradient-to-br   -> bg-linear-to-br
   * Arbitrary-property shorthand:
@@ -351,6 +353,8 @@ def rewrite_ease(text: str, edits: list[tuple[str, str]]) -> str:
 # ---------------------------------------------------------------------------
 LITERAL_RENAMES: dict[str, str] = {
     "break-words": "wrap-break-word",
+    "h-[100dvh]": "h-dvh",
+    "w-[100vw]": "w-screen",
 }
 
 # Prefix-only renames — preserve whatever suffix follows the prefix.
