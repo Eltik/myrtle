@@ -25,7 +25,9 @@ pub struct BaseContext {
 impl BaseContext {
     /// Roster -> base-skill profiles. Drops operators with no entry in
     /// `building_data.chars` (e.g. tokens, drones).
-    pub fn build(roster: &[RosterEntry], game_data: &GameData) -> Self {
+    /// `ignore_promotion` plans with every operator's highest base skills,
+    /// whether or not the player has promoted them that far.
+    pub fn build(roster: &[RosterEntry], game_data: &GameData, ignore_promotion: bool) -> Self {
         let profiles: Vec<OperatorBaseProfile> = roster
             .iter()
             .filter_map(|entry| {
@@ -39,6 +41,7 @@ impl BaseContext {
                     faction_tags,
                     rarity,
                     &game_data.building,
+                    ignore_promotion,
                 ))
             })
             .collect();

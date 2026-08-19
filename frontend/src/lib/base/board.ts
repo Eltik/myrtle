@@ -1,14 +1,13 @@
 import type { FacilityType, ICatalogSlot, IDraftRoom } from "#/lib/api/base";
-import type { IOperatorBaseSkill } from "#/types/operators";
 import { type Catalog, roomLabel, seatsOf } from "./catalog";
-import type { IRosterOption } from "./roster";
+import type { IRosterOption, IRosterSkill } from "./roster";
 
 type TileKind = "fixed" | "flexible" | "path" | "elevator";
 
 export interface ITileOperator {
     id: string;
     name: string;
-    skills: IOperatorBaseSkill[];
+    skills: IRosterSkill[];
     change?: "added" | "removed";
 }
 

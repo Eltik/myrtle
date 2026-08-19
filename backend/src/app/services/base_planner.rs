@@ -51,6 +51,11 @@ pub struct DraftRoom {
 #[derive(Debug, Clone, Deserialize)]
 pub struct EvaluateRequest {
     pub layout: Vec<DraftRoom>,
+    /// Plan with every operator's highest base skills, whether or not the
+    /// player has promoted them that far. The result is a target to build
+    /// toward, not a reading of the base they have today.
+    #[serde(default)]
+    pub ignore_promotion: bool,
 }
 
 /// The player's real base, every built slot of it.
@@ -102,6 +107,11 @@ pub struct OptimizeRequest {
     /// Operators the plan may not seat anywhere (injured, saved for elsewhere).
     #[serde(default)]
     pub excluded: Vec<String>,
+    /// Plan with every operator's highest base skills, whether or not the
+    /// player has promoted them that far. The result is a target to build
+    /// toward, not a reading of the base they have today.
+    #[serde(default)]
+    pub ignore_promotion: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -179,6 +189,11 @@ pub struct RotationRequest {
     pub locked: Vec<String>,
     #[serde(default)]
     pub excluded: Vec<String>,
+    /// Plan with every operator's highest base skills, whether or not the
+    /// player has promoted them that far. The result is a target to build
+    /// toward, not a reading of the base they have today.
+    #[serde(default)]
+    pub ignore_promotion: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -398,10 +413,11 @@ async fn context_for(
     uid: &str,
     viewer_id: Option<uuid::Uuid>,
     game_data: &GameData,
+    ignore_promotion: bool,
 ) -> Result<BaseContext, ApiError> {
     let user = profile_for(state, uid, viewer_id).await?;
     let roster = get_roster(&state.db, user.id).await?;
-    Ok(BaseContext::build(&roster, game_data))
+    Ok(BaseContext::build(&roster, game_data, ignore_promotion))
 }
 
 /// Resolve `uid` to a profile, honouring privacy the same way
@@ -476,7 +492,7 @@ pub async fn evaluate(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data).await?;
+    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let building = UserBuilding {
         rooms: req
             .layout
@@ -612,7 +628,7 @@ pub async fn optimize(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data).await?;
+    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
 
     let building = UserBuilding {
         rooms: req
@@ -679,7 +695,7 @@ pub async fn rotation(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data).await?;
+    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let building = UserBuilding {
         rooms: req
             .layout

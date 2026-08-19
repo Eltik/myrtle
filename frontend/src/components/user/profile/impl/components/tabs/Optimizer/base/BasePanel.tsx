@@ -5,6 +5,7 @@ import type { IBoard } from "#/lib/base/board";
 import { useBaseOptimizer } from "./base-context";
 import { Board } from "./board/Board";
 import { Headline } from "./controls/Headline";
+import { PromotionToggle } from "./controls/PromotionToggle";
 import { ShiftStrip } from "./controls/ShiftStrip";
 import { SustainabilityBadge } from "./controls/SustainabilityBadge";
 import { StatsForNerds } from "./stats/StatsForNerds";
@@ -42,7 +43,10 @@ export function BasePanel({ board }: { board: IBoard }) {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <ShiftStrip />
+                    <div className="flex flex-wrap items-center gap-4">
+                        <ShiftStrip />
+                        <PromotionToggle />
+                    </div>
                     {planned && sustainability && <SustainabilityBadge depletedCount={sustainability.depleted.length} dormOverflow={sustainability.dorm_overflow} horizonHours={sustainability.horizon_hours} verdict={sustainability.verdict} />}
                 </div>
 

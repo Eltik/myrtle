@@ -1227,7 +1227,7 @@ async fn build_base_improvements(
         profiles,
         registry,
         morale_drains,
-    } = BaseContext::build(roster, game_data);
+    } = BaseContext::build(roster, game_data, false);
 
     // For a 243 base, evaluate the base-wide resource economy (Rosmontis / Ebenholz /
     // Mr. Nothing "Perception Information" system, and anything shaped like it) ONCE: its

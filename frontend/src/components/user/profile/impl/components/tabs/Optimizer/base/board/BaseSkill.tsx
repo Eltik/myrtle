@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { baseSkillIcon } from "#/components/operators/detail/impl/assets";
 import { colorForTag } from "#/components/operators/detail/impl/description";
-import type { IOperatorBaseSkill } from "#/types/operators";
+import type { IRosterSkill } from "#/lib/base/roster";
+import { cn } from "#/lib/utils";
 
 const TOKEN = /<([@$])([\w.]+)>|<\/>/g;
 
@@ -43,14 +44,22 @@ function renderMarkup(text: string): ReactNode[] {
     return stack[0].children;
 }
 
-export function BaseSkill({ skill, server }: { skill: IOperatorBaseSkill; server?: "en" | "cn" }) {
+export function BaseSkill({ skill, server }: { skill: IRosterSkill; server?: "en" | "cn" }) {
     const icon = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
+    const locked = !skill.unlocked;
 
     return (
-        <div className="flex gap-2">
+        <div className={cn("flex gap-2", locked && "opacity-45 grayscale")}>
             {icon && <img alt="" aria-hidden className="mt-px size-5 shrink-0 self-start object-contain" decoding="async" loading="lazy" src={icon} />}
             <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="font-semibold text-[11px] text-foreground">{skill.buffName}</span>
+                <span className="flex items-baseline gap-1.5 font-semibold text-[11px] text-foreground">
+                    {skill.buffName}
+                    {locked && (
+                        <span className="font-normal text-[9.5px] text-muted-foreground uppercase tracking-wide">
+                            E{skill.unlockElite} Lv{skill.unlockLevel}
+                        </span>
+                    )}
+                </span>
                 <p className="text-[11px] text-muted-foreground leading-snug">{renderMarkup(skill.description)}</p>
             </div>
         </div>

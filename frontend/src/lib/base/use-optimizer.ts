@@ -38,6 +38,10 @@ export interface IOptimizerAPI {
     evaluationError: Error | null;
 
     rotation: IRotationResponse | null;
+
+    /** Plan with every operator's highest base skills, promoted or not. */
+    ignorePromotion: boolean;
+    setIgnorePromotion: (value: boolean) => void;
     viewShift: number | null;
     setViewShift: (shift: number | null) => void;
     shiftRoom: (slotId: string) => IShiftRoom | undefined;
@@ -46,13 +50,13 @@ export interface IOptimizerAPI {
     optimizing: boolean;
     optimizeError: Error | null;
     runOptimize: (scope: string[]) => void;
-    acceptRoom: (slotId: string) => void;
 
     reset: () => void;
 }
 
 interface IPersisted {
     layout: IDraftRoom[];
+    ignorePromotion?: boolean;
 }
 
 const EMPTY_SLOTS: ICatalogSlot[] = [];
@@ -63,14 +67,14 @@ function storageKey(uid: string): string {
     return `base-optimizer:${uid}:v2`;
 }
 
-function useEvaluation(uid: string, layout: IDraftRoom[]) {
+function useEvaluation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean) {
     const settled = useDebounce(layout, 350);
-    return useQuery(evaluateLayoutQueryOptions(uid, settled));
+    return useQuery(evaluateLayoutQueryOptions(uid, settled, ignorePromotion));
 }
 
-function useRotation(uid: string, layout: IDraftRoom[]) {
+function useRotation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean) {
     const settled = useDebounce(layout, 350);
-    return useQuery(rotationPlanQueryOptions(uid, settled));
+    return useQuery(rotationPlanQueryOptions(uid, settled, ignorePromotion));
 }
 
 export function useOptimizer(uid: string): IOptimizerAPI {
@@ -97,6 +101,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     }, [realLayout, catalog, setPersisted]);
 
     const layout = persisted.layout;
+    const ignorePromotion = persisted.ignorePromotion ?? false;
+    const setIgnorePromotion = useCallback((value: boolean) => setPersisted((prev) => ({ ...prev, ignorePromotion: value })), [setPersisted]);
 
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
 
@@ -109,11 +115,9 @@ export function useOptimizer(uid: string): IOptimizerAPI {
 
     const presets = layoutQuery.data?.presets ?? EMPTY_PRESETS;
 
-    const evaluation = useEvaluation(uid, layout);
+    const evaluation = useEvaluation(uid, layout, ignorePromotion);
 
-    const patchLayout = useCallback((fn: (rooms: IDraftRoom[]) => IDraftRoom[]) => setPersisted((prev) => ({ ...prev, layout: fn(prev.layout) })), [setPersisted]);
-
-    const rotationQuery = useRotation(uid, layout);
+    const rotationQuery = useRotation(uid, layout, ignorePromotion);
     const rotation = rotationQuery.data ?? null;
 
     const shiftCount = rotation?.shift_count ?? catalogQuery.data?.shift_count ?? 0;
@@ -122,42 +126,12 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const optimizeMutation = useMutation({
         mutationFn: (scope: string[]) =>
             optimizeLayoutFn({
-                data: { uid, layout, scope },
+                data: { uid, layout, scope, ignorePromotion },
             }),
         onSuccess: setProposal,
     });
 
     const runOptimize = useCallback((scope: string[]) => optimizeMutation.mutate(scope), [optimizeMutation]);
-
-    const applyRooms = useCallback(
-        (slotIds: string[]) => {
-            if (!proposal) return;
-            const bySlot = new Map(proposal.proposal.rooms.map((r) => [r.slot_id, r.operators.map((o) => o.operator_id)]));
-            const incoming = new Set(slotIds.flatMap((id) => bySlot.get(id) ?? []));
-            patchLayout((rooms) =>
-                rooms.map((room) => {
-                    if (slotIds.includes(room.slot_id)) return { ...room, operators: bySlot.get(room.slot_id) ?? [] };
-                    if (room.operators.some((id) => incoming.has(id))) {
-                        return { ...room, operators: room.operators.filter((id) => !incoming.has(id)) };
-                    }
-                    return room;
-                }),
-            );
-        },
-        [proposal, patchLayout],
-    );
-
-    const acceptRoom = useCallback(
-        (slotId: string) => {
-            applyRooms([slotId]);
-            setProposal((prev) => {
-                if (!prev) return prev;
-                const room_diffs = prev.room_diffs.filter((d) => d.slot_id !== slotId);
-                return room_diffs.length > 0 ? { ...prev, room_diffs } : null;
-            });
-        },
-        [applyRooms],
-    );
 
     const reset = useCallback(() => {
         setPersisted({ layout: realLayout });
@@ -197,6 +171,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             evaluating: evaluation.isFetching,
             evaluationError: evaluation.error,
             rotation,
+            ignorePromotion,
+            setIgnorePromotion,
             viewShift,
             setViewShift,
             shiftRoom,
@@ -204,7 +180,6 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             optimizing: optimizeMutation.isPending,
             optimizeError: optimizeMutation.error ?? rotationQuery.error,
             runOptimize,
-            acceptRoom,
             reset,
         }),
         [
@@ -223,13 +198,14 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             evaluation.error,
             rotation,
             rotationQuery.error,
+            ignorePromotion,
+            setIgnorePromotion,
             viewShift,
             shiftRoom,
             proposal,
             optimizeMutation.isPending,
             optimizeMutation.error,
             runOptimize,
-            acceptRoom,
             reset,
         ],
     );

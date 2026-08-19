@@ -1,5 +1,3 @@
-import { Check } from "lucide-react";
-import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { type ITile, vacanciesOf } from "#/lib/base/board";
 import { isProduction, powerOf } from "#/lib/base/catalog";
@@ -74,14 +72,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 </p>
             )}
             {change && (
-                <div className="flex items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
+                <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Optimized</span>
                     <span className="font-mono text-[11px] tabular-nums">
                         {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>
                     </span>
-                    <Button onClick={() => api.acceptRoom(tile.slotId)} size="sm" variant="outline">
-                        <Check />
-                        Apply
-                    </Button>
                 </div>
             )}
         </div>

@@ -3835,6 +3835,7 @@ fn real_base_repro() {
                 faction_tags,
                 rarity,
                 &gd.building,
+                false,
             ))
         })
         .collect();
@@ -6095,6 +6096,7 @@ fn reference_parity_252() {
                 faction_tags,
                 rarity,
                 &gd.building,
+                false,
             ))
         })
         .collect();

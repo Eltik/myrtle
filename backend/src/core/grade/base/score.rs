@@ -94,6 +94,7 @@ fn build_operator_profiles(
                 faction_tags,
                 rarity,
                 &game_data.building,
+                false,
             ));
         }
     }

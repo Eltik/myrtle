@@ -177,26 +177,32 @@ pub struct OperatorBaseProfile {
 }
 
 impl OperatorBaseProfile {
+    /// `ignore_promotion` takes each slot's highest tier regardless of the
+    /// operator's elite/level - "what this operator would bring at E2 max".
+    /// The player still has to promote them for it to be true, so anything
+    /// planned this way is a target, not a reading of their current base.
     pub fn build(
         roster: &RosterEntry,
         building_char: &BuildingChar,
         faction_tags: Vec<String>,
         rarity: i16,
         building_data: &BuildingDataFile,
+        ignore_promotion: bool,
     ) -> Self {
         let mut available_buffs = Vec::new();
 
         for slot in &building_char.buff_char {
-            let mut best: Option<&str> = None;
-            for entry in &slot.buff_data {
-                if i32::from(roster.elite) >= entry.cond.elite()
-                    && i32::from(roster.level) >= entry.cond.level
-                {
-                    best = Some(&entry.buff_id);
-                }
-            }
-            if let Some(buff_id) = best {
-                available_buffs.push(buff_id.to_string());
+            let best = slot
+                .buff_data
+                .iter()
+                .filter(|entry| {
+                    ignore_promotion
+                        || (i32::from(roster.elite) >= entry.cond.elite()
+                            && i32::from(roster.level) >= entry.cond.level)
+                })
+                .next_back();
+            if let Some(entry) = best {
+                available_buffs.push(entry.buff_id.clone());
             }
         }
 

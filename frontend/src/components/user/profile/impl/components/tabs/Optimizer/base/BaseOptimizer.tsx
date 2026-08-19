@@ -11,7 +11,7 @@ import { crewsForShift } from "./shift-crews";
 export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps) {
     const api = useOptimizer(uid);
 
-    const rosterById = useMemo(() => new Map(toRosterOptions(roster, operatorsStatic).map((op) => [op.id, op])), [roster, operatorsStatic]);
+    const rosterById = useMemo(() => new Map(toRosterOptions(roster, operatorsStatic, api.ignorePromotion).map((op) => [op.id, op])), [roster, operatorsStatic, api.ignorePromotion]);
     const presetBySlot = useMemo(() => new Map(api.presets.map((p) => [p.slot_id, p.shifts])), [api.presets]);
 
     const { rooms, marks } = useMemo(() => crewsForShift(api, presetBySlot), [api, presetBySlot]);
