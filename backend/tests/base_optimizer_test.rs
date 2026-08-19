@@ -4246,6 +4246,131 @@ fn room_presence_gates_resolve_against_the_deployment() {
     );
 }
 
+/// Delphine's "for each Glasgow Gang Operator assigned to the same Trading
+/// Post, +10%" is a CONDITIONAL per-operator global, not a flat tag bonus -
+/// the singular "each ... Operator" phrasing must route to the same machinery
+/// as SilverAsh's plural form. She earns a Control-Center seat only when the
+/// plan actually fields Glasgow traders; otherwise the dead-weight reselection
+/// evicts her instead of crediting a +10% nobody receives.
+#[test]
+fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    const BUFF: &str = "control_tra_limit&spd[010]";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    match registry.get(BUFF) {
+        Some(BuffResolutionStrategy::ConditionalGlobalEffect {
+            target_room,
+            faction_token,
+            required_count,
+            per_operator,
+            bonus_pct,
+        }) => {
+            assert_eq!(target_room, "TRADING");
+            assert_eq!(faction_token, "glasgow");
+            assert_eq!(*required_count, 1);
+            assert!(
+                *per_operator,
+                "each Glasgow member earns the +10% separately"
+            );
+            assert_eq!(*bonus_pct, 10.0);
+        }
+        other => panic!("expected ConditionalGlobalEffect, got {other:?}"),
+    }
+
+    // The buff's owner, from gamedata.
+    let delphine = gd
+        .building
+        .chars
+        .iter()
+        .find(|(_, c)| {
+            c.buff_char
+                .iter()
+                .any(|bc| bc.buff_data.iter().any(|bd| bd.buff_id == BUFF))
+        })
+        .map(|(id, _)| id.clone())
+        .expect("some operator owns Delphine's skill");
+
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp", "TRADING", 3),
+            room("d0", "DORMITORY", 2),
+        ],
+    };
+    let plan = |ids: &[&str], with_delphine: bool| {
+        let mut roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        if with_delphine {
+            roster.push(profile(gd, delphine.as_str()));
+        }
+        compute_optimal_assignment_with_pins(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            &[],
+        )
+    };
+    let cc_eff = |p: &backend::core::grade::base::types::BaseAssignment| {
+        p.rooms
+            .iter()
+            .find(|r| r.room_type == "CONTROL")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    let tp_eff = |p: &backend::core::grade::base::types::BaseAssignment| {
+        p.rooms
+            .iter()
+            .filter(|r| r.room_type == "TRADING")
+            .map(|r| r.total_efficiency)
+            .sum::<f64>()
+    };
+
+    // Only non-Glasgow traders available: her conditional can never fire.
+    // A spare CC seat is fine (leftovers get parked), but she must add ZERO
+    // credited value anywhere - previously the flat TagBased misparse sold
+    // her +10% at half credit with nobody to receive it.
+    let neutrals = ["char_103_angel", "char_214_kafka", "char_4032_provs"];
+    let without_her = plan(&neutrals, false);
+    let with_her = plan(&neutrals, true);
+    assert_eq!(
+        cc_eff(&with_her),
+        0.0,
+        "no Glasgow fielded: her Control-Center row must carry no credit"
+    );
+    assert!(
+        (tp_eff(&with_her) - tp_eff(&without_her)).abs() < 1e-9,
+        "no Glasgow fielded: the posts must not gain from her either ({} vs {})",
+        tp_eff(&with_her),
+        tp_eff(&without_her)
+    );
+
+    // With Texas and Lappland fielded, her conditional is REAL: each Glasgow
+    // member in the post earns +10%, credited to that post's efficiency.
+    let glasgow = ["char_154_morgan", "char_157_dagda", "char_103_angel"];
+    let g_without = plan(&glasgow, false);
+    let g_with = plan(&glasgow, true);
+    let fielded = g_with
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "TRADING")
+        .flat_map(|r| r.operators.iter())
+        .filter(|o| *o == "char_154_morgan" || *o == "char_157_dagda")
+        .count();
+    if fielded > 0 {
+        assert!(
+            tp_eff(&g_with) >= tp_eff(&g_without) + 10.0 - 1e-9,
+            "with {fielded} Glasgow trader(s) fielded, the post must gain her credit \
+             ({} vs {})",
+            tp_eff(&g_with),
+            tp_eff(&g_without)
+        );
+    }
+}
+
 /// Fiammetta's swap mechanic, as her own skills describe it: "Self-Discipline"
 /// recharges her at +2/hr EXCLUSIVELY (no dorm level, aura or ambience helps),
 /// and "Communal Suffering" swaps her full bar with the operator assigned into

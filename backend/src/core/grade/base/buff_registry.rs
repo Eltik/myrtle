@@ -1042,12 +1042,22 @@ pub fn build_registry(
                     // group marker. A "with <N>" clause means the WHOLE post is
                     // gated on holding N of that faction; otherwise it's a per-
                     // operator bonus that each matching operator earns.
+                    // Both faction phrasings are conditional: the plural "all
+                    // <Kjerag> Operators assigned to Trading Posts gain..."
+                    // and Delphine's singular "for each <Glasgow Gang>
+                    // Operator assigned to the same Trading Post, +10%"
+                    // (audited: hers is the ONLY each-singular in this branch).
+                    // Missing the singular routed her to TagBased - a flat
+                    // half-credit with no condition, so she earned a CC seat
+                    // even when no Glasgow member worked a post, and the
+                    // dead-weight reselection never checked her.
                     if let Some(faction_token) = parse_tag_keyword(&buff.description)
                         && !faction_token
                             .chars()
                             .next()
                             .is_some_and(|c| c.is_ascii_digit())
-                        && buff.description.contains("Operators")
+                        && (buff.description.contains("Operators")
+                            || buff.description.contains("each"))
                     {
                         let required_count = RE_VUP_NUMBER
                             .captures(&buff.description)

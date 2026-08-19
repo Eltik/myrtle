@@ -192,15 +192,11 @@ impl OperatorBaseProfile {
         let mut available_buffs = Vec::new();
 
         for slot in &building_char.buff_char {
-            let best = slot
-                .buff_data
-                .iter()
-                .filter(|entry| {
-                    ignore_promotion
-                        || (i32::from(roster.elite) >= entry.cond.elite()
-                            && i32::from(roster.level) >= entry.cond.level)
-                })
-                .next_back();
+            let best = slot.buff_data.iter().rfind(|entry| {
+                ignore_promotion
+                    || (i32::from(roster.elite) >= entry.cond.elite()
+                        && i32::from(roster.level) >= entry.cond.level)
+            });
             if let Some(entry) = best {
                 available_buffs.push(entry.buff_id.clone());
             }
