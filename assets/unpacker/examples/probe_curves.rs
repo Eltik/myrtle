@@ -202,7 +202,15 @@ fn main() {
                 continue;
             }
             let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
-            if !clipwant.is_empty() && !name.contains(&clipwant) {
+            // A leading '=' means EXACT match. Substring matching alone picks whichever of
+            // `_Start`, `_Start_Idle`, `_Start_Mlynar_L_Sword2`, ... the HashMap happens to
+            // yield first, which is not reproducible between runs.
+            let hit = if let Some(exact) = clipwant.strip_prefix('=') {
+                name == exact
+            } else {
+                clipwant.is_empty() || name.contains(&clipwant)
+            };
+            if !hit {
                 continue;
             }
             let Some(binds) = v
