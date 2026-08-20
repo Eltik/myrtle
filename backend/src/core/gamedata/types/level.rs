@@ -2,7 +2,7 @@
 //! that drive the Stage Viewer's pathing simulator.
 //!
 //! The raw `level_*.json` files (`PascalCase`, ~50-300 KB each) live under
-//! `gamedata/levels/` and are *not* loaded into [`GameData`] at boot (there are
+//! `gamedata/levels/` and are *not* loaded into [`super::GameData`] at boot (there are
 //! 2600+ of them). Instead a single file is read + normalized on demand by
 //! [`crate::app::services::level`]. This module owns both the raw source shape
 //! and the clean camelCase [`StageMap`] the frontend consumes.

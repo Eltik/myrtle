@@ -38,5 +38,5 @@ pub struct EnemyStageRef {
 
 /// `enemy_id -> appearances`. Built by [`build_enemy_stage_index`].
 ///
-/// [`build_enemy_stage_index`]: crate::core::gamedata::enrich::enemy_stages::build_enemy_stage_index
+/// [`build_enemy_stage_index`]: super::super::enrich::enemy_stages::build_enemy_stage_index
 pub type EnemyStageIndex = HashMap<String, Vec<EnemyStageRef>>;

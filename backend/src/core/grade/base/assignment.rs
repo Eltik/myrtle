@@ -5,6 +5,11 @@ use crate::core::{
     gamedata::types::building::{Buff, BuildingDataFile},
     grade::base::{
         buff_registry::BuffResolutionStrategy,
+        clause::clauses_from_strategy,
+        dorms::{building_hosts_manager, manager_can_sustain, manager_swap_rate},
+        ledger::op_power_rank_value,
+        pools::{POOL_PREFIX, settle_current_pools},
+        sustain_sim::{game_morale_drain, sustains_24h_block},
         team_select::PlannedGroup,
         types::{
             BaseAssignment, OperatorBaseProfile, RoomAssignment, RoomRotation, RotationAssignment,
@@ -497,12 +502,7 @@ fn optimal_inner_core(
             .map(|op| {
                 (
                     op,
-                    crate::core::grade::base::ledger::op_power_rank_value(
-                        op,
-                        building_data,
-                        registry,
-                        &facility_counts,
-                    ),
+                    op_power_rank_value(op, building_data, registry, &facility_counts),
                 )
             })
             .filter(|(_, v)| *v > 0.0)
@@ -746,8 +746,7 @@ pub(crate) fn assign_auxiliary_rooms(
     only_24h_sustainable: bool,
 ) {
     let bar_ok = |op: &OperatorBaseProfile| -> bool {
-        !only_24h_sustainable
-            || crate::core::grade::base::sustain_sim::sustains_24h_block(op, morale_drains)
+        !only_24h_sustainable || sustains_24h_block(op, morale_drains)
     };
     for room_type in ["HIRE", "MEETING"] {
         for room in building.rooms.iter().filter(|r| r.room_type == room_type) {
@@ -1144,9 +1143,7 @@ pub fn morale_sustained_beneficiaries(
     let managers = num_morale_swap_managers(operators, building_data);
     // No manager, or no dormitory that can host one (her seat plus a free
     // swap seat): the manager has to STAY parked in a dorm to work.
-    if managers == 0
-        || !crate::core::grade::base::dorms::building_hosts_manager(building, building_data)
-    {
+    if managers == 0 || !building_hosts_manager(building, building_data) {
         return HashSet::new();
     }
     // The swap hands over a full bar once per manager recharge (Fiammetta:
@@ -1155,9 +1152,7 @@ pub fn morale_sustained_beneficiaries(
     // 24/7 - they must keep rotating.
     let swap_rate = morale_swap_enabler(operators, building_data)
         .and_then(|id| operators.iter().find(|o| o.char_id == id))
-        .map_or(0.0, |m| {
-            crate::core::grade::base::dorms::manager_swap_rate(m, registry, building_data)
-        });
+        .map_or(0.0, |m| manager_swap_rate(m, registry, building_data));
     let op_index = build_op_index(operators);
     let mut ranked: Vec<(String, f64)> = Vec::new();
     for r in main
@@ -1170,10 +1165,7 @@ pub fn morale_sustained_beneficiaries(
         let room_mag = r.total_efficiency + r.order_value;
         for id in &r.operators {
             if let Some(op) = op_index.get(id.as_str()) {
-                if !crate::core::grade::base::dorms::manager_can_sustain(
-                    swap_rate,
-                    crate::core::grade::base::sustain_sim::game_morale_drain(op, morale_drains),
-                ) {
+                if !manager_can_sustain(swap_rate, game_morale_drain(op, morale_drains)) {
                     continue;
                 }
                 let up = op_uptime(op, morale_drains, recovery);
@@ -1559,16 +1551,11 @@ pub fn compute_current_assignment(
         effective_facility_counts(building, operators, registry, building_data);
     // The live base has REAL seats, so assignment-fed pools (Senshi's Monster
     // Meals) settle exactly and ride the synthetic channel into the scorer.
-    let settled = crate::core::grade::base::pools::settle_current_pools(
-        building,
-        operators,
-        registry,
-        building_data,
-    );
+    let settled = settle_current_pools(building, operators, registry, building_data);
     for (resource, points) in &settled {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         facility_counts.insert(
-            format!("{}{resource}", crate::core::grade::base::pools::POOL_PREFIX),
+            format!("{POOL_PREFIX}{resource}"),
             points.round().max(0.0) as usize,
         );
     }
@@ -1993,7 +1980,7 @@ fn cc_spare_seat_value(
             (buff.room_type == "CONTROL").then_some(())?;
             let strategy = registry.get(b)?;
             Some(
-                crate::core::grade::base::clause::clauses_from_strategy(b, buff, strategy)
+                clauses_from_strategy(b, buff, strategy)
                     .iter()
                     .filter(|c| matches!(c.kind, ClauseKind::SelfValue))
                     .map(|c| match &c.metric {
@@ -3359,10 +3346,7 @@ pub(crate) fn enumerate_candidate_teams(
             })
         })
         .filter(|op| include_automation || !has_automation_buff(op, registry))
-        .filter(|op| {
-            !require_24h_sustain
-                || crate::core::grade::base::sustain_sim::sustains_24h_block(op, morale_drains)
-        })
+        .filter(|op| !require_24h_sustain || sustains_24h_block(op, morale_drains))
         .collect();
 
     if candidates.is_empty() {

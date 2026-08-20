@@ -15,7 +15,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::core::gamedata::types::building::BuildingDataFile;
+use crate::core::gamedata::types::building::{Buff, BuildingDataFile};
 
 use super::buff_registry::BuffResolutionStrategy;
 use super::clause::{ClauseKind, PoolBasis, ResourceOp, clauses_from_strategy};
@@ -89,7 +89,7 @@ pub(crate) fn has_side_channel_grant(desc: &str) -> bool {
 fn strategy_generates(
     registry: &HashMap<String, BuffResolutionStrategy>,
     buff_id: &str,
-    buff: &crate::core::gamedata::types::building::Buff,
+    buff: &Buff,
     resource: &str,
 ) -> bool {
     registry.get(buff_id).is_some_and(|s| {

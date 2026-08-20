@@ -9,7 +9,7 @@
 //! category from a single resource. All taxonomy/labelling comes from
 //! [`StageClassifier`], the single source of truth.
 //!
-//! [`StageClassifier`]: crate::core::gamedata::enrich::stage_class::StageClassifier
+//! [`StageClassifier`]: super::super::enrich::stage_class::StageClassifier
 
 use serde::Serialize;
 
@@ -58,5 +58,5 @@ pub struct StageIndexEntry {
 }
 
 /// The full stage catalogue. Built by
-/// [`build_stage_index`](crate::core::gamedata::enrich::stage_index::build_stage_index).
+/// [`build_stage_index`](super::super::enrich::stage_index::build_stage_index).
 pub type StageIndex = Vec<StageIndexEntry>;

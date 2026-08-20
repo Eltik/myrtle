@@ -22,11 +22,17 @@ use crate::app::services::improvements::{
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::grade::base::assignment::{
-    compute_current_assignment, compute_optimal_assignment_with_pins,
+    compute_current_assignment, compute_optimal_assignment_with_pins, morale_recovery,
 };
 use crate::core::grade::base::context::BaseContext;
+use crate::core::grade::base::dorms::morale_manager_pin;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
-use crate::core::grade::base::types::{UserBuilding, UserRoom};
+use crate::core::grade::base::sustain_sim::game_morale_drain;
+use crate::core::grade::base::types::{
+    BaseAssignment, OperatorBaseProfile, RoomAssignment, UserBuilding, UserRoom,
+};
+use crate::core::grade::base::yield_model::room_yield;
+use crate::database::models::user::UserProfile;
 use crate::database::queries::building::get_building;
 use crate::database::queries::roster::get_roster;
 use crate::database::queries::users::find_by_uid;
@@ -426,7 +432,7 @@ async fn profile_for(
     state: &AppState,
     uid: &str,
     viewer_id: Option<uuid::Uuid>,
-) -> Result<crate::database::models::user::UserProfile, ApiError> {
+) -> Result<UserProfile, ApiError> {
     let user = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -522,7 +528,7 @@ pub async fn evaluate(
 
 fn dorms_of(building: &UserBuilding, ctx: &BaseContext, game_data: &GameData) -> DormsDto {
     use crate::core::grade::base::dorms::{dorm_aura_value, dorm_list, dorm_single_value};
-    let by_id: HashMap<&str, &crate::core::grade::base::types::OperatorBaseProfile> = ctx
+    let by_id: HashMap<&str, &OperatorBaseProfile> = ctx
         .profiles
         .iter()
         .map(|p| (p.char_id.as_str(), p))
@@ -568,7 +574,7 @@ fn dorms_of(building: &UserBuilding, ctx: &BaseContext, game_data: &GameData) ->
         count: per_dorm.len(),
         total_levels: building.total_dorm_levels(),
         total_capacity,
-        recovery_per_hour: crate::core::grade::base::assignment::morale_recovery(building),
+        recovery_per_hour: morale_recovery(building),
         per_dorm,
     }
 }
@@ -582,7 +588,7 @@ fn sustain_of(
     ctx: &BaseContext,
     game_data: &GameData,
 ) -> Vec<SustainEntryDto> {
-    let by_id: HashMap<&str, &crate::core::grade::base::types::OperatorBaseProfile> = ctx
+    let by_id: HashMap<&str, &OperatorBaseProfile> = ctx
         .profiles
         .iter()
         .map(|p| (p.char_id.as_str(), p))
@@ -599,10 +605,7 @@ fn sustain_of(
             let Some(profile) = by_id.get(char_id.as_str()) else {
                 continue;
             };
-            let drain = crate::core::grade::base::sustain_sim::game_morale_drain(
-                profile,
-                &ctx.morale_drains,
-            );
+            let drain = game_morale_drain(profile, &ctx.morale_drains);
             out.push(SustainEntryDto {
                 operator_id: char_id.clone(),
                 name: game_data
@@ -711,11 +714,8 @@ pub async fn rotation(
     // (Fiammetta) holds a dormitory seat when the roster runs a
     // morale-conditional generator - the planner and the Score tab must
     // never disagree about her.
-    if let Some(pin) = crate::core::grade::base::dorms::morale_manager_pin(
-        &candidates,
-        &building,
-        &game_data.building,
-    ) && !pins.iter().any(|(id, _)| id == &pin.0)
+    if let Some(pin) = morale_manager_pin(&candidates, &building, &game_data.building)
+        && !pins.iter().any(|(id, _)| id == &pin.0)
     {
         pins.push(pin);
     }
@@ -780,10 +780,10 @@ fn build_pins(layout: &[DraftRoom], scope: &[String], locked: &[String]) -> Vec<
 /// it has them, and zero where the engine reports none.
 fn diff_rooms(
     draft: &[DraftRoom],
-    baseline: &crate::core::grade::base::types::BaseAssignment,
-    proposal: &crate::core::grade::base::types::BaseAssignment,
+    baseline: &BaseAssignment,
+    proposal: &BaseAssignment,
 ) -> Vec<RoomDiffDto> {
-    let scored_by_slot: HashMap<&str, &crate::core::grade::base::types::RoomAssignment> = baseline
+    let scored_by_slot: HashMap<&str, &RoomAssignment> = baseline
         .rooms
         .iter()
         .map(|r| (r.slot_id.as_str(), r))
@@ -805,7 +805,7 @@ fn diff_rooms(
             continue;
         }
         let y_before = before.map_or_else(Default::default, |r| {
-            crate::core::grade::base::yield_model::room_yield(
+            room_yield(
                 &r.room_type,
                 r.formula_type.as_deref(),
                 r.level,
@@ -813,7 +813,7 @@ fn diff_rooms(
                 r.order_value,
             )
         });
-        let y_after = crate::core::grade::base::yield_model::room_yield(
+        let y_after = room_yield(
             &after.room_type,
             after.formula_type.as_deref(),
             after.level,
@@ -918,7 +918,7 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
     storeys.sort_by(|a, b| a.storey_id.cmp(&b.storey_id));
 
     CatalogResponse {
-        shift_count: crate::core::grade::base::shift_rotation::SHIFT_COUNT,
+        shift_count: SHIFT_COUNT,
         rooms,
         formulas,
         slots,

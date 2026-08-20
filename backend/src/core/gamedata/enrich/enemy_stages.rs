@@ -5,7 +5,7 @@
 //! keys/counts), classifies the level via [`StageClassifier`], and inverts the
 //! result into `enemy_id -> Vec<EnemyStageRef>`. It also folds in boss-only
 //! declarations from `activity_table` (some bosses never appear in a level
-//! file). All stage taxonomy/labelling lives in [`stage_class`].
+//! file). All stage taxonomy/labelling lives in [`super::stage_class`].
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

@@ -6,6 +6,8 @@ use regex::Regex;
 use crate::core::gamedata::types::building::Buff;
 use crate::core::gamedata::types::operator::Operator;
 
+use super::pools::ROBOTS_IN_POWER;
+
 /// Build a lowercased operator-name → `char_id` lookup, used to resolve
 /// named-teammate conditional buffs (the buff text references operators by
 /// display name, e.g. "...the same Trading Post as Lappland").
@@ -818,7 +820,7 @@ pub fn build_registry(
                 registry.insert(
                     buff_id.clone(),
                     BuffResolutionStrategy::PoolPointsScaling {
-                        resource: crate::core::grade::base::pools::ROBOTS_IN_POWER.to_string(),
+                        resource: ROBOTS_IN_POWER.to_string(),
                         per: 1.0,
                         pct: c[1].parse().unwrap_or(0.0),
                     },

@@ -8,7 +8,7 @@ use crate::core::gamedata::{
         building::BuildingDataFile,
         consts::GameDataConst,
         handbook::Handbook,
-        material::Materials,
+        material::{ItemType, Materials},
         module::{BattleEquip, RawModules},
         operator::{
             AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, LevelUpCostItem, Operator,
@@ -303,7 +303,7 @@ fn enrich_phases(phases: &[Phase], rarity: usize, ctx: &EnrichCtx) -> Vec<Phase>
                 let lmd_cost_item = EvolveCost {
                     id: "4001".to_owned(),
                     count: promo_lmd,
-                    item_type: crate::core::gamedata::types::material::ItemType::Gold,
+                    item_type: ItemType::Gold,
                     icon_id,
                     image,
                 };

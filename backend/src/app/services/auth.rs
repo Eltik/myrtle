@@ -5,6 +5,7 @@ use crate::core::auth::jwt::create_token;
 use crate::core::hypergryph::constants::Server;
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
+use crate::database::queries::users;
 use crate::database::queries::users::create_user;
 use crate::database::queries::users::find_raw_by_uid;
 use serde::Serialize;
@@ -106,13 +107,6 @@ pub async fn update_settings(
     store_gacha: bool,
     share_stats: bool,
 ) -> Result<(), ApiError> {
-    crate::database::queries::users::update_settings(
-        &state.db,
-        user_id,
-        public_profile,
-        store_gacha,
-        share_stats,
-    )
-    .await?;
+    users::update_settings(&state.db, user_id, public_profile, store_gacha, share_stats).await?;
     Ok(())
 }

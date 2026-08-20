@@ -23,6 +23,7 @@ use super::assignment::{
 };
 use super::buff_registry::BuffResolutionStrategy;
 use super::shift_rotation::SHIFT_COUNT;
+use super::sustain_sim::sustains_24h_block;
 use super::types::{OperatorBaseProfile, RoomAssignment, UserRoom};
 use super::util::max_stationed_at_level;
 
@@ -796,7 +797,7 @@ fn pad_teams(
                     || op_is_nullifier(op, &room_type, formula.as_deref(), registry, building_data)
                     // Padding seats the op into a 24h-block team - a heavy-drainer
                     // would run dry mid-block.
-                    || !crate::core::grade::base::sustain_sim::sustains_24h_block(op, morale_drains)
+                    || !sustains_24h_block(op, morale_drains)
                 {
                     continue;
                 }
