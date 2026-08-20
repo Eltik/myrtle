@@ -37,6 +37,12 @@ export interface ISceneRam {
     edgePow?: number;
     disturbTex?: number | null;
     disturbST: [number, number, number, number];
+    /** `_RamTex` - the RAMP the family is named for. The decompiled fragment ends
+     *  `col *= texture(_RamTex, TC1.xy)`, whose UV is a plain `uv * ST.xy + ST.zw` with NO
+     *  scroll. This carries the layer's SHAPE: the main slot is routinely a flat shared FLOW
+     *  map, so without the ramp the layer paints a flat wash instead of the ramp's artwork. */
+    ramTex?: number | null;
+    ramST?: [number, number, number, number];
     /** Dissolve threshold and the softness of its edge. */
     amount: number;
     borderWidth: number;
@@ -311,7 +317,18 @@ interface IRamSceneTex {
     /** Second dissolve map (the `Dissolve/` family multiplies two). Null on single-map families. */
     dissolve2: PIXI.Texture | null;
     disturb: PIXI.Texture | null;
+    /** `_RamTex`, the ramp the fragment multiplies through. Unlike the masks this is ARTWORK,
+     *  but it is still sampled RAW: the game multiplies straight texels into a colour the One
+     *  blend factor already treats as premultiplied, so a premultiplied ramp would double-apply
+     *  its own alpha. */
+    ram: PIXI.Texture | null;
     white: PIXI.Texture;
+}
+
+/** `?ramtex=0` drops the `_RamTex` multiply from the Ram scene compositor (diagnostic). */
+function ramTexOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ramtex") !== "0";
 }
 
 /** Rebuild an opaque additive texture with alpha = luminance (black-point) so its
@@ -1112,10 +1129,12 @@ uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
+uniform vec4 uRamST;
 varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vRamUV;
 varying vec4 vColor;
 void main() {
     gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
@@ -1127,9 +1146,14 @@ void main() {
     vec2 ds = unity * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
     vec2 dt = unity * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
     vec2 ds2 = unity * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
+    // The ramp is the one lookup with NO scroll and NO custom-stream offset (verified against
+    // the decompiled vertex: TC1.xy = uv * _RamTex_ST.xy + _RamTex_ST.zw, full stop).
+    // NOTE: no backticks in here - this is inside a template literal.
+    vec2 rm = unity * uRamST.xy + uRamST.zw;
     vDissolveUV = vec2(ds.x, 1.0 - ds.y);
     vDissolveUV2 = vec2(ds2.x, 1.0 - ds2.y);
     vDisturbUV = vec2(dt.x, 1.0 - dt.y);
+    vRamUV = vec2(rm.x, 1.0 - rm.y);
 }
 `;
 const RAM_SCENE_FRAG = `
@@ -1138,11 +1162,14 @@ varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vRamUV;
 varying vec4 vColor;
 uniform sampler2D uSampler;
 uniform sampler2D uDissolveTex;
 uniform sampler2D uDissolveTex2;
 uniform sampler2D uDisturbTex;
+uniform sampler2D uRamTex;
+uniform float uHasRam;
 uniform vec4 uColor; // premultiplied tint*alpha
 uniform float uWorldAlpha;
 uniform float uAmount;
@@ -1186,6 +1213,13 @@ void main() {
     }
     vec4 vc = vec4(vColor.rgb * vColor.a, vColor.a);
     vec4 pm = tex * uColor * vc * uWorldAlpha;   // premultiplied layer colour, pre-mask
+    // THE RAMP. The decompiled fragment ends with col *= texture(_RamTex, TC1.xy) -- a full
+    // RGBA multiply, applied before the dissolve mask scales alpha. This is what gives a Ram
+    // layer its shape: the main slot is routinely a flat shared flow map (Executor's cb_a_4
+    // binds the same flow_177 to _MainTex AND _DisturbTex), so without the ramp the layer
+    // paints a flat wash. Reverted by ?ramtex=0.
+    // NOTE: no backticks in here - this is inside a template literal.
+    if (uHasRam > 0.5) pm *= texture2D(uRamTex, vRamUV);
     // EDGE RIM. The ...edge variants light the dissolve boundary:
     //   e   = clamp(mask / edge.a, 0, 1)
     //   rim = pow(1 - smoothstep(0, 1, e), pow)
@@ -1258,6 +1292,9 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uDissolveTex: ramTex.dissolve ?? ramTex.white,
             uDissolveTex2: ramTex.dissolve2 ?? ramTex.white,
             uDisturbTex: ramTex.disturb ?? ramTex.white,
+            uRamTex: ramTex.ram ?? ramTex.white,
+            uHasRam: ramTex.ram ? 1 : 0,
+            uRamST: r.ramST ?? [1, 1, 0, 0],
             uColor,
             uWorldAlpha: 1,
             uAmount: r.amount,
@@ -1779,7 +1816,8 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         const dissolve = slot(r.dissolveTex);
         const dissolve2 = slot(r.dissolveTex2);
         const disturb = slot(r.disturbTex);
-        return dissolve || dissolve2 || disturb ? { dissolve, dissolve2, disturb, white: PIXI.Texture.WHITE } : null;
+        const ram = ramTexOn() ? slot(r.ramTex) : null;
+        return dissolve || dissolve2 || disturb || ram ? { dissolve, dissolve2, disturb, ram, white: PIXI.Texture.WHITE } : null;
     };
 
     // Does this scene own a DARK opaque painted backdrop (a self-lit painted world, not a

@@ -161,6 +161,17 @@ pub struct SceneRam {
     pub dissolve_pid: Option<i64>,
     pub dissolve_val: Option<Value>,
     pub dissolve_st: [f64; 4],
+    /// `_RamTex` `Texture2D` + its `path_id` and `[sx, sy, ox, oy]` — the RAMP the family is
+    /// named for. The decompiled fragment ends `col *= texture(_RamTex, TC1.xy)`, and its UV is a
+    /// plain `uv * _RamTex_ST.xy + _RamTex_ST.zw` with NO scroll and NO custom-stream offset.
+    ///
+    /// This is what gives a Ram layer its SHAPE: the main slot is routinely a flat shared FLOW
+    /// map (Executor's `cb_a_4` binds `flow_177` to `_MainTex` AND `_DisturbTex`, luminance mean
+    /// 0.671 with p90 also 0.671 — i.e. constant), so without the ramp the layer paints a flat
+    /// wash instead of the ramp's artwork.
+    pub ram_pid: Option<i64>,
+    pub ram_val: Option<Value>,
+    pub ram_st: [f64; 4],
     /// `_DisturbTex` `Texture2D` + its `path_id` and `[sx, sy, ox, oy]`.
     pub disturb_pid: Option<i64>,
     pub disturb_val: Option<Value>,
@@ -1866,7 +1877,9 @@ fn collect_dynchar_bg_quads(
                     // ⚠️ This deliberately does NOT change ADMISSION — a disturb-only material
                     // still fails `admit` below. Porting disturb-only layers was measured worse
                     // (Virtuosa 35.322 -> 37.770); this only completes layers that are already in.
-                    let (dist_pid, dist_val, dist_st) = {
+                    let (ram_pid, ram_val, ram_st) =
+            super::particles::mat_texenv(all_objects, mat, "_RamTex");
+        let (dist_pid, dist_val, dist_st) = {
                         let long = super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
                         if long.0.is_some() && long.1.is_some() {
                             long
@@ -1922,6 +1935,9 @@ fn collect_dynchar_bg_quads(
                             disturb_pid: dist_pid,
                             disturb_val: dist_val,
                             disturb_st: dist_st,
+                            ram_pid,
+                            ram_val,
+                            ram_st,
                             dissolve2_pid: diss2_pid,
                             dissolve2_val: diss2_val,
                             dissolve2_st: diss2_st,
@@ -4726,7 +4742,16 @@ fn export_scene(
                 &mut next_idx,
                 &mut saved,
             );
-            if diss.is_some() || diss2.is_some() || dist.is_some() {
+            let ramt = resolve_scene_mask(
+                r.ram_pid,
+                r.ram_val.as_ref(),
+                resources,
+                &tex_dir,
+                &mut tex_index,
+                &mut next_idx,
+                &mut saved,
+            );
+            if diss.is_some() || diss2.is_some() || dist.is_some() || ramt.is_some() {
                 layer["ram"] = serde_json::json!({
                     "dissolveTex": diss,
                     "dissolveST": r.dissolve_st,
@@ -4738,6 +4763,8 @@ fn export_scene(
                     "edgePow": r.edge_pow,
                     "disturbTex": dist,
                     "disturbST": r.disturb_st,
+                    "ramTex": ramt,
+                    "ramST": r.ram_st,
                     "amount": r.amount,
                     "borderWidth": r.border_width,
                     "anchorU": r.anchor_u,
