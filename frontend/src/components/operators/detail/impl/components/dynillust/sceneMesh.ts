@@ -325,7 +325,14 @@ interface IRamSceneTex {
     white: PIXI.Texture;
 }
 
-/** `?ramtex=0` drops the `_RamTex` multiply from the Ram scene compositor (diagnostic). */
+/** `?ramtex=0` stubs the `_RamTex` multiply out of the Ram scene compositor (diagnostic).
+ *
+ *  ⚠️ This is NOT a revert to the pre-ramp build, and must not be read as one. Adding the slot
+ *  also moved RAMP-ONLY layers onto the Ram compositor for the first time (they carried no `ram`
+ *  block at all before, so they took the plain path). Running that compositor with the multiply
+ *  stubbed out is a THIRD configuration that exists in neither build, and it is badly wrong:
+ *  Civilight Eterna scores 48.646 that way against 17.921 shipped and 17.908 before. To compare
+ *  against the old renderer, check out the old renderer. */
 function ramTexOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ramtex") !== "0";
@@ -1293,7 +1300,7 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uDissolveTex2: ramTex.dissolve2 ?? ramTex.white,
             uDisturbTex: ramTex.disturb ?? ramTex.white,
             uRamTex: ramTex.ram ?? ramTex.white,
-            uHasRam: ramTex.ram ? 1 : 0,
+            uHasRam: ramTex.ram && ramTexOn() ? 1 : 0,
             uRamST: r.ramST ?? [1, 1, 0, 0],
             uColor,
             uWorldAlpha: 1,
@@ -1816,7 +1823,11 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         const dissolve = slot(r.dissolveTex);
         const dissolve2 = slot(r.dissolveTex2);
         const disturb = slot(r.disturbTex);
-        const ram = ramTexOn() ? slot(r.ramTex) : null;
+        // NB: loaded regardless of the diagnostic flag, so ?ramtex=0 gates only the MULTIPLY and
+        // leaves the compositor selection identical. Dropping the texture here instead moves
+        // ramp-only layers off the Ram shader entirely, which is a different render, not an A/B
+        // (and hung the headless capture on Civilight Eterna).
+        const ram = slot(r.ramTex);
         return dissolve || dissolve2 || disturb || ram ? { dissolve, dissolve2, disturb, ram, white: PIXI.Texture.WHITE } : null;
     };
 
