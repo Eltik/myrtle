@@ -252,6 +252,13 @@ function apertureScaleOn(): boolean {
     return new URLSearchParams(window.location.search).get("apscale") !== "0";
 }
 
+/** `?apcenter=0` pins the scope aperture to the camera centre, ignoring the rim transform's
+ *  own POSITION curve (diagnostic). */
+function apertureCenterOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("apcenter") !== "0";
+}
+
 /** Linear sample of a `[t, value]` keyframe list, clamped at both ends. The scene's other
  *  samplers are shaped for XY and RGBA curves; this is the scalar case. */
 function sampleScalar(curve: [number, number][], t: number): number {
@@ -1316,6 +1323,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
          *  independently from the idle skeleton's own static bounds. Null until the first
          *  tick runs. */
         lastLiveCenter: [number, number] | null;
+        /** The RAW entrance camera centre (mesh px) sampled the same frame as
+         *  {@link lastLiveCenter}. The aperture needs it to express the scope rim's motion
+         *  RELATIVE to the camera; `lastLiveCenter` alone has skin-specific re-basing folded in. */
+        lastCamRaw: [number, number] | null;
         sceneLayers: PIXI.Container[];
         /** Deferred entrance end (see IComposite.entranceSceneEnd): fire `fireEnd`
          *  when the track clock reaches `endAt`. Null when the spine's own
@@ -1614,6 +1625,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const cx = c[0] + cxShift;
                 liveDisplayBox = { x: cx - size / 2, y: cy - size / 2, width: size, height: size };
                 ef.lastLiveCenter = [cx, cy];
+                ef.lastCamRaw = [c[0], c[1]];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
                 // DIAGNOSTIC (`?camroll=<deg>`): ROLL the frame about its centre. Wiš'adel's
                 // `_Start` clip animates her camera parent's euler Z from 11.34° to 29.56° over
@@ -1699,7 +1711,45 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const ap = eseq.aperture;
                 if (ap && eseq.apertureMask) {
                     const live = entranceFollowRef.current?.lastLiveCenter;
-                    if (live) eseq.apertureMask.position.set(live[0], live[1]);
+                    if (live) {
+                        // APERTURE CENTRE. The mask is pinned to the camera centre, which assumes
+                        // the scope rim rides the camera exactly. It very nearly does - Executor's
+                        // rim tracks the pan at correlation 0.9996 - but it keeps a residual of its
+                        // own, and that residual IS the aperture's drift off frame centre. The
+                        // exporter decoded the rim's POSITION curve all along and nothing read it
+                        // (`entrance_transform_curves` even paired it with the wrong transform).
+                        //
+                        // Predicted from the curve with no fitting: `restCenter + posCurve(t) −
+                        // camCentre(t)` = −23.9 mesh px at her t=5 beat, which is −21.0 screen px
+                        // at that frame's zoom. Measured from the capture: the game's aperture
+                        // centre sits at x=428 against our 449 - **−21 px**. `?apcenter=0` reverts.
+                        //
+                        // X ONLY. The camera curve's Y is expressed in a different frame from the
+                        // layer `pos` (they disagree by ~400 mesh px, where our vertical aperture
+                        // error is just −6 px), and the only rim curve in the corpus has dy ≡ 0, so
+                        // there is nothing to validate a Y correction against. Left pinned.
+                        const camRaw = entranceFollowRef.current?.lastCamRaw;
+                        let apX = live[0];
+                        if (ap.posCurve?.length && camRaw && apertureCenterOn()) {
+                            const pc = ap.posCurve;
+                            let dx = pc[0][1];
+                            if (tt <= pc[0][0]) dx = pc[0][1];
+                            else if (tt >= pc[pc.length - 1][0]) dx = pc[pc.length - 1][1];
+                            else
+                                for (let i = 1; i < pc.length; i++) {
+                                    if (tt <= pc[i][0]) {
+                                        const [t0, x0] = pc[i - 1];
+                                        const [t1, x1] = pc[i];
+                                        const f = t1 === t0 ? 0 : (tt - t0) / (t1 - t0);
+                                        dx = x0 + (x1 - x0) * f;
+                                        break;
+                                    }
+                                }
+                            const off = ap.restCenter[0] + dx - camRaw[0];
+                            if (Number.isFinite(off)) apX += off;
+                        }
+                        eseq.apertureMask.position.set(apX, live[1]);
+                    }
                     // The rim's own transform is ANIMATED, and the aperture is its inner circle,
                     // so the radius has to follow. Scaling the whole plate is safe: the hole is
                     // centred on the graphic's origin, and the 50000-wide plate still covers the
@@ -3692,6 +3742,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 centerBlend,
                                 startCenter: sampleCurveXY(built.entranceCamCenterCurve, 0) ?? [0, 0],
                                 lastLiveCenter: null,
+                                lastCamRaw: null,
                                 sceneLayers: sl,
                                 endAt: built.entranceSceneEnd,
                                 fireEnd: built.entranceSceneEnd != null ? built.requestEntranceEnd : null,

@@ -106,6 +106,9 @@ export interface ISceneLayer {
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
      *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
     scaleCurve?: [number, number][] | null;
+    /** ENTRANCE Transform POSITION offsets `[t, dx, dy]` in authored px, relative to this
+     *  layer's rest `pos`. Only the scope rim carries one today. */
+    posCurve?: [number, number, number][] | null;
     /** SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space) for
      *  a Ram-family scene layer. The frontend offsets the layer's UVs by `t · [u, v]` each
      *  frame (continuous scene clock), reproducing the shader's `_Time`-driven scroll. Absent
@@ -241,6 +244,14 @@ export interface ISceneAperture {
      *  the aperture follows, which a frozen radius cannot express (measured width/camera-scale
      *  swings 295..521 where ours was a constant 425). */
     scaleCurve: [number, number][] | null;
+    /** The rim's own ENTRANCE POSITION curve, `[t, dx, dy]` in authored px (see
+     *  {@link ISceneLayer.posCurve}). The aperture is pinned to the CAMERA centre, which is
+     *  only right while the rim rides the camera exactly. It does not: Executor's rim tracks
+     *  the pan at correlation 0.9996 but keeps a residual of its own, and that residual is
+     *  the aperture's real drift off centre. */
+    posCurve: [number, number, number][] | null;
+    /** The rim's rest centre in authored px, the anchor `posCurve` offsets from. */
+    restCenter: [number, number];
 }
 
 export interface ILoadedScene {
@@ -1727,6 +1738,8 @@ function sceneAperture(data: ISceneData, bases: ISceneTex[]): ISceneAperture | n
             curve: l.colorCurve ?? null,
             until: reveals.length ? Math.min(...reveals) : null,
             scaleCurve: l.scaleCurve ?? null,
+            posCurve: l.posCurve ?? null,
+            restCenter: [(Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...ys) + Math.min(...ys)) / 2],
         };
     }
     return null;

@@ -252,6 +252,11 @@ pub struct BgQuad {
     /// capture's radius to ~1% at four of five beats, so this is the missing input rather than an
     /// anchoring error. See `entrance_transform_curves`.
     pub scale_curve: Option<Vec<(f32, f32)>>,
+    /// ENTRANCE Transform POSITION keyframes for the quad's animated owner, as an OFFSET
+    /// from its prefab pose, in UNITY units (scaled to authored px by `inv` at emission,
+    /// like `follow.origin`). `entrance_transform_curves` has always decoded these alongside
+    /// the scale; nothing consumed them, so every animated scene transform exported frozen.
+    pub pos_curve: Option<Vec<(f32, f32, f32)>>,
     /// ENTRANCE reveal time (seconds) — when this layer's `GameObject` (or a nearest
     /// ancestor group) is switched ON by an `m_IsActive` curve in the `_Start` clips.
     /// `None` = always active (visible from t=0). Only `_Start` scenes carry non-None.
@@ -2231,6 +2236,49 @@ fn collect_dynchar_bg_quads(
                 // All-1.0 curves carry no information and would only bloat every scene JSON.
                 c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
             });
+        // The OWNER's animated POSITION, resolved into the same space as `pos`. The curve is
+        // authored in the owner's PARENT frame, so a parent-frame delta has to be carried
+        // through the parent's world LINEAR part (rotation/scale) before it means anything in
+        // authored px — taking the raw local delta would be right only for an unrotated,
+        // unscaled ancestry. Emitted as a delta, not an absolute, so the baked `pos` stays the
+        // single source of the layer's rest pose.
+        let pos_curve = xform_owner
+            .and_then(|owner| xform_map.get(&owner).map(|et| (owner, et)))
+            .and_then(|(owner, et)| {
+                if et.pos_x.len() < 2 && et.pos_y.len() < 2 {
+                    return None;
+                }
+                let tf = *go_to_transform.get(&owner)?;
+                let tv = &all_objects.get(&tf)?.1;
+                let lp = tv.get("m_LocalPosition")?;
+                let p0x = lp.get("x").and_then(Value::as_f64).unwrap_or(0.0) as f32;
+                let p0y = lp.get("y").and_then(Value::as_f64).unwrap_or(0.0) as f32;
+                let father = tv.get("m_Father").and_then(get_path_id).filter(|&p| p != 0);
+                let pw = father.map_or_else(super::mesh::Mat4::identity, |f| {
+                    accumulate_matrix(all_objects, f, &spine_gos, &idle_pose)
+                });
+                let o = pw.point([0.0, 0.0, 0.0]);
+                let mut ts: Vec<f32> = et
+                    .pos_x
+                    .iter()
+                    .chain(et.pos_y.iter())
+                    .map(|&(t, _)| t)
+                    .collect();
+                ts.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                ts.dedup_by(|a, b| (*a - *b).abs() < 1e-4);
+                let c: Vec<(f32, f32, f32)> = ts
+                    .iter()
+                    .map(|&t| {
+                        let dx = sample_kf(&et.pos_x, t, p0x) - p0x;
+                        let dy = sample_kf(&et.pos_y, t, p0y) - p0y;
+                        let w = pw.point([dx, dy, 0.0]);
+                        (t, w[0] - o[0], w[1] - o[1])
+                    })
+                    .collect();
+                c.iter()
+                    .any(|&(_, dx, dy)| dx.abs() > 1e-3 || dy.abs() > 1e-3)
+                    .then_some(c)
+            });
         // DIAGNOSTIC (`DYNCHAR_XFORM_DEBUG=1`): which GO owns each quad, and did it find a
         // curve? The curve map is keyed by the clip's DISAMBIGUATED ctrl, which need not be the
         // clone the quad was collected from — that mismatch is why Executor's scope rim exports
@@ -2257,6 +2305,7 @@ fn collect_dynchar_bg_quads(
             src_blend,
             dst_blend,
             scale_curve,
+            pos_curve,
             active_from: window.first().and_then(|w| w.0),
             active_until: window.first().and_then(|w| w.1),
             active_windows: if window.len() > 1 {
@@ -2528,6 +2577,27 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
         // free" argument is sound and still gives the wrong answer, because alpha is the tell.
         (2.0, false)
     } else if shader.contains("Ram/") {
+        // EXPERIMENT (`DYNCHAR_RAM_NEUTRAL=1`, default OFF) -- **MEASURED AND REFUTED**.
+        //
+        // The idea: gate the `Ram/` doubling on the SAME half-neutral convention the sibling
+        // families use. A x2 material cannot author `_MainColor` above its own neutral,
+        // because doubling would blow past white -- so a `Ram/` material at 0.75 (excu2's
+        // `cb_a_4`, the sheet behind her scope aperture) would be authored DIRECT, and
+        // doubling it only clamps 1.5 -> 1.0. That layer IS measurably over-bright: ablating
+        // it takes the lit region from +17.7 to +3.6 luma against the game at her t=5 beat.
+        //
+        // It is nonetheless the wrong correction. Gating changes 60 layer tints across three
+        // references and costs **exc 8.918 -> 9.534**, ska 10.427 -> 10.451, cet 17.908 ->
+        // 17.914; the other five are bit-identical. So the over-brightness is NOT a tint-scale
+        // error -- scaling these sheets by 0.75 makes every other beat worse than it makes
+        // t=5 better. This is a THIRD independent refutation of touching the `Ram/` x2 (the
+        // two below unclamp it, this one withholds it), which is why the doubling stays
+        // unconditional: it is an amplitude correction, not a port of `c = c + c`.
+        //
+        // Kept inert as the evidence. Do not re-derive.
+        if std::env::var("DYNCHAR_RAM_NEUTRAL").is_ok() && !half_neutral {
+            return (1.0, false);
+        }
         // `Ram/` keeps the CLAMPED doubling it shipped with. Its materials sit at or near
         // full scale (Skadi2's layers double to 1.4-2.0), so letting them through
         // unclamped is not a ramp but a wholesale brightening — MEASURED worse
@@ -3365,6 +3435,33 @@ impl BgParticleHost {
 /// Accumulate the full world matrix (TRS with rotation) by walking `m_Father`
 /// from `start_tf_pid` upward, stopping *before* any spine-root transform so the
 /// result is expressed in the spine root's local frame (the character's frame).
+/// Sample a keyframe list at `t` with linear interpolation, holding the end values.
+/// Returns `dflt` for an empty curve (an axis the clip does not animate).
+fn sample_kf(c: &[(f32, f32)], t: f32, dflt: f32) -> f32 {
+    if c.is_empty() {
+        return dflt;
+    }
+    if t <= c[0].0 {
+        return c[0].1;
+    }
+    if t >= c[c.len() - 1].0 {
+        return c[c.len() - 1].1;
+    }
+    for w in c.windows(2) {
+        let (t0, v0) = w[0];
+        let (t1, v1) = w[1];
+        if t <= t1 {
+            let d = t1 - t0;
+            return if d.abs() < 1e-6 {
+                v1
+            } else {
+                v0 + (v1 - v0) * (t - t0) / d
+            };
+        }
+    }
+    c[c.len() - 1].1
+}
+
 fn accumulate_matrix(
     all_objects: &HashMap<i64, (i32, Value)>,
     start_tf_pid: i64,
@@ -4653,6 +4750,15 @@ fn export_scene(
                     "disturbSpeed": r.disturb_speed,
                 });
             }
+        }
+        // ENTRANCE Transform POSITION curve: `[t, dx, dy]` authored-px offsets the frontend
+        // adds to this layer's rest pose (Executor's scope rim pans while ours is pinned).
+        if let Some(pc) = &quad.pos_curve {
+            layer["posCurve"] = serde_json::json!(
+                pc.iter()
+                    .map(|&(t, x, y)| [t, x * inv, y * inv])
+                    .collect::<Vec<_>>()
+            );
         }
         // CLIP `_MainTex_ST` curve (Capability B): `[t, sx, sy, ox, oy]` samples the frontend
         // replays during the entrance (Skadi2's seam sweep). Omitted for static-ST layers.

@@ -642,6 +642,9 @@ pub struct EntranceTransform {
     pub pos_y: Vec<(f32, f32)>,
 }
 
+/// A transform's POSITION keyframes: the x and y curves decoded from one binding.
+type PosXY = (Vec<(f32, f32)>, Vec<(f32, f32)>);
+
 /// Per-GameObject ENTRANCE transform curves: `_Start` clips that animate a Transform's
 /// SCALE (attribute 3) — and, on the same transform, its POSITION (attribute 1). Only
 /// SCALE-animated transforms are returned (a varying scale is the driver of an effect
@@ -678,6 +681,12 @@ pub fn entrance_transform_curves(
         let mut pos_x = Vec::new();
         let mut pos_y = Vec::new();
         let mut pos_path: Option<u32> = None;
+        // POSITION curves keyed by their OWN binding path. A clip binds several transforms'
+        // positions (Executor's clip carries both the scope rim and the camera dummy), and
+        // the single `pos_x`/`pos_y` pair below keeps only the LAST one it walks past. Pairing
+        // that with the scale's ctrl attaches one transform's motion to another — measured:
+        // her rim exported the CAMERA's pan (correlation 1.0, constant −1037.6 px offset).
+        let mut pos_by_path: HashMap<u32, PosXY> = HashMap::new();
         let mut all_hashes: std::collections::HashSet<u32> = std::collections::HashSet::new();
         let mut gidx = 0usize;
         for b in bindings {
@@ -699,6 +708,7 @@ pub fn entrance_transform_curves(
                 if let Some(c) = decode_curve_any(v, gidx + 1) {
                     pos_y = c;
                 }
+                pos_by_path.insert(path, (pos_x.clone(), pos_y.clone()));
             }
             gidx += binding_curve_count(tid, attr);
         }
@@ -760,11 +770,14 @@ pub fn entrance_transform_curves(
         else {
             continue;
         };
+        // Take the position curve bound to the SCALE's own path — never whichever one the
+        // binding walk happened to end on (see `pos_by_path`).
+        let (own_pos_x, own_pos_y) = pos_by_path.remove(&scale_path).unwrap_or_default();
         let e = out.entry(ctrl).or_default();
         if scale.len() > e.scale.len() {
             e.scale = scale;
-            e.pos_x = pos_x;
-            e.pos_y = pos_y;
+            e.pos_x = own_pos_x;
+            e.pos_y = own_pos_y;
         }
     }
     out
