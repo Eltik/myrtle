@@ -109,26 +109,22 @@ async fn main() -> Result<()> {
         bail!("nothing to do: pass --email, --import or --status");
     };
 
-    match flag("--code") {
-        // Step 2: exchange the code for a durable session.
-        Some(code) => {
-            let result = session::login(&client, &email, &code, server)
-                .await
-                .map_err(|e| anyhow::anyhow!("login failed: {e:?}"))?;
+    // Step 2: exchange the code for a durable session.
+    if let Some(code) = flag("--code") {
+        let result = session::login(&client, &email, &code, server)
+            .await
+            .map_err(|e| anyhow::anyhow!("login failed: {e:?}"))?;
 
-            persist(&out, &result.session, server)?;
-            Ok(())
-        }
-        // Step 1: ask Yostar to email a code.
-        None => {
-            send_code(&client, &email, server)
-                .await
-                .map_err(|e| anyhow::anyhow!("send_code failed: {e:?}"))?;
-            println!("Login code sent to {email}.");
-            println!("Now run: cargo run --bin set-session -- --email {email} --code <code>");
-            Ok(())
-        }
+        return persist(&out, &result.session, server);
     }
+
+    // Step 1: ask Yostar to email a code.
+    send_code(&client, &email, server)
+        .await
+        .map_err(|e| anyhow::anyhow!("send_code failed: {e:?}"))?;
+    println!("Login code sent to {email}.");
+    println!("Now run: cargo run --bin set-session -- --email {email} --code <code>");
+    Ok(())
 }
 
 /// Adopt a session produced elsewhere, saving an OTP round-trip when usable

@@ -4253,7 +4253,7 @@ fn room_presence_gates_resolve_against_the_deployment() {
 /// Delphine's "for each Glasgow Gang Operator assigned to the same Trading
 /// Post, +10%" is a CONDITIONAL per-operator global, not a flat tag bonus -
 /// the singular "each ... Operator" phrasing must route to the same machinery
-/// as SilverAsh's plural form. She earns a Control-Center seat only when the
+/// as `SilverAsh`'s plural form. She earns a Control-Center seat only when the
 /// plan actually fields Glasgow traders; otherwise the dead-weight reselection
 /// evicts her instead of crediting a +10% nobody receives.
 #[test]
@@ -4280,7 +4280,10 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
                 *per_operator,
                 "each Glasgow member earns the +10% separately"
             );
-            assert_eq!(*bonus_pct, 10.0);
+            assert!(
+                (*bonus_pct - 10.0).abs() < 1e-9,
+                "the conditional carries a +10% bonus, got {bonus_pct}"
+            );
         }
         other => panic!("expected ConditionalGlobalEffect, got {other:?}"),
     }
@@ -4340,9 +4343,8 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
     let neutrals = ["char_103_angel", "char_214_kafka", "char_4032_provs"];
     let without_her = plan(&neutrals, false);
     let with_her = plan(&neutrals, true);
-    assert_eq!(
-        cc_eff(&with_her),
-        0.0,
+    assert!(
+        cc_eff(&with_her).abs() < 1e-9,
         "no Glasgow fielded: her Control-Center row must carry no credit"
     );
     assert!(
@@ -4672,7 +4674,7 @@ fn dorm_levels_and_staffed_boosters_shape_recovery() {
 
     // A staffed whole-dorm aura holder speeds the LOW dorm: their +X/hr on
     // top of the L1 rate shrinks the leak, so depletion comes strictly later.
-    let (_, staffed_at) = outcome(1, vec![aura_owner.clone()]);
+    let (_, staffed_at) = outcome(1, vec![aura_owner]);
     assert!(
         staffed_at > low_at + 1.0,
         "a permanent aura resident must defer the L1 dorm's depletion \
@@ -6583,7 +6585,7 @@ fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
 /// Dump-driven diagnostic: the planner's plain-optimal path AND the rotation
 /// on a captured base, printing Control-Center / trading crews and where
 /// Delphine-class conditionals land.
-/// Run: BASE_REPRO_DIR=<dir> BASE_REPRO_UID=<uid> cargo test -- planner_probe --ignored --nocapture
+/// Run: `BASE_REPRO_DIR=<dir> BASE_REPRO_UID=<uid> cargo test -- planner_probe --ignored --nocapture`
 #[test]
 #[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
 fn planner_probe() {
