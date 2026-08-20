@@ -14,9 +14,9 @@ EMBED = HERE / "embed11"
 SKINS = [
     ("wis",  "Wiš'adel",          33.649,  6.750, "Six-frame trim error, then the ending stroke's missing dissolve-UV scroll. Now the corpus best."),
     ("eyja", "Eyjafjalla",        22.123, 10.412, "Reference mis-trimmed by three frames."),
-    ("mue",  "Muelsyse",          21.918, 11.842, "Settled ground at the transform beat, then the duplicated background layers that were drawing twice."),
-    ("exc",  "Executor",          11.038,  8.918, "Reference mis-trimmed by three frames."),
-    ("cet",  "Civilight Eterna",  18.087, 17.908, "Open — one corner is short of light, not short of art. Twenty-plus mechanisms refuted."),
+    ("mue",  "Muelsyse",          21.918, 11.845, "Settled ground at the transform beat, then the duplicated background layers that were drawing twice."),
+    ("exc",  "Executor",          11.038,  6.233, "Two fixes. The scope aperture rides the RIM, not the camera \u2014 a 21 px drift predicted from the clip data with no fitting. Then the Ram shader's closing ramp multiply, which had never been ported to scene layers at all."),
+    ("cet",  "Civilight Eterna",  18.087, 17.921, "Open — one corner is short of light, not short of art. Twenty-plus mechanisms refuted."),
     ("mly",  "Mlynar",            18.073, 17.954, "Open — worst remaining. Framing, trim and animation all verified exact; fifteen mechanisms refuted."),
     ("cel",  "Cello",             18.021, 17.518, "Her worst beat was a rotating overlay running at the wrong simulation speed."),
     ("ska",  "Skadi",             10.447, 10.427, "Stable."),
@@ -154,12 +154,51 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
 </header>
 
 <h2>What moved, and why</h2>
-<p class="lede">Four skins improved. Three of the four were not renderer bugs at all.</p>
+<p class="lede">Five skins improved. Three of them were not renderer bugs at all.</p>
 <div class="tw"><table>
 <thead><tr><th>Skin</th><th class="num">Before</th><th class="num">After</th><th class="num">Δ</th><th>Cause</th></tr></thead>
 <tbody>
 {rows}
 </tbody></table></div>
+
+<div class="finding">
+  <h3>An entire line of the shader had never been ported</h3>
+  <p>The Ram family's fragment program ends by multiplying through a ramp texture &mdash;
+  <code>col *= texture(_RamTex, &hellip;)</code>. Scene layers never did it. The slot was exported
+  for particles only; scene quads emitted no ramp at all and the shader had no sampler to receive
+  one, so a Ram scene layer rendered as main&nbsp;&times;&nbsp;tint with nothing shaping it.</p>
+  <p>That is worse than it sounds, because in this family a <em>flat main texture is the norm</em>
+  &mdash; the shape is supposed to come from the ramp. Executor's sheets bind the same shared flow
+  map to both the main and disturb slots, and its luminance is essentially constant: mean 0.671,
+  90th percentile also 0.671. Unshaped, they painted a flat grey wash over everything inside her
+  scope.</p>
+  <p>It showed up as a near-constant <strong>+17&nbsp;luma</strong> lift across every tone from 8 to
+  120, while the <em>ratio</em> swung from 1.73 down to 0.98 &mdash; a constant difference with a
+  moving ratio is something <em>added</em>, not something scaled. That distinction mattered: scaling
+  the sheets down had already been tried and measured worse. Restoring the multiply takes the excess
+  to <strong>+0.30</strong> and her score to <strong>6.233</strong>.</p>
+  <p>224 of 898 Ram scene layers across all 82 illustrations gain a ramp.</p>
+</div>
+
+<div class="finding">
+  <h3>The scope aperture rides the rim, not the camera</h3>
+  <p>Executor is the one illustration in eighty-two seen through a circular aperture, and we pinned
+  that aperture to the entrance <em>camera</em> centre &mdash; on the reasoning that the shot tracks
+  the scope. It very nearly does: the rim's motion correlates with the camera pan at
+  <strong>0.9996</strong>. But the rim keeps a small residual of its own, and that residual
+  <em>is</em> the aperture's drift off frame centre.</p>
+  <p>The correction was already in the data. The exporter had been decoding the rim's position curve
+  all along and throwing it away &mdash; and worse, pairing it with the wrong transform, so the rim
+  had been exporting the <em>camera's</em> pan instead of its own. With that untangled the offset
+  falls out with no fitting at all: <code>rest + posCurve(t) &minus; camera(t)</code> predicts
+  <strong>&minus;21.0&nbsp;px</strong> at her five-second beat. Measured against the capture, the
+  game's aperture sits <strong>21&nbsp;px</strong> left of ours. After the fix both centre on
+  x&nbsp;=&nbsp;428.5, same 404&times;404 disc, and she goes <strong>8.918 &rarr; 6.907</strong> with
+  all seven other references bit-identical.</p>
+  <p>A prior pass had closed this as &ldquo;not fixable from the exported data&rdquo;. That was the
+  wrong verdict for the right reason: the data existed, it was simply being dropped before anything
+  could read it.</p>
+</div>
 
 <div class="finding">
   <h3>Most of the gain was a measurement error, not a rendering one</h3>
@@ -466,15 +505,15 @@ corrected trim offset — at the old offsets several of these read as out of syn
 
 <h2>Still open</h2>
 <ul>
-  <li><strong>Civilight Eterna (18.087)</strong> — now the worst. Her error is broad rather than one
+  <li><strong>Civilight Eterna (17.921)</strong> — now the worst. Her error is broad rather than one
     bad beat, but three of her four worst beats share a −20 to −40 luma deficit in the
     <em>same lower-left corner</em>. In that corner the game carries <strong>1.8× as many bright
     blobs, each about 0.45× the size</strong> — twice the bright area — while our brightest pixels
     already match exactly. Measured out: the terrain plane, the whole scene-layer set, the gap-fill
     backdrop, the HDR pass, all 132 particle systems, framing, gamma and bloom.</li>
-  <li><strong>Mlynar (18.073)</strong> — a +1.98 Cb blue cast on his skin alone. Eight mechanisms
+  <li><strong>Mlynar (17.954)</strong> — a +1.98 Cb blue cast on his skin alone. Eight mechanisms
     refuted; two colour-space explanations fitted it to ~1% and both turned out wrong.</li>
-  <li><strong>Cello (18.021)</strong> — twelve mechanisms refuted and considered exhausted.</li>
+  <li><strong>Cello (17.518)</strong> — twelve mechanisms refuted and considered exhausted.</li>
   <li><strong>Wiš'adel t=12</strong> — her only bad beat. The capture ramps a darkening where we
     step it on in a single frame.</li>
   <li><strong>The 74 skins with no capture</strong> — only 8 of 82 are measured at all. This is the
