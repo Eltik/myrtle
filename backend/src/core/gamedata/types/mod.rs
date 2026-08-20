@@ -10,6 +10,7 @@ pub mod consts;
 pub mod enemy;
 pub mod enemy_stages;
 pub mod gacha;
+pub mod gacha_detail;
 pub mod handbook;
 pub mod level;
 pub mod material;

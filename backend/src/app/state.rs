@@ -9,6 +9,7 @@ use sqlx::PgPool;
 use crate::app::cache::store::CacheStore;
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
 use crate::core::hypergryph::constants::Server;
+use crate::core::service_account::ServiceAccounts;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -42,6 +43,7 @@ pub struct AppStateInner {
     pub default_server: Server,
     pub config: Arc<AppConfig>,
     pub http_client: Client,
+    pub service_accounts: ServiceAccounts,
 }
 
 impl AppState {
@@ -52,6 +54,7 @@ impl AppState {
         default_server: Server,
         config: AppConfig,
         client: Client,
+        service_accounts: ServiceAccounts,
     ) -> Self {
         Self {
             inner: Arc::new(AppStateInner {
@@ -61,6 +64,7 @@ impl AppState {
                 default_server,
                 config: Arc::new(config),
                 http_client: client,
+                service_accounts,
             }),
         }
     }

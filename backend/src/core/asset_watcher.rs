@@ -148,7 +148,7 @@ async fn handle_connection(
     }
 }
 
-async fn perform_reload(state: &AppState, server: Server) {
+pub(crate) async fn perform_reload(state: &AppState, server: Server) {
     let sd = state.server_data(server);
     let data_dir = sd.game_data_dir.clone();
     let assets_dir = sd.assets_dir.clone();

@@ -9,4 +9,5 @@ regrade_state.json.tmp
 device_ids.json
 device_ids.json.tmp
 .session.json
+game_sessions/
 backup

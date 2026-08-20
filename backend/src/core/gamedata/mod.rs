@@ -25,6 +25,7 @@ use crate::core::gamedata::{
         consts::GameDataConst,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
+        gacha_detail::{POOL_DETAIL_FILE_VERSION, PoolDetailFile, pool_detail_path},
         handbook::HandbookTableFile,
         material::ItemTableFile,
         medal::{MedalData, MedalTableFile},
@@ -49,6 +50,41 @@ pub mod enrich;
 pub mod profile;
 pub mod tables;
 pub mod types;
+
+/// Load the optional `gacha/getPoolDetail` sidecar written by
+/// [`super::gacha_detail_job`].
+///
+/// Absence is the normal case, not an error: a deployment with no game service
+/// account never writes one, and banners then carry only their blob-derived
+/// rate-ups. A *corrupt* or version-mismatched file is a warning and is
+/// discarded - gamedata load must never fail because a cache went bad.
+fn load_pool_details(assets_dir: &Path, warnings: &mut Vec<String>) -> Option<PoolDetailFile> {
+    let path = pool_detail_path(assets_dir);
+    if !path.exists() {
+        return None;
+    }
+
+    let parsed = std::fs::read(&path)
+        .map_err(|e| e.to_string())
+        .and_then(|bytes| {
+            serde_json::from_slice::<PoolDetailFile>(&bytes).map_err(|e| e.to_string())
+        });
+
+    match parsed {
+        Ok(file) if file.version == POOL_DETAIL_FILE_VERSION => Some(file),
+        Ok(file) => {
+            warnings.push(format!(
+                "gacha_pool_details: version {} != expected {POOL_DETAIL_FILE_VERSION}, ignoring",
+                file.version
+            ));
+            None
+        }
+        Err(e) => {
+            warnings.push(format!("gacha_pool_details: {e}"));
+            None
+        }
+    }
+}
 
 pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, DataError> {
     let mut warnings: Vec<String> = Vec::new();
@@ -113,8 +149,9 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let battle_equip = battle_equip_file.into_battle_equip();
     let handbook = handbook_file.into_handbook();
     let skins = skin_file.into_skin_data();
+    let pool_details = load_pool_details(assets_dir, &mut warnings);
     let mut gacha = gacha_file.into_gacha_data();
-    enrich_banners(&mut gacha.gacha_pool_client);
+    enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
     let zones = zone_file.zones;
     let stages = stage_file.stages;
     let mut medals = MedalData::from_table(medal_file);

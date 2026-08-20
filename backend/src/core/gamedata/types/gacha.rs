@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::gacha_detail::{RarityRate, WeightUpChar};
 use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -58,6 +59,24 @@ pub struct GachaPoolClient {
     pub featured6: Vec<String>,
     #[serde(default, skip_deserializing)]
     pub featured5: Vec<String>,
+
+    /// Rate-boosted operators, merged in from the pool-detail sidecar.
+    ///
+    /// Kept separate from `featured6` on purpose: a weight-up operator keeps the
+    /// band's base rate and merely takes a larger share of it, which is a
+    /// different promise to the player than a rate-up.
+    #[serde(default, skip_deserializing)]
+    pub weight_up: Vec<WeightUpChar>,
+    /// Headline per-rarity rates for this banner.
+    #[serde(default, skip_deserializing)]
+    pub avail_rates: Vec<RarityRate>,
+    /// Selectable 6* candidates on player-pick banners. Empty elsewhere.
+    #[serde(default, skip_deserializing)]
+    pub pickup6: Vec<String>,
+    /// Provenance of the featured lists: `"static"` when only the BSON blobs
+    /// were available, `"static+api"` once pool detail has been merged in.
+    #[serde(default, skip_deserializing)]
+    pub featured_source: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

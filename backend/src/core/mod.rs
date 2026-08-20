@@ -1,6 +1,7 @@
 pub mod asset_watcher;
 pub mod auth;
 pub mod dps_watcher;
+pub mod gacha_detail_job;
 pub mod gacha_resync;
 pub mod gamedata;
 pub mod grade;
@@ -9,4 +10,5 @@ pub mod leaderboard_snapshot_job;
 pub mod medal_ownership_job;
 pub mod operator_ownership_job;
 pub mod regrade_job;
+pub mod service_account;
 pub mod trending_job;

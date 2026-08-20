@@ -1,8 +1,9 @@
 use arc_swap::ArcSwap;
 use backend::app::server;
 use backend::core::hypergryph::{config, loaders};
+use backend::core::service_account::ServiceAccounts;
 use backend::core::{
-    asset_watcher, dps_watcher, leaderboard_snapshot_job, medal_ownership_job,
+    asset_watcher, dps_watcher, gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job,
     operator_ownership_job, regrade_job, trending_job,
 };
 use backend::{
@@ -114,8 +115,21 @@ async fn main() {
     config::init_config(GlobalConfig::new());
     loaders::init(&http_client).await;
 
+    // The backend's own game accounts, one per configured server. Optional:
+    // without them the pool-detail refresh is skipped and banners fall back to
+    // their static rate-up blobs.
+    let service_accounts = ServiceAccounts::load(&config.servers);
+
     // Start server
-    let state = AppState::new(db, cache, servers, default_server, config, http_client);
+    let state = AppState::new(
+        db,
+        cache,
+        servers,
+        default_server,
+        config,
+        http_client,
+        service_accounts,
+    );
 
     // Background watchers + cron jobs. These query Postgres and (in the case of
     // `regrade_job`) fan out parallel workers across every user, which is heavy
@@ -138,6 +152,7 @@ async fn main() {
         operator_ownership_job::spawn(state.clone());
         medal_ownership_job::spawn(state.clone());
         regrade_job::spawn(state.clone());
+        gacha_detail_job::spawn(state.clone());
     }
 
     server::run(state).await.expect("server error");
