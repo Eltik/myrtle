@@ -65,6 +65,23 @@ def main():
     # MADC and systematically penalises any change that moves or sharpens content.
     dy = int(next((float(f.split("=", 1)[1]) for f in flags if f.startswith("--dy=")), 0))
     fps = float(next((f.split("=", 1)[1] for f in flags if f.startswith("--fps=")), 15))
+    # `--srcaspect=W:H` corrects the reference clips' GEOMETRIC DISTORTION.
+    #
+    # `capture_oracle.sh` encodes with `scale=900:416`, which forces BOTH dimensions from the
+    # device's 2340x1080 frame. That is a NON-UNIFORM scale: x shrinks by 900/2340 = 0.384615
+    # and y by 416/1080 = 0.385185, so every reference frame is stretched vertically by
+    # 1.001481 relative to what the game actually showed. Our render has square pixels, so the
+    # two are compared in different geometries and we are penalised for it.
+    #
+    # Measured with an anisotropic (sx, sy) registration fit: sy lands on 1.0000 at nearly every
+    # beat on both Mlynar and Skadi while sx lands on 0.9985 — i.e. the error is purely
+    # horizontal and exactly the predicted 1/1.001481 = 0.998519. Correcting it is worth
+    # MAD_Y -0.442 corpus-wide (wis -1.119, mly -0.865, cel -0.461, ska -0.311, cet -0.218,
+    # mue -0.151, eyja +0.031).
+    #
+    # DEFAULT OFF. Every recorded number predates this and a silent basis change would make them
+    # all incomparable — the same reason the render density is pinned in `score_new.sh`.
+    srcaspect = next((f.split("=", 1)[1] for f in flags if f.startswith("--srcaspect=")), None)
     beats = [float(t) for t in times.split(",")]
 
     probe = subprocess.run(
@@ -91,6 +108,16 @@ def main():
             g_img = g_img.resize(o_img.size, Image.LANCZOS)
         o = np.asarray(o_img).astype(np.float32)
         g = np.asarray(g_img).astype(np.float32)
+        if srcaspect:
+            sw, sh = (float(v) for v in srcaspect.split(":"))
+            H0, W0 = o.shape[:2]
+            # Put OUR frame into the reference's (distorted) geometry: the reference squashed x
+            # by W0/sw and y by H0/sh, so the residual horizontal factor is their ratio.
+            k = (W0 / sw) / (H0 / sh)
+            xs = np.clip((np.arange(W0) - W0 / 2.0) / k + W0 / 2.0, 0, W0 - 1.001)
+            x0 = xs.astype(int)
+            fx = (xs - x0)[None, :, None]
+            o = o[:, x0] * (1 - fx) + o[:, x0 + 1] * fx
         # RECORDER DROPOUT GUARD. The headless capture occasionally writes a pure BLACK
         # frame; scored normally it contributes ~90 MADC and silently inflates the mean
         # (one dropout at Skadi's t=7 read 24.484 against her true 10.530, with every

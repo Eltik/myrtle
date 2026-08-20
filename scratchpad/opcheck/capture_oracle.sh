@@ -37,6 +37,17 @@ stop)
   adb pull $RAW $OUT/${key}_raw.mp4
   adb shell rm -f $RAW
   # Match the historical reference format exactly: 900x416, 15 fps.
+  #
+  # 🚨 THIS SIZE IS GEOMETRICALLY WRONG, and every reference in REF_NEW/ carries the error.
+  # The device frame is 2340x1080 (aspect 2.166667); forcing 900x416 scales x by 900/2340 =
+  # 0.384615 and y by 416/1080 = 0.385185 — a NON-UNIFORM scale that stretches every reference
+  # vertically by 1.001481. Measured against it with an anisotropic registration fit, sy lands on
+  # 1.0000 and sx on 0.9985 (= 1/1.001481) at nearly every beat on every skin, and correcting it
+  # is worth MAD_Y -0.44 corpus-wide. `mad.py --srcaspect=2340:1080` compensates at scoring time.
+  #
+  # An exact-aspect size is 1170x540 (2340/2 x 1080/2). Changing this line would make new
+  # references incomparable with the existing set, so it is left alone deliberately — re-capture
+  # the WHOLE set at 1170x540 or none of it.
   ffmpeg -y -v error -i $OUT/${key}_raw.mp4 -vf "scale=900:416:flags=lanczos,fps=15" \
          -c:v libx264 -crf 12 -pix_fmt yuv420p $OUT/${key}_game_fresh.mp4
   echo "wrote $OUT/${key}_game_fresh.mp4"
