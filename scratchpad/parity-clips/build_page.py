@@ -181,6 +181,24 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
 </div>
 
 <div class="finding">
+  <h3>The closing check: every skin, not just the eight we can score</h3>
+  <p>Eight illustrations have a game capture to compare against. Seventy-four do not, and no amount
+  of work on the eight says anything about the rest. So the last question before calling this done is
+  not "are we closer?" but "is anything <em>broken</em>?" &mdash; and that one is answerable for all
+  of them.</p>
+  <p>Every deployed skin was rendered at five points through its cinematic and screened for the
+  failure modes that actually matter: a frame that renders nothing, an intermittent dropout, a
+  blow-out that hides the character, content lost to black, or a flat fill where art should be.
+  <strong>Eighty-two skins, zero render failures, zero broken.</strong></p>
+  <p>Two were flagged, and both turned out to be the artwork doing what it was drawn to do. One
+  blacks out mid-cinematic &mdash; and because that skin does have a capture, it could be checked
+  directly: the game is blacker still at that instant, and fully black a frame earlier. The other
+  settles into a blown-white environment after its entrance, which looks alarming until you render
+  its idle on its own, bypassing the entrance entirely, and get the same bright frame. A screen that
+  flags nothing is not a screen; the useful outcome is that both candidates survived inspection.</p>
+</div>
+
+<div class="finding">
   <h3>Civilight Eterna's corner is missing light, not missing art</h3>
   <p>One region of her frame &mdash; the lower left &mdash; is darker than the capture at
   <em>every single beat</em>, by as much as 74 luma at the worst. The long-standing theory was that

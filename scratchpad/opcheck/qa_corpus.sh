@@ -35,7 +35,11 @@ import urllib.parse,sys
 u='http://localhost:3060/api/assets/textures/skinpack/'+sys.argv[1]+'/'+urllib.parse.quote(sys.argv[2],safe='')+'.png'
 print('backdrop='+urllib.parse.quote(u,safe=''))" "$op" "$sk")
   rm -rf $o; mkdir -p $o
-  EXTRA="$bd" node $HERE/rec.js "/spine/DynIllust/${enc}/${encs}" $o "$SHOTS" 900 416 >/dev/null 2>&1 || echo "RENDER-FAIL $sk"
+  # Pinned to DISPLAY density like score_new.sh and mkclip_any.sh: the viewer now ships at the
+  # client's own render targets, which is ~3.5x heavier under the harness's software GL. A QA
+  # sweep only asks "is anything BROKEN", and blank/blown/dark/flat all read identically at
+  # either density — so pay the cheap one. See `dynchar-idle-2048-render-target`.
+  EXTRA="rt2048=0&$bd" node $HERE/rec.js "/spine/DynIllust/${enc}/${encs}" $o "$SHOTS" 900 416 >/dev/null 2>&1 || echo "RENDER-FAIL $sk"
   printf "\r  %3d %s                    " $i "$sk"
 done
 echo ""
