@@ -12,14 +12,14 @@ EMBED = HERE / "embed11"
 
 # key -> (display name, before, after, note)
 SKINS = [
-    ("wis",  "Wiš'adel",          33.649,  6.750, "Six-frame trim error, then the ending stroke's missing dissolve-UV scroll. Now the corpus best."),
-    ("eyja", "Eyjafjalla",        22.123, 10.412, "Reference mis-trimmed by three frames."),
-    ("mue",  "Muelsyse",          21.918, 11.845, "Settled ground at the transform beat, then the duplicated background layers that were drawing twice."),
-    ("exc",  "Executor",          11.038,  6.233, "Two fixes. The scope aperture rides the RIM, not the camera \u2014 a 21 px drift predicted from the clip data with no fitting. Then the Ram shader's closing ramp multiply, which had never been ported to scene layers at all."),
-    ("cet",  "Civilight Eterna",  18.087, 17.921, "Open — one corner is short of light, not short of art. Twenty-plus mechanisms refuted."),
-    ("mly",  "Mlynar",            18.073, 17.954, "Open — worst remaining. Framing, trim and animation all verified exact; fifteen mechanisms refuted."),
-    ("cel",  "Cello",             18.021, 17.518, "Her worst beat was a rotating overlay running at the wrong simulation speed."),
-    ("ska",  "Skadi",             10.447, 10.427, "Stable."),
+    ("wis",  "Wiš'adel",          33.649,  5.537, "Six-frame trim error, then the ending stroke's missing dissolve-UV scroll. Now the corpus best."),
+    ("eyja", "Eyjafjalla",        22.123, 10.410, "Reference mis-trimmed by three frames."),
+    ("mue",  "Muelsyse",          21.918, 11.640, "Settled ground at the transform beat, then the duplicated background layers that were drawing twice."),
+    ("exc",  "Executor",          11.038,  6.185, "Two fixes. The scope aperture rides the RIM, not the camera \u2014 a 21 px drift predicted from the clip data with no fitting. Then the Ram shader's closing ramp multiply, which had never been ported to scene layers at all."),
+    ("cet",  "Civilight Eterna",  18.087, 17.693, "Open — now the worst. One corner is short of light, not short of art. Twenty-plus mechanisms refuted."),
+    ("mly",  "Mlynar",            18.073, 16.999, "Open. Framing, trim, animation, camera pipeline and clip scheduling all verified exact; nineteen mechanisms refuted. Most of his old figure turned out to be the measurement, not the render."),
+    ("cel",  "Cello",             18.021, 17.018, "Her worst beat was a rotating overlay running at the wrong simulation speed."),
+    ("ska",  "Skadi",             10.447, 10.084, "Stable."),
     ("whitw2","Whislash the Decadenza", 92.853, 73.264, "New 9th reference. Perspective camera + post-process greyscale both fixed."),
 ]
 
@@ -136,6 +136,7 @@ li {{ margin:.45rem 0; }}
 li strong {{ color:var(--ink); }}
 footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
   color:var(--ink-faint); font-size:.84rem; }}
+  .caveat{{max-width:70ch;margin:1.1rem 0 0;padding:.85rem 1rem;border-left:3px solid var(--accent,#888);background:color-mix(in srgb, var(--accent,#888) 7%, transparent);font-size:.94rem;line-height:1.6}}
 </style>
 
 <div class="wrap">
@@ -145,6 +146,12 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
   <p class="sub">A PIXI renderer reproducing each skin's <code>_Start</code> cinematic, scored per
   frame against an Android capture. Lower is closer. The metric is MADC — mean absolute difference
   in luma plus half the mean chroma difference, over a fixed inner crop.</p>
+  <p class="caveat"><strong>Read the two columns carefully.</strong> The &ldquo;before&rdquo;
+  figures were measured against the reference clips as captured; the &ldquo;after&rdquo; figures
+  correct those clips' 1.001481 vertical stretch (see below). About <strong>0.44</strong> of every
+  delta on this page is therefore the measurement being fixed rather than the renderer &mdash; on
+  the old basis the corpus mean is 12.383, not 11.946. The old figures cannot be recomputed on the
+  new basis without re-rendering each historical build, so they are left as recorded.</p>
   <div class="headline">
     <div class="stat"><p class="k">Corpus mean</p>
       <p class="v"><span class="from">{before_mean:.3f}</span> <span class="to">{after_mean:.3f}</span></p></div>
@@ -160,6 +167,25 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
 <tbody>
 {rows}
 </tbody></table></div>
+
+<div class="finding">
+  <h3>The measuring stick was bent</h3>
+  <p>Every reference clip is geometrically distorted, and had been for the whole project. The
+  capture script encodes the oracle with <code>scale=900:416</code> from the device's 2340&times;1080
+  frame &mdash; forcing both dimensions, which is a <em>non-uniform</em> scale: x shrinks by
+  0.384615 and y by 0.385185. Every reference is therefore stretched vertically by
+  <strong>1.001481</strong> relative to what the game actually displayed, while our render has
+  square pixels. The two have been compared in different geometries all along.</p>
+  <p>It hid because the obvious test cannot see it. Fitting a single scale factor splits the error
+  across both axes, reports ~0.999, and reads as a framing bug in the renderer &mdash; which is
+  exactly where it sent us looking. Fit the two axes <em>separately</em> and it is unmistakable:
+  the vertical lands on <strong>1.0000</strong> at nearly every beat on every skin, and the
+  horizontal on <strong>0.9985</strong> &mdash; precisely 1/1.001481.</p>
+  <p>Correcting it moves all nine illustrations the same direction and takes the corpus mean from
+  12.383 to <strong>11.946</strong>. So roughly 0.44 of the headline was never renderer error at
+  all &mdash; and worse, the metric had been quietly penalising every change that moved content
+  horizontally. Mlynar, long the worst skin, was mostly being mismeasured.</p>
+</div>
 
 <div class="finding">
   <h3>An entire line of the shader had never been ported</h3>
@@ -505,15 +531,15 @@ corrected trim offset — at the old offsets several of these read as out of syn
 
 <h2>Still open</h2>
 <ul>
-  <li><strong>Civilight Eterna (17.921)</strong> — now the worst. Her error is broad rather than one
+  <li><strong>Civilight Eterna (17.693)</strong> — now the worst. Her error is broad rather than one
     bad beat, but three of her four worst beats share a −20 to −40 luma deficit in the
     <em>same lower-left corner</em>. In that corner the game carries <strong>1.8× as many bright
     blobs, each about 0.45× the size</strong> — twice the bright area — while our brightest pixels
     already match exactly. Measured out: the terrain plane, the whole scene-layer set, the gap-fill
     backdrop, the HDR pass, all 132 particle systems, framing, gamma and bloom.</li>
-  <li><strong>Mlynar (17.954)</strong> — a +1.98 Cb blue cast on his skin alone. Eight mechanisms
+  <li><strong>Mlynar (16.999)</strong> — a +1.98 Cb blue cast on his skin alone. Eight mechanisms
     refuted; two colour-space explanations fitted it to ~1% and both turned out wrong.</li>
-  <li><strong>Cello (17.518)</strong> — twelve mechanisms refuted and considered exhausted.</li>
+  <li><strong>Cello (17.018)</strong> — one beat, t=10, scores 46 against 6 at t=8. A transient 22 px vertical camera displacement that peaks mid-deceleration and is gone half a second later; her exported camera curve is verified exact against the raw clip, so the game departs from its own authored curve there. The largest single localised prize left.</li>
   <li><strong>Wiš'adel t=12</strong> — her only bad beat. The capture ramps a darkening where we
     step it on in a single frame.</li>
   <li><strong>The 74 skins with no capture</strong> — only 8 of 82 are measured at all. This is the
