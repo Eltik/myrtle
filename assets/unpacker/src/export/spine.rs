@@ -1878,8 +1878,8 @@ fn collect_dynchar_bg_quads(
                     // still fails `admit` below. Porting disturb-only layers was measured worse
                     // (Virtuosa 35.322 -> 37.770); this only completes layers that are already in.
                     let (ram_pid, ram_val, ram_st) =
-            super::particles::mat_texenv(all_objects, mat, "_RamTex");
-        let (dist_pid, dist_val, dist_st) = {
+                        super::particles::mat_texenv(all_objects, mat, "_RamTex");
+                    let (dist_pid, dist_val, dist_st) = {
                         let long = super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
                         if long.0.is_some() && long.1.is_some() {
                             long
