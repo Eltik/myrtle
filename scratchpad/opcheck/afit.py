@@ -38,7 +38,14 @@ def warp(img,sx,sy,dx,dy):
     ux=np.clip((xs-cx-dx)/sx+cx,0,W-1.001); uy=np.clip((ys-cy-dy)/sy+cy,0,H-1.001)
     x0=ux.astype(int); y0=uy.astype(int); fx=ux-x0; fy=uy-y0
     return (img[y0,x0]*(1-fx)*(1-fy)+img[y0,x0+1]*fx*(1-fy)+img[y0+1,x0]*(1-fx)*fy+img[y0+1,x0+1]*fx*fy)
-def fit(oy,gy,M=20):
+def fit(oy, gy, M=20, maxshift=8):
+    """Best (sx, sy, dx, dy, mad). `maxshift` bounds |dx|,|dy| in PIXELS.
+
+    ⚠️ Stage 2 is a GREEDY hill-climb and `best` mutates inside the loop, so without the clamp
+    the shift walks far past its seed range — it reached dy=22 on cello, where the frame carries
+    ~44 px vertically periodic structure and dy is only determined MODULO 44. Raise `maxshift`
+    deliberately when you want a large shift, and cross-check an exhaustive per-block search
+    before believing it."""
     sl=(slice(M,oy.shape[0]-M), slice(36+M,864-M))
     def cost(sx,sy,dx,dy): return np.abs(warp(oy,sx,sy,dx,dy)[sl]-gy[sl]).mean()
     best=(1.0,1.0,0,0,cost(1,1,0,0))
@@ -54,6 +61,8 @@ def fit(oy,gy,M=20):
             for sy in np.arange(sy0-rng,sy0+rng+1e-9,step):
                 for dx in (best[2]-1,best[2],best[2]+1):
                     for dy in (best[3]-1,best[3],best[3]+1):
+                        if abs(dx) > maxshift or abs(dy) > maxshift:
+                            continue
                         c=cost(sx,sy,dx,dy)
                         if c<best[4]: best=(sx,sy,dx,dy,c)
     return best
