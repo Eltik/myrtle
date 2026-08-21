@@ -47,6 +47,15 @@ const DEFAULT_CALL_DELAY_MS: u64 = 120;
 /// server refusing everything cannot burn the whole pool list.
 const DEFAULT_MAX_FAILURES: u32 = 5;
 
+/// Flush the sidecar every N successful fetches.
+///
+/// An abort inside the loop already falls through to the final write, so this
+/// exists for the ungraceful cases -- a crash, a kill, a redeploy mid-walk --
+/// where nothing would otherwise reach disk. Because the next run only asks for
+/// pools it has no entry for, a checkpoint is all that is needed to make a cold
+/// backfill resumable.
+const DEFAULT_CHECKPOINT_EVERY: usize = 50;
+
 fn env_or<T: std::str::FromStr>(key: &str, fallback: T) -> T {
     std::env::var(key)
         .ok()
@@ -140,8 +149,11 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
 
     let delay = Duration::from_millis(env_or("GACHA_DETAIL_CALL_DELAY_MS", DEFAULT_CALL_DELAY_MS));
     let max_failures: u32 = env_or("GACHA_DETAIL_MAX_FAILURES", DEFAULT_MAX_FAILURES);
+    // 0 disables checkpointing, leaving only the final write.
+    let checkpoint_every: usize = env_or("GACHA_DETAIL_CHECKPOINT_EVERY", DEFAULT_CHECKPOINT_EVERY);
 
     let mut fetched = 0usize;
+    let mut since_checkpoint = 0usize;
     let mut consecutive_failures = 0u32;
 
     for pool_id in &wanted {
@@ -153,6 +165,7 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
                 Ok(detail) => {
                     file.pools.insert(pool_id.clone(), detail);
                     fetched += 1;
+                    since_checkpoint += 1;
                     consecutive_failures = 0;
                 }
                 Err(e) => {
@@ -182,6 +195,18 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
             break;
         }
 
+        if checkpoint_every > 0 && since_checkpoint >= checkpoint_every {
+            // A failed checkpoint is not fatal -- the entries are still in
+            // memory and the next checkpoint, or the final write, carries them.
+            match commit_sidecar(&path, &mut file, server, now) {
+                Ok(()) => {
+                    tracing::debug!(pools = file.pools.len(), "pool detail checkpoint written");
+                }
+                Err(e) => tracing::warn!(error = %e, "pool detail checkpoint failed"),
+            }
+            since_checkpoint = 0;
+        }
+
         tokio::time::sleep(delay).await;
     }
 
@@ -189,16 +214,28 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         return Ok(0);
     }
 
-    file.version = POOL_DETAIL_FILE_VERSION;
-    file.fetched_at = now;
-    file.server = server.as_str().to_owned();
-    write_sidecar(&path, &file)?;
+    commit_sidecar(&path, &mut file, server, now)?;
 
     // The loader reads this file, so a reload is what makes the new rate-ups
-    // visible on the static endpoints.
+    // visible on the static endpoints. Deliberately not done per checkpoint:
+    // a reload rebuilds every table for the server and is far too heavy to
+    // repeat mid-walk.
     asset_watcher::perform_reload(state, server).await;
 
     Ok(fetched)
+}
+
+/// Stamp the run's metadata onto the sidecar and write it.
+fn commit_sidecar(
+    path: &Path,
+    file: &mut PoolDetailFile,
+    server: Server,
+    now: i64,
+) -> anyhow::Result<()> {
+    file.version = POOL_DETAIL_FILE_VERSION;
+    file.fetched_at = now;
+    file.server = server.as_str().to_owned();
+    write_sidecar(path, file)
 }
 
 /// Read the sidecar, or start a fresh one. A corrupt or version-mismatched file
