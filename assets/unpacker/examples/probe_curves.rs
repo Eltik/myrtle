@@ -332,12 +332,19 @@ fn main() {
                 println!("\n   -- {pname}  {aname}  (curves {}..{})", o, o + dim - 1);
                 println!("      {:>6} {:>12} {:>12} {:>12}", "t", "x", "y", "z");
                 let mut t = 0.0f32;
-                while t <= 6.6 {
+                let t_end = std::env::var("PROBE_END")
+                    .ok()
+                    .and_then(|v| v.parse::<f32>().ok())
+                    .unwrap_or(6.6);
+                while t <= t_end {
                     let x = val(*o, t).unwrap_or(f32::NAN);
                     let y = val(o + 1, t).unwrap_or(f32::NAN);
                     let z = val(o + 2, t).unwrap_or(f32::NAN);
                     println!("      {t:>6.2} {x:>12.4} {y:>12.4} {z:>12.4}");
-                    t += 0.4;
+                    t += std::env::var("PROBE_STEP")
+                        .ok()
+                        .and_then(|v| v.parse::<f32>().ok())
+                        .unwrap_or(0.4);
                 }
             }
             return;
