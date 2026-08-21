@@ -48,7 +48,12 @@ stop)
   # An exact-aspect size is 1170x540 (2340/2 x 1080/2). Changing this line would make new
   # references incomparable with the existing set, so it is left alone deliberately — re-capture
   # the WHOLE set at 1170x540 or none of it.
-  ffmpeg -y -v error -i $OUT/${key}_raw.mp4 -vf "scale=900:416:flags=lanczos,fps=15" \
+  # `REF_SIZE=1170x540 REF_FPS=30` re-records at the EXACT aspect (2340/2 x 1080/2), which needs
+  # `mad.py --srcaspect=none` when scoring against it — the correction exists to undo the 900x416
+  # squash and would double-apply here. Default stays 900x416 so a one-off re-record cannot
+  # silently produce a reference incomparable with the other eight.
+  size=${REF_SIZE:-900x416}; fps=${REF_FPS:-15}
+  ffmpeg -y -v error -i $OUT/${key}_raw.mp4 -vf "scale=${size/x/:}:flags=lanczos,fps=${fps}" \
          -c:v libx264 -crf 12 -pix_fmt yuv420p $OUT/${key}_game_fresh.mp4
   echo "wrote $OUT/${key}_game_fresh.mp4"
   ffprobe -v error -select_streams v:0 \
