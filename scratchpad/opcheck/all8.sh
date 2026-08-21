@@ -11,11 +11,21 @@
 # EXTRA is the dyntest query string (e.g. "nohdr=1"), passed verbatim to every skin; the
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
-# Baselines as of 2026-08-10 (empty EXTRA):
-#   exc 8.919  eyja 10.408  ska 10.447  wis 12.643  mue 17.216  cel 18.021  mly 18.073  cet 18.087
-# (cet/exc/wis/eyja are NOT comparable to anything before 2026-08-11 — see REFOFF below.)
-# ✅ ALL EIGHT references are now trim-swept. mue is the only one needing no offset.
-# cet 18.087 is now the corpus worst.
+# Baselines as of 2026-08-20 (empty EXTRA), on the ASPECT-CORRECTED basis:
+#   wis 5.537  exc 6.185  ska 10.084  eyja 10.410  mue 11.640  mly 16.999  cel 17.018  cet 17.693
+#   corpus mean 11.946                                              cet 17.693 is the corpus worst.
+#
+# 🚨 NOT COMPARABLE to any figure recorded before 2026-08-20. `mad.py` now corrects the reference
+# clips' geometric distortion by default: `capture_oracle.sh` encodes with `scale=900:416` from a
+# 2340x1080 device frame, a NON-UNIFORM scale that stretches every reference vertically by
+# 1.001481. Correcting it is worth ~0.44 MADC corpus-wide and moves every skin the same way, so
+# every older number is that much PESSIMISTIC. `mad.py --srcaspect=none` reproduces the old basis.
+# See `dynchar-reference-clips-aspect-distorted`.
+#
+# For the record, the same eight on the old (distorted) basis:
+#   wis 6.750  exc 6.233  ska 10.427  eyja 10.412  mue 11.845  cel 17.518  cet 17.921  mly 17.954
+#   corpus mean 12.383
+# ✅ ALL EIGHT references are trim-swept. mue is the only one needing no offset.
 set -e
 HERE=${0:A:h}
 label=${1:?label required}; extra=${2:-}; shift 2 2>/dev/null || shift 1

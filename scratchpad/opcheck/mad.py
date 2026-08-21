@@ -65,7 +65,7 @@ def main():
     # MADC and systematically penalises any change that moves or sharpens content.
     dy = int(next((float(f.split("=", 1)[1]) for f in flags if f.startswith("--dy=")), 0))
     fps = float(next((f.split("=", 1)[1] for f in flags if f.startswith("--fps=")), 15))
-    # `--srcaspect=W:H` corrects the reference clips' GEOMETRIC DISTORTION.
+    # `--srcaspect=W:H` corrects the reference clips' GEOMETRIC DISTORTION. **ON BY DEFAULT.**
     #
     # `capture_oracle.sh` encodes with `scale=900:416`, which forces BOTH dimensions from the
     # device's 2340x1080 frame. That is a NON-UNIFORM scale: x shrinks by 900/2340 = 0.384615
@@ -79,9 +79,20 @@ def main():
     # MAD_Y -0.442 corpus-wide (wis -1.119, mly -0.865, cel -0.461, ska -0.311, cet -0.218,
     # mue -0.151, eyja +0.031).
     #
-    # DEFAULT OFF. Every recorded number predates this and a silent basis change would make them
-    # all incomparable — the same reason the render density is pinned in `score_new.sh`.
-    srcaspect = next((f.split("=", 1)[1] for f in flags if f.startswith("--srcaspect=")), None)
+    # ENABLED 2026-08-20. This is a property of the REFERENCE CLIPS, not of any one scorer, so it
+    # defaults on here rather than being pinned per-caller — every path that scores against
+    # `REF_NEW/` inherits it. `--srcaspect=none` reproduces the historical (distorted) basis.
+    #
+    # ⚠️ Every figure recorded before that date is on the OLD basis and is ~0.44 MADC pessimistic.
+    # The re-baselined eight: wis 5.537 · exc 6.185 · ska 10.084 · eyja 10.410 · mue 11.640 ·
+    # cel 17.018 · cet 17.693 · mly 16.999 — mean 11.946 (was 12.383).
+    #
+    # ⚠️ The correction assumes the reference was scaled from a 2340x1080 device frame, which is
+    # what `capture_oracle.sh` produces. It is WRONG for the legacy `REF/` salvage clips (1280x624)
+    # — pass `--srcaspect=none` for those.
+    srcaspect = next((f.split("=", 1)[1] for f in flags if f.startswith("--srcaspect=")), "2340:1080")
+    if srcaspect.lower() in ("none", "off", "0"):
+        srcaspect = None
     beats = [float(t) for t in times.split(",")]
 
     probe = subprocess.run(
@@ -144,6 +155,9 @@ def main():
     if ms:
         print(f"MEAN MAD(luma-only, legacy) = {np.mean(ys):.3f}  over {len(ms)} beats")
         print(f"MEAN CHROMA = {np.mean(cs):.3f}  over {len(ms)} beats")
+        # Self-identify the basis: a bare number is otherwise indistinguishable from a
+        # pre-2026-08-20 figure, which is ~0.44 pessimistic.
+        print(f"  [basis: {'aspect-corrected 2340:1080' if srcaspect else 'RAW reference aspect (historical)'}]")
         print(f"MEAN MADC = {np.mean(ms):.3f}  over {len(ms)} beats")
 
 
