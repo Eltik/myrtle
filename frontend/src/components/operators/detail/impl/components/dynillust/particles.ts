@@ -2258,8 +2258,29 @@ function applyPsDiag(data: IParticlesData, sys: IParticleSystemData, container: 
     const off = q.get("psoff");
     if (!only && !off) return;
     const idx = data.systems.indexOf(sys);
-    if (only && !only.split(",").map(Number).includes(idx)) container.renderable = false;
-    if (off?.split(",").map(Number).includes(idx)) container.renderable = false;
+    if (only && !parsePsList(only).has(idx)) container.renderable = false;
+    if (off && parsePsList(off).has(idx)) container.renderable = false;
+}
+
+/** Parse a `?psonly=`/`?psoff=` list: comma-separated indices AND `a-b` ranges.
+ *
+ *  ⚠️ Ranges used to be a SILENT NO-OP — `Number("0-131")` is NaN, so `?psoff=0-131` matched
+ *  nothing and read as "ablating every system changes the frame very little", which is exactly
+ *  the wrong conclusion. Any ablation result taken with a range before this fix is void. */
+function parsePsList(spec: string): Set<number> {
+    const out = new Set<number>();
+    for (const part of spec.split(",")) {
+        const m = /^\s*(-?\d+)\s*-\s*(-?\d+)\s*$/.exec(part);
+        if (m) {
+            const a = Number(m[1]);
+            const b = Number(m[2]);
+            for (let i = Math.min(a, b); i <= Math.max(a, b); i++) out.add(i);
+        } else {
+            const n = Number(part);
+            if (Number.isFinite(n)) out.add(n);
+        }
+    }
+    return out;
 }
 
 /** Batch plugin name for ADDITIVE particle SPRITES (see {@link ensureAdditiveSpriteBoost}). */
@@ -4671,6 +4692,30 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
     }
     if (emitters.length === 0) return null;
 
+    if (typeof window !== "undefined") {
+        const want = new URLSearchParams(window.location.search).get("psdbg");
+        if (want) {
+            const wanted = new Set(want.split(",").map(Number));
+            emitters.forEach((e, i) => {
+                const si = emitterSys[i] ?? -1;
+                if (wanted.has(si)) {
+                    const anyE = e as unknown as { dbg?: () => Record<string, unknown>; liveCount?: () => number; container?: PIXI.Container; everLive?: boolean; spawnTried?: number };
+                    const c = anyE.container;
+                    const kid = c?.children?.[0] as PIXI.Sprite | undefined;
+                    const wt = kid?.worldTransform;
+                    console.log(
+                        `DBGBG-PS sys=${si} kind=${e.constructor.name} tried=${anyE.spawnTried ?? "?"} everLive=${anyE.everLive ?? "?"} live=${anyE.liveCount ? anyE.liveCount() : "?"}` +
+                            ` kids=${c?.children.length ?? "?"} cAlpha=${c?.alpha?.toFixed(4) ?? "?"} cVis=${c?.visible} cRend=${c?.renderable} cWorldA=${c?.worldAlpha?.toFixed(4) ?? "?"}` +
+                            (kid ? ` kid0=(${kid.x.toFixed(0)},${kid.y.toFixed(0)}) wh=${kid.width?.toFixed(0)}x${kid.height?.toFixed(0)} a=${kid.alpha?.toFixed(3)} world=(${wt?.tx.toFixed(0)},${wt?.ty.toFixed(0)})` : " kid0=none") +
+                            ` data=${JSON.stringify(anyE.dbg ? anyE.dbg() : {})}`,
+                    );
+                }
+            });
+            for (const si of wanted) {
+                if (!emitterSys.includes(si)) console.log(`DBGBG-PS sys=${si} NO EMITTER BUILT (skipped at construction)`);
+            }
+        }
+    }
     PARTICLE_CENSUS.push({
         emitters: emitters.length,
         snapshot: () => emitters.map((e, i) => ({ sys: emitterSys[i] ?? -1, everLive: !!(e as unknown as { everLive?: boolean }).everLive, tried: (e as unknown as { spawnTried?: number }).spawnTried ?? 0 })),
