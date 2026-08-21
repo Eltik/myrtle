@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { env } from "#/env";
-import { getOperatorsListFn } from "#/lib/api/operators";
+import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
@@ -54,10 +54,15 @@ function backendBaseURL(): string {
     return (env.BACKEND_URL ?? env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
 }
 
-function assetURL(path: string): string {
+/** Servers other than the default serve their assets behind a `/{server}`
+ *  prefix. Mirrors `components/operators/detail/impl/assets.ts`. */
+type AssetServer = "en" | "cn";
+
+function assetURL(path: string, server?: AssetServer): string {
     const base = backendBaseURL();
     if (!base) return "";
-    return `${base}/api/assets${path.startsWith("/") ? path : `/${path}`}`;
+    const prefix = server && server !== "en" ? `${server}/` : "";
+    return `${base}/api/${prefix}assets${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function avatarURL(charId: string): string {
@@ -72,12 +77,12 @@ function skillIconURL(iconId: string): string {
     return `${base}/api/skill-icon/${encodeURIComponent(iconId)}`;
 }
 
-const charartURL = (operatorId: string) => assetURL(`/textures/chararts/${operatorId}/${operatorId}_2.png`);
+const charartURL = (operatorId: string, server?: AssetServer) => assetURL(`/textures/chararts/${operatorId}/${operatorId}_2.png`, server);
 const skinpackURL = (operatorId: string, skinId: string) => {
     const owner = skinId.split("@")[0] || operatorId;
     return assetURL(`/textures/skinpack/${owner}/${skinId.replaceAll("@", "_").replaceAll("#", "%23")}.png`);
 };
-const campLogoURL = (id: string) => assetURL(`/textures/spritepack/ui_camp_logo_0/logo_${id.toLowerCase()}.png`);
+const campLogoURL = (id: string, server?: AssetServer) => assetURL(`/textures/spritepack/ui_camp_logo_0/logo_${id.toLowerCase()}.png`, server);
 const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
 const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
 const secretaryArtURL = (operatorId: string, skinId: string | null, op?: IOperatorListItem): string => {
@@ -86,17 +91,23 @@ const secretaryArtURL = (operatorId: string, skinId: string | null, op?: IOperat
     if (op?.portrait) return assetURL(op.portrait);
     return charartURL(operatorId);
 };
-const professionIconURL = (profession: string) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`);
+const professionIconURL = (profession: string, server?: AssetServer) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`, server);
 
-const OPERATOR_HASH_VERSION = "v8";
+const OPERATOR_HASH_VERSION = "v9";
 
 const operatorHandler = defineOgHandler<IOperatorOgData>({
     kind: "operator",
     hashVersion: OPERATOR_HASH_VERSION,
     fetch: async (id) => {
-        const operators = await getOperatorsListFn();
-        const op = operators.find((o) => o.id === id);
-        if (!op) return null;
+        // `/operators/{id}` resolves across every loaded server -- default first,
+        // then CN -- and tags the response with the server it was found on. The
+        // operators list is Global-only, so going through it would leave every
+        // CN-exclusive operator without an embed.
+        const res = await backendFetch(`/operators/${encodeURIComponent(id)}`);
+        if (!res.ok) return null;
+        const op = deepCamelize(await res.json()) as IOperatorListItem;
+        if (!op?.name) return null;
+        const server = op.server;
         const rarity = rarityToNumber(op.rarity);
         // Faction display chooses the most specific source the data has;
         // matches how OperatorCardCompact picks its logo id.
@@ -120,14 +131,17 @@ const operatorHandler = defineOgHandler<IOperatorOgData>({
             position: op.position ?? "",
             nationId: op.nationId ?? "",
             rarity,
-            charArtURL: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`),
-            factionLogoURL: factionId ? campLogoURL(factionId) : undefined,
+            charArtURL: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`, server),
+            factionLogoURL: factionId ? campLogoURL(factionId, server) : undefined,
             factionLabel,
-            professionIconURL: op.profession ? professionIconURL(op.profession) : undefined,
+            professionIconURL: op.profession ? professionIconURL(op.profession, server) : undefined,
             stats,
+            server,
         };
     },
-    hashParts: (data) => [data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")],
+    // `server` participates so an operator that graduates from CN to Global
+    // re-renders against the Global asset tree instead of serving a stale card.
+    hashParts: (data) => [data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
     template: (data) => OperatorTemplate(data),
 });
 

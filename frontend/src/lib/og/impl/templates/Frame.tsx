@@ -40,7 +40,7 @@ export function BrandRow({ kicker = "ARKNIGHTS · COMPANION" }: { kicker?: strin
     );
 }
 
-export function FootRow({ path = siteHost(), version = "v3" }: { path?: string; version?: string }) {
+export function FootRow({ path = siteHost(), version = `v${OG_CONFIG.designVersion}` }: { path?: string; version?: string }) {
     return (
         <div
             style={{

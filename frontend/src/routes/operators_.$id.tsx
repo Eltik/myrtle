@@ -13,6 +13,10 @@ function buildOgData(operator: IOperatorListItem) {
         appellation: operator.appellation ?? "",
         profession: operator.profession,
         rarity: rarityNum as 1 | 2 | 3 | 4 | 5 | 6,
+        // Carried so the OG cache key differs between the CN and Global art
+        // trees; `/operators/{id}` tags every operator with the server it
+        // resolved on, CN-exclusive ones included.
+        server: operator.server,
     };
 }
 

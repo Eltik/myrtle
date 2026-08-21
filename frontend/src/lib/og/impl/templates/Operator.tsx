@@ -29,6 +29,10 @@ export interface IOperatorOgData {
     factionLogoURL?: string;
     professionIconURL?: string;
     stats?: IOperatorStat[];
+    /** Asset tree the card was rendered against. Not drawn -- it takes part in
+     *  the cache hash so a CN operator's card is re-rendered once it lands on
+     *  Global and its art moves to the default tree. */
+    server?: "en" | "cn";
 }
 
 export function OperatorTemplate(data: IOperatorOgData) {
