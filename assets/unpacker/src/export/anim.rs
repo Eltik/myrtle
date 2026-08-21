@@ -1858,7 +1858,10 @@ const PP_WEIGHT_CRC: u32 = 0x07cd_5541;
 /// different matching clip on each run because it walked hash order.
 /// `(effect_name, intensity, weight_curve[(t, weight)])` — see `entrance_post_fx`. Also used by
 /// `SpineAssets::bg_entrance_post_fx`.
-pub type EntrancePostFx = (String, f32, Vec<(f32, f32)>);
+/// `(effect, intensity, weight_curve, params)` — `params` are the settings object's own
+/// overridden scalar values (`blurDegree`, `blurSpread`, `quality`, `resMode`, ...), so an effect
+/// that needs a magnitude gets it from the profile rather than a fitted constant.
+pub type EntrancePostFx = (String, f32, Vec<(f32, f32)>, Vec<(String, f32)>);
 
 #[must_use]
 pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<EntrancePostFx> {
@@ -1876,7 +1879,7 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
         Some((go, prof))
     })?;
     // Its profile's first settings entry names the effect and carries its intensity.
-    let (effect, intensity) = ordered.iter().find_map(|(pid, (_, v))| {
+    let (effect, intensity, params) = ordered.iter().find_map(|(pid, (_, v))| {
         if **pid != profile_pid {
             return None;
         }
@@ -1892,7 +1895,26 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                 .and_then(|i| i.get("value"))
                 .and_then(Value::as_f64)
                 .unwrap_or(1.0) as f32;
-            Some((name, inten))
+            // Every OVERRIDDEN scalar the settings object carries. Post-process settings are
+            // `{overrideState, value}` pairs; an entry with `overrideState == 0` is an inert
+            // default the volume does not apply, so it is skipped rather than exported as if
+            // it were authored. `HGMobileBlur` supplies `blurDegree` / `blurSpread` / `quality`
+            // / `resMode` this way, which is the magnitude a blur needs.
+            let mut params: Vec<(String, f32)> = sv
+                .as_object()
+                .into_iter()
+                .flatten()
+                .filter_map(|(k, o)| {
+                    if k == "intensity" {
+                        return None;
+                    }
+                    let on = o.get("overrideState").and_then(Value::as_i64).unwrap_or(0);
+                    let v = o.get("value").and_then(Value::as_f64)?;
+                    (on != 0).then(|| (k.clone(), v as f32))
+                })
+                .collect();
+            params.sort_by(|a, b| a.0.cmp(&b.0));
+            Some((name, inten, params))
         })
     })?;
     // The weight curve: whichever clip binds crc32("weight") on the volume's GameObject.
@@ -1919,7 +1941,7 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                     && let Some(curve) = decode_curve_at(v, gidx)
                     && curve.len() > 1
                 {
-                    return Some((effect, intensity, curve));
+                    return Some((effect, intensity, curve, params));
                 }
             }
             gidx += count;

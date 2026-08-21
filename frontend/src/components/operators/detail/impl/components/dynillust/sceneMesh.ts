@@ -198,7 +198,15 @@ export interface ISceneData {
      *  entrance frame, so no world↔authored unit conversion is needed. `_Start` scenes only. */
     /** ENTRANCE post-process: the `pp` PostProcessVolume's effect, its intensity, and the
      *  volume WEIGHT curve the `_Start` clip animates. Null when the skin ships none. */
-    entrancePostFx?: { effect: string; intensity: number; weightCurve: [number, number][] } | null;
+    entrancePostFx?: {
+        effect: string;
+        intensity: number;
+        weightCurve: [number, number][];
+        /** The settings object's own OVERRIDDEN scalars, so an effect that needs a magnitude
+         *  reads it from the profile rather than a fitted constant. `HGMobileBlur` ships
+         *  `blurDegree` / `blurSpread` / `quality` / `resMode`. */
+        params?: Record<string, number> | null;
+    } | null;
     entranceOrthoCurve?: [number, number][] | null;
     /** ENTRANCE camera POSITIONAL dolly (pan): `[t_s, progress 0..1]` keyframes, extracted from
      *  the animated camera-ancestor Transform position in the `_Start` clip. Exported but currently

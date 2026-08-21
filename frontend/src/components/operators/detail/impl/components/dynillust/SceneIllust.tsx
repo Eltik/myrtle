@@ -659,7 +659,7 @@ interface IComposite {
      *  size). Scales the entrance frame relative to its base extent as the shot pushes in/out. */
     entranceOrthoCurve: [number, number][] | null;
     /** ENTRANCE post-process volume (see {@link entrancePostFxRef}). */
-    entrancePostFx: { effect: string; intensity: number; weightCurve: [number, number][] } | null;
+    entrancePostFx: { effect: string; intensity: number; weightCurve: [number, number][]; params?: Record<string, number> | null } | null;
     /** The `_Start` camera's ABSOLUTE frame-centre track (`[t_s, cx, cy]`, mesh px) - the game's
      *  own camera rig (the animated camera-parent Transform) accumulated by the Rust exporter into
      *  a world-space centre curve. Drives the entrance pan/dolly directly; no measured bounds. */
@@ -1358,7 +1358,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  with no volume - or one whose volume is never opened - is untouched. Civilight Eterna
      *  ships an `HGMobileBlur` profile whose weight measures 0 at every scored beat, and she is
      *  bit-identical with this in place. */
-    const entrancePostFxRef = useRef<{ filter: PIXI.ColorMatrixFilter; curve: [number, number][]; intensity: number; target: PIXI.Container } | null>(null);
+    const entrancePostFxRef = useRef<{
+        filter: PIXI.ColorMatrixFilter | PIXI.BlurFilter;
+        kind: "saturation" | "blur";
+        /** Full-strength blur radius in px at weight 1, derived from the profile. */
+        blurPx: number;
+        curve: [number, number][];
+        intensity: number;
+        target: PIXI.Container;
+        /** Its OWN entrance clock. This used to piggy-back on the screen fade's `elapsed`, which
+         *  silently disabled the whole subsystem for any skin whose director authors no fade
+         *  colour — Civilight Eterna ships an `HGMobileBlur` volume and `entranceFade` null, so
+         *  her blur never ran. */
+        elapsed: number;
+    } | null>(null);
     const entranceFadeRef = useRef<{ sprite: PIXI.Sprite; elapsed: number; duration: number; out: number | null; transform: number | null } | null>(null);
     /** Gap-fill vista sprites in the tree, so the transform beat can retire them. A list: while the
      *  entrance hands off, TWO composites are alive and each builds its own. */
@@ -1854,14 +1867,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // ENTRANCE POST-PROCESS: sample the authored volume weight at the entrance clock and
             // apply the effect. Saturation is 1 - weight*intensity, so weight 0 is a true no-op.
             const pfx = entrancePostFxRef.current;
-            if (pfx && entranceFadeRef.current) {
-                const w = Math.max(0, Math.min(1, sampleCurveAt(pfx.curve, entranceFadeRef.current.elapsed) * pfx.intensity));
-                const sat = 1 - w;
-                // Rec.601 luma-preserving saturation matrix (PIXI's ColorMatrixFilter layout).
-                const lr = 0.299 * (1 - sat);
-                const lg = 0.587 * (1 - sat);
-                const lb = 0.114 * (1 - sat);
-                pfx.filter.matrix = [lr + sat, lg, lb, 0, 0, lr, lg + sat, lb, 0, 0, lr, lg, lb + sat, 0, 0, 0, 0, 0, 1, 0];
+            if (pfx) {
+                // Its OWN clock — see the setup. Driving this off the screen fade's `elapsed`
+                // disabled the whole subsystem for every skin with no authored fade colour.
+                // Sample BEFORE advancing: the previous form read the screen fade's `elapsed`
+                // at this point in the tick, which the fade only increments further down. Keeping
+                // that phase makes the greyscale path bit-identical to what it was validated on.
+                const w = Math.max(0, Math.min(1, sampleCurveAt(pfx.curve, pfx.elapsed) * pfx.intensity));
+                pfx.elapsed += dt;
+                if (pfx.kind === "blur") {
+                    // The volume's weight fades the effect IN, so it scales the radius.
+                    (pfx.filter as PIXI.BlurFilter).blur = pfx.blurPx * w;
+                } else {
+                    const sat = 1 - w;
+                    // Rec.601 luma-preserving saturation matrix (PIXI's ColorMatrixFilter layout).
+                    const lr = 0.299 * (1 - sat);
+                    const lg = 0.587 * (1 - sat);
+                    const lb = 0.114 * (1 - sat);
+                    (pfx.filter as PIXI.ColorMatrixFilter).matrix = [lr + sat, lg, lb, 0, 0, lr, lg + sat, lb, 0, 0, lr, lg, lb + sat, 0, 0, 0, 0, 0, 1, 0];
+                }
                 pfx.target.filters = w > 0.001 ? [pfx.filter] : null;
             }
             const efd = entranceFadeRef.current;
@@ -3370,18 +3394,41 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             sp.alpha = 0;
                             app.stage.addChild(sp);
                             entranceFadeRef.current = { sprite: sp, elapsed: 0, duration: c.entranceFadeEnd ?? c.entranceDuration, out: null, transform: c.entranceTransform ?? null };
-                            // ENTRANCE POST-PROCESS. Only the greyscale family is implemented; a
-                            // blur profile is recognised but skipped (Civilight Eterna ships one
-                            // whose weight measures 0 at every scored beat, so nothing is lost).
-                            const pf = c.entrancePostFx;
-                            if (pf && /grey|gray|saturat/i.test(pf.effect) && pf.weightCurve.length > 1) {
-                                entrancePostFxRef.current = {
-                                    filter: new PIXI.ColorMatrixFilter(),
-                                    curve: pf.weightCurve,
-                                    intensity: pf.intensity,
-                                    target: c.root,
-                                };
-                            }
+                        }
+                    }
+                    // ENTRANCE POST-PROCESS: greyscale and mobile blur.
+                    //
+                    // ⚠️ NOT nested in the screen-fade block above, and NOT driven off its clock.
+                    // It used to be both, which silently disabled the whole subsystem for any skin
+                    // whose director authors no fade colour: Civilight Eterna ships an
+                    // `HGMobileBlur` volume and `entranceFade` null, so her blur never ran.
+                    //
+                    // The BLUR radius comes from the profile, not a fitted constant.
+                    // `HGMobileBlur`'s shader (`Hidden/Torappu/PostEffect/MobileBlurWithMask`) is a
+                    // 4-tap box at +-0.5 TEXEL of its render target, iterated `blurDegree` times,
+                    // with the target downsampled by `resMode` — so one pass spans
+                    // `blurSpread * 2^resMode` full-res px. She authors 1 / 1 / 1 -> 2 px.
+                    //
+                    // Measured: where her weight is high our render is 1.5-3.8x SHARPER than the
+                    // capture (gradient ratio), and where it is 0 we are 0.83x, the usual softness.
+                    // ⚠️ Her scored beats sample NEITHER blur window (5.2-6.8 and 11.6-13.0), so
+                    // this cannot move her MADC — validate it at a beat inside a window.
+                    const pf = c.entrancePostFx;
+                    if (pf && pf.weightCurve.length > 1 && /grey|gray|saturat|blur/i.test(pf.effect)) {
+                        const blur = /blur/i.test(pf.effect);
+                        const q = pf.params ?? {};
+                        entrancePostFxRef.current = {
+                            filter: blur ? new PIXI.BlurFilter() : new PIXI.ColorMatrixFilter(),
+                            kind: blur ? "blur" : "saturation",
+                            blurPx: (q.blurSpread ?? 1) * 2 ** (q.resMode ?? 0),
+                            curve: pf.weightCurve,
+                            intensity: pf.intensity,
+                            target: c.root,
+                            elapsed: 0,
+                        };
+                        if (blur) {
+                            // `blurDegree` is the iteration count the shader runs.
+                            (entrancePostFxRef.current.filter as PIXI.BlurFilter).quality = Math.max(1, Math.round(q.blurDegree ?? 1));
                         }
                     }
                     spineRef.current = c.spine;

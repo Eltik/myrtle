@@ -5007,10 +5007,17 @@ fn export_scene(
         "entranceCamOffsetPx": asset.bg_entrance_cam_offset.map(|(x, y)| [x as f32, y as f32]),
         // Data-driven camera dolly zoom: [[t_seconds, orthographic_size], …] keyframes.
         "entranceOrthoCurve": asset.bg_entrance_ortho_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
-        "entrancePostFx": asset.bg_entrance_post_fx.as_ref().map(|(name, inten, curve)| serde_json::json!({
+        "entrancePostFx": asset.bg_entrance_post_fx.as_ref().map(|(name, inten, curve, params)| serde_json::json!({
             "effect": name,
             "intensity": inten,
             "weightCurve": curve.iter().map(|(t, w)| [*t, *w]).collect::<Vec<_>>(),
+            // The settings object's own overridden scalars, so an effect that needs a MAGNITUDE
+            // reads it from the profile instead of a fitted constant (`HGMobileBlur` ships
+            // `blurDegree` / `blurSpread` / `quality` / `resMode`).
+            "params": params
+                .iter()
+                .map(|(k, v)| (k.clone(), serde_json::json!(*v)))
+                .collect::<serde_json::Map<String, serde_json::Value>>(),
         })),
         "entrancePanCurve": asset.bg_entrance_pan_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),
         "entranceCamCenterCurve": asset.bg_entrance_cam_center.as_ref().map(|c| c.iter().map(|(t, x, y)| [*t, *x, *y]).collect::<Vec<_>>()),
