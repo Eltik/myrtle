@@ -1877,8 +1877,22 @@ fn collect_dynchar_bg_quads(
                     // ⚠️ This deliberately does NOT change ADMISSION — a disturb-only material
                     // still fails `admit` below. Porting disturb-only layers was measured worse
                     // (Virtuosa 35.322 -> 37.770); this only completes layers that are already in.
-                    let (ram_pid, ram_val, ram_st) =
-                        super::particles::mat_texenv(all_objects, mat, "_RamTex");
+                    // `_RamTex` is only SAMPLED by the `Ram/` family. Of the 176 shaders in
+                    // `[uc]shaders.ab`, exactly 9 declare the property and EVERY one has `Ram/`
+                    // in its name (`Particles-L2D/Ram/*`, `Particles/Ram/*`, `UI/Ram/*`); its
+                    // sibling `Particles-L2D/Disturb/Disturb(CustomData)` does not declare it at
+                    // all. On any other family a material's `_RamTex` is RESIDUE from whatever
+                    // shader it was previously authored against, and binding it multiplies the
+                    // layer by a texture the program never reads — Civilight Eterna has 16 such
+                    // `Disturb/` layers against 35 genuine `Ram/` ones.
+                    //
+                    // ⚠️ This is the trap in `dynchar-mlynar-left-half-displaced`: a material's
+                    // PROPERTY SET does not identify its shader. Gate on `_shaderName`.
+                    let (ram_pid, ram_val, ram_st) = if shader.contains("Ram/") {
+                        super::particles::mat_texenv(all_objects, mat, "_RamTex")
+                    } else {
+                        (None, None, super::particles::ST_IDENTITY)
+                    };
                     let (dist_pid, dist_val, dist_st) = {
                         let long = super::particles::mat_texenv(all_objects, mat, "_DisturbTex");
                         if long.0.is_some() && long.1.is_some() {
