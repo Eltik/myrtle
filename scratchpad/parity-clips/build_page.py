@@ -16,7 +16,7 @@ SKINS = [
     ("eyja", "Eyjafjalla",        22.123, 10.410, "Reference mis-trimmed by three frames."),
     ("mue",  "Muelsyse",          21.918, 11.640, "Settled ground at the transform beat, then the duplicated background layers that were drawing twice."),
     ("exc",  "Executor",          11.038,  6.185, "Two fixes. The scope aperture rides the RIM, not the camera \u2014 a 21 px drift predicted from the clip data with no fitting. Then the Ram shader's closing ramp multiply, which had never been ported to scene layers at all."),
-    ("cet",  "Civilight Eterna",  18.087, 17.693, "Open — now the worst. One corner is short of light, not short of art. Twenty-plus mechanisms refuted."),
+    ("cet",  "Civilight Eterna",  18.087, 17.693, "Open — now the worst. One corner is short of light, not short of art; twenty-plus mechanisms refuted. Her blur now runs, though — see below — which her score cannot show."),
     ("mly",  "Mlynar",            18.073, 16.999, "Open. Framing, trim, animation, camera pipeline and clip scheduling all verified exact; nineteen mechanisms refuted. Most of his old figure turned out to be the measurement, not the render."),
     ("cel",  "Cello",             18.021, 17.018, "Her worst beat was a rotating overlay running at the wrong simulation speed."),
     ("ska",  "Skadi",             10.447, 10.084, "Stable."),
@@ -167,6 +167,24 @@ footer {{ margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--rule);
 <tbody>
 {rows}
 </tbody></table></div>
+
+<div class="finding">
+  <h3>A whole effect was missing, and the metric could not see it</h3>
+  <p>Three of the eighty-two illustrations ship a post-process volume. Civilight Eterna's is a
+  <em>blur</em>, authored in two windows during her entrance &mdash; and it had never once run. The
+  volume was being set up inside the screen-fade block and driven off the fade's clock, but the
+  fade is deliberately switched off for a skin whose scene paints its own; hers does. So the whole
+  subsystem was silently skipped for exactly the skins that look like her.</p>
+  <p>The radius is not a guess. The profile ships <code>blurDegree</code>, <code>blurSpread</code>
+  and <code>resMode</code>, and the shader is a four-tap box at half a texel of a downsampled
+  target &mdash; which works out to two pixels for her. Inside the windows our render had been
+  <strong>1.5&times; to 3.8&times; sharper</strong> than the capture; it now sits within about 25%
+  of it, and every frame outside the windows is untouched.</p>
+  <p>Her score does not move at all. Her seven measured beats fall in the gaps <em>between</em> the
+  two blur windows, so the number is blind to it &mdash; a reminder that a beat set can conceal an
+  entire subsystem, and that &ldquo;exhausted&rdquo; should mean &ldquo;we checked what the beats
+  don't sample&rdquo;.</p>
+</div>
 
 <div class="finding">
   <h3>The measuring stick was bent</h3>
