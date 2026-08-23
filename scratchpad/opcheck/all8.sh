@@ -28,7 +28,20 @@
 #   corpus mean 11.946
 #
 # Opt-in extras (NOT in the default key list, so the mean above stays comparable):
-#   kalts 48.614 (8 beats, REFOFF 0.200) — captured 2026-08-23, the WORST reference by far.
+#   kalts 32.361 (8 beats, REFOFF 0.200) — captured 2026-08-23. Was 48.614 until two exporter
+#                fixes landed the same day: the DROPPED CAMERA TRACK (-15.48) and the
+#                windowless-meshExt entrance planes (-0.77).
+#                🚨 EVERY ablation/admission result recorded on her before 2026-08-23 is VOID —
+#                they were measured through a badly misaligned camera and nothing could show
+#                through. Re-tested since and still refuted: cross-root particles (33.840),
+#                gainadd=0 (33.875), noveil (bit-identical); scenegain=0.5 (32.790) and
+#                nohdr=1 (32.671) are small compensations, not mechanisms.
+#                🔑 Remaining error is a MIST the game paints over the bottom quarter that we
+#                render only as a brief pulse (our `wenli` planes peak alpha 0.968 at t=3.70 and
+#                are 0.000 by t=4.47; the game's mist is strong at t=2,5,6,8). Residual bottom-band
+#                deficit is t=5 (+41.5) and t=8 (+24.2) luma; t=2 and t=6 are essentially solved.
+#                ⚠️ Use PEARSON CORRELATION, not MADC, to check whether content is missing —
+#                hers read ~0.05 against the capture (wis is 0.98) while mean and std MATCHED.
 #                🔑 Her error is ONE THING: a large-scale atmospheric MIST the game sweeps across
 #                the scene and we barely draw. The diff map is broad BLUE bands (game brighter)
 #                through the middle with RED on the crystal shards (we brighter, because the
@@ -41,7 +54,8 @@
 #                0.0-0.35 so the masks are not over-carving.
 #                ⚠️ `?gainadd=0` is worth **-1.499** on her — she is the biggest single loser
 #                from the additive-only scene gain (see the note above).
-#   fugue 11.064 (8 tuned beats, REFOFF 0.083) — captured autonomously 2026-08-22.
+#   fugue 9.784 (8 tuned beats, REFOFF 0.083) — captured autonomously 2026-08-22. 11.064 until
+#                the composite-gamma range fix, then 10.424, then -0.640 from the meshExt planes.
 #                🚨 Her deployed export was STALE (pre-2026-08-12: no `entrancePostFx.params`).
 #                A correctly-staged re-export (WHOLE refs/ tree — see the exporter memory) adds
 #                them and is DEPLOYED. ⛔ 2026-08-22's "27.701 -> 16.805 -> 13.617" was BOGUS: it

@@ -464,6 +464,26 @@ const STATE_ONLY: &[&str] = &[
 /// ordinary inactive object, an animated colour curve must NOT be able to resurrect it
 /// (Mlynar's `Special Only Effects` blade glow carries the same colliding alpha curve as his
 /// entrance rigs, which admitted a special-attack effect into the entrance).
+/// Is this `<State> Only Effects` state on the `DYNCHAR_STATE_ADMIT` allow-list?
+///
+/// Purely diagnostic: the gate exists because these groups belong to interaction states the
+/// entrance never enters, and admitting one draws content the game does not. It is here so
+/// "what is this gate withholding" is a measurement rather than an argument.
+fn state_admitted(state: &str) -> bool {
+    static ADMIT: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+    ADMIT
+        .get_or_init(|| {
+            std::env::var("DYNCHAR_STATE_ADMIT")
+                .unwrap_or_default()
+                .split(',')
+                .map(|s| s.trim().to_ascii_lowercase())
+                .filter(|s| !s.is_empty())
+                .collect()
+        })
+        .iter()
+        .any(|a| a == state)
+}
+
 pub(crate) fn state_only_blocked(
     all_objects: &HashMap<i64, (i32, Value)>,
     go_pid: i64,
@@ -488,9 +508,16 @@ pub(crate) fn state_only_blocked(
                 .unwrap_or("")
                 .to_ascii_lowercase();
             if name.contains("only")
-                && STATE_ONLY
-                    .iter()
-                    .any(|s| !(start_state_active && *s == "start") && name.contains(s))
+                && STATE_ONLY.iter().any(|s| {
+                    !(start_state_active && *s == "start")
+                        && name.contains(s)
+                        // DIAGNOSTIC (`DYNCHAR_STATE_ADMIT=interact,special`, default empty):
+                        // stop blocking the named `<State> Only Effects` groups, to measure
+                        // what a state gate is actually withholding. Generic — takes state
+                        // names, never skin names — so the same run answers the question for
+                        // every skin in the corpus.
+                        && !state_admitted(s)
+                })
             {
                 return true;
             }
@@ -555,9 +582,13 @@ pub(crate) fn go_effectively_active(
             // `Mlynar_EX2_L_Sword4` blade `glow_01` the game blooms as he raises and lowers the
             // sword). Keep every OTHER state gated — we never render interact/special/skill/…
             if name.contains("only")
-                && STATE_ONLY
-                    .iter()
-                    .any(|s| !(start_state_active && *s == "start") && name.contains(s))
+                && STATE_ONLY.iter().any(|s| {
+                    !(start_state_active && *s == "start")
+                        && name.contains(s)
+                        // See `state_admitted` — `DYNCHAR_STATE_ADMIT` is the measurement
+                        // escape hatch for "what is this gate withholding".
+                        && !state_admitted(s)
+                })
             {
                 return false;
             }
@@ -1571,7 +1602,22 @@ fn collect_dynchar_bg_quads(
             // otherwise a warm-ring/god-ray reveal painted on an external texture is
             // lost. Non-reveal meshExt quads without a window stay dropped (they'd be
             // always-on frozen fx polluting the idle scene).
-            if mat.get("_meshExtResolved").is_some() && window.is_empty() && !has_color_reveal {
+            // ⚠️ The "always-on frozen fx" justification is IDLE-SPECIFIC: an entrance is a
+            // finite cinematic, so a windowless always-on backdrop plane there is ordinary
+            // scenery, not pollution. `DYNCHAR_MESHEXT_ENT=1` keeps them for entrances only.
+            let meshext_keep_entrance =
+                is_entrance && std::env::var("DYNCHAR_MESHEXT_ENT").as_deref() != Ok("0");
+            if mat.get("_meshExtResolved").is_some()
+                && window.is_empty()
+                && !has_color_reveal
+                && !meshext_keep_entrance
+            {
+                if attrib_dbg {
+                    eprintln!(
+                        "    [scene] DROP meshExt-no-window  {:<26}",
+                        host.go_name(all_objects, go_pid)
+                    );
+                }
                 continue;
             }
             // _MainTex slot: texture + its Scale/Offset (ST). Unresolvable
@@ -1579,9 +1625,21 @@ fn collect_dynchar_bg_quads(
             let (main_pid, tex_val, st) =
                 super::particles::mat_texenv(all_objects, mat, "_MainTex");
             let (Some(main_pid), Some(tex_val)) = (main_pid, tex_val) else {
+                if attrib_dbg {
+                    eprintln!(
+                        "    [scene] DROP no _MainTex       {:<26} mat={mat_pid}",
+                        host.go_name(all_objects, go_pid)
+                    );
+                }
                 continue;
             };
             if spine_tex_pids.contains(&main_pid) {
+                if attrib_dbg {
+                    eprintln!(
+                        "    [scene] DROP spine-atlas tex   {:<26}",
+                        host.go_name(all_objects, go_pid)
+                    );
+                }
                 continue;
             }
             let tex_name = tex_val.get("m_Name").and_then(|v| v.as_str()).unwrap_or("");
@@ -2506,8 +2564,58 @@ fn legacy_tint_scale(mat: &Value, animated_color: bool) -> (f32, bool) {
     // and bleeds gold at the edges, which is precisely the flare the game draws. The value
     // being above the neutral is the AUTHOR ASKING for over-bright, not evidence against the
     // convention.
+    //
+    // 🔑 THE EVIDENCE IS THE SHADER'S DECLARATION, NOT THE MATERIAL'S SLOT LIST.
+    // The guard below originally read `!has_color_prop(mat, "_MainColor")` — "the
+    // material carries no `_MainColor`, so the shader must modulate by `_TintColor`".
+    // That inference is invalid in the other direction: Unity keeps every property a
+    // material ever carried, so a `_MainColor` left over from the shader the asset was
+    // authored against survives as residue on a shader that cannot read it. Measured
+    // over all 87 dynchar bundles, **630 materials carry a `_MainColor` their shader
+    // never declares** — and because this branch is tested BEFORE the `_MainColor`
+    // ones, every one of them was being handed to the wrong tint.
+    //
+    // Kal'tsit is the clean case: `wenli` and `wenl1` are the SAME quad drawn twice
+    // with the SAME authored colours (`_TintColor` 0.5/0.484, `_MainColor` 0.3456),
+    // differing only in shader. `Particles-L2D/AlphaBlend` took `_TintColor`x2 =
+    // (1,1,1,0.968) while `Dissolve/Dissolve AB` was pushed onto `_MainColor`x2 =
+    // (0.691,0.691,0.691,1.0) — two different tints for one sheet. `Dissolve AB`'s
+    // whole declared block is `_TintColor, _MainTex, _DissolveTex, _Amount,
+    // _BorderWidth, _ZTest`, with `_TintColor` DEFAULTING to (0.5,0.5,0.5,0.5) — the
+    // x2 neutral, from the shader's own mouth. `Disturb(CustomData)` in the same
+    // bundle does declare `_MainColor`, which is the positive control proving the
+    // scan finds the property when it is really there.
+    //
+    // ⛔ PARKED (`DYNCHAR_TINT_DECL=1` enables) — CORRECT AND MEASURED WORSE.
+    // Switching the guard to the declaration costs **+7.45 on Kal'tsit** (48.614 ->
+    // 56.053) and is corpus-neutral to 3dp; clamping the newly-admitted families
+    // instead of giving them the HDR ceiling does not help (56.067), so the damage is
+    // the tint SOURCE, not the ceiling.
+    //
+    // The reading itself is not in doubt. A raw-byte scan of every `Particles-L2D`
+    // shader shows `_MainColor` and `_TintColor` are strictly MUTUALLY EXCLUSIVE —
+    // `Dissolve AB` contains the string `_MainColor` zero times — so the residue really
+    // is unreadable by the shader that draws it.
+    //
+    // The best explanation for the conflict is that on these materials `_TintColor` is
+    // the STALE half: `kalts_wenli` carries `_TintColor` (0.5,0.5,0.5,0.484), which is
+    // the shader's own declared DEFAULT (0.5,0.5,0.5,0.5), against a hand-authored
+    // `_MainColor` (0.3456,0.3456,0.3456,0.509). That is the signature of a material
+    // authored against a `_MainColor` shader and later re-pointed at this one, leaving
+    // the value the artist chose in a slot the new shader cannot read. Unity would draw
+    // the default; our renderer scores much better drawing what was authored. Until
+    // that is resolved against a capture, the measured behaviour wins.
+    //
+    // Falls back to the old material test when the shader is unknown (no shader
+    // bundle staged), so an under-staged export cannot silently flip families.
+    let reads_main_color = if std::env::var("DYNCHAR_TINT_DECL").is_ok() {
+        super::shader_map::shader_declares(shader, "_MainColor")
+            .unwrap_or_else(|| has_color_prop(mat, "_MainColor"))
+    } else {
+        has_color_prop(mat, "_MainColor")
+    };
     let sub_l2d = l2d_rest.is_some_and(|rest| rest.contains('/') && !rest.starts_with("Ram/"))
-        && !has_color_prop(mat, "_MainColor");
+        && !reads_main_color;
     let legacy = shader.contains("/Particles/")
         || shader.starts_with("Particles/")
         || (animated_color && plain_l2d)
@@ -2526,8 +2634,15 @@ fn legacy_tint_scale(mat: &Value, animated_color: bool) -> (f32, bool) {
     // baseline-and-peak-share-a-ceiling failure documented on the Ram branch. The families
     // matched BEFORE this change keep their clamped behaviour untouched: they are shipped and
     // measured, and widening them is a separate question from admitting a family at all.
+    // HDR (the INFINITY rgb ceiling) stays exactly where it was measured: on materials that
+    // carry no `_MainColor` slot at all. The layers the declaration guard newly admits are a
+    // different population — their `_TintColor` rgb is 1.0, DOUBLE the 0.5 x2-neutral, so the
+    // "authored at or below neutral, therefore a real over-bright request" argument that
+    // justified the uncapped ceiling does not hold for them. Uncapped they render (2,2,2),
+    // which measured +7.4 on Kal'tsit (48.614 -> 56.053).
+    let hdr = sub_l2d && !has_color_prop(mat, "_MainColor");
     if legacy && has_tint_color {
-        (2.0, sub_l2d)
+        (2.0, hdr)
     } else {
         (1.0, false)
     }

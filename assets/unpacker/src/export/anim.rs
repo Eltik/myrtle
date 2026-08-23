@@ -2886,6 +2886,34 @@ fn build_hash_to_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, V
                 .push(tr_go[tr]);
         }
     }
+    // 🔑 THE EMPTY PATH. Unity binds a curve on the Animator's OWN GameObject with an empty
+    // path, whose `crc32("")` is **0** — and the suffix loop above can never produce it, so
+    // every such curve resolved to nothing and was silently dropped.
+    //
+    // Kal'tsit is the case that exposed it: her entrance clip binds the camera dolly as
+    // `[tid=4 position] -> path 0` with 20 keys of real motion (x 0.47 -> -2.46,
+    // y 7.45 -> 1.37 -> 5.39), because her Animator sits on `.../static_offset/fixed/03`,
+    // an ANCESTOR of `Dummy002/Main Camera`. We exported her `entranceCamCenterCurve` as a
+    // 2-point CONSTANT while the game pans, which a normalised cross-correlation against the
+    // capture shows directly: her best alignment needs dx 165 -> 8 px across t=2..8 while
+    // wisdel (our best skin) sits at 0.99 NCC with zero offset.
+    //
+    // Mapping 0 to every Animator-owning GameObject is deliberate: several Animators exist per
+    // bundle, and each caller already disambiguates by intersecting the candidate list with the
+    // subtree it cares about (the camera chain here), so the ambiguity resolves itself exactly
+    // as it does for a colliding subpath hash between twin rigs.
+    //
+    // `DYNCHAR_ANIMROOT=0` reverts.
+    if std::env::var("DYNCHAR_ANIMROOT").as_deref() != Ok("0") {
+        let roots: Vec<i64> = all_objects
+            .iter()
+            .filter(|(_, (cid, _))| *cid == 95)
+            .filter_map(|(_, (_, v))| v.get("m_GameObject").and_then(get_path_id))
+            .collect();
+        if !roots.is_empty() {
+            hash_to_gos.entry(0).or_default().extend(roots);
+        }
+    }
     for gos in hash_to_gos.values_mut() {
         gos.sort_unstable();
         gos.dedup();
