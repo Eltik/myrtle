@@ -379,6 +379,11 @@ pub struct BgQuad {
     /// every other layer wants) instead nails it to the world and the camera flies off it.
     /// Only two skins in the corpus have any: whitw2 (9, her film strip) and kalts (2, her mist).
     pub cam_locked: bool,
+    /// For a {@link cam_locked} quad: the camera frustum EXTENT (authored px) at ITS OWN distance
+    /// from the camera — the height the viewport maps to where this overlay sits. Under a
+    /// PERSPECTIVE rig that is NOT the camera's `entranceViewPx`, and using the latter scales and
+    /// positions the overlay by the ratio of the two distances.
+    pub cam_lock_view: Option<f64>,
 }
 
 /// A scene quad's runtime bone attachment (spine-unity `BoneFollower`). At runtime the
@@ -1480,6 +1485,14 @@ fn collect_dynchar_bg_quads(
     // an overlay locked to the viewport — a film-strip border, a lens sheet, a full-frame haze —
     // and its baked world pose is meaningless once the shot dollies. Computed once here; the
     // frontend re-places these against the live frame each tick (`camLocked`).
+    // Per camera-locked GO: the frustum EXTENT (authored px) at ITS OWN distance from the camera.
+    // A camera child is not framed by the camera's focal-plane extent — under a PERSPECTIVE rig its
+    // apparent size is set by the frustum where IT sits. whitw2's film strip lives at z 4.36 while
+    // her `entranceViewPx` is the frustum at the dolly's d0 = 3.0, a ratio of exactly
+    // 2*4.36*tan(30°) / 2*3.0*tan(30°) = 1.4535 — which is precisely how much too large and too
+    // high her strip rendered. Sizing against this instead lands the sprocket bars at screen
+    // y -0.2..36.2 and 379.8..416.2, against 0..35 and 380..415 measured in the capture.
+    let mut cam_lock_view: HashMap<i64, f64> = HashMap::new();
     let cam_locked_gos: std::collections::HashSet<i64> = {
         let mut out = std::collections::HashSet::new();
         if is_entrance
@@ -1488,13 +1501,65 @@ fn collect_dynchar_bg_quads(
                 .and_then(|(_, v)| v.get("m_GameObject").and_then(get_path_id))
                 .and_then(|g| go_to_transform.get(&g).copied())
         {
+            // Camera projection, read once.
+            let cam_obj = entrance_camera_pid(all_objects).and_then(|p| all_objects.get(&p));
+            let is_ortho = cam_obj
+                .and_then(|(_, v)| v.get("orthographic"))
+                .and_then(Value::as_bool)
+                .unwrap_or(true);
+            let ortho_sz = cam_obj
+                .and_then(|(_, v)| v.get("orthographic size"))
+                .and_then(Value::as_f64)
+                .unwrap_or(0.0);
+            let fov = cam_obj
+                .and_then(|(_, v)| v.get("field of view"))
+                .and_then(Value::as_f64)
+                .unwrap_or(60.0);
+            // Authored-px scale, read from the SkeletonData asset the same way the caller does.
+            // Ordered by path_id so a bundle with several skeletons cannot flip between runs.
+            let mut skel: Vec<(i64, f64)> = all_objects
+                .iter()
+                .filter(|(_, (_, v))| v.get("skeletonJSON").is_some())
+                .filter_map(|(p, (_, v))| Some((*p, v.get("scale").and_then(Value::as_f64)?)))
+                .collect();
+            skel.sort_unstable_by_key(|(p, _)| *p);
+            let inv = 1.0 / skel.first().map_or(0.01, |(_, sc)| *sc);
+            let local_of = |tf: i64| -> super::mesh::Mat4 {
+                all_objects.get(&tf).map_or_else(super::mesh::Mat4::identity, |(_, v)| {
+                    let g3 = |f: &str, d: f32| {
+                        let g = |k: &str| {
+                            v.get(f).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                        };
+                        [g("x"), g("y"), g("z")]
+                    };
+                    let q = {
+                        let g = |k: &str, d: f32| {
+                            v.get("m_LocalRotation").and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                        };
+                        [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
+                    };
+                    super::mesh::Mat4::trs(g3("m_LocalPosition", 0.0), q, g3("m_LocalScale", 1.0))
+                })
+            };
             for (&go, &tr) in &go_to_transform {
                 let mut cur = tr;
+                let mut m = super::mesh::Mat4::identity();
                 for _ in 0..64 {
                     if cur == cam_tr {
                         out.insert(go);
+                        // z of the GO's origin in CAMERA-LOCAL space.
+                        let d = f64::from(m.point([0.0, 0.0, 0.0])[2]).abs();
+                        let ext = if is_ortho {
+                            2.0 * ortho_sz * inv
+                        } else {
+                            2.0 * d * (fov.to_radians() / 2.0).tan() * inv
+                        };
+                        if ext > 0.0 {
+                            cam_lock_view.insert(go, ext);
+                        }
                         break;
                     }
+                    m = local_of(cur).mul(&m);
                     match all_objects
                         .get(&cur)
                         .and_then(|(_, v)| v.get("m_Father").and_then(get_path_id))
@@ -2518,6 +2583,7 @@ fn collect_dynchar_bg_quads(
             go_pid,
             go_name: host.go_name(all_objects, go_pid),
             cam_locked: cam_locked_gos.contains(&go_pid),
+            cam_lock_view: cam_lock_view.get(&go_pid).copied(),
         });
     }
 
@@ -5032,6 +5098,9 @@ fn export_scene(
         // skin without one stays byte-identical.
         if quad.cam_locked {
             layer["camLocked"] = serde_json::json!(true);
+            if let Some(v) = quad.cam_lock_view {
+                layer["camLockViewPx"] = serde_json::json!(v as f32);
+            }
         }
         // ENTRANCE uniform-scale multiplier over the baked pose (1.0 = unchanged). Emitted only
         // when the `_Start` clips actually animate this transform, so an unanimated corpus stays

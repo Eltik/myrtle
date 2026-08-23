@@ -1694,11 +1694,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // units, so the baked border flies off frame within a second and her whole
                 // cinematic renders without the film strip the game draws over it.
                 if (ef.sceneLayers && ef.frameSize > 0) {
-                    const k = size / ef.frameSize;
                     const [c0x, c0y] = ef.startCenter;
                     for (const cont of ef.sceneLayers) {
                         for (const m of cont.children) {
-                            if (!(m as unknown as ISceneLayerRuntime).__camLocked) continue;
+                            const rt = m as unknown as ISceneLayerRuntime;
+                            if (!rt.__camLocked) continue;
+                            // Size against the frustum at THIS overlay's own distance rather than
+                            // the camera's focal-plane extent (`ISceneLayer.camLockViewPx`).
+                            //
+                            // ⛔ DEFAULT OFF (`?camlockview=1` enables) even though it is provably
+                            // the correct geometry: it lands whitw2's sprocket bars at screen
+                            // y 0..36 and 380..416 against 0..35 and 380..415 measured in her
+                            // capture, i.e. exact. It still SCORES WORSE (46.975 -> 57.185) because
+                            // the game FADES the strip out — present t=1..10, gone by t≈12..13.5 —
+                            // and we draw it for the whole entrance, so a correctly-placed bar is
+                            // simply wrong on three of her seven beats. Ship this together with
+                            // whatever drives that fade, not before.
+                            const cvOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("camlockview") === "1";
+                            const ref = cvOn && rt.__camLockView && rt.__camLockView > 0 ? rt.__camLockView : ef.frameSize;
+                            const k = size / ref;
                             m.scale.set(k);
                             m.position.set(cx - k * c0x, cy - k * c0y);
                         }

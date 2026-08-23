@@ -77,6 +77,12 @@ export interface ISceneLayer {
      *  border, a lens overlay, a full-frame haze sheet. Its baked world pose is only correct at
      *  t=0. Only two skins ship any: whitw2 (8, her film strip) and kalts (2, her mist). */
     camLocked?: boolean;
+    /** For a {@link camLocked} quad: the camera frustum EXTENT (authored px) at ITS OWN distance
+     *  from the camera. Under a PERSPECTIVE rig this is NOT `entranceViewPx` — whitw2's film strip
+     *  sits at z 4.36 where the frustum is 503.4 px, while her `entranceViewPx` is the frustum at
+     *  the dolly's d₀=3.0 (346.4). Sizing against the wrong one scales AND shifts the overlay by
+     *  the ratio of the two distances (1.4535 for her). */
+    camLockViewPx?: number | null;
     /** Index into the scene's texture set. */
     tex: number;
     /** Flat [x0,y0,x1,y1,…] vertex positions (spine-authored pixels, Y-up). */
@@ -944,6 +950,8 @@ export interface ISceneLayerRuntime {
      *  it holds a constant position and size on screen however far the shot dollies or pans.
      *  The entrance camera tick re-places it against the live frame each frame. */
     __camLocked?: boolean;
+    /** Mirror of {@link ISceneLayer.camLockViewPx}. */
+    __camLockView?: number;
     __colorCurve?: [number, number, number, number, number][] | null;
     /** The layer's STATIC authored tint - how the IDLE scene paints this same artwork, since
      *  the idle copies of the windowed layers carry neither a window nor a colour curve.
@@ -2185,7 +2193,10 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // His are three non-additive sort-10 sheets tinted [0.41, 0.46, 1.00] and [0.72, 0.82, 0.94].
         if (isForeground && fgAlphaScale() !== 1) mesh.alpha *= fgAlphaScale();
         (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
-        if (layer.camLocked) (mesh as unknown as ISceneLayerRuntime).__camLocked = true;
+        if (layer.camLocked) {
+            (mesh as unknown as ISceneLayerRuntime).__camLocked = true;
+            if (layer.camLockViewPx) (mesh as unknown as ISceneLayerRuntime).__camLockView = layer.camLockViewPx;
+        }
         // Same knob for layers with NO colour curve, which the runtime replay never visits.
         {
             const ls = layerColorScales().get(srcIndexOf.get(layer) ?? -1);
