@@ -126,6 +126,10 @@ REFOFF[cet]=-0.067
 # proof is geometric rather than a score minimum: at +0.55 five of seven beats align at
 # scale 1.00 / dx 0 / dy 0 with NCC 0.86-0.94, against scale 1.6-1.8 at offset 0.
 REFOFF[whitw2]=0.550
+# chyue: anchored on the END WHITE-OUT ramp, the sharpest edge in her clip (half-rise Y=150 at
+# ours 18.942 vs game 18.744). Not fitted to the score. Her clock is otherwise correct — our
+# render performs the same white-out, and its timing matches to ~0.2 s.
+REFOFF[chyue]=-0.200
 # exc added 2026-08-11. Her clip is trimmed 3 frames EARLY -- our render runs BEHIND, the opposite
 # sign to cet. Corroborated INDEPENDENTLY of the score by the scope's lit-disc radius: the game
 # releases the aperture at t=5.10 where we release at 5.20, and shifting the whole radius
@@ -186,6 +190,11 @@ DIR[wis]='char_1035_wisdel_sale#14';      BEATS[wis]="2,4,6,8,10,12"
 # no white-out is produced. Scoring her in the default set would swamp the corpus mean with one
 # broken skin, so run her explicitly:  ./all8.sh <label> "" whitw2
 DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
+# chyue — captured 2026-08-23, the ELEVENTH reference and the last uncaptured entrance that the
+# Lookbook exposes (pasngr's "Dream In A Moment" is not listed in the EPOQUE collection: all 87
+# labels read, no hit). Beats avoid her two sensitive regions: the HARD-CUT camera tour at
+# t=9.5..11.5 (her rig jumps `updown.y` 8.52->3.39 in 0.067 s) and the white-out from t>=18.4.
+DIR[chyue]='char_2024_chyue_cfa#1';       BEATS[chyue]="1,3,5,7,8.5,12.5,15,17"
 # TENTH entry / NINTH working reference, added 2026-08-22 — Ch'en the Holungday "Fugue".
 # ✅ Unlike whitw2 this one RENDERS correctly and scores sanely (23.870, REFOFF derived
 # geometrically above). Captured autonomously from the emulator: Store -> Outfit Store -> Fashion
