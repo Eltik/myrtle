@@ -470,6 +470,10 @@ fn process_bundle(
                             "_DisturbTex",
                             "_DissolveTex_01",
                             "_DissolveTex_02",
+                            // The disturb WEIGHT map (see `SceneRam::weight_*`). Same reasoning
+                            // as the numbered dissolve pair: a material that does not bind it
+                            // skips, so this is inert for every other family.
+                            "_WeightTex",
                         ] {
                             if !slots.contains(&mask) {
                                 slots.push(mask);
@@ -495,7 +499,11 @@ fn process_bundle(
                         let decoded = if is_ram
                             || matches!(
                                 *slot,
-                                "_DissolveTex" | "_DisturbTex" | "_DissolveTex_01" | "_DissolveTex_02"
+                                "_DissolveTex"
+                                    | "_DisturbTex"
+                                    | "_DissolveTex_01"
+                                    | "_DissolveTex_02"
+                                    | "_WeightTex"
                             ) {
                             fx_textures.resolve_decode_ram(&sf.externals, fid, pid)
                         } else {

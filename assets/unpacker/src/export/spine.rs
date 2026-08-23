@@ -182,6 +182,25 @@ pub struct SceneRam {
     pub dissolve2_pid: Option<i64>,
     pub dissolve2_val: Option<Value>,
     pub dissolve2_st: [f64; 4],
+    /// `_WeightTex` — a per-pixel WEIGHT on the disturb displacement, sampled `.xy`.
+    ///
+    /// The `Disturb Anchor` family multiplies the anchored disturb offset by this map BEFORE
+    /// the intensity, so where the map is black the game displaces NOTHING and where it is
+    /// white it displaces fully:
+    ///
+    /// ```glsl
+    /// u_xlat16_8.xy = texture(_WeightTex, vs_TEXCOORD1.zw).xy;
+    /// u_xlat2.xy    = u_xlat16_8.xy * u_xlat16_1.xy;              // weight * (sample - anchor)
+    /// u_xlat16_1.xy = u_xlat2.xy * vec2(_IntensityU, _IntensityV) + vs_TEXCOORD0.xy;
+    /// ```
+    ///
+    /// Ignoring it applies the FULL displacement everywhere. Skadi binds `mask_16` (mean 0.502,
+    /// range 0.0-1.0) on 7 materials, i.e. we over-displace by ~2x on average there; her other
+    /// two weight materials bind a uniformly-1.0 texture and are unaffected either way.
+    /// 51 materials across 16 skins have the feature live (`_WEIGHT_ON` + a bound map).
+    pub weight_pid: Option<i64>,
+    pub weight_val: Option<Value>,
+    pub weight_st: [f64; 4],
     pub amount2: f32,
     pub border_width2: f32,
     /// `_Edgecolor` + `_pow` — the RIM the `…edge` shader variants composite along the dissolve
@@ -1841,6 +1860,11 @@ fn collect_dynchar_bg_quads(
                     } else {
                         super::particles::mat_texenv(all_objects, mat, "_DissolveTex")
                     };
+                    // `_WeightTex` — the disturb WEIGHT map (see `SceneRam::weight_*`). Resolved
+                    // unconditionally: the slot lookup returns None for any material that does
+                    // not bind it, so single-map and Ram-family layers are unchanged.
+                    let (weight_pid, weight_val, weight_st) =
+                        super::particles::mat_texenv(all_objects, mat, "_WeightTex");
                     let (diss2_pid, diss2_val, diss2_st) = if two_map {
                         super::particles::mat_texenv(all_objects, mat, "_DissolveTex_02")
                     } else {
@@ -1979,6 +2003,9 @@ fn collect_dynchar_bg_quads(
                             dissolve2_pid: diss2_pid,
                             dissolve2_val: diss2_val,
                             dissolve2_st: diss2_st,
+                            weight_pid,
+                            weight_val,
+                            weight_st,
                             edge_color: shader.to_ascii_lowercase().contains("edge").then(|| {
                                 let c = super::particles::mat_color(
                                     mat,
@@ -4842,6 +4869,15 @@ fn export_scene(
                 &mut next_idx,
                 &mut saved,
             );
+            let weightt = resolve_scene_mask(
+                r.weight_pid,
+                r.weight_val.as_ref(),
+                resources,
+                &tex_dir,
+                &mut tex_index,
+                &mut next_idx,
+                &mut saved,
+            );
             let ramt = resolve_scene_mask(
                 r.ram_pid,
                 r.ram_val.as_ref(),
@@ -4857,6 +4893,8 @@ fn export_scene(
                     "dissolveST": r.dissolve_st,
                     "dissolveTex2": diss2,
                     "dissolveST2": r.dissolve2_st,
+                    "weightTex": weightt,
+                    "weightST": r.weight_st,
                     "amount2": r.amount2,
                     "borderWidth2": r.border_width2,
                     "edgeColor": r.edge_color,

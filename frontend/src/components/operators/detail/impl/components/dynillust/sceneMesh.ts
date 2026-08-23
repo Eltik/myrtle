@@ -28,6 +28,11 @@ export interface ISceneRam {
      *  (`_DissolveTex_01` × `_DissolveTex_02`), each with its own threshold and border
      *  width. Absent on the single-map `Ram/` and `Disturb/` families. */
     dissolveTex2?: number | null;
+    /** `_WeightTex` — a per-pixel WEIGHT on the disturb displacement, sampled `.xy`. The
+     *  `Disturb Anchor` family multiplies the anchored offset by it BEFORE the intensity, so a
+     *  black texel displaces NOTHING. See the exporter's `SceneRam::weight_*`. */
+    weightTex?: number | null;
+    weightST?: [number, number, number, number];
     dissolveST2?: [number, number, number, number];
     amount2?: number;
     borderWidth2?: number;
@@ -330,6 +335,8 @@ interface IRamSceneTex {
     /** Second dissolve map (the `Dissolve/` family multiplies two). Null on single-map families. */
     dissolve2: PIXI.Texture | null;
     disturb: PIXI.Texture | null;
+    /** `_WeightTex`, the per-pixel weight on the disturb displacement. */
+    weight: PIXI.Texture | null;
     /** `_RamTex`, the ramp the fragment multiplies through. Unlike the masks this is ARTWORK,
      *  but it is still sampled RAW: the game multiplies straight texels into a colour the One
      *  blend factor already treats as premultiplied, so a premultiplied ramp would double-apply
@@ -1200,11 +1207,13 @@ uniform vec4 uRamST;
 uniform vec4 uDissolveRot;
 uniform vec4 uRamRot;
 uniform vec4 uDisturbRot;
+uniform vec4 uWeightST;
 varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
+varying vec2 vWeightUV;
 varying vec4 vColor;
 vec2 rot2(vec2 uv, vec4 r) {
     vec2 p = uv - vec2(0.5, 0.5);
@@ -1230,8 +1239,19 @@ void main() {
     vDissolveUV2 = vec2(ds2.x, 1.0 - ds2.y);
     vDisturbUV = vec2(dt.x, 1.0 - dt.y);
     vRamUV = vec2(rm.x, 1.0 - rm.y);
+    vec2 wt = unity * uWeightST.xy + uWeightST.zw;
+    vWeightUV = vec2(wt.x, 1.0 - wt.y);
 }
 `;
+/** DIAGNOSTIC (`?weight=<f>`): blend the `_WeightTex` gate in. 0 = ignore it and displace at
+ *  full intensity everywhere (the previous behaviour), 1 = apply it as the shader does, >1
+ *  over-drives it — the proportionality check that tells a small effect apart from dead wiring. */
+function weightMix(): number {
+    if (typeof window === "undefined") return 1;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("weight") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
 /** Per-lookup UV ROTATION scale. **DEFAULT 0 — IMPLEMENTED, VERIFIED, AND KEPT OFF.**
  *  `?uvrot=1` enables it, `?uvrot=-1` negates the angle.
  *
@@ -1275,6 +1295,7 @@ varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vWeightUV;
 varying vec2 vRamUV;
 varying vec4 vColor;
 uniform sampler2D uSampler;
@@ -1295,6 +1316,9 @@ uniform float uDisturbInfluenceDissolveUV;
 uniform float uDisturbInfluenceMainUV;
 uniform float uHasDissolve;
 uniform float uHasDissolve2;
+uniform sampler2D uWeightTex;
+uniform float uHasWeight;
+uniform float uWeightMix;
 uniform float uAmount2;
 uniform float uBorderWidth2;
 uniform vec4 uEdgeColor;
@@ -1305,7 +1329,12 @@ void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
     // Game shader: (sample - anchor) * intensity. With the anchor at 0 this is exactly the
     // previous sample * intensity, so layers without one are bit-identical.
-    vec2 dOff = (vec2(disturbSample) - vec2(uAnchorU, uAnchorV)) * vec2(uIntensityU, uIntensityV);
+    // NOTE: no backticks in here - this is inside a template literal.
+    // _WeightTex gates the displacement per pixel: the Disturb Anchor family multiplies the
+    // anchored offset by the weight BEFORE the intensity, so a black texel displaces nothing.
+    // Absent map => weight 1, i.e. bit-identical to the previous unweighted behaviour.
+    vec2 wgt = uHasWeight > 0.5 ? mix(vec2(1.0, 1.0), texture2D(uWeightTex, vWeightUV).xy, uWeightMix) : vec2(1.0, 1.0);
+    vec2 dOff = ((vec2(disturbSample) - vec2(uAnchorU, uAnchorV)) * wgt) * vec2(uIntensityU, uIntensityV);
     vec4 tex = texture2D(uSampler, dOff * uDisturbInfluenceMainUV + vUV); // premultiplied
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dOff * uDisturbInfluenceDissolveUV + vDissolveUV).x : 1.0;
     // Game shader: sw = 1 - roundEven(_Amount + 0.5), i.e. floor(_Amount + 1.0). Porting
@@ -1404,6 +1433,8 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uSampler: new PIXI.Texture(base),
             uDissolveTex: ramTex.dissolve ?? ramTex.white,
             uDissolveTex2: ramTex.dissolve2 ?? ramTex.white,
+            uWeightTex: ramTex.weight ?? ramTex.white,
+            uWeightST: r.weightST ?? [1, 1, 0, 0],
             uDisturbTex: ramTex.disturb ?? ramTex.white,
             uRamTex: ramTex.ram ?? ramTex.white,
             uHasRam: ramTex.ram && ramTexOn() ? 1 : 0,
@@ -1420,6 +1451,8 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uDisturbInfluenceMainUV: r.disturbInfluenceMainUV,
             uHasDissolve: ramTex.dissolve ? 1 : 0,
             uHasDissolve2: ramTex.dissolve2 ? 1 : 0,
+            uHasWeight: ramTex.weight ? 1 : 0,
+            uWeightMix: weightMix(),
             uAmount2: r.amount2 ?? 0,
             uBorderWidth2: r.borderWidth2 ?? 0.1,
             uEdgeColor: r.edgeColor ?? [1, 1, 1, 1],
@@ -1932,13 +1965,14 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         const slot = (i: number | null | undefined) => (i != null && bases[i] ? new PIXI.Texture(bases[i].raw) : null);
         const dissolve = slot(r.dissolveTex);
         const dissolve2 = slot(r.dissolveTex2);
+        const weight = slot(r.weightTex);
         const disturb = slot(r.disturbTex);
         // NB: loaded regardless of the diagnostic flag, so ?ramtex=0 gates only the MULTIPLY and
         // leaves the compositor selection identical. Dropping the texture here instead moves
         // ramp-only layers off the Ram shader entirely, which is a different render, not an A/B
         // (and hung the headless capture on Civilight Eterna).
         const ram = slot(r.ramTex);
-        return dissolve || dissolve2 || disturb || ram ? { dissolve, dissolve2, disturb, ram, white: PIXI.Texture.WHITE } : null;
+        return dissolve || dissolve2 || disturb || ram || weight ? { dissolve, dissolve2, disturb, weight, ram, white: PIXI.Texture.WHITE } : null;
     };
 
     // Does this scene own a DARK opaque painted backdrop (a self-lit painted world, not a
