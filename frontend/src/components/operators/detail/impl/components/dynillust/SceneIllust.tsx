@@ -1646,7 +1646,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // skadi2) keep the pure rig camera - `centerBlend` is null for them (verified parity).
                 let cxShift = 0;
                 let cy = c[1];
-                const cb = ef.centerBlend;
+                // DIAGNOSTIC (`?nocenterblend=1`): follow the rig's VERTICAL curve raw instead of
+                // re-basing it onto the settle-open centre. The re-base makes the framing depend
+                // only on the curve's SHAPE relative to its end, so a skin whose authored absolute
+                // vertical IS the shot gets it discarded — and any correction to the exported
+                // centre's Y cancels out entirely, which is exactly what hid Chongyue's.
+                const cbOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("nocenterblend") === "1";
+                const cb = cbOff ? null : ef.centerBlend;
                 if (cb) {
                     cy = cb.cy0 + (c[1] - cb.rigEndY);
                 }

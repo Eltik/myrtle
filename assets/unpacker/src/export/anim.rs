@@ -1253,6 +1253,27 @@ pub type CameraTrack = (
 /// rotates the camera about the view axis — 12 of the 13 entrance skins have an exactly
 /// axis-aligned camera basis (right = +X, up = +Y, roll 0.000°), so they keep a `None` and their
 /// exported centre is bit-identical.
+/// How many keyframes make a camera-chain curve "animated"?
+///
+/// A SINGLE-key curve is still an OVERRIDE: Unity's Animator writes that value every frame,
+/// replacing whatever `m_LocalPosition`/`m_LocalRotation` the transform serialised. Requiring
+/// `> 1` therefore silently falls back to the STATIC pose for any node the clip merely PINS.
+///
+/// Chongyue is the case that exposed it. Her `_Start` pins `Dummy002`'s position at (0,0,0) with
+/// one key, while its serialized `localPos` is (-3.2063, 0, -5.6353) — so we compose a camera
+/// 3.21 units to the side and 5.64 up. Feature-matching her render against the capture measures
+/// exactly that: a CONSTANT (-328.4 ± 13.5) authored px in X and (-593 ± 96) in Y, against a
+/// chain-matrix prediction of (-320.6, -563.5). See `camfit.py`.
+///
+/// `DYNCHAR_CAMKEY1=0` restores the old `> 1` behaviour.
+fn min_keys() -> usize {
+    if std::env::var("DYNCHAR_CAMKEY1").as_deref() == Ok("0") {
+        2
+    } else {
+        1
+    }
+}
+
 pub fn entrance_camera_track(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
@@ -1412,9 +1433,11 @@ pub fn entrance_camera_track(
                     .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
                 && let Some(&tf) = go_to_tf.get(&go)
             {
+                // `decode_curve_any`, NOT `decode_curve_at`: the latter reads only the STREAMED
+                // sub-clip, and a curve that merely PINS a value lives in the CONSTANT one.
                 let cs: Vec<Option<Vec<(f32, f32)>>> =
-                    (0..count).map(|i| decode_curve_at(v, gidx + i)).collect();
-                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() > 1)) {
+                    (0..count).map(|i| decode_curve_any(v, gidx + i)).collect();
+                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
                     let entry = animated_rot
                         .entry(tf)
                         .or_insert_with(|| (attr == 4, vec![Vec::new(); count]));
@@ -1435,11 +1458,11 @@ pub fn entrance_camera_track(
                 && let Some(&tf) = go_to_tf.get(&go)
             {
                 let cs = [
-                    decode_curve_at(v, gidx),
-                    decode_curve_at(v, gidx + 1),
-                    decode_curve_at(v, gidx + 2),
+                    decode_curve_any(v, gidx),
+                    decode_curve_any(v, gidx + 1),
+                    decode_curve_any(v, gidx + 2),
                 ];
-                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() > 1)) {
+                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
                     let entry = animated
                         .entry(tf)
                         .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
