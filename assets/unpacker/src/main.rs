@@ -455,7 +455,22 @@ fn process_bundle(
                     // lookup itself decide: a material that doesn't bind them skips.
                     let mut slots: Vec<&str> = base_slots.to_vec();
                     if export::spine::is_l2d_compositor(shader) {
-                        for mask in ["_DissolveTex", "_DisturbTex"] {
+                        // TWO-MAP SPELLINGS. The `Dissolve/` family binds `_DissolveTex_01` /
+                        // `_DissolveTex_02` (its single-name `_DissolveTex` is inert residue),
+                        // and this list only ever carried the single names — so a two-map
+                        // material's masks were never resolved across bundles and the layer drew
+                        // its full bounding rectangle. fugue's `_01` resolved only by ACCIDENT:
+                        // another material in the same bundle binds the same flow.ab texture
+                        // under the single name, so it was already in `spine_objects` by path_id.
+                        // `_02` (mask.ab, `mask_15`) had no such twin and stayed null.
+                        // The slot lookup below skips any name the material doesn't bind, so
+                        // adding the numbered pair is inert for every single-map material.
+                        for mask in [
+                            "_DissolveTex",
+                            "_DisturbTex",
+                            "_DissolveTex_01",
+                            "_DissolveTex_02",
+                        ] {
                             if !slots.contains(&mask) {
                                 slots.push(mask);
                             }
@@ -477,7 +492,11 @@ fn process_bundle(
                         // Masks are DATA maps, not sprites: a dissolve/disturb texture is
                         // legitimately opaque and would be thrown out by the sprite
                         // opacity gate, so it takes the raw path like the Ram slots do.
-                        let decoded = if is_ram || matches!(*slot, "_DissolveTex" | "_DisturbTex") {
+                        let decoded = if is_ram
+                            || matches!(
+                                *slot,
+                                "_DissolveTex" | "_DisturbTex" | "_DissolveTex_01" | "_DissolveTex_02"
+                            ) {
                             fx_textures.resolve_decode_ram(&sf.externals, fid, pid)
                         } else {
                             fx_textures.resolve_decode(&sf.externals, fid, pid)

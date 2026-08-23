@@ -11,9 +11,45 @@
 # EXTRA is the dyntest query string (e.g. "nohdr=1"), passed verbatim to every skin; the
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
-# Baselines as of 2026-08-20 (empty EXTRA), on the ASPECT-CORRECTED basis:
+# Baselines as of 2026-08-22 (empty EXTRA), on the ASPECT-CORRECTED basis:
+#   wis 5.537  exc 6.266  eyja 8.693  ska 10.084  mue 11.521  cel 17.075  mly 17.192  cet 17.701
+#   corpus mean 11.759                             cet 17.701 is the worst of the DEFAULT EIGHT.
+#
+# ⬆ 2026-08-22: EFFECT_SCENE_GAIN now tames ADDITIVE layers ONLY (11.946 -> 11.759). A
+#   normal-blend layer's alpha is COVERAGE, not intensity, so damping it only dims art the game
+#   draws at full strength. eyja -1.717, mue -0.119, ska/wis 0, cet +0.008, cel +0.057,
+#   exc +0.081, mly +0.193. `?gainadd=0` restores the previous behaviour EXACTLY (verified:
+#   it reproduces every baseline above it to 3dp), so any older measurement stays reachable.
+#   Also shipped: VEIL_SAT_MAX=0.25 — `isVeil` keyed on whiteness alone and demoted fugue's
+#   ORANGE flame behind the spine. Corpus-invisible (every corpus veil is sat <0.10), fugue
+#   14.081 -> 13.617. `?veilsat=0` restores the whiteness-only rule.
+# Previous basis, for comparing against notes written before that change:
 #   wis 5.537  exc 6.185  ska 10.084  eyja 10.410  mue 11.640  mly 16.999  cel 17.018  cet 17.693
-#   corpus mean 11.946                                              cet 17.693 is the corpus worst.
+#   corpus mean 11.946
+#
+# Opt-in extras (NOT in the default key list, so the mean above stays comparable):
+#   fugue 11.064 (8 tuned beats, REFOFF 0.083) — captured autonomously 2026-08-22.
+#                🚨 Her deployed export was STALE (pre-2026-08-12: no `entrancePostFx.params`).
+#                A correctly-staged re-export (WHOLE refs/ tree — see the exporter memory) adds
+#                them and is DEPLOYED. ⛔ 2026-08-22's "27.701 -> 16.805 -> 13.617" was BOGUS: it
+#                came from an UNDER-STAGED export that silently dropped 2 of her 7 layers (L5, an
+#                additive pure-red glow, and L6, a sort-100 full-frame white sheet). Her true
+#                baseline on correct assets is 28.064.
+#                🏆 SOLVED 2026-08-23: her whole early error was ONE layer — `baizhuanchang`
+#                (白转场, "white transition"), sort 100, on shader `Torappu/Particles/Dissolve/
+#                Dissolve AB Double`. `is_l2d_compositor` matched only `Particles-L2D/`, so its
+#                `_DissolveTex_01/_02` were never applied and it drew as a full opaque rectangle.
+#                t=1.0 53.0->21.3, t=2.8 51.3->20.3. Then the two-map dissolve slots
+#                (`_DissolveTex_02` never resolved cross-bundle) 15.497 -> 14.270, and extending
+#                GAMMA_CAL past 1111 (she is cs 1250 and was inheriting Mlynar's 0.93; measures
+#                1.03) 14.270 -> 11.064. ⛔ REFUTED as causes:
+#                the layer that dies at 2.533 (its colorCurve alpha is already 0.0 by t=1.0),
+#                whole-frame Gaussian blur (flat response, sigma 0..25 moves t=1.0 only 47.2->45.5),
+#                composite gamma, and the particle systems (`psoff=0-40` shifts 2585 px, 0.000 MADC).
+#                🔑 Remaining VISIBLE defect: the campfire at t=5.5/8.2 renders a dull dark-red
+#                ember where the game has a bright orange flame.
+#                (On the old generic 2,4,6,8 beats she read 23.870 — that set skipped the bad phase.)
+#   whitw2 ~92.9 — her entrance does not render at all; broken, not a parity signal.
 #
 # 🚨 NOT COMPARABLE to any figure recorded before 2026-08-20. `mad.py` now corrects the reference
 # clips' geometric distortion by default: `capture_oracle.sh` encodes with `scale=900:416` from a
@@ -64,6 +100,19 @@ REFOFF[wis]=-0.200
 # the beat set, minimises at exactly -0.100 in its convention (23.631 -> 11.797), and the 4-beat
 # score minimises at the same +0.100 with a sharp rise either side (12.585 / 10.409 / 12.952).
 REFOFF[eyja]=0.100
+# fugue added 2026-08-22 — the FIRST reference captured autonomously (see
+# dynchar-emulator-l2d-capture-flow). Derived GEOMETRICALLY, not from the score: render at off=0,
+# then per beat sweep the GAME frame index +/-0.6s at 1-frame granularity and take the frame whose
+# EDGE MAP (|dx|+|dy|, z-normalised, inner crop) correlates best — edges track STRUCTURE, so this
+# aligns geometry rather than fitting MADC. All four beats agreed within one frame and landed on
+# exact 1/30 multiples: t=2 -> -0.067 (edgeNCC 0.534), t=4 -> -0.067 (0.536), t=6 -> -0.100
+# (0.679), t=8 -> -0.100 (0.877); median 0.083.
+# 🚨 SIGN: score_new.sh renders t{beat+off} and compares it to the game frame at `beat`. The sweep
+# measures "our time b matches game time b-0.083", so game b matches our b+0.083 => REFOFF=+0.083.
+# Scoring the NEGATED value reads 36-38 and would falsely condemn the capture.
+# The geometric value also BEATS the coarse score sweep (+0.083 -> 23.870 vs +0.10 -> 25.165); a
+# 0.05-step sweep stepped over the true optimum. ⚠️ Changes ZERO pixels.
+REFOFF[fugue]=0.083
 # ⛔ mue was swept and needs NO offset -- the score is BEST at 0.000 (21.918) and degrades
 # monotonically (+0.017 -> 23.263, +0.033 -> 24.190). A dense sweep over 2.0-8.0s did prefer +0.033
 # by 0.51 on a base of 11.3, but that did NOT survive on her actual beat set. 🔑 Her trim is
@@ -88,6 +137,27 @@ DIR[wis]='char_1035_wisdel_sale#14';      BEATS[wis]="2,4,6,8,10,12"
 # no white-out is produced. Scoring her in the default set would swamp the corpus mean with one
 # broken skin, so run her explicitly:  ./all8.sh <label> "" whitw2
 DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
+# TENTH entry / NINTH working reference, added 2026-08-22 — Ch'en the Holungday "Fugue".
+# ✅ Unlike whitw2 this one RENDERS correctly and scores sanely (23.870, REFOFF derived
+# geometrically above). Captured autonomously from the emulator: Store -> Outfit Store -> Fashion
+# Gallery -> Sort by Brand -> EPOQUE -> tile -> magnifier -> reveal chrome -> ▶ Play, recorded at
+# native 2340x1080 and converted to the standard 900x416/30. The capture was verified genuine by
+# the luma BLACKOUT assertion (min 0.0) and is plainly the cinematic (black fade-in -> distant
+# snowy scene -> camera push-in -> close-up at the campfire), not the settled idle.
+# ⚠️ HELD OUT of the default key list ON PURPOSE — the documented corpus mean 11.946 is over the
+# EIGHT skins below, and silently making it nine would break comparability with every recorded
+# figure. Promote it into `keys` only together with a deliberate corpus re-baseline.
+# ✅ BEATS TUNED 2026-08-22 to her AUTHORED events, read from the `_Start[scene]` export rather
+# than guessed: entranceDuration 9.767 · entranceTransform 8.0 · camera ortho 3.0->1.5 with the
+# push-in over t=0-0.23 and essentially still after 1.50 · HGMobileBlur window 1.40->7.00
+# (peak 0.70 at 1.40) · sole layer activeUntil switch 2.533. The old generic 2/4/6/8 missed the
+# push-in entirely and left the 8.0-9.767 tail unsampled.
+#   1.0 post push-in · 1.8 blur on · 2.8 post layer-switch · 4.0/5.5 mid-blur ·
+#   6.8 pre blur-end · 7.5 post-blur · 8.2 post-transform
+# ⚠️ Deliberately STOPS at 8.2: the end white-out ramps from t~8.3 (luma 84->253 by 9.5) and a
+# fade beat measures fade-constant error, not renderer error (cf. exc's t=6, 38.79 and unshippable).
+#   Run her explicitly:  ./all8.sh <label> "" fugue
+DIR[fugue]='char_113_cqbw_epoque#7';      BEATS[fugue]="1,1.8,2.8,4,5.5,6.8,7.5,8.2"
 
 # NB: `${@:-a b c}` expands the default as a SINGLE word in zsh — spell the branch out.
 if (( $# )); then keys=($@); else keys=(ska exc cel mly mue eyja cet wis); fi

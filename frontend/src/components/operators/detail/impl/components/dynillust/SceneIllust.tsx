@@ -407,6 +407,35 @@ function fitWholeArt(): boolean {
     return new URLSearchParams(window.location.search).get("wholeart") !== "0";
 }
 
+/** DIAGNOSTIC (`?postfx=0`): skip the ENTRANCE post-process volume entirely (the
+ *  `HGMobileBlur` / greyscale pass driven by `entrancePostFx`).
+ *
+ *  Added to isolate Fugue's early-cinematic error: her blur window is 1.40-7.00 s at peak
+ *  weight 0.70 and her worst beats (1.8 / 2.8, MADC 49/53 against 13-16 later) sit INSIDE it.
+ *  The corpus barely exercises this path - cet's beats sample NEITHER of her blur windows
+ *  (`dynchar-postfx-disabled-without-fade`), so Fugue is the first real test of it. */
+function postFxOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("postfx") !== "0";
+}
+
+/** DIAGNOSTIC (`?blurpx=<n>`): override the entrance blur RADIUS.
+ *
+ *  Fugue's game capture is visibly HAZY at t=1.0-2.8 where ours is sharp, so the radius was the
+ *  obvious suspect for her early-beat error. It is NOT: swept on correctly-staged assets her
+ *  measured optimum is the DATA value itself — `blurSpread 1.3 * 2^resMode 1` = **2.6 px**
+ *  (2.6 -> 20.95, 5 -> 20.80, 8 -> 21.53, 12 -> 21.69, 16 -> 23.35, 24 -> 24.58 over her first
+ *  three beats). Do not override it.
+ *
+ *  ⚠️ An earlier reading of this — that the volume exports `params: null` and falls back to 1 px —
+ *  came from a STALE export. A correctly-staged export carries the params; see
+ *  `dynchar-client-version-split` for why an under-staged export is so easy to believe. */
+function blurPxOverride(): number | null {
+    if (typeof window === "undefined") return null;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("blurpx") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
 /** Alpha floor (0-255) for {@link paintedLocalBounds}. Calibrated against the one in-game
  *  recording available (Ch'en the Holungday); `?paintalpha=<n>` sweeps it. */
 const PAINTED_ALPHA_MIN = 8;
@@ -3414,13 +3443,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // ⚠️ Her scored beats sample NEITHER blur window (5.2-6.8 and 11.6-13.0), so
                     // this cannot move her MADC — validate it at a beat inside a window.
                     const pf = c.entrancePostFx;
-                    if (pf && pf.weightCurve.length > 1 && /grey|gray|saturat|blur/i.test(pf.effect)) {
+                    if (pf && postFxOn() && pf.weightCurve.length > 1 && /grey|gray|saturat|blur/i.test(pf.effect)) {
                         const blur = /blur/i.test(pf.effect);
                         const q = pf.params ?? {};
                         entrancePostFxRef.current = {
                             filter: blur ? new PIXI.BlurFilter() : new PIXI.ColorMatrixFilter(),
                             kind: blur ? "blur" : "saturation",
-                            blurPx: (q.blurSpread ?? 1) * 2 ** (q.resMode ?? 0),
+                            blurPx: blurPxOverride() ?? (q.blurSpread ?? 1) * 2 ** (q.resMode ?? 0),
                             curve: pf.weightCurve,
                             intensity: pf.intensity,
                             target: c.root,

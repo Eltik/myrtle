@@ -2648,10 +2648,29 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
 /// material binds — every caller pairs this with a test on the material's own properties.
 #[must_use]
 pub fn is_l2d_compositor(shader: &str) -> bool {
-    shader
-        .rfind("Particles-L2D/")
-        .map(|i| &shader[i + "Particles-L2D/".len()..])
-        .is_some_and(|rest| rest.contains('/'))
+    // `Torappu/Particles/<sub>/…` is the SAME compositor family as
+    // `Torappu/Particles-L2D/<sub>/…` — the namespace is a packaging split, not a shader
+    // difference. `Ram/` was already matched wherever it lives (the cgbird / Archetto layers
+    // outside `Particles-L2D` entirely); `Dissolve/` and `Disturb/` were not, so a material on
+    // `Torappu/Particles/Dissolve/Dissolve AB Double` bound `_DissolveTex_01`/`_02` that nothing
+    // ever read and the layer drew as a FULL OPAQUE RECTANGLE — the exact failure already
+    // recorded for Mlynar's `Disturb/` wind sheets, one namespace over.
+    //
+    // Scope, measured across ALL 87 dynchar bundles: this widening changes the export of
+    // exactly ONE skin (fugue). Every other skin is byte-identical with the gate wide or narrow,
+    // so it is not a corpus-wide reclassification. `DYNCHAR_PARTICLES_NS=0` restores the
+    // narrow gate.
+    let tags: &[&str] = if std::env::var("DYNCHAR_PARTICLES_NS").as_deref() == Ok("0") {
+        &["Particles-L2D/"]
+    } else {
+        &["Particles-L2D/", "Particles/"]
+    };
+    tags.iter().any(|tag| {
+        shader
+            .rfind(tag)
+            .map(|i| &shader[i + tag.len()..])
+            .is_some_and(|rest| rest.contains('/'))
+    })
 }
 
 /// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,

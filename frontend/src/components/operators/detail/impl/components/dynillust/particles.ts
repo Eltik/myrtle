@@ -382,6 +382,17 @@ function ramTonemap(): number {
     return Number.isFinite(v) && v >= 0 ? v : 0.5;
 }
 
+/** DIAGNOSTIC (`?psdelay=<f>`): scale every emitter's cinematic start delay (0 = all systems
+ *  run from t=0). Separates "the wash is a DELAYED system we hold dormant too long" from "the
+ *  wash is not a particle at all": if the game paints a region early that our delayed systems
+ *  would eventually paint, `?psdelay=0` lights it at t=2; if the region stays dark, no particle
+ *  in the export can produce it at any delay. */
+function psDelayScale(): number {
+    if (typeof window === "undefined") return 1;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("psdelay") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
+
 /** DIAGNOSTIC (`?ramtex=0`): drop the Ram shader's RAMP multiply, to tell "the ramp texture is
  *  bound and contributing" apart from "we are only seeing the warped MAIN texture". */
 function ramTexOn(): boolean {
@@ -1480,7 +1491,7 @@ class Emitter {
         // so once active all the `time`-based emission logic below sees time starting at 0.
         // `?psdt=<s>` shifts ONLY this clock (see psDt) - the camera and spine keep their own,
         // which is what makes it a phase measurement rather than a retime of the whole shot.
-        this.time = -(data.delay ?? 0) + psDt();
+        this.time = -(data.delay ?? 0) * psDelayScale() + psDt();
         this.cineTime = psDt();
         // Crop to the material's `_MainTex_ST` cell first, so both the whole-sprite
         // path and the sheet-slicing below operate on the selected atlas region
@@ -2962,7 +2973,7 @@ class RamEmitter {
         this.blend = blend;
         this.data = data;
         // Start dormant through the cinematic delay (see the billboard system's ctor).
-        this.time = -(data.delay ?? 0) + psDt();
+        this.time = -(data.delay ?? 0) * psDelayScale() + psDt();
         this.cineTime = psDt();
         this.ram = ram;
         this.follow = followOf(data);

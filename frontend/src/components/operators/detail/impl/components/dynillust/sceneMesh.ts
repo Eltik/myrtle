@@ -599,6 +599,32 @@ function encodeTint(t: readonly number[]): [number, number, number, number] {
 }
 
 const EFFECT_SCENE_GAIN = 0.3;
+/** {@link EFFECT_SCENE_GAIN} tames ADDITIVE layers ONLY. `?gainadd=0` restores the old
+ *  behaviour, which tamed normal-blend layers too.
+ *
+ *  The taming exists because an ADDITIVE overlay SUMS light and blows out where the engine
+ *  tonemaps it. A NORMAL-blend layer cannot blow out - its alpha is COVERAGE, not intensity -
+ *  so damping it only reveals whatever sits behind, dimming art the game draws at full
+ *  strength. This is the same distinction the duplicate-quad rule above already makes.
+ *
+ *  Measured: a skin's response to full gain tracks the ADDITIVE FRACTION of its tamed layers
+ *  almost exactly. eyja (0/4 additive) and mue (0/137) both WANT full gain; ska (6/6),
+ *  exc (74/88) and mly (9/15) are hurt by it. Taming additive only takes the corpus
+ *  **11.946 -> 11.759**: eyja -1.717, mue -0.119, ska/wis 0, cet +0.008, cel +0.057,
+ *  exc +0.081, mly +0.193. fugue (an opt-in ninth ref) goes 16.805 -> 14.081, and a diff-map
+ *  puts that ENTIRELY in her upper-frame atmosphere sheet (512x512 over a 1625x1625 mesh),
+ *  which was drawing at alpha 0.271 against an authored 0.904 - the game's opening is a soft
+ *  grey haze and ours was far too contrasty. Her campfire is a SEPARATE fix (see VEIL_SAT_MAX):
+ *  this change frees the flame's gain too, but that alone moved 0 pixels there because the
+ *  veil demotion had it drawing behind the spine.
+ *
+ *  ⚠️ Applied at the `gain` expression ONLY. `isEffect` also feeds `hasDarkBackdrop` and the
+ *  `isVeil` re-sort; moving IT instead (`?stretchmin=`) is non-monotonic and reconfigures the
+ *  whole scene. */
+function gainAdditiveOnly(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("gainadd") !== "0";
+}
 /** DIAGNOSTIC (`?scenegain=<f>`): override {@link EFFECT_SCENE_GAIN} so the taming applied to
  *  effect-classified scene layers can be measured rather than assumed. 1 = no taming. */
 function effectSceneGain(): number {
@@ -817,6 +843,27 @@ function spanOf(layer: ISceneLayer, axis: 0 | 1): number {
 function veilDisabled(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("noveil") === "1";
+}
+/** A foreground layer whose texture saturation reaches this is NOT a white veil, whatever its
+ *  whiteness measures. `?veilsat=0` restores the old whiteness-only rule.
+ *
+ *  {@link VEIL_WHITENESS_MIN} keys on whiteness ALONE, and a warm COLOURED overlay can clear it:
+ *  fugue's campfire flame is `rgbMean [210,124,125]` - sat 0.276, whiteness **0.693** - so it was
+ *  demoted behind the spine and the character art occluded it ENTIRELY. Freeing its
+ *  `EFFECT_SCENE_GAIN` changed 0 pixels there precisely because it was drawing behind her. The
+ *  doc on VEIL_WHITENESS_MIN already says coloured fx (red halftones/slashes) must stay in
+ *  front; whiteness alone cannot express that, and this is the missing term.
+ *
+ *  Threshold placed on measurement, not taste: every veil-classified layer across the eight
+ *  reference skins has sat **< 0.10** (the corpus is bit-identical at `?veilsat=0.10`, 0.25 and
+ *  0.15 alike), while the flame sits at 0.276. 0.25 is the conservative end of that gap - it
+ *  exempts as few layers as possible while still clearing the flame. fugue 14.081 -> 13.617;
+ *  corpus unchanged at 11.759. */
+const VEIL_SAT_MAX = 0.25;
+function veilSatMin(): number {
+    if (typeof window === "undefined") return VEIL_SAT_MAX;
+    const v = parseFloat(new URLSearchParams(window.location.search).get("veilsat") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : VEIL_SAT_MAX;
 }
 function veilFrameCoverExempt(): boolean {
     if (typeof window === "undefined") return false;
@@ -1440,7 +1487,8 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // excludes the mid-white veils that must stay demoted.
     const sheetMin = paintedSheetWhitenessMin();
     const sheetExempt = sheetMin > 0 && !additive && tex.whiteness >= sheetMin && tex.opaqueFrac <= PAINTED_SHEET_OPAQUE_MAX;
-    const gain = !fullGain && !isPaintedSurface && ((isEffect && !tiledExempt && !sheetExempt) || (additive && temperLargeAdditive)) ? effectSceneGain() : 1;
+    const tameThis = (isEffect && !tiledExempt && !sheetExempt) || (additive && temperLargeAdditive);
+    const gain = !fullGain && !isPaintedSurface && tameThis && (additive || !gainAdditiveOnly()) ? effectSceneGain() : 1;
     // DIAGNOSTIC (`?dumpclass=1`): record every input the effect/gain classifier uses, so a
     // mis-classified layer can be separated from correctly-tamed ones on real properties.
     // Collected into a global rather than logged: the dev server rewrites `console.log` into
@@ -1970,7 +2018,8 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // AUTHORED camera box - an extent the entrance plunge is much wider than, which is why
         // that flag is bit-identical on cello even though her veil manifestly fills the shot.
         // Touches ONLY the re-sort, never `isEffect`'s other two consumers (see the note above).
-        const isVeil = !veilDisabled() && isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(coversFrame && veilFrameCoverExempt());
+        const veilSat = veilSatMin();
+        const isVeil = !veilDisabled() && isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(veilSat > 0 && base.sat >= veilSat) && !(coversFrame && veilFrameCoverExempt());
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
         // ice-flame around her oni-mask "shield"). Exported as normal-blend (Unity
