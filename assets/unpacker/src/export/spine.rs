@@ -373,6 +373,12 @@ pub struct BgQuad {
     /// Source `GameObject` name, resolved at construction (where the object map is in scope).
     /// Diagnostics only — never emitted.
     pub go_name: String,
+    /// Is this quad a DESCENDANT of the entrance camera? Then it rides the camera and holds a
+    /// CONSTANT position and size on screen, however far the shot dollies or pans — a film-strip
+    /// border, a lens overlay, a full-frame haze sheet. Baking its rest-pose world position (what
+    /// every other layer wants) instead nails it to the world and the camera flies off it.
+    /// Only two skins in the corpus have any: whitw2 (9, her film strip) and kalts (2, her mist).
+    pub cam_locked: bool,
 }
 
 /// A scene quad's runtime bone attachment (spine-unity `BoneFollower`). At runtime the
@@ -1470,6 +1476,38 @@ fn collect_dynchar_bg_quads(
         .collect();
     renderers.sort_unstable_by_key(|(pid, _)| *pid);
 
+    // GameObjects that RIDE the entrance camera (descendants of its transform). Such a quad is
+    // an overlay locked to the viewport — a film-strip border, a lens sheet, a full-frame haze —
+    // and its baked world pose is meaningless once the shot dollies. Computed once here; the
+    // frontend re-places these against the live frame each tick (`camLocked`).
+    let cam_locked_gos: std::collections::HashSet<i64> = {
+        let mut out = std::collections::HashSet::new();
+        if is_entrance
+            && let Some(cam_tr) = entrance_camera_pid(all_objects)
+                .and_then(|p| all_objects.get(&p))
+                .and_then(|(_, v)| v.get("m_GameObject").and_then(get_path_id))
+                .and_then(|g| go_to_transform.get(&g).copied())
+        {
+            for (&go, &tr) in &go_to_transform {
+                let mut cur = tr;
+                for _ in 0..64 {
+                    if cur == cam_tr {
+                        out.insert(go);
+                        break;
+                    }
+                    match all_objects
+                        .get(&cur)
+                        .and_then(|(_, v)| v.get("m_Father").and_then(get_path_id))
+                        .filter(|&f| f != 0)
+                    {
+                        Some(f) => cur = f,
+                        None => break,
+                    }
+                }
+            }
+        }
+        out
+    };
     let mut skipped_inactive = 0usize;
     // Env-gated attribution: the exported layers are anonymous, so tracing a missing
     // element back to its authored node (and to WHICH prefab root) otherwise means
@@ -2479,6 +2517,7 @@ fn collect_dynchar_bg_quads(
             follow,
             go_pid,
             go_name: host.go_name(all_objects, go_pid),
+            cam_locked: cam_locked_gos.contains(&go_pid),
         });
     }
 
@@ -4988,6 +5027,11 @@ fn export_scene(
         });
         if has_vcol {
             layer["col"] = serde_json::json!(col);
+        }
+        // Camera-riding overlay (see `BgQuad::cam_locked`). Emitted only when true, so every
+        // skin without one stays byte-identical.
+        if quad.cam_locked {
+            layer["camLocked"] = serde_json::json!(true);
         }
         // ENTRANCE uniform-scale multiplier over the baked pose (1.0 = unchanged). Emitted only
         // when the `_Start` clips actually animate this transform, so an unanimated corpus stays

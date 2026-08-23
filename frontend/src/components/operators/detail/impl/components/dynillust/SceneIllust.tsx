@@ -1669,6 +1669,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 ef.lastLiveCenter = [cx, cy];
                 ef.lastCamRaw = [c[0], c[1]];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
+                // CAMERA-RIDING OVERLAYS. A quad parented to the Main Camera keeps a CONSTANT
+                // screen position and size no matter how far the shot dollies — a film-strip
+                // border, a lens sheet, a full-frame haze. Its exported vertices are the rest
+                // pose, i.e. only correct at t=0, so re-place it against the live frame: the box
+                // is centred on `c` with side `size`, so mapping p -> c + (p - c0)·k with
+                // k = size/size0 holds it exactly still on screen.
+                //
+                // whitw2 is the case that exposed it: her 8 `biankuan` (边框, "border") quads are
+                // children of `Main Camera/char_01/...`, and her shot dollies 1.2 -> 13 world
+                // units, so the baked border flies off frame within a second and her whole
+                // cinematic renders without the film strip the game draws over it.
+                if (ef.sceneLayers && ef.frameSize > 0) {
+                    const k = size / ef.frameSize;
+                    const [c0x, c0y] = ef.startCenter;
+                    for (const cont of ef.sceneLayers) {
+                        for (const m of cont.children) {
+                            if (!(m as unknown as ISceneLayerRuntime).__camLocked) continue;
+                            m.scale.set(k);
+                            m.position.set(cx - k * c0x, cy - k * c0y);
+                        }
+                    }
+                }
                 // DIAGNOSTIC (`?camroll=<deg>`): ROLL the frame about its centre. Wiš'adel's
                 // `_Start` clip animates her camera parent's euler Z from 11.34° to 29.56° over
                 // the first 2.4s, and `entrance_camera_track` only samples POSITION curves - so

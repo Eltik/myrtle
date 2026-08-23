@@ -83,14 +83,15 @@
 #                🔑 Remaining VISIBLE defect: the campfire at t=5.5/8.2 renders a dull dark-red
 #                ember where the game has a bright orange flame.
 #                (On the old generic 2,4,6,8 beats she read 23.870 — that set skipped the bad phase.)
-#   whitw2 69.465 (7 beats, REFOFF 0) — the corpus's ONLY perspective entrance camera. 92.9 when
+#   whitw2 46.975 (7 beats, REFOFF 0.550) — the corpus's ONLY perspective entrance camera. 92.9 when
 #                her entrance read as a static camera; then the dolly fix, the post-process volume,
 #                the animator-root camera track and finally the perspective FRAME SIZE (her frame
 #                extent was sqrt(3) = 1.732x too wide: the client read `2*orthoCurve[0]/skelScale`,
 #                but on a perspective rig that curve is the DOLLY and its keys are DISTANCES).
-#                ⛔ The residual is a time-varying PAN that no single (scale,dx,dy) fixes — that is
-#                PARALLAX under a dollying perspective camera, and we composite 2D layers with no
-#                per-layer depth. Architectural; do not chase it as a camera-curve bug.
+#                Then the REFERENCE TRIM (see REFOFF above, -22) and CAMERA-LOCKED overlays (-2.5).
+#                ⚠️ The "residual is parallax, architectural" note here was WRONG and is retracted:
+#                a per-region shift test showed the top/mid/bottom bands all wanted the SAME dx
+#                (t=6: -112/-117/-119), i.e. one rigid shift — a global timing error, not parallax.
 #
 # 🚨 NOT COMPARABLE to any figure recorded before 2026-08-20. `mad.py` now corrects the reference
 # clips' geometric distortion by default: `capture_oracle.sh` encodes with `scale=900:416` from a
@@ -119,6 +120,12 @@ REFOFF[mly]=0.033; REFOFF[cel]=-0.033; REFOFF[ska]=0.067
 # blackout 11.0-13.0 (best 0.100) and the first blackout 5.0-6.5 (best 0.100). Took the cleanest
 # instrument's value. ⚠️ This changes ZERO pixels -- it only compares the right frames.
 REFOFF[cet]=-0.067
+# whitw2: her t0 was anchored to the HARD CUT out of black (first non-black frame). That cut is
+# not the animation start — ~24 BLACK frames (0.8 s) precede it and the cinematic is already
+# running behind them, so the anchor is systematically LATE. Measured optimum +0.55 s, and the
+# proof is geometric rather than a score minimum: at +0.55 five of seven beats align at
+# scale 1.00 / dx 0 / dy 0 with NCC 0.86-0.94, against scale 1.6-1.8 at offset 0.
+REFOFF[whitw2]=0.550
 # exc added 2026-08-11. Her clip is trimmed 3 frames EARLY -- our render runs BEHIND, the opposite
 # sign to cet. Corroborated INDEPENDENTLY of the score by the scope's lit-disc radius: the game
 # releases the aperture at t=5.10 where we release at 5.20, and shifting the whole radius

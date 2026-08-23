@@ -72,6 +72,11 @@ export interface ISceneRam {
 }
 
 export interface ISceneLayer {
+    /** Is this quad a CHILD OF THE ENTRANCE CAMERA? Then it rides the camera and holds a
+     *  constant position and size on screen however far the shot dollies or pans — a film-strip
+     *  border, a lens overlay, a full-frame haze sheet. Its baked world pose is only correct at
+     *  t=0. Only two skins ship any: whitw2 (8, her film strip) and kalts (2, her mist). */
+    camLocked?: boolean;
     /** Index into the scene's texture set. */
     tex: number;
     /** Flat [x0,y0,x1,y1,…] vertex positions (spine-authored pixels, Y-up). */
@@ -935,6 +940,10 @@ export interface ISceneLayerRuntime {
      *  guessing from the screen box (which the camera transform makes unreliable). */
     __texIndex?: number;
     __srcIndex?: number;
+    /** Mirror of {@link ISceneLayer.camLocked}: this quad is a CHILD OF THE ENTRANCE CAMERA, so
+     *  it holds a constant position and size on screen however far the shot dollies or pans.
+     *  The entrance camera tick re-places it against the live frame each frame. */
+    __camLocked?: boolean;
     __colorCurve?: [number, number, number, number, number][] | null;
     /** The layer's STATIC authored tint - how the IDLE scene paints this same artwork, since
      *  the idle copies of the windowed layers carry neither a window nor a colour curve.
@@ -2082,7 +2091,14 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // Virtuosa's white glass-panel sheet (tex7: 1024px, opaqueFrac 0.33,
         // whiteness 0.53) hazes over her body from the front. Dark crystal shards that
         // legitimately cross her are far less white (≈0.27) and stay in front.
-        const isBackdropMisSorted = isDuplicateOfBackground || (!isRevealOverlay && !layer.additive && base.sat < 0.25 && (base.opaqueFrac >= 0.95 || (texLarge && base.opaqueFrac >= 0.4) || (texLarge && base.opaqueFrac >= 0.25 && base.whiteness >= 0.45)));
+        // ...but NEVER a camera-riding overlay. A quad parented to the entrance camera is by
+        // construction a viewport overlay - it cannot be scene backdrop geometry, whatever its
+        // texture measures. whitw2's film strip is exactly the shape this heuristic demotes (a
+        // white 128px sheet, sat 0, opaqueFrac 0.59), so all 8 of her `biankuan` border quads -
+        // the HIGHEST sorts in her scene, 17..22 - were being pushed behind the backdrop and
+        // painted over by the whole shot. The film strip the game draws over her entire
+        // cinematic never appeared.
+        const isBackdropMisSorted = !layer.camLocked && (isDuplicateOfBackground || (!isRevealOverlay && !layer.additive && base.sat < 0.25 && (base.opaqueFrac >= 0.95 || (texLarge && base.opaqueFrac >= 0.4) || (texLarge && base.opaqueFrac >= 0.25 && base.whiteness >= 0.45))));
         const isForeground = layer.sort >= data.characterSort && !isBackdropMisSorted;
         // A bright-white foreground effect panel is a paint/flash VEIL the source art
         // keeps BEHIND the character - re-sort it to the background so her body
@@ -2112,7 +2128,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // that flag is bit-identical on cello even though her veil manifestly fills the shot.
         // Touches ONLY the re-sort, never `isEffect`'s other two consumers (see the note above).
         const veilSat = veilSatMin();
-        const isVeil = !veilDisabled() && isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(veilSat > 0 && base.sat >= veilSat) && !(coversFrame && veilFrameCoverExempt());
+        const isVeil = !veilDisabled() && !layer.camLocked && isForeground && !isRevealOverlay && !layer.additive && isEffect && base.whiteness >= VEIL_WHITENESS_MIN && !(veilSat > 0 && base.sat >= veilSat) && !(coversFrame && veilFrameCoverExempt());
         // A SATURATED foreground effect panel sitting over the character's central
         // column is glowing energy the game blends additively (Hoshiguma's blue
         // ice-flame around her oni-mask "shield"). Exported as normal-blend (Unity
@@ -2169,6 +2185,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // His are three non-additive sort-10 sheets tinted [0.41, 0.46, 1.00] and [0.72, 0.82, 0.94].
         if (isForeground && fgAlphaScale() !== 1) mesh.alpha *= fgAlphaScale();
         (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
+        if (layer.camLocked) (mesh as unknown as ISceneLayerRuntime).__camLocked = true;
         // Same knob for layers with NO colour curve, which the runtime replay never visits.
         {
             const ls = layerColorScales().get(srcIndexOf.get(layer) ?? -1);
