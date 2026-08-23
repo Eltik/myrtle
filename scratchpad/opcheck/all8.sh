@@ -11,6 +11,13 @@
 # EXTRA is the dyntest query string (e.g. "nohdr=1"), passed verbatim to every skin; the
 # per-skin `backdrop=` is appended by score_new.sh, so never pass one here.
 #
+# REGISTRATION baseline (`r`, printed on every line since 2026-08-23). MADC is blind to
+# "right content, wrong place"; r is the check. Every healthy reference sits high:
+#   wis .972  fugue .972  eyja .968  ska .950  exc .932  mue .928  cel .915  cet .892  mly .888
+#   kalts .510   whitw2 .287     <- the only two that do not line up, and both are understood
+#                                   (kalts: content, her mist; whitw2: parallax, perspective rig)
+# A DROP in r means geometry moved — run `geomsearch.py` before reading a diff map.
+#
 # Baselines as of 2026-08-22 (empty EXTRA), on the ASPECT-CORRECTED basis:
 #   wis 5.537  exc 6.266  eyja 8.693  ska 10.084  mue 11.521  cel 17.075  mly 17.192  cet 17.701
 #   corpus mean 11.759                             cet 17.701 is the worst of the DEFAULT EIGHT.

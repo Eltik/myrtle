@@ -46,4 +46,7 @@ out=$SP/new_${label}_${key}; rm -rf $out; mkdir -p $out
 shots=$(python3 -c "print(','.join(f'{float(b)+$off:.4f}' for b in '$beats'.split(',')))")
 EXTRA="$extra" node $HERE/rec.js "/spine/DynIllust/$enc/$fenc" $out "$shots" 900 416 >/dev/null 2>&1
 printf "%-16s %-4s " "$label" "$key"
-python3 $HERE/mad.py $out $HERE/REF_NEW/${key}_game_fresh.mp4 "$beats" --inner --offset=$off --dy=0 --fps=30 | grep "MEAN MADC"
+# Print the registration number on the same line as the score. MADC alone cannot distinguish
+# "missing content" from "right content, wrong place" — see mad.py's MEAN r note.
+python3 $HERE/mad.py $out $HERE/REF_NEW/${key}_game_fresh.mp4 "$beats" --inner --offset=$off --dy=0 --fps=30 \
+  | awk '/MEAN MADC/{m=$0} /MEAN r/{r=$4} END{printf "%s   r=%s\n", m, r}'

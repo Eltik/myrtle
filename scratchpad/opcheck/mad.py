@@ -153,11 +153,21 @@ def main():
         # nowhere. Kal'tsit sat at r ~= 0.05 for three sessions while every investigation read her
         # diff map as a missing atmospheric veil; the real fault was a dropped camera track, and
         # r is what exposed it. A well-registered skin reads 0.87-0.99 (wisdel 0.99).
-        rs.append(float(np.corrcoef(yo.ravel(), yg.ravel())[0, 1]))
+        # A FLAT beat (a fade-to-white/black hold) has no spatial structure to correlate and
+        # yields nan — excu2's t=6 is exactly this (Y=2.000, C=0.000). Excluded from the mean
+        # rather than poisoning it; a real frame always clears this bar by orders of magnitude.
+        r = (
+            float(np.corrcoef(yo.ravel(), yg.ravel())[0, 1])
+            if yo.std() > 1e-3 and yg.std() > 1e-3
+            else float("nan")
+        )
+        if np.isfinite(r):
+            rs.append(r)
         ys.append(mad_y)
         cs.append(mad_c)
         ms.append(mad_y + mad_c)
-        print(f"  t={b:<6} MADC={mad_y + mad_c:7.3f}  (Y={mad_y:7.3f}  C={mad_c:6.3f}  r={rs[-1]:6.3f})")
+        rtxt = f"{r:6.3f}" if np.isfinite(r) else "  flat"
+        print(f"  t={b:<6} MADC={mad_y + mad_c:7.3f}  (Y={mad_y:7.3f}  C={mad_c:6.3f}  r={rtxt})")
     if ms:
         print(f"MEAN MAD(luma-only, legacy) = {np.mean(ys):.3f}  over {len(ms)} beats")
         print(f"MEAN CHROMA = {np.mean(cs):.3f}  over {len(ms)} beats")
@@ -165,14 +175,16 @@ def main():
         # pre-2026-08-20 figure, which is ~0.44 pessimistic.
         print(f"  [basis: {'aspect-corrected 2340:1080' if srcaspect else 'RAW reference aspect (historical)'}]")
         print(f"MEAN MADC = {np.mean(ms):.3f}  over {len(ms)} beats")
-        mr = float(np.mean(rs))
+        mr = float(np.mean(rs)) if rs else float("nan")
         # Every well-behaved reference sits at 0.87-0.99 (wisdel 0.99, cel 0.90, cet 0.88,
         # mlynar 0.87). Below ~0.70 the frames genuinely do not line up, which is EITHER a
         # geometry fault (camera track, framing, zoom) OR content large enough to dominate the
         # picture. A scale+translation cross-correlation search separates the two; do that before
         # reading a diff map, because a diff map cannot tell them apart.
         warn = "   <== LOW: run a scale/translation search before blaming content" if mr < 0.70 else ""
-        print(f"MEAN r = {mr:.3f}  (registration; corpus refs run 0.87-0.99){warn}")
+        nflat = len(ms) - len(rs)
+        flat = f"  [{nflat} flat beat(s) excluded]" if nflat else ""
+        print(f"MEAN r = {mr:.3f}  (registration; corpus refs run 0.87-0.99){flat}{warn}")
 
 
 if __name__ == "__main__":
