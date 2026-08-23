@@ -107,7 +107,7 @@ def main():
     n = len(raw) // (GW * GH * 3)
     G = np.frombuffer(raw, np.uint8)[: n * GW * GH * 3].reshape(n, GH, GW, 3)
 
-    ys, cs, ms = [], [], []
+    ys, cs, ms, rs = [], [], [], []
     for b in beats:
         o_img = Image.open(f"{ours_dir}/t{b + off:.2f}.png").convert("RGB")
         gi = int(round(b * fps))
@@ -148,10 +148,16 @@ def main():
         yg, cbg, crg = ycc(g)
         mad_y = np.abs(np.round(yo) - np.round(yg)).mean()
         mad_c = (np.abs(cbo - cbg).mean() + np.abs(cro - crg).mean()) / 2
+        # PEARSON r between the two luma planes. MADC is a per-pixel MAGNITUDE difference and is
+        # BLIND to "right content, wrong place": two frames can share a mean and a std and agree
+        # nowhere. Kal'tsit sat at r ~= 0.05 for three sessions while every investigation read her
+        # diff map as a missing atmospheric veil; the real fault was a dropped camera track, and
+        # r is what exposed it. A well-registered skin reads 0.87-0.99 (wisdel 0.99).
+        rs.append(float(np.corrcoef(yo.ravel(), yg.ravel())[0, 1]))
         ys.append(mad_y)
         cs.append(mad_c)
         ms.append(mad_y + mad_c)
-        print(f"  t={b:<6} MADC={mad_y + mad_c:7.3f}  (Y={mad_y:7.3f}  C={mad_c:6.3f})")
+        print(f"  t={b:<6} MADC={mad_y + mad_c:7.3f}  (Y={mad_y:7.3f}  C={mad_c:6.3f}  r={rs[-1]:6.3f})")
     if ms:
         print(f"MEAN MAD(luma-only, legacy) = {np.mean(ys):.3f}  over {len(ms)} beats")
         print(f"MEAN CHROMA = {np.mean(cs):.3f}  over {len(ms)} beats")
@@ -159,6 +165,14 @@ def main():
         # pre-2026-08-20 figure, which is ~0.44 pessimistic.
         print(f"  [basis: {'aspect-corrected 2340:1080' if srcaspect else 'RAW reference aspect (historical)'}]")
         print(f"MEAN MADC = {np.mean(ms):.3f}  over {len(ms)} beats")
+        mr = float(np.mean(rs))
+        # Every well-behaved reference sits at 0.87-0.99 (wisdel 0.99, cel 0.90, cet 0.88,
+        # mlynar 0.87). Below ~0.70 the frames genuinely do not line up, which is EITHER a
+        # geometry fault (camera track, framing, zoom) OR content large enough to dominate the
+        # picture. A scale+translation cross-correlation search separates the two; do that before
+        # reading a diff map, because a diff map cannot tell them apart.
+        warn = "   <== LOW: run a scale/translation search before blaming content" if mr < 0.70 else ""
+        print(f"MEAN r = {mr:.3f}  (registration; corpus refs run 0.87-0.99){warn}")
 
 
 if __name__ == "__main__":
