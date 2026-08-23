@@ -116,6 +116,10 @@ pub struct SpineAsset {
     /// — the TIGHT close-up the `_Start` opens on (Virtuosa 598px, vs the 1929px display
     /// stop). The client dollies OUT from this to the display frame. `None` when no entrance.
     pub bg_entrance_view: Option<f64>,
+    /// Is the entrance camera PERSPECTIVE? Then `entranceOrthoCurve` carries dolly DISTANCES,
+    /// not ortho sizes, and `2*curve[0]/skeletonScale` is not a view extent — the client must
+    /// use `entranceViewPx` (already the frustum height at the dolly's FIRST keyframe).
+    pub bg_entrance_persp: bool,
     /// ENTRANCE camera AIM point relative to the skeleton root, in authored px `(dx, dy)`
     /// (Y-up). The `_Start` close-up is centred HERE, not on the hair-dragged character
     /// centroid — it frames the upper body / halo (Virtuosa dy≈+200). `None` when no entrance.
@@ -998,6 +1002,7 @@ pub fn collect_spine_assets(
             let ortho_curve = super::anim::entrance_ortho_curve(all_objects)
                 .or_else(|| super::anim::entrance_dolly_curve(all_objects));
             let pan_curve = super::anim::entrance_pan_curve(all_objects);
+            super::anim::report_unresolved_bindings(all_objects);
             let (cam_center, cam_roll, aperture) =
                 super::anim::entrance_camera_track(all_objects, inv, ortho);
             (
@@ -1043,6 +1048,12 @@ pub fn collect_spine_assets(
             bg_entrance_fade,
             bg_entrance_transform,
             bg_entrance_view,
+            // `entranceOrthoCurve` falls back to the DOLLY curve for a perspective rig, and a
+            // dolly keyframe is a DISTANCE — so the client must not read `2*curve[0]/skelScale`
+            // as a view extent there. Recomputed rather than threaded through the tuple above;
+            // both calls are pure lookups over `all_objects`.
+            bg_entrance_persp: super::anim::entrance_ortho_curve(all_objects).is_none()
+                && super::anim::entrance_dolly_curve(all_objects).is_some(),
             bg_entrance_cam_offset,
             bg_entrance_ortho_curve,
             bg_entrance_pan_curve,
@@ -3963,6 +3974,7 @@ pub fn collect_enemy_spine_assets(
             bg_entrance_fade: None,
             bg_entrance_transform: None,
             bg_entrance_view: None,
+            bg_entrance_persp: false,
             bg_entrance_cam_offset: None,
             bg_entrance_ortho_curve: None,
             bg_entrance_post_fx: None,
@@ -5319,6 +5331,7 @@ fn export_scene(
         "entranceTransform": asset.bg_entrance_transform.map(|v| v as f32),
         // Tight entrance close-up view (authored px) from the entrance camera's ortho size.
         "entranceViewPx": asset.bg_entrance_view.map(|v| v as f32),
+        "entrancePerspective": asset.bg_entrance_persp.then_some(true),
         "entranceCamOffsetPx": asset.bg_entrance_cam_offset.map(|(x, y)| [x as f32, y as f32]),
         // Data-driven camera dolly zoom: [[t_seconds, orthographic_size], …] keyframes.
         "entranceOrthoCurve": asset.bg_entrance_ortho_curve.as_ref().map(|c| c.iter().map(|(t, s)| [*t, *s]).collect::<Vec<_>>()),

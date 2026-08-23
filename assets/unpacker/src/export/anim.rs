@@ -2832,6 +2832,46 @@ fn build_hash_to_go(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, i6
 /// Like {@link `build_hash_to_go`} but keeps EVERY `GameObject` matching a subpath hash
 /// (sorted by `path_id`) — identical sibling rigs (Mlynar's three sword clones) bind
 /// the same relative subpath, and per-rig consumers need all candidates.
+/// DIAGNOSTIC (`DYNCHAR_BINDDBG=1`): every `AnimationClip` binding whose path hash does NOT
+/// resolve to a GameObject, grouped by clip.
+///
+/// An unresolved hash means a curve we decode and then throw away, which is exactly how the
+/// camera dolly was lost for a whole skin (see the empty-path note in `build_hash_to_gos`).
+/// The count is worth watching: `dump_entrance_cams` reported "9 bindings had UNRESOLVED path
+/// hashes" on Kal'tsit and only ONE of them was the animator root.
+pub fn report_unresolved_bindings(all_objects: &HashMap<i64, (i32, Value)>) {
+    if std::env::var("DYNCHAR_BINDDBG").is_err() {
+        return;
+    }
+    let hash_to_gos = build_hash_to_gos(all_objects);
+    for (cid, v) in all_objects.values() {
+        if *cid != 74 {
+            continue;
+        }
+        let Some(bindings) = generic_bindings(v) else {
+            continue;
+        };
+        let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
+        let mut miss: Vec<(i64, i64, u32)> = Vec::new();
+        for b in bindings {
+            let (tid, attr, path) = binding_fields(b);
+            if !hash_to_gos.contains_key(&path) {
+                miss.push((tid, attr, path));
+            }
+        }
+        if !miss.is_empty() {
+            eprintln!(
+                "  [bind] clip {name:<44} {}/{} UNRESOLVED",
+                miss.len(),
+                bindings.len()
+            );
+            for (tid, attr, path) in miss.iter().take(12) {
+                eprintln!("           tid={tid:<4} attr={attr:<12} path=0x{path:08x}");
+            }
+        }
+    }
+}
+
 fn build_hash_to_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, Vec<i64>> {
     let mut go_name: HashMap<i64, String> = HashMap::new();
     let mut tr_go: HashMap<i64, i64> = HashMap::new();

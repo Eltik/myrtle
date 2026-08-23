@@ -2943,7 +2943,22 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // (then the tight `_adjustes[1]` stop) only when no ortho curve/scale shipped.
                 const entranceOrtho0 = scene?.data.entranceOrthoCurve?.[0]?.[1];
                 const entranceSkelScale = scene?.data.skeletonScale;
-                const entranceFrameSize = entranceOrtho0 && entranceSkelScale ? (2 * entranceOrtho0) / entranceSkelScale : ((authoredFrame?.entranceViewPx as number | undefined) ?? (authoredFrame?.viewPx2 as number | undefined) ?? null);
+                // ...EXCEPT on a PERSPECTIVE rig, where that curve is the camera DOLLY and its
+                // keyframes are DISTANCES. `2·d₀/skeletonScale` is then not a view extent at all:
+                // whitw2 reads 600 px against her true frustum height of 346.41
+                // (`2·d₀·tan(fov/2)/skeletonScale`), framing her whole entrance √3 = 1.732× too
+                // wide. The exporter already puts that frustum height in `entranceViewPx` and it
+                // is derived from the dolly's FIRST keyframe, so it is the animated t=0 extent the
+                // comment above asks for - not the static ortho this fallback normally means.
+                // Measured: her best cross-correlation alignment needs a 1.6-1.8× zoom-in at EVERY
+                // beat while the ortho ratio (which varies 10× over the shot) is already correct.
+                const entrancePersp = scene?.data.entrancePerspective === true;
+                const entranceFrameSize =
+                    entrancePersp && usableExtent(authoredFrame?.entranceViewPx)
+                        ? (authoredFrame?.entranceViewPx as number)
+                        : entranceOrtho0 && entranceSkelScale
+                          ? (2 * entranceOrtho0) / entranceSkelScale
+                          : ((authoredFrame?.entranceViewPx as number | undefined) ?? (authoredFrame?.viewPx2 as number | undefined) ?? null);
                 // Authored SCENE-timeline end: when the entrance→idle handoff (pose swap +
                 // pull-out dolly) fires, relative to the entrance track clock.
                 //

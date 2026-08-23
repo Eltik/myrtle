@@ -76,7 +76,14 @@
 #                🔑 Remaining VISIBLE defect: the campfire at t=5.5/8.2 renders a dull dark-red
 #                ember where the game has a bright orange flame.
 #                (On the old generic 2,4,6,8 beats she read 23.870 — that set skipped the bad phase.)
-#   whitw2 ~92.9 — her entrance does not render at all; broken, not a parity signal.
+#   whitw2 69.465 (7 beats, REFOFF 0) — the corpus's ONLY perspective entrance camera. 92.9 when
+#                her entrance read as a static camera; then the dolly fix, the post-process volume,
+#                the animator-root camera track and finally the perspective FRAME SIZE (her frame
+#                extent was sqrt(3) = 1.732x too wide: the client read `2*orthoCurve[0]/skelScale`,
+#                but on a perspective rig that curve is the DOLLY and its keys are DISTANCES).
+#                ⛔ The residual is a time-varying PAN that no single (scale,dx,dy) fixes — that is
+#                PARALLAX under a dollying perspective camera, and we composite 2D layers with no
+#                per-layer depth. Architectural; do not chase it as a camera-curve bug.
 #
 # 🚨 NOT COMPARABLE to any figure recorded before 2026-08-20. `mad.py` now corrects the reference
 # clips' geometric distortion by default: `capture_oracle.sh` encodes with `scale=900:416` from a

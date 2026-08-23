@@ -218,6 +218,11 @@ export interface ISceneData {
         params?: Record<string, number> | null;
     } | null;
     entranceOrthoCurve?: [number, number][] | null;
+    /** Is the `_Start` camera PERSPECTIVE? Then {@link entranceOrthoCurve} carries dolly
+     *  DISTANCES, not ortho sizes, so `2*curve[0]/skeletonScale` is NOT a view extent and
+     *  `entranceViewPx` (the frustum height at the dolly's first keyframe) must be used
+     *  instead. Only `whitw2` ships a perspective entrance camera across all 87 bundles. */
+    entrancePerspective?: boolean | null;
     /** ENTRANCE camera POSITIONAL dolly (pan): `[t_s, progress 0..1]` keyframes, extracted from
      *  the animated camera-ancestor Transform position in the `_Start` clip. Exported but currently
      *  unread - superseded by {@link entranceCamCenterCurve}. `_Start` only. */
