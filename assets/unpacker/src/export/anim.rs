@@ -1337,6 +1337,7 @@ pub fn entrance_camera_track(
     let local_trs = |tf: i64,
                      pos_override: Option<[f32; 3]>,
                      rot_override: Option<[f32; 4]>,
+                     scale_override: Option<[f32; 3]>,
                      unit_scale: bool|
      -> Mat4 {
         let Some((_, v)) = all_objects.get(&tf) else {
@@ -1373,10 +1374,15 @@ pub fn entrance_camera_track(
         // columns, and a collapsed column normalises to garbage. That is fixed properly by taking
         // the basis from a UNIT-SCALE build of the same chain: an orthonormal basis belongs to the
         // rotation, not to the scale.
+        // ...and the collapse can be ANIMATED rather than serialized. Mlynar's `_Start` pins
+        // `Dummy002`'s scale to (1, 0, 1) with single-key curves while the transform itself
+        // ships (1, 1, 1), so reading only `m_LocalScale` let his Main Camera's local +2.9947 Y
+        // through — 0.912 (the `static_offset` scale) x 2.9947 = 2.731 units = 273 authored px of
+        // constant vertical error, measured at +271.6 +/- 2.0 px against his capture.
         let s = if unit_scale {
             [1.0, 1.0, 1.0]
         } else {
-            vec3("m_LocalScale", 1.0)
+            scale_override.unwrap_or_else(|| vec3("m_LocalScale", 1.0))
         };
         Mat4::trs(pos, q, s)
     };
@@ -1397,6 +1403,9 @@ pub fn entrance_camera_track(
     let is_ancestor = build_ancestor_check(all_objects);
     let clip_animators = build_clip_animator_gos(all_objects);
     let mut animated: HashMap<i64, [Vec<(f32, f32)>; 3]> = HashMap::new();
+    // SCALE curves on the chain. A clip can COLLAPSE an axis (scale 0) to neutralise a child's
+    // local offset along it — see `local_trs`. Never sampled before, so such a pin was ignored.
+    let mut animated_scale: HashMap<i64, [Vec<(f32, f32)>; 3]> = HashMap::new();
     // ROTATION curves on the same chain, keyed transform pid -> (is_euler, per-component curves).
     // Wiš'adel's `_Start` animates her camera parent's EULER Z from 11.338° to 29.556° over the
     // first 2.4 s; reading only `attr == 1` froze the shot at its opening roll.
@@ -1423,7 +1432,8 @@ pub fn entrance_camera_track(
             // camera move entirely.
             let is_pos = type_id == 4 && attr == 1;
             let is_rot = type_id == 4 && (attr == 2 || attr == 4);
-            let scoped = (is_pos || is_rot)
+            let is_scale = type_id == 4 && attr == 3;
+            let scoped = (is_pos || is_rot || is_scale)
                 .then(|| hash_to_gos.get(&path))
                 .flatten()
                 .map(|gos| scope_to_animator(gos, animator_gos, &is_ancestor));
@@ -1447,6 +1457,30 @@ pub fn entrance_camera_track(
                             && c.len() > entry.1[i].len()
                         {
                             entry.1[i] = c;
+                        }
+                    }
+                }
+            }
+            if is_scale
+                && let Some(&go) = scoped
+                    .as_deref()
+                    .and_then(|gos| gos.iter().find(|g| chain_gos.contains(g)))
+                && let Some(&tf) = go_to_tf.get(&go)
+            {
+                let cs = [
+                    decode_curve_any(v, gidx),
+                    decode_curve_any(v, gidx + 1),
+                    decode_curve_any(v, gidx + 2),
+                ];
+                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
+                    let entry = animated_scale
+                        .entry(tf)
+                        .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
+                    for (i, c) in cs.into_iter().enumerate() {
+                        if let Some(c) = c
+                            && c.len() > entry[i].len()
+                        {
+                            entry[i] = c;
                         }
                     }
                 }
@@ -1485,7 +1519,7 @@ pub fn entrance_camera_track(
     // entrance zoom was being discarded; Civilight Eterna is fully static and was framed on the
     // IDLE's tight bounds instead of her own entrance camera. Emit a constant two-key curve for
     // them — `world_at` reads the static TRS when nothing is animated, so the value is exact.
-    let is_static = animated.is_empty() && animated_rot.is_empty();
+    let is_static = animated.is_empty() && animated_rot.is_empty() && animated_scale.is_empty();
     // Timeline = union of EVERY animated axis's keyframe times.
     let mut times: Vec<f32> = animated
         .values()
@@ -1553,6 +1587,26 @@ pub fn entrance_camera_track(
     };
     // An animated transform's local ROTATION at time t, as a quaternion. Euler curves (attr 4)
     // are Unity degrees in ZXY order; quaternion curves (attr 2) are used as-is.
+    // An animated transform's local SCALE at time t (animated axes sampled, others static).
+    let sample_scale_tf = |tf: i64, t: f32| -> [f32; 3] {
+        let st = all_objects.get(&tf).map_or([1.0f32; 3], |(_, v)| {
+            let g = |k: &str| {
+                v.get("m_LocalScale")
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(1.0) as f32
+            };
+            [g("x"), g("y"), g("z")]
+        });
+        match animated_scale.get(&tf) {
+            Some(cs) => [
+                sample(&cs[0], t, st[0]),
+                sample(&cs[1], t, st[1]),
+                sample(&cs[2], t, st[2]),
+            ],
+            None => st,
+        }
+    };
     let sample_rot_tf = |tf: i64, t: f32| -> Option<[f32; 4]> {
         let (is_euler, cs) = animated_rot.get(&tf)?;
         if *is_euler {
@@ -1593,7 +1647,8 @@ pub fn entrance_camera_track(
         for &tf in chain.iter().rev() {
             let pos = animated.contains_key(&tf).then(|| sample_tf(tf, t));
             let rot = sample_rot_tf(tf, t);
-            let local = local_trs(tf, pos, rot, unit_scale);
+            let scl = animated_scale.contains_key(&tf).then(|| sample_scale_tf(tf, t));
+            let local = local_trs(tf, pos, rot, scl, unit_scale);
             m = m.mul(&local);
         }
         m

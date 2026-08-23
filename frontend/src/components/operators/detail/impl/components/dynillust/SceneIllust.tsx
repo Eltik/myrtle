@@ -1646,13 +1646,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // skadi2) keep the pure rig camera - `centerBlend` is null for them (verified parity).
                 let cxShift = 0;
                 let cy = c[1];
-                // DIAGNOSTIC (`?nocenterblend=1`): follow the rig's VERTICAL curve raw instead of
-                // re-basing it onto the settle-open centre. The re-base makes the framing depend
-                // only on the curve's SHAPE relative to its end, so a skin whose authored absolute
-                // vertical IS the shot gets it discarded — and any correction to the exported
-                // centre's Y cancels out entirely, which is exactly what hid Chongyue's.
-                const cbOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("nocenterblend") === "1";
-                const cb = cbOff ? null : ef.centerBlend;
+                // ⛔ RETIRED (`?centerblend=1` restores it). This re-based the rig's VERTICAL curve
+                // onto the settle-open centre, `cy0 + (rigY − rigEndY)`, because Mlynar's absolute
+                // rig centre could not be trusted. It cannot be trusted no longer: his rig was off
+                // by a CONSTANT +273 authored px because his `_Start` pins `Dummy002`'s SCALE to
+                // (1, 0, 1) — collapsing the axis that carries his Main Camera's local +2.9947 Y —
+                // and `entrance_camera_track` never sampled clip SCALE curves at all. With that
+                // fixed the re-base is a measured NO-OP for him (17.192 → 17.191).
+                //
+                // Keeping it was NOT free: because it depends only on the curve's SHAPE relative
+                // to its end, it CANCELS any constant correction to the exported centre — which is
+                // exactly what hid Chongyue's remaining vertical error. Retiring it is worth
+                // −28.7 on her (78.825 → 50.158, r −0.019 → 0.606) and 0.000 everywhere else.
+                const cbOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("centerblend") === "1";
+                const cb = cbOn ? ef.centerBlend : null;
                 if (cb) {
                     cy = cb.cy0 + (c[1] - cb.rigEndY);
                 }
