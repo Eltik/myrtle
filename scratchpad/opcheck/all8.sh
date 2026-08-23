@@ -190,6 +190,11 @@ DIR[wis]='char_1035_wisdel_sale#14';      BEATS[wis]="2,4,6,8,10,12"
 # no white-out is produced. Scoring her in the default set would swamp the corpus mean with one
 # broken skin, so run her explicitly:  ./all8.sh <label> "" whitw2
 DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
+#   chyue 50.158 (8 beats, REFOFF -0.200, r 0.606) — 77.924 at capture. Two camera-chain faults,
+#                both found by feature-matching her render against the capture (`camfit.py`):
+#                the track decoded only the STREAMED sub-clip so a PINNED transform used its static
+#                pose (-320.6 px in X), and `centerBlend` cancelled every constant correction in Y
+#                until Mlynar's rig was fixed and it could be retired (-28.7).
 # chyue — captured 2026-08-23, the ELEVENTH reference and the last uncaptured entrance that the
 # Lookbook exposes (pasngr's "Dream In A Moment" is not listed in the EPOQUE collection: all 87
 # labels read, no hit). Beats avoid her two sensitive regions: the HARD-CUT camera tour at
