@@ -28,6 +28,19 @@
 #   corpus mean 11.946
 #
 # Opt-in extras (NOT in the default key list, so the mean above stays comparable):
+#   kalts 48.614 (8 beats, REFOFF 0.200) — captured 2026-08-23, the WORST reference by far.
+#                🔑 Her error is ONE THING: a large-scale atmospheric MIST the game sweeps across
+#                the scene and we barely draw. The diff map is broad BLUE bands (game brighter)
+#                through the middle with RED on the crystal shards (we brighter, because the
+#                game's mist veils them). ⛔ Nothing we draw is WRONG — ablating scenebg (58.1),
+#                scenefg (52.6) or the spine (45.8) all make it worse or barely move it, and
+#                `psoff=0-200` is inert. It is missing content, not mis-drawn content.
+#                ⛔ Also refuted on her: the sort-100 transition plane is correctly gated
+#                (activeFrom 13.8, matching the game's second white-out), her post-process volume
+#                is genuinely weight-0 with no clip driving it, and her dissolve amounts are all
+#                0.0-0.35 so the masks are not over-carving.
+#                ⚠️ `?gainadd=0` is worth **-1.499** on her — she is the biggest single loser
+#                from the additive-only scene gain (see the note above).
 #   fugue 11.064 (8 tuned beats, REFOFF 0.083) — captured autonomously 2026-08-22.
 #                🚨 Her deployed export was STALE (pre-2026-08-12: no `entrancePostFx.params`).
 #                A correctly-staged re-export (WHOLE refs/ tree — see the exporter memory) adds
@@ -113,6 +126,7 @@ REFOFF[eyja]=0.100
 # The geometric value also BEATS the coarse score sweep (+0.083 -> 23.870 vs +0.10 -> 25.165); a
 # 0.05-step sweep stepped over the true optimum. ⚠️ Changes ZERO pixels.
 REFOFF[fugue]=0.083
+REFOFF[kalts]=0.200
 # ⛔ mue was swept and needs NO offset -- the score is BEST at 0.000 (21.918) and degrades
 # monotonically (+0.017 -> 23.263, +0.033 -> 24.190). A dense sweep over 2.0-8.0s did prefer +0.033
 # by 0.51 on a base of 11.3, but that did NOT survive on her actual beat set. 🔑 Her trim is
@@ -158,6 +172,23 @@ DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
 # fade beat measures fade-constant error, not renderer error (cf. exc's t=6, 38.79 and unshippable).
 #   Run her explicitly:  ./all8.sh <label> "" fugue
 DIR[fugue]='char_113_cqbw_epoque#7';      BEATS[fugue]="1,1.8,2.8,4,5.5,6.8,7.5,8.2"
+
+# kalts — captured 2026-08-23, the TENTH reference and by far the WORST (48.6 vs a corpus of
+# 5.5-17.7). Chosen because she is the densest carrier of the features the other references
+# cannot see: 33 UV-SCROLL components and a bound `_DisturTex_02`. ⚠️ Her assets were also one
+# of the six under-staged exports fixed the same day (42->44 layers, 8->18 textures), so this
+# capture is their first real validation.
+#
+# 🚨 Her reference has TWO WHITE-OUTS the beats must avoid — mean luma peaks 252 at t=9.6 and
+# 253 at t=14.1 (clean windows 0-8.7 and 11.1-13.2). Scoring inside one measures the fade
+# constant, not the renderer (cf. exc t=6 and fugue's 8.2 cutoff). t=10 alone reads 99.4 and
+# t=14 reads 115.9 for that reason and BOTH are excluded.
+#
+# REFOFF 0.200 is a swept minimum on the clean beats (-0.3 52.04 / -0.1 50.92 / 0 50.54 /
+# 0.1 49.52 / [0.2 48.62] / 0.3 49.98). ⚠️ 0.25 scores 47.59 but over SEVEN beats — it pushes
+# t=12 past the render range, so it is not comparable; always check the beat count.
+#   Run her explicitly:  ./all8.sh <label> "" kalts
+DIR[kalts]='char_003_kalts_boc#6';       BEATS[kalts]="1,2,3,4,5,6,8,12"
 
 # NB: `${@:-a b c}` expands the default as a SINGLE word in zsh — spell the branch out.
 if (( $# )); then keys=($@); else keys=(ska exc cel mly mue eyja cet wis); fi

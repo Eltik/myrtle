@@ -2067,18 +2067,25 @@ fn collect_dynchar_bg_quads(
                             // 0.300/-0.050 while their residual `_DissolveUSpeed` reads
                             // 0.120 / 0.200 — so we evolved their dissolve mask ~1.5-1.7x too
                             // slowly and their silhouette drifted out of step with the game.
-                            dissolve_speed: if uvtween_family {
-                                [uvtween[2], uvtween[3]]
-                            } else {
+                            dissolve_speed: {
+                                let base = if uvtween_family {
+                                    [uvtween[2], uvtween[3]]
+                                } else {
+                                    [
+                                        blend("_DissolveUSpeed", 0.0) as f32,
+                                        blend("_DissolveVSpeed", 0.0) as f32,
+                                    ]
+                                };
+                                let c = uv_scroll_component(all_objects, go_pid);
+                                [base[0] + c.dissolve[0], base[1] + c.dissolve[1]]
+                            },
+                            disturb_speed: {
+                                let c = uv_scroll_component(all_objects, go_pid);
                                 [
-                                    blend("_DissolveUSpeed", 0.0) as f32,
-                                    blend("_DissolveVSpeed", 0.0) as f32,
+                                    blend("_DisturbUSpeed", 0.0) as f32 + c.disturb[0],
+                                    blend("_DisturbVSpeed", 0.0) as f32 + c.disturb[1],
                                 ]
                             },
-                            disturb_speed: [
-                                blend("_DisturbUSpeed", 0.0) as f32,
-                                blend("_DisturbVSpeed", 0.0) as f32,
-                            ],
                         })
                     } else {
                         None
@@ -2698,6 +2705,74 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
 /// opposed to the plain blend modes (`Particles-L2D/AlphaBlend`, `…/Additive`) that have
 /// nothing below the namespace. Membership alone implies nothing about WHICH maps a given
 /// material binds — every caller pairs this with a test on the material's own properties.
+/// Script pathIDs of the two UV-SCROLL MonoBehaviours. They share the field layout
+/// (`xspeed`/`yspeed` for the MAIN map, `useSecondMap` + `secondMapName` +
+/// `secondXSpeed`/`secondYSpeed` for a NAMED second map); the second variant only adds
+/// `protectMainUV`/`protectSecondUV`.
+const UV_SCROLL_SCRIPTS: [i64; 2] = [1_369_540_917_083_035_942, 568_963_171_123_803_239];
+
+/// The scroll a UV-scroll component adds to this GameObject's lookups, in UV/second.
+///
+/// ⚠️ ADDITIVE to the material's own `_DissolveUSpeed`/`_DisturbUSpeed`. They are two different
+/// mechanisms — the SHADER pans the lookup against `_Time`, while the component drives the
+/// material's ST offset every frame — so a layer carrying both scrolls at the sum. Kal'tsit's
+/// mist sheets (`ql*`) are the case that found this: their materials read `_DissolveUSpeed` 0.0
+/// while the component scrolls `_DissolveTex` at -0.01..-0.15 u/s, so we evolved their masks
+/// not at all.
+///
+/// Only the SECOND map is folded in here, because that is the one with a working renderer path
+/// (`uDissolveScroll` / `uDisturbScroll`). The component's MAIN-map scroll is deliberately NOT
+/// applied: `uvScroll` is a measured NO-OP on a ram-shader layer, so routing it there would be
+/// inert and would read as a false null. `_RamTex` is skipped for the same reason — the ramp
+/// has no scroll uniform at all.
+#[derive(Default)]
+struct UvScrollAdd {
+    dissolve: [f32; 2],
+    disturb: [f32; 2],
+}
+
+fn uv_scroll_component(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> UvScrollAdd {
+    let mut out = UvScrollAdd::default();
+    for (cid, v) in all_objects.values() {
+        if *cid != 114 {
+            continue;
+        }
+        let Some(script) = v.get("m_Script").and_then(get_path_id) else {
+            continue;
+        };
+        if !UV_SCROLL_SCRIPTS.contains(&script) {
+            continue;
+        }
+        if v.get("m_GameObject").and_then(get_path_id) != Some(go_pid) {
+            continue;
+        }
+        // The component applies its second map ONLY when the flag is set; a non-zero speed with
+        // `useSecondMap` off is authored residue (Skadi's `pattern_01` is one).
+        let use2 = v
+            .get("useSecondMap")
+            .and_then(|b| b.as_bool().map(u64::from).or_else(|| b.as_u64()))
+            .unwrap_or(0)
+            != 0;
+        if !use2 {
+            continue;
+        }
+        let name = v
+            .get("secondMapName")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        let sx = v.get("secondXSpeed").and_then(Value::as_f64).unwrap_or(0.0) as f32;
+        let sy = v.get("secondYSpeed").and_then(Value::as_f64).unwrap_or(0.0) as f32;
+        if name.starts_with("_Dissolve") {
+            out.dissolve[0] += sx;
+            out.dissolve[1] += sy;
+        } else if name.starts_with("_Distur") {
+            out.disturb[0] += sx;
+            out.disturb[1] += sy;
+        }
+    }
+    out
+}
+
 /// Script pathID of the UV-ROTATION MonoBehaviour (see `SceneRam::uv_rot`).
 const UV_ROTATION_SCRIPT: i64 = 7_163_214_010_000_414_217;
 
