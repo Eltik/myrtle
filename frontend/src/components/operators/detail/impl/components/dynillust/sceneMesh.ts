@@ -50,6 +50,11 @@ export interface ISceneRam {
     /** `_AnchorU`/`_AnchorV` - the zero point the disturb sample is measured against.
      *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
      *  reproduces the plain `sample * intensity` every `Ram/` layer shipped with. */
+    /** `_Rotation0..3` as DEGREES, `[main, dissolve, ram, disturb]` — a per-lookup UV rotation
+     *  about the (0.5, 0.5) texel centre, applied BETWEEN the lookup's ST and its scroll.
+     *  Written at runtime by a UV-rotation component, never serialized on the material; see the
+     *  exporter's `SceneRam::uv_rot`. */
+    uvRot?: [number, number, number, number];
     anchorU?: number;
     anchorV?: number;
     intensityU: number;
@@ -1192,12 +1197,19 @@ uniform vec4 uDisturbST;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
 uniform vec4 uRamST;
+uniform vec4 uDissolveRot;
+uniform vec4 uRamRot;
+uniform vec4 uDisturbRot;
 varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
 varying vec2 vRamUV;
 varying vec4 vColor;
+vec2 rot2(vec2 uv, vec4 r) {
+    vec2 p = uv - vec2(0.5, 0.5);
+    return vec2(dot(p, r.xz), dot(p, r.yw)) + vec2(0.5, 0.5);
+}
 void main() {
     gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
     vUV = aUV;
@@ -1205,19 +1217,58 @@ void main() {
     // aBaseUV carries Unity's V already flipped (see buildLayerMesh); undo the flip, apply
     // the mask's ST + scroll in Unity space, then flip once more to sample.
     vec2 unity = vec2(aBaseUV.x, 1.0 - aBaseUV.y);
-    vec2 ds = unity * uDissolveST.xy + uDissolveST.zw + uDissolveScroll;
-    vec2 dt = unity * uDisturbST.xy + uDisturbST.zw + uDisturbScroll;
-    vec2 ds2 = unity * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll;
+    // Each lookup is rotated about the (0.5, 0.5) texel centre BETWEEN its ST and its scroll,
+    // exactly as the decompiled Unity vertex program does it (see ISceneRam.uvRot).
+    vec2 ds = rot2(unity * uDissolveST.xy + uDissolveST.zw, uDissolveRot) + uDissolveScroll;
+    vec2 dt = rot2(unity * uDisturbST.xy + uDisturbST.zw, uDisturbRot) + uDisturbScroll;
+    vec2 ds2 = rot2(unity * uDissolveST2.xy + uDissolveST2.zw, uDissolveRot) + uDissolveScroll;
     // The ramp is the one lookup with NO scroll and NO custom-stream offset (verified against
     // the decompiled vertex: TC1.xy = uv * _RamTex_ST.xy + _RamTex_ST.zw, full stop).
     // NOTE: no backticks in here - this is inside a template literal.
-    vec2 rm = unity * uRamST.xy + uRamST.zw;
+    vec2 rm = rot2(unity * uRamST.xy + uRamST.zw, uRamRot);
     vDissolveUV = vec2(ds.x, 1.0 - ds.y);
     vDissolveUV2 = vec2(ds2.x, 1.0 - ds2.y);
     vDisturbUV = vec2(dt.x, 1.0 - dt.y);
     vRamUV = vec2(rm.x, 1.0 - rm.y);
 }
 `;
+/** Per-lookup UV ROTATION scale. **DEFAULT 0 — IMPLEMENTED, VERIFIED, AND KEPT OFF.**
+ *  `?uvrot=1` enables it, `?uvrot=-1` negates the angle.
+ *
+ *  The subsystem is real and the implementation is faithful: `_HG_UV_ROTATION` is enabled on
+ *  **100 materials** across the corpus, the decompiled `Ram/Disturb(CustomData)` vertex program
+ *  rotates each lookup about the (0.5, 0.5) texel centre between its ST and its scroll, and a
+ *  UV-rotation component supplies angles the material never serializes (see `ISceneRam.uvRot`).
+ *  It renders: on cello it moves **68,541 px** across her beats, deltas up to 190.
+ *
+ *  It is kept OFF because it does not pay on the only reference that carries it. Cello is the
+ *  sole affected skin of the eight (Skadi's three components sit on non-ram objects, so all her
+ *  ram layers export `uvRot` 0 and she is bit-identical either way):
+ *
+ *      whole beat set   off 17.075   on 17.094
+ *      affected beats   off 13.647   on 13.674   negated 14.225
+ *
+ *  The sign IS right — negating costs 4x what applying it does — so this is not a convention
+ *  error, the correction simply does not help. Same standing as `DYNCHAR_UVSCROLL_ALL` in the
+ *  exporter: shader-correct and parity-neutral is not enough to reclassify 20 skins we cannot
+ *  measure. Turn it on only alongside a capture of an affected skin. */
+function uvRotScale(): number {
+    if (typeof window === "undefined") return 0;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("uvrot") ?? "");
+    return Number.isFinite(v) ? v : 0;
+}
+
+/** Pack a UV rotation (DEGREES) the way the Unity shader reads it: the vertex program does
+ *  `dot(uv, R.xz)` / `dot(uv, R.yw)`, i.e. the matrix is `[[R.x, R.z], [R.y, R.w]]`. Identity
+ *  for 0, so a layer with no rotation component is bit-identical. */
+function rotMat2(deg: number): [number, number, number, number] {
+    if (!deg) return [1, 0, 0, 1];
+    const a = (deg * Math.PI) / 180;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    return [c, s, -s, c];
+}
+
 const RAM_SCENE_FRAG = `
 precision highp float;
 varying vec2 vUV;
@@ -1375,6 +1426,9 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uEdgePow: r.edgePow ?? 1,
             uHasEdge: r.edgeColor ? 1 : 0,
             uHasDisturb: ramTex.disturb ? 1 : 0,
+            uDissolveRot: rotMat2((r.uvRot?.[1] ?? 0) * uvRotScale()),
+            uRamRot: rotMat2((r.uvRot?.[2] ?? 0) * uvRotScale()),
+            uDisturbRot: rotMat2((r.uvRot?.[3] ?? 0) * uvRotScale()),
             uDissolveST: r.dissolveST,
             uDissolveST2: r.dissolveST2 ?? [1, 1, 0, 0],
             uDisturbST: r.disturbST,

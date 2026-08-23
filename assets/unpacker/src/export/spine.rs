@@ -220,6 +220,30 @@ pub struct SceneRam {
     /// already-shipping `Ram/` layer is unchanged.
     pub anchor_u: f32,
     pub anchor_v: f32,
+    /// `_Rotation0..3` — a per-LOOKUP UV rotation about the (0.5, 0.5) texel centre, in DEGREES,
+    /// ordered `[main, dissolve, ram, disturb]`.
+    ///
+    /// The shader variant is real and live: `_HG_UV_ROTATION` is enabled on **100 materials**
+    /// across the corpus, and the decompiled `Ram/Disturb(CustomData)` vertex program rotates
+    /// each lookup between its ST and its scroll —
+    ///
+    /// ```glsl
+    /// u_xlat0.xy   = in_TEXCOORD0.xy * _DissolveTex_ST.xy + _DissolveTex_ST.zw;
+    /// u_xlat16_2.xy = u_xlat0.xy + vec2(-0.5, -0.5);
+    /// u_xlat6.x    = dot(u_xlat16_2.xy, _Rotation1.xz);
+    /// u_xlat6.y    = dot(u_xlat16_2.xy, _Rotation1.yw);
+    /// u_xlat0.xy   = u_xlat6.xy + vec2(0.5, 0.5);
+    /// ```
+    ///
+    /// mapping `_Rotation0 -> _MainTex`, `1 -> _DissolveTex`, `2 -> _RamTex`, `3 -> _DisturbTex`.
+    ///
+    /// ⚠️ The MATERIALS DO NOT SERIALIZE `_Rotation0..3` — a UV-rotation MonoBehaviour (script
+    /// `7163214010000414217`, `_propertyName` is the PREFIX) writes them at runtime from
+    /// `_rotateTex1..4` + `angle1`/`_angle2..4`. Reading the material alone finds nothing, which
+    /// is why this looked inert. Cello carries 57 of them (her stairs rotate the DISSOLVE lookup
+    /// by ±38.5 degrees) and all 35 of her ram layers bind a dissolve mask with a real
+    /// `amount` (0.10-0.53), so the carve is genuinely mis-oriented without this.
+    pub uv_rot: [f32; 4],
 }
 
 /// One textured mesh quad of the background scene, resolved to world geometry
@@ -1984,6 +2008,7 @@ fn collect_dynchar_bg_quads(
                             } else {
                                 blend("_BorderWidth", 0.1)
                             } as f32,
+                            uv_rot: uv_rotation_of_go(all_objects, go_pid),
                             anchor_u: blend("_AnchorU", 0.0) as f32,
                             anchor_v: blend("_AnchorV", 0.0) as f32,
                             intensity_u: blend("_IntensityU", 0.0) as f32,
@@ -2646,6 +2671,48 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
 /// opposed to the plain blend modes (`Particles-L2D/AlphaBlend`, `…/Additive`) that have
 /// nothing below the namespace. Membership alone implies nothing about WHICH maps a given
 /// material binds — every caller pairs this with a test on the material's own properties.
+/// Script pathID of the UV-ROTATION MonoBehaviour (see `SceneRam::uv_rot`).
+const UV_ROTATION_SCRIPT: i64 = 7_163_214_010_000_414_217;
+
+/// `[main, dissolve, ram, disturb]` UV rotation in DEGREES for this GameObject, from the
+/// UV-rotation component attached to it. All zero when it carries none.
+///
+/// The component names its slots 1-based (`_rotateTex1..4`) against the shader's 0-based
+/// `_Rotation0..3`, and spells the first angle `angle1` while the rest are `_angle2..4`.
+/// A slot whose `_rotateTexN` flag is off keeps 0, so an authored angle that the component
+/// does not actually apply cannot leak into the export.
+fn uv_rotation_of_go(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> [f32; 4] {
+    let mut out = [0.0f32; 4];
+    for (cid, v) in all_objects.values() {
+        if *cid != 114 {
+            continue;
+        }
+        if v.get("m_Script").and_then(get_path_id) != Some(UV_ROTATION_SCRIPT) {
+            continue;
+        }
+        if v.get("m_GameObject").and_then(get_path_id) != Some(go_pid) {
+            continue;
+        }
+        for (i, slot) in out.iter_mut().enumerate() {
+            let on = v
+                .get(format!("_rotateTex{}", i + 1).as_str())
+                .and_then(Value::as_f64)
+                .unwrap_or(0.0)
+                != 0.0;
+            if !on {
+                continue;
+            }
+            let key = if i == 0 {
+                "angle1".to_string()
+            } else {
+                format!("_angle{}", i + 1)
+            };
+            *slot = v.get(key.as_str()).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+        }
+    }
+    out
+}
+
 #[must_use]
 pub fn is_l2d_compositor(shader: &str) -> bool {
     // `Torappu/Particles/<sub>/…` is the SAME compositor family as
@@ -4798,6 +4865,7 @@ fn export_scene(
                     "disturbST": r.disturb_st,
                     "ramTex": ramt,
                     "ramST": r.ram_st,
+                    "uvRot": r.uv_rot,
                     "amount": r.amount,
                     "borderWidth": r.border_width,
                     "anchorU": r.anchor_u,
