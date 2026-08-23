@@ -1533,6 +1533,17 @@ pub fn entrance_camera_track(
             .flat_map(|(_, cs)| cs.iter().flatten())
             .map(|(t, _)| *t),
     );
+    // SCALE times too. `is_static` counts a scale-only animated chain as NON-static, so without
+    // this a rig whose clip animates ONLY scale would reach the `times.len() < 2` guard below and
+    // lose its camera track entirely — worse than the static fallback it would have had. No skin
+    // in the corpus is scale-only today; this keeps that from becoming a silent trap.
+    times.extend(
+        animated_scale
+            .values()
+            .flatten()
+            .flatten()
+            .map(|(t, _)| *t),
+    );
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     times.dedup();
     if is_static {
