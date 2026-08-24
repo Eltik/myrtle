@@ -1704,14 +1704,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             //
                             // Derived from Whislash-alter's prefab chain: her sprocket bars hang at
                             // d=4.36 under a fov-60 rig, so their extent is 503.45px, while
-                            // `entranceViewPx` is 346.41 — the frustum at the dolly's d0=3.0. The
+                            // `entranceViewPx` is 346.41 - the frustum at the dolly's d0=3.0. The
                             // 1.4535 ratio was exactly the size-and-position error. With this the
                             // bars land at y 0..36 and 380..416 against 0..35 and 380..415 measured
                             // in her capture.
                             //
                             // ⚠️ This measured WORSE (46.975 -> 57.185) until the reveal timeline
                             // learned to read her cinematic clip, because the game switches the
-                            // whole camera-locked group OFF at t=8.13 and we drew it throughout —
+                            // whole camera-locked group OFF at t=8.13 and we drew it throughout -
                             // correctly-placed bars on beats that should have none. With the gate
                             // in place it pays: 42.903 -> 41.861. `?camlockview=0` reverts.
                             const cvOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("camlockview") === "0";

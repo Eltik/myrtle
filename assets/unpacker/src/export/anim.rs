@@ -1467,7 +1467,10 @@ pub fn entrance_camera_track(
                 // sub-clip, and a curve that merely PINS a value lives in the CONSTANT one.
                 let cs: Vec<Option<Vec<(f32, f32)>>> =
                     (0..count).map(|i| decode_curve_any(v, gidx + i)).collect();
-                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
+                if cs
+                    .iter()
+                    .any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys()))
+                {
                     let entry = animated_rot
                         .entry(tf)
                         .or_insert_with(|| (attr == 4, vec![Vec::new(); count]));
@@ -1492,7 +1495,10 @@ pub fn entrance_camera_track(
                     decode_curve_any(v, gidx + 1),
                     decode_curve_any(v, gidx + 2),
                 ];
-                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
+                if cs
+                    .iter()
+                    .any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys()))
+                {
                     let entry = animated_scale
                         .entry(tf)
                         .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
@@ -1516,7 +1522,10 @@ pub fn entrance_camera_track(
                     decode_curve_any(v, gidx + 1),
                     decode_curve_any(v, gidx + 2),
                 ];
-                if cs.iter().any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys())) {
+                if cs
+                    .iter()
+                    .any(|c| c.as_ref().is_some_and(|c| c.len() >= min_keys()))
+                {
                     let entry = animated
                         .entry(tf)
                         .or_insert_with(|| [Vec::new(), Vec::new(), Vec::new()]);
@@ -1557,13 +1566,7 @@ pub fn entrance_camera_track(
     // this a rig whose clip animates ONLY scale would reach the `times.len() < 2` guard below and
     // lose its camera track entirely — worse than the static fallback it would have had. No skin
     // in the corpus is scale-only today; this keeps that from becoming a silent trap.
-    times.extend(
-        animated_scale
-            .values()
-            .flatten()
-            .flatten()
-            .map(|(t, _)| *t),
-    );
+    times.extend(animated_scale.values().flatten().flatten().map(|(t, _)| *t));
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     times.dedup();
     if is_static {
@@ -1678,7 +1681,9 @@ pub fn entrance_camera_track(
         for &tf in chain.iter().rev() {
             let pos = animated.contains_key(&tf).then(|| sample_tf(tf, t));
             let rot = sample_rot_tf(tf, t);
-            let scl = animated_scale.contains_key(&tf).then(|| sample_scale_tf(tf, t));
+            let scl = animated_scale
+                .contains_key(&tf)
+                .then(|| sample_scale_tf(tf, t));
             let local = local_trs(tf, pos, rot, scl, unit_scale);
             m = m.mul(&local);
         }
@@ -2942,7 +2947,7 @@ fn build_hash_to_go(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, i6
 /// (sorted by `path_id`) — identical sibling rigs (Mlynar's three sword clones) bind
 /// the same relative subpath, and per-rig consumers need all candidates.
 /// DIAGNOSTIC (`DYNCHAR_BINDDBG=1`): every `AnimationClip` binding whose path hash does NOT
-/// resolve to a GameObject, grouped by clip.
+/// resolve to a `GameObject`, grouped by clip.
 ///
 /// An unresolved hash means a curve we decode and then throw away, which is exactly how the
 /// camera dolly was lost for a whole skin (see the empty-path note in `build_hash_to_gos`).

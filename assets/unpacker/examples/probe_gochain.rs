@@ -30,8 +30,6 @@ fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
 }
 
-
-
 fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -49,7 +47,6 @@ fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     }
     out
 }
-
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -141,25 +138,47 @@ fn main() {
 
         // ---- the chain of every GO whose name matches $GOCHAIN, camera-relative ----
         let want = std::env::var("GOCHAIN").unwrap_or_default();
-        if want.is_empty() { continue }
+        if want.is_empty() {
+            continue;
+        }
         let mut seen: std::collections::HashSet<i64> = std::collections::HashSet::new();
         for (go, nm) in &go_name {
-            if !nm.contains(&want) || !seen.insert(*go) { continue }
+            if !nm.contains(&want) || !seen.insert(*go) {
+                continue;
+            }
             println!("GO {nm:?} pid={go}");
             let mut cur = go_tf.get(go).copied();
             let mut depth = 0;
             while let Some(tf) = cur {
-                if depth > 24 { break }
+                if depth > 24 {
+                    break;
+                }
                 let Some((_, v)) = all.get(&tf) else { break };
                 let g = tf_go.get(&tf).copied().unwrap_or(0);
                 let n2 = go_name.get(&g).cloned().unwrap_or_default();
-                let f = |fl: &str, k: &str| v.get(fl).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+                let f = |fl: &str, k: &str| {
+                    v.get(fl)
+                        .and_then(|x| x.get(k))
+                        .and_then(Value::as_f64)
+                        .unwrap_or(0.0)
+                };
                 println!(
                     "   {depth:>2} {n2:<28} pos=({:.6},{:.6},{:.6}) rot=({:.6},{:.6},{:.6},{:.6}) scale=({:.6},{:.6},{:.6})",
-                    f("m_LocalPosition","x"), f("m_LocalPosition","y"), f("m_LocalPosition","z"),
-                    f("m_LocalRotation","x"), f("m_LocalRotation","y"), f("m_LocalRotation","z"), f("m_LocalRotation","w"),
-                    f("m_LocalScale","x"), f("m_LocalScale","y"), f("m_LocalScale","z"));
-                cur = tf_father.get(&tf).copied().filter(|&x| x != 0 && all.contains_key(&x));
+                    f("m_LocalPosition", "x"),
+                    f("m_LocalPosition", "y"),
+                    f("m_LocalPosition", "z"),
+                    f("m_LocalRotation", "x"),
+                    f("m_LocalRotation", "y"),
+                    f("m_LocalRotation", "z"),
+                    f("m_LocalRotation", "w"),
+                    f("m_LocalScale", "x"),
+                    f("m_LocalScale", "y"),
+                    f("m_LocalScale", "z")
+                );
+                cur = tf_father
+                    .get(&tf)
+                    .copied()
+                    .filter(|&x| x != 0 && all.contains_key(&x));
                 depth += 1;
             }
         }

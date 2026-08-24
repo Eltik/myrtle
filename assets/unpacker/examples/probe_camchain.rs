@@ -29,8 +29,6 @@ fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
 }
 
-
-
 fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -48,7 +46,6 @@ fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     }
     out
 }
-
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -142,29 +139,57 @@ fn main() {
         let mut cam_go: Option<i64> = None;
         for (p, (cid, v)) in &all {
             if *cid == 20
-                && let Some(g) = v.get("m_GameObject").and_then(pid) {
-                    let ortho = v.get("orthographic").and_then(Value::as_bool).unwrap_or(false);
-                    let osz = v.get("orthographic size").and_then(Value::as_f64).unwrap_or(0.0);
-                    let fov = v.get("field of view").and_then(Value::as_f64).unwrap_or(0.0);
-                    println!("CAMERA pid={p} ortho={ortho} orthoSize={osz} fov={fov}");
-                    cam_go = Some(g);
-                }
+                && let Some(g) = v.get("m_GameObject").and_then(pid)
+            {
+                let ortho = v
+                    .get("orthographic")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let osz = v
+                    .get("orthographic size")
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0);
+                let fov = v
+                    .get("field of view")
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0);
+                println!("CAMERA pid={p} ortho={ortho} orthoSize={osz} fov={fov}");
+                cam_go = Some(g);
+            }
         }
         let Some(cg) = cam_go else { continue };
         let mut cur = go_tf.get(&cg).copied();
         let mut depth = 0;
         while let Some(tf) = cur {
-            if depth > 24 { break }
+            if depth > 24 {
+                break;
+            }
             let Some((_, v)) = all.get(&tf) else { break };
             let go = tf_go.get(&tf).copied().unwrap_or(0);
             let nm = go_name.get(&go).cloned().unwrap_or_default();
-            let g3 = |f: &str, k: &str| v.get(f).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+            let g3 = |f: &str, k: &str| {
+                v.get(f)
+                    .and_then(|x| x.get(k))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0)
+            };
             println!(
                 "CHAIN {depth} name={nm:?}\n   pos=({:.10},{:.10},{:.10})\n   rot=({:.10},{:.10},{:.10},{:.10})\n   scale=({:.10},{:.10},{:.10})",
-                g3("m_LocalPosition","x"), g3("m_LocalPosition","y"), g3("m_LocalPosition","z"),
-                g3("m_LocalRotation","x"), g3("m_LocalRotation","y"), g3("m_LocalRotation","z"), g3("m_LocalRotation","w"),
-                g3("m_LocalScale","x"), g3("m_LocalScale","y"), g3("m_LocalScale","z"));
-            cur = tf_father.get(&tf).copied().filter(|&f| f != 0 && all.contains_key(&f));
+                g3("m_LocalPosition", "x"),
+                g3("m_LocalPosition", "y"),
+                g3("m_LocalPosition", "z"),
+                g3("m_LocalRotation", "x"),
+                g3("m_LocalRotation", "y"),
+                g3("m_LocalRotation", "z"),
+                g3("m_LocalRotation", "w"),
+                g3("m_LocalScale", "x"),
+                g3("m_LocalScale", "y"),
+                g3("m_LocalScale", "z")
+            );
+            cur = tf_father
+                .get(&tf)
+                .copied()
+                .filter(|&f| f != 0 && all.contains_key(&f));
             depth += 1;
         }
     }

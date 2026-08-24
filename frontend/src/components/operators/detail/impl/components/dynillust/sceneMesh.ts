@@ -28,7 +28,7 @@ export interface ISceneRam {
      *  (`_DissolveTex_01` × `_DissolveTex_02`), each with its own threshold and border
      *  width. Absent on the single-map `Ram/` and `Disturb/` families. */
     dissolveTex2?: number | null;
-    /** `_WeightTex` — a per-pixel WEIGHT on the disturb displacement, sampled `.xy`. The
+    /** `_WeightTex` - a per-pixel WEIGHT on the disturb displacement, sampled `.xy`. The
      *  `Disturb Anchor` family multiplies the anchored offset by it BEFORE the intensity, so a
      *  black texel displaces NOTHING. See the exporter's `SceneRam::weight_*`. */
     weightTex?: number | null;
@@ -55,7 +55,7 @@ export interface ISceneRam {
     /** `_AnchorU`/`_AnchorV` - the zero point the disturb sample is measured against.
      *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
      *  reproduces the plain `sample * intensity` every `Ram/` layer shipped with. */
-    /** `_Rotation0..3` as DEGREES, `[main, dissolve, ram, disturb]` — a per-lookup UV rotation
+    /** `_Rotation0..3` as DEGREES, `[main, dissolve, ram, disturb]` - a per-lookup UV rotation
      *  about the (0.5, 0.5) texel centre, applied BETWEEN the lookup's ST and its scroll.
      *  Written at runtime by a UV-rotation component, never serialized on the material; see the
      *  exporter's `SceneRam::uv_rot`. */
@@ -73,12 +73,12 @@ export interface ISceneRam {
 
 export interface ISceneLayer {
     /** Is this quad a CHILD OF THE ENTRANCE CAMERA? Then it rides the camera and holds a
-     *  constant position and size on screen however far the shot dollies or pans — a film-strip
+     *  constant position and size on screen however far the shot dollies or pans - a film-strip
      *  border, a lens overlay, a full-frame haze sheet. Its baked world pose is only correct at
      *  t=0. Only two skins ship any: whitw2 (8, her film strip) and kalts (2, her mist). */
     camLocked?: boolean;
     /** For a {@link camLocked} quad: the camera frustum EXTENT (authored px) at ITS OWN distance
-     *  from the camera. Under a PERSPECTIVE rig this is NOT `entranceViewPx` — whitw2's film strip
+     *  from the camera. Under a PERSPECTIVE rig this is NOT `entranceViewPx` - whitw2's film strip
      *  sits at z 4.36 where the frustum is 503.4 px, while her `entranceViewPx` is the frustum at
      *  the dolly's d₀=3.0 (346.4). Sizing against the wrong one scales AND shifts the overlay by
      *  the ratio of the two distances (1.4535 for her). */
@@ -1267,14 +1267,14 @@ void main() {
 `;
 /** DIAGNOSTIC (`?weight=<f>`): blend the `_WeightTex` gate in. 0 = ignore it and displace at
  *  full intensity everywhere (the previous behaviour), 1 = apply it as the shader does, >1
- *  over-drives it — the proportionality check that tells a small effect apart from dead wiring. */
+ *  over-drives it - the proportionality check that tells a small effect apart from dead wiring. */
 function weightMix(): number {
     if (typeof window === "undefined") return 1;
     const v = Number.parseFloat(new URLSearchParams(window.location.search).get("weight") ?? "");
     return Number.isFinite(v) && v >= 0 ? v : 1;
 }
 
-/** Per-lookup UV ROTATION scale. **DEFAULT 0 — IMPLEMENTED, VERIFIED, AND KEPT OFF.**
+/** Per-lookup UV ROTATION scale. **DEFAULT 0 - IMPLEMENTED, VERIFIED, AND KEPT OFF.**
  *  `?uvrot=1` enables it, `?uvrot=-1` negates the angle.
  *
  *  The subsystem is real and the implementation is faithful: `_HG_UV_ROTATION` is enabled on
@@ -1290,7 +1290,7 @@ function weightMix(): number {
  *      whole beat set   off 17.075   on 17.094
  *      affected beats   off 13.647   on 13.674   negated 14.225
  *
- *  The sign IS right — negating costs 4x what applying it does — so this is not a convention
+ *  The sign IS right - negating costs 4x what applying it does - so this is not a convention
  *  error, the correction simply does not help. Same standing as `DYNCHAR_UVSCROLL_ALL` in the
  *  exporter: shader-correct and parity-neutral is not enough to reclassify 20 skins we cannot
  *  measure. Turn it on only alongside a capture of an affected skin. */

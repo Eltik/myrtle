@@ -260,7 +260,7 @@ pub struct SceneRam {
     ///
     /// mapping `_Rotation0 -> _MainTex`, `1 -> _DissolveTex`, `2 -> _RamTex`, `3 -> _DisturbTex`.
     ///
-    /// ⚠️ The MATERIALS DO NOT SERIALIZE `_Rotation0..3` — a UV-rotation MonoBehaviour (script
+    /// ⚠️ The MATERIALS DO NOT SERIALIZE `_Rotation0..3` — a UV-rotation `MonoBehaviour` (script
     /// `7163214010000414217`, `_propertyName` is the PREFIX) writes them at runtime from
     /// `_rotateTex1..4` + `angle1`/`_angle2..4`. Reading the material alone finds nothing, which
     /// is why this looked inert. Cello carries 57 of them (her stairs rotate the DISSOLVE lookup
@@ -379,7 +379,7 @@ pub struct BgQuad {
     /// every other layer wants) instead nails it to the world and the camera flies off it.
     /// Only two skins in the corpus have any: whitw2 (9, her film strip) and kalts (2, her mist).
     pub cam_locked: bool,
-    /// For a {@link cam_locked} quad: the camera frustum EXTENT (authored px) at ITS OWN distance
+    /// For a {@link `cam_locked`} quad: the camera frustum EXTENT (authored px) at ITS OWN distance
     /// from the camera — the height the viewport maps to where this overlay sits. Under a
     /// PERSPECTIVE rig that is NOT the camera's `entranceViewPx`, and using the latter scales and
     /// positions the overlay by the ratio of the two distances.
@@ -1525,21 +1525,33 @@ fn collect_dynchar_bg_quads(
             skel.sort_unstable_by_key(|(p, _)| *p);
             let inv = 1.0 / skel.first().map_or(0.01, |(_, sc)| *sc);
             let local_of = |tf: i64| -> super::mesh::Mat4 {
-                all_objects.get(&tf).map_or_else(super::mesh::Mat4::identity, |(_, v)| {
-                    let g3 = |f: &str, d: f32| {
-                        let g = |k: &str| {
-                            v.get(f).and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                all_objects
+                    .get(&tf)
+                    .map_or_else(super::mesh::Mat4::identity, |(_, v)| {
+                        let g3 = |f: &str, d: f32| {
+                            let g = |k: &str| {
+                                v.get(f)
+                                    .and_then(|x| x.get(k))
+                                    .and_then(Value::as_f64)
+                                    .unwrap_or(d.into()) as f32
+                            };
+                            [g("x"), g("y"), g("z")]
                         };
-                        [g("x"), g("y"), g("z")]
-                    };
-                    let q = {
-                        let g = |k: &str, d: f32| {
-                            v.get("m_LocalRotation").and_then(|x| x.get(k)).and_then(Value::as_f64).unwrap_or(d.into()) as f32
+                        let q = {
+                            let g = |k: &str, d: f32| {
+                                v.get("m_LocalRotation")
+                                    .and_then(|x| x.get(k))
+                                    .and_then(Value::as_f64)
+                                    .unwrap_or(d.into()) as f32
+                            };
+                            [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
                         };
-                        [g("x", 0.0), g("y", 0.0), g("z", 0.0), g("w", 1.0)]
-                    };
-                    super::mesh::Mat4::trs(g3("m_LocalPosition", 0.0), q, g3("m_LocalScale", 1.0))
-                })
+                        super::mesh::Mat4::trs(
+                            g3("m_LocalPosition", 0.0),
+                            q,
+                            g3("m_LocalScale", 1.0),
+                        )
+                    })
             };
             for (&go, &tr) in &go_to_transform {
                 let mut cur = tr;
@@ -2936,13 +2948,13 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
 /// opposed to the plain blend modes (`Particles-L2D/AlphaBlend`, `…/Additive`) that have
 /// nothing below the namespace. Membership alone implies nothing about WHICH maps a given
 /// material binds — every caller pairs this with a test on the material's own properties.
-/// Script pathIDs of the two UV-SCROLL MonoBehaviours. They share the field layout
+/// Script pathIDs of the two UV-SCROLL `MonoBehaviours`. They share the field layout
 /// (`xspeed`/`yspeed` for the MAIN map, `useSecondMap` + `secondMapName` +
 /// `secondXSpeed`/`secondYSpeed` for a NAMED second map); the second variant only adds
 /// `protectMainUV`/`protectSecondUV`.
 const UV_SCROLL_SCRIPTS: [i64; 2] = [1_369_540_917_083_035_942, 568_963_171_123_803_239];
 
-/// The scroll a UV-scroll component adds to this GameObject's lookups, in UV/second.
+/// The scroll a UV-scroll component adds to this `GameObject`'s lookups, in UV/second.
 ///
 /// ⚠️ ADDITIVE to the material's own `_DissolveUSpeed`/`_DisturbUSpeed`. They are two different
 /// mechanisms — the SHADER pans the lookup against `_Time`, while the component drives the
@@ -3004,10 +3016,10 @@ fn uv_scroll_component(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) ->
     out
 }
 
-/// Script pathID of the UV-ROTATION MonoBehaviour (see `SceneRam::uv_rot`).
+/// Script pathID of the UV-ROTATION `MonoBehaviour` (see `SceneRam::uv_rot`).
 const UV_ROTATION_SCRIPT: i64 = 7_163_214_010_000_414_217;
 
-/// `[main, dissolve, ram, disturb]` UV rotation in DEGREES for this GameObject, from the
+/// `[main, dissolve, ram, disturb]` UV rotation in DEGREES for this `GameObject`, from the
 /// UV-rotation component attached to it. All zero when it carries none.
 ///
 /// The component names its slots 1-based (`_rotateTex1..4`) against the shader's 0-based

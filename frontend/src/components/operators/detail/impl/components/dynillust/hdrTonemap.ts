@@ -272,7 +272,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
     [1050, 1.02], // Virtuosa
     [1100, 1.02], // Muelsyse - the fourth capture this table asked for (see below)
     [1111, 0.93], // Mlynar
-    // fugue "Wintry Sojourn" — the FIRST capture above the previously-calibrated range, and the
+    // fugue "Wintry Sojourn" - the FIRST capture above the previously-calibrated range, and the
     // reason the range had to be extended rather than clamped. Everything at cs > 1111 used to
     // inherit Mlynar's 0.93; fugue at cs 1250 measures **1.03**, an interior minimum bracketed on
     // both sides over her eight beats:
@@ -283,11 +283,11 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
     // ⚠️ She BREAKS the "gamma falls as cameraSize rises" story this table was built on. Three of
     // the four earlier points sit at 1.02-1.04 and fugue rejoins them at 1.02-1.03, which makes
     // Mlynar's 0.93 the outlier rather than the trend's endpoint. `cameraSizePx` still ORDERS the
-    // calibration set well enough to interpolate, but it demonstrably does NOT extrapolate — do
+    // calibration set well enough to interpolate, but it demonstrably does NOT extrapolate - do
     // not infer a value for a new skin from the slope; capture it.
     //
     // Scope: only 13 deployed entrance scenes carry a `cameraSizePx` at all and only TWO are
-    // above 1111 — fugue (1250) and pasngr (1150). All eight reference skins are <= 1111, so this
+    // above 1111 - fugue (1250) and pasngr (1150). All eight reference skins are <= 1111, so this
     // row provably cannot move the corpus (verified: 11.759 before and after). pasngr has no
     // capture and now interpolates to ~0.96 instead of inheriting 0.93; that is a small move
     // toward the group consensus, but it IS unmeasured.

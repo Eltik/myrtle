@@ -2275,7 +2275,7 @@ function applyPsDiag(data: IParticlesData, sys: IParticleSystemData, container: 
 
 /** Parse a `?psonly=`/`?psoff=` list: comma-separated indices AND `a-b` ranges.
  *
- *  ⚠️ Ranges used to be a SILENT NO-OP — `Number("0-131")` is NaN, so `?psoff=0-131` matched
+ *  ⚠️ Ranges used to be a SILENT NO-OP - `Number("0-131")` is NaN, so `?psoff=0-131` matched
  *  nothing and read as "ablating every system changes the frame very little", which is exactly
  *  the wrong conclusion. Any ablation result taken with a range before this fix is void. */
 function parsePsList(spec: string): Set<number> {

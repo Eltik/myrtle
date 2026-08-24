@@ -28,8 +28,6 @@ fn pid(v: &Value) -> Option<i64> {
     v.get("m_PathID").and_then(Value::as_i64)
 }
 
-
-
 fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -47,7 +45,6 @@ fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
     }
     out
 }
-
 
 fn main() {
     let mut args = std::env::args().skip(1);

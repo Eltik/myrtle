@@ -56,7 +56,10 @@ fn main() {
     let path = std::env::args()
         .nth(1)
         .expect("usage: probe_windows <bundle.ab> [name-filter]");
-    let filter = std::env::args().nth(2).unwrap_or_default().to_ascii_lowercase();
+    let filter = std::env::args()
+        .nth(2)
+        .unwrap_or_default()
+        .to_ascii_lowercase();
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
 

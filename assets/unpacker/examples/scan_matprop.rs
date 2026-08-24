@@ -5,7 +5,9 @@
 //! Usage: scan_matprop <_PropName> <bundle.ab> [bundle.ab ...]
 use serde_json::Value;
 use std::collections::HashMap;
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
     let mut a = std::env::args().skip(1);
@@ -46,24 +48,45 @@ type Out = (usize, usize, usize, usize, HashMap<String, usize>);
 fn scan(path: &str, prop: &str) -> Out {
     let mut floats: HashMap<String, usize> = HashMap::new();
     let (mut mats, mut tb, mut tn) = (0usize, 0usize, 0usize);
-    let Ok(data) = std::fs::read(path) else { return (0, 0, 0, 0, floats) };
-    let Ok(bundle) = BundleFile::parse(data) else { return (0, 0, 0, 0, floats) };
+    let Ok(data) = std::fs::read(path) else {
+        return (0, 0, 0, 0, floats);
+    };
+    let Ok(bundle) = BundleFile::parse(data) else {
+        return (0, 0, 0, 0, floats);
+    };
     for e in &bundle.files {
-        let Ok(sf) = SerializedFile::parse(e.data.to_vec()) else { continue };
+        let Ok(sf) = SerializedFile::parse(e.data.to_vec()) else {
+            continue;
+        };
         for o in &sf.objects {
-            if o.class_id != 21 { continue }
+            if o.class_id != 21 {
+                continue;
+            }
             let Ok(v) = read_object(&sf, o) else { continue };
             mats += 1;
             let sp = v.get("m_SavedProperties");
-            if let Some(env) = sp.and_then(|s| s.get("m_TexEnvs")).and_then(|t| t.get(prop)) {
-                let pid = env.get("m_Texture").and_then(|t| t.get("m_PathID")).and_then(Value::as_i64).unwrap_or(0);
-                if pid == 0 { tn += 1 } else {
+            if let Some(env) = sp
+                .and_then(|s| s.get("m_TexEnvs"))
+                .and_then(|t| t.get(prop))
+            {
+                let pid = env
+                    .get("m_Texture")
+                    .and_then(|t| t.get("m_PathID"))
+                    .and_then(Value::as_i64)
+                    .unwrap_or(0);
+                if pid == 0 {
+                    tn += 1
+                } else {
                     tb += 1;
                     let nm = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
                     println!("    bound: mat='{nm}' texPathID={pid}");
                 }
             }
-            if let Some(f) = sp.and_then(|s| s.get("m_Floats")).and_then(|f| f.get(prop)).and_then(Value::as_f64) {
+            if let Some(f) = sp
+                .and_then(|s| s.get("m_Floats"))
+                .and_then(|f| f.get(prop))
+                .and_then(Value::as_f64)
+            {
                 *floats.entry(format!("{f:.3}")).or_default() += 1;
             }
         }
