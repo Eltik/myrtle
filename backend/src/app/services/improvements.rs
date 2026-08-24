@@ -1358,13 +1358,14 @@ async fn build_base_improvements(
         );
     }
 
-    // For a 243 base, evaluate the base-wide resource economy (Rosmontis / Ebenholz /
-    // Mr. Nothing "Perception Information" system, and anything shaped like it) ONCE: its
-    // consumer overrides feed the OPTIMAL peak registry (each consumer's base-wide pool
-    // bonus becomes a direct productivity buff, so the optimizer values and places them),
-    // and its support plan + consumer payoffs are surfaced below. It's a peak/snapshot
-    // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
-    // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
+    // Evaluate the base-wide resource economies (Rosmontis / Ebenholz / Mr.
+    // Nothing "Perception Information" and anything shaped like it) ONCE: each
+    // consumer's pool bonus becomes a direct productivity buff in the OPTIMAL
+    // registry, so the optimizer values and places them. It's a peak/snapshot
+    // strategy (it needs operators resting to feed the pool), so the overrides
+    // apply ONLY to `optimal` - not `current`, `sustained`, or the rotation.
+    // The machinery reads the actual rooms, so every layout (243, 252, 2/5/2)
+    // gets the treatment - the old 243-only gate died with perception.rs.
     // NATIVE-FIRST: the pool machinery (plan_optimal_economies + the bundle
     // oracle below) prices every economy from clauses. The Fiammetta-type
     // morale-swap manager is rotation logistics, not an economy: reserve one

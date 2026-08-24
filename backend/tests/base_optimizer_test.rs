@@ -7060,3 +7060,28 @@ fn dorm_comfort_adds_recovery() {
     // Best-first ordering now prefers the furnished dorm.
     assert_eq!(dorms[0].slot_id, "d0");
 }
+
+#[test]
+#[ignore]
+fn unpriced_buff_audit() {
+    use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut unpriced = 0;
+    for (id, buff) in &gd.building.buffs {
+        match registry.get(id) {
+            Some(BuffResolutionStrategy::Complex { estimated_pct }) => {
+                unpriced += 1;
+                let desc: String = buff.description.chars().take(120).collect();
+                println!("COMPLEX {id} [{}] est {estimated_pct}: {desc}", buff.room_type);
+            }
+            None => {
+                unpriced += 1;
+                println!("MISSING {id} [{}]", buff.room_type);
+            }
+            _ => {}
+        }
+    }
+    println!("TOTAL unpriced: {unpriced} of {}", gd.building.buffs.len());
+}
