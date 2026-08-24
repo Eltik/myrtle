@@ -50,6 +50,9 @@ export interface IOptimizerAPI {
      *  the sync cannot read; prices Lin-style per-slot HR skills. */
     openRecruitSlots: number;
     setOpenRecruitSlots: (value: number) => void;
+    /** Extra check-in cadence (hours) priced alongside the 6/12/24 presets. */
+    claimIntervalHours: number | undefined;
+    setClaimIntervalHours: (value: number | undefined) => void;
     viewShift: number | null;
     setViewShift: (shift: number | null) => void;
     shiftRoom: (slotId: string) => IShiftRoom | undefined;
@@ -76,9 +79,9 @@ function storageKey(uid: string): string {
     return `base-optimizer:${uid}:v2`;
 }
 
-function useEvaluation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts) {
+function useEvaluation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, claimIntervalHours?: number) {
     const settled = useDebounce(layout, 350);
-    return useQuery(evaluateLayoutQueryOptions(uid, settled, ignorePromotion, facts));
+    return useQuery(evaluateLayoutQueryOptions(uid, settled, ignorePromotion, facts, claimIntervalHours));
 }
 
 function useRotation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts) {
@@ -137,7 +140,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
 
     const presets = layoutQuery.data?.presets ?? EMPTY_PRESETS;
 
-    const evaluation = useEvaluation(uid, layout, ignorePromotion, facts);
+    const [claimIntervalHours, setClaimIntervalHours] = useState<number | undefined>(undefined);
+    const evaluation = useEvaluation(uid, layout, ignorePromotion, facts, claimIntervalHours);
 
     const rotationQuery = useRotation(uid, layout, ignorePromotion, facts);
     const rotation = rotationQuery.data ?? null;
@@ -199,6 +203,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             setIgnorePromotion,
             openRecruitSlots,
             setOpenRecruitSlots,
+            claimIntervalHours,
+            setClaimIntervalHours,
             viewShift,
             setViewShift,
             shiftRoom,
@@ -229,6 +235,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             setIgnorePromotion,
             openRecruitSlots,
             setOpenRecruitSlots,
+            claimIntervalHours,
+            setClaimIntervalHours,
             viewShift,
             shiftRoom,
             proposal,

@@ -1757,6 +1757,107 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
 /// is flagged `equivalent` and suggests no swap - the player's team is already as good.
 #[allow(clippy::too_many_arguments)]
 #[doc(hidden)]
+/// Simulate a layout's CURRENT crews with no rotation at all - the "if you
+/// never swap" picture adachurch calls the single-form sim. Every staffed room
+/// works around the clock at the efficiency the evaluate pass scored it;
+/// dormitory occupants rest as permanent residents. The timeline is omitted -
+/// the verdict, depletion events and idle hours are the point.
+pub fn static_sustainability(
+    building: &UserBuilding,
+    assignment: &BaseAssignment,
+    profiles: &[OperatorBaseProfile],
+    game_data: &GameData,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+) -> Option<SustainabilityDto> {
+    use crate::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    let efficiency_of: HashMap<&str, f64> = assignment
+        .rooms
+        .iter()
+        .map(|r| (r.slot_id.as_str(), r.total_efficiency))
+        .collect();
+    let cells: Vec<ShiftRoom> = building
+        .rooms
+        .iter()
+        .filter(|r| !r.current_operators.is_empty())
+        .map(|r| ShiftRoom {
+            slot_id: r.slot_id.clone(),
+            room_type: r.room_type.clone(),
+            formula_type: r.current_formula.clone(),
+            recommended: r.current_operators.clone(),
+            current: Vec::new(),
+            active: true,
+            efficiency: efficiency_of.get(r.slot_id.as_str()).copied(),
+            team_id: None,
+            team_label: None,
+        })
+        .collect();
+    if cells.is_empty() {
+        return None;
+    }
+    let rotation = ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: cells.clone(),
+            })
+            .collect(),
+        sustained: Vec::new(),
+        bench: Vec::new(),
+    };
+    let targeted = targeted_morale_effects(
+        &game_data.building.buffs,
+        &build_name_to_char(&game_data.operators),
+    );
+    let sim = simulate_rotation(
+        &rotation,
+        profiles,
+        building,
+        &game_data.building,
+        registry,
+        morale_drains,
+        &targeted,
+    );
+    let room_type_of = |slot_id: &str| -> String {
+        building
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == slot_id)
+            .map_or_else(|| slot_id.to_string(), |r| r.room_type.clone())
+    };
+    Some(SustainabilityDto {
+        verdict: match sim.verdict {
+            Verdict::HoldsUp => "holds_up".to_string(),
+            Verdict::Depletes => "depletes".to_string(),
+        },
+        horizon_hours: sim.horizon_hours,
+        depleted: sim
+            .depleted
+            .iter()
+            .map(|d| DepletedOperatorDto {
+                operator: assigned_operator(&d.char_id, game_data),
+                at_hours: d.at_hours,
+                room_type: room_type_of(&d.slot_id),
+            })
+            .collect(),
+        dorm_overflow: sim.dorm_overflow,
+        facilities: sim
+            .facilities
+            .iter()
+            .map(|f| FacilityOutputDto {
+                slot_id: f.slot_id.clone(),
+                room_type: f.room_type.clone(),
+                formula_type: f.formula_type.clone(),
+                lmd: f.lmd,
+                gold: f.gold,
+                exp: f.exp,
+                idle_hours: f.idle_hours,
+            })
+            .collect(),
+        timeline: Vec::new(),
+    })
+}
+
 pub fn shift_rotation_to_dto(
     rotation: &ShiftRotation,
     game_data: &GameData,

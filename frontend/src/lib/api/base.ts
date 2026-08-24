@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import { optionalSiteToken } from "./_shared.server";
-import type { IAssignedOperator, IBaseAssignment, IShiftRotation } from "./user";
+import type { IAssignedOperator, IBaseAssignment, IShiftRotation, ISustainability } from "./user";
 
 /**
  * The interactive base planner.
@@ -94,6 +94,8 @@ export interface IEvaluateResponse {
     dorms: IDorms;
     /** Check-in economics; absent when nothing produces. */
     claim?: IClaim;
+    /** The drafted crews simulated with NO rotation - "if you never swap". */
+    unrotated?: ISustainability;
 }
 
 /** How long the base runs unattended, and what each claim cadence loses. */
@@ -219,13 +221,13 @@ export interface ICatalogResponse {
 }
 
 export const evaluateLayoutFn = createServerFn({ method: "POST" })
-    .inputValidator((data: { uid: string; layout: IDraftRoom[]; ignorePromotion?: boolean; facts?: IAccountFacts; bearerToken?: string }) => data)
-    .handler(async ({ data: { uid, layout, ignorePromotion, facts, bearerToken } }) => {
+    .inputValidator((data: { uid: string; layout: IDraftRoom[]; ignorePromotion?: boolean; facts?: IAccountFacts; claimIntervalHours?: number; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, layout, ignorePromotion, facts, claimIntervalHours, bearerToken } }) => {
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/base/evaluate?uid=${encodeURIComponent(uid)}`, {
             method: "POST",
             bearerToken: token,
-            body: JSON.stringify({ layout, ignore_promotion: ignorePromotion ?? false, facts: facts ?? {} }),
+            body: JSON.stringify({ layout, ignore_promotion: ignorePromotion ?? false, facts: facts ?? {}, claim_interval_hours: claimIntervalHours ?? null }),
         });
         if (!res.ok) {
             const text = await res.text().catch(() => "");
@@ -390,10 +392,10 @@ export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], igno
     });
 }
 
-export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, bearerToken?: string) {
+export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, claimIntervalHours?: number, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, bearerToken ? "auth" : "anon"],
-        queryFn: () => evaluateLayoutFn({ data: { uid, layout, ignorePromotion, facts, bearerToken } }),
+        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, claimIntervalHours ?? 0, bearerToken ? "auth" : "anon"],
+        queryFn: () => evaluateLayoutFn({ data: { uid, layout, ignorePromotion, facts, claimIntervalHours, bearerToken } }),
         enabled: layout.length > 0,
         staleTime: 5 * 60 * 1000,
         // A draft in progress is a sequence of near-identical layouts; keeping

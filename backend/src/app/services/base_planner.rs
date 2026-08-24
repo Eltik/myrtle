@@ -61,6 +61,9 @@ pub struct DraftRoom {
 #[derive(Debug, Clone, Deserialize)]
 pub struct EvaluateRequest {
     pub layout: Vec<DraftRoom>,
+    /// Extra check-in cadence (hours) to price alongside the 6/12/24 presets.
+    #[serde(default)]
+    pub claim_interval_hours: Option<f64>,
     /// Plan with every operator's highest base skills, whether or not the
     /// player has promoted them that far. The result is a target to build
     /// toward, not a reading of the base they have today.
@@ -145,6 +148,10 @@ pub struct EvaluateResponse {
     /// claim cadence loses. `None` when nothing produces.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
+    /// The drafted crews simulated with NO rotation at all - "if you never
+    /// swap". `None` when nothing is staffed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unrotated: Option<crate::app::services::improvements::SustainabilityDto>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -643,13 +650,22 @@ pub async fn evaluate(
 
     let assignment_dto =
         base_assignment_to_dto(&assignment, &game_data, &ctx.profiles, &ctx.registry);
-    let claim = claim_of(&assignment_dto);
+    let claim = claim_of(&assignment_dto, req.claim_interval_hours);
+    let unrotated = crate::app::services::improvements::static_sustainability(
+        &building,
+        &assignment,
+        &ctx.profiles,
+        &game_data,
+        &ctx.registry,
+        &ctx.morale_drains,
+    );
     Ok(EvaluateResponse {
         power: power_of(&building, &game_data),
         sustain: sustain_of(&building, &ctx, &game_data, &live_morale),
         dorms: dorms_of(&building, &ctx, &game_data),
         assignment: assignment_dto,
         claim,
+        unrotated,
     })
 }
 
@@ -659,7 +675,7 @@ pub async fn evaluate(
 /// room's rate; the rest is produced into a full buffer and lost. Losses are
 /// per RESOURCE (trading LMD, factory gold, factory EXP) so the coupled
 /// gold→trade chain isn't double-counted into one number.
-fn claim_of(assignment: &BaseAssignmentDto) -> Option<ClaimDto> {
+fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Option<ClaimDto> {
     let fills: Vec<&crate::app::services::improvements::RoomAssignmentDto> = assignment
         .rooms
         .iter()
@@ -669,7 +685,14 @@ fn claim_of(assignment: &BaseAssignmentDto) -> Option<ClaimDto> {
         .iter()
         .filter_map(|r| r.fill_hours)
         .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))?;
-    let intervals = [6.0, 12.0, 24.0]
+    let mut cadences = vec![6.0, 12.0, 24.0];
+    if let Some(h) = custom_hours.filter(|h| h.is_finite() && *h >= 1.0 && *h <= 168.0)
+        && !cadences.iter().any(|c| (c - h).abs() < 1e-9)
+    {
+        cadences.push(h);
+        cadences.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    }
+    let intervals = cadences
         .iter()
         .map(|&hours| {
             let mut lost_lmd = 0.0;

@@ -73,6 +73,7 @@ pub struct Shift {
     pub rooms: Vec<ShiftRoom>,
 }
 
+#[derive(Clone)]
 pub struct ShiftRoom {
     pub slot_id: String,
     pub room_type: String,

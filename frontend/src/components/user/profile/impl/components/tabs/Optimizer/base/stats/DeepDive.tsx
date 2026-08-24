@@ -88,6 +88,9 @@ function productLabel(room: { room_type: string; formula_type: string | null }):
 export function DeepDive() {
     const [open, setOpen] = useState(true);
     const [cadence, setCadence] = useState("12");
+    const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
+    const periodMult = { day: 1, week: 7, month: 30, year: 365 }[period];
+    const periodLabel = { day: "/day", week: "/week", month: "/month", year: "/year" }[period];
     const [snapshot, setSnapshot] = useState<ISnapshot | null>(null);
     const api = useBaseOptimizer();
     const evaluation = api.evaluation;
@@ -103,7 +106,11 @@ export function DeepDive() {
     const rooms = evaluation.assignment.rooms.filter((r) => r.fill_hours !== undefined);
     const sustainability = api.rotation?.rotation.sustainability;
     const interval = claim?.intervals.find((i) => String(i.hours) === cadence);
-    const losses = interval ? [interval.lost_lmd_per_day >= 1 ? `−${num(interval.lost_lmd_per_day)} LMD` : null, interval.lost_gold_per_day >= 0.1 ? `−${interval.lost_gold_per_day.toFixed(1)} gold` : null, interval.lost_exp_per_day >= 1 ? `−${num(interval.lost_exp_per_day)} EXP` : null].filter(Boolean) : [];
+    const losses = interval
+        ? [interval.lost_lmd_per_day >= 1 ? `−${num(interval.lost_lmd_per_day * periodMult)} LMD` : null, interval.lost_gold_per_day >= 0.1 ? `−${(interval.lost_gold_per_day * periodMult).toFixed(1)} gold` : null, interval.lost_exp_per_day >= 1 ? `−${num(interval.lost_exp_per_day * periodMult)} EXP` : null].filter(
+              Boolean,
+          )
+        : [];
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
@@ -154,7 +161,35 @@ export function DeepDive() {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? `${losses.join(" · ")} /day` : "nothing lost"}</span>
+                                    <input
+                                        aria-label="Custom check-in cadence in hours"
+                                        className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-muted-foreground/50"
+                                        inputMode="numeric"
+                                        onChange={(e) => {
+                                            const v = Number(e.target.value);
+                                            if (Number.isFinite(v) && v >= 1 && v <= 168) {
+                                                api.setClaimIntervalHours(v);
+                                                setCadence(String(v));
+                                            } else if (e.target.value === "") {
+                                                api.setClaimIntervalHours(undefined);
+                                            }
+                                        }}
+                                        placeholder="h"
+                                    />
+                                    <ToggleGroup
+                                        aria-label="Loss period"
+                                        onValueChange={(next: string[]) => {
+                                            if (next[0]) setPeriod(next[0] as typeof period);
+                                        }}
+                                        value={[period]}
+                                    >
+                                        {(["day", "week", "month", "year"] as const).map((pp) => (
+                                            <ToggleGroupItem key={pp} size="sm" value={pp}>
+                                                {pp[0].toUpperCase()}
+                                            </ToggleGroupItem>
+                                        ))}
+                                    </ToggleGroup>
+                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? `${losses.join(" · ")} ${periodLabel}` : "nothing lost"}</span>
                                 </div>
                             </div>
                         </section>
@@ -244,6 +279,23 @@ export function DeepDive() {
                                     );
                                 })}
                             </div>
+                        </section>
+                    )}
+
+                    {evaluation.unrotated && (
+                        <section className="flex flex-col gap-1">
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Without rotating · {Math.round(evaluation.unrotated.horizon_hours / 24)} days</h3>
+                            {evaluation.unrotated.depleted.length === 0 ? (
+                                <span className="text-[11.5px] text-muted-foreground">Your stationed crews hold up even with no swaps at all.</span>
+                            ) : (
+                                <span className="text-[11.5px]">
+                                    <span className="font-semibold text-destructive">{evaluation.unrotated.depleted.length} operators run dry</span>
+                                    <span className="text-muted-foreground">
+                                        {" "}
+                                        if you never swap - first at {(evaluation.unrotated.depleted[0]?.at_hours ?? 0).toFixed(1)}h ({evaluation.unrotated.depleted[0]?.operator.name}). Rotate or lose the hours.
+                                    </span>
+                                </span>
+                            )}
                         </section>
                     )}
 
