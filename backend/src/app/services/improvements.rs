@@ -1755,12 +1755,6 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
     out
 }
 
-/// Convert a recommended rotation into its DTO, computing the per-room diff between
-/// the player's saved preset and the recommendation. A production room whose CURRENT team
-/// isn't the recommended set but scores at least as high (an exact tie on the room's objective)
-/// is flagged `equivalent` and suggests no swap - the player's team is already as good.
-#[allow(clippy::too_many_arguments)]
-#[doc(hidden)]
 /// Simulate a layout's CURRENT crews with no rotation at all - the "if you
 /// never swap" picture adachurch calls the single-form sim. Every staffed room
 /// works around the clock at the efficiency the evaluate pass scored it;
@@ -1865,6 +1859,10 @@ pub fn static_sustainability(
     })
 }
 
+/// Convert a recommended rotation into its DTO, computing the per-room diff between
+/// the player's saved preset and the recommendation. A production room whose CURRENT team
+/// isn't the recommended set but scores at least as high (an exact tie on the room's objective)
+/// is flagged `equivalent` and suggests no swap - the player's team is already as good.
 pub fn shift_rotation_to_dto(
     rotation: &ShiftRotation,
     game_data: &GameData,
