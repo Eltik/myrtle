@@ -504,6 +504,8 @@ export interface IShiftRoom {
     /** False when the room is deliberately unstaffed this shift (CC's off shift). */
     active: boolean;
     recommended: IAssignedOperator[];
+    /** Per-skill contribution breakdown for this shift's crew. */
+    ledger?: ISkillLine[];
     /** The player's saved preset for this room and shift (empty if none). */
     current: IAssignedOperator[];
     /** Operators to ADD (in the recommendation, not the current preset). */

@@ -614,6 +614,10 @@ pub struct ShiftRoomDto {
     /// The recommended crew's room efficiency % (speed incl. global bonuses), for
     /// production/power cells - lets players see how output is distributed across teams.
     pub efficiency: Option<f64>,
+    /// Per-skill contribution breakdown for THIS shift's crew (production and
+    /// Control-Center cells).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub ledger: Vec<SkillLineDto>,
     /// Stable identity of the team/squad staffing this cell - the same id spans the two
     /// consecutive shift columns a production team's 24h block covers.
     pub team_id: Option<String>,
@@ -1893,8 +1897,34 @@ pub fn shift_rotation_to_dto(
             }
         }
     }
+    // Per-shift skill ledgers: ablation marginals against the crew that
+    // actually works each shift, with that shift's own Control-Center grants.
+    let op_index_ledger = crate::core::grade::base::assignment::build_op_index(profiles);
+    let facility_counts = crate::core::grade::base::assignment::effective_facility_counts(
+        building,
+        profiles,
+        registry,
+        &game_data.building,
+    );
+    let ledger_ctx = crate::core::grade::base::skill_ledger::LedgerCtx {
+        op_index: &op_index_ledger,
+        registry,
+        building_data: &game_data.building,
+        facility_counts: &facility_counts,
+        total_dorm_levels: building.total_dorm_levels(),
+        morale_drains,
+    };
+
     let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
     for shift in &rotation.shifts {
+        let shift_cc: Vec<String> = shift
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "CONTROL" && r.active)
+            .map(|r| r.recommended.clone())
+            .unwrap_or_default();
+        let (shift_globals, shift_conditions) =
+            crate::core::grade::base::skill_ledger::grants_of(&ledger_ctx, &shift_cc);
         // An operator can physically be in only ONE room per shift. The recommended teams are
         // already a conflict-free partition, but the order-independent `equivalent` overlay can
         // surface the player's team (matched from a DIFFERENT slot) for one cell while another
@@ -2027,11 +2057,32 @@ pub fn shift_rotation_to_dto(
                 kept.extend(running.iter().cloned());
             }
 
+            let ledger = if !room.active {
+                Vec::new()
+            } else if room.room_type == "CONTROL" {
+                crate::core::grade::base::skill_ledger::control_room_ledger(
+                    &ledger_ctx,
+                    &room.recommended,
+                )
+            } else if crate::core::grade::base::util::is_production_room(&room.room_type) {
+                crate::core::grade::base::skill_ledger::production_room_ledger(
+                    &ledger_ctx,
+                    &room.recommended,
+                    &room.room_type,
+                    room.formula_type.as_deref(),
+                    &shift_cc,
+                    &shift_globals,
+                    &shift_conditions,
+                )
+            } else {
+                Vec::new()
+            };
             room_dtos.push(ShiftRoomDto {
                 slot_id: room.slot_id.clone(),
                 room_type: room.room_type.clone(),
                 formula_type: room.formula_type.clone(),
                 active: room.active,
+                ledger: ledger.iter().map(|l| skill_line_dto(l, game_data)).collect(),
                 recommended: {
                     let mut v = ops(&room.recommended);
                     for o in &mut v {

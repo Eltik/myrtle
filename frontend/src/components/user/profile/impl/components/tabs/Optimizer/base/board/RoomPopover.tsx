@@ -59,10 +59,9 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
     const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));
 
-    // The per-skill breakdown comes from the evaluation of the drafted board, so
-    // it describes the crews on display when no shift tab is active. Rotation
-    // shift crews differ per shift - no ledger is shown for them (yet).
-    const ledger = api.viewShift == null ? (scored?.ledger ?? []) : [];
+    // The per-skill breakdown for whatever crew is displayed: the shift cell's
+    // own ledger when a shift tab is active, else the evaluated draft's.
+    const ledger = api.viewShift == null ? (scored?.ledger ?? []) : (shiftRoom?.ledger ?? []);
     const lineFor = (opId: string, buffId: string) => ledger.find((l) => l.operator_id === opId && l.buff_id === buffId && !l.from_control_center);
     const ccLines = ledger.filter((l) => l.from_control_center);
 

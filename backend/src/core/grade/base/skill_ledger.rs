@@ -166,6 +166,16 @@ impl LedgerCtx<'_> {
     }
 }
 
+/// The global bonuses + conditions a fixed Control-Center crew grants -
+/// exposed so rotation cells can build per-shift ledgers against the crew
+/// that actually works their shift.
+pub(crate) fn grants_of(
+    ctx: &LedgerCtx,
+    cc_ops: &[String],
+) -> (HashMap<String, f64>, Vec<CcCondition>) {
+    ctx.cc_grants(cc_ops, None)
+}
+
 /// The breakdown for one production room (TRADING / MANUFACTURE / POWER):
 /// each crew member's same-room buffs, plus every Control-Center line that
 /// targets this room type. `global_bonuses`/`cc_conditions` must be the grants
