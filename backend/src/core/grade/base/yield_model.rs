@@ -163,7 +163,9 @@ pub fn room_fill(
     match (room_type, formula) {
         ("TRADING", _) => {
             let phases = &building_data.trading_data.phases;
-            let base = phases.get(phase.min(phases.len().checked_sub(1)?))?.order_limit;
+            let base = phases
+                .get(phase.min(phases.len().checked_sub(1)?))?
+                .order_limit;
             let capacity = (base + capacity_bonus).max(1);
             let orders_per_day = TRADING_GOLD_SOLD_PER_DAY_BASE * mult / GOLD_PER_ORDER;
             Some(RoomFill {

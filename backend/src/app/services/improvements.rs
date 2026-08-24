@@ -2086,8 +2086,7 @@ pub fn shift_rotation_to_dto(
                     .rooms
                     .iter()
                     .filter(|r| {
-                        r.active
-                            && crate::core::grade::base::util::is_production_room(&r.room_type)
+                        r.active && crate::core::grade::base::util::is_production_room(&r.room_type)
                     })
                     .map(|r| crate::core::grade::base::types::RoomAssignment {
                         room_type: r.room_type.clone(),

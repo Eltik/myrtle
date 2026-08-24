@@ -369,11 +369,7 @@ fn trainer_value(desc: &str, class: &str) -> Option<f64> {
 
 /// Top trainer picks for the declared training class: every roster operator's
 /// best TRAINING-room skill value for that class, strongest first.
-fn trainer_hints(
-    ctx: &BaseContext,
-    game_data: &GameData,
-    class: &str,
-) -> Vec<TrainerHintDto> {
+fn trainer_hints(ctx: &BaseContext, game_data: &GameData, class: &str) -> Vec<TrainerHintDto> {
     if !TRAINER_CLASSES.contains(&class) {
         return Vec::new();
     }
@@ -414,8 +410,7 @@ pub async fn save_facts(
     viewer_id: uuid::Uuid,
     facts: AccountFactsReq,
 ) -> Result<AccountFactsReq, ApiError> {
-    let value =
-        serde_json::to_value(&facts).map_err(|_| ApiError::BadRequest("facts".into()))?;
+    let value = serde_json::to_value(&facts).map_err(|_| ApiError::BadRequest("facts".into()))?;
     crate::database::queries::users::set_base_facts(&state.db, viewer_id, &value).await?;
     Ok(facts)
 }
@@ -847,7 +842,10 @@ pub async fn evaluate(
 /// room's rate; the rest is produced into a full buffer and lost. Losses are
 /// per RESOURCE (trading LMD, factory gold, factory EXP) so the coupled
 /// gold→trade chain isn't double-counted into one number.
-pub(crate) fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Option<ClaimDto> {
+pub(crate) fn claim_of(
+    assignment: &BaseAssignmentDto,
+    custom_hours: Option<f64>,
+) -> Option<ClaimDto> {
     let fills: Vec<&crate::app::services::improvements::RoomAssignmentDto> = assignment
         .rooms
         .iter()

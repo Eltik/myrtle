@@ -6,8 +6,8 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::services::base_planner::{
     AccountFactsReq, CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse,
-    OptimizeRequest, OptimizeResponse, RotationRequest, catalog, evaluate,
-    layout, optimize, rotation, save_facts,
+    OptimizeRequest, OptimizeResponse, RotationRequest, catalog, evaluate, layout, optimize,
+    rotation, save_facts,
 };
 use crate::app::state::AppState;
 use crate::database::queries::users::find_by_id;
@@ -97,7 +97,9 @@ pub async fn rotation_plan(
     let request_hash = {
         use std::hash::{Hash, Hasher};
         let mut h = std::collections::hash_map::DefaultHasher::new();
-        serde_json::to_string(&body).unwrap_or_default().hash(&mut h);
+        serde_json::to_string(&body)
+            .unwrap_or_default()
+            .hash(&mut h);
         h.finish()
     };
     let key = crate::app::cache::keys::CacheKey::BaseRotation {

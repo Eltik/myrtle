@@ -41,6 +41,22 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     if op.tag_list.iter().any(|s| s == "Robot") {
         push("robot");
     }
+    // The multi-power system: RIIC faction tags count SECONDARY affiliations
+    // too (Texas: nation lungmen, SubPower siracusa - and the game's "all
+    // Siracusa Operators" buffs reach her). MainPower mirrors the top-level
+    // ids; the dedup guard makes pushing it a harmless no-op.
+    let powers = op.main_power.iter().chain(op.sub_power.iter().flatten());
+    for power in powers {
+        for id in [&power.nation_id, &power.group_id, &power.team_id]
+            .into_iter()
+            .flatten()
+        {
+            let lower = id.to_lowercase();
+            if !lower.is_empty() && !tags.contains(&lower) {
+                tags.push(lower);
+            }
+        }
+    }
     tags
 }
 

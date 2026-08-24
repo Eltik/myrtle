@@ -47,6 +47,11 @@ enum Source {
     PeerScaled,
     /// Drained out of a resource pool.
     PoolDrain,
+    /// Granted onto this operator by an EXTERNAL source (a per-operator
+    /// Control-Center conditional, e.g. Umiri). Not the operator's own skill:
+    /// a teammate nullifier (Shamare) kills it even on the nullifier's own
+    /// row, because "contributions from other operators" means other SOURCES.
+    Granted,
 }
 
 struct Entry {
@@ -468,6 +473,33 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
+    // ── Per-operator Control-Center grants ──────────────────────────────────
+    // Umiri-style conditionals ("all Siracusa Operators assigned to Trading
+    // Posts gain +5%") buff the OPERATORS, so they enter the ledger as
+    // per-entity contributions and die under a team suppressor (Shamare
+    // cancels everything not sourced from herself) exactly like any other
+    // teammate contribution. Threshold conditionals ("...with 3 Kjerag
+    // Operators") buff the POST and stay CC-sourced (added in P5, immune to
+    // suppression, like the unconditional globals).
+    {
+        let speed_metric = Metric::speed_for_room(ev.room_type);
+        for cond in ev.cc_conditions {
+            if !cond.per_operator || cond.target_room != ev.room_type {
+                continue;
+            }
+            for (i, m) in members.iter().enumerate() {
+                if m.match_tags.iter().any(|t| t == &cond.faction_token) {
+                    entries.push(Entry {
+                        entity: i,
+                        metric: speed_metric.clone(),
+                        amount: cond.bonus_pct,
+                        source: Source::Granted,
+                    });
+                }
+            }
+        }
+    }
+
     // ── P4: suppression, strictly last ───────────────────────────────────────
     let speed_metric = Metric::speed_for_room(ev.room_type);
 
@@ -485,7 +517,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
     for s in &suppressors {
         for e in &mut entries {
-            if e.entity == s.entity {
+            // The suppressor's OWN skill survives - but an external grant
+            // landing on the suppressor's row (Umiri's per-operator CC bonus)
+            // is another operator's contribution and dies with the rest.
+            if e.entity == s.entity && e.source != Source::Granted {
                 continue;
             }
             // Under an automation wipe, speed is fully governed by the wipe
@@ -525,11 +560,13 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
-    // Faction-gated Control-Center bonuses, evaluated per room against the
-    // actual team (legacy pass-through until CC clauses land in the context).
+    // Threshold-gated Control-Center bonuses buff the POST itself, so they
+    // are added here, past suppression - CC-sourced like the unconditional
+    // globals. (Per-operator conditionals already entered the ledger above.)
     speed += ev
         .cc_conditions
         .iter()
+        .filter(|c| !c.per_operator)
         .map(|c| c.contribution(ev.room_type, &members))
         .sum::<f64>();
 

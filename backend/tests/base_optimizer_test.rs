@@ -7153,7 +7153,8 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
         .iter()
         .map(|id| profile(gd, id))
         .collect();
-    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
     let cc = asn
         .rooms
         .iter()
@@ -7197,19 +7198,6 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
             .count(),
         1
     );
-}
-
-#[test]
-#[ignore]
-fn umiri_parse_peek() {
-    let gd = load_game_data();
-    let name_to_char = build_name_to_char(&gd.operators);
-    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
-    println!("umiri => {:?}", registry.get("control_tra_limit&spd2[000]"));
-    let whitew = profile(gd, "char_140_whitew");
-    let texas = profile(gd, "char_102_texas");
-    println!("lappland tags: {:?}", whitew.match_tags);
-    println!("texas tags: {:?}", texas.match_tags);
 }
 
 /// Umiri's Famiglia Approval buffs OPERATORS, not the post: it stacks with
@@ -7271,4 +7259,41 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
     let cc = asn.rooms.iter().find(|r| r.room_type == "CONTROL").unwrap();
     let umiri_cc = cc.ledger.iter().find(|l| l.buff_id == UMIRI_BUFF).unwrap();
     assert_eq!(umiri_cc.disposition, LineDisposition::Inactive);
+
+    // Texas counts too - her SubPower is siracusa even though her nation is
+    // lungmen (the game's multi-affiliation system). Two Siracusans = +10.
+    let asn = build(vec!["char_140_whitew".into(), "char_102_texas".into()]);
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    let umiri_tp = tp
+        .ledger
+        .iter()
+        .find(|l| l.buff_id == UMIRI_BUFF && l.from_control_center)
+        .expect("umiri line");
+    assert!(
+        (umiri_tp.speed_pct - 10.0).abs() < 1e-6,
+        "two Siracusans = +10, got {}",
+        umiri_tp.speed_pct
+    );
+
+    // Shamare cancels contributions sourced from her TEAMMATES - including
+    // Umiri's per-operator grant to Lappland - while CC-sourced post-wide
+    // globals (Amiya's +7) survive.
+    let asn = build(vec!["char_254_vodfox".into(), "char_140_whitew".into()]);
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    let umiri_tp = tp
+        .ledger
+        .iter()
+        .find(|l| l.buff_id == UMIRI_BUFF && l.from_control_center)
+        .expect("umiri line");
+    assert!(
+        umiri_tp.speed_pct.abs() < 1e-6,
+        "Shamare cancels the per-operator grant, got {}",
+        umiri_tp.speed_pct
+    );
+    let amiya_tp = tp
+        .ledger
+        .iter()
+        .find(|l| l.from_control_center && l.buff_id != UMIRI_BUFF && l.speed_pct > 0.0)
+        .expect("amiya survives shamare");
+    assert!((amiya_tp.speed_pct - 7.0).abs() < 1e-6);
 }

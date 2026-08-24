@@ -149,6 +149,8 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         activity_potential_item_id: raw.activity_potential_item_id.clone(),
         classic_potential_item_id: raw.classic_potential_item_id.clone(),
         nation_id: raw.nation_id.clone().unwrap_or_default(),
+        main_power: raw.main_power.clone(),
+        sub_power: raw.sub_power.clone(),
         group_id: raw.group_id.clone(),
         team_id: raw.team_id.clone(),
         display_number: raw.display_number.clone().unwrap_or_default(),

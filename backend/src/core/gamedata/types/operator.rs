@@ -394,6 +394,10 @@ pub struct RawOperator {
     #[serde(default)]
     pub team_id: Option<String>,
     #[serde(default)]
+    pub main_power: Option<PowerAffiliation>,
+    #[serde(default)]
+    pub sub_power: Option<Vec<PowerAffiliation>>,
+    #[serde(default)]
     pub display_number: Option<String>,
     pub appellation: String,
     #[serde(default)]
@@ -464,6 +468,20 @@ pub struct EnrichedSkill {
     pub static_data: Option<SkillStatic>,
 }
 
+/// One power/faction affiliation (the `MainPower`/`SubPower` shape). Used by
+/// both the PascalCase raw character table and the camelCase enriched
+/// operators file, so every field aliases both casings.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PowerAffiliation {
+    #[serde(default, alias = "NationId")]
+    pub nation_id: Option<String>,
+    #[serde(default, alias = "GroupId")]
+    pub group_id: Option<String>,
+    #[serde(default, alias = "TeamId")]
+    pub team_id: Option<String>,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Operator {
@@ -478,6 +496,14 @@ pub struct Operator {
     pub nation_id: String,
     pub group_id: Option<String>,
     pub team_id: Option<String>,
+    /// Primary affiliation (mirrors the top-level nation/group ids).
+    #[serde(default)]
+    pub main_power: Option<PowerAffiliation>,
+    /// Secondary affiliations - the game's multi-power system. RIIC faction
+    /// tags COUNT these: Texas is nation `lungmen` but SubPower `siracusa`,
+    /// and Umiri's "all Siracusa Operators" buff reaches her in-game.
+    #[serde(default)]
+    pub sub_power: Option<Vec<PowerAffiliation>>,
     pub display_number: String,
     pub appellation: String,
     pub position: OperatorPosition,

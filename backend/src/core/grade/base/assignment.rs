@@ -1639,7 +1639,6 @@ pub fn compute_current_assignment(
         morale_drains,
     };
 
-
     let mut total = 0.0;
     for room in building
         .rooms
