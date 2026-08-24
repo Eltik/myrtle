@@ -411,7 +411,7 @@ export const saveBaseFactsFn = createServerFn({ method: "POST" })
 
 export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["base", "rotation", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, bearerToken ? "auth" : "anon"],
+        queryKey: ["base", "rotation", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, facts?.training_class ?? "", bearerToken ? "auth" : "anon"],
         queryFn: () => rotationPlanFn({ data: { uid, layout, ignorePromotion, facts, bearerToken } }),
         enabled: layout.length > 0,
         staleTime: 5 * 60 * 1000,
@@ -421,7 +421,7 @@ export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], igno
 
 export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, claimIntervalHours?: number, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, claimIntervalHours ?? 0, bearerToken ? "auth" : "anon"],
+        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, facts?.training_class ?? "", claimIntervalHours ?? 0, bearerToken ? "auth" : "anon"],
         queryFn: () => evaluateLayoutFn({ data: { uid, layout, ignorePromotion, facts, claimIntervalHours, bearerToken } }),
         enabled: layout.length > 0,
         staleTime: 5 * 60 * 1000,
