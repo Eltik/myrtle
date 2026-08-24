@@ -1656,6 +1656,21 @@ fn collect_dynchar_bg_quads(
         } else {
             None
         };
+        // A/B PROBE (`DYNCHAR_CROSSROOT_UNGATED=0`): an idle-root layer inside an ENTRANCE that
+        // has NO authored transform beat has nothing to sequence it — `cross_root_reveal` is
+        // None, so `cross_from` above stays None and the layer draws from t=0 for the whole
+        // cinematic. The game activates the idle prefab at the HAND-OFF, not before, so those
+        // layers arguably should not be in the entrance at all. Only two skins are affected
+        // (Mlynar 3 layers, pasngr 5); every other entrance ships a transform beat.
+        if is_entrance
+            && cross_root_reveal.is_none()
+            && std::env::var("DYNCHAR_CROSSROOT_UNGATED").as_deref() == Ok("0")
+            && let (Some(own), Some(root)) = (own_root, host.prefab_root_of_go(all_objects, go_pid))
+            && root != own
+            && skeleton_roots.contains(&root)
+        {
+            continue;
+        }
         // Skip renderers under a state-gated (inactive) group. The prefab keeps
         // "Start Only Effects" / "Interact Only Effects" / "Special Only Effects"
         // groups m_IsActive=0 by default (the game activates them only during
