@@ -39,6 +39,8 @@ export interface IOptimizerAPI {
     evaluationError: Error | null;
 
     rotation: IRotationResponse | null;
+    /** True while the rotation plan is still being computed. */
+    rotationLoading: boolean;
 
     /** Plan with every operator's highest base skills, promoted or not. */
     ignorePromotion: boolean;
@@ -128,6 +130,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
 
     const rotationQuery = useRotation(uid, layout, ignorePromotion, facts);
     const rotation = rotationQuery.data ?? null;
+    const rotationLoading = rotationQuery.isPending;
 
     const shiftCount = rotation?.shift_count ?? catalogQuery.data?.shift_count ?? 0;
     const [viewShift, setViewShift] = useState<number | null>(null);
@@ -180,6 +183,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             evaluating: evaluation.isFetching,
             evaluationError: evaluation.error,
             rotation,
+            rotationLoading,
             ignorePromotion,
             setIgnorePromotion,
             openRecruitSlots,
@@ -208,6 +212,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             evaluation.isFetching,
             evaluation.error,
             rotation,
+            rotationLoading,
             rotationQuery.error,
             ignorePromotion,
             setIgnorePromotion,

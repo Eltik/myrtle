@@ -110,10 +110,15 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 <div className={`ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5 ${benched.has(op.id) ? "opacity-60" : ""}`}>
                                     {op.skills.map((skill) => {
                                         const line = lineFor(op.id, skill.buffId);
+                                        // A row with no ledger line, for an operator the ledger DOES
+                                        // know, is a superseded lower tier: the buff isn't in the
+                                        // operator's live kit (a higher-tier skill replaced it).
+                                        const replaced = !line && ledger.some((l) => l.operator_id === op.id && !l.from_control_center);
                                         return (
-                                            <div className="flex items-start justify-between gap-2" key={skill.buffId}>
+                                            <div className={cn("flex items-start justify-between gap-2", replaced && "opacity-40")} key={skill.buffId}>
                                                 <BaseSkill skill={skill} />
                                                 {line && <LedgerChip line={line} />}
+                                                {replaced && <span className="shrink-0 text-[9px] text-muted-foreground uppercase tracking-wider">replaced</span>}
                                             </div>
                                         );
                                     })}
@@ -122,6 +127,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                         </div>
                     ))}
                     {vacancies > 0 && <p className="text-[11px] text-muted-foreground">{vacancies === tile.seats ? "Nobody is working here." : `${vacancies} seat${vacancies === 1 ? "" : "s"} open.`}</p>}
+                    {ledger.length > 0 && <p className="text-[10px] text-muted-foreground/70 leading-snug">Values are marginals - what this room loses if that one skill is removed. Coupled skills overlap, so they don&rsquo;t sum to the room total.</p>}
                     {ccLines.length > 0 && (
                         <div className="flex flex-col gap-1 rounded-md border border-border/50 bg-muted/10 px-2 py-1.5">
                             <span className="text-[9px] text-muted-foreground uppercase tracking-wider">From the Control Center</span>

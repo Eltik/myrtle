@@ -7,6 +7,7 @@ import type { IEvaluateResponse } from "#/lib/api/base";
 import { roomLabel } from "#/lib/base/catalog";
 import { cn } from "#/lib/utils";
 import { useBaseOptimizer } from "../base-context";
+import { TileTooltip } from "../board/tile/components/TileTooltip";
 
 const num = (value: number) => Math.round(value).toLocaleString();
 
@@ -116,7 +117,12 @@ export function DeepDive() {
                                     <span className="text-[12px]">
                                         Log in before <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours)}</span> to lose nothing
                                     </span>
-                                    <span className="text-[11px] text-muted-foreground">First room stalls {hoursLabel(claim.next_full_hours)} after a claim - buffers below.</span>
+                                    <span className="text-[11px] text-muted-foreground">
+                                        First room stalls {hoursLabel(claim.next_full_hours)} after a claim - buffers below.{" "}
+                                        <TileTooltip label={<span className="block max-w-64">Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown - never earlier. Trading posts are assumed gold-supplied.</span>}>
+                                            <span className="cursor-help underline decoration-dotted underline-offset-2">conservative</span>
+                                        </TileTooltip>
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <ToggleGroup
@@ -199,6 +205,13 @@ export function DeepDive() {
                             <span className="text-[11.5px] text-muted-foreground">Snapshot the current numbers, then edit the board or run the optimizer - the difference tracks live.</span>
                         )}
                     </section>
+
+                    {api.rotationLoading && !sustainability && (
+                        <section className="flex flex-col gap-1">
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Simulated totals &amp; rotation events</h3>
+                            <span className="animate-pulse text-[11.5px] text-muted-foreground">Simulating the rotation - this is the slow part…</span>
+                        </section>
+                    )}
 
                     {sustainability?.facilities && sustainability.facilities.length > 0 && (
                         <section className="flex flex-col gap-1.5">
