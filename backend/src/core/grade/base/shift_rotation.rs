@@ -766,10 +766,35 @@ fn rotation_core(
             }
         });
         for id in heavy {
-            if let Some(j) = cc2
+            // Among the sustaining Squad-2 members, promote the one whose move
+            // WASTES the least value: score = what they'd add on top of Squad 1
+            // minus what Squad 2 loses without them. A "+7% trading" next to
+            // Squad 1's same-family +7% scores negative, so a plain filler
+            // (0 - 0) is preferred over stranding a value pick.
+            let best = cc2
                 .iter()
-                .position(|c| !is_pin(c) && sustains(c) && !cc1.contains(c))
-            {
+                .enumerate()
+                .filter(|(_, c)| !is_pin(c) && sustains(c) && !cc1.contains(*c))
+                .map(|(j, c)| {
+                    let gain = super::assignment::cc_marginal_over(
+                        &cc1,
+                        c,
+                        &op_index,
+                        registry,
+                        building_data,
+                    );
+                    let loss = super::assignment::cc_marginal_over(
+                        &cc2,
+                        c,
+                        &op_index,
+                        registry,
+                        building_data,
+                    );
+                    (j, gain - loss)
+                })
+                .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(j, _)| j);
+            if let Some(j) = best {
                 cc1.push(cc2[j].clone());
                 cc2[j] = id;
             } else if !cc2.contains(&id) && (cc2.len() as i32) < cc_plan.control_slots {

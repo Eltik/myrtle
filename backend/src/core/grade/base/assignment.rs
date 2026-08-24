@@ -2170,7 +2170,7 @@ pub(crate) struct CcBonusAccumulator {
 impl CcBonusAccumulator {
     /// The marginal flat gain from adding `bonuses` - a stacking buff always counts
     /// fully; a non-stacking one counts only what it exceeds its family's strongest.
-    fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
+    pub(crate) fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
         bonuses
             .iter()
             .map(|b| {
@@ -2295,6 +2295,31 @@ pub(crate) fn cc_bonuses(
         }
     }
     out
+}
+
+/// The flat Control-Center value `candidate` adds ON TOP of `crew`'s bonuses:
+/// duplicates of a non-stacking family collapse to 0, so a second "+7% all
+/// Trading Posts" reads as the dead weight it is. Used by the rotation's
+/// heavy-drain swap to avoid parking a value pick next to its own duplicate.
+pub(crate) fn cc_marginal_over(
+    crew: &[String],
+    candidate_id: &str,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    let mut acc = CcBonusAccumulator::default();
+    for id in crew {
+        if id == candidate_id {
+            continue;
+        }
+        if let Some(op) = op_index.get(id.as_str()) {
+            acc.add(&cc_bonuses(op, registry, building_data));
+        }
+    }
+    op_index
+        .get(candidate_id)
+        .map_or(0.0, |op| acc.marginal(&cc_bonuses(op, registry, building_data)))
 }
 
 /// Can the roster ever satisfy a conditional CC buff's gate? `SilverAsh`'s "+10% to
