@@ -200,6 +200,24 @@ export function DeepDive() {
                         )}
                     </section>
 
+                    {sustainability?.facilities && sustainability.facilities.length > 0 && (
+                        <section className="flex flex-col gap-1.5">
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Simulated totals · {Math.round(sustainability.horizon_hours / 24)} days under the rotation</h3>
+                            <div className="flex flex-col divide-y divide-border/60">
+                                {sustainability.facilities.map((f) => {
+                                    const produced = f.room_type === "TRADING" ? `${num(f.lmd)} LMD` : f.formula_type === "F_GOLD" ? `${f.gold.toFixed(1)} gold` : f.formula_type === "F_EXP" ? `${num(f.exp)} EXP` : "-";
+                                    return (
+                                        <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={f.slot_id}>
+                                            <span className="min-w-0 flex-1 truncate">{roomLabel(f.room_type, api.catalog)}</span>
+                                            <span className="font-mono tabular-nums">{produced}</span>
+                                            <span className={cn("w-24 text-right font-mono tabular-nums", f.idle_hours > 0.05 ? "text-destructive" : "text-muted-foreground")}>{f.idle_hours > 0.05 ? `${f.idle_hours.toFixed(1)}h idle` : "no idle"}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
                     {sustainability && (
                         <section className="flex flex-col gap-1.5">
                             <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Rotation events · {Math.round(sustainability.horizon_hours / 24)} simulated days</h3>

@@ -536,6 +536,24 @@ pub struct SustainabilityDto {
     /// Every simulated operator's morale over the week, sampled at 12h block
     /// boundaries - the "morale over time" chart. Most-at-risk first.
     pub timeline: Vec<MoraleTimelineDto>,
+    /// Per-facility simulated totals over the horizon, with lost hours (dark
+    /// shifts + post-depletion time). Absent on older payloads.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub facilities: Vec<FacilityOutputDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FacilityOutputDto {
+    pub slot_id: String,
+    pub room_type: String,
+    pub formula_type: Option<String>,
+    /// Simulated totals over the horizon, in the room's own resources.
+    pub lmd: f64,
+    pub gold: f64,
+    pub exp: f64,
+    /// Hours of lost work: shifts the room rested dark plus the remainder of
+    /// blocks after its crew ran dry.
+    pub idle_hours: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1957,6 +1975,19 @@ pub fn shift_rotation_to_dto(
             })
             .collect(),
         dorm_overflow: sim.dorm_overflow,
+        facilities: sim
+            .facilities
+            .iter()
+            .map(|f| FacilityOutputDto {
+                slot_id: f.slot_id.clone(),
+                room_type: f.room_type.clone(),
+                formula_type: f.formula_type.clone(),
+                lmd: f.lmd,
+                gold: f.gold,
+                exp: f.exp,
+                idle_hours: f.idle_hours,
+            })
+            .collect(),
         timeline: {
             let mut rows: Vec<MoraleTimelineDto> = sim
                 .timeline

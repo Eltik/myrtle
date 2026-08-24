@@ -63,6 +63,26 @@ pub struct SustainabilityReport {
     /// Every simulated operator's morale over the horizon - the data behind a
     /// "morale over time" chart.
     pub timeline: Vec<OperatorMoraleTimeline>,
+    /// Per-facility production totals and lost hours over the horizon.
+    pub facilities: Vec<FacilityOutput>,
+}
+
+/// One production room's simulated totals over the horizon. Each 12h block
+/// contributes `rate x mean crew alive-fraction`: an operator's buffs stop
+/// the moment their bar empties, so the room's output is scaled by how much
+/// of the block its crew actually had morale. `idle_hours` counts the lost
+/// time - dark shifts (the cell rests unstaffed) plus the post-depletion
+/// remainder of working blocks.
+#[derive(Debug, Clone)]
+pub struct FacilityOutput {
+    pub slot_id: String,
+    pub room_type: String,
+    pub formula_type: Option<String>,
+    /// Simulated totals over the horizon, in each room's own resource.
+    pub lmd: f64,
+    pub gold: f64,
+    pub exp: f64,
+    pub idle_hours: f64,
 }
 
 /// One operator's simulated morale, sampled at every 12h block boundary
@@ -389,10 +409,22 @@ pub fn simulate_rotation(
         .map(|id| (id.clone(), vec![MORALE_MAX]))
         .collect();
 
+    // Room levels, for converting a cell's efficiency into a resource rate.
+    let level_of: HashMap<&str, i32> = building
+        .rooms
+        .iter()
+        .map(|r| (r.slot_id.as_str(), r.level))
+        .collect();
+    let mut facility_acc: HashMap<String, FacilityOutput> = HashMap::new();
+
     let blocks = (SIM_HORIZON_HOURS / SHIFT_HOURS) as usize;
     for block in 0..blocks {
         let shift = block % 3;
         let t0 = block as f64 * SHIFT_HOURS;
+
+        // How much of this block each worker had morale for (1.0 = the whole
+        // block) - the fraction of the block their buffs were live.
+        let mut alive_frac: HashMap<&str, f64> = HashMap::new();
 
         // Workers drain. Running dry STRICTLY inside a block is a depletion;
         // landing on exactly zero at the block boundary is the intended rhythm
@@ -423,6 +455,7 @@ pub fn simulate_rotation(
             let m = morale.get_mut(id).expect("scheduled op has morale");
             let before = *m;
             *m = (before - drain * SHIFT_HOURS).max(0.0);
+            alive_frac.insert(id.as_str(), (before / (drain * SHIFT_HOURS)).min(1.0));
             if before < drain * SHIFT_HOURS - EPS && !depleted.iter().any(|d| &d.char_id == id) {
                 depleted.push(DepletedOperator {
                     char_id: id.clone(),
@@ -430,6 +463,58 @@ pub fn simulate_rotation(
                     slot_id: slot.clone(),
                 });
             }
+        }
+
+        // Per-facility production this block: rate x mean crew alive-fraction.
+        // A dark cell (the room rests unstaffed this shift) is fully idle; a
+        // working crew that runs dry mid-block idles for the remainder.
+        // (A rotation can carry fewer than 3 shifts in synthetic fixtures -
+        // a missing shift simply contributes nothing.)
+        for room in rotation
+            .shifts
+            .get(shift)
+            .map(|s| s.rooms.as_slice())
+            .unwrap_or_default()
+            .iter()
+            .filter(|r| super::util::is_production_room(&r.room_type))
+        {
+            let acc = facility_acc
+                .entry(room.slot_id.clone())
+                .or_insert_with(|| FacilityOutput {
+                    slot_id: room.slot_id.clone(),
+                    room_type: room.room_type.clone(),
+                    formula_type: room.formula_type.clone(),
+                    lmd: 0.0,
+                    gold: 0.0,
+                    exp: 0.0,
+                    idle_hours: 0.0,
+                });
+            if !room.active || room.recommended.is_empty() {
+                acc.idle_hours += SHIFT_HOURS;
+                continue;
+            }
+            #[allow(clippy::cast_precision_loss)]
+            let crew_frac = room
+                .recommended
+                .iter()
+                // 24/7-sustained and resident operators aren't in `schedules`;
+                // their bars are held full by definition.
+                .map(|id| alive_frac.get(id.as_str()).copied().unwrap_or(1.0))
+                .sum::<f64>()
+                / room.recommended.len() as f64;
+            let level = level_of.get(room.slot_id.as_str()).copied().unwrap_or(1);
+            let y = super::yield_model::room_yield(
+                &room.room_type,
+                room.formula_type.as_deref(),
+                level,
+                room.efficiency.unwrap_or(0.0),
+                0.0,
+            );
+            let day_frac = SHIFT_HOURS / 24.0 * crew_frac;
+            acc.lmd += y.lmd_per_day * day_frac;
+            acc.gold += y.gold_per_day * day_frac;
+            acc.exp += y.exp_per_day * day_frac;
+            acc.idle_hours += SHIFT_HOURS * (1.0 - crew_frac);
         }
 
         // Resters recover lowest-morale first, filling the BEST dorm's free
@@ -541,6 +626,8 @@ pub fn simulate_rotation(
             .partial_cmp(&b.at_hours)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+    let mut facilities: Vec<FacilityOutput> = facility_acc.into_values().collect();
+    facilities.sort_by(|a, b| a.slot_id.cmp(&b.slot_id));
     SustainabilityReport {
         verdict: if depleted.is_empty() {
             Verdict::HoldsUp
@@ -551,5 +638,6 @@ pub fn simulate_rotation(
         depleted,
         dorm_overflow,
         timeline,
+        facilities,
     }
 }

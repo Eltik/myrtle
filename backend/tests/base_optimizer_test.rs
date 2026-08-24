@@ -6811,6 +6811,31 @@ fn planner_probe() {
         }
     }
     println!("PROBE rotation bench {:?}", rot.bench);
+    let targeted = backend::core::grade::base::buff_registry::targeted_morale_effects(
+        &gd.building.buffs,
+        &name_to_char,
+    );
+    let sim = backend::core::grade::base::sustain_sim::simulate_rotation(
+        &rot,
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &targeted,
+    );
+    for f in &sim.facilities {
+        println!(
+            "SIM {} {:12} {:6} lmd {:8.0} gold {:6.1} exp {:8.0} idle {:5.1}h",
+            f.slot_id,
+            f.room_type,
+            f.formula_type.as_deref().unwrap_or("-"),
+            f.lmd,
+            f.gold,
+            f.exp,
+            f.idle_hours
+        );
+    }
     println!("PROBE rotation done");
 }
 
@@ -6888,6 +6913,80 @@ fn ledger_probe_registry_peek() {
     for id in ["trade_ord_limit&cost_P[001]", "trade_ord_limit&cost_P[000]"] {
         println!("{id} => {:?}", registry.get(id));
     }
+}
+
+/// The sim's per-facility totals: a room dark two of three shifts logs 2/3 of
+/// the horizon as idle and produces only for its staffed blocks; a fully
+/// staffed room logs none.
+#[test]
+fn sim_facility_totals_count_dark_shifts_as_idle() {
+    use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
+    use backend::core::grade::base::sustain_sim::simulate_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let targeted = backend::core::grade::base::buff_registry::targeted_morale_effects(
+        &gd.building.buffs,
+        &name_to_char,
+    );
+    const BODY: &str = "char_103_angel";
+    let rotation = ShiftRotation {
+        shifts: (1..=3)
+            .map(|index| Shift {
+                index,
+                rooms: vec![ShiftRoom {
+                    slot_id: "tp".into(),
+                    room_type: "TRADING".into(),
+                    formula_type: None,
+                    recommended: if index == 1 {
+                        vec![BODY.to_string()]
+                    } else {
+                        Vec::new()
+                    },
+                    current: Vec::new(),
+                    active: index == 1,
+                    efficiency: Some(35.0),
+                    team_id: None,
+                    team_label: None,
+                }],
+            })
+            .collect(),
+        sustained: Vec::new(),
+        bench: Vec::new(),
+    };
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
+    };
+    let profiles = vec![profile(gd, BODY)];
+    let sim = simulate_rotation(
+        &rotation,
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &targeted,
+    );
+    let tp = sim
+        .facilities
+        .iter()
+        .find(|f| f.slot_id == "tp")
+        .expect("trading post accounted");
+    // Dark two of three shifts: every block whose shift isn't shift 1 is
+    // idle. The horizon isn't an exact multiple of the 3-shift cycle, so
+    // count blocks rather than assuming a clean 2/3.
+    let total_blocks = (sim.horizon_hours / 12.0) as usize;
+    let staffed_blocks = total_blocks.div_ceil(3);
+    #[allow(clippy::cast_precision_loss)]
+    let expected_idle = (total_blocks - staffed_blocks) as f64 * 12.0;
+    assert!(
+        (tp.idle_hours - expected_idle).abs() < 1e-6,
+        "idle {} vs expected {expected_idle}",
+        tp.idle_hours
+    );
+    // Produces only while staffed, never zero, and no phantom other resources.
+    assert!(tp.lmd > 0.0);
+    assert!(tp.gold.abs() < 1e-9 && tp.exp.abs() < 1e-9);
 }
 
 /// Account facts re-price player-state-gated skills the sync cannot read:

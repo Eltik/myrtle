@@ -559,6 +559,20 @@ export interface ISustainability {
     /** Every simulated operator's morale over the week, sampled at 12h block
      *  boundaries. Most-at-risk (lowest week-end bar) first. */
     timeline: IMoraleTimeline[];
+    /** Per-facility simulated totals over the horizon, with lost hours. */
+    facilities?: IFacilityOutput[];
+}
+
+/** One production room's simulated totals over the sim horizon. */
+export interface IFacilityOutput {
+    slot_id: string;
+    room_type: string;
+    formula_type: string | null;
+    lmd: number;
+    gold: number;
+    exp: number;
+    /** Hours of lost work: dark shifts plus post-depletion time. */
+    idle_hours: number;
 }
 
 export interface IMoraleTimeline {
