@@ -242,9 +242,9 @@ pub(crate) fn production_room_ledger(
             if l.bonus.room != room_type {
                 continue;
             }
-            let (value, disposition) = if l.bonus.stacks {
-                (l.bonus.bonus, LineDisposition::Contributes)
-            } else if winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i) {
+            let claims = l.bonus.stacks
+                || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
+            let (value, disposition) = if claims {
                 (l.bonus.bonus, LineDisposition::Contributes)
             } else {
                 (0.0, LineDisposition::Covered)
@@ -383,11 +383,11 @@ pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<Led
     // globals are credited on their target rooms, not here.
     let (lines, winners) = cc_bonus_lines(ctx, cc_ops);
     for (i, l) in lines.iter().enumerate() {
+        let claims = l.bonus.stacks
+            || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
         let (value, disposition) = if l.bonus.conditional.is_some() {
             (0.0, LineDisposition::Inactive)
-        } else if l.bonus.stacks {
-            (l.bonus.bonus, LineDisposition::Contributes)
-        } else if winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i) {
+        } else if claims {
             (l.bonus.bonus, LineDisposition::Contributes)
         } else {
             (0.0, LineDisposition::Covered)
