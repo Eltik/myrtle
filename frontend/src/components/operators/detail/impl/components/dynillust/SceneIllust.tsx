@@ -846,6 +846,22 @@ function fadeParam(name: string, dflt: number): number {
  *  bit-identical. `?fadein=` still sweeps it. */
 const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
 /** Seconds the fade holds at full before lifting (covers the idle swap). `?fadehold=`. */
+/** How far from the TRANSFORM beat toward the authored `duration` the settled-ground swap fires,
+ *  as a fraction of that gap. 0 = at the transform (the behaviour this replaced).
+ *
+ *  ⚠️ This is a TRADE, shipped knowingly, not a derived anchor — one does not exist in the data.
+ *  The two skins with settled-ground exposure have their true ground events on OPPOSITE sides of
+ *  `duration` (Muelsyse 3.23s before, Whislash-alter 0.10s after), so no monotone function of
+ *  transform/duration/clipStop yields both. Ruled out by measurement: the fade ramp start (past
+ *  mue's last beat, degrades to off, 10.756 -> 16.372), `duration` itself (same), splitting the
+ *  swap from the gap-fill removal (coupled — mue with both off is 18.166, worse than either), and
+ *  a post-process-driven signal (whitw2's clip binds `pp`; mue's bundle has none).
+ *
+ *  At 0.7: whitw2 41.861 -> 37.731 (r .627 -> .736), mue 10.756 -> 11.515, nothing else moves.
+ *  🔑 mue's preference for 0 is COMPENSATION, not evidence the transform anchor is right: her own
+ *  true event is f≈0.538 and she scores 11.515 there too, i.e. WORSE than with a ground that turns
+ *  3.8s early. So this trades a real defect for a compensating artifact. `?settledfrac=` sweeps it. */
+const SETTLED_GROUND_FRAC = 0.7;
 const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
 /** Seconds spent lifting the fade once the idle is live - Mlynar's capture is fully white at
  *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
@@ -1998,8 +2014,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // REGRESSES 11.616 -> 11.711 because whitw2 is not in that eight. No other skin is
                 // affected either way. Default stays 0 — shipping a 1-parameter fit across two
                 // skins with opposed preferences is the overfitting this project keeps retracting.
-                const sgFrac = typeof window === "undefined" ? 0 : (Number(new URLSearchParams(window.location.search).get("settledfrac")) || 0);
-                const sgAt = efd.transform != null && sgFrac > 0 && efd.duration != null
+                // ⚠️ Read the parameter, do not coerce: `?settledfrac=0` is a MEANINGFUL value
+                // (fire at the transform, the pre-2026-08-24 behaviour) and a `|| 0` fallback
+                // would silently turn it into the default.
+                const sgParam = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("settledfrac");
+                const sgRaw = sgParam == null ? SETTLED_GROUND_FRAC : Number(sgParam);
+                const sgFrac = Number.isFinite(sgRaw) && sgRaw >= 0 ? sgRaw : SETTLED_GROUND_FRAC;
+                const sgAt = efd.transform != null && efd.duration != null
                     ? efd.transform + sgFrac * Math.max(0, efd.duration - efd.transform)
                     : efd.transform;
                 if (settledGroundOn() && !settledRef.current && sgAt != null && efd.elapsed >= sgAt) {
