@@ -3657,8 +3657,33 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // ⚠️ MADC cannot see ANY of this - every scored beat lands before the hand-off.
                 const settleBasis = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("settlebasis") ?? "");
                 const settleBox = settleBasis === "wide" ? main.authoredDisplayBounds : settleBasis === "tight" ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : (main.previewBounds ?? main.authoredTightBounds ?? main.authoredDisplayBounds);
-                const gameFrame = settleBox ?? main.bounds;
-                const openTight = main.authoredTightBounds; // the game's `_adjustes[1]`, else null
+                // DIAGNOSTIC (`?settlescale=`): multiply the SETTLED frame extent about its own
+                // centre — the twin of `?camscale=`, which only reaches the entrance camera. The
+                // settled frame is `bodyFrameBox(cameraSizePx * PREVIEW_CAM_FRAC)`, i.e. sized
+                // from `cameraSizePx` but CENTRED ON THE BODY, so a skin whose backdrop is not
+                // centred on its character can frame off the art. Exists so "what extent does the
+                // game actually settle at" is a measurement rather than an argument. Inert at 1.
+                const settleScaleRaw = typeof window === "undefined" ? Number.NaN : parseFloat(new URLSearchParams(window.location.search).get("settlescale") ?? "");
+                const settleScale = Number.isFinite(settleScaleRaw) && settleScaleRaw > 0 ? settleScaleRaw : 1;
+                const scaledSettleBox =
+                    settleBox && settleScale !== 1
+                        ? {
+                              x: settleBox.x + (settleBox.width * (1 - settleScale)) / 2,
+                              y: settleBox.y + (settleBox.height * (1 - settleScale)) / 2,
+                              width: settleBox.width * settleScale,
+                              height: settleBox.height * settleScale,
+                          }
+                        : settleBox;
+                const gameFrame = scaledSettleBox ?? main.bounds;
+                const openTight =
+                    main.authoredTightBounds && settleScale !== 1
+                        ? {
+                              x: main.authoredTightBounds.x + (main.authoredTightBounds.width * (1 - settleScale)) / 2,
+                              y: main.authoredTightBounds.y + (main.authoredTightBounds.height * (1 - settleScale)) / 2,
+                              width: main.authoredTightBounds.width * settleScale,
+                              height: main.authoredTightBounds.height * settleScale,
+                          }
+                        : main.authoredTightBounds; // the game's `_adjustes[1]`, else null
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
                 // When we arrive from the `_Start` cinematic, the settled idle continues the
