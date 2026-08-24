@@ -865,6 +865,33 @@ const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
  *  ⚠️ Both exposed skins share transform 13.0, so "transform + lead" and "absolute 14.5" are not
  *  yet distinguishable — a third exposed skin would separate them. `?settledlead=` sweeps it. */
 const SETTLED_GROUND_LEAD = 1.5;
+
+/** Seconds over which the settled ground FADES IN, ending at the lead time. 0 = switch instantly.
+ *
+ *  🔑 The RAMP is data-justified, not fitted: both captures show the ground ramp rather than
+ *  switch. mue's ground region reads 167 @12 / 175 @13 / 183 @14.5 / 203 @15 / 224 @17, and at
+ *  whitw2's t=13.5 the game reads 151.6 where our dark ground gives 99.3 and our white 200 — it
+ *  is MIDWAY, which no step can produce.
+ *
+ *  ⚠️ The DURATION is pinned on whitw2 alone, because she is the only reference whose beats fall
+ *  inside the ramp window; mue (10.756) and kalts (31.303) are BIT-IDENTICAL at every value tried,
+ *  and no other skin has settled-ground exposure. Swept: 0 37.731 · 0.50 36.533 · 0.60 34.633 ·
+ *  0.65 33.934 · **0.70 33.431** · 0.80 34.215 · 1.00 35.464. Interior minimum, bracketed.
+ *  ⚠️ `r` declines gently across the sweep (.736 -> .717 at the optimum), so this is not the
+ *  MADC-and-r-agree case a TRIM re-fit demands — it is accepted because the mechanism is measured
+ *  in the captures independently of the score. `?settledramp=` sweeps it. */
+const SETTLED_GROUND_RAMP = 0.7;
+
+function settledGroundRamp(): number {
+    if (typeof window === "undefined") return SETTLED_GROUND_RAMP;
+    // ⚠️ Read the parameter, do not coerce. `Number(null)` is 0, which is finite and >= 0, so a
+    // missing param would silently return 0 — the same trap the settled-lead reader documents,
+    // and it defeated this default once already.
+    const raw = new URLSearchParams(window.location.search).get("settledramp");
+    if (raw == null) return SETTLED_GROUND_RAMP;
+    const v = Number(raw);
+    return Number.isFinite(v) && v >= 0 ? v : SETTLED_GROUND_RAMP;
+}
 const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
 /** Seconds spent lifting the fade once the idle is live - Mlynar's capture is fully white at
  *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
@@ -1304,6 +1331,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  semi-transparent painted world (see createEnvironmentBgTexture), so whitening it would
      *  change the art itself, and no reference scores a dark-backdrop skin this late. */
     const envBgDarkRef = useRef(false);
+    /** The SETTLED ground, held above the viewer backdrop and faded in. Both captures show the
+     *  ground RAMP rather than switch, so a step cannot match either: at whitw2's t=13.5 the game
+     *  reads 151.6 where our dark ground gives 99.3 and our white 200 — it is midway. */
+    const settledBgRef = useRef<PIXI.Sprite | null>(null);
     /** Latched once the entrance clock passes `entranceTransform`. A LATCH, not a one-shot sweep:
      *  the settled composite is BUILT after the beat and constructs its own gap-fill sprite, so
      *  anything built from here on must consult this. See {@link settledGroundOn}. */
@@ -1483,6 +1514,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             a.renderer.resize(cw, ch);
             hdrRef.current?.resize(cw, ch, want);
             if (envBgRef.current) resizeEnvironmentBg(envBgRef.current, cw, ch);
+            if (settledBgRef.current) resizeEnvironmentBg(settledBgRef.current, cw, ch);
         };
 
         const cleanup = () => {
@@ -1516,6 +1548,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             hdrRef.current = null;
             hdrSceneRef.current = null;
             envBgRef.current = null;
+            settledBgRef.current = null;
             if (appRef.current) {
                 appRef.current.destroy(true, { children: true, texture: true });
                 appRef.current = null;
@@ -2026,18 +2059,22 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const sgAt = efd.transform != null
                     ? efd.transform + Math.min(sgLead, Math.max(0, (efd.duration ?? Infinity) - efd.transform))
                     : efd.transform;
+                const sgRamp = settledGroundRamp();
+                if (settledGroundOn() && sgAt != null && settledBgRef.current) {
+                    settledBgRef.current.alpha =
+                        sgRamp > 0
+                            ? Math.max(0, Math.min(1, (efd.elapsed - (sgAt - sgRamp)) / sgRamp))
+                            : efd.elapsed >= sgAt
+                              ? 1
+                              : 0;
+                }
+                // Gap fill is retired AT the lead time regardless of the ramp: the two are
+                // coupled (mue with both off is 18.166, worse than either alone), so the region it
+                // vacates must already be receiving ground.
                 if (settledGroundOn() && !settledRef.current && sgAt != null && efd.elapsed >= sgAt) {
                     settledRef.current = true;
                     for (const sp of gapFillSpritesRef.current) sp.renderable = false;
                     gapFillSpritesRef.current = [];
-                    const envBg = envBgDarkRef.current ? null : envBgRef.current;
-                    if (envBg) {
-                        const old = envBg.texture;
-                        envBg.texture = createEnvironmentBgTexture(false, SETTLED_GROUND);
-                        // Built per-app and owned by nothing else, so the replaced one leaks
-                        // unless destroyed with its base.
-                        old.destroy(true);
-                    }
                 }
                 let a = 0;
                 if (efd.out !== null) {
@@ -3542,6 +3579,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 resizeEnvironmentBg(envBg, width, height);
                 envBgRef.current = envBg;
                 app.stage.addChildAt(envBg, 0);
+                // Settled ground, stacked directly above the backdrop and faded in by the tick.
+                // Skipped for the dark-backdrop family, which keeps its own measured fill.
+                if (!main.hasDarkBackdrop) {
+                    const sb = new PIXI.Sprite(createEnvironmentBgTexture(false, SETTLED_GROUND));
+                    sb.alpha = 0;
+                    resizeEnvironmentBg(sb, width, height);
+                    settledBgRef.current = sb;
+                    app.stage.addChildAt(sb, 1);
+                }
                 // HDR bloom pass: render the scene into a half-float target so additive
                 // light/flame stacks don't clip to white, then tonemap to screen. Created
                 // once and re-pointed at whichever composite is live. Spine-only art never
@@ -4045,6 +4091,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             currentApp.renderer.resize(w, h);
             hdrRef.current?.resize(w, h, currentApp.renderer.resolution);
             if (envBgRef.current) resizeEnvironmentBg(envBgRef.current, w, h);
+            if (settledBgRef.current) resizeEnvironmentBg(settledBgRef.current, w, h);
             const target = sceneContainerRef.current ?? spineRef.current;
             layoutSpine(target, w, h, boundsRef.current, fitRef.current);
         });
