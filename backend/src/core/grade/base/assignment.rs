@@ -1639,21 +1639,6 @@ pub fn compute_current_assignment(
         morale_drains,
     };
 
-    // Show the current Control Center (with the bonuses it currently provides).
-    if let Some(cc) = control_room
-        && !cc_ops.is_empty()
-    {
-        rooms.push(RoomAssignment {
-            slot_id: cc.slot_id.clone(),
-            room_type: "CONTROL".to_string(),
-            level: cc.level,
-            formula_type: None,
-            total_efficiency: global_bonuses.values().sum(),
-            ledger: super::skill_ledger::control_room_ledger(&ledger_ctx, &cc_ops),
-            operators: cc_ops.clone(),
-            ..Default::default()
-        });
-    }
 
     let mut total = 0.0;
     for room in building
@@ -1742,6 +1727,25 @@ pub fn compute_current_assignment(
             ledger,
             fill,
         });
+    }
+
+    // Show the current Control Center (with the bonuses it currently provides).
+    // Built AFTER the production rooms so its ledger can say whether each
+    // conditional skill actually fires in one of them.
+    if let Some(cc) = control_room
+        && !cc_ops.is_empty()
+    {
+        let cc_row = RoomAssignment {
+            slot_id: cc.slot_id.clone(),
+            room_type: "CONTROL".to_string(),
+            level: cc.level,
+            formula_type: None,
+            total_efficiency: global_bonuses.values().sum(),
+            ledger: super::skill_ledger::control_room_ledger(&ledger_ctx, &cc_ops, &rooms),
+            operators: cc_ops.clone(),
+            ..Default::default()
+        };
+        rooms.insert(0, cc_row);
     }
 
     BaseAssignment {
@@ -2360,7 +2364,7 @@ fn cc_condition_feasible(
 /// Does a faction-gated CC condition actually fire given the FINAL production
 /// teams? (`SilverAsh`'s "3 Kjerag in a Trading Post" only fires if a post really
 /// ends up holding 3 Kjerag operators.)
-fn cc_condition_fires(
+pub(crate) fn cc_condition_fires(
     cond: &CcCondition,
     rooms: &[RoomAssignment],
     op_index: &HashMap<&str, &OperatorBaseProfile>,

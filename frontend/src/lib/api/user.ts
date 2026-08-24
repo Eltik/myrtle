@@ -422,7 +422,7 @@ export interface ISkillLine {
     value_pct?: number;
     /** The line's owner sits in the Control Center, not this room. */
     from_control_center?: boolean;
-    disposition: "contributes" | "inactive" | "covered" | "morale" | "capacity" | "non_production" | "unmodeled";
+    disposition: "contributes" | "inactive" | "covered" | "per_room" | "morale" | "capacity" | "non_production" | "unmodeled";
 }
 
 export interface INonProdEffect {

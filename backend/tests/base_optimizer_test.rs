@@ -7198,3 +7198,77 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
         1
     );
 }
+
+#[test]
+#[ignore]
+fn umiri_parse_peek() {
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    println!("umiri => {:?}", registry.get("control_tra_limit&spd2[000]"));
+    let whitew = profile(gd, "char_140_whitew");
+    let texas = profile(gd, "char_102_texas");
+    println!("lappland tags: {:?}", whitew.match_tags);
+    println!("texas tags: {:?}", texas.match_tags);
+}
+
+/// Umiri's Famiglia Approval buffs OPERATORS, not the post: it stacks with
+/// Amiya's post-wide +7% (different effect types), its credit lands on the
+/// post holding the Siracusan, and the CC row labels it "per-room" when it
+/// fires - "inactive" only when no team satisfies it.
+#[test]
+fn umiri_stacks_with_amiya_and_labels_per_room() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    const UMIRI: &str = "char_4186_tmoris";
+    const UMIRI_BUFF: &str = "control_tra_limit&spd2[000]";
+    let build = |tp_crew: Vec<String>| {
+        let mut building = UserBuilding {
+            rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+        };
+        building.rooms[0].current_operators = vec!["char_002_amiya".into(), UMIRI.into()];
+        building.rooms[1].current_operators = tp_crew.clone();
+        let mut ids: Vec<&str> = vec!["char_002_amiya", UMIRI];
+        ids.extend(tp_crew.iter().map(String::as_str));
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+    };
+
+    // Lappland (Siracusa) in the post: Umiri fires.
+    let asn = build(vec!["char_140_whitew".into(), "char_103_angel".into()]);
+    let cc = asn.rooms.iter().find(|r| r.room_type == "CONTROL").unwrap();
+    let umiri_cc = cc
+        .ledger
+        .iter()
+        .find(|l| l.buff_id == UMIRI_BUFF)
+        .expect("umiri line on cc row");
+    assert_eq!(umiri_cc.disposition, LineDisposition::PerRoom);
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    let umiri_tp = tp
+        .ledger
+        .iter()
+        .find(|l| l.buff_id == UMIRI_BUFF && l.from_control_center)
+        .expect("umiri line on the post");
+    assert_eq!(umiri_tp.disposition, LineDisposition::Contributes);
+    assert!(
+        (umiri_tp.speed_pct - 5.0).abs() < 1e-6,
+        "one Siracusan = +5, got {}",
+        umiri_tp.speed_pct
+    );
+    // Amiya's +7 is credited too - they STACK (different effect types).
+    let amiya_tp = tp
+        .ledger
+        .iter()
+        .find(|l| l.from_control_center && l.buff_id != UMIRI_BUFF && l.speed_pct > 0.0)
+        .expect("amiya line on the post");
+    assert!((amiya_tp.speed_pct - 7.0).abs() < 1e-6);
+
+    // No Siracusan anywhere: honestly inactive.
+    let asn = build(vec!["char_103_angel".into()]);
+    let cc = asn.rooms.iter().find(|r| r.room_type == "CONTROL").unwrap();
+    let umiri_cc = cc.ledger.iter().find(|l| l.buff_id == UMIRI_BUFF).unwrap();
+    assert_eq!(umiri_cc.disposition, LineDisposition::Inactive);
+}

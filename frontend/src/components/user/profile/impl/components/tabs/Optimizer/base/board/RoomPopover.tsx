@@ -18,6 +18,7 @@ function LedgerChip({ line }: { line: ISkillLine }) {
     const label = {
         inactive: "inactive",
         covered: "covered",
+        per_room: "per-room",
         morale: "morale",
         capacity: "capacity",
         non_production: "reception / HR",
@@ -26,6 +27,7 @@ function LedgerChip({ line }: { line: ISkillLine }) {
     const hint = {
         inactive: "This skill's condition isn't met by this crew, so it adds nothing here.",
         covered: "A stronger skill of the same type is already active in this crew - the game only applies the most effective one, so this copy adds nothing on top.",
+        per_room: "Active - this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
         morale: "This skill changes morale drain or recovery - it shows up in the sustainability simulation, not in this room's efficiency.",
         capacity: "This skill raises the room's order capacity, not its speed - it buys longer gaps between check-ins.",
         non_production: "Non-production value (clues, training, HR) - counted in its own units, never folded into the efficiency number.",

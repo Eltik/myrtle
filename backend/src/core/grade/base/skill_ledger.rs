@@ -33,6 +33,10 @@ pub enum LineDisposition {
     /// type is already active in this crew - the game's "(only the most
     /// effective one will take effect)" clause. Zero marginal, not a fault.
     Covered,
+    /// A conditional Control-Center skill whose gate IS met by at least one
+    /// production team: its credit lives inside those rooms' numbers (see
+    /// their breakdowns), never on the CC row itself.
+    PerRoom,
     /// Moves morale/drain (the sustain sim), not room efficiency.
     MoraleOnly,
     /// Moves the order/stock capacity, not the speed number shown.
@@ -350,7 +354,11 @@ fn cc_bonus_lines(
     (lines, winners)
 }
 
-pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<LedgerLine> {
+pub(crate) fn control_room_ledger(
+    ctx: &LedgerCtx,
+    cc_ops: &[String],
+    team_rooms: &[super::types::RoomAssignment],
+) -> Vec<LedgerLine> {
     let mut out = Vec::new();
     // Non-bonus CONTROL buffs (morale, clue, unmodeled...) classify by
     // strategy as before.
@@ -385,8 +393,19 @@ pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<Led
     for (i, l) in lines.iter().enumerate() {
         let claims = l.bonus.stacks
             || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
-        let (value, disposition) = if l.bonus.conditional.is_some() {
-            (0.0, LineDisposition::Inactive)
+        let (value, disposition) = if let Some(cond) = &l.bonus.conditional {
+            // Umiri-style: the credit lands inside the rooms whose crews meet
+            // the gate. On the CC row, say WHERE it went - "inactive" is only
+            // honest when no team satisfies it.
+            let fires = super::assignment::cc_condition_fires(cond, team_rooms, ctx.op_index);
+            (
+                0.0,
+                if fires {
+                    LineDisposition::PerRoom
+                } else {
+                    LineDisposition::Inactive
+                },
+            )
         } else if claims {
             (l.bonus.bonus, LineDisposition::Contributes)
         } else {

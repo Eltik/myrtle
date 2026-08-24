@@ -487,6 +487,7 @@ fn skill_line_dto(
             D::Contributes => "contributes",
             D::Inactive => "inactive",
             D::Covered => "covered",
+            D::PerRoom => "per_room",
             D::MoraleOnly => "morale",
             D::CapacityOnly => "capacity",
             D::NonProduction => "non_production",
@@ -2081,9 +2082,24 @@ pub fn shift_rotation_to_dto(
             let ledger = if !room.active {
                 Vec::new()
             } else if room.room_type == "CONTROL" {
+                let team_rooms: Vec<crate::core::grade::base::types::RoomAssignment> = shift
+                    .rooms
+                    .iter()
+                    .filter(|r| {
+                        r.active
+                            && crate::core::grade::base::util::is_production_room(&r.room_type)
+                    })
+                    .map(|r| crate::core::grade::base::types::RoomAssignment {
+                        room_type: r.room_type.clone(),
+                        formula_type: r.formula_type.clone(),
+                        operators: r.recommended.clone(),
+                        ..Default::default()
+                    })
+                    .collect();
                 crate::core::grade::base::skill_ledger::control_room_ledger(
                     &ledger_ctx,
                     &room.recommended,
+                    &team_rooms,
                 )
             } else if crate::core::grade::base::util::is_production_room(&room.room_type) {
                 crate::core::grade::base::skill_ledger::production_room_ledger(
