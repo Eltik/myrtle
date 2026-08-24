@@ -123,7 +123,15 @@ def main():
         if dur is None or cl is None:
             print(f"{k:<8}   -- no entranceDuration or clip"); continue
         off = OFF.get(k, 0.0)
-        times = [t for t in (dur + 1.0, dur + 2.5) if t + off < cl - 0.25]
+        # ENTRANCE mode (`SETTLED_BEATS=<csv>`): fit the SCORED beats instead of the settled shot,
+        # so the same character-anchored estimator can re-check entrance registration. The
+        # original "all 12 references are registered" verdict used FULL-FRAME fits, which alias on
+        # self-similar scenes — see fit()'s note — so it is worth re-testing the low-`r` skins.
+        env_beats = os.environ.get("SETTLED_BEATS")
+        if env_beats:
+            times = [float(x) for x in env_beats.split(",") if x.strip()]
+        else:
+            times = [t for t in (dur + 1.0, dur + 2.5) if t + off < cl - 0.25]
         if not times:
             print(f"{k:<8}   -- capture ends at {cl:.1f}s, entrance runs to {dur:.1f}s (no settled frames)")
             continue

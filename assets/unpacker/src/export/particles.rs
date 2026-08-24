@@ -481,6 +481,32 @@ pub(crate) struct EntranceCtx<'a> {
     pub is_entrance: bool,
 }
 
+/// Does this `GameObject` name a state clone the `_Start` CINEMATIC must not draw?
+///
+/// Effect rigs are instantiated once per state as `<skin>_<State>[_NN](Clone)`. Rather than match
+/// the skin id (which we do not have here) this reads the name's UNDERSCORE SEGMENTS and asks
+/// whether any of them names a non-cinematic state.
+///
+/// ⚠️ Segment equality, never `contains`. `_Start_Idle` carries BOTH "start" and "idle" and is an
+/// IDLE clone — a substring test for "start" admits it, which is exactly the trap that hid the
+/// reveal-timeline bug (clip `03`). Presence of a non-cinematic segment decides, and "start" never
+/// rescues it. Arknights skin ids (`char_2024_chyue_cfa#1`) contain no such segment, so a name can
+/// only match through its state tail.
+fn non_cinematic_state_clone(name: &str) -> bool {
+    // MEASURED, not assumed. Adding "interact" and "special" here drops 68 more systems across 7
+    // entrances (wisdel alone loses 38) and is a net LOSS: mue 10.756 -> 10.857, corpus-8 mean
+    // 11.616 -> 11.626. The game does draw some interact/special-clone effects during a cinematic,
+    // and the `<State> Only Effects` group gate already withholds the ones that must not appear.
+    // Only the IDLE clones are wrong here.
+    const NON_CINEMATIC: [&str; 1] = ["idle"];
+    let Some(base) = name.strip_suffix("(Clone)") else {
+        return false;
+    };
+    base.trim_end()
+        .split('_')
+        .any(|seg| NON_CINEMATIC.contains(&seg.to_ascii_lowercase().as_str()))
+}
+
 /// Propagate a shared reveal through a bone-follower rig. Some falling-apple/
 /// comet-rig leaves are not individually gated by `m_IsActive`/`_delayTime`,
 /// but share a `followBone` with siblings that are and should not render from
@@ -830,6 +856,42 @@ pub(crate) fn collect_dynchar_particles(
                 f64::from(o[1]) * inv_scale
             )
         };
+        // 🚨 THE ENTRANCE MUST NOT PLAY THE IDLE STATES' EFFECTS.
+        //
+        // A dynchar prefab instantiates its effect rig once PER STATE, as `<skin>_<State>(Clone)`
+        // subtrees — `_Start`, `_Start_Idle`, `_Idle`, `_Interact`, `_Special`. The game runs the
+        // clone for the state it is in; the `_Start` cinematic must not draw the idle ones. The
+        // existing gate only blocks `<State> Only Effects` GROUPS, so an idle clone parked under
+        // an ordinary group (`General Effects`, or nothing) sails straight through.
+        //
+        // Ch'en the Holungday exposed it. Her two `glow 01` emitters are the SAME authored effect
+        // at the same local position (0.05, 9.85, 0), instantiated under
+        // `..._Start_Idle_01(Clone)` and `..._Idle_01(Clone)/General Effects` — and both were
+        // drawn through her whole cinematic: a 1250px full-frame additive glow, twice over. They
+        // cost 6.76 MADC of her 28.530, and removing them takes her frame-mean luma to
+        // -0.8 / +2.4 / +13.3 against the game where it had been +13.2 / +16.8 / +21.6.
+        //
+        // ⚠️ Match on the STATE, not on the substring: `_Start_Idle` contains "start" and is an
+        // IDLE clone. That is the same name trap that hid the reveal-timeline bug (`03`), so the
+        // test is "an ancestor `(Clone)` whose state names idle", never "the name has start in it".
+        // `DYNCHAR_ENT_IDLE_CLONE=1` reverts.
+        if entrance.is_entrance
+            && std::env::var("DYNCHAR_ENT_IDLE_CLONE").as_deref() != Ok("1")
+            && let Some(clone) = host
+                .ancestor_go_names(all_objects, go_pid)
+                .into_iter()
+                .find(|n| non_cinematic_state_clone(n))
+        {
+            skipped.inactive_group += 1;
+            if attrib_dbg {
+                eprintln!(
+                    "    [ptcl] DROP idle-state-clone {:<22} {} host='{clone}'",
+                    host.go_name(all_objects, go_pid),
+                    drop_where(all_objects),
+                );
+            }
+            continue;
+        }
         if !admit_cross_root && !host.effectively_active(all_objects, go_pid, entrance.is_entrance)
         {
             skipped.inactive_group += 1;
