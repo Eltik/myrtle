@@ -192,6 +192,12 @@ const initScript = () => {
                 console.log("STAGEDUMP null");
             }
             try {
+                const cl = await page.evaluate(() => (window.__dynClip ? window.__dynClip() : "NO-HOOK"));
+                console.log("CLIPDUMP " + file + " " + JSON.stringify(cl));
+            } catch (e) {
+                console.log("CLIPDUMP null");
+            }
+            try {
                 const tex = await page.evaluate(() => (window.__dumpTex ? window.__dumpTex() : "NO-HOOK"));
                 console.log("TEXDUMP " + JSON.stringify(tex));
             } catch (e) {
