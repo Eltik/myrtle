@@ -85,6 +85,11 @@ export interface IDorm {
     occupant_aura_per_hour: number;
     /** Strongest single-target recovery among the occupants. */
     occupant_single_per_hour: number;
+    /** Furniture ambience (0 to this level's cap). */
+    comfort?: number;
+    comfort_limit?: number;
+    /** Recovery/hr still available if ambience were maxed. */
+    comfort_upside_per_hour?: number;
 }
 
 export interface IEvaluateResponse {

@@ -1,3 +1,5 @@
+import { Sparkles } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ISkillLine } from "#/lib/api/user";
 import { type ITile, vacanciesOf } from "#/lib/base/board";
@@ -147,6 +149,12 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">
                     {api.evaluationError ? "This layout could not be scored." : api.evaluating ? "Scoring…" : unstaffed ? "An empty room produces nothing and buffs nothing." : "Only producing rooms report an efficiency. This crew contributes through the bonuses they cast elsewhere."}
                 </p>
+            )}
+            {room && ["TRADING", "MANUFACTURE", "POWER", "CONTROL", "MEETING", "HIRE", "DORMITORY"].includes(room.room_type) && (
+                <Button className="w-full" disabled={api.optimizing} onClick={() => api.runOptimize([tile.slotId])} size="sm" variant="outline">
+                    <Sparkles />
+                    {api.optimizing ? "Optimizing…" : "Optimize this room only"}
+                </Button>
             )}
             {change && (
                 <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">

@@ -207,6 +207,13 @@ pub struct DormDto {
     /// The strongest single-target heal among the drafted occupants
     /// ("+X/hr to another Operator whose Morale is not full").
     pub occupant_single_per_hour: f64,
+    /// Furniture ambience (0 to this level's `DecorationLimit`).
+    pub comfort: i32,
+    /// This level's ambience cap (`DormData.Phases[level].DecorationLimit`).
+    pub comfort_limit: i32,
+    /// Recovery/hr still on the table if ambience were maxed:
+    /// `(limit - comfort) / 2500`.
+    pub comfort_upside_per_hour: f64,
 }
 
 /// One operator's endurance in the room the draft puts them in. Drain is the
@@ -765,6 +772,19 @@ fn dorms_of(building: &UserBuilding, ctx: &BaseContext, game_data: &GameData) ->
         .filter(|r| r.room_type == "DORMITORY")
         .map(|r| (r.slot_id.as_str(), &r.current_operators))
         .collect();
+    let comfort_of: HashMap<&str, i32> = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| (r.slot_id.as_str(), r.comfort))
+        .collect();
+    let comfort_limit_at = |level: i32| -> i32 {
+        let phases = &game_data.building.dorm_data.phases;
+        #[allow(clippy::cast_sign_loss)]
+        let idx = ((level.max(1) as usize) - 1).min(phases.len().saturating_sub(1));
+        phases.get(idx).map_or(0, |p| p.decoration_limit)
+    };
+    let comfort_factor = game_data.building.comfort_manpower_recover_factor;
 
     let per_dorm: Vec<DormDto> = dorm_list(building, &game_data.building)
         .into_iter()
@@ -783,6 +803,13 @@ fn dorms_of(building: &UserBuilding, ctx: &BaseContext, game_data: &GameData) ->
                         .fold(0.0, f64::max)
                 })
             };
+            let comfort = comfort_of.get(d.slot_id.as_str()).copied().unwrap_or(0);
+            let limit = comfort_limit_at(d.level);
+            let upside = if comfort_factor > 0.0 {
+                f64::from((limit - comfort).max(0)) / (comfort_factor * 100.0)
+            } else {
+                0.0
+            };
             DormDto {
                 occupant_aura_per_hour: skill_max(false),
                 occupant_single_per_hour: skill_max(true),
@@ -790,6 +817,9 @@ fn dorms_of(building: &UserBuilding, ctx: &BaseContext, game_data: &GameData) ->
                 level: d.level,
                 capacity: d.capacity,
                 recovery_per_hour: d.recovery_per_hour,
+                comfort,
+                comfort_limit: limit,
+                comfort_upside_per_hour: upside,
             }
         })
         .collect();

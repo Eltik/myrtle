@@ -1,4 +1,4 @@
-import { Camera, ChevronDown, X } from "lucide-react";
+import { Camera, ChevronDown, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -195,6 +195,25 @@ export function DeepDive() {
                         </section>
                     )}
 
+                    {(evaluation.dorms.per_dorm ?? []).some((d) => (d.comfort_upside_per_hour ?? 0) > 0.05) && (
+                        <section className="flex flex-col gap-1">
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Furniture upside</h3>
+                            {(evaluation.dorms.per_dorm ?? [])
+                                .filter((d) => (d.comfort_upside_per_hour ?? 0) > 0.05)
+                                .map((d) => (
+                                    <span className="text-[11.5px]" key={d.slot_id}>
+                                        <span className="text-muted-foreground">Dormitory Lv{d.level} ambience</span>{" "}
+                                        <span className="font-mono tabular-nums">
+                                            {d.comfort}/{d.comfort_limit}
+                                        </span>
+                                        <span className="text-muted-foreground"> - </span>
+                                        <span className="font-mono font-semibold text-emerald-400 tabular-nums">+{(d.comfort_upside_per_hour ?? 0).toFixed(2)}/h</span>
+                                        <span className="text-muted-foreground"> recovery sitting in the furniture shop.</span>
+                                    </span>
+                                ))}
+                        </section>
+                    )}
+
                     {rooms.length > 0 && (
                         <section className="flex flex-col gap-2">
                             <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Output by facility</h3>
@@ -230,6 +249,24 @@ export function DeepDive() {
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Compare</h3>
                             <div className="flex items-center gap-1.5">
+                                <Button
+                                    onClick={() => {
+                                        const rot = api.rotation?.rotation;
+                                        const lines: string[] = [`Base plan - ${num(evaluation.assignment.yield_lmd_per_day)} LMD/day, ${num(evaluation.assignment.yield_exp_per_day)} EXP/day`];
+                                        for (const shift of rot?.shifts ?? []) {
+                                            lines.push(`\nShift ${shift.index}`);
+                                            for (const r of shift.rooms.filter((r) => r.active && r.recommended.length > 0)) {
+                                                lines.push(`  ${roomLabel(r.room_type, api.catalog)}: ${r.recommended.map((o) => o.name).join(", ")}`);
+                                            }
+                                        }
+                                        void navigator.clipboard.writeText(lines.join("\n"));
+                                    }}
+                                    size="sm"
+                                    variant="ghost"
+                                >
+                                    <Copy />
+                                    Copy plan
+                                </Button>
                                 <Button onClick={() => setSnapshot(live)} size="sm" variant="outline">
                                     <Camera />
                                     {snapshot ? "Re-snapshot" : "Snapshot"}
