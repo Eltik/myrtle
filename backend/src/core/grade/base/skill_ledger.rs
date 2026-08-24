@@ -29,6 +29,10 @@ pub enum LineDisposition {
     Contributes,
     /// Priced strategy, but its gate isn't met by this crew/base.
     Inactive,
+    /// Real and unconditional, but a stronger skill of the same non-stacking
+    /// type is already active in this crew - the game's "(only the most
+    /// effective one will take effect)" clause. Zero marginal, not a fault.
+    Covered,
     /// Moves morale/drain (the sustain sim), not room efficiency.
     MoraleOnly,
     /// Moves the order/stock capacity, not the speed number shown.
@@ -227,51 +231,65 @@ pub(crate) fn production_room_ledger(
         }
     }
 
-    // Control-Center lines that target this room type: ablate the CC member's
-    // buff, re-derive the grants, and re-score the room under them.
-    for id in cc_ops {
-        let Some(op) = ctx.op_index.get(id.as_str()) else {
-            continue;
-        };
-        for buff_id in &op.available_buffs {
-            let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
-                continue;
-            };
-            if buff.room_type != "CONTROL" {
+    // Control-Center lines that target this room type. Unconditional globals
+    // use family attribution (the winner claims the family's value, duplicate
+    // copies read "covered" - ablation is tie-blind and would let the value
+    // go unclaimed); conditional globals keep the ablation path, since their
+    // credit genuinely depends on THIS room's crew meeting the gate.
+    let (lines, winners) = cc_bonus_lines(ctx, cc_ops);
+    for (i, l) in lines.iter().enumerate() {
+        if l.bonus.conditional.is_none() {
+            if l.bonus.room != room_type {
                 continue;
             }
-            let targets_room = match ctx.registry.get(buff_id) {
-                Some(
-                    BuffResolutionStrategy::GlobalEffect { target_room, .. }
-                    | BuffResolutionStrategy::TagBased { target_room, .. }
-                    | BuffResolutionStrategy::ConditionalGlobalEffect { target_room, .. }
-                    | BuffResolutionStrategy::GlobalPoolScaling { target_room, .. },
-                ) => target_room == room_type,
-                _ => false,
-            };
-            if !targets_room {
-                continue;
-            }
-            let probe = ablated(op, buff_id, ctx.building_data);
-            let (globals, conditions) = ctx.cc_grants(cc_ops, Some((id, &probe)));
-            let (speed, value) = ctx.score(ops, room_type, formula, &conditions, None);
-            let global = globals.get(room_type).copied().unwrap_or(0.0);
-            let d_speed = (full_speed + full_global) - (speed + global);
-            let d_value = full_value - value;
-            let disposition = if d_speed.abs() > EPS || d_value.abs() > EPS {
-                LineDisposition::Contributes
+            let (value, disposition) = if l.bonus.stacks {
+                (l.bonus.bonus, LineDisposition::Contributes)
+            } else if winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i) {
+                (l.bonus.bonus, LineDisposition::Contributes)
             } else {
-                LineDisposition::Inactive
+                (0.0, LineDisposition::Covered)
             };
             out.push(LedgerLine {
-                operator_id: (*id).clone(),
-                buff_id: buff_id.clone(),
-                speed_pct: d_speed,
-                value_pct: d_value,
+                operator_id: l.operator_id.clone(),
+                buff_id: l.buff_id.clone(),
+                speed_pct: value,
+                value_pct: 0.0,
                 from_control_center: true,
                 disposition,
             });
+            continue;
         }
+        // Conditional global: does the gate fire in THIS crew? Ablate and
+        // re-score under the reduced grants.
+        if l.bonus
+            .conditional
+            .as_ref()
+            .is_some_and(|c| c.target_room != room_type)
+        {
+            continue;
+        }
+        let Some(op) = ctx.op_index.get(l.operator_id.as_str()) else {
+            continue;
+        };
+        let probe = ablated(op, &l.buff_id, ctx.building_data);
+        let (globals, conditions) = ctx.cc_grants(cc_ops, Some((l.operator_id.as_str(), &probe)));
+        let (speed, value) = ctx.score(ops, room_type, formula, &conditions, None);
+        let global = globals.get(room_type).copied().unwrap_or(0.0);
+        let d_speed = (full_speed + full_global) - (speed + global);
+        let d_value = full_value - value;
+        let disposition = if d_speed.abs() > EPS || d_value.abs() > EPS {
+            LineDisposition::Contributes
+        } else {
+            LineDisposition::Inactive
+        };
+        out.push(LedgerLine {
+            operator_id: l.operator_id.clone(),
+            buff_id: l.buff_id.clone(),
+            speed_pct: d_speed,
+            value_pct: d_value,
+            from_control_center: true,
+            disposition,
+        });
     }
     out
 }
@@ -279,10 +297,24 @@ pub(crate) fn production_room_ledger(
 /// The Control Center row's own breakdown: each member's CONTROL buff, valued
 /// as the marginal on the SUM of global bonuses the crew grants (the number the
 /// CC row displays). Non-global CC skills classify by strategy.
-pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<LedgerLine> {
-    let mut out = Vec::new();
-    let (full_globals, _) = ctx.cc_grants(cc_ops, None);
-    let full_sum: f64 = full_globals.values().sum();
+/// One Control-Center bonus line, pre-attribution.
+struct CcBonusLine {
+    operator_id: String,
+    buff_id: String,
+    bonus: super::assignment::CcBonus,
+}
+
+/// Gather every CC member's bonus-bearing CONTROL buff, plus the winner of
+/// each non-stacking family: the strongest member, first-in-crew-order on
+/// ties - the game's own "(only the most effective one will take effect)"
+/// rule. Ablation marginals are tie-blind (with two +7% copies, removing
+/// either changes nothing, so NOBODY claims the +7 that is really there);
+/// explicit attribution keeps the lines summing to the room's number.
+fn cc_bonus_lines(
+    ctx: &LedgerCtx,
+    cc_ops: &[String],
+) -> (Vec<CcBonusLine>, HashMap<(String, String), usize>) {
+    let mut lines = Vec::new();
     for id in cc_ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
             continue;
@@ -291,26 +323,83 @@ pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<Led
             let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
                 continue;
             };
-            if buff.room_type != "CONTROL" {
+            if let Some(bonus) =
+                super::assignment::cc_bonus_for(buff_id, buff, ctx.registry.get(buff_id))
+            {
+                lines.push(CcBonusLine {
+                    operator_id: (*id).clone(),
+                    buff_id: buff_id.clone(),
+                    bonus,
+                });
+            }
+        }
+    }
+    let mut winners: HashMap<(String, String), usize> = HashMap::new();
+    for (i, l) in lines.iter().enumerate() {
+        if l.bonus.stacks || l.bonus.conditional.is_some() {
+            continue;
+        }
+        let key = (l.bonus.room.clone(), l.bonus.family.clone());
+        match winners.get(&key) {
+            Some(&j) if lines[j].bonus.bonus >= l.bonus.bonus => {}
+            _ => {
+                winners.insert(key, i);
+            }
+        }
+    }
+    (lines, winners)
+}
+
+pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<LedgerLine> {
+    let mut out = Vec::new();
+    // Non-bonus CONTROL buffs (morale, clue, unmodeled...) classify by
+    // strategy as before.
+    for id in cc_ops {
+        let Some(op) = ctx.op_index.get(id.as_str()) else {
+            continue;
+        };
+        for buff_id in &op.available_buffs {
+            let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
+                continue;
+            };
+            if buff.room_type != "CONTROL"
+                || super::assignment::cc_bonus_for(buff_id, buff, ctx.registry.get(buff_id))
+                    .is_some()
+            {
                 continue;
             }
-            let probe = ablated(op, buff_id, ctx.building_data);
-            let (globals, _) = ctx.cc_grants(cc_ops, Some((id, &probe)));
-            let d = full_sum - globals.values().sum::<f64>();
-            let disposition = if d.abs() > EPS {
-                LineDisposition::Contributes
-            } else {
-                zero_disposition(ctx.registry.get(buff_id), cc_ops)
-            };
             out.push(LedgerLine {
                 operator_id: (*id).clone(),
                 buff_id: buff_id.clone(),
-                speed_pct: d,
+                speed_pct: 0.0,
                 value_pct: 0.0,
                 from_control_center: false,
-                disposition,
+                disposition: zero_disposition(ctx.registry.get(buff_id), cc_ops),
             });
         }
+    }
+    // Bonus lines: stacking entries contribute outright, each non-stacking
+    // family is claimed by its winner, the rest read "covered". Conditional
+    // globals are credited on their target rooms, not here.
+    let (lines, winners) = cc_bonus_lines(ctx, cc_ops);
+    for (i, l) in lines.iter().enumerate() {
+        let (value, disposition) = if l.bonus.conditional.is_some() {
+            (0.0, LineDisposition::Inactive)
+        } else if l.bonus.stacks {
+            (l.bonus.bonus, LineDisposition::Contributes)
+        } else if winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i) {
+            (l.bonus.bonus, LineDisposition::Contributes)
+        } else {
+            (0.0, LineDisposition::Covered)
+        };
+        out.push(LedgerLine {
+            operator_id: l.operator_id.clone(),
+            buff_id: l.buff_id.clone(),
+            speed_pct: value,
+            value_pct: 0.0,
+            from_control_center: false,
+            disposition,
+        });
     }
     out
 }

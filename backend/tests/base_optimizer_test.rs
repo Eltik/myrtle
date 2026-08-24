@@ -7106,9 +7106,18 @@ fn trainer_hints_respect_the_declared_class() {
         }
         if d.contains("for each") {
             scaled += 1;
-        } else if ["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"]
-            .iter()
-            .any(|c| d.contains(c))
+        } else if [
+            "Vanguard",
+            "Guard",
+            "Defender",
+            "Sniper",
+            "Caster",
+            "Medic",
+            "Supporter",
+            "Specialist",
+        ]
+        .iter()
+        .any(|c| d.contains(c))
         {
             specific += 1;
         } else {
@@ -7117,5 +7126,75 @@ fn trainer_hints_respect_the_declared_class() {
     }
     assert!(agnostic > 0, "class-agnostic trainer skills exist");
     assert!(specific > 0, "class-specific trainer skills exist");
-    assert!(scaled > 0, "composition-scaled trainer skills exist (skipped)");
+    assert!(
+        scaled > 0,
+        "composition-scaled trainer skills exist (skipped)"
+    );
+}
+
+/// Non-stacking family attribution: with two "+7% all Trading Posts" globals
+/// in the Control Center, exactly ONE line claims the +7 and the duplicate
+/// reads "covered" - and the CC row's lines sum to the crew's global total.
+/// (Pure ablation marginals are tie-blind: removing either copy changes
+/// nothing, so nobody would claim the value.)
+#[test]
+fn ledger_attributes_nonstacking_families_to_one_winner() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+    };
+    building.rooms[0].current_operators = vec!["char_4132_ascln".into(), "char_308_swire".into()];
+    building.rooms[1].current_operators = vec!["char_103_angel".into()];
+    let roster: Vec<OperatorBaseProfile> = ["char_4132_ascln", "char_308_swire", "char_103_angel"]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let cc = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("cc scored");
+    let trading_lines: Vec<_> = cc
+        .ledger
+        .iter()
+        .filter(|l| l.speed_pct > 0.0 || l.disposition == LineDisposition::Covered)
+        .collect();
+    let winners = trading_lines
+        .iter()
+        .filter(|l| l.disposition == LineDisposition::Contributes)
+        .count();
+    let covered = trading_lines
+        .iter()
+        .filter(|l| l.disposition == LineDisposition::Covered)
+        .count();
+    assert_eq!(winners, 1, "exactly one +7 claims the family");
+    assert_eq!(covered, 1, "the duplicate reads covered");
+    let line_sum: f64 = cc.ledger.iter().map(|l| l.speed_pct).sum();
+    assert!(
+        (line_sum - cc.total_efficiency).abs() < 1e-6,
+        "CC lines ({line_sum}) sum to the row total ({})",
+        cc.total_efficiency
+    );
+    // And the trading post sees exactly one +7 [CC] line, one covered.
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    let cc_lines: Vec<_> = tp.ledger.iter().filter(|l| l.from_control_center).collect();
+    assert_eq!(
+        cc_lines
+            .iter()
+            .filter(|l| l.disposition == LineDisposition::Contributes)
+            .count(),
+        1
+    );
+    assert_eq!(
+        cc_lines
+            .iter()
+            .filter(|l| l.disposition == LineDisposition::Covered)
+            .count(),
+        1
+    );
 }

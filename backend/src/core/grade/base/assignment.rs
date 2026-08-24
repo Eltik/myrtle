@@ -2111,26 +2111,26 @@ pub(crate) fn other_room_skill_count(
 /// buffs (Sakiko's Precious-Metal productivity, Viviana's faction buff, etc.)
 /// always `stacks` on top.
 pub(crate) struct CcBonus {
-    room: String,
-    family: String,
-    bonus: f64,
+    pub(crate) room: String,
+    pub(crate) family: String,
+    pub(crate) bonus: f64,
     /// True when the buff has NO non-stacking clause and therefore always adds.
-    stacks: bool,
+    pub(crate) stacks: bool,
     /// `Some` when this bonus only applies to production rooms whose team meets a
     /// faction condition - credited per-room, not flat. `bonus` above is then a
     /// discounted *selection* weight, not the value actually granted.
-    conditional: Option<CcCondition>,
+    pub(crate) conditional: Option<CcCondition>,
 }
 
 /// A Control Center bonus that is gated on a production room's team composition.
 /// Resolved per-room in `compute_team_efficiency` rather than added flat.
 #[derive(Clone)]
 pub(crate) struct CcCondition {
-    target_room: String,
-    faction_token: String,
-    required_count: usize,
-    per_operator: bool,
-    bonus_pct: f64,
+    pub(crate) target_room: String,
+    pub(crate) faction_token: String,
+    pub(crate) required_count: usize,
+    pub(crate) per_operator: bool,
+    pub(crate) bonus_pct: f64,
 }
 
 impl CcCondition {
@@ -2227,74 +2227,84 @@ impl CcBonusAccumulator {
 }
 
 /// Collect an operator's Control Center global production bonuses.
+/// The Control-Center bonus one buff maps to, if any. Split out per-buff so
+/// the skill ledger can attribute non-stacking families to their strongest
+/// member instead of relying on tie-blind ablation marginals.
+pub(crate) fn cc_bonus_for(
+    buff_id: &str,
+    buff: &Buff,
+    strategy: Option<&BuffResolutionStrategy>,
+) -> Option<CcBonus> {
+    if buff.room_type != "CONTROL" {
+        return None;
+    }
+    match strategy {
+        Some(BuffResolutionStrategy::GlobalEffect {
+            target_room,
+            bonus_pct,
+        }) => {
+            // Clause-bearing buffs of the same room+metric don't stack (e.g.
+            // Amiya & Noir Corne Alter both "+7% all Trading Posts"); clause-less
+            // ones (Sakiko's Precious-Metal productivity) always stack.
+            let stacks = cc_buff_stacks(buff);
+            Some(CcBonus {
+                room: target_room.clone(),
+                family: format!("{target_room}#global"),
+                bonus: *bonus_pct,
+                stacks,
+                conditional: None,
+            })
+        }
+        Some(BuffResolutionStrategy::TagBased {
+            target_room,
+            bonus_pct,
+            ..
+        }) => Some(CcBonus {
+            room: target_room.clone(),
+            family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+            // Faction bonuses only reach matching operators - credit half. They
+            // carry no non-stacking clause, so they stack on top of generics.
+            bonus: bonus_pct * 0.5,
+            stacks: true,
+            conditional: None,
+        }),
+        Some(BuffResolutionStrategy::ConditionalGlobalEffect {
+            target_room,
+            faction_token,
+            required_count,
+            per_operator,
+            bonus_pct,
+        }) => Some(CcBonus {
+            room: target_room.clone(),
+            family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+            // Selection weight: discounted since the gate may not be met. The
+            // real value is granted per-room via `conditional`.
+            bonus: bonus_pct * 0.5,
+            stacks: false,
+            conditional: Some(CcCondition {
+                target_room: target_room.clone(),
+                faction_token: faction_token.clone(),
+                required_count: *required_count,
+                per_operator: *per_operator,
+                bonus_pct: *bonus_pct,
+            }),
+        }),
+        _ => None,
+    }
+}
+
 pub(crate) fn cc_bonuses(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> Vec<CcBonus> {
-    let mut out = Vec::new();
-    for buff_id in &op.available_buffs {
-        let Some(buff) = building_data.buffs.get(buff_id) else {
-            continue;
-        };
-        if buff.room_type != "CONTROL" {
-            continue;
-        }
-        match registry.get(buff_id) {
-            Some(BuffResolutionStrategy::GlobalEffect {
-                target_room,
-                bonus_pct,
-            }) => {
-                // Clause-bearing buffs of the same room+metric don't stack (e.g.
-                // Amiya & Noir Corne Alter both "+7% all Trading Posts"); clause-less
-                // ones (Sakiko's Precious-Metal productivity) always stack.
-                let stacks = cc_buff_stacks(buff);
-                out.push(CcBonus {
-                    room: target_room.clone(),
-                    family: format!("{target_room}#global"),
-                    bonus: *bonus_pct,
-                    stacks,
-                    conditional: None,
-                });
-            }
-            Some(BuffResolutionStrategy::TagBased {
-                target_room,
-                bonus_pct,
-                ..
-            }) => out.push(CcBonus {
-                room: target_room.clone(),
-                family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
-                // Faction bonuses only reach matching operators - credit half. They
-                // carry no non-stacking clause, so they stack on top of generics.
-                bonus: bonus_pct * 0.5,
-                stacks: true,
-                conditional: None,
-            }),
-            Some(BuffResolutionStrategy::ConditionalGlobalEffect {
-                target_room,
-                faction_token,
-                required_count,
-                per_operator,
-                bonus_pct,
-            }) => out.push(CcBonus {
-                room: target_room.clone(),
-                family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
-                // Selection weight: discounted since the gate may not be met. The
-                // real value is granted per-room via `conditional`.
-                bonus: bonus_pct * 0.5,
-                stacks: false,
-                conditional: Some(CcCondition {
-                    target_room: target_room.clone(),
-                    faction_token: faction_token.clone(),
-                    required_count: *required_count,
-                    per_operator: *per_operator,
-                    bonus_pct: *bonus_pct,
-                }),
-            }),
-            _ => {}
-        }
-    }
-    out
+    op.available_buffs
+        .iter()
+        .filter_map(|buff_id| {
+            let buff = building_data.buffs.get(buff_id)?;
+            cc_bonus_for(buff_id, buff, registry.get(buff_id))
+        })
+        .collect()
 }
 
 /// The flat Control-Center value `candidate` adds ON TOP of `crew`'s bonuses:
@@ -2317,9 +2327,9 @@ pub(crate) fn cc_marginal_over(
             acc.add(&cc_bonuses(op, registry, building_data));
         }
     }
-    op_index
-        .get(candidate_id)
-        .map_or(0.0, |op| acc.marginal(&cc_bonuses(op, registry, building_data)))
+    op_index.get(candidate_id).map_or(0.0, |op| {
+        acc.marginal(&cc_bonuses(op, registry, building_data))
+    })
 }
 
 /// Can the roster ever satisfy a conditional CC buff's gate? `SilverAsh`'s "+10% to

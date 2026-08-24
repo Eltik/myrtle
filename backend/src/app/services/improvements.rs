@@ -486,6 +486,7 @@ fn skill_line_dto(
         disposition: match l.disposition {
             D::Contributes => "contributes",
             D::Inactive => "inactive",
+            D::Covered => "covered",
             D::MoraleOnly => "morale",
             D::CapacityOnly => "capacity",
             D::NonProduction => "non_production",
