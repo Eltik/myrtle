@@ -127,7 +127,7 @@ REFOFF[mly]=0.033; REFOFF[cel]=-0.033; REFOFF[ska]=0.067
 # shift cuts mean |d-alpha| from 0.0575 to 0.0055, a 10x reduction, best at 0.067), the mid-clip
 # blackout 11.0-13.0 (best 0.100) and the first blackout 5.0-6.5 (best 0.100). Took the cleanest
 # instrument's value. ⚠️ This changes ZERO pixels -- it only compares the right frames.
-REFOFF[cet]=-0.067
+REFOFF[cet]=-0.100
 # whitw2: her t0 was anchored to the HARD CUT out of black (first non-black frame). That cut is
 # not the animation start — ~24 BLACK frames (0.8 s) precede it and the cinematic is already
 # running behind them, so the anchor is systematically LATE. Measured optimum +0.55 s, and the
