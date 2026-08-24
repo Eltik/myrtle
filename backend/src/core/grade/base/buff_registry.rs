@@ -245,6 +245,25 @@ static RE_DORM_SINGLE_TARGET: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"to an(?:other)? Operator (?:assigned to|in) (?:that|the) Dorm(?:itory)?").unwrap()
 });
 
+/// The whole-dorm aura figure: "restores +X Morale per hour to all (other)
+/// Operators assigned to that Dormitory". Captured explicitly so compound
+/// texts classify as the AURA they are - the `contains("self")` heuristic
+/// filed both shapes under self-only, hiding them from dorm staffing:
+/// - Durin's "self Morale recovered per hour -0.1, but restores +0.2 ... to
+///   all Operators". Community-confirmed 2026-08-24: the aura applies to
+///   herself fully too (net +0.1), so the self-malus can never turn her
+///   negative and needs no field of its own - dorm staff don't drain, so a
+///   net-positive rider never changes an outcome.
+/// - The "self +0.55, and restores +0.1 ... to all OTHER Operators" family.
+///   A dorm self-recovery rider is priced nowhere (resters recover at dorm
+///   rate + auras; only the Fiammetta swap path reads self-only rates, gated
+///   on its "swap" text), so the others-aura is the whole model-relevant
+///   value of these skills.
+static RE_DORM_AURA_ALL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"restores <@cc\.vup>\+([\d.]+)</> Morale per hour to all (?:other )?Operators")
+        .unwrap()
+});
+
 /// A CC dorm-recovery aura: "all Operators in Dormitories recover +X Morale per hour".
 static RE_DORM_RECOVERY_AURA: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"all Operators in Dormitories recover <@cc\.vup>\+([\d.]+)</>\s*Morale per hour")
@@ -964,11 +983,18 @@ pub fn build_registry(
                 value: f64::from(buff.efficiency),
             },
             "DORMITORY" => {
-                let recovery = parse_first_float(&buff.description).unwrap_or(0.0);
                 let desc_lower = buff.description.to_lowercase();
-                let is_self_only = desc_lower.contains("self")
-                    || desc_lower.contains("oneself")
-                    || prefix.contains("_oneself");
+                // The explicit whole-dorm phrasing WINS over the self heuristic:
+                // Durin's compound text mentions "self" but is an aura.
+                let aura = RE_DORM_AURA_ALL
+                    .captures(&buff.description)
+                    .and_then(|c| c[1].parse::<f64>().ok());
+                let recovery =
+                    aura.unwrap_or_else(|| parse_first_float(&buff.description).unwrap_or(0.0));
+                let is_self_only = aura.is_none()
+                    && (desc_lower.contains("self")
+                        || desc_lower.contains("oneself")
+                        || prefix.contains("_oneself"));
                 // "restores +X to another Operator in that Dormitory" - one
                 // beneficiary, not the whole room (audited: 25 single-target
                 // vs 39 whole-dorm captures, disjoint).
@@ -2115,10 +2141,8 @@ pub fn targeted_morale_effects(
 /// (never-guess) and this resolver re-prices it when the player declares the
 /// fact.
 static RE_HR_PER_SLOT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r"(?:<@cc\.vup>)?\+([\d.]+)%(?:</>)? HR contacting speed for every Recruit slot",
-    )
-    .unwrap()
+    Regex::new(r"(?:<@cc\.vup>)?\+([\d.]+)%(?:</>)? HR contacting speed for every Recruit slot")
+        .unwrap()
 });
 
 /// Registry rewrite for player-declared account facts (the established
@@ -2139,10 +2163,8 @@ pub fn resolve_account_facts(
         let Some(buff) = buffs.get(buff_id) else {
             continue;
         };
-        if let (
-            BuffResolutionStrategy::NonProduction { value },
-            Some(c),
-        ) = (strategy, RE_HR_PER_SLOT.captures(&buff.description))
+        if let (BuffResolutionStrategy::NonProduction { value }, Some(c)) =
+            (strategy, RE_HR_PER_SLOT.captures(&buff.description))
         {
             let per_slot: f64 = c[1].parse().unwrap_or(0.0);
             out.insert(

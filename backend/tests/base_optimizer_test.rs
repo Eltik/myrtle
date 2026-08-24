@@ -7200,6 +7200,53 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
     );
 }
 
+/// Durin-class compound texts ("self Morale recovered per hour -0.1, but
+/// restores +0.2 Morale per hour to all Operators assigned to that Dormitory")
+/// are whole-dorm AURAS, not self-only skills. Community-confirmed 2026-08-24:
+/// the aura applies to the holder fully too (net +0.1 on her own bar), and it
+/// competes under the game's strongest-effect rule like every other dorm aura
+/// (Lumen-class auras do NOT stack either - the model's max-fold is correct).
+#[test]
+fn durin_compound_text_is_a_whole_dorm_aura() {
+    use backend::core::grade::base::dorms::dorm_aura_value;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    // Both tiers of the shared family (six owners: Durin, Hellagur, Glaze,
+    // Bagpipe, ...) parse as auras at the ALL-Operators figure, never at the
+    // self-malus the "self" heuristic used to file them under.
+    for (id, want) in [
+        ("dorm_rec_all&oneself[000]", 0.2),
+        ("dorm_rec_all&oneself[001]", 0.25),
+        // The sibling shape: "self +0.55, and restores +0.1 Morale per hour
+        // to all OTHER Operators" (Hellagur/Bagpipe/Mint/Fartooth tiers). The
+        // self rider is priced nowhere, so the others-aura is the skill's
+        // whole model-relevant value.
+        ("dorm_rec_all&oneself[021]", 0.1),
+    ] {
+        match registry.get(id) {
+            Some(BuffResolutionStrategy::MoraleModifier {
+                recovery_per_hour,
+                is_self_only,
+                single_target,
+                ..
+            }) => {
+                assert!(
+                    (recovery_per_hour - want).abs() < 1e-9,
+                    "{id}: aura value {recovery_per_hour}, want {want}"
+                );
+                assert!(!is_self_only, "{id}: an aura, not a self-only skill");
+                assert!(!single_target, "{id}: whole-dorm, not single-target");
+            }
+            other => panic!("{id}: expected MoraleModifier, got {other:?}"),
+        }
+    }
+    // Dorm staffing can now see her: she prices at her max-tier aura value.
+    let durin = profile(gd, "char_501_durin");
+    let v = dorm_aura_value(&durin, &registry, &gd.building);
+    assert!((v - 0.25).abs() < 1e-9, "Durin's staffing value, got {v}");
+}
+
 /// Umiri's Famiglia Approval buffs OPERATORS, not the post: it stacks with
 /// Amiya's post-wide +7% (different effect types), its credit lands on the
 /// post holding the Siracusan, and the CC row labels it "per-room" when it
