@@ -18,6 +18,7 @@ import {
     type ISlotPresets,
     optimizeLayoutFn,
     rotationPlanQueryOptions,
+    saveBaseFactsFn,
 } from "#/lib/api/base";
 import type { IShiftRoom } from "#/lib/api/user";
 import { type Catalog, isPlannable } from "./catalog";
@@ -111,8 +112,18 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const layout = persisted.layout;
     const ignorePromotion = persisted.ignorePromotion ?? false;
     const setIgnorePromotion = useCallback((value: boolean) => setPersisted((prev) => ({ ...prev, ignorePromotion: value })), [setPersisted]);
-    const openRecruitSlots = persisted.openRecruitSlots ?? 0;
-    const setOpenRecruitSlots = useCallback((value: number) => setPersisted((prev) => ({ ...prev, openRecruitSlots: value })), [setPersisted]);
+    // Precedence: an explicit local edit this browser > the owner's saved
+    // facts (from the layout payload) > none. Edits also save server-side
+    // best-effort - only the profile owner's token succeeds, and that is the
+    // point: saved facts feed every scorer, viewers get a local what-if.
+    const openRecruitSlots = persisted.openRecruitSlots ?? layoutQuery.data?.facts?.open_recruit_slots ?? 0;
+    const setOpenRecruitSlots = useCallback(
+        (value: number) => {
+            setPersisted((prev) => ({ ...prev, openRecruitSlots: value }));
+            void saveBaseFactsFn({ data: { facts: { open_recruit_slots: value } } }).catch(() => {});
+        },
+        [setPersisted],
+    );
     const facts = useMemo(() => ({ open_recruit_slots: openRecruitSlots }), [openRecruitSlots]);
 
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);

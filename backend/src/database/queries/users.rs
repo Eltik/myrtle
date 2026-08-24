@@ -120,6 +120,37 @@ pub async fn update_settings(
     Ok(())
 }
 
+/// The user's saved base "account facts" (player state the sync cannot read).
+pub async fn get_base_facts(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Option<serde_json::Value>, sqlx::Error> {
+    sqlx::query_scalar::<_, Option<serde_json::Value>>(
+        "SELECT base_facts FROM user_settings WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .map(Option::flatten)
+}
+
+/// Save the user's base "account facts".
+pub async fn set_base_facts(
+    pool: &PgPool,
+    user_id: Uuid,
+    facts: &serde_json::Value,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "INSERT INTO user_settings (user_id, base_facts) VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET base_facts = EXCLUDED.base_facts",
+    )
+    .bind(user_id)
+    .bind(facts)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 /// Update user role
 pub async fn update_role(pool: &PgPool, user_id: Uuid, role: &str) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE users SET role = $2 WHERE id = $1")

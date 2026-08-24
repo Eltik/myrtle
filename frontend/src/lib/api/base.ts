@@ -296,6 +296,8 @@ export interface ISlotPresets {
 
 export interface ILayoutResponse {
     rooms: IDraftRoom[];
+    /** The owner's saved account facts, so every viewer scores with them. */
+    facts?: IAccountFacts;
     /**
      * The player's own shift rotation, out of the game's `presetQueue`. Kept
      * apart from `rooms` because that is the shape posted back for scoring;
@@ -359,6 +361,21 @@ export function baseCatalogQueryOptions() {
  * repeat edits that land back on an arrangement already scored - dragging an
  * operator out and back costs nothing.
  */
+export const saveBaseFactsFn = createServerFn({ method: "POST" })
+    .inputValidator((data: { facts: IAccountFacts; bearerToken?: string }) => data)
+    .handler(async ({ data: { facts, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        if (!token) return { saved: false };
+        const res = await backendFetch("/base/facts", {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify(facts),
+        });
+        // Not being the owner (or signed out) is a normal outcome: the toggle
+        // still works as a per-request what-if, it just doesn't persist.
+        return { saved: res.ok };
+    });
+
 export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, bearerToken?: string) {
     return queryOptions({
         queryKey: ["base", "rotation", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, bearerToken ? "auth" : "anon"],

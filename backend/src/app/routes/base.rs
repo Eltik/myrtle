@@ -5,9 +5,9 @@ use serde::Deserialize;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::services::base_planner::{
-    CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse, OptimizeRequest,
-    OptimizeResponse, RotationRequest, RotationResponse, catalog, evaluate, layout, optimize,
-    rotation,
+    AccountFactsReq, CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse,
+    OptimizeRequest, OptimizeResponse, RotationRequest, RotationResponse, catalog, evaluate,
+    layout, optimize, rotation, save_facts,
 };
 use crate::app::state::AppState;
 use crate::database::queries::users::find_by_id;
@@ -97,4 +97,17 @@ pub async fn rotation_plan(
 /// it needs no auth and the client can cache it hard.
 pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse> {
     Json(catalog(&state))
+}
+
+/// The signed-in user saving their OWN account facts (recruit slots etc.).
+/// Facts always attach to the caller's profile - there is no setting another
+/// player's facts; viewers get per-request overrides instead.
+pub async fn put_facts(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Json(body): Json<AccountFactsReq>,
+) -> Result<Json<AccountFactsReq>, ApiError> {
+    let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+    let user_uuid: uuid::Uuid = auth.user_uuid()?;
+    Ok(Json(save_facts(&state, user_uuid, body).await?))
 }

@@ -81,6 +81,9 @@ pub struct LayoutResponse {
     /// Separate from `rooms` because that is the round-trip shape the client
     /// posts back; presets are read-only context and never travel with a draft.
     pub presets: Vec<SlotPresetsDto>,
+    /// The owner's saved account facts, so every viewer scores with them.
+    #[serde(default)]
+    pub facts: AccountFactsReq,
 }
 
 /// One slot's saved rotation: the crew the player has queued for each shift.
@@ -232,7 +235,7 @@ pub struct RotationRequest {
 /// Player-declared account state the sync cannot read (the "account facts"
 /// prompt). With no declaration the never-guess default stands: the dependent
 /// skills price 0.
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize)]
 pub struct AccountFactsReq {
     /// Recruit slots purchased beyond the initial one (0-3). Prices the
     /// per-slot HR-speed riders (Lin's Meritocracy).
@@ -249,6 +252,41 @@ fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: Accou
             slots.min(3),
         );
     }
+}
+
+/// The facts the PROFILE OWNER declared, saved server-side - the default every
+/// scorer reads, so the planner and `/user/improvements` price the same skills
+/// the same way. A request's own facts override per-field (a what-if).
+async fn effective_facts(
+    state: &AppState,
+    uid: &str,
+    request: AccountFactsReq,
+) -> AccountFactsReq {
+    let saved = match find_by_uid(&state.db, uid).await {
+        Ok(Some(user)) => {
+            crate::database::queries::users::get_base_facts(&state.db, user.id)
+                .await
+                .ok()
+                .flatten()
+                .and_then(|v| serde_json::from_value::<AccountFactsReq>(v).ok())
+                .unwrap_or_default()
+        }
+        _ => AccountFactsReq::default(),
+    };
+    AccountFactsReq {
+        open_recruit_slots: request.open_recruit_slots.or(saved.open_recruit_slots),
+    }
+}
+
+/// The owner saving their facts (auth required, own profile only).
+pub async fn save_facts(
+    state: &AppState,
+    viewer_id: uuid::Uuid,
+    facts: AccountFactsReq,
+) -> Result<AccountFactsReq, ApiError> {
+    let value = serde_json::to_value(facts).map_err(|_| ApiError::BadRequest("facts".into()))?;
+    crate::database::queries::users::set_base_facts(&state.db, viewer_id, &value).await?;
+    Ok(facts)
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -499,10 +537,17 @@ pub async fn layout(
     viewer_id: Option<uuid::Uuid>,
 ) -> Result<LayoutResponse, ApiError> {
     let user = profile_for(state, uid, viewer_id).await?;
+    let facts = crate::database::queries::users::get_base_facts(&state.db, user.id)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|v| serde_json::from_value::<AccountFactsReq>(v).ok())
+        .unwrap_or_default();
     let Some(building_json) = get_building(&state.db, user.id).await? else {
         return Ok(LayoutResponse {
             rooms: Vec::new(),
             presets: Vec::new(),
+            facts,
         });
     };
 
@@ -535,7 +580,11 @@ pub async fn layout(
     // `roomSlots` is a JSON object, so its iteration order is not the base's.
     // Sort by slot so the board is stable between loads.
     rooms.sort_by(|a, b| a.slot_id.cmp(&b.slot_id));
-    Ok(LayoutResponse { rooms, presets })
+    Ok(LayoutResponse {
+        rooms,
+        presets,
+        facts,
+    })
 }
 
 pub async fn evaluate(
@@ -548,7 +597,8 @@ pub async fn evaluate(
     validate(&req.layout, &game_data)?;
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
-    apply_account_facts(&mut ctx, &game_data, req.facts);
+    let facts = effective_facts(state, uid, req.facts).await;
+    apply_account_facts(&mut ctx, &game_data, facts);
     let building = UserBuilding {
         rooms: req
             .layout
@@ -734,7 +784,8 @@ pub async fn optimize(
     validate(&req.layout, &game_data)?;
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
-    apply_account_facts(&mut ctx, &game_data, req.facts);
+    let facts = effective_facts(state, uid, req.facts).await;
+    apply_account_facts(&mut ctx, &game_data, facts);
 
     let building = UserBuilding {
         rooms: req
@@ -802,7 +853,8 @@ pub async fn rotation(
     validate(&req.layout, &game_data)?;
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
-    apply_account_facts(&mut ctx, &game_data, req.facts);
+    let facts = effective_facts(state, uid, req.facts).await;
+    apply_account_facts(&mut ctx, &game_data, facts);
     let building = UserBuilding {
         rooms: req
             .layout

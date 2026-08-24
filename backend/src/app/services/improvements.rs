@@ -1331,9 +1331,28 @@ async fn build_base_improvements(
     // the interactive planner endpoints so both read a roster the same way.
     let BaseContext {
         profiles,
-        registry,
+        mut registry,
         morale_drains,
     } = BaseContext::build(roster, game_data, false);
+
+    // The owner's saved account facts (recruit slots etc.) re-price the same
+    // skills here as in the interactive planner - the two surfaces must never
+    // disagree on a number.
+    if let Ok(Some(value)) =
+        crate::database::queries::users::get_base_facts(pool, user_id).await
+        && let Some(slots) = value
+            .get("open_recruit_slots")
+            .and_then(serde_json::Value::as_u64)
+            .filter(|&n| n > 0)
+    {
+        #[allow(clippy::cast_possible_truncation)]
+        let slots = (slots.min(3)) as u32;
+        registry = crate::core::grade::base::buff_registry::resolve_account_facts(
+            &registry,
+            &game_data.building.buffs,
+            slots,
+        );
+    }
 
     // For a 243 base, evaluate the base-wide resource economy (Rosmontis / Ebenholz /
     // Mr. Nothing "Perception Information" system, and anything shaped like it) ONCE: its

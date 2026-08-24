@@ -126,6 +126,7 @@ pub fn router() -> Router<AppState> {
         .route("/base/evaluate", post(base::evaluate_layout))
         .route("/base/optimize", post(base::optimize_layout))
         .route("/base/rotation", post(base::rotation_plan))
+        .route("/base/facts", put(base::put_facts))
         .route("/get-user-supports", get(roster::get_supports))
         .route("/inventory", get(inventory::get_inventory))
         .route("/user-skins", get(skins::get_owned_skins))
