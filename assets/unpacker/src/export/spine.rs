@@ -483,6 +483,32 @@ const STATE_ONLY: &[&str] = &[
 ///
 /// Purely diagnostic: the gate exists because these groups belong to interaction states the
 /// entrance never enters, and admitting one draws content the game does not. It is here so
+/// Does this `GameObject` name a state clone the `_Start` CINEMATIC must not draw?
+///
+/// Effect rigs are instantiated once per state as `<skin>_<State>[_NN](Clone)`. Rather than match
+/// the skin id (which we do not have here) this reads the name's UNDERSCORE SEGMENTS and asks
+/// whether any of them names a non-cinematic state.
+///
+/// ⚠️ Segment equality, never `contains`. `_Start_Idle` carries BOTH "start" and "idle" and is an
+/// IDLE clone — a substring test for "start" admits it, which is exactly the trap that hid the
+/// reveal-timeline bug (clip `03`). Presence of a non-cinematic segment decides, and "start" never
+/// rescues it. Arknights skin ids (`char_2024_chyue_cfa#1`) contain no such segment, so a name can
+/// only match through its state tail.
+pub(crate) fn non_cinematic_state_clone(name: &str) -> bool {
+    // MEASURED, not assumed. Adding "interact" and "special" here drops 68 more systems across 7
+    // entrances (wisdel alone loses 38) and is a net LOSS: mue 10.756 -> 10.857, corpus-8 mean
+    // 11.616 -> 11.626. The game does draw some interact/special-clone effects during a cinematic,
+    // and the `<State> Only Effects` group gate already withholds the ones that must not appear.
+    // Only the IDLE clones are wrong here.
+    const NON_CINEMATIC: [&str; 1] = ["idle"];
+    let Some(base) = name.strip_suffix("(Clone)") else {
+        return false;
+    };
+    base.trim_end()
+        .split('_')
+        .any(|seg| NON_CINEMATIC.contains(&seg.to_ascii_lowercase().as_str()))
+}
+
 /// "what is this gate withholding" is a measurement rather than an argument.
 fn state_admitted(state: &str) -> bool {
     static ADMIT: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
@@ -1602,6 +1628,16 @@ fn collect_dynchar_bg_quads(
         {
             continue;
         }
+        // ⛔ REFUTED: gating entrance SCENE quads the same way is catastrophic.
+        //
+        // The particle gate in `particles.rs` withholds entrance effects hosted in an IDLE state
+        // clone, and the symmetric rule looked obvious here — Ch'en's `sand` quads hang off
+        // `..._Idle_SC_CY_Belt_B2_01(Clone)`. It is WRONG: an entrance cinematic legitimately
+        // draws the character's idle SCENERY, and dropping it removes the set out from under her.
+        // Measured (216 layers over 13 entrances, excu2's whole 56-layer scene among them):
+        // exc 6.292 -> 57.932 (r .931 -> .330), ska 9.854 -> 18.498, mly 17.007 -> 25.708,
+        // against only mue -0.095 / eyja -0.209 / cet -0.098. Do not re-attempt.
+        //
         // 🚨 THE IDLE SCENE MUST NOT DRAW THE ENTRANCE RIG.
         //
         // A dynchar bundle ships TWO prefab roots: the idle world (`dyn_illust_*`) and the

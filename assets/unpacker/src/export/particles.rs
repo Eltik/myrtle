@@ -481,31 +481,6 @@ pub(crate) struct EntranceCtx<'a> {
     pub is_entrance: bool,
 }
 
-/// Does this `GameObject` name a state clone the `_Start` CINEMATIC must not draw?
-///
-/// Effect rigs are instantiated once per state as `<skin>_<State>[_NN](Clone)`. Rather than match
-/// the skin id (which we do not have here) this reads the name's UNDERSCORE SEGMENTS and asks
-/// whether any of them names a non-cinematic state.
-///
-/// ⚠️ Segment equality, never `contains`. `_Start_Idle` carries BOTH "start" and "idle" and is an
-/// IDLE clone — a substring test for "start" admits it, which is exactly the trap that hid the
-/// reveal-timeline bug (clip `03`). Presence of a non-cinematic segment decides, and "start" never
-/// rescues it. Arknights skin ids (`char_2024_chyue_cfa#1`) contain no such segment, so a name can
-/// only match through its state tail.
-fn non_cinematic_state_clone(name: &str) -> bool {
-    // MEASURED, not assumed. Adding "interact" and "special" here drops 68 more systems across 7
-    // entrances (wisdel alone loses 38) and is a net LOSS: mue 10.756 -> 10.857, corpus-8 mean
-    // 11.616 -> 11.626. The game does draw some interact/special-clone effects during a cinematic,
-    // and the `<State> Only Effects` group gate already withholds the ones that must not appear.
-    // Only the IDLE clones are wrong here.
-    const NON_CINEMATIC: [&str; 1] = ["idle"];
-    let Some(base) = name.strip_suffix("(Clone)") else {
-        return false;
-    };
-    base.trim_end()
-        .split('_')
-        .any(|seg| NON_CINEMATIC.contains(&seg.to_ascii_lowercase().as_str()))
-}
 
 /// Propagate a shared reveal through a bone-follower rig. Some falling-apple/
 /// comet-rig leaves are not individually gated by `m_IsActive`/`_delayTime`,
@@ -880,7 +855,7 @@ pub(crate) fn collect_dynchar_particles(
             && let Some(clone) = host
                 .ancestor_go_names(all_objects, go_pid)
                 .into_iter()
-                .find(|n| non_cinematic_state_clone(n))
+                .find(|n| super::spine::non_cinematic_state_clone(n))
         {
             skipped.inactive_group += 1;
             if attrib_dbg {
