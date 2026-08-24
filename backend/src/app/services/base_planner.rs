@@ -203,8 +203,13 @@ pub struct SustainEntryDto {
     pub room_type: String,
     /// Morale lost per working hour.
     pub drain_per_hour: f64,
-    /// Hours from full morale to empty. `None` = never depletes.
+    /// Hours until empty FROM THE CURRENT BAR when the sync knows it, else
+    /// from full. `None` = never depletes.
     pub lasts_hours: Option<f64>,
+    /// The operator's morale as of the last account sync (0-24). Absent when
+    /// the sync doesn't cover them.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub morale: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -599,6 +604,17 @@ pub async fn evaluate(
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, facts);
+    // Real current morale from the synced base, so "lasts X h" means from
+    // NOW (well, from the last sync) instead of from a hypothetical full bar.
+    let live_morale = match find_by_uid(&state.db, uid).await {
+        Ok(Some(user)) => get_building(&state.db, user.id)
+            .await
+            .ok()
+            .flatten()
+            .map(|json| crate::core::grade::base::types::live_morale(&json))
+            .unwrap_or_default(),
+        _ => HashMap::new(),
+    };
     let building = UserBuilding {
         rooms: req
             .layout
@@ -623,7 +639,7 @@ pub async fn evaluate(
     let claim = claim_of(&assignment_dto);
     Ok(EvaluateResponse {
         power: power_of(&building, &game_data),
-        sustain: sustain_of(&building, &ctx, &game_data),
+        sustain: sustain_of(&building, &ctx, &game_data, &live_morale),
         dorms: dorms_of(&building, &ctx, &game_data),
         assignment: assignment_dto,
         claim,
@@ -739,6 +755,7 @@ fn sustain_of(
     building: &UserBuilding,
     ctx: &BaseContext,
     game_data: &GameData,
+    live_morale: &HashMap<String, f64>,
 ) -> Vec<SustainEntryDto> {
     let by_id: HashMap<&str, &OperatorBaseProfile> = ctx
         .profiles
@@ -758,6 +775,7 @@ fn sustain_of(
                 continue;
             };
             let drain = game_morale_drain(profile, &ctx.morale_drains);
+            let morale = live_morale.get(char_id).copied();
             out.push(SustainEntryDto {
                 operator_id: char_id.clone(),
                 name: game_data
@@ -767,7 +785,8 @@ fn sustain_of(
                 slot_id: room.slot_id.clone(),
                 room_type: room.room_type.clone(),
                 drain_per_hour: drain,
-                lasts_hours: (drain > 0.0).then(|| MAX_MORALE / drain),
+                lasts_hours: (drain > 0.0).then(|| morale.unwrap_or(MAX_MORALE) / drain),
+                morale,
             });
         }
     }

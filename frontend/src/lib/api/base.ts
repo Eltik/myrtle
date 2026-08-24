@@ -51,8 +51,10 @@ export interface ISustainEntry {
     slot_id: string;
     room_type: RoomType;
     drain_per_hour: number;
-    /** Hours from full morale to empty. `null` = never depletes. */
+    /** Hours until empty from the current bar (when the sync knows it), else from full. `null` = never depletes. */
     lasts_hours: number | null;
+    /** Morale as of the last account sync (0-24), when known. */
+    morale?: number;
 }
 
 /**

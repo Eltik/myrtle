@@ -24,6 +24,31 @@ pub struct UserRoom {
     pub preset_shifts: Vec<Vec<String>>,
 }
 
+/// Every operator's CURRENT morale from the synced building data, keyed by
+/// char id: `chars[].ap` counts 360,000 per morale point (24.0 = 8,640,000).
+/// The value is as of the last account sync - morale keeps moving in-game
+/// afterwards - so treat it as "when last seen", not a live feed.
+pub fn live_morale(data: &serde_json::Value) -> std::collections::HashMap<String, f64> {
+    const AP_PER_POINT: f64 = 360_000.0;
+    const MORALE_MAX: f64 = 24.0;
+    data.get("chars")
+        .and_then(|v| v.as_object())
+        .map(|chars| {
+            chars
+                .values()
+                .filter_map(|c| {
+                    let char_id = c.get("charId").and_then(|v| v.as_str())?;
+                    let ap = c.get("ap").and_then(serde_json::Value::as_f64)?;
+                    Some((
+                        char_id.to_string(),
+                        (ap / AP_PER_POINT).clamp(0.0, MORALE_MAX),
+                    ))
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 /// Map a manufacture `formulaId` to its production formula type.
 fn formula_from_id(id: &str) -> Option<String> {
     match id {

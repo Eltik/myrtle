@@ -95,6 +95,11 @@ export function DeepDive() {
     const live = snapshotOf(evaluation);
 
     const claim = evaluation.claim;
+    // Who runs dry soonest FROM THEIR REAL CURRENT BAR (as of the last sync).
+    const atRisk = evaluation.sustain
+        .filter((e) => e.lasts_hours !== null && e.morale !== undefined)
+        .sort((a, b) => (a.lasts_hours ?? 0) - (b.lasts_hours ?? 0))
+        .slice(0, 3);
     const rooms = evaluation.assignment.rooms.filter((r) => r.fill_hours !== undefined);
     const sustainability = api.rotation?.rotation.sustainability;
     const interval = claim?.intervals.find((i) => String(i.hours) === cadence);
@@ -123,6 +128,17 @@ export function DeepDive() {
                                             <span className="cursor-help underline decoration-dotted underline-offset-2">conservative</span>
                                         </TileTooltip>
                                     </span>
+                                    {atRisk.length > 0 && (
+                                        <span className="text-[11px]">
+                                            <span className="text-muted-foreground">At risk from their current bar: </span>
+                                            {atRisk.map((e, i) => (
+                                                <span key={e.operator_id}>
+                                                    {i > 0 && <span className="text-muted-foreground"> · </span>}
+                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0)}</span>
+                                                </span>
+                                            ))}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <ToggleGroup
