@@ -129,7 +129,7 @@ REFOFF[whitw2]=0.550
 # chyue: anchored on the END WHITE-OUT ramp, the sharpest edge in her clip (half-rise Y=150 at
 # ours 18.942 vs game 18.744). Not fitted to the score. Her clock is otherwise correct — our
 # render performs the same white-out, and its timing matches to ~0.2 s.
-REFOFF[chyue]=-0.200
+REFOFF[chyue]=0.267
 # exc added 2026-08-11. Her clip is trimmed 3 frames EARLY -- our render runs BEHIND, the opposite
 # sign to cet. Corroborated INDEPENDENTLY of the score by the scope's lit-disc radius: the game
 # releases the aperture at t=5.10 where we release at 5.20, and shifting the whole radius
@@ -190,7 +190,15 @@ DIR[wis]='char_1035_wisdel_sale#14';      BEATS[wis]="2,4,6,8,10,12"
 # no white-out is produced. Scoring her in the default set would swamp the corpus mean with one
 # broken skin, so run her explicitly:  ./all8.sh <label> "" whitw2
 DIR[whitw2]='char_1038_whitw2_sale#15';   BEATS[whitw2]="2,4,6,8,10,12,13.5"
-#   chyue 50.158 (8 beats, REFOFF -0.200, r 0.606) — 77.924 at capture. Two camera-chain faults,
+#   chyue 28.530 (8 beats, REFOFF 0.267, r 0.890) — 77.924 at capture, then 50.158 until the
+#                REFERENCE TRIM was corrected 2026-08-24: -0.200 was wrong by 14 frames. A dense
+#                sweep is a SHARP interior minimum (0.200 33.775 / 0.267 28.530 / 0.333 33.568)
+#                and MEAN r jumps 0.606 -> 0.890, into the band of every working reference — a
+#                registration number, not a fitted score, so this is alignment and not overfit.
+#                ZERO pixels changed. Beat count stays 8 across the whole sweep, so it is not the
+#                "pushed a beat out of range" trap. ⚠️ Her clapperboard is the sharp edge that
+#                makes the lag visible; the earlier trim was set without one.
+#                Two camera-chain faults were found earlier,
 #                both found by feature-matching her render against the capture (`camfit.py`):
 #                the track decoded only the STREAMED sub-clip so a PINNED transform used its static
 #                pose (-320.6 px in X), and `centerBlend` cancelled every constant correction in Y
