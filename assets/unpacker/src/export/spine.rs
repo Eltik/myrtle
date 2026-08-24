@@ -2496,9 +2496,16 @@ fn collect_dynchar_bg_quads(
                             // Previously SILENT. An in-bundle Mesh that fails to parse takes its
                             // layer with it and leaves no trace, which reads as "the prefab never
                             // had it" — the hardest kind of gap to notice.
+                            // ⚠️ Print the ROOT. SCENE_ATTRIB output is INTERLEAVED across
+                            // bundles, so a line without one cannot be attributed to a skin —
+                            // neighbouring lines routinely belong to five different skins.
                             eprintln!(
-                                "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp}",
+                                "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp} root={}",
                                 host.go_name(all_objects, go_pid),
+                                own_root.map_or_else(
+                                    || "?".to_string(),
+                                    |r| host.go_name(all_objects, r)
+                                ),
                             );
                         }
                         continue;
