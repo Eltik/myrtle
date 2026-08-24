@@ -129,6 +129,27 @@ pub struct EvaluateResponse {
     pub sustain: Vec<SustainEntryDto>,
     /// What the dormitory wing is worth to this layout.
     pub dorms: DormsDto,
+    /// Check-in economics: time until the first room stalls, and what each
+    /// claim cadence loses. `None` when nothing produces.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim: Option<ClaimDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ClaimDto {
+    /// Hours (from an empty buffer, i.e. from a claim now) until the FIRST
+    /// production room's buffer is full - log in before this to lose nothing.
+    pub next_full_hours: f64,
+    /// Steady-state losses at each check-in cadence.
+    pub intervals: Vec<ClaimIntervalDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ClaimIntervalDto {
+    pub hours: f64,
+    pub lost_lmd_per_day: f64,
+    pub lost_gold_per_day: f64,
+    pub lost_exp_per_day: f64,
 }
 
 /// The dormitories' contribution. They produce nothing, so they never appear in
@@ -518,11 +539,63 @@ pub async fn evaluate(
         None,
     );
 
+    let assignment_dto =
+        base_assignment_to_dto(&assignment, &game_data, &ctx.profiles, &ctx.registry);
+    let claim = claim_of(&assignment_dto);
     Ok(EvaluateResponse {
         power: power_of(&building, &game_data),
         sustain: sustain_of(&building, &ctx, &game_data),
         dorms: dorms_of(&building, &ctx, &game_data),
-        assignment: base_assignment_to_dto(&assignment, &game_data, &ctx.profiles, &ctx.registry),
+        assignment: assignment_dto,
+        claim,
+    })
+}
+
+/// The claim model: how long the base runs unattended before the first room
+/// stalls, and what each check-in cadence leaves on the table. Steady-state
+/// per room: claiming every `T` hours realizes `min(fill, T) / T` of the
+/// room's rate; the rest is produced into a full buffer and lost. Losses are
+/// per RESOURCE (trading LMD, factory gold, factory EXP) so the coupled
+/// gold→trade chain isn't double-counted into one number.
+fn claim_of(assignment: &BaseAssignmentDto) -> Option<ClaimDto> {
+    let fills: Vec<&crate::app::services::improvements::RoomAssignmentDto> = assignment
+        .rooms
+        .iter()
+        .filter(|r| r.fill_hours.is_some())
+        .collect();
+    let next_full_hours = fills
+        .iter()
+        .filter_map(|r| r.fill_hours)
+        .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))?;
+    let intervals = [6.0, 12.0, 24.0]
+        .iter()
+        .map(|&hours| {
+            let mut lost_lmd = 0.0;
+            let mut lost_gold = 0.0;
+            let mut lost_exp = 0.0;
+            for r in &fills {
+                let fill = r.fill_hours.unwrap_or(f64::INFINITY);
+                let lost_frac = (1.0_f64 - (fill / hours).min(1.0)).max(0.0);
+                match r.room_type.as_str() {
+                    "TRADING" => lost_lmd += r.yield_lmd_per_day * lost_frac,
+                    "MANUFACTURE" => {
+                        lost_gold += r.yield_gold_per_day * lost_frac;
+                        lost_exp += r.yield_exp_per_day * lost_frac;
+                    }
+                    _ => {}
+                }
+            }
+            ClaimIntervalDto {
+                hours,
+                lost_lmd_per_day: lost_lmd,
+                lost_gold_per_day: lost_gold,
+                lost_exp_per_day: lost_exp,
+            }
+        })
+        .collect();
+    Some(ClaimDto {
+        next_full_hours,
+        intervals,
     })
 }
 

@@ -88,6 +88,23 @@ export interface IEvaluateResponse {
     power: IPower;
     sustain: ISustainEntry[];
     dorms: IDorms;
+    /** Check-in economics; absent when nothing produces. */
+    claim?: IClaim;
+}
+
+/** How long the base runs unattended, and what each claim cadence loses. */
+export interface IClaim {
+    /** Hours from a claim now until the FIRST production room stalls. */
+    next_full_hours: number;
+    /** Steady-state losses at each check-in cadence (6h / 12h / 24h). */
+    intervals: IClaimInterval[];
+}
+
+export interface IClaimInterval {
+    hours: number;
+    lost_lmd_per_day: number;
+    lost_gold_per_day: number;
+    lost_exp_per_day: number;
 }
 
 export interface IRoomDiff {

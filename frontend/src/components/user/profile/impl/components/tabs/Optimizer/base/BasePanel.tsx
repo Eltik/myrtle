@@ -11,6 +11,7 @@ import { Headline } from "./controls/Headline";
 import { PromotionToggle } from "./controls/PromotionToggle";
 import { ShiftStrip } from "./controls/ShiftStrip";
 import { SustainabilityBadge } from "./controls/SustainabilityBadge";
+import { DeepDive } from "./stats/DeepDive";
 import { StatsForNerds } from "./stats/StatsForNerds";
 
 export function BasePanel({ board }: { board: IBoard }) {
@@ -77,6 +78,8 @@ export function BasePanel({ board }: { board: IBoard }) {
                         <BoardFullscreen board={board} />
                     </DialogContent>
                 </Dialog>
+
+                <DeepDive />
 
                 <StatsForNerds />
             </div>

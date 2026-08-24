@@ -6632,6 +6632,16 @@ fn ledger_probe() {
         None,
     );
     for r in &asn.rooms {
+        if let Some(f) = &r.fill {
+            println!(
+                "FILL {} {} {:?} cap {} fill {:.1}h",
+                r.slot_id,
+                r.room_type,
+                r.formula_type.as_deref().unwrap_or("-"),
+                f.capacity,
+                f.fill_hours
+            );
+        }
         if r.room_type != "TRADING" && r.room_type != "CONTROL" {
             continue;
         }

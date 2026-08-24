@@ -405,6 +405,14 @@ pub struct RoomAssignmentDto {
     /// Per-skill contribution breakdown (evaluate path only; empty elsewhere).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub ledger: Vec<SkillLineDto>,
+    /// Output-buffer size: orders for a trading post (incl. crew capacity
+    /// skills), items for a factory. Evaluate path only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capacity: Option<i32>,
+    /// Hours from an empty buffer to full - how long the room runs unattended
+    /// before it stalls. Evaluate path only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fill_hours: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2127,6 +2135,8 @@ fn room_assignment_to_dto(
             .iter()
             .map(|l| skill_line_dto(l, game_data))
             .collect(),
+        capacity: room.fill.as_ref().map(|f| f.capacity),
+        fill_hours: room.fill.as_ref().map(|f| f.fill_hours),
     }
 }
 

@@ -127,6 +127,79 @@ pub fn global_bonus_value(room_type: &str, room_count: usize, pct: f64) -> f64 {
     per_room_base * room_count as f64 * pct / 100.0
 }
 
+/// A production room's output buffer: how big it is and how long it takes to
+/// fill from empty. Once full the room stalls, so `fill_hours` is also "how
+/// long you can stay logged out of this room without losing anything".
+/// Trading capacity is in ORDERS (the game's order limit plus crew capacity
+/// skills); factory capacity in ITEMS of the formula the room runs (its
+/// `OutputCapacity` weight budget over the item's weight). A trading post is
+/// assumed gold-supplied - if it starves it never fills, so this is the
+/// conservative deadline.
+#[derive(Debug, Clone)]
+pub struct RoomFill {
+    pub capacity: i32,
+    pub fill_hours: f64,
+}
+
+/// Nominal gold moved per LMD-strategy order. `TRADING_GOLD_SOLD_PER_DAY_BASE`
+/// = 20 bars/day is 10 such orders/day - the same 2-gold/1000-LMD order the
+/// yield model's base rate already assumes.
+const GOLD_PER_ORDER: f64 = 2.0;
+
+/// Seconds of production points a room accrues per day at 100%.
+const POINTS_PER_DAY: f64 = 86400.0;
+
+pub fn room_fill(
+    room_type: &str,
+    formula: Option<&str>,
+    level: i32,
+    speed_pct: f64,
+    capacity_bonus: i32,
+    building_data: &crate::core::gamedata::types::building::BuildingDataFile,
+) -> Option<RoomFill> {
+    let mult = productivity_mult(speed_pct);
+    #[allow(clippy::cast_sign_loss)]
+    let phase = (level.max(1) as usize) - 1;
+    match (room_type, formula) {
+        ("TRADING", _) => {
+            let phases = &building_data.trading_data.phases;
+            let base = phases.get(phase.min(phases.len().checked_sub(1)?))?.order_limit;
+            let capacity = (base + capacity_bonus).max(1);
+            let orders_per_day = TRADING_GOLD_SOLD_PER_DAY_BASE * mult / GOLD_PER_ORDER;
+            Some(RoomFill {
+                capacity,
+                fill_hours: f64::from(capacity) / orders_per_day * 24.0,
+            })
+        }
+        ("MANUFACTURE", Some(f)) => {
+            // The recipe the room runs at this level: the highest matching one
+            // its level unlocks (the same rule the EXP-rate table encodes).
+            let recipe = building_data
+                .manufact_formulas
+                .values()
+                .filter(|r| r.formula_type == f)
+                .filter(|r| {
+                    r.require_rooms
+                        .iter()
+                        .all(|rr| rr.room_id != "MANUFACTURE" || rr.room_level <= level)
+                })
+                .max_by_key(|r| r.cost_point)?;
+            let phases = &building_data.manufact_data.phases;
+            let out_cap = phases
+                .get(phase.min(phases.len().checked_sub(1)?))?
+                .output_capacity;
+            let capacity = ((out_cap + capacity_bonus) / recipe.weight.max(1)).max(1);
+            #[allow(clippy::cast_precision_loss)]
+            let items_per_day = POINTS_PER_DAY / recipe.cost_point as f64 * mult;
+            Some(RoomFill {
+                capacity,
+                fill_hours: f64::from(capacity) / items_per_day * 24.0,
+            })
+        }
+        _ => None,
+    }
+}
+
 /// Per-room natural yield, for display.
 #[derive(Debug, Clone, Default)]
 pub struct RoomYield {

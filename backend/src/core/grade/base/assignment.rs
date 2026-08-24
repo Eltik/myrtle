@@ -822,6 +822,7 @@ pub(crate) fn assign_auxiliary_rooms(
                 order_value: 0.0,
                 locked: false,
                 ledger: Vec::new(),
+                fill: None,
             });
         }
     }
@@ -864,6 +865,7 @@ fn append_support_rooms(
                 order_value: 0.0,
                 locked: false,
                 ledger: Vec::new(),
+                fill: None,
             });
         }
     }
@@ -1703,6 +1705,31 @@ pub fn compute_current_assignment(
             &global_bonuses,
             &cc_conditions,
         );
+        // Output-buffer model: crew capacity skills widen the buffer, and the
+        // room's own speed (incl. CC globals) sets how fast it fills.
+        let present: HashSet<String> = ops.iter().cloned().collect();
+        let capacity_bonus: i32 = ops
+            .iter()
+            .filter_map(|id| op_index.get(id.as_str()))
+            .map(|op| {
+                compute_order_limit(
+                    op,
+                    &room.room_type,
+                    formula.as_deref(),
+                    registry,
+                    building_data,
+                    &present,
+                )
+            })
+            .sum();
+        let fill = super::yield_model::room_fill(
+            &room.room_type,
+            formula.as_deref(),
+            room.level,
+            eff,
+            capacity_bonus,
+            building_data,
+        );
         rooms.push(RoomAssignment {
             slot_id: room.slot_id.clone(),
             room_type: room.room_type.clone(),
@@ -1713,6 +1740,7 @@ pub fn compute_current_assignment(
             order_value: value,
             locked,
             ledger,
+            fill,
         });
     }
 
@@ -3102,6 +3130,7 @@ fn assign_single_room(
         order_value: value,
         locked,
         ledger: Vec::new(),
+        fill: None,
     }
 }
 

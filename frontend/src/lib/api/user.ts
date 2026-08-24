@@ -399,6 +399,10 @@ export interface IRoomAssignment {
     non_production: INonProdEffect[];
     /** Per-skill contribution breakdown (evaluate path only; absent elsewhere). */
     ledger?: ISkillLine[];
+    /** Output-buffer size: orders (trading, incl. crew capacity skills) or items (factory). */
+    capacity?: number;
+    /** Hours from an empty buffer to full - unattended runtime before the room stalls. */
+    fill_hours?: number;
 }
 
 /**

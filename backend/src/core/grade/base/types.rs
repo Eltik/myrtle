@@ -268,6 +268,8 @@ pub struct RoomAssignment {
     /// Per-skill contribution breakdown (deep dive). Filled by the evaluate
     /// path only; search paths leave it empty - it is display data, not score.
     pub ledger: Vec<super::skill_ledger::LedgerLine>,
+    /// Output-buffer size and fill time (deep dive). Evaluate path only.
+    pub fill: Option<super::yield_model::RoomFill>,
 }
 
 #[derive(Clone)]
