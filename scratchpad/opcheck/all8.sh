@@ -35,6 +35,14 @@
 #   corpus mean 11.946
 #
 # Opt-in extras (NOT in the default key list, so the mean above stays comparable):
+#   kalts 31.303 (8 beats, REFOFF 0.400, r 0.593) — RE-TRIMMED 2026-08-24. Her trim was swept
+#                earlier the same day and left at 0.200 because the MADC minimum (0.333) and the
+#                r maximum (0.467) DISAGREED — the signature of fitting rather than alignment.
+#                That ambiguity was the BUGS: after the settled-idle and idle-clone-particle
+#                fixes the sweep resolves to a single sharp interior minimum where both agree,
+#                bracketed at frame granularity (0.367 31.427 / 0.400 31.303 / 0.433 31.709),
+#                r 0.527 -> 0.593, 8 beats throughout. 🔑 A trim that reads as ambiguous may be
+#                measuring a defect, not a lag — re-sweep after fixing one.
 #   kalts 32.361 (8 beats, REFOFF 0.200) — captured 2026-08-23. Was 48.614 until two exporter
 #                fixes landed the same day: the DROPPED CAMERA TRACK (-15.48) and the
 #                windowless-meshExt entrance planes (-0.77).
@@ -165,7 +173,7 @@ REFOFF[eyja]=0.100
 # The geometric value also BEATS the coarse score sweep (+0.083 -> 23.870 vs +0.10 -> 25.165); a
 # 0.05-step sweep stepped over the true optimum. ⚠️ Changes ZERO pixels.
 REFOFF[fugue]=0.083
-REFOFF[kalts]=0.200
+REFOFF[kalts]=0.400
 # ⛔ mue was swept and needs NO offset -- the score is BEST at 0.000 (21.918) and degrades
 # monotonically (+0.017 -> 23.263, +0.033 -> 24.190). A dense sweep over 2.0-8.0s did prefer +0.033
 # by 0.51 on a base of 11.3, but that did NOT survive on her actual beat set. 🔑 Her trim is
