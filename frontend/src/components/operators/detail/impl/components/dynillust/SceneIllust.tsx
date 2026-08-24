@@ -2615,6 +2615,44 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             }),
                         };
                     };
+                    // LIVE STAGE WALK. `__dumpLayers` below closes over ONE composite's
+                    // containers, and the entrance composite is destroyed at the hand-off
+                    // (`sceneContainer.destroy({children: true})`) — so past the hand-off it keeps
+                    // answering from an emptied container and reports 0 rows, which reads exactly
+                    // like "the settled idle draws no scene layers". It cost a wrong diagnosis
+                    // once. This one walks the actual stage, so it is correct at any time.
+                    (window as unknown as { __dumpStage?: () => unknown }).__dumpStage = () => {
+                        const rows: { path: string; kind: string; vis: boolean; rend: boolean; wAlpha: number; box: number[] }[] = [];
+                        const walk = (o: PIXI.DisplayObject, path: string, depth: number) => {
+                            if (depth > 24) return;
+                            const c = o as PIXI.Container;
+                            const kids = c.children as PIXI.DisplayObject[] | undefined;
+                            const name = (o as unknown as { name?: string }).name ?? o.constructor?.name ?? "?";
+                            const here = `${path}/${name}`;
+                            if (!kids || kids.length === 0) {
+                                const b = o.getBounds();
+                                rows.push({
+                                    path: here,
+                                    kind: o.constructor?.name ?? "?",
+                                    vis: o.visible,
+                                    rend: o.renderable,
+                                    wAlpha: Number(((o as unknown as { worldAlpha: number }).worldAlpha ?? -1).toFixed(3)),
+                                    box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
+                                });
+                                return;
+                            }
+                            for (const k of kids) walk(k, here, depth + 1);
+                        };
+                        // Walk every LIVE composite root, not the stage: the scene is rendered
+                        // into a render texture from a container that is not a stage child, so a
+                        // stage walk sees almost nothing.
+                        const comps = compositesRef.current ?? [];
+                        comps.forEach((cp, i) => {
+                            const root = (cp as unknown as { root?: PIXI.Container }).root;
+                            if (root) walk(root, `#${i}${root.parent ? "" : "(DETACHED)"}`, 0);
+                        });
+                        return rows;
+                    };
                     (window as unknown as { __dumpLayers?: () => unknown }).__dumpLayers = () => {
                         const rows: unknown[] = [];
                         const walk = (c: PIXI.Container | null, side: string) => {

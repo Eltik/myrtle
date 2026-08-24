@@ -186,6 +186,12 @@ const initScript = () => {
                 console.log("LAYERDUMP null");
             }
             try {
+                const st = await page.evaluate(() => (window.__dumpStage ? window.__dumpStage() : "NO-HOOK"));
+                console.log("STAGEDUMP " + file + " " + JSON.stringify(st));
+            } catch (e) {
+                console.log("STAGEDUMP null");
+            }
+            try {
                 const tex = await page.evaluate(() => (window.__dumpTex ? window.__dumpTex() : "NO-HOOK"));
                 console.log("TEXDUMP " + JSON.stringify(tex));
             } catch (e) {
