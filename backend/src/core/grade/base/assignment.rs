@@ -821,6 +821,7 @@ pub(crate) fn assign_auxiliary_rooms(
                 total_efficiency: eff,
                 order_value: 0.0,
                 locked: false,
+                ledger: Vec::new(),
             });
         }
     }
@@ -862,6 +863,7 @@ fn append_support_rooms(
                 total_efficiency: 0.0,
                 order_value: 0.0,
                 locked: false,
+                ledger: Vec::new(),
             });
         }
     }
@@ -1624,6 +1626,17 @@ pub fn compute_current_assignment(
 
     let mut rooms: Vec<RoomAssignment> = Vec::new();
 
+    // The evaluate view is the deep dive's data source, so every room also
+    // carries its per-skill breakdown (marginals measured by ablation).
+    let ledger_ctx = super::skill_ledger::LedgerCtx {
+        op_index: &op_index,
+        registry,
+        building_data,
+        facility_counts: &facility_counts,
+        total_dorm_levels,
+        morale_drains,
+    };
+
     // Show the current Control Center (with the bonuses it currently provides).
     if let Some(cc) = control_room
         && !cc_ops.is_empty()
@@ -1633,8 +1646,9 @@ pub fn compute_current_assignment(
             room_type: "CONTROL".to_string(),
             level: cc.level,
             formula_type: None,
-            operators: cc_ops,
             total_efficiency: global_bonuses.values().sum(),
+            ledger: super::skill_ledger::control_room_ledger(&ledger_ctx, &cc_ops),
+            operators: cc_ops.clone(),
             ..Default::default()
         });
     }
@@ -1680,6 +1694,15 @@ pub fn compute_current_assignment(
             registry,
             building_data,
         );
+        let ledger = super::skill_ledger::production_room_ledger(
+            &ledger_ctx,
+            &ops,
+            &room.room_type,
+            formula.as_deref(),
+            &cc_ops,
+            &global_bonuses,
+            &cc_conditions,
+        );
         rooms.push(RoomAssignment {
             slot_id: room.slot_id.clone(),
             room_type: room.room_type.clone(),
@@ -1689,6 +1712,7 @@ pub fn compute_current_assignment(
             total_efficiency: eff,
             order_value: value,
             locked,
+            ledger,
         });
     }
 
@@ -2058,7 +2082,7 @@ pub(crate) fn other_room_skill_count(
 /// same-room clause-bearing buffs (only the strongest applies), while clause-less
 /// buffs (Sakiko's Precious-Metal productivity, Viviana's faction buff, etc.)
 /// always `stacks` on top.
-struct CcBonus {
+pub(crate) struct CcBonus {
     room: String,
     family: String,
     bonus: f64,
@@ -2106,7 +2130,7 @@ impl CcCondition {
 /// (summed flat per room) from faction-gated ones (returned for per-room,
 /// team-dependent evaluation). Shared by the optimizer and the live-base reader.
 #[derive(Default)]
-struct CcBonusAccumulator {
+pub(crate) struct CcBonusAccumulator {
     /// Clause-bearing buffs: strongest-per-(room, family) wins (non-stacking).
     best: HashMap<(String, String), f64>,
     /// Clause-less buffs: summed flat per room (they always stack).
@@ -2138,7 +2162,7 @@ impl CcBonusAccumulator {
 
     /// Fold one operator's bonuses in: clause-less buffs add to the room total,
     /// clause-bearing ones keep only the strongest per family.
-    fn add(&mut self, bonuses: &[CcBonus]) {
+    pub(crate) fn add(&mut self, bonuses: &[CcBonus]) {
         for b in bonuses {
             if b.stacks && b.conditional.is_none() {
                 *self.stacked.entry(b.room.clone()).or_insert(0.0) += b.bonus;
@@ -2163,7 +2187,7 @@ impl CcBonusAccumulator {
 
     /// `(flat per-room totals, faction-gated conditions)`. Conditional families are
     /// kept out of the flat totals - they're applied per room against the team.
-    fn finish(self) -> (HashMap<String, f64>, Vec<CcCondition>) {
+    pub(crate) fn finish(self) -> (HashMap<String, f64>, Vec<CcCondition>) {
         let mut global = self.stacked;
         for ((room, family), bonus) in &self.best {
             if !self.cond_families.contains(&(room.clone(), family.clone())) {
@@ -2175,7 +2199,7 @@ impl CcBonusAccumulator {
 }
 
 /// Collect an operator's Control Center global production bonuses.
-fn cc_bonuses(
+pub(crate) fn cc_bonuses(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
@@ -3077,6 +3101,7 @@ fn assign_single_room(
         total_efficiency: speed + global,
         order_value: value,
         locked,
+        ledger: Vec::new(),
     }
 }
 

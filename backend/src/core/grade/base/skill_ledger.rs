@@ -1,0 +1,306 @@
+//! Per-skill contribution ledger — the "how this room's number is calculated"
+//! breakdown behind the deep-dive UI.
+//!
+//! Every line is a MARGINAL measured by ablation: remove exactly one buff from
+//! one operator, re-score the room with everything else unchanged, and report
+//! the delta. That definition survives every mechanism the engine models —
+//! pair riders (Lemuen loses her +25 if Exusiai leaves), non-stacking families
+//! (a second +7% global shows 0), faction gates, recipe-type scaling — because
+//! it asks the scorer itself rather than re-deriving the rules.
+//!
+//! Lines that measure 0 are classified rather than hidden: a priced strategy
+//! whose gate isn't met here reads "inactive", a morale/drain skill reads
+//! "morale" (it moves the sustain sim, not efficiency), a capacity skill reads
+//! "capacity", and a buff the engine deliberately doesn't price (never-guess)
+//! reads "unmodeled" — three honest states where a ✓/✗ ledger has two.
+
+use std::collections::HashMap;
+
+use crate::core::gamedata::types::building::BuildingDataFile;
+
+use super::assignment::{CcBonusAccumulator, CcCondition, cc_bonuses, compute_team_efficiency};
+use super::buff_registry::BuffResolutionStrategy;
+use super::types::{OperatorBaseProfile, compute_match_tags};
+
+/// How a zero-marginal line should be read.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LineDisposition {
+    /// Non-zero marginal: this line is part of the room's number.
+    Contributes,
+    /// Priced strategy, but its gate isn't met by this crew/base.
+    Inactive,
+    /// Moves morale/drain (the sustain sim), not room efficiency.
+    MoraleOnly,
+    /// Moves the order/stock capacity, not the speed number shown.
+    CapacityOnly,
+    /// Non-production Control-Center value (clue/training/HR) — reported in
+    /// the room's `non_production` block, not its efficiency.
+    NonProduction,
+    /// The engine deliberately prices this at zero (never-guess).
+    Unmodeled,
+}
+
+/// One skill line of a room's breakdown.
+#[derive(Clone, Debug)]
+pub struct LedgerLine {
+    pub operator_id: String,
+    pub buff_id: String,
+    /// Marginal order/production SPEED % in this exact crew.
+    pub speed_pct: f64,
+    /// Marginal order VALUE %.
+    pub value_pct: f64,
+    /// Set for Control-Center lines shown on a production room: the line's
+    /// owner sits in the CC, not this room.
+    pub from_control_center: bool,
+    pub disposition: LineDisposition,
+}
+
+const EPS: f64 = 1e-6;
+
+/// A profile identical to `op` with one buff removed. Match tags are
+/// recomputed — some derive from the buff set, and a stale tag would keep a
+/// faction gate satisfied that the ablation should break.
+fn ablated(
+    op: &OperatorBaseProfile,
+    buff_id: &str,
+    building_data: &BuildingDataFile,
+) -> OperatorBaseProfile {
+    let mut p = op.clone();
+    p.available_buffs.retain(|b| b != buff_id);
+    p.match_tags = compute_match_tags(&p.faction_tags, &p.available_buffs, building_data);
+    p
+}
+
+fn zero_disposition(strategy: Option<&BuffResolutionStrategy>, crew: &[String]) -> LineDisposition {
+    match strategy {
+        Some(BuffResolutionStrategy::MoraleModifier { .. }) => LineDisposition::MoraleOnly,
+        Some(BuffResolutionStrategy::CapacityOnly { .. }) => LineDisposition::CapacityOnly,
+        // A capacity component with 0 efficiency marginal is still ACTIVE
+        // capacity when its teammate gate is met (Lappland's "+4 order limit
+        // with Texas" reads "capacity", not "inactive", while Texas shares
+        // the post).
+        Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { order_limit, .. })
+            if *order_limit != 0 =>
+        {
+            LineDisposition::CapacityOnly
+        }
+        Some(BuffResolutionStrategy::ConditionalOnTeammate {
+            required_char_id,
+            order_limit,
+            ..
+        }) => {
+            let gate_met = required_char_id
+                .as_ref()
+                .is_none_or(|rc| crew.iter().any(|o| o == rc));
+            if gate_met && *order_limit != 0 {
+                LineDisposition::CapacityOnly
+            } else {
+                LineDisposition::Inactive
+            }
+        }
+        Some(BuffResolutionStrategy::ControlNonProduction { .. }) => LineDisposition::NonProduction,
+        Some(BuffResolutionStrategy::Complex { .. }) | None => LineDisposition::Unmodeled,
+        Some(_) => LineDisposition::Inactive,
+    }
+}
+
+/// The scoring context a room ledger re-runs its ablations against. All fields
+/// are exactly what `compute_team_efficiency` was called with for the real
+/// number, so a marginal of 0 genuinely means "removing this changes nothing".
+pub struct LedgerCtx<'a> {
+    pub op_index: &'a HashMap<&'a str, &'a OperatorBaseProfile>,
+    pub registry: &'a HashMap<String, BuffResolutionStrategy>,
+    pub building_data: &'a BuildingDataFile,
+    pub facility_counts: &'a HashMap<String, usize>,
+    pub total_dorm_levels: i32,
+    pub morale_drains: &'a HashMap<String, f64>,
+}
+
+impl LedgerCtx<'_> {
+    fn score(
+        &self,
+        ops: &[String],
+        room_type: &str,
+        formula: Option<&str>,
+        conditions: &[CcCondition],
+        replace: Option<(&str, &OperatorBaseProfile)>,
+    ) -> (f64, f64) {
+        // Borrow everything from the real index, swapping in at most one
+        // ablated profile.
+        let mut index: HashMap<&str, &OperatorBaseProfile> = self.op_index.clone();
+        if let Some((id, p)) = replace {
+            index.insert(id, p);
+        }
+        compute_team_efficiency(
+            ops,
+            room_type,
+            formula,
+            &index,
+            self.registry,
+            self.building_data,
+            self.facility_counts,
+            self.total_dorm_levels,
+            self.morale_drains,
+            conditions,
+        )
+    }
+
+    /// Global bonuses + conditions a fixed CC crew grants, with at most one
+    /// member's profile replaced by an ablated copy.
+    fn cc_grants(
+        &self,
+        cc_ops: &[String],
+        replace: Option<(&str, &OperatorBaseProfile)>,
+    ) -> (HashMap<String, f64>, Vec<CcCondition>) {
+        let mut acc = CcBonusAccumulator::default();
+        for id in cc_ops {
+            let profile = match replace {
+                Some((rid, p)) if rid == id => Some(p),
+                _ => self.op_index.get(id.as_str()).copied(),
+            };
+            if let Some(op) = profile {
+                acc.add(&cc_bonuses(op, self.registry, self.building_data));
+            }
+        }
+        acc.finish()
+    }
+}
+
+/// The breakdown for one production room (TRADING / MANUFACTURE / POWER):
+/// each crew member's same-room buffs, plus every Control-Center line that
+/// targets this room type. `global_bonuses`/`cc_conditions` must be the grants
+/// of `cc_ops` exactly as the room was really scored with.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn production_room_ledger(
+    ctx: &LedgerCtx,
+    ops: &[String],
+    room_type: &str,
+    formula: Option<&str>,
+    cc_ops: &[String],
+    global_bonuses: &HashMap<String, f64>,
+    cc_conditions: &[CcCondition],
+) -> Vec<LedgerLine> {
+    let mut out = Vec::new();
+    let (full_speed, full_value) = ctx.score(ops, room_type, formula, cc_conditions, None);
+    let full_global = global_bonuses.get(room_type).copied().unwrap_or(0.0);
+
+    // The room's own crew, one line per same-room buff.
+    for id in ops {
+        let Some(op) = ctx.op_index.get(id.as_str()) else {
+            continue;
+        };
+        for buff_id in &op.available_buffs {
+            let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
+                continue;
+            };
+            if buff.room_type != room_type {
+                continue;
+            }
+            let probe = ablated(op, buff_id, ctx.building_data);
+            let (speed, value) =
+                ctx.score(ops, room_type, formula, cc_conditions, Some((id, &probe)));
+            let d_speed = full_speed - speed;
+            let d_value = full_value - value;
+            let disposition = if d_speed.abs() > EPS || d_value.abs() > EPS {
+                LineDisposition::Contributes
+            } else {
+                zero_disposition(ctx.registry.get(buff_id), ops)
+            };
+            out.push(LedgerLine {
+                operator_id: (*id).clone(),
+                buff_id: buff_id.clone(),
+                speed_pct: d_speed,
+                value_pct: d_value,
+                from_control_center: false,
+                disposition,
+            });
+        }
+    }
+
+    // Control-Center lines that target this room type: ablate the CC member's
+    // buff, re-derive the grants, and re-score the room under them.
+    for id in cc_ops {
+        let Some(op) = ctx.op_index.get(id.as_str()) else {
+            continue;
+        };
+        for buff_id in &op.available_buffs {
+            let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
+                continue;
+            };
+            if buff.room_type != "CONTROL" {
+                continue;
+            }
+            let targets_room = match ctx.registry.get(buff_id) {
+                Some(
+                    BuffResolutionStrategy::GlobalEffect { target_room, .. }
+                    | BuffResolutionStrategy::TagBased { target_room, .. }
+                    | BuffResolutionStrategy::ConditionalGlobalEffect { target_room, .. }
+                    | BuffResolutionStrategy::GlobalPoolScaling { target_room, .. },
+                ) => target_room == room_type,
+                _ => false,
+            };
+            if !targets_room {
+                continue;
+            }
+            let probe = ablated(op, buff_id, ctx.building_data);
+            let (globals, conditions) = ctx.cc_grants(cc_ops, Some((id, &probe)));
+            let (speed, value) = ctx.score(ops, room_type, formula, &conditions, None);
+            let global = globals.get(room_type).copied().unwrap_or(0.0);
+            let d_speed = (full_speed + full_global) - (speed + global);
+            let d_value = full_value - value;
+            let disposition = if d_speed.abs() > EPS || d_value.abs() > EPS {
+                LineDisposition::Contributes
+            } else {
+                LineDisposition::Inactive
+            };
+            out.push(LedgerLine {
+                operator_id: (*id).clone(),
+                buff_id: buff_id.clone(),
+                speed_pct: d_speed,
+                value_pct: d_value,
+                from_control_center: true,
+                disposition,
+            });
+        }
+    }
+    out
+}
+
+/// The Control Center row's own breakdown: each member's CONTROL buff, valued
+/// as the marginal on the SUM of global bonuses the crew grants (the number the
+/// CC row displays). Non-global CC skills classify by strategy.
+pub(crate) fn control_room_ledger(ctx: &LedgerCtx, cc_ops: &[String]) -> Vec<LedgerLine> {
+    let mut out = Vec::new();
+    let (full_globals, _) = ctx.cc_grants(cc_ops, None);
+    let full_sum: f64 = full_globals.values().sum();
+    for id in cc_ops {
+        let Some(op) = ctx.op_index.get(id.as_str()) else {
+            continue;
+        };
+        for buff_id in &op.available_buffs {
+            let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
+                continue;
+            };
+            if buff.room_type != "CONTROL" {
+                continue;
+            }
+            let probe = ablated(op, buff_id, ctx.building_data);
+            let (globals, _) = ctx.cc_grants(cc_ops, Some((id, &probe)));
+            let d = full_sum - globals.values().sum::<f64>();
+            let disposition = if d.abs() > EPS {
+                LineDisposition::Contributes
+            } else {
+                zero_disposition(ctx.registry.get(buff_id), cc_ops)
+            };
+            out.push(LedgerLine {
+                operator_id: (*id).clone(),
+                buff_id: buff_id.clone(),
+                speed_pct: d,
+                value_pct: 0.0,
+                from_control_center: false,
+                disposition,
+            });
+        }
+    }
+    out
+}

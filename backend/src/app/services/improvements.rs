@@ -402,6 +402,9 @@ pub struct RoomAssignmentDto {
     /// training / HR speed in each boosted facility's OWN units - never folded
     /// into the LMD objective. Empty for other rooms.
     pub non_production: Vec<NonProdEffectDto>,
+    /// Per-skill contribution breakdown (evaluate path only; empty elsewhere).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub ledger: Vec<SkillLineDto>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -411,6 +414,69 @@ pub struct NonProdEffectDto {
     /// Effect % in that facility's own units (clue collection speed,
     /// Specialization training speed, HR contacting speed).
     pub value: f64,
+}
+
+/// One line of a room's per-skill breakdown (the deep dive's "how this is
+/// calculated"). Values are MARGINALS in this exact crew - what the room's
+/// number loses if this one skill is removed - so pair riders, non-stacking
+/// rules and faction gates are already folded in.
+#[derive(Debug, Clone, Serialize)]
+pub struct SkillLineDto {
+    pub operator_id: String,
+    /// Display name, so Control-Center lines shown on another room need no
+    /// roster join client-side.
+    pub operator_name: String,
+    pub buff_id: String,
+    /// The skill's display name from `building_data`.
+    pub buff_name: String,
+    /// Marginal speed/efficiency %.
+    pub speed_pct: f64,
+    /// Marginal order-value %.
+    #[serde(skip_serializing_if = "is_zero")]
+    pub value_pct: f64,
+    /// The line's owner sits in the Control Center, not this room.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub from_control_center: bool,
+    /// "contributes" | "inactive" (gate unmet here) | "morale" (moves the
+    /// sustain sim, not efficiency) | "capacity" | "non_production" |
+    /// "unmodeled" (the engine deliberately prices it 0).
+    pub disposition: &'static str,
+}
+
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_zero(v: &f64) -> bool {
+    v.abs() < 1e-9
+}
+
+fn skill_line_dto(
+    l: &crate::core::grade::base::skill_ledger::LedgerLine,
+    game_data: &GameData,
+) -> SkillLineDto {
+    use crate::core::grade::base::skill_ledger::LineDisposition as D;
+    SkillLineDto {
+        operator_id: l.operator_id.clone(),
+        operator_name: game_data
+            .operators
+            .get(&l.operator_id)
+            .map_or_else(|| l.operator_id.clone(), |o| o.name.clone()),
+        buff_id: l.buff_id.clone(),
+        buff_name: game_data
+            .building
+            .buffs
+            .get(&l.buff_id)
+            .map_or_else(String::new, |b| b.buff_name.clone()),
+        speed_pct: l.speed_pct,
+        value_pct: l.value_pct,
+        from_control_center: l.from_control_center,
+        disposition: match l.disposition {
+            D::Contributes => "contributes",
+            D::Inactive => "inactive",
+            D::MoraleOnly => "morale",
+            D::CapacityOnly => "capacity",
+            D::NonProduction => "non_production",
+            D::Unmodeled => "unmodeled",
+        },
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2056,6 +2122,11 @@ fn room_assignment_to_dto(
         yield_gold_per_day: y.gold_per_day,
         yield_exp_per_day: y.exp_per_day,
         non_production,
+        ledger: room
+            .ledger
+            .iter()
+            .map(|l| skill_line_dto(l, game_data))
+            .collect(),
     }
 }
 

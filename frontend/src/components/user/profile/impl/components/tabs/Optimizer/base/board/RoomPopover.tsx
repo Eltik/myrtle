@@ -1,9 +1,42 @@
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import type { ISkillLine } from "#/lib/api/user";
 import { type ITile, vacanciesOf } from "#/lib/base/board";
 import { isProduction, powerOf } from "#/lib/base/catalog";
+import { cn } from "#/lib/utils";
 import { useBaseOptimizer } from "../base-context";
 import { BaseSkill } from "./BaseSkill";
 import { TileTooltip } from "./tile/components/TileTooltip";
+
+/** The marginal chip on a skill row: what this line is worth in THIS crew. */
+function LedgerChip({ line }: { line: ISkillLine }) {
+    if (line.disposition === "contributes") {
+        const parts = [Math.abs(line.speed_pct) > 1e-9 ? `${line.speed_pct > 0 ? "+" : ""}${trim(line.speed_pct)}%` : null, line.value_pct && Math.abs(line.value_pct) > 1e-9 ? `${line.value_pct > 0 ? "+" : ""}${trim(line.value_pct)}% value` : null].filter(Boolean);
+        return <span className="shrink-0 font-mono font-semibold text-[10px] text-foreground tabular-nums">{parts.join(" · ")}</span>;
+    }
+    const label = {
+        inactive: "inactive",
+        morale: "morale",
+        capacity: "capacity",
+        non_production: "reception / HR",
+        unmodeled: "not modeled",
+    }[line.disposition];
+    const hint = {
+        inactive: "This skill's condition isn't met by this crew, so it adds nothing here.",
+        morale: "This skill changes morale drain or recovery - it shows up in the sustainability simulation, not in this room's efficiency.",
+        capacity: "This skill raises the room's order capacity, not its speed - it buys longer gaps between check-ins.",
+        non_production: "Non-production value (clues, training, HR) - counted in its own units, never folded into the efficiency number.",
+        unmodeled: "The optimizer deliberately prices this at zero rather than guessing.",
+    }[line.disposition];
+    return (
+        <TileTooltip label={<span className="block max-w-56">{hint}</span>}>
+            <span className={cn("shrink-0 text-[9px] uppercase tracking-wider", line.disposition === "inactive" ? "text-muted-foreground/60 line-through" : "text-muted-foreground")}>{label}</span>
+        </TileTooltip>
+    );
+}
+
+function trim(v: number): string {
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
 
 function Stat({ label, value }: { label: string; value: string }) {
     return (
@@ -25,6 +58,13 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const shiftRoom = api.viewShift != null ? api.shiftRoom(tile.slotId) : undefined;
     const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
     const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));
+
+    // The per-skill breakdown comes from the evaluation of the drafted board, so
+    // it describes the crews on display when no shift tab is active. Rotation
+    // shift crews differ per shift - no ledger is shown for them (yet).
+    const ledger = api.viewShift == null ? (scored?.ledger ?? []) : [];
+    const lineFor = (opId: string, buffId: string) => ledger.find((l) => l.operator_id === opId && l.buff_id === buffId && !l.from_control_center);
+    const ccLines = ledger.filter((l) => l.from_control_center);
 
     const producesOwnOutput = scored !== undefined;
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
@@ -68,14 +108,33 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                             </div>
                             {op.skills.length > 0 && (
                                 <div className={`ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5 ${benched.has(op.id) ? "opacity-60" : ""}`}>
-                                    {op.skills.map((skill) => (
-                                        <BaseSkill key={skill.buffId} skill={skill} />
-                                    ))}
+                                    {op.skills.map((skill) => {
+                                        const line = lineFor(op.id, skill.buffId);
+                                        return (
+                                            <div className="flex items-start justify-between gap-2" key={skill.buffId}>
+                                                <BaseSkill skill={skill} />
+                                                {line && <LedgerChip line={line} />}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
                     ))}
                     {vacancies > 0 && <p className="text-[11px] text-muted-foreground">{vacancies === tile.seats ? "Nobody is working here." : `${vacancies} seat${vacancies === 1 ? "" : "s"} open.`}</p>}
+                    {ccLines.length > 0 && (
+                        <div className="flex flex-col gap-1 rounded-md border border-border/50 bg-muted/10 px-2 py-1.5">
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">From the Control Center</span>
+                            {ccLines.map((l) => (
+                                <div className="flex items-baseline justify-between gap-2 text-[11px]" key={`${l.operator_id}:${l.buff_id}`}>
+                                    <span className="min-w-0 truncate">
+                                        {l.operator_name} · <span className="text-muted-foreground">{l.buff_name}</span>
+                                    </span>
+                                    <LedgerChip line={l} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
             )}
 

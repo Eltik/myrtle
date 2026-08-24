@@ -265,6 +265,9 @@ pub struct RoomAssignment {
     /// swapped without breaking the combo. False = a flexible team of independent
     /// operators that are interchangeable with similar ones.
     pub locked: bool,
+    /// Per-skill contribution breakdown (deep dive). Filled by the evaluate
+    /// path only; search paths leave it empty - it is display data, not score.
+    pub ledger: Vec<super::skill_ledger::LedgerLine>,
 }
 
 #[derive(Clone)]

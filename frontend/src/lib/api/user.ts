@@ -397,6 +397,28 @@ export interface IRoomAssignment {
     /** Non-production effects the crew provides (Control Center only): clue /
      *  training / HR speed in each boosted facility's own units. */
     non_production: INonProdEffect[];
+    /** Per-skill contribution breakdown (evaluate path only; absent elsewhere). */
+    ledger?: ISkillLine[];
+}
+
+/**
+ * One line of a room's per-skill breakdown. Values are MARGINALS in this exact
+ * crew - what the room loses if this one skill is removed - so pair riders,
+ * non-stacking rules and faction gates are already folded in. Marginals of
+ * coupled skills deliberately do NOT sum to the room total.
+ */
+export interface ISkillLine {
+    operator_id: string;
+    operator_name: string;
+    buff_id: string;
+    buff_name: string;
+    /** Marginal speed/efficiency %. */
+    speed_pct: number;
+    /** Marginal order-value %. */
+    value_pct?: number;
+    /** The line's owner sits in the Control Center, not this room. */
+    from_control_center?: boolean;
+    disposition: "contributes" | "inactive" | "morale" | "capacity" | "non_production" | "unmodeled";
 }
 
 export interface INonProdEffect {

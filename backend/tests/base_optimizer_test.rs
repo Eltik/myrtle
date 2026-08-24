@@ -6588,6 +6588,73 @@ fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
 /// Run: `BASE_REPRO_DIR=<dir> BASE_REPRO_UID=<uid> cargo test -- planner_probe --ignored --nocapture`
 #[test]
 #[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
+fn ledger_probe() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let dir = std::env::var("BASE_REPRO_DIR").expect("BASE_REPRO_DIR");
+    let uid = std::env::var("BASE_REPRO_UID").expect("BASE_REPRO_UID");
+    let read = |what: &str| -> serde_json::Value {
+        let path = format!("{dir}/{what}_{uid}.json");
+        serde_json::from_str(
+            &std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}")),
+        )
+        .expect("valid json")
+    };
+    let building = UserBuilding::from_json(&read("building"));
+    let roster: Vec<RosterEntry> = serde_json::from_value(read("roster")).expect("roster rows");
+    let profiles: Vec<OperatorBaseProfile> = roster
+        .iter()
+        .filter_map(|entry| {
+            let bc = gd.building.chars.get(&entry.operator_id)?;
+            let static_op = gd.operators.get(&entry.operator_id);
+            let faction_tags = static_op
+                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
+            Some(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                rarity,
+                &gd.building,
+                false,
+            ))
+        })
+        .collect();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let asn = compute_current_assignment(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        None,
+    );
+    for r in &asn.rooms {
+        if r.room_type != "TRADING" && r.room_type != "CONTROL" {
+            continue;
+        }
+        println!(
+            "== {} {} eff {:.1} value {:.1}",
+            r.slot_id, r.room_type, r.total_efficiency, r.order_value
+        );
+        for l in &r.ledger {
+            println!(
+                "   {:22} {:32} speed {:+7.2} value {:+6.2} {:?}{}",
+                l.operator_id,
+                l.buff_id,
+                l.speed_pct,
+                l.value_pct,
+                l.disposition,
+                if l.from_control_center { "  [CC]" } else { "" }
+            );
+        }
+    }
+}
+
+#[test]
+#[ignore]
 fn planner_probe() {
     use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
     let gd = load_game_data();
@@ -6735,4 +6802,80 @@ fn planner_probe() {
     }
     println!("PROBE rotation bench {:?}", rot.bench);
     println!("PROBE rotation done");
+}
+
+/// The deep-dive skill ledger: marginals by ablation, with coupled skills
+/// (Feud + Jaye's mirroring), pair riders, CC globals and capacity-only lines
+/// all classified honestly.
+#[test]
+fn skill_ledger_reports_marginals_and_dispositions() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let mut building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+    };
+    building.rooms[0].current_operators = vec!["char_4132_ascln".into()];
+    building.rooms[1].current_operators = vec![
+        "char_140_whitew".into(),
+        "char_102_texas".into(),
+        "char_272_strong".into(),
+    ];
+    let roster: Vec<OperatorBaseProfile> = [
+        "char_4132_ascln",
+        "char_140_whitew",
+        "char_102_texas",
+        "char_272_strong",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let tp = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("trading room scored");
+    let line = |op: &str, buff: &str| {
+        tp.ledger
+            .iter()
+            .find(|l| l.operator_id == op && l.buff_id == buff)
+            .unwrap_or_else(|| panic!("no ledger line for {op} {buff}"))
+    };
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    // Texas' Feud fires with Lappland present. Its marginal EXCEEDS its face
+    // +65 because removing it also collapses Jaye's teammate-mirroring - the
+    // ledger reports what the room actually loses.
+    let feud = line("char_102_texas", "trade_ord_spd&cost_P[000]");
+    assert_eq!(feud.disposition, LineDisposition::Contributes);
+    assert!(
+        feud.speed_pct >= 65.0 - 1e-6,
+        "Feud marginal {} >= 65",
+        feud.speed_pct
+    );
+    // Jaye's own mirroring line contributes.
+    let jaye = line("char_272_strong", "trade_ord_limit_diff[000]");
+    assert_eq!(jaye.disposition, LineDisposition::Contributes);
+    assert!(jaye.speed_pct > 0.0);
+    // Lappland's Texas-gated order-limit skill: zero efficiency marginal, but
+    // the gate is met and it moves capacity - "capacity", not "inactive".
+    let lapp = line("char_140_whitew", "trade_ord_limit&cost_P[001]");
+    assert_eq!(lapp.disposition, LineDisposition::CapacityOnly);
+    // Ascalon's CC-wide +7% shows on the post as a Control-Center line.
+    let cc_line = line("char_4132_ascln", "control_tra_spd[030]");
+    assert!(cc_line.from_control_center);
+    assert_eq!(cc_line.disposition, LineDisposition::Contributes);
+    assert!((cc_line.speed_pct - 7.0).abs() < 1e-6);
+}
+
+#[test]
+#[ignore]
+fn ledger_probe_registry_peek() {
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    for id in ["trade_ord_limit&cost_P[001]", "trade_ord_limit&cost_P[000]"] {
+        println!("{id} => {:?}", registry.get(id));
+    }
 }
