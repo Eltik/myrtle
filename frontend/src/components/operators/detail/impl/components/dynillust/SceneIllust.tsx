@@ -423,11 +423,11 @@ function postFxOn(): boolean {
  *
  *  Fugue's game capture is visibly HAZY at t=1.0-2.8 where ours is sharp, so the radius was the
  *  obvious suspect for her early-beat error. It is NOT: swept on correctly-staged assets her
- *  measured optimum is the DATA value itself — `blurSpread 1.3 * 2^resMode 1` = **2.6 px**
+ *  measured optimum is the DATA value itself - `blurSpread 1.3 * 2^resMode 1` = **2.6 px**
  *  (2.6 -> 20.95, 5 -> 20.80, 8 -> 21.53, 12 -> 21.69, 16 -> 23.35, 24 -> 24.58 over her first
  *  three beats). Do not override it.
  *
- *  ⚠️ An earlier reading of this — that the volume exports `params: null` and falls back to 1 px —
+ *  ⚠️ An earlier reading of this - that the volume exports `params: null` and falls back to 1 px -
  *  came from a STALE export. A correctly-staged export carries the params; see
  *  `dynchar-client-version-split` for why an under-staged export is so easy to believe. */
 function blurPxOverride(): number | null {
@@ -1397,7 +1397,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         target: PIXI.Container;
         /** Its OWN entrance clock. This used to piggy-back on the screen fade's `elapsed`, which
          *  silently disabled the whole subsystem for any skin whose director authors no fade
-         *  colour — Civilight Eterna ships an `HGMobileBlur` volume and `entranceFade` null, so
+         *  colour - Civilight Eterna ships an `HGMobileBlur` volume and `entranceFade` null, so
          *  her blur never ran. */
         elapsed: number;
     } | null>(null);
@@ -1650,12 +1650,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // onto the settle-open centre, `cy0 + (rigY − rigEndY)`, because Mlynar's absolute
                 // rig centre could not be trusted. It cannot be trusted no longer: his rig was off
                 // by a CONSTANT +273 authored px because his `_Start` pins `Dummy002`'s SCALE to
-                // (1, 0, 1) — collapsing the axis that carries his Main Camera's local +2.9947 Y —
+                // (1, 0, 1) - collapsing the axis that carries his Main Camera's local +2.9947 Y -
                 // and `entrance_camera_track` never sampled clip SCALE curves at all. With that
                 // fixed the re-base is a measured NO-OP for him (17.192 → 17.191).
                 //
                 // Keeping it was NOT free: because it depends only on the curve's SHAPE relative
-                // to its end, it CANCELS any constant correction to the exported centre — which is
+                // to its end, it CANCELS any constant correction to the exported centre - which is
                 // exactly what hid Chongyue's remaining vertical error. Retiring it is worth
                 // −28.7 on her (78.825 → 50.158, r −0.019 → 0.606) and 0.000 everywhere else.
                 const cbOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("centerblend") === "1";
@@ -1683,7 +1683,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 ef.lastCamRaw = [c[0], c[1]];
                 layoutSpine(ef.root, sw, sh, { x: cx - size / 2, y: cy - size / 2, width: size, height: size }, fitRef.current);
                 // CAMERA-RIDING OVERLAYS. A quad parented to the Main Camera keeps a CONSTANT
-                // screen position and size no matter how far the shot dollies — a film-strip
+                // screen position and size no matter how far the shot dollies - a film-strip
                 // border, a lens sheet, a full-frame haze. Its exported vertices are the rest
                 // pose, i.e. only correct at t=0, so re-place it against the live frame: the box
                 // is centred on `c` with side `size`, so mapping p -> c + (p - c0)·k with
@@ -1699,19 +1699,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         for (const m of cont.children) {
                             const rt = m as unknown as ISceneLayerRuntime;
                             if (!rt.__camLocked) continue;
-                            // Size against the frustum at THIS overlay's own distance rather than
-                            // the camera's focal-plane extent (`ISceneLayer.camLockViewPx`).
+                            // Size against the frustum at THIS overlay's own distance rather than the
+                            // camera's focal-plane extent (`ISceneLayer.camLockViewPx`).
                             //
-                            // ⛔ DEFAULT OFF (`?camlockview=1` enables) even though it is provably
-                            // the correct geometry: it lands whitw2's sprocket bars at screen
-                            // y 0..36 and 380..416 against 0..35 and 380..415 measured in her
-                            // capture, i.e. exact. It still SCORES WORSE (46.975 -> 57.185) because
-                            // the game FADES the strip out — present t=1..10, gone by t≈12..13.5 —
-                            // and we draw it for the whole entrance, so a correctly-placed bar is
-                            // simply wrong on three of her seven beats. Ship this together with
-                            // whatever drives that fade, not before.
-                            const cvOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("camlockview") === "1";
-                            const ref = cvOn && rt.__camLockView && rt.__camLockView > 0 ? rt.__camLockView : ef.frameSize;
+                            // Derived from Whislash-alter's prefab chain: her sprocket bars hang at
+                            // d=4.36 under a fov-60 rig, so their extent is 503.45px, while
+                            // `entranceViewPx` is 346.41 — the frustum at the dolly's d0=3.0. The
+                            // 1.4535 ratio was exactly the size-and-position error. With this the
+                            // bars land at y 0..36 and 380..416 against 0..35 and 380..415 measured
+                            // in her capture.
+                            //
+                            // ⚠️ This measured WORSE (46.975 -> 57.185) until the reveal timeline
+                            // learned to read her cinematic clip, because the game switches the
+                            // whole camera-locked group OFF at t=8.13 and we drew it throughout —
+                            // correctly-placed bars on beats that should have none. With the gate
+                            // in place it pays: 42.903 -> 41.861. `?camlockview=0` reverts.
+                            const cvOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("camlockview") === "0";
+                            const ref = !cvOff && rt.__camLockView && rt.__camLockView > 0 ? rt.__camLockView : ef.frameSize;
                             const k = size / ref;
                             m.scale.set(k);
                             m.position.set(cx - k * c0x, cy - k * c0y);
@@ -1946,7 +1950,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // apply the effect. Saturation is 1 - weight*intensity, so weight 0 is a true no-op.
             const pfx = entrancePostFxRef.current;
             if (pfx) {
-                // Its OWN clock — see the setup. Driving this off the screen fade's `elapsed`
+                // Its OWN clock - see the setup. Driving this off the screen fade's `elapsed`
                 // disabled the whole subsystem for every skin with no authored fade colour.
                 // Sample BEFORE advancing: the previous form read the screen fade's `elapsed`
                 // at this point in the tick, which the fade only increments further down. Keeping
@@ -3499,13 +3503,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // The BLUR radius comes from the profile, not a fitted constant.
                     // `HGMobileBlur`'s shader (`Hidden/Torappu/PostEffect/MobileBlurWithMask`) is a
                     // 4-tap box at +-0.5 TEXEL of its render target, iterated `blurDegree` times,
-                    // with the target downsampled by `resMode` — so one pass spans
+                    // with the target downsampled by `resMode` - so one pass spans
                     // `blurSpread * 2^resMode` full-res px. She authors 1 / 1 / 1 -> 2 px.
                     //
                     // Measured: where her weight is high our render is 1.5-3.8x SHARPER than the
                     // capture (gradient ratio), and where it is 0 we are 0.83x, the usual softness.
                     // ⚠️ Her scored beats sample NEITHER blur window (5.2-6.8 and 11.6-13.0), so
-                    // this cannot move her MADC — validate it at a beat inside a window.
+                    // this cannot move her MADC - validate it at a beat inside a window.
                     const pf = c.entrancePostFx;
                     if (pf && postFxOn() && pf.weightCurve.length > 1 && /grey|gray|saturat|blur/i.test(pf.effect)) {
                         const blur = /blur/i.test(pf.effect);

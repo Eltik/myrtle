@@ -464,6 +464,27 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
                 .flatten()
         })
         .map(|d| d as f32);
+    // ENTRANCE CLIP ADMISSION. `is_entrance_clip` is a NAME match, and three entrance bundles
+    // name their cinematic something else entirely — Eyjafjalla the Hvit Aska
+    // `char_1016_agoat2#_camera_01`, Ch'en the Holungday `Take 002`, Whislash-alter just `03`.
+    // That is the exact trap `camera_motion_clips` already documents and solves for the CAMERA,
+    // and it applied here too: the clip that drives the entrance camera IS the cinematic, so its
+    // `m_IsActive` toggles ARE the reveal timeline.
+    //
+    // Whislash-alter is the case that exposed it. Her clip `03` binds `m_IsActive` on
+    // `Dummy002/Main Camera/char_01/static_offset/fixed`, the parent of all eight camera-locked
+    // film-strip quads — so the strip is authored to switch OFF, and we drew it for the whole
+    // entrance because the name gate skipped `03`. Every one of her 26 entrance layers came back
+    // with zero gating.
+    //
+    // UNION, so every skin the name gate already handled is untouched by construction: where a
+    // camera-motion clip is already name-admitted, `camera_motion_clips` returns exactly that
+    // clip, and the union adds nothing. `DYNCHAR_WINCAMCLIP=0` reverts to the name gate alone.
+    let cam_clips = if std::env::var("DYNCHAR_WINCAMCLIP").as_deref() == Ok("0") {
+        HashSet::new()
+    } else {
+        camera_motion_clips(all_objects)
+    };
     let mut out: HashMap<i64, ActiveWindowList> = HashMap::new();
     for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 {
@@ -471,9 +492,8 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
         }
         // Only the ENTRANCE clip drives the reveal timeline. The `_Start` bundle also
         // ships the full idle/interact state machine, whose `m_IsActive` toggles are
-        // NOT the cinematic sequence — merging them corrupts the windows. Pick the clip
-        // whose name marks it as the entrance/start cinematic.
-        if !is_entrance_clip(v) {
+        // NOT the cinematic sequence — merging them corrupts the windows.
+        if !is_entrance_clip(v) && !cam_clips.contains(clip_pid) {
             continue;
         }
         let stop = clip_stop_time(v);
