@@ -1976,7 +1976,33 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // SETTLED GROUND, latched off the entrance clock (see settledGroundOn). Driven from
                 // the clock rather than the hand-off event because the hand-off fires at
                 // `duration`, ~3s after the capture's ground has already finished.
-                if (settledGroundOn() && !settledRef.current && efd.transform != null && efd.elapsed >= efd.transform) {
+                // DIAGNOSTIC (`?settledfrac=<f>`): move the swap from the TRANSFORM beat to
+                // `transform + f*(duration - transform)`, i.e. a fraction of the way from the
+                // transform to the authored end. Default 0 = fire at the transform, the shipped
+                // behaviour. It exists because the transform anchor was calibrated on ONE skin
+                // (Muelsyse) and demonstrably overshoots another: Whislash-alter's ground goes
+                // white ~1.6s before the capture's, costing her 41.861 -> 37.731. The captures
+                // put mue at ~54% of that gap and whitw2 at ~70%, so a single fraction looked like
+                // it might serve both where a single instant cannot.
+                //
+                // ⛔ PRICED, and the two skins want OPPOSITE things — there is no free fraction:
+                //     f      whitw2              mue
+                //     0      41.861 (shipped)    10.756 (shipped, best)
+                //     0.5    41.861              11.515
+                //     0.6    41.861              11.515
+                //     0.7    37.731 (best)       11.515
+                //     off    37.731              16.372
+                // whitw2 needs f>=0.7 (her transform->duration gap is only 1.5s, so anything less
+                // still fires before her scored beat); mue is best at f=0 and pays 0.759 for any
+                // move. Net at 0.7 is -3.371 across the 12 references, but the corpus-8 MEAN
+                // REGRESSES 11.616 -> 11.711 because whitw2 is not in that eight. No other skin is
+                // affected either way. Default stays 0 — shipping a 1-parameter fit across two
+                // skins with opposed preferences is the overfitting this project keeps retracting.
+                const sgFrac = typeof window === "undefined" ? 0 : (Number(new URLSearchParams(window.location.search).get("settledfrac")) || 0);
+                const sgAt = efd.transform != null && sgFrac > 0 && efd.duration != null
+                    ? efd.transform + sgFrac * Math.max(0, efd.duration - efd.transform)
+                    : efd.transform;
+                if (settledGroundOn() && !settledRef.current && sgAt != null && efd.elapsed >= sgAt) {
                     settledRef.current = true;
                     for (const sp of gapFillSpritesRef.current) sp.renderable = false;
                     gapFillSpritesRef.current = [];
