@@ -1656,12 +1656,15 @@ fn collect_dynchar_bg_quads(
         } else {
             None
         };
-        // A/B PROBE (`DYNCHAR_CROSSROOT_UNGATED=0`): an idle-root layer inside an ENTRANCE that
-        // has NO authored transform beat has nothing to sequence it — `cross_root_reveal` is
-        // None, so `cross_from` above stays None and the layer draws from t=0 for the whole
-        // cinematic. The game activates the idle prefab at the HAND-OFF, not before, so those
-        // layers arguably should not be in the entrance at all. Only two skins are affected
-        // (Mlynar 3 layers, pasngr 5); every other entrance ships a transform beat.
+        // A/B PROBE (`DYNCHAR_CROSSROOT_UNGATED=0`), kept for the record — the idea it tests is
+        // REFUTED. An idle-root layer inside an ENTRANCE with NO authored transform beat has
+        // nothing to sequence it: `cross_root_reveal` is None, so `cross_from` above stays None
+        // and the layer draws from t=0 for the whole cinematic. That looks wrong — the game
+        // activates the idle prefab at the HAND-OFF, not before — and only two skins are affected
+        // (Mlynar 5 layers, pasngr 5; every other entrance ships a transform beat).
+        //
+        // ⛔ But dropping them SCORES WORSE: Mlynar 17.191 -> 17.363. The game does draw them.
+        // Keep the default (admit), and do not re-litigate this without new evidence.
         if is_entrance
             && cross_root_reveal.is_none()
             && std::env::var("DYNCHAR_CROSSROOT_UNGATED").as_deref() == Ok("0")
