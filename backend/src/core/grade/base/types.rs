@@ -22,6 +22,8 @@ pub struct UserRoom {
     /// The player's planned rotation shifts for this room (each a list of
     /// `char_id`s), from the in-game preset queue. Empty if none set.
     pub preset_shifts: Vec<Vec<String>>,
+    /// Dormitory ambience (0-5000) from the synced furniture, 0 elsewhere.
+    pub comfort: i32,
 }
 
 /// Every operator's CURRENT morale from the synced building data, keyed by
@@ -93,6 +95,23 @@ impl UserBuilding {
             })
             .unwrap_or_default();
 
+        // slot_id -> dormitory ambience, from `rooms.DORMITORY[slot].comfort`.
+        let comfort_by_slot: HashMap<String, i32> = data
+            .get("rooms")
+            .and_then(|v| v.get("DORMITORY"))
+            .and_then(|v| v.as_object())
+            .map(|slots| {
+                slots
+                    .iter()
+                    .filter_map(|(slot_id, room)| {
+                        let c = room.get("comfort").and_then(serde_json::Value::as_i64)?;
+                        #[allow(clippy::cast_possible_truncation)]
+                        Some((slot_id.clone(), c as i32))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
         // slot_id -> planned rotation shifts, from `rooms.<type>[slot].presetQueue`
         // (a list of shifts, each a list of stationed instIds → char_ids).
         let mut presets_by_slot: HashMap<String, Vec<Vec<String>>> = HashMap::new();
@@ -159,6 +178,7 @@ impl UserBuilding {
                         current_operators,
                         current_formula: formula_by_slot.get(slot_id).cloned(),
                         preset_shifts: presets_by_slot.get(slot_id).cloned().unwrap_or_default(),
+                        comfort: comfort_by_slot.get(slot_id).copied().unwrap_or(0),
                     });
                 }
             }

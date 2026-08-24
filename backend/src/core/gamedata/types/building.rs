@@ -51,6 +51,12 @@ pub struct BuildingDataFile {
     /// Dormitory recovery mechanics.
     pub dorm_data: DormData,
 
+    /// Ambience -> recovery conversion: `comfort / this` = manpower recovered
+    /// per second (5000 comfort / 25 = 200 ap/s = +2.0 morale/hr, the game's
+    /// "ambience / 2500 per hour" rule). 0 disables the bonus.
+    #[serde(default)]
+    pub comfort_manpower_recover_factor: f64,
+
     /// Power plant mechanics.
     pub power_data: PowerData,
 

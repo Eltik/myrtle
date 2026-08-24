@@ -7032,3 +7032,31 @@ fn facts_probe_registry_peek() {
         println!("{id} => {:?}", registry.get(id));
     }
 }
+
+/// Dorm ambience: a maxed-furniture dorm (comfort 5000) recovers +2.0/hr on
+/// top of its level rate, per the game's ComfortManpowerRecoverFactor.
+#[test]
+fn dorm_comfort_adds_recovery() {
+    use backend::core::grade::base::dorms::dorm_list;
+    let gd = load_game_data();
+    let mut building = UserBuilding {
+        rooms: vec![room("d0", "DORMITORY", 5), room("d1", "DORMITORY", 5)],
+    };
+    building.rooms[0].comfort = 5000;
+    let dorms = dorm_list(&building, &gd.building);
+    let rate = |slot: &str| {
+        dorms
+            .iter()
+            .find(|d| d.slot_id == slot)
+            .expect("dorm listed")
+            .recovery_per_hour
+    };
+    assert!((rate("d1") - 2.0).abs() < 1e-9, "bare L5 dorm is 2.0/hr");
+    assert!(
+        (rate("d0") - 4.0).abs() < 1e-9,
+        "maxed ambience adds +2.0/hr, got {}",
+        rate("d0")
+    );
+    // Best-first ordering now prefers the furnished dorm.
+    assert_eq!(dorms[0].slot_id, "d0");
+}

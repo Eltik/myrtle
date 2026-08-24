@@ -52,6 +52,10 @@ pub struct DraftRoom {
     /// Factory recipe ("`F_GOLD`" / "`F_EXP`" / "`F_DIAMOND`"). None for other rooms.
     #[serde(default)]
     pub formula_type: Option<String>,
+    /// Dormitory ambience (0-5000), carried through from the synced base so a
+    /// drafted dorm keeps its furniture bonus. 0 elsewhere.
+    #[serde(default)]
+    pub comfort: i32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -102,6 +106,7 @@ pub struct DraftRoomDto {
     pub level: i32,
     pub operators: Vec<String>,
     pub formula_type: Option<String>,
+    pub comfort: i32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -408,6 +413,7 @@ impl DraftRoom {
             current_operators: self.operators,
             current_formula: self.formula_type,
             preset_shifts: Vec::new(),
+            comfort: self.comfort,
         }
     }
 }
@@ -580,6 +586,7 @@ pub async fn layout(
             level: room.level,
             operators: room.current_operators,
             formula_type: room.current_formula,
+            comfort: room.comfort,
         })
         .collect();
     // `roomSlots` is a JSON object, so its iteration order is not the base's.

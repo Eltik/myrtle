@@ -41,9 +41,17 @@ pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> V
         .filter(|r| r.room_type == "DORMITORY")
         .map(|r| {
             let idx = (r.level.max(1) as usize - 1).min(phases.len().saturating_sub(1));
-            let rate = phases
+            let mut rate = phases
                 .get(idx)
                 .map_or(0.0, |p| f64::from(p.manpower_recover) / 100.0);
+            // Ambience: `comfort / ComfortManpowerRecoverFactor` manpower/sec
+            // (= comfort/2500 morale/hr at the game's factor of 25). The synced
+            // furniture sets `comfort`; a drafted room without it just gets the
+            // bare rate.
+            let factor = building_data.comfort_manpower_recover_factor;
+            if factor > 0.0 && r.comfort > 0 {
+                rate += f64::from(r.comfort) / (factor * 100.0);
+            }
             #[allow(clippy::cast_sign_loss)]
             let capacity =
                 max_stationed_at_level(building_data, "DORMITORY", r.level).max(0) as usize;

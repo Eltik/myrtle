@@ -33,6 +33,8 @@ export interface IDraftRoom {
     level: number;
     operators: string[];
     formula_type?: FormulaType | null;
+    /** Dormitory ambience (0-5000), carried from the synced base. */
+    comfort?: number;
 }
 
 export interface IPower {
