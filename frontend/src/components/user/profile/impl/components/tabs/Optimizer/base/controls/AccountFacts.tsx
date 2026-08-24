@@ -30,6 +30,7 @@ export function AccountFacts() {
                                 </ToggleGroupItem>
                             ))}
                         </ToggleGroup>
+                        {api.factsSaved !== null && <span className={api.factsSaved ? "text-[10px] text-emerald-400" : "text-[10px] text-muted-foreground"}>{api.factsSaved ? "saved" : "what-if"}</span>}
                     </div>
                 )}
             />

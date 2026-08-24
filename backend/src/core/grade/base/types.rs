@@ -26,11 +26,25 @@ pub struct UserRoom {
     pub comfort: i32,
 }
 
-/// Every operator's CURRENT morale from the synced building data, keyed by
-/// char id: `chars[].ap` counts 360,000 per morale point (24.0 = 8,640,000).
-/// The value is as of the last account sync - morale keeps moving in-game
-/// afterwards - so treat it as "when last seen", not a live feed.
-pub fn live_morale(data: &serde_json::Value) -> std::collections::HashMap<String, f64> {
+/// One operator's morale state from the synced building data: the bar as the
+/// game last recorded it, when that was, and where they were sitting.
+#[derive(Debug, Clone)]
+pub struct MoraleSnapshot {
+    /// Morale points (0-24) at `at_unix`.
+    pub morale: f64,
+    /// Unix seconds of the game's last morale write for this operator.
+    pub at_unix: i64,
+    /// The room they occupied ("" = unstationed; morale is frozen there).
+    pub room_slot: String,
+}
+
+/// Every operator's morale snapshot from the synced building data, keyed by
+/// char id: `chars[].ap` counts 360,000 per morale point (24.0 = 8,640,000),
+/// stamped by `lastApAddTime`. Project it forward with
+/// [`super::sustain_sim::project_morale`] before showing it as "now".
+pub fn live_morale_snapshot(
+    data: &serde_json::Value,
+) -> std::collections::HashMap<String, MoraleSnapshot> {
     const AP_PER_POINT: f64 = 360_000.0;
     const MORALE_MAX: f64 = 24.0;
     data.get("chars")
@@ -43,7 +57,18 @@ pub fn live_morale(data: &serde_json::Value) -> std::collections::HashMap<String
                     let ap = c.get("ap").and_then(serde_json::Value::as_f64)?;
                     Some((
                         char_id.to_string(),
-                        (ap / AP_PER_POINT).clamp(0.0, MORALE_MAX),
+                        MoraleSnapshot {
+                            morale: (ap / AP_PER_POINT).clamp(0.0, MORALE_MAX),
+                            at_unix: c
+                                .get("lastApAddTime")
+                                .and_then(serde_json::Value::as_i64)
+                                .unwrap_or(0),
+                            room_slot: c
+                                .get("roomSlotId")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or_default()
+                                .to_string(),
+                        },
                     ))
                 })
                 .collect()

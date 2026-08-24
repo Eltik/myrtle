@@ -446,7 +446,7 @@ pub struct SkillLineDto {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub from_control_center: bool,
     /// "contributes" | "inactive" (gate unmet here) | "morale" (moves the
-    /// sustain sim, not efficiency) | "capacity" | "non_production" |
+    /// sustain sim, not efficiency) | "capacity" | "`non_production`" |
     /// "unmodeled" (the engine deliberately prices it 0).
     pub disposition: &'static str,
 }
@@ -1342,8 +1342,7 @@ async fn build_base_improvements(
     // The owner's saved account facts (recruit slots etc.) re-price the same
     // skills here as in the interactive planner - the two surfaces must never
     // disagree on a number.
-    if let Ok(Some(value)) =
-        crate::database::queries::users::get_base_facts(pool, user_id).await
+    if let Ok(Some(value)) = crate::database::queries::users::get_base_facts(pool, user_id).await
         && let Some(slots) = value
             .get("open_recruit_slots")
             .and_then(serde_json::Value::as_u64)
@@ -1767,6 +1766,7 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
 /// works around the clock at the efficiency the evaluate pass scored it;
 /// dormitory occupants rest as permanent residents. The timeline is omitted -
 /// the verdict, depletion events and idle hours are the point.
+#[allow(clippy::too_many_arguments)]
 pub fn static_sustainability(
     building: &UserBuilding,
     assignment: &BaseAssignment,
@@ -1774,6 +1774,7 @@ pub fn static_sustainability(
     game_data: &GameData,
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
+    initial_morale: Option<&HashMap<String, f64>>,
 ) -> Option<SustainabilityDto> {
     use crate::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
     let efficiency_of: HashMap<&str, f64> = assignment
@@ -1814,7 +1815,7 @@ pub fn static_sustainability(
         &game_data.building.buffs,
         &build_name_to_char(&game_data.operators),
     );
-    let sim = simulate_rotation(
+    let sim = crate::core::grade::base::sustain_sim::simulate_rotation_from(
         &rotation,
         profiles,
         building,
@@ -1822,6 +1823,7 @@ pub fn static_sustainability(
         registry,
         morale_drains,
         &targeted,
+        initial_morale,
     );
     let room_type_of = |slot_id: &str| -> String {
         building
@@ -2083,7 +2085,10 @@ pub fn shift_rotation_to_dto(
                 room_type: room.room_type.clone(),
                 formula_type: room.formula_type.clone(),
                 active: room.active,
-                ledger: ledger.iter().map(|l| skill_line_dto(l, game_data)).collect(),
+                ledger: ledger
+                    .iter()
+                    .map(|l| skill_line_dto(l, game_data))
+                    .collect(),
                 recommended: {
                     let mut v = ops(&room.recommended);
                     for o in &mut v {

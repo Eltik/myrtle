@@ -137,7 +137,7 @@ export function DeepDive() {
                                     </span>
                                     {atRisk.length > 0 && (
                                         <span className="text-[11px]">
-                                            <span className="text-muted-foreground">At risk from their current bar: </span>
+                                            <span className="text-muted-foreground">At risk from their current bar{evaluation.morale_synced_hours_ago !== undefined && ` (projected from your sync ${hoursLabel(evaluation.morale_synced_hours_ago)} ago)`}: </span>
                                             {atRisk.map((e, i) => (
                                                 <span key={e.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}

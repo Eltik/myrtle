@@ -149,9 +149,14 @@ pub struct EvaluateResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
     /// The drafted crews simulated with NO rotation at all - "if you never
-    /// swap". `None` when nothing is staffed.
+    /// swap". `None` when nothing is staffed. Seeded with PROJECTED live
+    /// morale, so its clock starts now, not at a hypothetical full bar.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<crate::app::services::improvements::SustainabilityDto>,
+    /// Hours since the newest morale write in the sync - how stale the
+    /// "current bar" data is. `None` when the sync carries no morale.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub morale_synced_hours_ago: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -274,20 +279,14 @@ fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: Accou
 /// The facts the PROFILE OWNER declared, saved server-side - the default every
 /// scorer reads, so the planner and `/user/improvements` price the same skills
 /// the same way. A request's own facts override per-field (a what-if).
-async fn effective_facts(
-    state: &AppState,
-    uid: &str,
-    request: AccountFactsReq,
-) -> AccountFactsReq {
+async fn effective_facts(state: &AppState, uid: &str, request: AccountFactsReq) -> AccountFactsReq {
     let saved = match find_by_uid(&state.db, uid).await {
-        Ok(Some(user)) => {
-            crate::database::queries::users::get_base_facts(&state.db, user.id)
-                .await
-                .ok()
-                .flatten()
-                .and_then(|v| serde_json::from_value::<AccountFactsReq>(v).ok())
-                .unwrap_or_default()
-        }
+        Ok(Some(user)) => crate::database::queries::users::get_base_facts(&state.db, user.id)
+            .await
+            .ok()
+            .flatten()
+            .and_then(|v| serde_json::from_value::<AccountFactsReq>(v).ok())
+            .unwrap_or_default(),
         _ => AccountFactsReq::default(),
     };
     AccountFactsReq {
@@ -618,16 +617,43 @@ pub async fn evaluate(
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, facts);
-    // Real current morale from the synced base, so "lasts X h" means from
-    // NOW (well, from the last sync) instead of from a hypothetical full bar.
-    let live_morale = match find_by_uid(&state.db, uid).await {
-        Ok(Some(user)) => get_building(&state.db, user.id)
-            .await
-            .ok()
-            .flatten()
-            .map(|json| crate::core::grade::base::types::live_morale(&json))
-            .unwrap_or_default(),
-        _ => HashMap::new(),
+    // Real current morale, PROJECTED to now: the sync stores each bar with a
+    // timestamp and a seat, so drain/recovery since the last sync is applied
+    // before anything reads it. "Lasts X h" genuinely means from now.
+    let (live_morale, morale_synced_hours_ago) = match find_by_uid(&state.db, uid).await {
+        Ok(Some(user)) => {
+            let snapshots = get_building(&state.db, user.id)
+                .await
+                .ok()
+                .flatten()
+                .map(|json| crate::core::grade::base::types::live_morale_snapshot(&json))
+                .unwrap_or_default();
+            let now_unix = chrono::Utc::now().timestamp();
+            let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
+            let age = if latest > 0 {
+                Some(((now_unix - latest).max(0) as f64) / 3600.0)
+            } else {
+                None
+            };
+            // The projection reads seats from the REAL base, not the draft.
+            let real_building = get_building(&state.db, user.id)
+                .await
+                .ok()
+                .flatten()
+                .map(|json| UserBuilding::from_json(&json));
+            let projected = real_building.map_or_else(HashMap::new, |rb| {
+                crate::core::grade::base::sustain_sim::project_morale(
+                    &snapshots,
+                    now_unix,
+                    &rb,
+                    &ctx.profiles,
+                    &game_data.building,
+                    &ctx.morale_drains,
+                )
+            });
+            (projected, age)
+        }
+        _ => (HashMap::new(), None),
     };
     let building = UserBuilding {
         rooms: req
@@ -658,6 +684,7 @@ pub async fn evaluate(
         &game_data,
         &ctx.registry,
         &ctx.morale_drains,
+        Some(&live_morale),
     );
     Ok(EvaluateResponse {
         power: power_of(&building, &game_data),
@@ -666,6 +693,7 @@ pub async fn evaluate(
         assignment: assignment_dto,
         claim,
         unrotated,
+        morale_synced_hours_ago,
     })
 }
 

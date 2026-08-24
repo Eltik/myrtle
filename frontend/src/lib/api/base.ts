@@ -94,8 +94,11 @@ export interface IEvaluateResponse {
     dorms: IDorms;
     /** Check-in economics; absent when nothing produces. */
     claim?: IClaim;
-    /** The drafted crews simulated with NO rotation - "if you never swap". */
+    /** The drafted crews simulated with NO rotation - "if you never swap".
+     *  Seeded with projected live morale, so its clock starts now. */
     unrotated?: ISustainability;
+    /** Hours since the newest morale write in the sync. */
+    morale_synced_hours_ago?: number;
 }
 
 /** How long the base runs unattended, and what each claim cadence loses. */

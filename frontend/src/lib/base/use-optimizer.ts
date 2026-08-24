@@ -50,6 +50,8 @@ export interface IOptimizerAPI {
      *  the sync cannot read; prices Lin-style per-slot HR skills. */
     openRecruitSlots: number;
     setOpenRecruitSlots: (value: number) => void;
+    /** After an edit: true = saved to the profile, false = session what-if only. */
+    factsSaved: boolean | null;
     /** Extra check-in cadence (hours) priced alongside the 6/12/24 presets. */
     claimIntervalHours: number | undefined;
     setClaimIntervalHours: (value: number | undefined) => void;
@@ -68,7 +70,6 @@ export interface IOptimizerAPI {
 interface IPersisted {
     layout: IDraftRoom[];
     ignorePromotion?: boolean;
-    openRecruitSlots?: number;
 }
 
 const EMPTY_SLOTS: ICatalogSlot[] = [];
@@ -115,18 +116,20 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const layout = persisted.layout;
     const ignorePromotion = persisted.ignorePromotion ?? false;
     const setIgnorePromotion = useCallback((value: boolean) => setPersisted((prev) => ({ ...prev, ignorePromotion: value })), [setPersisted]);
-    // Precedence: an explicit local edit this browser > the owner's saved
-    // facts (from the layout payload) > none. Edits also save server-side
-    // best-effort - only the profile owner's token succeeds, and that is the
-    // point: saved facts feed every scorer, viewers get a local what-if.
-    const openRecruitSlots = persisted.openRecruitSlots ?? layoutQuery.data?.facts?.open_recruit_slots ?? 0;
-    const setOpenRecruitSlots = useCallback(
-        (value: number) => {
-            setPersisted((prev) => ({ ...prev, openRecruitSlots: value }));
-            void saveBaseFactsFn({ data: { facts: { open_recruit_slots: value } } }).catch(() => {});
-        },
-        [setPersisted],
-    );
+    // The server-saved value is the store; an edit THIS SESSION overrides it
+    // as a what-if and also saves best-effort - only the profile owner's
+    // token succeeds, which is the point: saved facts feed every scorer,
+    // viewers get a session-local what-if. (Deliberately NOT persisted
+    // client-side: a stale localStorage value must never shadow the saved one.)
+    const [sessionSlots, setSessionSlots] = useState<number | null>(null);
+    const [factsSaved, setFactsSaved] = useState<boolean | null>(null);
+    const openRecruitSlots = sessionSlots ?? layoutQuery.data?.facts?.open_recruit_slots ?? 0;
+    const setOpenRecruitSlots = useCallback((value: number) => {
+        setSessionSlots(value);
+        saveBaseFactsFn({ data: { facts: { open_recruit_slots: value } } })
+            .then((r) => setFactsSaved(r.saved))
+            .catch(() => setFactsSaved(false));
+    }, []);
     const facts = useMemo(() => ({ open_recruit_slots: openRecruitSlots }), [openRecruitSlots]);
 
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
@@ -203,6 +206,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             setIgnorePromotion,
             openRecruitSlots,
             setOpenRecruitSlots,
+            factsSaved,
             claimIntervalHours,
             setClaimIntervalHours,
             viewShift,
@@ -235,6 +239,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             setIgnorePromotion,
             openRecruitSlots,
             setOpenRecruitSlots,
+            factsSaved,
             claimIntervalHours,
             setClaimIntervalHours,
             viewShift,

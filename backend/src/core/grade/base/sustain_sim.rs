@@ -128,6 +128,55 @@ struct OpSchedule {
     drain: f64,
 }
 
+/// Project synced morale snapshots forward to `now_unix`: an operator in a
+/// working room drains at their game rate, one in a dormitory recovers at that
+/// dorm's rate (level + ambience), and an unstationed one is frozen - the
+/// game only moves morale inside rooms. Room auras and single-target healers
+/// are deliberately ignored here: this is a now-cast, not the block sim, and
+/// staying slightly conservative beats over-promising.
+pub fn project_morale(
+    snapshots: &HashMap<String, super::types::MoraleSnapshot>,
+    now_unix: i64,
+    building: &UserBuilding,
+    profiles: &[OperatorBaseProfile],
+    building_data: &BuildingDataFile,
+    morale_drains: &HashMap<String, f64>,
+) -> HashMap<String, f64> {
+    let dorms: HashMap<String, f64> = super::dorms::dorm_list(building, building_data)
+        .into_iter()
+        .map(|d| (d.slot_id, d.recovery_per_hour))
+        .collect();
+    let working: HashMap<&str, &str> = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type != "DORMITORY")
+        .flat_map(|r| {
+            r.current_operators
+                .iter()
+                .map(move |id| (id.as_str(), r.slot_id.as_str()))
+        })
+        .collect();
+    let profile_of: HashMap<&str, &OperatorBaseProfile> =
+        profiles.iter().map(|p| (p.char_id.as_str(), p)).collect();
+    snapshots
+        .iter()
+        .map(|(id, snap)| {
+            let hours = ((now_unix - snap.at_unix).max(0) as f64) / 3600.0;
+            let projected = if let Some(rate) = dorms.get(&snap.room_slot) {
+                snap.morale + rate * hours
+            } else if working.contains_key(id.as_str()) || !snap.room_slot.is_empty() {
+                let drain = profile_of
+                    .get(id.as_str())
+                    .map_or(MIN_MORALE_DRAIN, |p| game_morale_drain(p, morale_drains));
+                snap.morale - drain * hours
+            } else {
+                snap.morale
+            };
+            (id.clone(), projected.clamp(0.0, MORALE_MAX))
+        })
+        .collect()
+}
+
 /// Simulate the rotation's login rhythm over [`SIM_HORIZON_HOURS`].
 pub fn simulate_rotation(
     rotation: &ShiftRotation,
@@ -137,6 +186,33 @@ pub fn simulate_rotation(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
     targeted: &HashMap<String, TargetedMoraleEffect>,
+) -> SustainabilityReport {
+    simulate_rotation_from(
+        rotation,
+        profiles,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        targeted,
+        None,
+    )
+}
+
+/// Like [`simulate_rotation`], but with the option to start operators at
+/// their REAL current bars instead of full ones. The steady-state rotation
+/// verdict deliberately starts full (it answers "does the rhythm hold?"); the
+/// unrotated "from now" sim seeds live bars (it answers "what happens next?").
+#[allow(clippy::too_many_arguments)]
+pub fn simulate_rotation_from(
+    rotation: &ShiftRotation,
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    targeted: &HashMap<String, TargetedMoraleEffect>,
+    initial_morale: Option<&HashMap<String, f64>>,
 ) -> SustainabilityReport {
     let profile_by_id: HashMap<&str, &OperatorBaseProfile> =
         profiles.iter().map(|p| (p.char_id.as_str(), p)).collect();
@@ -399,14 +475,20 @@ pub fn simulate_rotation(
 
     let mut morale: HashMap<String, f64> = schedules
         .keys()
-        .map(|id| (id.clone(), MORALE_MAX))
+        .map(|id| {
+            let start = initial_morale
+                .and_then(|m| m.get(id))
+                .copied()
+                .unwrap_or(MORALE_MAX);
+            (id.clone(), start)
+        })
         .collect();
     let mut depleted: Vec<DepletedOperator> = Vec::new();
     let mut dorm_overflow = 0usize;
     // Morale sampled per operator at every block boundary (t=0 is full).
     let mut samples: HashMap<String, Vec<f64>> = schedules
         .keys()
-        .map(|id| (id.clone(), vec![MORALE_MAX]))
+        .map(|id| (id.clone(), vec![morale.get(id).copied().unwrap_or(MORALE_MAX)]))
         .collect();
 
     // Room levels, for converting a cell's efficiency into a resource rate.
