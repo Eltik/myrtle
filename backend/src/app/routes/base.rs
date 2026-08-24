@@ -81,16 +81,45 @@ pub async fn optimize_layout(
     Ok(Json(optimize(&state, &uid, viewer, body).await?))
 }
 
-/// A two-squad, three-shift rotation for the drafted layout.
+/// A two-squad, three-shift rotation for the drafted layout. The heaviest
+/// planner endpoint, so identical (uid, request) pairs serve from cache: the
+/// computation is deterministic given its inputs, and the short TTL only
+/// bounds staleness against a fresh account sync.
 pub async fn rotation_plan(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
     Query(params): Query<PlannerParams>,
     Json(body): Json<RotationRequest>,
-) -> Result<Json<RotationResponse>, ApiError> {
+) -> Result<axum::response::Response, ApiError> {
+    use axum::response::IntoResponse;
     let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
     let viewer = viewer_id(&state, &auth).await;
-    Ok(Json(rotation(&state, &uid, viewer, body).await?))
+    let request_hash = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        serde_json::to_string(&body).unwrap_or_default().hash(&mut h);
+        h.finish()
+    };
+    let key = crate::app::cache::keys::CacheKey::BaseRotation {
+        uid: &uid,
+        request_hash,
+    };
+    if let Some(raw) = state.cache.get_raw(&key).await {
+        return Ok((
+            [(axum::http::header::CONTENT_TYPE, "application/json")],
+            raw,
+        )
+            .into_response());
+    }
+    let resp = rotation(&state, &uid, viewer, body).await?;
+    let json = serde_json::to_string(&resp)
+        .map_err(|e| ApiError::Internal(anyhow::anyhow!("serialize rotation: {e}")))?;
+    state.cache.set_raw(&key, json.clone()).await;
+    Ok((
+        [(axum::http::header::CONTENT_TYPE, "application/json")],
+        json,
+    )
+        .into_response())
 }
 
 /// Facility definitions from `building_data`. Roster-independent and stable, so

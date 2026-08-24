@@ -104,6 +104,7 @@ export function DeepDive() {
         .sort((a, b) => (a.lasts_hours ?? 0) - (b.lasts_hours ?? 0))
         .slice(0, 3);
     const rooms = evaluation.assignment.rooms.filter((r) => r.fill_hours !== undefined);
+    const stallRoom = rooms.length > 0 ? rooms.reduce((a, b) => ((a.fill_hours ?? 1e9) <= (b.fill_hours ?? 1e9) ? a : b)) : undefined;
     const sustainability = api.rotation?.rotation.sustainability;
     const interval = claim?.intervals.find((i) => String(i.hours) === cadence);
     const losses = interval
@@ -130,7 +131,7 @@ export function DeepDive() {
                                         Log in before <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours)}</span> to lose nothing
                                     </span>
                                     <span className="text-[11px] text-muted-foreground">
-                                        First room stalls {hoursLabel(claim.next_full_hours)} after a claim - buffers below.{" "}
+                                        {stallRoom ? roomLabel(stallRoom.room_type, api.catalog) : "First room"} stalls {hoursLabel(claim.next_full_hours)} after a claim - buffers below.{" "}
                                         <TileTooltip label={<span className="block max-w-64">Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown - never earlier. Trading posts are assumed gold-supplied.</span>}>
                                             <span className="cursor-help underline decoration-dotted underline-offset-2">conservative</span>
                                         </TileTooltip>
@@ -250,6 +251,7 @@ export function DeepDive() {
                             <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Compare</h3>
                             <div className="flex items-center gap-1.5">
                                 <Button
+                                    disabled={!api.rotation}
                                     onClick={() => {
                                         const rot = api.rotation?.rotation;
                                         const lines: string[] = [`Base plan - ${num(evaluation.assignment.yield_lmd_per_day)} LMD/day, ${num(evaluation.assignment.yield_exp_per_day)} EXP/day`];

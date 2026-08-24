@@ -56,6 +56,13 @@ pub enum CacheKey<'a> {
         server: &'a str,
     },
     CommunityEnemyAverage,
+    /// A computed base rotation for one uid + exact request (layout, locks,
+    /// promotion flag, facts). Deterministic given the inputs, so a short TTL
+    /// only bounds staleness against a re-sync.
+    BaseRotation {
+        uid: &'a str,
+        request_hash: u64,
+    },
     DpsList {
         kind: &'a str,
     },
@@ -122,6 +129,9 @@ impl CacheKey<'_> {
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
             CacheKey::OperatorOwnership { server } => format!("operators:ownership:{server}"),
             CacheKey::CommunityEnemyAverage => "enemies:community_average".to_owned(),
+            CacheKey::BaseRotation { uid, request_hash } => {
+                format!("base:rotation:{uid}:{request_hash}")
+            }
             CacheKey::DpsList { kind } => format!("dps:list:{kind}"),
         }
     }
@@ -145,6 +155,7 @@ impl CacheKey<'_> {
             CacheKey::SkinPopularity => Duration::from_hours(1),
             CacheKey::OperatorOwnership { .. } => Duration::from_hours(1),
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
+            CacheKey::BaseRotation { .. } => Duration::from_mins(5),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
         }
     }

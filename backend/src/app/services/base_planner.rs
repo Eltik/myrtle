@@ -39,7 +39,7 @@ use crate::database::queries::users::find_by_uid;
 
 /// One room of a client-drafted layout. Mirrors `UserRoom` minus the bits only
 /// the live game data can supply (preset queues).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DraftRoom {
     pub slot_id: String,
     /// Game room constant: "MANUFACTURE", "TRADING", "POWER", "DORMITORY",
@@ -245,7 +245,7 @@ pub struct PowerDto {
 
 /// A rotation is whole-base by construction (a shift covers every room at
 /// once), so unlike optimize there is no `scope` - only who must stay put.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RotationRequest {
     pub layout: Vec<DraftRoom>,
     #[serde(default)]
@@ -628,38 +628,30 @@ pub async fn evaluate(
     // timestamp and a seat, so drain/recovery since the last sync is applied
     // before anything reads it. "Lasts X h" genuinely means from now.
     let (live_morale, morale_synced_hours_ago) = match find_by_uid(&state.db, uid).await {
-        Ok(Some(user)) => {
-            let snapshots = get_building(&state.db, user.id)
-                .await
-                .ok()
-                .flatten()
-                .map(|json| crate::core::grade::base::types::live_morale_snapshot(&json))
-                .unwrap_or_default();
-            let now_unix = chrono::Utc::now().timestamp();
-            let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
-            let age = if latest > 0 {
-                Some(((now_unix - latest).max(0) as f64) / 3600.0)
-            } else {
-                None
-            };
-            // The projection reads seats from the REAL base, not the draft.
-            let real_building = get_building(&state.db, user.id)
-                .await
-                .ok()
-                .flatten()
-                .map(|json| UserBuilding::from_json(&json));
-            let projected = real_building.map_or_else(HashMap::new, |rb| {
-                crate::core::grade::base::sustain_sim::project_morale(
+        Ok(Some(user)) => match get_building(&state.db, user.id).await.ok().flatten() {
+            Some(json) => {
+                let snapshots = crate::core::grade::base::types::live_morale_snapshot(&json);
+                let now_unix = chrono::Utc::now().timestamp();
+                let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
+                let age = if latest > 0 {
+                    Some(((now_unix - latest).max(0) as f64) / 3600.0)
+                } else {
+                    None
+                };
+                // The projection reads seats from the REAL base, not the draft.
+                let real_building = UserBuilding::from_json(&json);
+                let projected = crate::core::grade::base::sustain_sim::project_morale(
                     &snapshots,
                     now_unix,
-                    &rb,
+                    &real_building,
                     &ctx.profiles,
                     &game_data.building,
                     &ctx.morale_drains,
-                )
-            });
-            (projected, age)
-        }
+                );
+                (projected, age)
+            }
+            None => (HashMap::new(), None),
+        },
         _ => (HashMap::new(), None),
     };
     let building = UserBuilding {

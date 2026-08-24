@@ -162,9 +162,13 @@ pub fn project_morale(
         .iter()
         .map(|(id, snap)| {
             let hours = ((now_unix - snap.at_unix).max(0) as f64) / 3600.0;
+            // Known dorm -> recover; known working room -> drain; anything
+            // else (unstationed, or a room type the sync knows but we don't
+            // model, e.g. private rooms) -> FROZEN. Never-guess: an unknown
+            // seat must not fabricate drain OR recovery.
             let projected = if let Some(rate) = dorms.get(&snap.room_slot) {
                 snap.morale + rate * hours
-            } else if working.contains_key(id.as_str()) || !snap.room_slot.is_empty() {
+            } else if working.contains_key(id.as_str()) {
                 let drain = profile_of
                     .get(id.as_str())
                     .map_or(MIN_MORALE_DRAIN, |p| game_morale_drain(p, morale_drains));
@@ -488,7 +492,12 @@ pub fn simulate_rotation_from(
     // Morale sampled per operator at every block boundary (t=0 is full).
     let mut samples: HashMap<String, Vec<f64>> = schedules
         .keys()
-        .map(|id| (id.clone(), vec![morale.get(id).copied().unwrap_or(MORALE_MAX)]))
+        .map(|id| {
+            (
+                id.clone(),
+                vec![morale.get(id).copied().unwrap_or(MORALE_MAX)],
+            )
+        })
         .collect();
 
     // Room levels, for converting a cell's efficiency into a resource rate.
