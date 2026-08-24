@@ -1602,6 +1602,37 @@ fn collect_dynchar_bg_quads(
         {
             continue;
         }
+        // 🚨 THE IDLE SCENE MUST NOT DRAW THE ENTRANCE RIG.
+        //
+        // A dynchar bundle ships TWO prefab roots: the idle world (`dyn_illust_*`) and the
+        // entrance cinematic (`dyn_entrance_*`). `own_root` only ever ORDERED them, it never
+        // filtered — so the idle scene collected the cinematic's quads too. Those quads are
+        // sequenced entirely by the `_Start` clip's reveal timeline and its colour curves, and
+        // the idle scene runs NEITHER (`active_windows` is deliberately entrance-only, and the
+        // layer colour curves come from the same clip). Any of them that ships prefab-ACTIVE is
+        // therefore emitted with no window, no curve and full tint: drawn forever at full
+        // strength.
+        //
+        // Kal'tsit "Remnant" is the case that exposed it. `wenl1` and `wenli` are a PURE WHITE
+        // 2341x2181 sheet under `03 > Main Camera > ... > dyn_entrance_char_003_kalts_boc#6`,
+        // correctly gated 2.97 -> 4.5 / 5.9 in her entrance and emitted UNGATED into her idle.
+        // Her settled shot rendered 48% blown white, mean luma 181 against the game's 97.
+        //
+        // The converse is NOT symmetric and must stay: an ENTRANCE legitimately draws idle-root
+        // layers, sequenced by `cross_root_reveal` (Virtuosa's mirror world). This drops only
+        // entrance-root quads from the IDLE scene. `DYNCHAR_IDLE_ENTRANCE=1` reverts.
+        if !is_entrance
+            && std::env::var("DYNCHAR_IDLE_ENTRANCE").as_deref() != Ok("1")
+            && let Some(root) = host.prefab_root_of_go(all_objects, go_pid)
+            && Some(root) != own_root
+            && all_objects
+                .get(&root)
+                .and_then(|(_, v)| v.get("m_Name"))
+                .and_then(Value::as_str)
+                .is_some_and(|n| n.to_ascii_lowercase().starts_with("dyn_entrance"))
+        {
+            continue;
+        }
         // ENTRANCE visibility window (self or nearest toggled ancestor). Resolved
         // BEFORE the active-drop below: entrance-exclusive overlays (the
         // `dyn_entrance_*` subtree, e.g. Mlynar's white-transition flash) ship
@@ -4475,7 +4506,8 @@ fn opaque_luma(
     }
     let mut lums: Vec<u8> = Vec::new();
     const N: usize = 8;
-    for tri in indices.chunks_exact(3) {
+    let (triangles, _remainder) = indices.as_chunks::<3>();
+    for tri in triangles {
         let (Some(&p0), Some(&p1), Some(&p2)) = (
             uvs.get(tri[0] as usize),
             uvs.get(tri[1] as usize),
