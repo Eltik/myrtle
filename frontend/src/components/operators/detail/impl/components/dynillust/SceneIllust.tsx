@@ -846,22 +846,25 @@ function fadeParam(name: string, dflt: number): number {
  *  bit-identical. `?fadein=` still sweeps it. */
 const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
 /** Seconds the fade holds at full before lifting (covers the idle swap). `?fadehold=`. */
-/** How far from the TRANSFORM beat toward the authored `duration` the settled-ground swap fires,
- *  as a fraction of that gap. 0 = at the transform (the behaviour this replaced).
+/** Seconds after the TRANSFORM beat at which the settled-ground swap fires. 0 = at the transform
+ *  (the behaviour this replaced).
  *
- *  ⚠️ This is a TRADE, shipped knowingly, not a derived anchor — one does not exist in the data.
- *  The two skins with settled-ground exposure have their true ground events on OPPOSITE sides of
- *  `duration` (Muelsyse 3.23s before, Whislash-alter 0.10s after), so no monotone function of
- *  transform/duration/clipStop yields both. Ruled out by measurement: the fade ramp start (past
- *  mue's last beat, degrades to off, 10.756 -> 16.372), `duration` itself (same), splitting the
- *  swap from the gap-fill removal (coupled — mue with both off is 18.166, worse than either), and
- *  a post-process-driven signal (whitw2's clip binds `pp`; mue's bundle has none).
+ *  🔑 ABSOLUTE, not a fraction of `transform -> duration`. The two skins with settled-ground
+ *  exposure constrain this in absolute time, and a fraction cannot satisfy both because their
+ *  gaps differ by 4.7x (mue 7.0s, whitw2 1.5s):
  *
- *  At 0.7: whitw2 41.861 -> 37.731 (r .627 -> .736), mue 10.756 -> 11.515, nothing else moves.
- *  🔑 mue's preference for 0 is COMPENSATION, not evidence the transform anchor is right: her own
- *  true event is f≈0.538 and she scores 11.515 there too, i.e. WORSE than with a ground that turns
- *  3.8s early. So this trades a real defect for a compensating artifact. `?settledfrac=` sweeps it. */
-const SETTLED_GROUND_FRAC = 0.7;
+ *    whitw2  needs the swap AFTER  renderer 14.05 — her ground is still dark there and ours
+ *            whitened ~1.6s early, costing 41.861 -> 37.731.
+ *    mue     needs it BY renderer 15.00 — measured inside the swap's own pixel mask, the game
+ *            reads 203.1 there against our white ground's 203.4 and our dark ground's 110.2.
+ *            Her ground RAMPS (167 at t=12, 175 at 13, 183 at 14.5, 203 at 15, 224 at 17), so it
+ *            is never as dark as ours; firing late is what hurts her.
+ *
+ *  Window [14.05, 15.00] with both transforms at 13.0 -> lead 1.05..2.00; 1.5 sits mid-window.
+ *  ⚠️ A fraction cost mue 0.759 at her t=15 for nothing; this costs her nothing.
+ *  ⚠️ Both exposed skins share transform 13.0, so "transform + lead" and "absolute 14.5" are not
+ *  yet distinguishable — a third exposed skin would separate them. `?settledlead=` sweeps it. */
+const SETTLED_GROUND_LEAD = 1.5;
 const ENTRANCE_FADE_HOLD = fadeParam("fadehold", 0.2);
 /** Seconds spent lifting the fade once the idle is live - Mlynar's capture is fully white at
  *  `duration - 0.1` and back to the idle mean by `duration + 0.3`. */
@@ -2017,11 +2020,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // ⚠️ Read the parameter, do not coerce: `?settledfrac=0` is a MEANINGFUL value
                 // (fire at the transform, the pre-2026-08-24 behaviour) and a `|| 0` fallback
                 // would silently turn it into the default.
-                const sgParam = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("settledfrac");
-                const sgRaw = sgParam == null ? SETTLED_GROUND_FRAC : Number(sgParam);
-                const sgFrac = Number.isFinite(sgRaw) && sgRaw >= 0 ? sgRaw : SETTLED_GROUND_FRAC;
-                const sgAt = efd.transform != null && efd.duration != null
-                    ? efd.transform + sgFrac * Math.max(0, efd.duration - efd.transform)
+                const sgParam = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("settledlead");
+                const sgRaw = sgParam == null ? SETTLED_GROUND_LEAD : Number(sgParam);
+                const sgLead = Number.isFinite(sgRaw) && sgRaw >= 0 ? sgRaw : SETTLED_GROUND_LEAD;
+                const sgAt = efd.transform != null
+                    ? efd.transform + Math.min(sgLead, Math.max(0, (efd.duration ?? Infinity) - efd.transform))
                     : efd.transform;
                 if (settledGroundOn() && !settledRef.current && sgAt != null && efd.elapsed >= sgAt) {
                     settledRef.current = true;
