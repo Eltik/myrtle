@@ -2457,6 +2457,17 @@ fn collect_dynchar_bg_quads(
                 .as_ref()
                 .is_some_and(|c| c.first().is_some_and(|&(_, rgba)| rgba[3].abs() < 0.02));
             if !reveals {
+                if attrib_dbg {
+                    // Previously SILENT. A layer the colour-reveal exception admitted, then
+                    // rejected because no reveal curve resolved, vanishes with no trace — which
+                    // is indistinguishable from "the prefab never had it".
+                    eprintln!(
+                        "    [scene] DROP reveal-unproven {:<22} curve={} first_a={:?}",
+                        host.go_name(all_objects, go_pid),
+                        color_curve.as_ref().map_or(0, Vec::len),
+                        color_curve.as_ref().and_then(|c| c.first().map(|&(_, rgba)| rgba[3])),
+                    );
+                }
                 skipped_inactive += 1;
                 continue;
             }
@@ -2480,7 +2491,18 @@ fn collect_dynchar_bg_quads(
             Some(mp) if mp != 0 => match all_objects.get(&mp) {
                 Some((43, mesh_val)) => match super::mesh::parse_mesh(mesh_val, &HashMap::new()) {
                     Some(m) => m,
-                    None => continue,
+                    None => {
+                        if attrib_dbg {
+                            // Previously SILENT. An in-bundle Mesh that fails to parse takes its
+                            // layer with it and leaves no trace, which reads as "the prefab never
+                            // had it" — the hardest kind of gap to notice.
+                            eprintln!(
+                                "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp}",
+                                host.go_name(all_objects, go_pid),
+                            );
+                        }
+                        continue;
+                    }
                 },
                 _ => super::mesh::unit_quad(), // built-in / external quad
             },
@@ -4836,9 +4858,26 @@ fn export_scene(
             continue;
         }
         // Skip non-visual helper layers (coverage masks, distortion maps) —
-        // UNLESS the entrance cinematic sequences the layer (it carries an
-        // active window): a clip-revealed layer is a deliberate visual beat,
-        // not a helper (Mlynar's white-transition flash samples `mask_09`).
+        // UNLESS the entrance cinematic sequences the layer: a clip-driven layer is a
+        // deliberate visual beat, not a helper (Mlynar's white-transition flash samples
+        // `mask_09`).
+        //
+        // ⚠️ "Sequenced" deliberately means an active WINDOW ONLY, not a colour curve.
+        // Extending it to `quad.color_curve.is_none()` was tried and is CATASTROPHIC:
+        // Whislash-alter's `baizhuanchang_02` is a sort-100 full-frame plane sampling
+        // `mask_09` with a 26-key `_MainColor` alpha curve and NO window, and admitting it
+        // takes her 33.431 -> 80.603 (r .736 -> .377).
+        //
+        // The reason is that its curve's times are CLIP-LOCAL: they come from the 0.83s
+        // sub-clip `char_1038_whitw2_start_04`, run 0.00 -> 0.83 with alpha 0 -> 1, and
+        // nothing tells us when that sub-clip PLAYS. Applied on the entrance timeline the
+        // plane reaches full opacity at 0.83s and, unwindowed, holds it for the rest of the
+        // cinematic. Kal'tsit's equivalent plane survives the filter only because her curve
+        // comes from the cinematic clip itself, so its times are already entrance-global
+        // (13.8 -> 14.67) AND it carries a window.
+        //
+        // Fixing this needs sub-clip PLACEMENT, which we do not currently read — not a
+        // looser filter.
         let name_l = quad.tex_val["m_Name"]
             .as_str()
             .unwrap_or("")

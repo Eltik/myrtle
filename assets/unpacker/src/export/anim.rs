@@ -2467,6 +2467,20 @@ pub fn entrance_material_color_channels(
                     hash_to_gos.contains_key(&path),
                     decode_curve_any(v, gidx).map(|c| c.len()),
                 );
+                // The re-validation in `spine.rs` (`admitted_by_reveal`) requires a reveal curve
+                // to START HIDDEN, so the first sample decides whether a colour-reveal-only layer
+                // survives. Print the endpoints: a fade-OUT plane starts at 1.0 and is dropped.
+                if let Some(c) = decode_curve_any(v, gidx)
+                    && !c.is_empty()
+                {
+                    eprintln!(
+                        "           first=(t {:.3}, v {:.3})  last=(t {:.3}, v {:.3})",
+                        c[0].0,
+                        c[0].1,
+                        c[c.len() - 1].0,
+                        c[c.len() - 1].1
+                    );
+                }
             }
             if custom == MATERIAL_CUSTOM_TYPE
                 && !is_pptr
