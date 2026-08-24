@@ -6889,3 +6889,47 @@ fn ledger_probe_registry_peek() {
         println!("{id} => {:?}", registry.get(id));
     }
 }
+
+/// Account facts re-price player-state-gated skills the sync cannot read:
+/// Lin's Meritocracy (+10% HR speed per purchased recruit slot) prices 0
+/// undeclared (never-guess) and 10 x slots once declared. Flat-valued HIRE
+/// skills stay untouched.
+#[test]
+fn account_facts_reprice_per_slot_hr_riders() {
+    use backend::core::grade::base::buff_registry::{
+        BuffResolutionStrategy, resolve_account_facts,
+    };
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let value = |reg: &std::collections::HashMap<String, BuffResolutionStrategy>, id: &str| {
+        match reg.get(id) {
+            Some(BuffResolutionStrategy::NonProduction { value }) => *value,
+            other => panic!("{id}: expected NonProduction, got {other:?}"),
+        }
+    };
+    assert_eq!(value(&registry, "hire_spd_cost&extra[000]"), 0.0);
+    let resolved = resolve_account_facts(&registry, &gd.building.buffs, 3);
+    assert_eq!(value(&resolved, "hire_spd_cost&extra[000]"), 30.0);
+    // A flat HIRE skill with a non-priced slot rider is untouched.
+    assert_eq!(
+        value(&resolved, "hire_spd_cost&clue[000]"),
+        value(&registry, "hire_spd_cost&clue[000]")
+    );
+}
+
+#[test]
+#[ignore]
+fn facts_probe_registry_peek() {
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    for id in [
+        "hire_spd_cost&extra[000]",
+        "hire_spd_cost&clue[000]",
+        "hire_spd&clue[100]",
+        "hire_spd_bd_n1_n1[100]",
+    ] {
+        println!("{id} => {:?}", registry.get(id));
+    }
+}

@@ -7,6 +7,7 @@ import {
     baseLayoutQueryOptions,
     evaluateLayoutQueryOptions,
     type FacilityType,
+    type IAccountFacts,
     type ICatalogFormula,
     type ICatalogRoom,
     type ICatalogSlot,
@@ -42,6 +43,10 @@ export interface IOptimizerAPI {
     /** Plan with every operator's highest base skills, promoted or not. */
     ignorePromotion: boolean;
     setIgnorePromotion: (value: boolean) => void;
+    /** Recruit slots purchased beyond the initial one (0-3) - an account fact
+     *  the sync cannot read; prices Lin-style per-slot HR skills. */
+    openRecruitSlots: number;
+    setOpenRecruitSlots: (value: number) => void;
     viewShift: number | null;
     setViewShift: (shift: number | null) => void;
     shiftRoom: (slotId: string) => IShiftRoom | undefined;
@@ -57,6 +62,7 @@ export interface IOptimizerAPI {
 interface IPersisted {
     layout: IDraftRoom[];
     ignorePromotion?: boolean;
+    openRecruitSlots?: number;
 }
 
 const EMPTY_SLOTS: ICatalogSlot[] = [];
@@ -67,14 +73,14 @@ function storageKey(uid: string): string {
     return `base-optimizer:${uid}:v2`;
 }
 
-function useEvaluation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean) {
+function useEvaluation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts) {
     const settled = useDebounce(layout, 350);
-    return useQuery(evaluateLayoutQueryOptions(uid, settled, ignorePromotion));
+    return useQuery(evaluateLayoutQueryOptions(uid, settled, ignorePromotion, facts));
 }
 
-function useRotation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean) {
+function useRotation(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts) {
     const settled = useDebounce(layout, 350);
-    return useQuery(rotationPlanQueryOptions(uid, settled, ignorePromotion));
+    return useQuery(rotationPlanQueryOptions(uid, settled, ignorePromotion, facts));
 }
 
 export function useOptimizer(uid: string): IOptimizerAPI {
@@ -103,6 +109,9 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const layout = persisted.layout;
     const ignorePromotion = persisted.ignorePromotion ?? false;
     const setIgnorePromotion = useCallback((value: boolean) => setPersisted((prev) => ({ ...prev, ignorePromotion: value })), [setPersisted]);
+    const openRecruitSlots = persisted.openRecruitSlots ?? 0;
+    const setOpenRecruitSlots = useCallback((value: number) => setPersisted((prev) => ({ ...prev, openRecruitSlots: value })), [setPersisted]);
+    const facts = useMemo(() => ({ open_recruit_slots: openRecruitSlots }), [openRecruitSlots]);
 
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
 
@@ -115,9 +124,9 @@ export function useOptimizer(uid: string): IOptimizerAPI {
 
     const presets = layoutQuery.data?.presets ?? EMPTY_PRESETS;
 
-    const evaluation = useEvaluation(uid, layout, ignorePromotion);
+    const evaluation = useEvaluation(uid, layout, ignorePromotion, facts);
 
-    const rotationQuery = useRotation(uid, layout, ignorePromotion);
+    const rotationQuery = useRotation(uid, layout, ignorePromotion, facts);
     const rotation = rotationQuery.data ?? null;
 
     const shiftCount = rotation?.shift_count ?? catalogQuery.data?.shift_count ?? 0;
@@ -126,7 +135,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const optimizeMutation = useMutation({
         mutationFn: (scope: string[]) =>
             optimizeLayoutFn({
-                data: { uid, layout, scope, ignorePromotion },
+                data: { uid, layout, scope, ignorePromotion, facts },
             }),
         onSuccess: setProposal,
     });
@@ -173,6 +182,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             rotation,
             ignorePromotion,
             setIgnorePromotion,
+            openRecruitSlots,
+            setOpenRecruitSlots,
             viewShift,
             setViewShift,
             shiftRoom,
@@ -200,6 +211,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             rotationQuery.error,
             ignorePromotion,
             setIgnorePromotion,
+            openRecruitSlots,
+            setOpenRecruitSlots,
             viewShift,
             shiftRoom,
             proposal,

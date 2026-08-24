@@ -62,6 +62,8 @@ pub struct EvaluateRequest {
     /// toward, not a reading of the base they have today.
     #[serde(default)]
     pub ignore_promotion: bool,
+    #[serde(default)]
+    pub facts: AccountFactsReq,
 }
 
 /// The player's real base, every built slot of it.
@@ -118,6 +120,8 @@ pub struct OptimizeRequest {
     /// toward, not a reading of the base they have today.
     #[serde(default)]
     pub ignore_promotion: bool,
+    #[serde(default)]
+    pub facts: AccountFactsReq,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -221,6 +225,30 @@ pub struct RotationRequest {
     /// toward, not a reading of the base they have today.
     #[serde(default)]
     pub ignore_promotion: bool,
+    #[serde(default)]
+    pub facts: AccountFactsReq,
+}
+
+/// Player-declared account state the sync cannot read (the "account facts"
+/// prompt). With no declaration the never-guess default stands: the dependent
+/// skills price 0.
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+pub struct AccountFactsReq {
+    /// Recruit slots purchased beyond the initial one (0-3). Prices the
+    /// per-slot HR-speed riders (Lin's Meritocracy).
+    #[serde(default)]
+    pub open_recruit_slots: Option<u32>,
+}
+
+/// Re-price the context's registry under the player's declared facts.
+fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: AccountFactsReq) {
+    if let Some(slots) = facts.open_recruit_slots.filter(|&n| n > 0) {
+        ctx.registry = crate::core::grade::base::buff_registry::resolve_account_facts(
+            &ctx.registry,
+            &game_data.building.buffs,
+            slots.min(3),
+        );
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -519,7 +547,8 @@ pub async fn evaluate(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    apply_account_facts(&mut ctx, &game_data, req.facts);
     let building = UserBuilding {
         rooms: req
             .layout
@@ -704,7 +733,8 @@ pub async fn optimize(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    apply_account_facts(&mut ctx, &game_data, req.facts);
 
     let building = UserBuilding {
         rooms: req
@@ -771,7 +801,8 @@ pub async fn rotation(
     let game_data = state.default_game_data();
     validate(&req.layout, &game_data)?;
 
-    let ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
+    apply_account_facts(&mut ctx, &game_data, req.facts);
     let building = UserBuilding {
         rooms: req
             .layout

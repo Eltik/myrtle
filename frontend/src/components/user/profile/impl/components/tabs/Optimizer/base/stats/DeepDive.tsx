@@ -1,12 +1,62 @@
-import { ChevronDown } from "lucide-react";
+import { Camera, ChevronDown, X } from "lucide-react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import type { IEvaluateResponse } from "#/lib/api/base";
 import { roomLabel } from "#/lib/base/catalog";
 import { cn } from "#/lib/utils";
 import { useBaseOptimizer } from "../base-context";
 
 const num = (value: number) => Math.round(value).toLocaleString();
+
+/** The comparable numbers of one evaluated draft, for the snapshot diff. */
+interface ISnapshot {
+    efficiency: number;
+    lmd: number;
+    exp: number;
+    gold: number;
+    tradingCapacity: number;
+    powerNet: number;
+    dormRecovery: number;
+    nextFullHours: number | null;
+}
+
+function snapshotOf(evaluation: IEvaluateResponse): ISnapshot {
+    const rooms = evaluation.assignment.rooms;
+    return {
+        efficiency: evaluation.assignment.total_production_efficiency,
+        lmd: evaluation.assignment.yield_lmd_per_day,
+        exp: evaluation.assignment.yield_exp_per_day,
+        gold: rooms.reduce((sum, r) => sum + r.yield_gold_per_day, 0),
+        tradingCapacity: rooms.filter((r) => r.room_type === "TRADING").reduce((sum, r) => sum + (r.capacity ?? 0), 0),
+        powerNet: evaluation.power.net,
+        dormRecovery: evaluation.dorms.recovery_per_hour,
+        nextFullHours: evaluation.claim?.next_full_hours ?? null,
+    };
+}
+
+function DiffRow({ label, from, to, format, betterLow }: { label: string; from: number; to: number; format: (v: number) => string; betterLow?: boolean }) {
+    const delta = to - from;
+    const meaningful = Math.abs(delta) > (Math.abs(from) + Math.abs(to)) * 1e-6 + 1e-9;
+    const improved = betterLow ? delta < 0 : delta > 0;
+    return (
+        <div className="flex items-baseline justify-between gap-4 py-1">
+            <span className="text-[11.5px] text-muted-foreground">{label}</span>
+            <span className="font-mono text-[11.5px] tabular-nums">
+                {format(from)} &rarr; {format(to)}{" "}
+                {meaningful ? (
+                    <span className={cn("font-semibold", improved ? "text-emerald-400" : "text-destructive")}>
+                        {delta > 0 ? "+" : "−"}
+                        {format(Math.abs(delta))}
+                    </span>
+                ) : (
+                    <span className="text-muted-foreground">no change</span>
+                )}
+            </span>
+        </div>
+    );
+}
 
 function hoursLabel(hours: number): string {
     if (hours >= 48) return `${(hours / 24).toFixed(1)}d`;
@@ -37,9 +87,11 @@ function productLabel(room: { room_type: string; formula_type: string | null }):
 export function DeepDive() {
     const [open, setOpen] = useState(true);
     const [cadence, setCadence] = useState("12");
+    const [snapshot, setSnapshot] = useState<ISnapshot | null>(null);
     const api = useBaseOptimizer();
     const evaluation = api.evaluation;
     if (!evaluation) return null;
+    const live = snapshotOf(evaluation);
 
     const claim = evaluation.claim;
     const rooms = evaluation.assignment.rooms.filter((r) => r.fill_hours !== undefined);
@@ -116,6 +168,37 @@ export function DeepDive() {
                             </div>
                         </section>
                     )}
+
+                    <section className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between gap-3">
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Compare</h3>
+                            <div className="flex items-center gap-1.5">
+                                <Button onClick={() => setSnapshot(live)} size="sm" variant="outline">
+                                    <Camera />
+                                    {snapshot ? "Re-snapshot" : "Snapshot"}
+                                </Button>
+                                {snapshot && (
+                                    <Button aria-label="Clear snapshot" onClick={() => setSnapshot(null)} size="icon-sm" variant="ghost">
+                                        <X />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                        {snapshot ? (
+                            <div className="flex flex-col divide-y divide-border/60">
+                                <DiffRow format={(v) => `${Math.round(v)}%`} from={snapshot.efficiency} label="Production efficiency" to={live.efficiency} />
+                                <DiffRow format={num} from={snapshot.lmd} label="LMD / day" to={live.lmd} />
+                                <DiffRow format={num} from={snapshot.exp} label="EXP / day" to={live.exp} />
+                                <DiffRow format={(v) => v.toFixed(1)} from={snapshot.gold} label="Pure Gold / day" to={live.gold} />
+                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.tradingCapacity} label="Trading capacity" to={live.tradingCapacity} />
+                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.powerNet} label="Power net" to={live.powerNet} />
+                                <DiffRow format={(v) => `${v.toFixed(2)}/h`} from={snapshot.dormRecovery} label="Dorm recovery" to={live.dormRecovery} />
+                                {snapshot.nextFullHours !== null && live.nextFullHours !== null && <DiffRow format={(v) => hoursLabel(v)} from={snapshot.nextFullHours} label="First room stalls" to={live.nextFullHours} />}
+                            </div>
+                        ) : (
+                            <span className="text-[11.5px] text-muted-foreground">Snapshot the current numbers, then edit the board or run the optimizer - the difference tracks live.</span>
+                        )}
+                    </section>
 
                     {sustainability && (
                         <section className="flex flex-col gap-1.5">

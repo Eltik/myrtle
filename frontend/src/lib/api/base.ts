@@ -107,6 +107,15 @@ export interface IClaimInterval {
     lost_exp_per_day: number;
 }
 
+/**
+ * Player-declared account state the sync cannot read. Undeclared facts keep
+ * the never-guess default: the dependent skills price 0.
+ */
+export interface IAccountFacts {
+    /** Recruit slots purchased beyond the initial one (0-3). */
+    open_recruit_slots?: number;
+}
+
 export interface IRoomDiff {
     slot_id: string;
     room_type: RoomType;
@@ -139,6 +148,7 @@ export interface IOptimizeInput {
      * promoted them that far - a target to build toward, not their base today.
      */
     ignorePromotion?: boolean;
+    facts?: IAccountFacts;
 }
 
 export interface ICatalogPhase {
@@ -205,13 +215,13 @@ export interface ICatalogResponse {
 }
 
 export const evaluateLayoutFn = createServerFn({ method: "POST" })
-    .inputValidator((data: { uid: string; layout: IDraftRoom[]; ignorePromotion?: boolean; bearerToken?: string }) => data)
-    .handler(async ({ data: { uid, layout, ignorePromotion, bearerToken } }) => {
+    .inputValidator((data: { uid: string; layout: IDraftRoom[]; ignorePromotion?: boolean; facts?: IAccountFacts; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, layout, ignorePromotion, facts, bearerToken } }) => {
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/base/evaluate?uid=${encodeURIComponent(uid)}`, {
             method: "POST",
             bearerToken: token,
-            body: JSON.stringify({ layout, ignore_promotion: ignorePromotion ?? false }),
+            body: JSON.stringify({ layout, ignore_promotion: ignorePromotion ?? false, facts: facts ?? {} }),
         });
         if (!res.ok) {
             const text = await res.text().catch(() => "");
@@ -222,13 +232,14 @@ export const evaluateLayoutFn = createServerFn({ method: "POST" })
 
 export const optimizeLayoutFn = createServerFn({ method: "POST" })
     .inputValidator((data: IOptimizeInput & { bearerToken?: string }) => data)
-    .handler(async ({ data: { uid, layout, scope, locked, excluded, ignorePromotion, bearerToken } }) => {
+    .handler(async ({ data: { uid, layout, scope, locked, excluded, ignorePromotion, facts, bearerToken } }) => {
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/base/optimize?uid=${encodeURIComponent(uid)}`, {
             method: "POST",
             bearerToken: token,
             body: JSON.stringify({
                 ignore_promotion: ignorePromotion ?? false,
+                facts: facts ?? {},
                 layout,
                 scope: scope ?? [],
                 locked: locked ?? [],
@@ -252,6 +263,7 @@ export interface IRotationInput {
      * promoted them that far - a target to build toward, not their base today.
      */
     ignorePromotion?: boolean;
+    facts?: IAccountFacts;
 }
 
 export interface IRotationResponse {
@@ -262,12 +274,12 @@ export interface IRotationResponse {
 
 export const rotationPlanFn = createServerFn({ method: "POST" })
     .inputValidator((data: IRotationInput & { bearerToken?: string }) => data)
-    .handler(async ({ data: { uid, layout, locked, excluded, ignorePromotion, bearerToken } }) => {
+    .handler(async ({ data: { uid, layout, locked, excluded, ignorePromotion, facts, bearerToken } }) => {
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/base/rotation?uid=${encodeURIComponent(uid)}`, {
             method: "POST",
             bearerToken: token,
-            body: JSON.stringify({ layout, locked: locked ?? [], excluded: excluded ?? [], ignore_promotion: ignorePromotion ?? false }),
+            body: JSON.stringify({ layout, locked: locked ?? [], excluded: excluded ?? [], ignore_promotion: ignorePromotion ?? false, facts: facts ?? {} }),
         });
         if (!res.ok) {
             const text = await res.text().catch(() => "");
@@ -347,20 +359,20 @@ export function baseCatalogQueryOptions() {
  * repeat edits that land back on an arrangement already scored - dragging an
  * operator out and back costs nothing.
  */
-export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, bearerToken?: string) {
+export function rotationPlanQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["base", "rotation", uid, layoutKey(layout), ignorePromotion, bearerToken ? "auth" : "anon"],
-        queryFn: () => rotationPlanFn({ data: { uid, layout, ignorePromotion, bearerToken } }),
+        queryKey: ["base", "rotation", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, bearerToken ? "auth" : "anon"],
+        queryFn: () => rotationPlanFn({ data: { uid, layout, ignorePromotion, facts, bearerToken } }),
         enabled: layout.length > 0,
         staleTime: 5 * 60 * 1000,
         placeholderData: (prev) => prev,
     });
 }
 
-export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, bearerToken?: string) {
+export function evaluateLayoutQueryOptions(uid: string, layout: IDraftRoom[], ignorePromotion: boolean, facts?: IAccountFacts, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, bearerToken ? "auth" : "anon"],
-        queryFn: () => evaluateLayoutFn({ data: { uid, layout, ignorePromotion, bearerToken } }),
+        queryKey: ["base", "evaluate", uid, layoutKey(layout), ignorePromotion, facts?.open_recruit_slots ?? 0, bearerToken ? "auth" : "anon"],
+        queryFn: () => evaluateLayoutFn({ data: { uid, layout, ignorePromotion, facts, bearerToken } }),
         enabled: layout.length > 0,
         staleTime: 5 * 60 * 1000,
         // A draft in progress is a sequence of near-identical layouts; keeping

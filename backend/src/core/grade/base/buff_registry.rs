@@ -2093,6 +2093,53 @@ pub fn targeted_morale_effects(
     out
 }
 
+/// Per-recruit-slot HR speed: "+10% HR contacting speed for every Recruit
+/// slot other than the initial slot" (Lin's Meritocracy). The slot count is
+/// ACCOUNT state the sync cannot read, so the base parse prices the rider 0
+/// (never-guess) and this resolver re-prices it when the player declares the
+/// fact.
+static RE_HR_PER_SLOT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?:<@cc\.vup>)?\+([\d.]+)%(?:</>)? HR contacting speed for every Recruit slot",
+    )
+    .unwrap()
+});
+
+/// Registry rewrite for player-declared account facts (the established
+/// resolve-* pattern: never mutate, return a re-priced copy). Currently one
+/// fact exists: `open_recruit_slots` - recruit slots purchased beyond the
+/// initial one (0-3) - which prices the per-slot HR-speed riders that
+/// otherwise resolve to 0. Audited 2026-08-23: `RE_HR_PER_SLOT` captures
+/// exactly `hire_spd_cost&extra[000]` (Lin, flat 0 + 10/slot); the other
+/// slot-gated buffs' riders are clue likelihoods, drains, or resource points
+/// - none of them the buff's PRICED value - and stay untouched.
+pub fn resolve_account_facts(
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    buffs: &HashMap<String, Buff>,
+    open_recruit_slots: u32,
+) -> HashMap<String, BuffResolutionStrategy> {
+    let mut out = registry.clone();
+    for (buff_id, strategy) in registry {
+        let Some(buff) = buffs.get(buff_id) else {
+            continue;
+        };
+        if let (
+            BuffResolutionStrategy::NonProduction { value },
+            Some(c),
+        ) = (strategy, RE_HR_PER_SLOT.captures(&buff.description))
+        {
+            let per_slot: f64 = c[1].parse().unwrap_or(0.0);
+            out.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::NonProduction {
+                    value: value + per_slot * f64::from(open_recruit_slots),
+                },
+            );
+        }
+    }
+    out
+}
+
 /// The alternative self-drain phrasing: "self Morale loss per hour
 /// <@cc.vdown>+N</>". Companion-gated forms ("when assigned together with
 /// <op>, ... Morale loss +N") are SKIPPED - capturing them flat would charge
