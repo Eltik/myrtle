@@ -52,6 +52,9 @@ export interface IOptimizerAPI {
     setOpenRecruitSlots: (value: number) => void;
     /** After an edit: true = saved to the profile, false = session what-if only. */
     factsSaved: boolean | null;
+    /** The class currently training (ranks trainer hints), or null. */
+    trainingClass: string | null;
+    setTrainingClass: (value: string | null) => void;
     /** Extra check-in cadence (hours) priced alongside the 6/12/24 presets. */
     claimIntervalHours: number | undefined;
     setClaimIntervalHours: (value: number | undefined) => void;
@@ -122,15 +125,30 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     // viewers get a session-local what-if. (Deliberately NOT persisted
     // client-side: a stale localStorage value must never shadow the saved one.)
     const [sessionSlots, setSessionSlots] = useState<number | null>(null);
+    const [sessionClass, setSessionClass] = useState<string | null | undefined>(undefined);
     const [factsSaved, setFactsSaved] = useState<boolean | null>(null);
     const openRecruitSlots = sessionSlots ?? layoutQuery.data?.facts?.open_recruit_slots ?? 0;
-    const setOpenRecruitSlots = useCallback((value: number) => {
-        setSessionSlots(value);
-        saveBaseFactsFn({ data: { facts: { open_recruit_slots: value } } })
+    const trainingClass = sessionClass !== undefined ? sessionClass : (layoutQuery.data?.facts?.training_class ?? null);
+    const saveFacts = useCallback((facts: { open_recruit_slots: number; training_class: string | null }) => {
+        saveBaseFactsFn({ data: { facts } })
             .then((r) => setFactsSaved(r.saved))
             .catch(() => setFactsSaved(false));
     }, []);
-    const facts = useMemo(() => ({ open_recruit_slots: openRecruitSlots }), [openRecruitSlots]);
+    const setOpenRecruitSlots = useCallback(
+        (value: number) => {
+            setSessionSlots(value);
+            saveFacts({ open_recruit_slots: value, training_class: trainingClass });
+        },
+        [saveFacts, trainingClass],
+    );
+    const setTrainingClass = useCallback(
+        (value: string | null) => {
+            setSessionClass(value);
+            saveFacts({ open_recruit_slots: openRecruitSlots, training_class: value });
+        },
+        [saveFacts, openRecruitSlots],
+    );
+    const facts = useMemo(() => ({ open_recruit_slots: openRecruitSlots, training_class: trainingClass }), [openRecruitSlots, trainingClass]);
 
     const [proposal, setProposal] = useState<IOptimizeResponse | null>(null);
 
@@ -207,6 +225,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             openRecruitSlots,
             setOpenRecruitSlots,
             factsSaved,
+            trainingClass,
+            setTrainingClass,
             claimIntervalHours,
             setClaimIntervalHours,
             viewShift,
@@ -240,6 +260,8 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             openRecruitSlots,
             setOpenRecruitSlots,
             factsSaved,
+            trainingClass,
+            setTrainingClass,
             claimIntervalHours,
             setClaimIntervalHours,
             viewShift,

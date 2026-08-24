@@ -62,6 +62,26 @@ export function BasePanel({ improvements, accent }: IProps) {
                         {gain > 0 && <Pill color={accent}>+{compactNum(gain)} value/day</Pill>}
                     </div>
                     <YieldHeadline current={base.current} optimal={base.optimal} />
+                    {base.claim && (
+                        <p className="text-[11px] text-muted-foreground">
+                            Log in every <span className="font-mono tabular-nums">{Math.floor(base.claim.next_full_hours)}h</span> to lose nothing
+                            {(() => {
+                                const daily = base.claim.intervals.find((i) => i.hours === 24);
+                                return daily && daily.lost_lmd_per_day >= 1 ? (
+                                    <>
+                                        {" "}
+                                        - once a day costs <span className="font-mono text-destructive/90 tabular-nums">−{Math.round(daily.lost_lmd_per_day).toLocaleString()} LMD/day</span>
+                                    </>
+                                ) : null;
+                            })()}.
+                            {base.unrotated && base.unrotated.depleted.length > 0 && (
+                                <>
+                                    {" "}
+                                    Without swapping, <span className="font-mono tabular-nums">{base.unrotated.depleted.length}</span> operators run dry.
+                                </>
+                            )}
+                        </p>
+                    )}
 
                     {/* Dialog opens the full plan as a focused full-screen view on every
                         screen size, desktop included. */}

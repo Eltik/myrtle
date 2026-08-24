@@ -157,6 +157,31 @@ pub struct EvaluateResponse {
     /// "current bar" data is. `None` when the sync carries no morale.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub morale_synced_hours_ago: Option<f64>,
+    /// Top trainers for the declared `training_class` fact (empty otherwise,
+    /// or when the layout has no Training Room).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub trainer_hints: Vec<TrainerHintDto>,
+    /// Drone buffer, projected to now. `None` when the sync carries none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub drones: Option<DronesDto>,
+}
+
+/// One trainer suggestion for the declared training class.
+#[derive(Debug, Clone, Serialize)]
+pub struct TrainerHintDto {
+    pub operator: crate::app::services::improvements::AssignedOperator,
+    /// Specialization training speed % their best matching skill provides.
+    pub value_pct: f64,
+}
+
+/// The drone (Labor) buffer, projected to now from the synced snapshot.
+#[derive(Debug, Clone, Serialize)]
+pub struct DronesDto {
+    pub current: f64,
+    pub max: i32,
+    /// Hours until the buffer caps and recovery is wasted. `None` = already full.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_in_hours: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -264,16 +289,21 @@ pub struct RotationRequest {
 /// Player-declared account state the sync cannot read (the "account facts"
 /// prompt). With no declaration the never-guess default stands: the dependent
 /// skills price 0.
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct AccountFactsReq {
     /// Recruit slots purchased beyond the initial one (0-3). Prices the
     /// per-slot HR-speed riders (Lin's Meritocracy).
     #[serde(default)]
     pub open_recruit_slots: Option<u32>,
+    /// The class currently training in the Training Room ("Guard", "Sniper",
+    /// ...). Lets trainer hints rank class-specific skills honestly instead
+    /// of recommending a Guard trainer for a Sniper.
+    #[serde(default)]
+    pub training_class: Option<String>,
 }
 
 /// Re-price the context's registry under the player's declared facts.
-fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: AccountFactsReq) {
+fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: &AccountFactsReq) {
     if let Some(slots) = facts.open_recruit_slots.filter(|&n| n > 0) {
         ctx.registry = crate::core::grade::base::buff_registry::resolve_account_facts(
             &ctx.registry,
@@ -298,7 +328,84 @@ async fn effective_facts(state: &AppState, uid: &str, request: AccountFactsReq) 
     };
     AccountFactsReq {
         open_recruit_slots: request.open_recruit_slots.or(saved.open_recruit_slots),
+        training_class: request.training_class.or(saved.training_class),
     }
+}
+
+/// The game's eight operator classes, as their skill texts spell them.
+const TRAINER_CLASSES: [&str; 8] = [
+    "Vanguard",
+    "Guard",
+    "Defender",
+    "Sniper",
+    "Caster",
+    "Medic",
+    "Supporter",
+    "Specialist",
+];
+
+/// A trainer's flat Specialization-speed value for `class`, from one buff
+/// text: class-specific skills count only for their class, class-agnostic
+/// ones ("Operators' Specialization training speed +25%") count for any.
+/// Composition-scaled texts ("for each ... Operator") are skipped rather
+/// than guessed.
+fn trainer_value(desc: &str, class: &str) -> Option<f64> {
+    if !desc.contains("Specialization training speed") || desc.contains("for each") {
+        return None;
+    }
+    static RE_PCT: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\+([\d.]+)%").unwrap());
+    let pct: f64 = RE_PCT.captures(desc)?.get(1)?.as_str().parse().ok()?;
+    let mentioned: Vec<&&str> = TRAINER_CLASSES
+        .iter()
+        .filter(|c| desc.contains(**c))
+        .collect();
+    if mentioned.iter().any(|c| ***c == *class) || mentioned.is_empty() {
+        Some(pct)
+    } else {
+        None
+    }
+}
+
+/// Top trainer picks for the declared training class: every roster operator's
+/// best TRAINING-room skill value for that class, strongest first.
+fn trainer_hints(
+    ctx: &BaseContext,
+    game_data: &GameData,
+    class: &str,
+) -> Vec<TrainerHintDto> {
+    if !TRAINER_CLASSES.contains(&class) {
+        return Vec::new();
+    }
+    let mut ranked: Vec<(String, f64)> = ctx
+        .profiles
+        .iter()
+        .filter_map(|p| {
+            let best = p
+                .available_buffs
+                .iter()
+                .filter_map(|b| {
+                    let buff = game_data.building.buffs.get(b)?;
+                    (buff.room_type == "TRAINING").then_some(())?;
+                    trainer_value(&buff.description, class)
+                })
+                .fold(0.0_f64, f64::max);
+            (best > 0.0).then(|| (p.char_id.clone(), best))
+        })
+        .collect();
+    ranked.sort_by(|a, b| {
+        b.1.partial_cmp(&a.1)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(a.0.cmp(&b.0))
+    });
+    ranked
+        .into_iter()
+        .take(3)
+        .map(|(id, value)| TrainerHintDto {
+            operator: crate::app::services::improvements::assigned_operator(&id, game_data),
+            value_pct: value,
+        })
+        .collect()
 }
 
 /// The owner saving their facts (auth required, own profile only).
@@ -307,7 +414,8 @@ pub async fn save_facts(
     viewer_id: uuid::Uuid,
     facts: AccountFactsReq,
 ) -> Result<AccountFactsReq, ApiError> {
-    let value = serde_json::to_value(facts).map_err(|_| ApiError::BadRequest("facts".into()))?;
+    let value =
+        serde_json::to_value(&facts).map_err(|_| ApiError::BadRequest("facts".into()))?;
     crate::database::queries::users::set_base_facts(&state.db, viewer_id, &value).await?;
     Ok(facts)
 }
@@ -623,13 +731,15 @@ pub async fn evaluate(
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
-    apply_account_facts(&mut ctx, &game_data, facts);
+    apply_account_facts(&mut ctx, &game_data, &facts);
     // Real current morale, PROJECTED to now: the sync stores each bar with a
     // timestamp and a seat, so drain/recovery since the last sync is applied
     // before anything reads it. "Lasts X h" genuinely means from now.
+    let mut drones_json: Option<serde_json::Value> = None;
     let (live_morale, morale_synced_hours_ago) = match find_by_uid(&state.db, uid).await {
         Ok(Some(user)) => match get_building(&state.db, user.id).await.ok().flatten() {
             Some(json) => {
+                drones_json = json.get("status").and_then(|v| v.get("labor")).cloned();
                 let snapshots = crate::core::grade::base::types::live_morale_snapshot(&json);
                 let now_unix = chrono::Utc::now().timestamp();
                 let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
@@ -685,6 +795,39 @@ pub async fn evaluate(
         &ctx.morale_drains,
         Some(&live_morale),
     );
+    let trainer_hints = match (
+        facts.training_class.as_deref(),
+        building.rooms.iter().any(|r| r.room_type == "TRAINING"),
+    ) {
+        (Some(class), true) => self::trainer_hints(&ctx, &game_data, class),
+        _ => Vec::new(),
+    };
+    // Drones: `labor.value` at `lastUpdateTime`, recovering at the game base
+    // rate (86400s / 360s-per-drone = 240/day) scaled by the synced buffSpeed
+    // multiplier. Projected to now; capped at max.
+    let drones = drones_json.and_then(|l| {
+        let value = l.get("value").and_then(serde_json::Value::as_f64)?;
+        #[allow(clippy::cast_possible_truncation)]
+        let max = l.get("maxValue").and_then(serde_json::Value::as_i64)? as i32;
+        let buff = l
+            .get("buffSpeed")
+            .and_then(serde_json::Value::as_f64)
+            .unwrap_or(0.0);
+        let at = l
+            .get("lastUpdateTime")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
+        let rate_per_hour = 240.0 / 24.0 * (1.0 + buff);
+        let hours = ((chrono::Utc::now().timestamp() - at).max(0) as f64) / 3600.0;
+        let current = (value + rate_per_hour * hours).min(f64::from(max));
+        let full_in_hours = (rate_per_hour > 0.0 && current < f64::from(max))
+            .then(|| (f64::from(max) - current) / rate_per_hour);
+        Some(DronesDto {
+            current,
+            max,
+            full_in_hours,
+        })
+    });
     Ok(EvaluateResponse {
         power: power_of(&building, &game_data),
         sustain: sustain_of(&building, &ctx, &game_data, &live_morale),
@@ -693,6 +836,8 @@ pub async fn evaluate(
         claim,
         unrotated,
         morale_synced_hours_ago,
+        trainer_hints,
+        drones,
     })
 }
 
@@ -702,7 +847,7 @@ pub async fn evaluate(
 /// room's rate; the rest is produced into a full buffer and lost. Losses are
 /// per RESOURCE (trading LMD, factory gold, factory EXP) so the coupled
 /// gold→trade chain isn't double-counted into one number.
-fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Option<ClaimDto> {
+pub(crate) fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Option<ClaimDto> {
     let fills: Vec<&crate::app::services::improvements::RoomAssignmentDto> = assignment
         .rooms
         .iter()
@@ -884,7 +1029,7 @@ pub async fn optimize(
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
-    apply_account_facts(&mut ctx, &game_data, facts);
+    apply_account_facts(&mut ctx, &game_data, &facts);
 
     let building = UserBuilding {
         rooms: req
@@ -953,7 +1098,7 @@ pub async fn rotation(
 
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
-    apply_account_facts(&mut ctx, &game_data, facts);
+    apply_account_facts(&mut ctx, &game_data, &facts);
     let building = UserBuilding {
         rooms: req
             .layout

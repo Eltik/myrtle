@@ -136,6 +136,33 @@ export function DeepDive() {
                                             <span className="cursor-help underline decoration-dotted underline-offset-2">conservative</span>
                                         </TileTooltip>
                                     </span>
+                                    {evaluation.drones && (
+                                        <span className="text-[11px] text-muted-foreground">
+                                            Drones{" "}
+                                            <span className="font-mono tabular-nums">
+                                                {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
+                                            </span>
+                                            {evaluation.drones.full_in_hours !== undefined ? (
+                                                <>
+                                                    {" "}
+                                                    - full in <span className="font-mono tabular-nums">{hoursLabel(evaluation.drones.full_in_hours)}</span>, spend before then
+                                                </>
+                                            ) : (
+                                                <span className="text-destructive"> - full, recovery is being wasted</span>
+                                            )}
+                                        </span>
+                                    )}
+                                    {(evaluation.trainer_hints ?? []).length > 0 && (
+                                        <span className="text-[11px]">
+                                            <span className="text-muted-foreground">Best trainers for {api.trainingClass}: </span>
+                                            {(evaluation.trainer_hints ?? []).map((h, i) => (
+                                                <span key={h.operator.operator_id}>
+                                                    {i > 0 && <span className="text-muted-foreground"> · </span>}
+                                                    {h.operator.name} <span className="font-mono text-muted-foreground tabular-nums">+{Math.round(h.value_pct)}%</span>
+                                                </span>
+                                            ))}
+                                        </span>
+                                    )}
                                     {atRisk.length > 0 && (
                                         <span className="text-[11px]">
                                             <span className="text-muted-foreground">At risk from their current bar{evaluation.morale_synced_hours_ago !== undefined && ` (projected from your sync ${hoursLabel(evaluation.morale_synced_hours_ago)} ago)`}: </span>

@@ -285,6 +285,13 @@ pub struct BaseImprovements {
     /// Information" system): support operators to station outside production, and the
     /// production operators it powers. `None` unless a 243 roster can field the economy.
     pub perception: Option<PerceptionPlanDto>,
+    /// Check-in economics for the CURRENT base (same model as the planner's
+    /// deep dive), so both tabs read the same numbers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim: Option<crate::app::services::base_planner::ClaimDto>,
+    /// The current crews simulated with no rotation at all - "if you never swap".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unrotated: Option<SustainabilityDto>,
 }
 
 /// The base-wide resource economy plan: which support operators to station (and where) to
@@ -1532,6 +1539,16 @@ async fn build_base_improvements(
         game_data,
     );
 
+    let claim = crate::app::services::base_planner::claim_of(&current_dto, None);
+    let unrotated = static_sustainability(
+        &user_building,
+        &current,
+        &profiles,
+        game_data,
+        &registry,
+        &morale_drains,
+        None,
+    );
     Ok(BaseImprovements {
         current: Some(current_dto),
         optimal: Some(optimal_dto),
@@ -1539,6 +1556,8 @@ async fn build_base_improvements(
         layout,
         shift_rotation,
         perception,
+        claim,
+        unrotated,
     })
 }
 
@@ -2228,7 +2247,7 @@ pub(crate) fn base_assignment_to_dto(
 }
 
 /// Resolve a `char_id` to an `AssignedOperator` (id + display name).
-fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
+pub(crate) fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
     AssignedOperator {
         operator_id: id.to_string(),
         name: game_data

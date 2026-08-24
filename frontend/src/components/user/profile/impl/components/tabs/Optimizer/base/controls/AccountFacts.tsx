@@ -30,6 +30,15 @@ export function AccountFacts() {
                                 </ToggleGroupItem>
                             ))}
                         </ToggleGroup>
+                        <span className="text-[12px] text-muted-foreground">Training</span>
+                        <select aria-label="Class currently training" className="rounded-md border border-border bg-transparent px-1.5 py-1 text-[11px]" onChange={(e) => api.setTrainingClass(e.target.value === "" ? null : e.target.value)} value={api.trainingClass ?? ""}>
+                            <option value="">Nobody</option>
+                            {["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"].map((c) => (
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
+                            ))}
+                        </select>
                         {api.factsSaved !== null && <span className={api.factsSaved ? "text-[10px] text-emerald-400" : "text-[10px] text-muted-foreground"}>{api.factsSaved ? "saved" : "what-if"}</span>}
                     </div>
                 )}

@@ -630,6 +630,10 @@ export interface IBaseImprovements {
     shift_rotation?: IShiftRotation | null;
     /** The base-wide resource economy plan, if a 243 roster can field it. */
     perception?: IPerceptionPlan | null;
+    /** Check-in economics for the current base (same model as the planner). */
+    claim?: import("./base").IClaim;
+    /** The current crews simulated with no rotation - "if you never swap". */
+    unrotated?: ISustainability;
 }
 
 export interface IImprovementsResponse {

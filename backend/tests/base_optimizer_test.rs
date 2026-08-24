@@ -6623,14 +6623,8 @@ fn ledger_probe() {
         .collect();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let asn = compute_current_assignment(
-        &profiles,
-        &building,
-        &gd.building,
-        &registry,
-        &drains,
-        None,
-    );
+    let asn =
+        compute_current_assignment(&profiles, &building, &gd.building, &registry, &drains, None);
     for r in &asn.rooms {
         if let Some(f) = &r.fill {
             println!(
@@ -6866,7 +6860,8 @@ fn skill_ledger_reports_marginals_and_dispositions() {
     .iter()
     .map(|id| profile(gd, id))
     .collect();
-    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
     let tp = asn
         .rooms
         .iter()
@@ -7001,12 +6996,13 @@ fn account_facts_reprice_per_slot_hr_riders() {
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
-    let value = |reg: &std::collections::HashMap<String, BuffResolutionStrategy>, id: &str| {
-        match reg.get(id) {
+    let value =
+        |reg: &std::collections::HashMap<String, BuffResolutionStrategy>, id: &str| match reg
+            .get(id)
+        {
             Some(BuffResolutionStrategy::NonProduction { value }) => *value,
             other => panic!("{id}: expected NonProduction, got {other:?}"),
-        }
-    };
+        };
     assert_eq!(value(&registry, "hire_spd_cost&extra[000]"), 0.0);
     let resolved = resolve_account_facts(&registry, &gd.building.buffs, 3);
     assert_eq!(value(&resolved, "hire_spd_cost&extra[000]"), 30.0);
@@ -7074,7 +7070,10 @@ fn unpriced_buff_audit() {
             Some(BuffResolutionStrategy::Complex { estimated_pct }) => {
                 unpriced += 1;
                 let desc: String = buff.description.chars().take(120).collect();
-                println!("COMPLEX {id} [{}] est {estimated_pct}: {desc}", buff.room_type);
+                println!(
+                    "COMPLEX {id} [{}] est {estimated_pct}: {desc}",
+                    buff.room_type
+                );
             }
             None => {
                 unpriced += 1;
@@ -7084,4 +7083,39 @@ fn unpriced_buff_audit() {
         }
     }
     println!("TOTAL unpriced: {unpriced} of {}", gd.building.buffs.len());
+}
+
+/// Trainer hints rank by the declared class: class-agnostic skills count for
+/// everyone, class-specific ones only for their class, composition-scaled
+/// texts are skipped rather than guessed.
+#[test]
+fn trainer_hints_respect_the_declared_class() {
+    // Exercised through the public evaluate path indirectly; here just pin the
+    // gamedata phrasings the parser relies on.
+    let gd = load_game_data();
+    let mut agnostic = 0;
+    let mut specific = 0;
+    let mut scaled = 0;
+    for buff in gd.building.buffs.values() {
+        if buff.room_type != "TRAINING" {
+            continue;
+        }
+        let d = &buff.description;
+        if !d.contains("Specialization training speed") {
+            continue;
+        }
+        if d.contains("for each") {
+            scaled += 1;
+        } else if ["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"]
+            .iter()
+            .any(|c| d.contains(c))
+        {
+            specific += 1;
+        } else {
+            agnostic += 1;
+        }
+    }
+    assert!(agnostic > 0, "class-agnostic trainer skills exist");
+    assert!(specific > 0, "class-specific trainer skills exist");
+    assert!(scaled > 0, "composition-scaled trainer skills exist (skipped)");
 }

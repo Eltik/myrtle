@@ -104,6 +104,23 @@ export interface IEvaluateResponse {
     unrotated?: ISustainability;
     /** Hours since the newest morale write in the sync. */
     morale_synced_hours_ago?: number;
+    /** Top trainers for the declared training class. */
+    trainer_hints?: ITrainerHint[];
+    /** Drone buffer, projected to now. */
+    drones?: IDrones;
+}
+
+export interface ITrainerHint {
+    operator: IAssignedOperator;
+    /** Specialization training speed % of their best matching skill. */
+    value_pct: number;
+}
+
+export interface IDrones {
+    current: number;
+    max: number;
+    /** Hours until the buffer caps and recovery is wasted. Absent = full. */
+    full_in_hours?: number;
 }
 
 /** How long the base runs unattended, and what each claim cadence loses. */
@@ -128,6 +145,8 @@ export interface IClaimInterval {
 export interface IAccountFacts {
     /** Recruit slots purchased beyond the initial one (0-3). */
     open_recruit_slots?: number;
+    /** The class currently training ("Guard", "Sniper", ...) - ranks trainer hints. */
+    training_class?: string | null;
 }
 
 export interface IRoomDiff {
