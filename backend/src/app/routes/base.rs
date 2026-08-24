@@ -6,7 +6,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::services::base_planner::{
     AccountFactsReq, CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse,
-    OptimizeRequest, OptimizeResponse, RotationRequest, RotationResponse, catalog, evaluate,
+    OptimizeRequest, OptimizeResponse, RotationRequest, catalog, evaluate,
     layout, optimize, rotation, save_facts,
 };
 use crate::app::state::AppState;
