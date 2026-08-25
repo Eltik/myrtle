@@ -2141,7 +2141,37 @@ fn collect_dynchar_bg_quads(
                         .iter()
                         .find(|(n, _)| n == "_MainColor")
                         .map_or([1.0; 4], |(_, c)| *c);
-                    (mc, 1.0, false)
+                    // THE ×2 BELONGS HERE TOO (`DYNCHAR_MC_X2`, the same flag the branch
+                    // above uses, default OFF). That branch applies `main_color_doubles`
+                    // and this one did not, which is exactly the asymmetry the corpus
+                    // measured. Ch'en the Holungday is `Dissolve(CustomData)`, a verified
+                    // NON-doubling family, so folding `_MainColor` whole is complete and
+                    // worth -4.707. Whislash-alter's `jiu (1)` is `Disturb Anchor
+                    // (AlphaBlend)`, a DOUBLING family: the fragment runs
+                    // `tex * _MainColor * vs_COLOR0` and then `c = c + c`, so an authored
+                    // 0.5 grey is the NEUTRAL and folding it un-doubled renders the layer
+                    // at half. Same clamp discipline as the branch above: rgb is not
+                    // clamped because the frontend composites into a half-float HDR
+                    // target, alpha is, because it is a coverage weight.
+                    //
+                    // ⚠️ `_MainColorACtrl` is identity on `jiu (1)` and not for the reason
+                    // the note on `main_color_doubles` gives: her `_MainColor.w` is 1.0, so
+                    // `mix(1, _MainColor.w, ctrl)` is 1 whatever `ctrl` holds. Do not chase
+                    // it.
+                    // ⚠️ ITS OWN FLAG, deliberately NOT `DYNCHAR_MC_X2`. That name also
+                    // enables the doubling in the branch above, which is separately measured
+                    // and refuted, and sharing it confounds the corpus: Mlynar is
+                    // bit-identical under this arm alone and goes 17.007 -> 23.805 the moment
+                    // the shared flag lights the other branch as well.
+                    if std::env::var("DYNCHAR_MC_X2_DECL").is_ok() && main_color_doubles(mat) {
+                        (
+                            [mc[0] * 2.0, mc[1] * 2.0, mc[2] * 2.0, (mc[3] * 2.0).min(1.0)],
+                            2.0,
+                            true,
+                        )
+                    } else {
+                        (mc, 1.0, false)
+                    }
                 } else {
                     (material_tint(mat), 1.0, false)
                 }
