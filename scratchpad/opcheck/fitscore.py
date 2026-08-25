@@ -129,6 +129,36 @@ def main():
     m_fit, s, dx, dy = best
     print(f"[fit] FIT: scale={s:.3f} dx={dx:+.0f} dy={dy:+.0f}  (MADC at fit beat {m_fit:.3f})")
 
+    # 🚨 COVERAGE, and it is not cosmetic. The anti-cheat fill stops a shrinking fit from
+    # winning, but it also means every pixel it fills is GAME-BACKDROP vs GAME, containing
+    # none of our render. Any statistic computed on the fitted frame is contaminated there,
+    # in proportion to how much of the frame the transform vacates.
+    #
+    # This cost a whole finding. A "bottom-fifth over-brightness shared by all five settled
+    # clips, +16.646 to +57.261" was measured on fitted frames whose bottom fifth our render
+    # covered 0.00% of on three of the five, 15.72% on a fourth. The shared vertical structure
+    # it rested on (row-profile pairwise r +0.639) collapses to +0.015 once the fill is
+    # excluded, and fugue's bottom band FLIPS SIGN, +41.750 -> -18.885. Nothing we drew was in
+    # the band being measured, which is why every group ablation, the spine included, left the
+    # number bit-identical.
+    #
+    # Read the fill share before quoting any regional number off a fitted frame. Above ~20% the
+    # fitted MADC is substantially not about our renderer.
+    mask = np.asarray(Image.fromarray(np.full((H, W), 255, np.uint8)).transform(
+        (W, H), Image.AFFINE, (1.0/s, 0, W/2.0 - (W/2.0+dx)/s, 0, 1.0/s, H/2.0 - (H/2.0+dy)/s),
+        resample=Image.BILINEAR, fillcolor=0)) > 200
+    mi = mask[:, x0:x1]
+    rowcov = mi.mean(axis=1)
+    print(f"[fit] COVERAGE by our render: whole frame {mi.mean()*100:.2f}%, "
+          f"top fifth {rowcov[:len(rowcov)//5].mean()*100:.2f}%, "
+          f"bottom fifth {rowcov[-len(rowcov)//5:].mean()*100:.2f}%")
+    _oy, _ob, _or = ycc(warp(oo, s, dx, dy, fill)[:, x0:x1])
+    _gy, _gb, _gr = ycc(go[:, x0:x1])
+    _d = np.abs(_oy-_gy) + (np.abs(_ob-_gb) + np.abs(_or-_gr)) / 2
+    _fill_share = _d[~mi].sum() / _d.sum() if _d.sum() > 0 else 0.0
+    print(f"[fit] FILL SHARE of the fitted residual: {_fill_share*100:.1f}%"
+          f"{'   ⚠️ regional statistics off this frame are NOT about our renderer' if _fill_share > 0.20 else ''}")
+
     # ---- apply the SAME transform to every beat ----
     print(f"\n{'beat':>6}  {'raw':>8}  {'fitted':>8}")
     raws, fits = [], []
