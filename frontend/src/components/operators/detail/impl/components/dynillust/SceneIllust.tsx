@@ -2551,6 +2551,51 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 }
                             });
                         }
+                        // `src:<i>` drops the layer whose SCENE-JSON index is `i`; `srconly:<i>`
+                        // keeps only that one. Ranges allowed (`src:40-47`). Both sides are
+                        // searched, so the caller does not need to know which container a sort
+                        // landed in.
+                        //
+                        // 🔑 Why this exists alongside `bg:`/`fg:`. Those index into the CONTAINER,
+                        // and the container order is not the JSON order: `background` receives
+                        // `backdropMeshes` before `otherBg`, and the bg/fg split is
+                        // `layer.sort >= characterSort` with a `backdropMisSorted` exception. So a
+                        // positional token cannot be quoted against the scene JSON without first
+                        // dumping, and `?dumplayers=1` returns `[]` whenever the hook closed over a
+                        // composite whose `scene` is null, which is exactly what it did on
+                        // Executor's settled composite. Matching `__srcIndex` removes the mapping
+                        // step and makes an ablation quotable as "layer 40 of the JSON".
+                        //
+                        // Same window-clearing as the positional tokens: the entrance tick rewrites
+                        // `renderable` every frame for any layer carrying an `m_IsActive` window, so
+                        // without this a windowed layer measures as contributing nothing whatever it
+                        // draws.
+                        {
+                            const wanted: Array<[number, number, boolean]> = [];
+                            for (const tok of off) {
+                                const m = /^src(only)?:(\d+)(?:-(\d+))?$/.exec(tok);
+                                if (m) wanted.push([Number(m[2]), m[3] ? Number(m[3]) : Number(m[2]), !!m[1]]);
+                            }
+                            if (wanted.length && scene) {
+                                for (const side of [scene.background, scene.foreground]) {
+                                    if (!side) continue;
+                                    for (const c of side.children) {
+                                        const rt = c as unknown as ISceneLayerRuntime;
+                                        const si = rt.__srcIndex;
+                                        if (si == null) continue;
+                                        const hit = wanted.some(([lo, hi]) => si >= lo && si <= hi);
+                                        const anyOnly = wanted.some(([, , only]) => only);
+                                        if (anyOnly) c.renderable = hit;
+                                        else if (hit) c.renderable = false;
+                                        if (anyOnly || hit) {
+                                            rt.__activeFrom = undefined;
+                                            rt.__activeUntil = undefined;
+                                            rt.__activeWindows = undefined;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         // `on:bg:<i>` / `on:fg:<i>` clears a layer's `m_IsActive` window so it
                         // stays drawn - tests whether missing content is a mis-timed window.
                         // NOTE THE SECOND COLON: the regex is `on:(bg|fg):(\d+)`. Written
