@@ -1036,15 +1036,6 @@ pub(crate) fn op_uptime(
     recovery / (d + recovery)
 }
 
-/// Operators a staggered rotation needs on its shared bench. Because only one
-/// operator is swapped out at a time and the same filler can cover any room, the
-/// bench is sized to the expected number resting at once (the summed per-operator
-/// rest fractions across all mains), never fewer than one. Low-drain mains rest
-/// less, so a strong roster needs only a handful of fillers - not a second team.
-pub(crate) fn shared_bench_size(rest_demand: f64) -> usize {
-    (rest_demand.ceil() as usize).max(1)
-}
-
 /// Hours a neutral-drain operator works before its morale runs low and you swap it
 /// out (~a daily rotation); faster-draining operators last proportionally fewer.
 const ROTATION_BASE_HOURS: f64 = 24.0;
@@ -1290,6 +1281,74 @@ pub fn sustained_efficiency_of(
             r.total_efficiency * rotation * cap_factor
         })
         .sum()
+}
+
+/// Sustained LMD-equivalent daily value of an assignment: each staffed
+/// production room's efficiency is throttled by its rotation sustain factor
+/// and its factory buffer-cap factor - the same arithmetic as
+/// [`sustained_efficiency_of`] - and the throttled rooms are then valued
+/// through the coupled yield model ([`assignment_value`]). This is the honest
+/// "what does this staffing actually earn per day" figure that a snapshot
+/// efficiency overstates. An UNSTAFFED room is worth exactly 0 - in the game
+/// a factory with no operators produces nothing, even though the scorer
+/// still reports its Control-Center globals as room efficiency.
+pub fn sustained_assignment_value(
+    main: &BaseAssignment,
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+) -> f64 {
+    let op_index = build_op_index(operators);
+    let cc_recovery = cc_morale_boost(main, &op_index, registry, building_data);
+    let recovery = morale_recovery(building) + cc_recovery;
+    let morale_sustained = morale_sustained_beneficiaries(
+        main,
+        operators,
+        morale_drains,
+        recovery,
+        building,
+        registry,
+        building_data,
+    );
+    let throttled: Vec<RoomAssignment> = main
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .filter(|r| !r.operators.is_empty())
+        .map(|r| {
+            let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
+            let rotation = room_sustain_factor(
+                &r.operators,
+                &op_index,
+                morale_drains,
+                recovery,
+                coverage,
+                &morale_sustained,
+            );
+            let cap = team_capacity_bonus(
+                &r.operators,
+                &r.room_type,
+                r.formula_type.as_deref(),
+                &op_index,
+                registry,
+                building_data,
+            );
+            let cap_factor = factory_cap_factor(
+                building_data,
+                r.formula_type.as_deref(),
+                r.level,
+                r.total_efficiency,
+                cap,
+            );
+            RoomAssignment {
+                total_efficiency: r.total_efficiency * rotation * cap_factor,
+                ..r.clone()
+            }
+        })
+        .collect();
+    assignment_value(&throttled)
 }
 
 pub fn compute_sustained_assignment(

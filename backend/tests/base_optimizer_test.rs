@@ -1649,22 +1649,14 @@ fn optimizes_a_full_base() {
 }
 
 #[test]
-fn grade_base_produces_a_sane_score() {
-    // The high-level scorer: a base with a partial roster should grade in [0, 1]
-    // and strictly above 0 (it has production capacity), and a full roster on the
-    // same base should score at least as high.
+fn grade_base_scores_stationing_quality() {
+    // The grade answers ONE question: does the player have the best base THEY
+    // could have? Actual sustained yield / achievable sustained yield, on
+    // their own roster and rooms. So: nobody stationed grades 0 (an empty
+    // base earns nothing), any real stationing grades in (0, 1], and
+    // stationing closer to the optimizer's own pick never grades lower.
     let gd = load_game_data();
-    let building_json = serde_json::json!({
-        "roomSlots": {
-            "cc": { "roomId": "CONTROL", "level": 5, "state": 2 },
-            "tp0": { "roomId": "TRADING", "level": 3, "state": 2 },
-            "mf0": { "roomId": "MANUFACTURE", "level": 3, "state": 2 },
-            "mf1": { "roomId": "MANUFACTURE", "level": 3, "state": 2 },
-            "d0": { "roomId": "DORMITORY", "level": 5, "state": 2 },
-        }
-    });
-
-    let partial: Vec<RosterEntry> = [
+    let roster: Vec<RosterEntry> = [
         TEXAS,
         LAPPLAND,
         EXUSIAI,
@@ -1675,23 +1667,63 @@ fn grade_base_produces_a_sane_score() {
     .iter()
     .map(|id| roster_entry(id))
     .collect();
-    let partial_score = grade_base(&partial, Some(&building_json), gd);
+
+    // A 1-TP / 2-factory base with the given crews stationed. Factories carry
+    // real formulas, as every synced base does.
+    let building = |tp: &[&str], mf0: &[&str], mf1: &[&str]| {
+        let mut chars = serde_json::Map::new();
+        let mut inst_of = std::collections::HashMap::new();
+        for (i, id) in tp.iter().chain(mf0).chain(mf1).enumerate() {
+            let inst = i as i64 + 1;
+            inst_of.insert(*id, inst);
+            chars.insert(inst.to_string(), serde_json::json!({ "charId": id }));
+        }
+        let ids = |crew: &[&str]| -> Vec<i64> { crew.iter().map(|id| inst_of[id]).collect() };
+        serde_json::json!({
+            "chars": chars,
+            "rooms": { "MANUFACTURE": {
+                "mf0": { "formulaId": "4" },
+                "mf1": { "formulaId": "1" },
+            }},
+            "roomSlots": {
+                "cc": { "roomId": "CONTROL", "level": 5, "state": 2 },
+                "tp0": { "roomId": "TRADING", "level": 3, "state": 2, "charInstIds": ids(tp) },
+                "mf0": { "roomId": "MANUFACTURE", "level": 3, "state": 2, "charInstIds": ids(mf0) },
+                "mf1": { "roomId": "MANUFACTURE", "level": 3, "state": 2, "charInstIds": ids(mf1) },
+                "d0": { "roomId": "DORMITORY", "level": 5, "state": 2 },
+            }
+        })
+    };
+
+    let empty = grade_base(&roster, Some(&building(&[], &[], &[])), gd);
     assert!(
-        (0.0..=1.0).contains(&partial_score) && partial_score > 0.0,
-        "partial-roster score should be in (0, 1], got {partial_score}"
+        empty.abs() < 1e-9,
+        "an unstaffed base earns nothing, got {empty}"
     );
 
-    let full: Vec<RosterEntry> = gd
-        .building
-        .chars
-        .keys()
-        .filter(|id| id.starts_with("char_"))
-        .map(|id| roster_entry(id))
-        .collect();
-    let full_score = grade_base(&full, Some(&building_json), gd);
+    // Bodies with no relevant skills in the wrong rooms...
+    let weak = grade_base(
+        &roster,
+        Some(&building(&["char_003_kalts"], &["char_190_clour"], &[])),
+        gd,
+    );
+    // ...vs the trading synergy where it belongs.
+    let good = grade_base(
+        &roster,
+        Some(&building(
+            &[TEXAS, LAPPLAND, EXUSIAI],
+            &["char_496_wildmn"],
+            &["char_190_clour", "char_003_kalts"],
+        )),
+        gd,
+    );
     assert!(
-        (0.0..=1.0).contains(&full_score) && full_score >= partial_score - 1e-6,
-        "full-roster score ({full_score}) should be in [0,1] and >= partial ({partial_score})"
+        (0.0..=1.0).contains(&weak) && weak > 0.0,
+        "a staffed base earns something: {weak}"
+    );
+    assert!(
+        (0.0..=1.0).contains(&good) && good >= weak - 1e-6,
+        "better stationing never grades lower (good={good}, weak={weak})"
     );
 }
 
@@ -7284,12 +7316,10 @@ fn wisadel_conspirator_named_char_grants() {
     // The clue payload fires only while Ines sits in a Reception Room.
     let wisadel = profile(gd, WISADEL);
     let ops = vec![wisadel];
-    let meeting_room = |ops_in: Vec<String>| {
-        backend::core::grade::base::types::RoomAssignment {
-            room_type: "MEETING".into(),
-            operators: ops_in,
-            ..Default::default()
-        }
+    let meeting_room = |ops_in: Vec<String>| backend::core::grade::base::types::RoomAssignment {
+        room_type: "MEETING".into(),
+        operators: ops_in,
+        ..Default::default()
     };
     let crew = vec![WISADEL.to_string()];
     assert_eq!(
