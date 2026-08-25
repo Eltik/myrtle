@@ -3,13 +3,14 @@ use std::collections::HashMap;
 use crate::core::gamedata::types::building::BuildingDataFile;
 use crate::{core::gamedata::types::building::BuildingChar, database::models::roster::RosterEntry};
 
+#[derive(Clone)]
 pub struct UserBuilding {
     /// How many factories, trading posts, power plants, and their levels.
     /// Key = `slot_id` (e.g. "`slot_1`"), Value = room info.
     pub rooms: Vec<UserRoom>,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UserRoom {
     pub slot_id: String,
     pub room_type: String, // "MANUFACTURE", "TRADING", "POWER", "DORMITORY", etc.

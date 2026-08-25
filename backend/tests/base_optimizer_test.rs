@@ -1668,9 +1668,10 @@ fn grade_base_scores_stationing_quality() {
     .map(|id| roster_entry(id))
     .collect();
 
-    // A 1-TP / 2-factory base with the given crews stationed. Factories carry
-    // real formulas, as every synced base does.
-    let building = |tp: &[&str], mf0: &[&str], mf1: &[&str]| {
+    // A 1-TP / 2-factory base with the given crews stationed, production rooms
+    // at the given level. Factories carry real formulas, as every synced base
+    // does.
+    let building = |tp: &[&str], mf0: &[&str], mf1: &[&str], level: i64| {
         let mut chars = serde_json::Map::new();
         let mut inst_of = std::collections::HashMap::new();
         for (i, id) in tp.iter().chain(mf0).chain(mf1).enumerate() {
@@ -1687,24 +1688,26 @@ fn grade_base_scores_stationing_quality() {
             }},
             "roomSlots": {
                 "cc": { "roomId": "CONTROL", "level": 5, "state": 2 },
-                "tp0": { "roomId": "TRADING", "level": 3, "state": 2, "charInstIds": ids(tp) },
-                "mf0": { "roomId": "MANUFACTURE", "level": 3, "state": 2, "charInstIds": ids(mf0) },
-                "mf1": { "roomId": "MANUFACTURE", "level": 3, "state": 2, "charInstIds": ids(mf1) },
+                "tp0": { "roomId": "TRADING", "level": level, "state": 2, "charInstIds": ids(tp) },
+                "mf0": { "roomId": "MANUFACTURE", "level": level, "state": 2, "charInstIds": ids(mf0) },
+                "mf1": { "roomId": "MANUFACTURE", "level": level, "state": 2, "charInstIds": ids(mf1) },
                 "d0": { "roomId": "DORMITORY", "level": 5, "state": 2 },
             }
         })
     };
 
-    let empty = grade_base(&roster, Some(&building(&[], &[], &[])), gd);
+    // Unstaffed base, rooms already max level: zero utilization, full
+    // infrastructure - exactly the 25% infrastructure share.
+    let empty = grade_base(&roster, Some(&building(&[], &[], &[], 3)), gd);
     assert!(
-        empty.abs() < 1e-9,
-        "an unstaffed base earns nothing, got {empty}"
+        (empty - 0.25).abs() < 1e-9,
+        "unstaffed but fully built = the infrastructure share alone, got {empty}"
     );
 
     // Bodies with no relevant skills in the wrong rooms...
     let weak = grade_base(
         &roster,
-        Some(&building(&["char_003_kalts"], &["char_190_clour"], &[])),
+        Some(&building(&["char_003_kalts"], &["char_190_clour"], &[], 3)),
         gd,
     );
     // ...vs the trading synergy where it belongs.
@@ -1714,16 +1717,35 @@ fn grade_base_scores_stationing_quality() {
             &[TEXAS, LAPPLAND, EXUSIAI],
             &["char_496_wildmn"],
             &["char_190_clour", "char_003_kalts"],
+            3,
         )),
         gd,
     );
     assert!(
-        (0.0..=1.0).contains(&weak) && weak > 0.0,
-        "a staffed base earns something: {weak}"
+        (0.0..=1.0).contains(&weak) && weak > 0.25,
+        "a staffed base earns above the infrastructure floor: {weak}"
     );
     assert!(
         (0.0..=1.0).contains(&good) && good >= weak - 1e-6,
         "better stationing never grades lower (good={good}, weak={weak})"
+    );
+
+    // The same stationing on under-leveled rooms: utilization is unchanged
+    // (both sides shrink together) but the infrastructure share drops, so the
+    // grade must come out strictly lower.
+    let good_low = grade_base(
+        &roster,
+        Some(&building(
+            &[TEXAS, LAPPLAND, EXUSIAI],
+            &["char_496_wildmn"],
+            &["char_190_clour", "char_003_kalts"],
+            1,
+        )),
+        gd,
+    );
+    assert!(
+        good_low < good - 1e-6,
+        "under-leveled rooms grade lower (L1={good_low}, L3={good})"
     );
 }
 
