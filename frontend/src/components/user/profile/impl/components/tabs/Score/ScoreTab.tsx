@@ -25,7 +25,7 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <OverallGradeCard score={score} />
                 {SUBSCORES.map((sub) => (
-                    <SubscoreCard key={sub.key} score={score[sub.key]} sub={sub} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />
+                    <SubscoreCard key={sub.key} score={score[sub.key]} sub={sub} improvements={improvements} isImprovementsLoading={isImprovementsLoading} scoreRow={score} />
                 ))}
             </div>
         </div>

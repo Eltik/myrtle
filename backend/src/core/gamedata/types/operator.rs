@@ -469,7 +469,7 @@ pub struct EnrichedSkill {
 }
 
 /// One power/faction affiliation (the `MainPower`/`SubPower` shape). Used by
-/// both the PascalCase raw character table and the camelCase enriched
+/// both the `PascalCase` raw character table and the camelCase enriched
 /// operators file, so every field aliases both casings.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -500,7 +500,7 @@ pub struct Operator {
     #[serde(default)]
     pub main_power: Option<PowerAffiliation>,
     /// Secondary affiliations - the game's multi-power system. RIIC faction
-    /// tags COUNT these: Texas is nation `lungmen` but SubPower `siracusa`,
+    /// tags COUNT these: Texas is nation `lungmen` but `SubPower` `siracusa`,
     /// and Umiri's "all Siracusa Operators" buff reaches her in-game.
     #[serde(default)]
     pub sub_power: Option<Vec<PowerAffiliation>>,

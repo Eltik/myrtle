@@ -45,6 +45,13 @@ pub struct UserScore {
     pub sandbox_score: f64,
     pub medal_score: f64,
     pub base_score: f64,
+    /// The base grade's stationing-utilization component (actual vs the
+    /// optimizer's best on the built rooms). None on rows graded before the
+    /// split was stored.
+    pub base_utilization: Option<f64>,
+    /// The base grade's infrastructure-completeness component (built rooms vs
+    /// the same rooms at max level). None on pre-split rows.
+    pub base_infrastructure: Option<f64>,
     pub skin_score: f64,
     pub grade: Option<String>,
     pub calculated_at: DateTime<Utc>,

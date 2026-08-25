@@ -1,5 +1,5 @@
 import { Skeleton } from "#/components/ui/skeleton";
-import type { IImprovementsResponse } from "#/lib/api/user";
+import type { IImprovementsResponse, IUserScore } from "#/lib/api/user";
 import type { ISubscore } from "../helpers";
 import { BasePanel } from "./base/BasePanel";
 import { MedalPanel } from "./MedalPanel";
@@ -13,6 +13,8 @@ interface IProps {
     sub: ISubscore;
     improvements: IImprovementsResponse | null | undefined;
     isLoading: boolean;
+    /** The stored score row - the base panel reads its graded component split. */
+    score: IUserScore | null | undefined;
 }
 
 /**
@@ -20,7 +22,10 @@ interface IProps {
  * expanded. Renders a skeleton while improvements load (the query is shared
  * across all cards so the wait cost is paid once).
  */
-export function ImprovementsPanel({ sub, improvements, isLoading }: IProps) {
+export function ImprovementsPanel({ sub, improvements, isLoading, score }: IProps) {
+    // The base panel reads the stored score row, not the improvements query -
+    // render it immediately instead of waiting on the shared fetch.
+    if (sub.key === "base_score") return <BasePanel score={score} accent={sub.color} />;
     if (isLoading && !improvements) return <PanelSkeleton />;
     if (!improvements) {
         return (
@@ -32,8 +37,6 @@ export function ImprovementsPanel({ sub, improvements, isLoading }: IProps) {
     switch (sub.key) {
         case "operator_score":
             return <OperatorPanel improvements={improvements} accent={sub.color} />;
-        case "base_score":
-            return <BasePanel improvements={improvements} accent={sub.color} />;
         case "stage_score":
             return <StagePanel improvements={improvements} accent={sub.color} />;
         case "roguelike_score":

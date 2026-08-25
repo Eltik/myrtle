@@ -147,6 +147,8 @@ async fn regrade_one(
         sandbox_score: grade.sandbox_grade,
         medal_score: grade.medal_grade,
         base_score: grade.base_grade,
+        base_utilization: Some(grade.base_utilization),
+        base_infrastructure: Some(grade.base_infrastructure),
         skin_score: 0.0,
         grade: Some(grade.overall),
         calculated_at: Utc::now(),

@@ -2253,7 +2253,9 @@ pub(crate) fn base_assignment_to_dto(
         rooms: asn
             .rooms
             .iter()
-            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry, &bench_ids, &asn.rooms))
+            .map(|r| {
+                room_assignment_to_dto(r, game_data, profiles, registry, &bench_ids, &asn.rooms)
+            })
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
         yield_lmd_per_day: flows.realized_lmd(),

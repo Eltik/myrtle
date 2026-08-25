@@ -252,14 +252,18 @@ pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::
     sqlx::query(
         r"
         INSERT INTO user_scores (user_id, total_score, operator_score, stage_score,
-            roguelike_score, sandbox_score, medal_score, base_score, skin_score,
+            roguelike_score, sandbox_score, medal_score, base_score,
+            base_utilization, base_infrastructure, skin_score,
             grade)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
         ON CONFLICT (user_id) DO UPDATE SET
             total_score = EXCLUDED.total_score, operator_score = EXCLUDED.operator_score,
             stage_score = EXCLUDED.stage_score, roguelike_score = EXCLUDED.roguelike_score,
             sandbox_score = EXCLUDED.sandbox_score, medal_score = EXCLUDED.medal_score,
-            base_score = EXCLUDED.base_score, skin_score = EXCLUDED.skin_score,
+            base_score = EXCLUDED.base_score,
+            base_utilization = EXCLUDED.base_utilization,
+            base_infrastructure = EXCLUDED.base_infrastructure,
+            skin_score = EXCLUDED.skin_score,
             grade = EXCLUDED.grade,
             calculated_at = NOW()
     ",
@@ -272,6 +276,8 @@ pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::
     .bind(score.sandbox_score)
     .bind(score.medal_score)
     .bind(score.base_score)
+    .bind(score.base_utilization)
+    .bind(score.base_infrastructure)
     .bind(score.skin_score)
     .bind(&score.grade)
     .execute(pool)

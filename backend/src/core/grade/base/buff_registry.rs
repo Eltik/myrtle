@@ -239,8 +239,10 @@ pub struct NamedCharGrant {
 /// assigned to (the Reception Room|a Trading Post|...), <payload>". Captures
 /// (name, room label, payload segment up to the next gate or end).
 static RE_CC_NAMED_GATE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"if <@cc\.kw>([^<]+)</> is assigned to (?:the |a |an )?([A-Za-z' ]+?)\s*,\s*([^;]*)")
-        .unwrap()
+    Regex::new(
+        r"if <@cc\.kw>([^<]+)</> is assigned to (?:the |a |an )?([A-Za-z' ]+?)\s*,\s*([^;]*)",
+    )
+    .unwrap()
 });
 
 /// The order/capacity-limit payload of a named-gate segment.

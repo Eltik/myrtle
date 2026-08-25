@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
-import type { IImprovementsResponse } from "#/lib/api/user";
+import type { IImprovementsResponse, IUserScore } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../../Stats/primitives";
 import { formatPct, type ISubscore, toPct, weightShare } from "../helpers";
@@ -13,9 +13,11 @@ interface ISubscoreCardProps {
     score: number | null | undefined;
     improvements: IImprovementsResponse | null | undefined;
     isImprovementsLoading: boolean;
+    /** The full stored score row, for panels that read more than the headline number. */
+    scoreRow: IUserScore;
 }
 
-export function SubscoreCard({ sub, score, improvements, isImprovementsLoading }: ISubscoreCardProps) {
+export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, scoreRow }: ISubscoreCardProps) {
     const pct = toPct(score);
     const wShare = weightShare(sub.weight);
     const contribution = (pct * wShare) / 100;
@@ -77,7 +79,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading }
                 </CollapsibleTrigger>
                 <CollapsibleContent className="overflow-hidden">
                     <div className="border-border/30 border-t">
-                        <ImprovementsPanel sub={sub} improvements={improvements} isLoading={isImprovementsLoading} />
+                        <ImprovementsPanel sub={sub} improvements={improvements} isLoading={isImprovementsLoading} score={scoreRow} />
                     </div>
                 </CollapsibleContent>
             </StatCard>

@@ -52,6 +52,10 @@ pub const SECTION_WEIGHT_TOTAL: f64 = SECTION_WEIGHT_OPERATOR
 pub struct UserGrade {
     pub operator_grade: f64,
     pub base_grade: f64,
+    /// The base grade's stationing-utilization component.
+    pub base_utilization: f64,
+    /// The base grade's infrastructure-completeness component.
+    pub base_infrastructure: f64,
     pub roguelike_grade: f64,
     pub medal_grade: f64,
     pub stage_grade: f64,
@@ -87,7 +91,8 @@ pub async fn calculate_user_grade(
     let owned_operators: HashSet<&str> =
         user_roster.iter().map(|e| e.operator_id.as_str()).collect();
     let operator_grade = grade_operators(&user_roster, game_data, &support_ids);
-    let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
+    let base = grade_base(&user_roster, building_json.as_ref(), game_data);
+    let base_grade = base.score;
     let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
     let medal_grade = grade_medals(&user_medals, &game_data.medals, &owned_operators);
 
@@ -106,6 +111,8 @@ pub async fn calculate_user_grade(
     Ok(UserGrade {
         operator_grade,
         base_grade,
+        base_utilization: base.utilization,
+        base_infrastructure: base.infrastructure,
         roguelike_grade,
         medal_grade,
         stage_grade,

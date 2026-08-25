@@ -314,6 +314,8 @@ pub async fn refresh(
                 sandbox_score: grade.sandbox_grade,
                 medal_score: grade.medal_grade,
                 base_score: grade.base_grade,
+                base_utilization: Some(grade.base_utilization),
+                base_infrastructure: Some(grade.base_infrastructure),
                 skin_score: 0.0,
                 calculated_at: Utc::now(),
             },

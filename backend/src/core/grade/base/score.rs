@@ -5,9 +5,7 @@ use crate::core::grade::base::assignment::{
 use crate::database::models::roster::RosterEntry;
 
 use super::{
-    buff_registry::{
-        BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
-    },
+    buff_registry::{BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of},
     types::{OperatorBaseProfile, UserBuilding},
 };
 use std::collections::HashMap;
@@ -20,6 +18,28 @@ const UTILIZATION_WEIGHT: f64 = 0.75;
 /// versus the same rooms at max level. Deliberately the smaller share -
 /// account progress matters, but less than using what you have well.
 const INFRASTRUCTURE_WEIGHT: f64 = 0.25;
+
+/// The base grade with its two components, each already log-curved to [0, 1].
+/// `score` is the weighted blend the profile stores; the components are kept
+/// so the frontend can show WHICH term drags the grade.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BaseGrade {
+    pub score: f64,
+    /// Stationing utilization: actual vs achievable on the built rooms.
+    pub utilization: f64,
+    /// Infrastructure completeness: achievable as built vs at max level.
+    pub infrastructure: f64,
+}
+
+impl BaseGrade {
+    fn blend(utilization: f64, infrastructure: f64) -> Self {
+        Self {
+            score: UTILIZATION_WEIGHT * utilization + INFRASTRUCTURE_WEIGHT * infrastructure,
+            utilization,
+            infrastructure,
+        }
+    }
+}
 
 /// The base grade answers: does the player have the best base THEY could
 /// have? Two log-curved ratios, both valued as sustained LMD-equivalent
@@ -39,20 +59,20 @@ pub fn grade_base(
     roster: &[RosterEntry],
     building_json: Option<&serde_json::Value>,
     game_data: &GameData,
-) -> f64 {
+) -> BaseGrade {
     let building_data = &game_data.building;
     if building_data.buffs.is_empty() {
-        return 0.0;
+        return BaseGrade::default();
     }
     let name_to_char = build_name_to_char(&game_data.operators);
     let (registry, morale_drains) = build_registry(&building_data.buffs, &name_to_char);
 
     let user_building = match building_json {
         Some(json) => UserBuilding::from_json(json),
-        None => return 0.0, // No building data synced
+        None => return BaseGrade::default(), // No building data synced
     };
     if user_building.is_empty() {
-        return 0.0;
+        return BaseGrade::default();
     }
     let profiles = build_operator_profiles(roster, game_data);
 
@@ -67,7 +87,7 @@ pub fn grade_base(
         &morale_drains,
     );
     if achievable <= 0.0 {
-        return 0.0;
+        return BaseGrade::default();
     }
 
     // The base as the player actually stationed it.
@@ -106,7 +126,7 @@ pub fn grade_base(
         1.0
     };
 
-    UTILIZATION_WEIGHT * utilization + INFRASTRUCTURE_WEIGHT * infrastructure
+    BaseGrade::blend(utilization, infrastructure)
 }
 
 /// The optimizer's best sustained LMD-equivalent daily yield for this roster
