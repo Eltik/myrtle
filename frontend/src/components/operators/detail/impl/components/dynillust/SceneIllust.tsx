@@ -2606,7 +2606,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                         const anyOnly = wanted.some(([, , only]) => only);
                                         if (anyOnly) c.renderable = hit;
                                         else if (hit) c.renderable = false;
-                                        if (anyOnly || hit) {
+                                        // Clear windows ONLY on the layers the token KEEPS. The
+                                        // first form cleared them on every layer under `srconly`,
+                                        // which is backwards: the entrance tick recomputes
+                                        // `renderable` each frame as `(af == null || tt >= af) &&
+                                        // (au == null || tt < au)`, so a window-less layer is
+                                        // unconditionally turned back ON and the isolation leaked
+                                        // the whole scene back in on the very next frame.
+                                        if (hit) {
                                             rt.__activeFrom = undefined;
                                             rt.__activeUntil = undefined;
                                             rt.__activeWindows = undefined;
