@@ -43,6 +43,16 @@ use std::{
 
 const DEFAULT_BATCH_SIZE: usize = 1000;
 
+/// Conservative per-batch payload cap. Postgres rejects a jsonb value above
+/// ~256MB ("total size of jsonb array elements exceeds the maximum"), and the
+/// server-side binary representation can run larger than the JSON text we
+/// measure here, so flush well below the hard limit. Row-count batching alone
+/// is not enough: 1000 rows of a jumbo-JSONB table (synced building blobs)
+/// overflow the cap long before the row limit. An oversized SINGLE row still
+/// ships alone - if one row crosses the server cap by itself, no batching
+/// strategy can save it.
+const MAX_BATCH_BYTES: usize = 64 * 1024 * 1024;
+
 #[derive(Deserialize)]
 struct Manifest {
     format_version: u32,
@@ -153,6 +163,7 @@ async fn main() -> Result<()> {
         let reader = BufReader::with_capacity(1 << 20, file);
 
         let mut batch: Vec<Value> = Vec::with_capacity(args.batch_size);
+        let mut batch_bytes: usize = 0;
         let insert_sql = format!(
             "INSERT INTO {table} \
              SELECT * FROM jsonb_populate_recordset(NULL::{table}, $1::jsonb)"
@@ -165,10 +176,19 @@ async fn main() -> Result<()> {
             }
             let v: Value = serde_json::from_str(&line)
                 .with_context(|| format!("invalid JSON row in {}", path.display()))?;
+            // Flush BEFORE this row would push the payload past the byte cap,
+            // so every shipped batch stays under it (a lone oversized row
+            // still ships by itself).
+            if !batch.is_empty() && batch_bytes + line.len() > MAX_BATCH_BYTES {
+                flush_batch(&mut tx, &insert_sql, &mut batch).await?;
+                batch_bytes = 0;
+            }
+            batch_bytes += line.len();
             batch.push(v);
 
             if batch.len() >= args.batch_size {
                 flush_batch(&mut tx, &insert_sql, &mut batch).await?;
+                batch_bytes = 0;
             }
             rows_loaded += 1;
         }
