@@ -2085,7 +2085,19 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const end = efd.duration - ENTRANCE_FADE_HOLD;
                     a = Math.max(0, Math.min(1, (efd.elapsed - (end - ENTRANCE_FADE_IN)) / ENTRANCE_FADE_IN));
                 }
-                efd.sprite.alpha = a;
+                // DIAGNOSTIC (`?fadesprite=0`): suppress the INFERRED global screen fade while
+                // keeping this ref alive. `?entfade=0` cannot answer this question because the ref
+                // is a COMPOUND switch - it carries the fade sprite AND the clock that drives the
+                // settled-ground swap and the gap-fill retirement - so disabling it moves two
+                // things at once. Nine of the twelve references author their own fade PLANE with
+                // an explicit window and alpha curve (Kal'tsit: sort 100, 13.800..14.667, alpha
+                // 0 -> 1 across 28 keys), and instrumented at 14.30 the plane ALONE leaves the
+                // frame 1.67% saturated where the plane plus this sprite is 100%. This isolates
+                // that. Read the param explicitly, never coerced.
+                const spriteOff =
+                    typeof window !== "undefined" &&
+                    new URLSearchParams(window.location.search).get("fadesprite") === "0";
+                efd.sprite.alpha = spriteOff ? 0 : a;
             }
             const ez = entranceZoomRef.current;
             if (ez && appRef.current) {
