@@ -1657,6 +1657,18 @@ fn collect_dynchar_bg_quads(
     // list restricts it to those layers, which is how the population is ABLATED: the
     // corpus verdict is dominated by two skins, and cost per layer that runs inverse to
     // layers moved is the signature of an over-broad predicate rather than a uniform one.
+    // `=1` for every qualifying layer, or a comma-separated MATERIAL-name list to ablate
+    // one at a time. See `dissolve_spelling`.
+    let dissolve_spelling_only: Option<Vec<String>> = std::env::var("DYNCHAR_DISSOLVE_SPELLING")
+        .ok()
+        .map(|v| match v.as_str() {
+            "1" => Vec::new(),
+            list => list
+                .split(',')
+                .map(|n| n.trim().to_string())
+                .filter(|n| !n.is_empty())
+                .collect(),
+        });
     let main_color_decl: Option<Vec<String>> =
         std::env::var("DYNCHAR_MAINCOLOR_DECL")
             .ok()
@@ -2282,10 +2294,34 @@ fn collect_dynchar_bg_quads(
                     // our `_Amount`/`_BorderWidth`. This is the third shader-correct change this
                     // session to measure worse (see `main_color_doubles` and the L2D x2 gate):
                     // on this pipeline the GLSL is necessary evidence, never sufficient.
+                    // THE THIRD SPELLING (`DYNCHAR_DISSOLVE_SPELLING`, default OFF; `=1` for
+                    // every qualifying layer, or a comma-separated MATERIAL-name list to
+                    // ablate). `Dissolve/Dissolve(CustomData)` calls the switch
+                    // `_UseDissolveTex` and the threshold `_DissolveIntensity`; reading
+                    // `_ToggleUseDissolve` on it defaults to 0 and drops a live mask. This is
+                    // the same shape as the `_DisturbTex`/`_DisturTex` pair below.
+                    //
+                    // ⚠️ The switch alone is NOT enough. `amount` reads `_Amount` and falls back
+                    // to 0.5, and 31 of the 37 affected materials carry no `_Amount` at all, so
+                    // admitting them on the switch while masking on a 0.5 default would ship the
+                    // right geometry with the wrong threshold. `dissolve_spelling` returns both
+                    // names together for that reason.
+                    let spelling_on = dissolve_spelling_only.as_ref().is_some_and(|only| {
+                        only.is_empty()
+                            || mat
+                                .get("m_Name")
+                                .and_then(Value::as_str)
+                                .is_some_and(|n| only.iter().any(|m| m == n))
+                    });
+                    let (switch_prop, threshold_prop) = if spelling_on {
+                        dissolve_spelling(mat, shader)
+                    } else {
+                        ("_ToggleUseDissolve", "_Amount")
+                    };
                     let vetoed = if std::env::var("DYNCHAR_DISSOLVE_GATE").is_ok() {
                         shader.contains("Disturb Anchor") && blend("_ToggleUseDissolve", 0.0) < 0.5
                     } else {
-                        blend("_ToggleUseDissolve", toggle_default) < 0.5
+                        blend(switch_prop, toggle_default) < 0.5
                     };
                     if vetoed {
                         diss_pid = None;
@@ -2355,6 +2391,31 @@ fn collect_dynchar_bg_quads(
                     // Print the layers that actually REACH the export with a live two-map
                     // dissolve — the corpus scan counts materials, and most materials never
                     // reach a kept layer.
+                    // CENSUS (`DYNCHAR_DISSOLVE_CENSUS=1`) for the THIRD switch spelling.
+                    // `Dissolve/Dissolve(CustomData)` declares its dissolve switch
+                    // `_UseDissolveTex` and its threshold `_DissolveIntensity`; its compiled
+                    // GLSL names `_ToggleUseDissolve` and `_Amount` ZERO times, while
+                    // `Disturb Anchor (AlphaBlend)` declares both of those. So the veto above
+                    // reads a property this family does not have, defaults it to 0 and drops a
+                    // live mask. Exactly parallel to the `_DisturbTex`/`_DisturTex` two
+                    // spellings already handled below. Prints one line per layer that REACHES
+                    // this gate so the population can be counted before anything is changed.
+                    if std::env::var("DYNCHAR_DISSOLVE_CENSUS").is_ok() {
+                        eprintln!(
+                            "  [disscensus] admit={admit} two_map={two_map} toggle={:.3} useDiss={:.3} amount={:.3} dissInt={:.3} bw={:.3} mainUV=({:.3},{:.3}) dissTexBound={} shader={shader} mat={}",
+                            blend("_ToggleUseDissolve", -1.0),
+                            blend("_UseDissolveTex", -1.0),
+                            blend("_Amount", -1.0),
+                            blend("_DissolveIntensity", -1.0),
+                            blend("_BorderWidth", -1.0),
+                            blend("_MainUSpeed", 0.0),
+                            blend("_MainVSpeed", 0.0),
+                            super::particles::mat_texenv(all_objects, mat, "_DissolveTex")
+                                .0
+                                .is_some(),
+                            mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                        );
+                    }
                     if !admit && std::env::var("SCENE_DEBUG").is_ok() {
                         let f01 = blend("_Amount_01", -1.0);
                         let t01 = super::particles::mat_texenv(all_objects, mat, "_DissolveTex_01");
@@ -2406,7 +2467,7 @@ fn collect_dynchar_bg_quads(
                             amount: if two_map {
                                 blend("_Amount_01", 0.5)
                             } else {
-                                blend("_Amount", 0.5)
+                                blend(threshold_prop, 0.5)
                             } as f32,
                             border_width: if two_map {
                                 blend("_BorderWidth_01", 0.1)
@@ -3360,6 +3421,48 @@ fn l2d_main_color_family(mat: &Value) -> bool {
             .and_then(|sp| sp.get("m_Colors"))
             .and_then(|c| c.as_object())
             .is_some_and(|c| c.contains_key("_MainColor"))
+}
+
+/// Which property spells this shader's dissolve SWITCH and THRESHOLD.
+///
+/// Three families ship three vocabularies for one piece of maths. Decompiled, the
+/// dissolve term is identical in all of them, only the threshold's NAME changes:
+///
+/// ```text
+/// Ram/Disturb(CustomData)      X = vs_TEXCOORD2.x + _Amount      (no switch, always on)
+/// Disturb Anchor (AlphaBlend)  X = _Amount                       switch _ToggleUseDissolve
+/// Dissolve/Dissolve(CustomData) X = _DissolveIntensity           switch _UseDissolveTex
+///
+/// t = tex - X;  k = 1 - roundEven(X + 0.5);
+/// t = _BorderWidth * k + t;  t = t / _BorderWidth;  clamp(t, 0, 1)
+/// ```
+///
+/// `_BorderWidth` is the same name and the same term in all three, so only the switch
+/// and the threshold need naming. `Dissolve(CustomData)` names `_ToggleUseDissolve` and
+/// `_Amount` ZERO times in its compiled GLSL, and `Ram/Disturb(CustomData)` names
+/// `_DissolveIntensity` and `_UseDissolveTex` zero times, so the two vocabularies are
+/// disjoint in the shipped programs.
+///
+/// Decided by the shader's DECLARATION, with the material's slot list as the fallback for
+/// an under-staged export. A shader declaring BOTH is ambiguous and keeps today's names,
+/// which is what guarantees no already-admitted layer moves.
+fn dissolve_spelling(mat: &Value, shader: &str) -> (&'static str, &'static str) {
+    let declares = |p: &str| {
+        super::shader_map::shader_declares(shader, p).unwrap_or_else(|| has_float_prop(mat, p))
+    };
+    if declares("_UseDissolveTex") && !declares("_Amount") {
+        ("_UseDissolveTex", "_DissolveIntensity")
+    } else {
+        ("_ToggleUseDissolve", "_Amount")
+    }
+}
+
+/// Does the material carry `key` among its saved FLOAT properties?
+fn has_float_prop(mat: &Value, key: &str) -> bool {
+    mat.get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Floats"))
+        .and_then(|f| f.as_object())
+        .is_some_and(|f| f.contains_key(key))
 }
 
 /// Does the material's own shader DECLARE `_MainColor`, and which test answered?
