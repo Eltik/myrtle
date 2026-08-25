@@ -254,6 +254,29 @@ DIR[fugue]='char_113_cqbw_epoque#7';      BEATS[fugue]="1,1.8,2.8,4,5.5,6.8,7.5,
 # t=12 past the render range, so it is not comparable; always check the beat count.
 #   Run her explicitly:  ./all8.sh <label> "" kalts
 DIR[kalts]='char_003_kalts_boc#6';       BEATS[kalts]="1,2,3,4,5,6,8,12"
+# excunew — captured 2026-08-26, the TWELFTH entry and the FIFTH clip that reaches past its own
+# cut (18.233333 s / 547 frames against a 6.500 entrance, so ~11.8 s of settled coverage). Same
+# skin as `exc`, whose clip is only 7.000 s and stops 0.600 s past her cut; both are kept because
+# they answer different questions and neither is a re-trim of the other.
+# Route: Store -> Outfit Store -> 75 carousel swipes -> FLOT SHOP NOW (1993,901) -> Sort by Brand
+# -> Test Collection was the FIRST brand tile (411,310) -> one scroll -> "Allmind As One" third in
+# the in-stock strip (1482,702). Blackout 6.97-7.29 s, t0 7.32 s.
+# ✅ VALIDATION, the third the pipeline has passed (cet +0.998, mly +0.016): she reads 6.536 r.943
+# against the established exc's 6.292 r.931. Different beat counts, so compare the shape not the
+# digits; her r is the higher of the two.
+# 🔑 REFOFF DERIVED GEOMETRICALLY, never swept: `edgetrim.py` on NINE beats over a 4.00 s lever
+# gives +0.1667, where 5 of the 9 picks land exactly. The four-beat set reads +0.1500, half a
+# frame off, and the score sweep is UNUSABLE on her (see below) — take the nine-beat value.
+# ⚠️ BEATS STOP AT 4.8 ON PURPOSE. Two hazards sit just past it, both in TRACK clock: her white
+# flash starts at 5.1833 (peak 5.2167) and her screen fade saturates at 5.900. Game beat 4.8 is
+# track 4.9667, clear of both. A beat inside either measures a constant, not the renderer.
+# 🚨 DO NOT SWEEP HER TRIM ON THE SCORE. Offset 0.200 blows BOTH her clips up identically,
+# exc 8.458 -> 41.367 and excunew 9.716 -> 42.881, because `t5.20.png` renders at meanY 202.709
+# with 67.70% of pixels over 250 against neighbours at 17.831/19.181/21.816/20.919. Track 5.200 is
+# exactly her `entranceTransform` 5.199999809265137. The sweep reads that flash as a lag and never
+# brackets a minimum. Recorded in dynchar-ffmpeg-select-frame-trap.
+DIR[excunew]='char_1032_excu2_sale#12';  BEATS[excunew]="1,2,3,4,4.8"
+REFOFF[excunew]=0.1667
 
 # NB: `${@:-a b c}` expands the default as a SINGLE word in zsh — spell the branch out.
 if (( $# )); then keys=($@); else keys=(ska exc cel mly mue eyja cet wis); fi
