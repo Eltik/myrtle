@@ -94,16 +94,69 @@ def main():
         lo = min(r[0] for r in row)
         hi = max(r[0] for r in row)
         interior = lo + 1e-9 < gbest < hi - 1e-9
-        picks.append(b - gbest)
+        picks.append((b, b - gbest))
         top = "  ".join(f"{t:.4f}:{v:.3f}" for t, v in row[:5])
         print(f"  t={b:<7} best game {gbest:8.4f}  implied {b - gbest:+.4f}  edgeNCC {ncc:.3f}  "
               f"{'interior' if interior else '⚠️ AT WINDOW EDGE'}   top5 {top}")
     if picks:
-        p = np.array(picks)
+        bt = np.array([b for b, _ in picks])
+        p = np.array([v for _, v in picks])
+        step = 1.0 / fps
         print(f"\n[edge] per-beat implied: {', '.join(f'{v:+.4f}' for v in p)}")
         print(f"[edge] MEDIAN {np.median(p):+.4f}   MEAN {p.mean():+.4f}   SPREAD {p.max() - p.min():.4f}"
               f"   frames {np.median(p) * fps:+.2f}")
         print(f"[edge] => REFOFF = {np.median(p):+.4f}   (sign: REFOFF = beat - best_game_time)")
+        # RATE CHECK. A trim is a CONSTANT; a rate error is LINEAR in t. Eyeballing "the picks
+        # ramp" cannot tell them apart, because the picks are quantised to one frame and a
+        # monotone 2,2,3,4 fits a line trivially. Fit one and report whether it survives.
+        #
+        # 🚨 The bar is `|slope| * lever > one frame` AND a CI that excludes zero. Executor's
+        # four beats over a 3.00 s lever read +0.023310 s/s at R2 0.891 with the CI excluding
+        # zero, which looked like a 2.331% rate error. Re-sampled at NINE beats over 4.00 s it
+        # collapsed to +0.011123 at R2 0.093 with the CI including zero, and dropping the single
+        # weakest pick (edgeNCC 0.270, against 0.36-0.71 elsewhere) left +0.002112 at R2 0.019.
+        # It was two frames of quantised movement on the shortest baseline in the corpus.
+        # ⛔ Do not read a slope off a short lever. wis is the control: 0.000000 over 10.00 s.
+        if len(p) > 2 and bt.max() > bt.min():
+            A = np.vstack([bt, np.ones(len(bt))]).T
+            (m, c), _, _, _ = np.linalg.lstsq(A, p, rcond=None)
+            resid = p - A @ np.array([m, c])
+            ss_t = ((p - p.mean()) ** 2).sum()
+            ss_r = (resid ** 2).sum()
+            r2 = 1 - ss_r / ss_t if ss_t > 1e-12 else float("nan")
+            se = np.sqrt(ss_r / (len(p) - 2) / ((bt - bt.mean()) ** 2).sum()) if ss_r > 0 else 0.0
+            ci = 1.96 * se
+            lever = bt.max() - bt.min()
+            excl = (m - ci) * (m + ci) > 0
+            print(f"[rate] slope {m:+.6f} s/s ({100 * m:+.3f}%)  R2 {r2:.3f}  resid RMS "
+                  f"{np.sqrt((resid ** 2).mean()) / step:.2f} frames  lever {lever:.2f}s")
+            rms_fr = np.sqrt((resid ** 2).mean()) / step
+            move_fr = abs(m) * lever / step
+            ciy = "degenerate, residuals exactly zero" if ss_r <= 0 else ("EXCLUDES zero" if excl else "includes zero")
+            print(f"[rate] 95% CI {m - ci:+.6f}..{m + ci:+.6f} ({ciy})"
+                  f"   |slope|*lever = {move_fr:.2f} frames")
+            # Four conditions, and ALL must hold. Each one has a specific failure behind it.
+            #   n >= 6      : four quantised monotone picks fit a line trivially. Fugue's
+            #                 2,2,3,3 over 6.00s reads +0.667% at R2 0.800 with the CI excluding
+            #                 zero, and she is not drifting.
+            #   move >= 2fr : one frame of movement is the measurement floor, not a signal.
+            #   CI excl 0   : and ss_r > 0, because a PERFECT fit gives se = 0 and a collapsed
+            #                 CI that "excludes zero" while proving flatness. wis is exactly that.
+            #   rms < 1fr   : a slope drawn through scattered picks is describing the scatter.
+            ok = len(p) >= 6 and move_fr >= 2.0 and excl and ss_r > 0 and rms_fr < 1.0
+            fails = []
+            if len(p) < 6:
+                fails.append(f"n={len(p)}<6")
+            if move_fr < 2.0:
+                fails.append(f"move {move_fr:.2f}fr<2")
+            if ss_r <= 0:
+                fails.append("perfect fit, se=0")
+            elif not excl:
+                fails.append("CI spans 0")
+            if rms_fr >= 1.0:
+                fails.append(f"resid {rms_fr:.2f}fr>=1")
+            print(f"[rate] => {'REAL RATE ERROR' if ok else 'FLAT (consistent with a constant trim)'}"
+                  f"{'' if ok else '   [' + ', '.join(fails) + ']'}")
 
 
 main()
