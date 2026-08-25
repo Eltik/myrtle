@@ -5372,7 +5372,7 @@ fn cc_non_production_skills_parse_and_break_spare_seat_ties() {
         bare("op_c", vec!["control_mp&meet_spd[000]".to_string()]),    // clue +5, needs Sakiko
     ];
     let ids = |v: &[&str]| v.iter().map(|s| (*s).to_string()).collect::<Vec<_>>();
-    let effects = |crew: &[String]| cc_non_production_effects(crew, &crew_ops, &registry);
+    let effects = |crew: &[String]| cc_non_production_effects(crew, &crew_ops, &registry, &[]);
     assert_eq!(
         effects(&ids(&["op_a", "op_b"])),
         [("MEETING".to_string(), 15.0)],
@@ -7197,6 +7197,138 @@ fn ledger_attributes_nonstacking_families_to_one_winner() {
             .filter(|l| l.disposition == LineDisposition::Covered)
             .count(),
         1
+    );
+}
+
+/// Wiš'adel's Conspirator: named-operator CC gates. "If Hoederer is assigned
+/// to a Trading Post, that Trading Post's order limit +2" lands on the post
+/// seating him (+1 at the α tier); "if Ines is assigned to the Reception
+/// Room, clue collection speed +5%" is priced in the reception's own units.
+#[test]
+fn wisadel_conspirator_named_char_grants() {
+    use backend::core::grade::base::assignment::{
+        cc_non_production_effects, compute_current_assignment,
+    };
+    use backend::core::grade::base::buff_registry::NamedCharGrant;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    const WISADEL: &str = "char_1035_wisdel";
+    const HOEDERER: &str = "char_4088_hodrer";
+    const INES: &str = "char_4087_ines";
+
+    // Parse: both payload segments resolve, names to char ids.
+    match registry.get("control_meeting&ord[001]") {
+        Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
+            assert!(
+                grants.contains(&NamedCharGrant {
+                    char_id: INES.into(),
+                    target_room: "MEETING".into(),
+                    order_limit: 0.0,
+                    nonprod_pct: 5.0,
+                }),
+                "Ines clue grant, got {grants:?}"
+            );
+            assert!(
+                grants.contains(&NamedCharGrant {
+                    char_id: HOEDERER.into(),
+                    target_room: "TRADING".into(),
+                    order_limit: 2.0,
+                    nonprod_pct: 0.0,
+                }),
+                "Hoederer order-limit grant, got {grants:?}"
+            );
+        }
+        other => panic!("expected NamedCharRoomGrants, got {other:?}"),
+    }
+
+    // Behavior: the post seating Hoederer gains +2 order limit while Wiš'adel
+    // holds the CC - and only that post.
+    let build = |cc_crew: Vec<String>| {
+        let mut building = UserBuilding {
+            rooms: vec![
+                room("cc", "CONTROL", 5),
+                room("tp1", "TRADING", 3),
+                room("tp2", "TRADING", 3),
+            ],
+        };
+        building.rooms[0].current_operators = cc_crew.clone();
+        building.rooms[1].current_operators = vec![HOEDERER.into()];
+        building.rooms[2].current_operators = vec!["char_103_angel".into()];
+        let mut ids: Vec<&str> = vec![HOEDERER, "char_103_angel"];
+        ids.extend(cc_crew.iter().map(String::as_str));
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+    };
+    let capacity = |asn: &backend::core::grade::base::types::BaseAssignment, slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .and_then(|r| r.fill.as_ref())
+            .map(|f| f.capacity)
+            .expect("trading fill")
+    };
+    let with = build(vec![WISADEL.into()]);
+    let without = build(vec![]);
+    assert_eq!(
+        capacity(&with, "tp1") - capacity(&without, "tp1"),
+        2,
+        "Hoederer's post gains +2 order limit under Wiš'adel"
+    );
+    assert_eq!(
+        capacity(&with, "tp2"),
+        capacity(&without, "tp2"),
+        "a post without Hoederer gains nothing"
+    );
+
+    // The clue payload fires only while Ines sits in a Reception Room.
+    let wisadel = profile(gd, WISADEL);
+    let ops = vec![wisadel];
+    let meeting_room = |ops_in: Vec<String>| {
+        backend::core::grade::base::types::RoomAssignment {
+            room_type: "MEETING".into(),
+            operators: ops_in,
+            ..Default::default()
+        }
+    };
+    let crew = vec![WISADEL.to_string()];
+    assert_eq!(
+        cc_non_production_effects(&crew, &ops, &registry, &[meeting_room(vec![INES.into()])]),
+        [("MEETING".to_string(), 5.0)],
+        "clue +5% while Ines holds the reception"
+    );
+    assert_eq!(
+        cc_non_production_effects(&crew, &ops, &registry, &[meeting_room(vec![])]),
+        [],
+        "no Ines, no clue payload"
+    );
+}
+
+/// Waai Fu's Team Spirit: she IGNORES roommates' drain auras in a Factory.
+/// The registry prices it as a real morale effect (never "unmodeled"), and
+/// the rotation planner exempts her from the room's shared drain aura.
+#[test]
+fn waai_fu_ignores_factory_drain_auras() {
+    use backend::core::grade::base::assignment::has_drain_aura_immunity;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    assert!(
+        matches!(
+            registry.get("manu_cost_all[000]"),
+            Some(BuffResolutionStrategy::MoraleDrainAuraImmunity)
+        ),
+        "Team Spirit parses as drain-aura immunity, got {:?}",
+        registry.get("manu_cost_all[000]")
+    );
+    let waaifu = profile(gd, "char_243_waaifu");
+    assert!(
+        has_drain_aura_immunity(&waaifu, "MANUFACTURE", &registry, &gd.building),
+        "immunity detected in factories"
+    );
+    assert!(
+        !has_drain_aura_immunity(&waaifu, "TRADING", &registry, &gd.building),
+        "her skill is factory-scoped"
     );
 }
 

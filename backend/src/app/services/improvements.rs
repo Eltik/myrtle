@@ -2253,7 +2253,7 @@ pub(crate) fn base_assignment_to_dto(
         rooms: asn
             .rooms
             .iter()
-            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry, &bench_ids))
+            .map(|r| room_assignment_to_dto(r, game_data, profiles, registry, &bench_ids, &asn.rooms))
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
         yield_lmd_per_day: flows.realized_lmd(),
@@ -2334,6 +2334,7 @@ fn room_assignment_to_dto(
     profiles: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
     bench_ids: &std::collections::HashSet<&str>,
+    sibling_rooms: &[RoomAssignment],
 ) -> RoomAssignmentDto {
     let y = room_yield(
         &room.room_type,
@@ -2343,7 +2344,7 @@ fn room_assignment_to_dto(
         room.order_value,
     );
     let non_production = if room.room_type == "CONTROL" {
-        cc_non_production_effects(&room.operators, profiles, registry)
+        cc_non_production_effects(&room.operators, profiles, registry, sibling_rooms)
             .into_iter()
             .map(|(room_type, value)| NonProdEffectDto { room_type, value })
             .collect()

@@ -107,6 +107,9 @@ fn zero_disposition(strategy: Option<&BuffResolutionStrategy>, crew: &[String]) 
             }
         }
         Some(BuffResolutionStrategy::ControlNonProduction { .. }) => LineDisposition::NonProduction,
+        // Drain-aura immunity (Waai Fu's Team Spirit) is real and priced, but
+        // entirely a morale effect - zero efficiency marginal by design.
+        Some(BuffResolutionStrategy::MoraleDrainAuraImmunity) => LineDisposition::MoraleOnly,
         Some(BuffResolutionStrategy::Complex { .. }) | None => LineDisposition::Unmodeled,
         Some(_) => LineDisposition::Inactive,
     }

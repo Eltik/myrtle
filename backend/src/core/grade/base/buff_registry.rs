@@ -221,6 +221,41 @@ fn room_type_from_global_label(label: &str) -> &'static str {
     }
 }
 
+/// One named-operator-gated Control-Center grant: the payload fires while
+/// `char_id` is seated in a `target_room`-type room, and lands ON that room.
+#[derive(Debug, Clone, PartialEq)]
+pub struct NamedCharGrant {
+    pub char_id: String,
+    /// Game room constant the named operator must be seated in.
+    pub target_room: String,
+    /// Order/capacity limit added to the room seating the named operator.
+    pub order_limit: f64,
+    /// Non-production speed % (clue collection etc.), priced in the boosted
+    /// facility's own units like `ControlNonProduction`.
+    pub nonprod_pct: f64,
+}
+
+/// A named-operator room gate inside a CC buff: "if <@cc.kw>NAME</> is
+/// assigned to (the Reception Room|a Trading Post|...), <payload>". Captures
+/// (name, room label, payload segment up to the next gate or end).
+static RE_CC_NAMED_GATE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"if <@cc\.kw>([^<]+)</> is assigned to (?:the |a |an )?([A-Za-z' ]+?)\s*,\s*([^;]*)")
+        .unwrap()
+});
+
+/// The order/capacity-limit payload of a named-gate segment.
+static RE_NAMED_GATE_ORD: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"order limit <@cc\.vup>\+(\d+)</>").unwrap());
+
+/// Morale-drain-aura immunity (Waai Fu's Team Spirit): the holder ignores
+/// roommates' effects on ITS OWN morale consumption.
+static RE_DRAIN_AURA_IMMUNITY: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"ignore</> the effects of any Operators stationed in (?:that|the) [A-Za-z ]+ that would affect the Morale consumption of <@cc\.kw>this Operator",
+    )
+    .unwrap()
+});
+
 /// Non-production Control-Center skill effects, each in its own facility's
 /// units: clue collection speed (Reception Room), Specialization training
 /// speed (Training Room), HR contacting speed (HR Office).
@@ -584,6 +619,21 @@ pub enum BuffResolutionStrategy {
         per_operator: bool,
         bonus_pct: f64,
     },
+
+    /// Control Center conditionals gated on a NAMED operator seated in a
+    /// target room, payloads landing where that operator sits (Wiš'adel's
+    /// Conspirator: "if Ines is assigned to the Reception Room, clue
+    /// collection speed +5%; if Hoederer is assigned to a Trading Post, that
+    /// Trading Post's order limit +2"). One grant per gated segment; a grant
+    /// whose name fails to resolve is dropped at parse (never guess).
+    NamedCharRoomGrants { grants: Vec<NamedCharGrant> },
+
+    /// "Ignore the effects of any Operators stationed in that <room> that
+    /// would affect the Morale consumption of this Operator" (Waai Fu's Team
+    /// Spirit): the holder is immune to roommate-projected drain auras in the
+    /// buff's room type. No output of its own - it cancels others' drain
+    /// effects on the holder.
+    MoraleDrainAuraImmunity,
 
     /// Bonus based on operator faction/tag in the affected rooms.
     /// e.g. "all Knight operators in Factories +7%"
@@ -1148,6 +1198,16 @@ pub fn build_registry(
                             bonus_pct: bonus,
                         }
                     }
+                } else if let Some(grants) =
+                    parse_named_char_room_grants(&buff.description, name_to_char)
+                {
+                    // Named-operator room gates (Wiš'adel's Conspirator): each
+                    // "if <NAME> is assigned to <room>, <payload>" segment
+                    // becomes a grant landing on the room seating that
+                    // operator. Must precede the non-production branch, whose
+                    // Reception-Room guard exists exactly to leave these
+                    // (`control_meeting&ord` x2) for this parse.
+                    BuffResolutionStrategy::NamedCharRoomGrants { grants }
                 } else if let Some((target_room, c)) = [
                     ("MEETING", &RE_CC_CLUE),
                     ("TRAINING", &RE_CC_TRAIN),
@@ -1205,7 +1265,13 @@ pub fn build_registry(
                 // stationed in a specific room TYPE somewhere in the base, not this room.
                 // Must precede the base-wide/teammate branches (its "is assigned to a
                 // <Room>" phrasing carries no "Work Area"/"same" marker to catch it).
-                if let Some(gate) = parse_room_presence_gate(
+                if RE_DRAIN_AURA_IMMUNITY.is_match(&buff.description) {
+                    // Waai Fu's Team Spirit: the holder ignores roommates'
+                    // drain auras in this room type. Checked first - its
+                    // phrasing carries no efficiency payload for the other
+                    // branches to misread.
+                    BuffResolutionStrategy::MoraleDrainAuraImmunity
+                } else if let Some(gate) = parse_room_presence_gate(
                     &buff.description,
                     f64::from(buff.efficiency),
                     name_to_char,
@@ -1828,6 +1894,40 @@ fn room_type_from_label(label: &str) -> Option<&'static str> {
 /// Trading Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in the Control
 /// Center, Logos as the Trainer); the faction form captures exactly
 /// `power_rec_spd_ext&faction[000]` (another Laterano op in a Power Plant).
+/// Parse a Control-Center buff's named-operator room gates ("if <NAME> is
+/// assigned to <room>, <payload>") into grants landing on the named
+/// operator's room. Returns None when no segment carries BOTH a resolvable
+/// gate and a priced payload - the buff then falls through to later branches.
+/// A segment whose NAME fails to resolve is dropped (never guess).
+fn parse_named_char_room_grants(
+    desc: &str,
+    name_to_char: &HashMap<String, String>,
+) -> Option<Vec<NamedCharGrant>> {
+    let grants: Vec<NamedCharGrant> = RE_CC_NAMED_GATE
+        .captures_iter(desc)
+        .filter_map(|c| {
+            let char_id = name_to_char.get(&c[1].to_lowercase())?.clone();
+            let target_room = room_type_from_label(&c[2])?;
+            let payload = &c[3];
+            let order_limit = RE_NAMED_GATE_ORD
+                .captures(payload)
+                .and_then(|o| o[1].parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let nonprod_pct = RE_CC_CLUE
+                .captures(payload)
+                .and_then(|n| n[1].parse::<f64>().ok())
+                .unwrap_or(0.0);
+            (order_limit != 0.0 || nonprod_pct != 0.0).then(|| NamedCharGrant {
+                char_id,
+                target_room: target_room.to_string(),
+                order_limit,
+                nonprod_pct,
+            })
+        })
+        .collect();
+    (!grants.is_empty()).then_some(grants)
+}
+
 fn parse_room_presence_gate(
     desc: &str,
     base_efficiency: f64,

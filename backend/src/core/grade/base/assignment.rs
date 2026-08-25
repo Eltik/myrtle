@@ -1090,6 +1090,28 @@ pub(crate) fn crew_drain_aura(
         .sum()
 }
 
+/// Does this operator carry a drain-aura immunity for `room_type` rooms
+/// (Waai Fu's Team Spirit)? An immune operator ignores roommates' drain-aura
+/// effects on its own morale; Control-Center recovery still reaches it
+/// (sourced outside the room).
+pub fn has_drain_aura_immunity(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> bool {
+    op.available_buffs.iter().any(|b| {
+        building_data
+            .buffs
+            .get(b)
+            .is_some_and(|buff| buff.room_type == room_type)
+            && matches!(
+                registry.get(b),
+                Some(BuffResolutionStrategy::MoraleDrainAuraImmunity)
+            )
+    })
+}
+
 /// The roster's morale-swap manager (Fiammetta and equivalents), if any: the
 /// operator whose base skill swaps Morale with a teammate, holding one working
 /// operator at full morale 24/7.
@@ -1412,22 +1434,33 @@ pub fn compute_sustained_assignment(
         // The room's shared drain aura shifts every member's swap clock, and
         // the Control Center's base-wide recovery offsets it - the same
         // arithmetic the sustainability simulator charges.
-        let aura =
-            crew_drain_aura(&room.operators, &op_index, building_data, registry) - cc_recovery;
+        let room_aura = crew_drain_aura(&room.operators, &op_index, building_data, registry);
         // Members ordered by who needs swapping first (shortest hours first).
         let mut members: Vec<RotationMember> = room
             .operators
             .iter()
             .filter_map(|id| op_index.get(id.as_str()).copied())
-            .map(|op| RotationMember {
-                operator: op.char_id.clone(),
-                // A morale-swap-sustained operator works indefinitely, so it's never the one
-                // rotated out (sorts last and never counts as needing rest).
-                lasts_hours: if morale_sustained.contains(&op.char_id) {
-                    f64::INFINITY
+            .map(|op| {
+                // A drain-aura-immune member (Waai Fu's Team Spirit) ignores
+                // roommates' drain effects; CC recovery still reaches it
+                // (sourced outside the room). Mirrors the simulator's
+                // `SelfAuraImmunity` cancellation.
+                let aura = if has_drain_aura_immunity(op, &room.room_type, registry, building_data)
+                {
+                    -cc_recovery
                 } else {
-                    op_lasts_hours(op, morale_drains, aura)
-                },
+                    room_aura - cc_recovery
+                };
+                RotationMember {
+                    operator: op.char_id.clone(),
+                    // A morale-swap-sustained operator works indefinitely, so it's never the one
+                    // rotated out (sorts last and never counts as needing rest).
+                    lasts_hours: if morale_sustained.contains(&op.char_id) {
+                        f64::INFINITY
+                    } else {
+                        op_lasts_hours(op, morale_drains, aura)
+                    },
+                }
             })
             .collect();
         members.sort_by(|a, b| {
@@ -1692,6 +1725,18 @@ pub fn compute_current_assignment(
         // Output-buffer model: crew capacity skills widen the buffer, and the
         // room's own speed (incl. CC globals) sets how fast it fills.
         let present: HashSet<String> = ops.iter().cloned().collect();
+        // Named-operator CC grants widen the buffer too ("that Trading Post's
+        // order limit +2" while Hoederer is seated here).
+        let member_profiles: Vec<&OperatorBaseProfile> = ops
+            .iter()
+            .filter_map(|id| op_index.get(id.as_str()).copied())
+            .collect();
+        #[allow(clippy::cast_possible_truncation)]
+        let cc_capacity: i32 = cc_conditions
+            .iter()
+            .map(|c| c.capacity_contribution(&room.room_type, &member_profiles))
+            .sum::<f64>()
+            .round() as i32;
         let capacity_bonus: i32 = ops
             .iter()
             .filter_map(|id| op_index.get(id.as_str()))
@@ -1705,7 +1750,8 @@ pub fn compute_current_assignment(
                     &present,
                 )
             })
-            .sum();
+            .sum::<i32>()
+            + cc_capacity;
         let fill = super::yield_model::room_fill(
             &room.room_type,
             formula.as_deref(),
@@ -1983,29 +2029,48 @@ pub fn cc_non_production_effects(
     crew: &[String],
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
+    team_rooms: &[RoomAssignment],
 ) -> Vec<(String, f64)> {
     let mut best: HashMap<String, f64> = HashMap::new();
+    let mut record = |room: &str, value: f64| {
+        let e = best.entry(room.to_string()).or_insert(0.0);
+        if value > *e {
+            *e = value;
+        }
+    };
     for id in crew {
         let Some(op) = operators.iter().find(|o| &o.char_id == id) else {
             continue;
         };
         for b in &op.available_buffs {
-            if let Some(BuffResolutionStrategy::ControlNonProduction {
-                target_room,
-                value,
-                same_room_gate,
-            }) = registry.get(b)
-            {
-                let live = match same_room_gate {
-                    Some(chars) => chars.iter().any(|c| crew.contains(c)),
-                    None => true,
-                };
-                if live {
-                    let e = best.entry(target_room.clone()).or_insert(0.0);
-                    if *value > *e {
-                        *e = *value;
+            match registry.get(b) {
+                Some(BuffResolutionStrategy::ControlNonProduction {
+                    target_room,
+                    value,
+                    same_room_gate,
+                }) => {
+                    let live = match same_room_gate {
+                        Some(chars) => chars.iter().any(|c| crew.contains(c)),
+                        None => true,
+                    };
+                    if live {
+                        record(target_room, *value);
                     }
                 }
+                // Named-operator gates checked against the TARGET room's crew
+                // (Wiš'adel's clue payload fires while Ines sits in the
+                // Reception Room, not in the CC).
+                Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
+                    for g in grants.iter().filter(|g| g.nonprod_pct != 0.0) {
+                        let live = team_rooms.iter().any(|r| {
+                            r.room_type == g.target_room && r.operators.contains(&g.char_id)
+                        });
+                        if live {
+                            record(&g.target_room, g.nonprod_pct);
+                        }
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -2130,10 +2195,25 @@ pub(crate) struct CcBonus {
 #[derive(Clone)]
 pub(crate) struct CcCondition {
     pub(crate) target_room: String,
+    /// Occupancy gate token: a faction tag ("siracusa") OR a char id
+    /// (Wiš'adel's "if Hoederer is assigned to a Trading Post"). See
+    /// [`cc_token_matches`].
     pub(crate) faction_token: String,
     pub(crate) required_count: usize,
     pub(crate) per_operator: bool,
     pub(crate) bonus_pct: f64,
+    /// Order/capacity limit granted to the room satisfying the gate (0 for
+    /// speed conditionals). Suppression-agnostic - capacity is not a metric a
+    /// nullifier targets.
+    pub(crate) order_limit: f64,
+}
+
+/// Does an operator satisfy a CC-condition gate token? Faction tokens match
+/// the operator's tags; a char-id token ("char_1035_wisdel"-style, from
+/// named-operator gates) matches that exact operator. The two namespaces
+/// cannot collide - faction tokens are bare lowercase words.
+pub(crate) fn cc_token_matches(op: &OperatorBaseProfile, token: &str) -> bool {
+    op.char_id == token || op.match_tags.iter().any(|t| t == token)
 }
 
 impl CcCondition {
@@ -2144,12 +2224,34 @@ impl CcCondition {
         }
         let count = team
             .iter()
-            .filter(|op| op.match_tags.contains(&self.faction_token))
+            .filter(|op| cc_token_matches(op, &self.faction_token))
             .count();
         if self.per_operator {
             self.bonus_pct * count as f64
         } else if count >= self.required_count {
             self.bonus_pct
+        } else {
+            0.0
+        }
+    }
+
+    /// The order-limit points this condition grants a `room_type` room staffed
+    /// by `team` - the capacity payload of a named-operator gate ("that
+    /// Trading Post's order limit +2" while Hoederer is seated there).
+    pub(crate) fn capacity_contribution(
+        &self,
+        room_type: &str,
+        team: &[&OperatorBaseProfile],
+    ) -> f64 {
+        if self.order_limit == 0.0 || self.target_room != room_type {
+            return 0.0;
+        }
+        let count = team
+            .iter()
+            .filter(|op| cc_token_matches(op, &self.faction_token))
+            .count();
+        if count >= self.required_count {
+            self.order_limit
         } else {
             0.0
         }
@@ -2207,7 +2309,10 @@ impl CcBonusAccumulator {
                 self.conditions
                     .entry(key)
                     .and_modify(|c| {
-                        if cond.bonus_pct > c.bonus_pct {
+                        // Strongest of the family wins - by speed payload,
+                        // then by capacity payload (Conspirator α +1 vs β +2
+                        // both carry 0 speed).
+                        if (cond.bonus_pct, cond.order_limit) > (c.bonus_pct, c.order_limit) {
                             *c = cond.clone();
                         }
                     })
@@ -2290,8 +2395,36 @@ pub(crate) fn cc_bonus_for(
                 required_count: *required_count,
                 per_operator: *per_operator,
                 bonus_pct: *bonus_pct,
+                order_limit: 0.0,
             }),
         }),
+        Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
+            // The order-limit payload rides the CC-condition machinery: the
+            // room seating the named operator gains capacity. Zero selection
+            // weight - surplus limit is not rewarded (the capacity factor
+            // caps at 1.0), so its expected efficiency value is honestly 0;
+            // it still raises the order BUFFER, which the yield model prices.
+            // The clue payload is handled by `cc_non_production_effects`.
+            // (At most one order-limit grant per buff exists in the data; a
+            // second would collapse into the same family here.)
+            grants
+                .iter()
+                .find(|g| g.order_limit != 0.0)
+                .map(|g| CcBonus {
+                    room: g.target_room.clone(),
+                    family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+                    bonus: 0.0,
+                    stacks: false,
+                    conditional: Some(CcCondition {
+                        target_room: g.target_room.clone(),
+                        faction_token: g.char_id.clone(),
+                        required_count: 1,
+                        per_operator: false,
+                        bonus_pct: 0.0,
+                        order_limit: g.order_limit,
+                    }),
+                })
+        }
         _ => None,
     }
 }
@@ -2347,14 +2480,18 @@ fn cc_condition_feasible(
 ) -> bool {
     let eligible = operators
         .iter()
-        .filter(|op| op.match_tags.contains(&cond.faction_token))
+        .filter(|op| cc_token_matches(op, &cond.faction_token))
         .filter(|op| {
-            op.available_buffs.iter().any(|b| {
-                building_data
-                    .buffs
-                    .get(b)
-                    .is_some_and(|buff| buff.room_type == cond.target_room)
-            })
+            // A named operator can always be SEATED in the target room; the
+            // faction shape additionally wants members with a skill for it -
+            // seatable-but-skill-less faction bodies never make the team.
+            op.char_id == cond.faction_token
+                || op.available_buffs.iter().any(|b| {
+                    building_data
+                        .buffs
+                        .get(b)
+                        .is_some_and(|buff| buff.room_type == cond.target_room)
+                })
         })
         .count();
     eligible >= cond.required_count
@@ -2376,7 +2513,7 @@ pub(crate) fn cc_condition_fires(
                 .operators
                 .iter()
                 .filter_map(|id| op_index.get(id.as_str()))
-                .filter(|op| op.match_tags.contains(&cond.faction_token))
+                .filter(|op| cc_token_matches(op, &cond.faction_token))
                 .count();
             if cond.per_operator {
                 count >= 1

@@ -44,6 +44,10 @@ pub enum Metric {
     /// `value` more (negative = slower) per hour while the owner is seated
     /// ("Morale consumed per hour of all Operators in the Factory -0.1").
     MoraleDrainAura,
+    /// Marker: the holder IGNORES roommates' `MoraleDrainAura` effects on its
+    /// own drain in the owner's room type (Waai Fu's Team Spirit). Value is
+    /// unused; presence is the whole effect.
+    MoraleDrainAuraImmunity,
     /// A Control-Center aura raising every DORMITORY sleeper's recovery rate
     /// ("all Operators in Dormitories recover +0.05 Morale per hour") - the
     /// game's non-stacking clause applies, so consumers take the maximum.
@@ -815,6 +819,60 @@ pub fn clauses_from_strategy(
             );
             c.non_stacking_family = cc_non_stacking_family(buff_id, buff);
             out.push(c);
+        }
+
+        S::NamedCharRoomGrants { grants } => {
+            // Each grant lands on the room seating the named operator, gated
+            // on that operator (the char id doubles as the gate token - the
+            // occupancy matcher accepts char ids alongside faction tags). The
+            // live values ride the CC-condition machinery; these clauses give
+            // the taxonomy an honest record of both payloads.
+            for g in grants {
+                if g.order_limit != 0.0 {
+                    out.push(Clause::base(
+                        buff_id,
+                        buff,
+                        Metric::CapacityLimit,
+                        ClauseKind::RoomTypeGlobal {
+                            target_room: g.target_room.clone(),
+                            gate: Some(Gate {
+                                tag: g.char_id.clone(),
+                                required_count: 1,
+                                per_operator: false,
+                            }),
+                        },
+                        g.order_limit,
+                    ));
+                }
+                if g.nonprod_pct != 0.0 {
+                    let mut c = Clause::base(
+                        buff_id,
+                        buff,
+                        Metric::speed_for_room(&g.target_room),
+                        ClauseKind::RoomTypeGlobal {
+                            target_room: g.target_room.clone(),
+                            gate: Some(Gate {
+                                tag: g.char_id.clone(),
+                                required_count: 1,
+                                per_operator: false,
+                            }),
+                        },
+                        g.nonprod_pct,
+                    );
+                    c.non_stacking_family = cc_non_stacking_family(buff_id, buff);
+                    out.push(c);
+                }
+            }
+        }
+
+        S::MoraleDrainAuraImmunity => {
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                Metric::MoraleDrainAuraImmunity,
+                ClauseKind::SelfValue,
+                1.0,
+            ));
         }
 
         S::TagBased {

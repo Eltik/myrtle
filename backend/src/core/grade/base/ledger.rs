@@ -583,7 +583,15 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             .and_then(|lv| phases.get(lv.saturating_sub(1)))
             .or_else(|| phases.last())
             .map_or(FALLBACK_TRADING_ORDER_LIMIT, |p| p.order_limit);
-        let net_limit: f64 = own_capacity.iter().sum();
+        // Named-operator CC grants ("that Trading Post's order limit +2"
+        // while Hoederer is seated here) add to the same pool as the crew's
+        // own capacity skills. CC-sourced, so no suppressor touches them.
+        let cc_capacity: f64 = ev
+            .cc_conditions
+            .iter()
+            .map(|c| c.capacity_contribution(ev.room_type, &members))
+            .sum();
+        let net_limit: f64 = own_capacity.iter().sum::<f64>() + cc_capacity;
         #[allow(clippy::cast_possible_truncation)]
         let effective = (base_limit + net_limit.round() as i32).max(MIN_TRADING_ORDER_LIMIT);
         let capacity = (f64::from(effective) / f64::from(base_limit)).min(1.0);
