@@ -759,7 +759,33 @@ pub(crate) fn blocking_ancestor(
 /// `path_ids` of all objects consumed by spine extraction.
 pub fn collect_spine_assets(
     all_objects: &HashMap<i64, (i32, Value)>,
+    resources: &HashMap<String, Vec<u8>>,
 ) -> (Vec<SpineAsset>, HashSet<i64>) {
+    // EXTERNAL VERTEX BUFFERS, plumbed but OPT-IN. `main.rs` builds `resources`
+    // from the bundle's .resS / .resource entries, and `mesh::parse_mesh` needs
+    // it: a Mesh whose inline buffer is empty carries an `m_StreamData` pointing
+    // into one of those files, which `read_stream_data` resolves by filename.
+    // Both dynchar mesh call sites used to pass an EMPTY map, so every such mesh
+    // returned None and took its layer with it, silently until `47760c02`.
+    //
+    // MEASURED, and the default is OFF for it. Ch'en the Holungday is the only
+    // skin in the corpus with such a mesh: her entrance's `bg_snow_lens_01`
+    // (2410 verts) and `bg_01_lens_01` (432 verts) come back as full-frame
+    // ADDITIVE layers at sort -1 and -18, and she goes 16.652 -> 21.583
+    // (r .904 -> .853). Per beat, 2/5/8/11/14 all degrade 4.6 to 10.7 and it is
+    // Y, not chroma; only t=18.5 improves (9.644 -> 8.646, r .825 -> .854) and
+    // t=17 is flat. A layer that helps ONLY at the end while lifting luma
+    // everywhere before it is drawn too early, and both export with no reveal
+    // (`reveal=-`) so they run the whole cinematic. The geometry is right and
+    // the SEQUENCING is missing, which is the same shape as Whislash-alter's
+    // `mask_09`. Restore the map with `DYNCHAR_MESHRES=1` when chasing that;
+    // the plumbing stays so the next person does not re-derive it.
+    let empty_resources: HashMap<String, Vec<u8>> = HashMap::new();
+    let resources = if std::env::var("DYNCHAR_MESHRES").as_deref() == Ok("1") {
+        resources
+    } else {
+        &empty_resources
+    };
     let mut claimed = HashSet::new();
     let mut assets = Vec::new();
 
@@ -906,6 +932,7 @@ pub fn collect_spine_assets(
                 own_root,
                 &skeleton_roots,
                 &host,
+                resources,
             );
             claimed.extend(scene.claimed_tex.iter().copied());
             // Entrance `m_IsActive` reveal times gate the `_Start` cinematic's particle
@@ -963,6 +990,7 @@ pub fn collect_spine_assets(
             let (particles, skipped) = super::particles::collect_dynchar_particles(
                 all_objects,
                 inv_scale,
+                resources,
                 &host,
                 &super::particles::EntranceCtx {
                     windows: &particle_windows,
@@ -1234,6 +1262,7 @@ fn reveal_of_go(
 /// (relative to the spine root). ALL non-character quads are returned (foreground
 /// effects included) — the live scene renderer inserts the animated character
 /// among them at `char_sort`.
+#[allow(clippy::too_many_arguments)]
 fn collect_dynchar_bg_quads(
     all_objects: &HashMap<i64, (i32, Value)>,
     spine_tex_pids: &HashSet<i64>,
@@ -1242,6 +1271,7 @@ fn collect_dynchar_bg_quads(
     own_root: Option<i64>,
     skeleton_roots: &HashSet<i64>,
     host: &BgParticleHost,
+    resources: &HashMap<String, Vec<u8>>,
 ) -> BgScene {
     // GameObject path_id → Transform (class 4), and → MeshFilter mesh pid.
     let mut go_to_transform: HashMap<i64, i64> = HashMap::new();
@@ -2465,7 +2495,9 @@ fn collect_dynchar_bg_quads(
                         "    [scene] DROP reveal-unproven {:<22} curve={} first_a={:?}",
                         host.go_name(all_objects, go_pid),
                         color_curve.as_ref().map_or(0, Vec::len),
-                        color_curve.as_ref().and_then(|c| c.first().map(|&(_, rgba)| rgba[3])),
+                        color_curve
+                            .as_ref()
+                            .and_then(|c| c.first().map(|&(_, rgba)| rgba[3])),
                     );
                 }
                 skipped_inactive += 1;
@@ -2489,27 +2521,24 @@ fn collect_dynchar_bg_quads(
         // the output.
         let mut mesh = match go_to_mesh.get(&go_pid).copied() {
             Some(mp) if mp != 0 => match all_objects.get(&mp) {
-                Some((43, mesh_val)) => match super::mesh::parse_mesh(mesh_val, &HashMap::new()) {
-                    Some(m) => m,
-                    None => {
-                        if attrib_dbg {
-                            // Previously SILENT. An in-bundle Mesh that fails to parse takes its
-                            // layer with it and leaves no trace, which reads as "the prefab never
-                            // had it" — the hardest kind of gap to notice.
-                            // ⚠️ Print the ROOT. SCENE_ATTRIB output is INTERLEAVED across
-                            // bundles, so a line without one cannot be attributed to a skin —
-                            // neighbouring lines routinely belong to five different skins.
-                            eprintln!(
-                                "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp} root={}",
-                                host.go_name(all_objects, go_pid),
-                                own_root.map_or_else(
-                                    || "?".to_string(),
-                                    |r| host.go_name(all_objects, r)
-                                ),
-                            );
-                        }
-                        continue;
+                Some((43, mesh_val)) => if let Some(m) = super::mesh::parse_mesh(mesh_val, resources) { m } else {
+                    if attrib_dbg {
+                        // Previously SILENT. An in-bundle Mesh that fails to parse takes its
+                        // layer with it and leaves no trace, which reads as "the prefab never
+                        // had it" — the hardest kind of gap to notice.
+                        // ⚠️ Print the ROOT. SCENE_ATTRIB output is INTERLEAVED across
+                        // bundles, so a line without one cannot be attributed to a skin —
+                        // neighbouring lines routinely belong to five different skins.
+                        eprintln!(
+                            "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp} root={}",
+                            host.go_name(all_objects, go_pid),
+                            own_root.map_or_else(
+                                || "?".to_string(),
+                                |r| host.go_name(all_objects, r)
+                            ),
+                        );
                     }
+                    continue;
                 },
                 _ => super::mesh::unit_quad(), // built-in / external quad
             },

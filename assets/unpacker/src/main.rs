@@ -618,7 +618,7 @@ fn process_bundle(
         let (spine_assets, claimed) = if is_enemy_spine_bundle {
             spine::collect_enemy_spine_assets(&spine_objects)
         } else {
-            spine::collect_spine_assets(&spine_objects)
+            spine::collect_spine_assets(&spine_objects, &resources)
         };
         if !spine_assets.is_empty() {
             // Enemy pack bundles hold many enemies; each asset derives its own

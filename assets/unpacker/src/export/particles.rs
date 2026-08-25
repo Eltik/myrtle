@@ -481,7 +481,6 @@ pub(crate) struct EntranceCtx<'a> {
     pub is_entrance: bool,
 }
 
-
 /// Propagate a shared reveal through a bone-follower rig. Some falling-apple/
 /// comet-rig leaves are not individually gated by `m_IsActive`/`_delayTime`,
 /// but share a `followBone` with siblings that are and should not render from
@@ -601,6 +600,7 @@ impl std::fmt::Display for ParticleSkips {
 pub(crate) fn collect_dynchar_particles(
     all_objects: &HashMap<i64, (i32, Value)>,
     inv_scale: f64,
+    resources: &HashMap<String, Vec<u8>>,
     host: &BgParticleHost,
     entrance: &EntranceCtx<'_>,
     scope: &RootScope<'_>,
@@ -1546,15 +1546,16 @@ pub(crate) fn collect_dynchar_particles(
         // flat cards) so the frontend can instance it per particle, scaled by the
         // particle's size: `finalVertPx = localVert * exportedStartSize` (startSize
         // is already emitter-scaled to px, and Unity scales the mesh by particle
-        // size, so the raw local geometry needs no extra scale here). Only inline
-        // meshes resolve (empty resources, like the scene bg quads at spine.rs);
-        // a streamed/compressed mesh yields None → the system stays skipped by the
-        // frontend, exactly as before. Bounded to guard against a pathological mesh.
+        // size, so the raw local geometry needs no extra scale here). `resources`
+        // carries the bundle's .resS entries, so a mesh whose vertex buffer is
+        // EXTERNAL (`m_StreamData`) resolves here too; a compressed mesh still
+        // yields None → the system stays skipped by the frontend, exactly as
+        // before. Bounded to guard against a pathological mesh.
         if render_mode == "mesh"
             && let Some(mesh_pid) = renderer.and_then(|r| r.get("m_Mesh")).and_then(get_path_id)
             && mesh_pid != 0
             && let Some((43, mesh_val)) = all_objects.get(&mesh_pid).map(|(c, v)| (*c, v))
-            && let Some(m) = super::mesh::parse_mesh(mesh_val, &HashMap::new())
+            && let Some(m) = super::mesh::parse_mesh(mesh_val, resources)
             && !m.indices.is_empty()
             && m.positions.len() <= 8192
         {

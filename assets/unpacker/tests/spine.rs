@@ -48,8 +48,8 @@ fn collect_spine_via_monobehaviour() {
         return;
     }
 
-    let (all_objects, _resources) = load_all_objects(&bundle_path);
-    let (spine_assets, claimed) = collect_spine_assets(&all_objects);
+    let (all_objects, resources) = load_all_objects(&bundle_path);
+    let (spine_assets, claimed) = collect_spine_assets(&all_objects, &resources);
 
     assert!(
         spine_assets.len() >= 3,
