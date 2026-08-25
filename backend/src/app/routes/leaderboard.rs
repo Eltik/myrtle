@@ -142,7 +142,6 @@ pub async fn score_history(
     State(state): State<AppState>,
     Query(params): Query<HistoryParams>,
 ) -> Result<Json<Vec<ScoreHistoryPoint>>, ApiError> {
-    let points =
-        crate::database::queries::score::get_score_history(&state.db, &params.uid).await?;
+    let points = crate::database::queries::score::get_score_history(&state.db, &params.uid).await?;
     Ok(Json(points))
 }

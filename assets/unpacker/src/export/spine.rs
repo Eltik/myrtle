@@ -2125,9 +2125,15 @@ fn collect_dynchar_bg_quads(
                     eprintln!(
                         "    [tintcensus] {:<26} shader={} via={how} _Color={:?} _MainColor={:?} root={}",
                         host.go_name(all_objects, go_pid),
-                        mat.get("_shaderName").and_then(|v| v.as_str()).unwrap_or("?"),
+                        mat.get("_shaderName")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("?"),
                         material_tint(mat),
-                        cprops.0.iter().find(|(n, _)| n == "_MainColor").map(|(_, c)| *c),
+                        cprops
+                            .0
+                            .iter()
+                            .find(|(n, _)| n == "_MainColor")
+                            .map(|(_, c)| *c),
                         own_root.map_or_else(|| "?".to_string(), |r| host.go_name(all_objects, r)),
                     );
                 }
@@ -2165,7 +2171,12 @@ fn collect_dynchar_bg_quads(
                     // the shared flag lights the other branch as well.
                     if std::env::var("DYNCHAR_MC_X2_DECL").is_ok() && main_color_doubles(mat) {
                         (
-                            [mc[0] * 2.0, mc[1] * 2.0, mc[2] * 2.0, (mc[3] * 2.0).min(1.0)],
+                            [
+                                mc[0] * 2.0,
+                                mc[1] * 2.0,
+                                mc[2] * 2.0,
+                                (mc[3] * 2.0).min(1.0),
+                            ],
                             2.0,
                             true,
                         )
@@ -2691,25 +2702,29 @@ fn collect_dynchar_bg_quads(
         // the output.
         let mut mesh = match go_to_mesh.get(&go_pid).copied() {
             Some(mp) if mp != 0 => match all_objects.get(&mp) {
-                Some((43, mesh_val)) => if let Some(m) = super::mesh::parse_mesh(mesh_val, resources) { m } else {
-                    if attrib_dbg {
-                        // Previously SILENT. An in-bundle Mesh that fails to parse takes its
-                        // layer with it and leaves no trace, which reads as "the prefab never
-                        // had it" — the hardest kind of gap to notice.
-                        // ⚠️ Print the ROOT. SCENE_ATTRIB output is INTERLEAVED across
-                        // bundles, so a line without one cannot be attributed to a skin —
-                        // neighbouring lines routinely belong to five different skins.
-                        eprintln!(
-                            "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp} root={}",
-                            host.go_name(all_objects, go_pid),
-                            own_root.map_or_else(
-                                || "?".to_string(),
-                                |r| host.go_name(all_objects, r)
-                            ),
-                        );
+                Some((43, mesh_val)) => {
+                    if let Some(m) = super::mesh::parse_mesh(mesh_val, resources) {
+                        m
+                    } else {
+                        if attrib_dbg {
+                            // Previously SILENT. An in-bundle Mesh that fails to parse takes its
+                            // layer with it and leaves no trace, which reads as "the prefab never
+                            // had it" — the hardest kind of gap to notice.
+                            // ⚠️ Print the ROOT. SCENE_ATTRIB output is INTERLEAVED across
+                            // bundles, so a line without one cannot be attributed to a skin —
+                            // neighbouring lines routinely belong to five different skins.
+                            eprintln!(
+                                "    [scene] DROP mesh-parse-failed {:<20} mesh_pid={mp} root={}",
+                                host.go_name(all_objects, go_pid),
+                                own_root.map_or_else(
+                                    || "?".to_string(),
+                                    |r| host.go_name(all_objects, r)
+                                ),
+                            );
+                        }
+                        continue;
                     }
-                    continue;
-                },
+                }
                 _ => super::mesh::unit_quad(), // built-in / external quad
             },
             _ => super::mesh::unit_quad(),
@@ -3508,8 +3523,10 @@ fn main_color_declared(mat: &Value) -> (bool, &'static str) {
         .get("_shaderName")
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    super::shader_map::shader_declares(shader, "_MainColor")
-        .map_or_else(|| (has_color_prop(mat, "_MainColor"), "mat"), |d| (d, "decl"))
+    super::shader_map::shader_declares(shader, "_MainColor").map_or_else(
+        || (has_color_prop(mat, "_MainColor"), "mat"),
+        |d| (d, "decl"),
+    )
 }
 
 /// A layer whose shader reads `_MainColor` and whose material carries NO `_TintColor`.

@@ -1697,11 +1697,21 @@ fn grade_base_scores_stationing_quality() {
     };
 
     // Unstaffed base, rooms already max level: zero utilization, full
-    // infrastructure - exactly the 25% infrastructure share.
+    // infrastructure - exactly the 25% infrastructure share, and the stored
+    // components say so explicitly.
     let empty = grade_base(&roster, Some(&building(&[], &[], &[], 3)), gd);
     assert!(
-        (empty - 0.25).abs() < 1e-9,
-        "unstaffed but fully built = the infrastructure share alone, got {empty}"
+        (empty.score - 0.25).abs() < 1e-9,
+        "unstaffed but fully built = the infrastructure share alone, got {}",
+        empty.score
+    );
+    assert!(
+        empty.utilization.abs() < 1e-9,
+        "no stationing, no utilization"
+    );
+    assert!(
+        (empty.infrastructure - 1.0).abs() < 1e-9,
+        "rooms already maxed"
     );
 
     // Bodies with no relevant skills in the wrong rooms...
@@ -1709,7 +1719,8 @@ fn grade_base_scores_stationing_quality() {
         &roster,
         Some(&building(&["char_003_kalts"], &["char_190_clour"], &[], 3)),
         gd,
-    );
+    )
+    .score;
     // ...vs the trading synergy where it belongs.
     let good = grade_base(
         &roster,
@@ -1720,7 +1731,8 @@ fn grade_base_scores_stationing_quality() {
             3,
         )),
         gd,
-    );
+    )
+    .score;
     assert!(
         (0.0..=1.0).contains(&weak) && weak > 0.25,
         "a staffed base earns above the infrastructure floor: {weak}"
@@ -1742,7 +1754,8 @@ fn grade_base_scores_stationing_quality() {
             1,
         )),
         gd,
-    );
+    )
+    .score;
     assert!(
         good_low < good - 1e-6,
         "under-leveled rooms grade lower (L1={good_low}, L3={good})"

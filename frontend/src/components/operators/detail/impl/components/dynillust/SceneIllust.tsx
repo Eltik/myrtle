@@ -2056,17 +2056,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const sgParam = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("settledlead");
                 const sgRaw = sgParam == null ? SETTLED_GROUND_LEAD : Number(sgParam);
                 const sgLead = Number.isFinite(sgRaw) && sgRaw >= 0 ? sgRaw : SETTLED_GROUND_LEAD;
-                const sgAt = efd.transform != null
-                    ? efd.transform + Math.min(sgLead, Math.max(0, (efd.duration ?? Infinity) - efd.transform))
-                    : efd.transform;
+                const sgAt = efd.transform != null ? efd.transform + Math.min(sgLead, Math.max(0, (efd.duration ?? Infinity) - efd.transform)) : efd.transform;
                 const sgRamp = settledGroundRamp();
                 if (settledGroundOn() && sgAt != null && settledBgRef.current) {
-                    settledBgRef.current.alpha =
-                        sgRamp > 0
-                            ? Math.max(0, Math.min(1, (efd.elapsed - (sgAt - sgRamp)) / sgRamp))
-                            : efd.elapsed >= sgAt
-                              ? 1
-                              : 0;
+                    settledBgRef.current.alpha = sgRamp > 0 ? Math.max(0, Math.min(1, (efd.elapsed - (sgAt - sgRamp)) / sgRamp)) : efd.elapsed >= sgAt ? 1 : 0;
                 }
                 // Gap fill is retired AT the lead time regardless of the ramp: the two are
                 // coupled (mue with both off is 18.166, worse than either alone), so the region it
