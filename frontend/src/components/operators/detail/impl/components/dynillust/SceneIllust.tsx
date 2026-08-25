@@ -3632,6 +3632,24 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const sb = new PIXI.Sprite(createEnvironmentBgTexture(false, SETTLED_GROUND));
                     sb.alpha = 0;
                     resizeEnvironmentBg(sb, width, height);
+                    // DIAGNOSTIC (`?settledbg=0`): draw nothing for the settled ground while leaving
+                    // every other consequence of `settledGroundOn()` exactly as shipped.
+                    //
+                    // `?settledground=0` CANNOT answer "how much is the white ground worth", because
+                    // it is a COMPOUND switch gating three things: this sprite's alpha ramp, the
+                    // `settledRef` latch that retires the gap-fill sprites, and the `gapFill` gate
+                    // that decides whether a post-latch composite builds one at all. Its own doc
+                    // comment says the halves are one defect and neither works alone (Muelsyse t=18:
+                    // gap fill alone 49.142 -> 52.632, WORSE; together 49.142 -> 26.910). Reading its
+                    // result as the ground's cost attributes three behaviours to one. Same shape as
+                    // `?entfade=` needing `?fadesprite=` before the screen fade could be isolated.
+                    //
+                    // 🔑 Suppressing at CREATION rather than in the tick is deliberate. The alpha is
+                    // written only inside `if (efd)`, and `efd` is nulled once the fade lifts, so
+                    // past the hand-off nothing assigns it again and it FREEZES at whatever it last
+                    // held, which is 1. A tick-side suppression would therefore stop reaching the
+                    // exact region under investigation.
+                    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settledbg") === "0") sb.renderable = false;
                     settledBgRef.current = sb;
                     app.stage.addChildAt(sb, 1);
                 }
