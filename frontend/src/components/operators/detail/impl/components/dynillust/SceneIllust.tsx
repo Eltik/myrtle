@@ -853,9 +853,9 @@ const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
  *  exposure constrain this in absolute time, and a fraction cannot satisfy both because their
  *  gaps differ by 4.7x (mue 7.0s, whitw2 1.5s):
  *
- *    whitw2  needs the swap AFTER  renderer 14.05 — her ground is still dark there and ours
+ *    whitw2  needs the swap AFTER  renderer 14.05 - her ground is still dark there and ours
  *            whitened ~1.6s early, costing 41.861 -> 37.731.
- *    mue     needs it BY renderer 15.00 — measured inside the swap's own pixel mask, the game
+ *    mue     needs it BY renderer 15.00 - measured inside the swap's own pixel mask, the game
  *            reads 203.1 there against our white ground's 203.4 and our dark ground's 110.2.
  *            Her ground RAMPS (167 at t=12, 175 at 13, 183 at 14.5, 203 at 15, 224 at 17), so it
  *            is never as dark as ours; firing late is what hurts her.
@@ -863,14 +863,14 @@ const ENTRANCE_FADE_IN = fadeParam("fadein", 0.2);
  *  Window [14.05, 15.00] with both transforms at 13.0 -> lead 1.05..2.00; 1.5 sits mid-window.
  *  ⚠️ A fraction cost mue 0.759 at her t=15 for nothing; this costs her nothing.
  *  ⚠️ Both exposed skins share transform 13.0, so "transform + lead" and "absolute 14.5" are not
- *  yet distinguishable — a third exposed skin would separate them. `?settledlead=` sweeps it. */
+ *  yet distinguishable - a third exposed skin would separate them. `?settledlead=` sweeps it. */
 const SETTLED_GROUND_LEAD = 1.5;
 
 /** Seconds over which the settled ground FADES IN, ending at the lead time. 0 = switch instantly.
  *
  *  🔑 The RAMP is data-justified, not fitted: both captures show the ground ramp rather than
  *  switch. mue's ground region reads 167 @12 / 175 @13 / 183 @14.5 / 203 @15 / 224 @17, and at
- *  whitw2's t=13.5 the game reads 151.6 where our dark ground gives 99.3 and our white 200 — it
+ *  whitw2's t=13.5 the game reads 151.6 where our dark ground gives 99.3 and our white 200 - it
  *  is MIDWAY, which no step can produce.
  *
  *  ⚠️ The DURATION is pinned on whitw2 alone, because she is the only reference whose beats fall
@@ -878,14 +878,14 @@ const SETTLED_GROUND_LEAD = 1.5;
  *  and no other skin has settled-ground exposure. Swept: 0 37.731 · 0.50 36.533 · 0.60 34.633 ·
  *  0.65 33.934 · **0.70 33.431** · 0.80 34.215 · 1.00 35.464. Interior minimum, bracketed.
  *  ⚠️ `r` declines gently across the sweep (.736 -> .717 at the optimum), so this is not the
- *  MADC-and-r-agree case a TRIM re-fit demands — it is accepted because the mechanism is measured
+ *  MADC-and-r-agree case a TRIM re-fit demands - it is accepted because the mechanism is measured
  *  in the captures independently of the score. `?settledramp=` sweeps it. */
 const SETTLED_GROUND_RAMP = 0.7;
 
 function settledGroundRamp(): number {
     if (typeof window === "undefined") return SETTLED_GROUND_RAMP;
     // ⚠️ Read the parameter, do not coerce. `Number(null)` is 0, which is finite and >= 0, so a
-    // missing param would silently return 0 — the same trap the settled-lead reader documents,
+    // missing param would silently return 0 - the same trap the settled-lead reader documents,
     // and it defeated this default once already.
     const raw = new URLSearchParams(window.location.search).get("settledramp");
     if (raw == null) return SETTLED_GROUND_RAMP;
@@ -1333,7 +1333,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     const envBgDarkRef = useRef(false);
     /** The SETTLED ground, held above the viewer backdrop and faded in. Both captures show the
      *  ground RAMP rather than switch, so a step cannot match either: at whitw2's t=13.5 the game
-     *  reads 151.6 where our dark ground gives 99.3 and our white 200 — it is midway. */
+     *  reads 151.6 where our dark ground gives 99.3 and our white 200 - it is midway. */
     const settledBgRef = useRef<PIXI.Sprite | null>(null);
     /** Latched once the entrance clock passes `entranceTransform`. A LATCH, not a one-shot sweep:
      *  the settled composite is BUILT after the beat and constructs its own gap-fill sprite, so
@@ -2037,7 +2037,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // put mue at ~54% of that gap and whitw2 at ~70%, so a single fraction looked like
                 // it might serve both where a single instant cannot.
                 //
-                // ⛔ PRICED, and the two skins want OPPOSITE things — there is no free fraction:
+                // ⛔ PRICED, and the two skins want OPPOSITE things - there is no free fraction:
                 //     f      whitw2              mue
                 //     0      41.861 (shipped)    10.756 (shipped, best)
                 //     0.5    41.861              11.515
@@ -2048,7 +2048,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // still fires before her scored beat); mue is best at f=0 and pays 0.759 for any
                 // move. Net at 0.7 is -3.371 across the 12 references, but the corpus-8 MEAN
                 // REGRESSES 11.616 -> 11.711 because whitw2 is not in that eight. No other skin is
-                // affected either way. Default stays 0 — shipping a 1-parameter fit across two
+                // affected either way. Default stays 0 - shipping a 1-parameter fit across two
                 // skins with opposed preferences is the overfitting this project keeps retracting.
                 // ⚠️ Read the parameter, do not coerce: `?settledfrac=0` is a MEANINGFUL value
                 // (fire at the transform, the pre-2026-08-24 behaviour) and a `|| 0` fallback
@@ -2094,9 +2094,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // 0 -> 1 across 28 keys), and instrumented at 14.30 the plane ALONE leaves the
                 // frame 1.67% saturated where the plane plus this sprite is 100%. This isolates
                 // that. Read the param explicitly, never coerced.
-                const spriteOff =
-                    typeof window !== "undefined" &&
-                    new URLSearchParams(window.location.search).get("fadesprite") === "0";
+                const spriteOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fadesprite") === "0";
                 efd.sprite.alpha = spriteOff ? 0 : a;
             }
             const ez = entranceZoomRef.current;
@@ -2709,7 +2707,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     };
                     // LIVE STAGE WALK. `__dumpLayers` below closes over ONE composite's
                     // containers, and the entrance composite is destroyed at the hand-off
-                    // (`sceneContainer.destroy({children: true})`) — so past the hand-off it keeps
+                    // (`sceneContainer.destroy({children: true})`) - so past the hand-off it keeps
                     // answering from an emptied container and reports 0 rows, which reads exactly
                     // like "the settled idle draws no scene layers". It cost a wrong diagnosis
                     // once. This one walks the actual stage, so it is correct at any time.
@@ -3759,7 +3757,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const settleBasis = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("settlebasis") ?? "");
                 const settleBox = settleBasis === "wide" ? main.authoredDisplayBounds : settleBasis === "tight" ? (main.authoredTightBounds ?? main.authoredDisplayBounds) : (main.previewBounds ?? main.authoredTightBounds ?? main.authoredDisplayBounds);
                 // DIAGNOSTIC (`?settlescale=`): multiply the SETTLED frame extent about its own
-                // centre — the twin of `?camscale=`, which only reaches the entrance camera. The
+                // centre - the twin of `?camscale=`, which only reaches the entrance camera. The
                 // settled frame is `bodyFrameBox(cameraSizePx * PREVIEW_CAM_FRAC)`, i.e. sized
                 // from `cameraSizePx` but CENTRED ON THE BODY, so a skin whose backdrop is not
                 // centred on its character can frame off the art. Exists so "what extent does the

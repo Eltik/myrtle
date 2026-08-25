@@ -263,7 +263,6 @@ export function useOptimizer(uid: string): IOptimizerAPI {
             trainingClass,
             setTrainingClass,
             claimIntervalHours,
-            setClaimIntervalHours,
             viewShift,
             shiftRoom,
             proposal,

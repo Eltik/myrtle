@@ -89,7 +89,7 @@ function GradeLadder({ total, color }: { total: number; color: string }) {
                     })}
                 </div>
                 {/* Position marker */}
-                <div className="absolute top-[-3px] h-3.5 w-[3px] -translate-x-1/2 rounded-full" style={{ left: `${pos}%`, background: color, boxShadow: "0 0 0 2px var(--background)" }} />
+                <div className="absolute -top-0.75 h-3.5 w-0.75 -translate-x-1/2 rounded-full" style={{ left: `${pos}%`, background: color, boxShadow: "0 0 0 2px var(--background)" }} />
             </div>
             <div className="relative h-3.5">
                 {GRADE_LADDER.map((g) => (

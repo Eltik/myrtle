@@ -27,6 +27,8 @@ impl AuthUser {
 impl FromRequestParts<AppState> for AuthUser {
     type Rejection = ApiError;
 
+    // `async fn` is the idiomatic spelling of this trait method even though nothing awaits.
+    #[allow(clippy::unused_async_trait_impl)]
     async fn from_request_parts(
         parts: &mut Parts,
         state: &AppState,
