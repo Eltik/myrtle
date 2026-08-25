@@ -3212,10 +3212,54 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // was live at 20.35. Every other benchmark already lands within 0.1s of
                         // `duration` (Mlynar 16.50, Virtuosa 18.00, Skadi 2 22.43 → 22.33), so
                         // this is a no-op for them.
+                        //
+                        // 🔑 2026-08-25, read the two lines together: the floor above raises `end`
+                        // to at least `duration`, so this min ALWAYS returns exactly `duration` and
+                        // is unreachable rather than binding. Every layer term computed above is
+                        // therefore dead code on this arm, and all ten skins that take it hand off
+                        // at their own `duration`. The captures say that is the right beat, so the
+                        // arm stays as it is; it is the OTHER one that was wrong. Do not "simplify"
+                        // this to a bare assignment without re-reading the else branch below, which
+                        // now depends on the same value being used on both sides.
                         deferEndUntil = Math.min(end, scene.data.entranceDuration ?? end);
                     } else {
+                        // NO authored transform. This arm used to hand off at `end`, the layer and
+                        // camera-curve tail, and that is WRONG: the game cuts at the director's
+                        // `duration`.
+                        //
+                        // Measured on three captures, game clock converted to render clock with
+                        // each skin's own REFOFF. The cut is the largest frame-to-frame delta in
+                        // the ending, and every one of them sits perfectly frozen at 253.000 with
+                        // `dPrev` 0.000 for the ten frames before it, so the beat is unambiguous:
+                        //
+                        //     skin    duration   flat 253.000 span (game)   cut, render   delta
+                        //     fugue      9.767   9.4333..9.7333 = 0.300       9.8830     +0.116
+                        //     kalts     14.500  13.9667..14.2667 = 0.300     14.7000     +0.200
+                        //     chyue     20.000  19.8333..19.8667 = 0.033     20.2670     +0.267
+                        //
+                        // Ch'ien Yu is the case that settles it, because she is on THIS arm: her
+                        // `end` is 19.267 and her camera tail 18.567, which sit 1.000s and 1.700s
+                        // before her observed cut, the second of those in the dark beat at luma
+                        // 33.920 before her white-out has even started. The tails are not the beat.
+                        //
+                        // ⚠️ The residual +0.116/+0.200/+0.267 is DELIBERATELY not folded in. It
+                        // does not yet separate a constant lead near 0.150 from a proportional
+                        // 1.188%/1.379%/1.335% of duration, and three points cannot decide it. A
+                        // capture of Executor (duration 6.500) would: constant predicts ~0.150,
+                        // proportional ~0.077, a 2x separation on one clip.
+                        //
+                        // The `end > entAnimDur + 0.05` guard is unchanged - it decides WHETHER a
+                        // tick-driven deferral exists at all, and only the VALUE was ever wrong.
+                        // All three skins on this arm pass it (pasngr 15.967 > 11.717, mlynar
+                        // 16.500 > 14.717, chyue 19.267 > 18.983), so nothing starts or stops
+                        // deferring, and Mlynar's `end` already equals his `duration` at 16.500.
+                        //
+                        // `?handoffdur=0` restores `end`. Read as an explicit "0" so an ABSENT
+                        // parameter keeps the fix; never a falsy test, which `Number(null)` = 0
+                        // has silently defeated here before.
+                        const off = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("handoffdur") === "0";
                         const entAnimDur = spine.spineData.animations.find((a: { name: string }) => a.name === entranceAnim)?.duration ?? 0;
-                        if (end > entAnimDur + 0.05) deferEndUntil = end;
+                        if (end > entAnimDur + 0.05) deferEndUntil = off ? end : (scene.data.entranceDuration ?? end);
                     }
                 }
                 // THE DIRECTOR'S `duration` IS THE AUTHORED END, whatever the spine does - and
