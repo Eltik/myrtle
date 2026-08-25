@@ -1653,7 +1653,21 @@ fn collect_dynchar_bg_quads(
     // declaration-based tint switch at `reads_main_color`, which is measured worse, so
     // sharing the name would enable both at once and confound the score.
     let tint_census = std::env::var("DYNCHAR_TINTCENSUS").is_ok();
-    let main_color_decl_on = std::env::var("DYNCHAR_MAINCOLOR_DECL").is_ok();
+    // `=1` applies the arm to every qualifying layer. A comma-separated GameObject-name
+    // list restricts it to those layers, which is how the population is ABLATED: the
+    // corpus verdict is dominated by two skins, and cost per layer that runs inverse to
+    // layers moved is the signature of an over-broad predicate rather than a uniform one.
+    let main_color_decl: Option<Vec<String>> =
+        std::env::var("DYNCHAR_MAINCOLOR_DECL")
+            .ok()
+            .map(|v| match v.as_str() {
+                "1" => Vec::new(),
+                list => list
+                    .split(',')
+                    .map(|n| n.trim().to_string())
+                    .filter(|n| !n.is_empty())
+                    .collect(),
+            });
     for (_, renderer) in renderers {
         let Some(go_pid) = renderer.get("m_GameObject").and_then(get_path_id) else {
             continue;
@@ -2105,7 +2119,10 @@ fn collect_dynchar_bg_quads(
                         own_root.map_or_else(|| "?".to_string(), |r| host.go_name(all_objects, r)),
                     );
                 }
-                if main_color_decl_on {
+                let decl_on = main_color_decl.as_ref().is_some_and(|only| {
+                    only.is_empty() || only.iter().any(|n| *n == host.go_name(all_objects, go_pid))
+                });
+                if decl_on {
                     cprops.1 = Some("_MainColor".to_string());
                     let mc = cprops
                         .0
