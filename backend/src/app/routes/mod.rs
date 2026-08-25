@@ -79,6 +79,7 @@ pub fn router() -> Router<AppState> {
         .route("/leaderboard/movers", get(leaderboard::top_movers))
         .route("/leaderboard/distribution", get(leaderboard::distribution))
         .route("/leaderboard/standing", get(leaderboard::standing))
+        .route("/leaderboard/history", get(leaderboard::score_history))
         .route("/search", get(search::search))
         .route("/static/{resource}", get(static_data::get_static))
         .route("/level/{stage_id}", get(level::get_level_map))

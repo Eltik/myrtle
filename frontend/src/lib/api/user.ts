@@ -887,6 +887,30 @@ export const getPlayerStandingFn = createServerFn({ method: "GET" })
         return (await res.json()) as IPlayerStanding;
     });
 
+export interface IScoreHistoryPoint {
+    taken_at: string;
+    total_score: number | null;
+    rank_global: number;
+    rank_server: number;
+}
+
+export const getScoreHistoryFn = createServerFn({ method: "GET" })
+    .inputValidator((uid: string) => uid)
+    .handler(async ({ data: uid }) => {
+        const res = await backendFetch(`/leaderboard/history?uid=${encodeURIComponent(uid)}`);
+        if (!res.ok) throw new Error(`Failed to load score history: ${res.status}`);
+        return (await res.json()) as IScoreHistoryPoint[];
+    });
+
+export function scoreHistoryQueryOptions(uid: string) {
+    return queryOptions({
+        queryKey: ["user", "leaderboard", "history", uid],
+        queryFn: () => getScoreHistoryFn({ data: uid }),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
+    });
+}
+
 export function playerStandingQueryOptions(input: IPlayerStandingInput) {
     return queryOptions({
         queryKey: ["user", "leaderboard", "standing", input.uid, input.server, input.window ?? null, input.interval ?? null],

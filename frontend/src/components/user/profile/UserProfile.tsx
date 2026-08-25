@@ -170,7 +170,7 @@ export function UserProfile() {
                 {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                 {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                 {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} server={data.server} uid={id} />}
-                {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
+                {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
                 {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
             </main>
         </DynamicArtProvider>

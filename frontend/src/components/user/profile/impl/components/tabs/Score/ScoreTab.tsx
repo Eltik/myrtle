@@ -1,5 +1,8 @@
-import type { IImprovementsResponse, IUserScore } from "#/lib/api/user";
+import { useQuery } from "@tanstack/react-query";
+import { type IImprovementsResponse, type IUserScore, playerStandingQueryOptions, scoreHistoryQueryOptions } from "#/lib/api/user";
+import { ContributionCard } from "./cards/ContributionCard";
 import { OverallGradeCard } from "./cards/OverallGradeCard";
+import { ScoreHistoryCard } from "./cards/ScoreHistoryCard";
 import { SubscoreCard } from "./cards/SubscoreCard";
 import { SUBSCORES } from "./helpers";
 import { ScoreTabEmpty } from "./ScoreTabEmpty";
@@ -10,9 +13,17 @@ interface IScoreTabProps {
     isLoading: boolean;
     improvements: IImprovementsResponse | null | undefined;
     isImprovementsLoading: boolean;
+    uid: string;
+    server: string;
 }
 
-export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading }: IScoreTabProps) {
+export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading, uid, server }: IScoreTabProps) {
+    // Rank/percentile context and the snapshot history load alongside the
+    // score row; both are public leaderboard data, so a private-profile 404
+    // simply leaves their sections off.
+    const { data: standing } = useQuery({ ...playerStandingQueryOptions({ uid, server, interval: "7 days" }), enabled: Boolean(score) });
+    const { data: history, isLoading: isHistoryLoading } = useQuery({ ...scoreHistoryQueryOptions(uid), enabled: Boolean(score) });
+
     if (isLoading && !score) return <ScoreTabSkeleton />;
     if (!score) return <ScoreTabEmpty />;
 
@@ -23,7 +34,9 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
                 <span className="text-[12px] text-muted-foreground">Scoring is subject to change and in the very early stages of development. Score is based off of potential completion, NOT how "meta" your account is.</span>
             </div>
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
-                <OverallGradeCard score={score} />
+                <OverallGradeCard score={score} standing={standing} />
+                <ContributionCard score={score} />
+                <ScoreHistoryCard score={score} history={history} isLoading={isHistoryLoading} />
                 {SUBSCORES.map((sub) => (
                     <SubscoreCard key={sub.key} score={score[sub.key]} sub={sub} improvements={improvements} isImprovementsLoading={isImprovementsLoading} scoreRow={score} />
                 ))}

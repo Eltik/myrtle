@@ -77,6 +77,15 @@ pub struct ServerShare {
     pub players: i64,
 }
 
+/// One point of a user's leaderboard history - a snapshot they appeared in.
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct ScoreHistoryPoint {
+    pub taken_at: DateTime<Utc>,
+    pub total_score: Option<f64>,
+    pub rank_global: i32,
+    pub rank_server: i32,
+}
+
 #[derive(Debug, Serialize)]
 pub struct PlayerStanding {
     pub player: LeaderboardEntry,

@@ -3,7 +3,7 @@ use sqlx::PgPool;
 use sqlx::types::Uuid;
 
 use crate::database::models::score::{
-    LeaderboardEntry, LeaderboardMover, PlayerStanding, ServerShare, UserScore,
+    LeaderboardEntry, LeaderboardMover, PlayerStanding, ScoreHistoryPoint, ServerShare, UserScore,
 };
 
 /// Fetch the full score row for one user by `uid` (external 10-digit id).
@@ -245,6 +245,28 @@ pub async fn count_leaderboard(
         qry = qry.bind(p);
     }
     qry.fetch_one(pool).await
+}
+
+/// A user's score and rank across every leaderboard snapshot they appear in,
+/// oldest first - the Score tab's history chart. Snapshots are taken by the
+/// leaderboard job, so the series grows one point per snapshot.
+pub async fn get_score_history(
+    pool: &PgPool,
+    uid: &str,
+) -> Result<Vec<ScoreHistoryPoint>, sqlx::Error> {
+    sqlx::query_as(
+        r"
+        SELECT s.taken_at, e.total_score, e.rank_global, e.rank_server
+        FROM leaderboard_snapshot_entries e
+        JOIN leaderboard_snapshots s ON s.id = e.snapshot_id
+        JOIN users u ON u.id = e.user_id
+        WHERE u.uid = $1
+        ORDER BY s.taken_at
+        ",
+    )
+    .bind(uid)
+    .fetch_all(pool)
+    .await
 }
 
 /// Upsert a user's score

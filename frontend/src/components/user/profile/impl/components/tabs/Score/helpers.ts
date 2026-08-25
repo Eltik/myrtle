@@ -44,3 +44,33 @@ export function formatCalculatedAt(iso: string | null | undefined): string | nul
     if (Number.isNaN(d.getTime())) return null;
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+
+// Mirrors the backend's `score_to_grade` thresholds in
+// `backend/src/core/grade/calculate.rs` - change both together.
+export const GRADE_LADDER = [
+    { grade: "F", min: 0.0 },
+    { grade: "D", min: 0.15 },
+    { grade: "C", min: 0.3 },
+    { grade: "B", min: 0.45 },
+    { grade: "A", min: 0.6 },
+    { grade: "S", min: 0.75 },
+    { grade: "S+", min: 0.9 },
+] as const;
+
+/** The next rung above `total` (0-1 scale), or null at the top. */
+export function nextGradeStep(total: number): { grade: string; min: number; pointsAway: number } | null {
+    const next = GRADE_LADDER.find((g) => g.min > total + 1e-9);
+    if (!next) return null;
+    return { grade: next.grade, min: next.min, pointsAway: (next.min - total) * 100 };
+}
+
+/**
+ * The section where a point of section-score buys the most composite score:
+ * highest weight share among sections with real headroom left. Returns null
+ * when everything is effectively maxed.
+ */
+export function fastestSection(score: IUserScore): ISubscore | null {
+    const candidates = SUBSCORES.filter((sub) => toPct(score[sub.key]) < 99.5);
+    if (candidates.length === 0) return null;
+    return candidates.reduce((best, sub) => (sub.weight > best.weight ? sub : best));
+}

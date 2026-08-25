@@ -14,7 +14,7 @@ use crate::{
         error::ApiError, extractors::pagination::Pagination,
         services::leaderboard::LeaderboardPage, state::AppState,
     },
-    database::models::score::{LeaderboardMover, PlayerStanding, ServerShare},
+    database::models::score::{LeaderboardMover, PlayerStanding, ScoreHistoryPoint, ServerShare},
 };
 
 #[derive(Deserialize)]
@@ -129,4 +129,20 @@ pub async fn standing(
     }
     let standing = get_standing(&state, &params.uid, &params.server, window, interval).await?;
     Ok(Json(standing))
+}
+
+#[derive(Deserialize)]
+pub struct HistoryParams {
+    pub uid: String,
+}
+
+/// A user's score/rank across every leaderboard snapshot, oldest first - the
+/// Score tab's history chart. Public data (the leaderboard already shows it).
+pub async fn score_history(
+    State(state): State<AppState>,
+    Query(params): Query<HistoryParams>,
+) -> Result<Json<Vec<ScoreHistoryPoint>>, ApiError> {
+    let points =
+        crate::database::queries::score::get_score_history(&state.db, &params.uid).await?;
+    Ok(Json(points))
 }
