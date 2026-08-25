@@ -2996,9 +2996,22 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // scene filling around them). Combined with the "height" fit (see `fitRef`), the
                 // crop height maps to the container height, so the finite scene art leaves the
                 // game's side pillar-box slack - no stretch, no distortion. The box is CENTRED on the
-                // character body - the raw `_adjustes` OFFSET points ~650px BELOW the body in export
-                // space (verified), so it can't be used for centring; `VBIAS` corrects the residual
-                // hair/mass drag.
+                // character body - the raw `_adjustes` OFFSET points BELOW the body in export space,
+                // so it is not used for centring; `VBIAS` corrects the residual hair/mass drag.
+                //
+                // ⚠️ CORRECTED 2026-08-26. This said "~650px BELOW the body (verified)". Measured
+                // with `__frameProbe` on the five skins that have settled captures, the gap is
+                // 802.57 / 984.07 / 1007.12 / 1046.07 / 1213.85 authored px: mean 1010.74, spread
+                // **411.28**. The direction is right and the magnitude is 1.55x the figure quoted,
+                // but the important part is that it is NOT A CONSTANT, and that spread is exactly
+                // the per-skin signal `VBIAS` throws away.
+                //
+                // ⛔ Three attempts to turn it into a derived per-skin term all failed, see
+                // `dynchar-cameraoffsetpxy-refuted`. The closest is treating the authored camera as
+                // the crop centre outright, which gets the SLOPE right (1.0171, i.e. it captures
+                // the per-skin variation almost exactly) but still needs a global +254.38 px and
+                // lands at R2 0.6992, worse than a naive line through the raw offsets. Nothing
+                // ships until a form without a fitted constant is found.
                 //
                 // Re-swept by the same method as `VBIAS` after that constant was corrected (the
                 // two interact: `cy0 = bodyCy - VBIAS*e` with `e = viewPx*RCAL`). Mlynar is again
@@ -3046,6 +3059,40 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const e = viewPx * RCAL;
                     return { x: bodyCx - e / 2, y: bodyCy - VBIAS * e - e / 2, width: e, height: e };
                 };
+                // DIAGNOSTIC (`__frameProbe`, DEV only): the inputs `bodyFrameBox` uses and the
+                // authored camera it declines to use, in one place and in comparable units.
+                //
+                // It exists to CHECK a load-bearing claim rather than argue about it. The comment
+                // above says the raw `_adjustes` offset "points ~650 px BELOW the body in export
+                // space (verified)", which is why the vertical centre is measured off the body and
+                // corrected by a single global `VBIAS`. Nothing exposed `bodyCy`, so that number
+                // could not be re-derived, and a claim that cannot be re-derived is the shape this
+                // project has had to retract four times.
+                //
+                // `offsetBelowBody` is the quantity in question, expressed in AUTHORED px so it can
+                // be read against `cameraOffsetPxY` directly: positive means the authored camera
+                // centre sits below the measured body centre.
+                if (import.meta.env.DEV && typeof window !== "undefined") {
+                    (window as unknown as { __frameProbe?: () => unknown }).__frameProbe = () => ({
+                        bodyCx,
+                        bodyCy,
+                        headY,
+                        feetY,
+                        centroid: vb?.centroid ?? null,
+                        visBox: vb ? { x: vb.x, y: vb.y, w: vb.width, h: vb.height } : null,
+                        RCAL,
+                        VBIAS,
+                        offsetPx: authoredFrame?.offsetPx ?? null,
+                        offsetPx2: authoredFrame?.offsetPx2 ?? null,
+                        viewPx: authoredFrame?.viewPx ?? null,
+                        viewPx2: authoredFrame?.viewPx2 ?? null,
+                        cameraSizePx: authoredFrame?.cameraSizePx ?? null,
+                        // What the shipped formula puts the crop centre at, and what the authored
+                        // camera would put it at, both in render/vis px.
+                        shippedCy: bodyCy - VBIAS * ((authoredFrame?.viewPx2 ?? authoredFrame?.viewPx ?? 0) * RCAL),
+                        offsetBelowBody: authoredFrame?.offsetPx ? (bodyCy - authoredFrame.offsetPx[1] * RCAL) / RCAL : null,
+                    });
+                }
                 /** An authored `_adjustes` extent is only usable if it is a POSITIVE FINITE
                  *  number. Unity writes an uninitialised stop as `-FLT_MAX`
                  *  (-3.4028235e38), which the exporter carries through verbatim - and a

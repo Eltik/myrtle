@@ -275,6 +275,12 @@ DIR[kalts]='char_003_kalts_boc#6';       BEATS[kalts]="1,2,3,4,5,6,8,12"
 # with 67.70% of pixels over 250 against neighbours at 17.831/19.181/21.816/20.919. Track 5.200 is
 # exactly her `entranceTransform` 5.199999809265137. The sweep reads that flash as a lag and never
 # brackets a minimum. Recorded in dynchar-ffmpeg-select-frame-trap.
+# 🚨 celnew / skanew / eyjanew EXIST IN REF_NEW BUT ARE NOT FOR SCORING and are deliberately NOT
+# given DIR/BEATS entries here. They reach past their cuts but are degraded by host load at capture
+# time (20.38-23.24 fps source against 33.32-59.98 on the good clips) and do not reproduce their
+# baselines: celnew 24.879 r.870 against cel 16.997 r.916, skanew 13.253 r.903 against ska 9.854
+# r.951, eyjanew 15.600 r.896 against eyja 8.693 r.968. `muenew` DOES reproduce (10.511 r.941
+# against mue 10.756 r.935) and could be promoted if wanted. See REF_NEW/NOT_FOR_SCORING.md.
 DIR[excunew]='char_1032_excu2_sale#12';  BEATS[excunew]="1,2,3,4,4.8"
 REFOFF[excunew]=0.1667
 
