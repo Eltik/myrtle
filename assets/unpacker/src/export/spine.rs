@@ -1646,6 +1646,14 @@ fn collect_dynchar_bg_quads(
     // element back to its authored node (and to WHICH prefab root) otherwise means
     // re-deriving the walk by hand. Output-neutral.
     let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
+    // Tint-source census and switch for the `_MainColor`-without-`_TintColor` population
+    // (see `main_color_no_tint_color`). Read once here, not per layer.
+    //
+    // ⚠️ NOT `DYNCHAR_TINT_DECL`: that variable already gates a DIFFERENT
+    // declaration-based tint switch at `reads_main_color`, which is measured worse, so
+    // sharing the name would enable both at once and confound the score.
+    let tint_census = std::env::var("DYNCHAR_TINTCENSUS").is_ok();
+    let main_color_decl_on = std::env::var("DYNCHAR_MAINCOLOR_DECL").is_ok();
     for (_, renderer) in renderers {
         let Some(go_pid) = renderer.get("m_GameObject").and_then(get_path_id) else {
             continue;
@@ -2053,6 +2061,60 @@ fn collect_dynchar_bg_quads(
                     )
                 } else {
                     (mc, 1.0, false)
+                }
+            } else if let Some(how) = main_color_no_tint_color(mat) {
+                // A shader that reads `_MainColor` on a material with NO `_TintColor`.
+                // `material_tint` below would fold `_Color`, the inert Unity white
+                // placeholder, so the layer draws at full opacity in a colour the shader
+                // was never told to use. The branch above it wants the CLIP to name
+                // `_MainColor` as its evidence; that evidence is unavailable to a layer no
+                // clip animates, and the shader's own declaration is the stronger source
+                // anyway.
+                //
+                // ⛔ MEASURED CORPUS-WIDE AND WORSE, so the default is OFF.
+                // `DYNCHAR_TINTCENSUS=1` prints the population, `DYNCHAR_MAINCOLOR_DECL=1`
+                // applies it. Every one of the 370 layers that reach this arm is admitted by
+                // the shader's DECLARATION (`via=decl`); the material fallback fires zero
+                // times with the shaders staged, and all 370 would move (none is a no-op).
+                // With the flag on, 37 exported files change across 31 skins, but only FIVE
+                // are entrance scenes, so only five references can move at all:
+                //
+                //   cel  17.039 -> 17.002   mue    10.756 -> 11.422   exc  6.292 -> 6.292
+                //   wis   5.557 ->  5.557   whitw2 33.431 -> 35.216
+                //
+                // The other seven are bit-identical (ska, mly, eyja, cet, chyue, fugue,
+                // kalts). Net +2.414 over the twelve; corpus-8 mean 11.481 -> 11.560.
+                // Whislash-alter carries the damage (r .717 -> .686) and Muelsyse most of the
+                // rest (r .935 -> .930), so it is not noise: reading `_MainColor` here dims
+                // layers the game evidently draws brighter.
+                //
+                // The reading is not what is in doubt. On Ch'en the Holungday's two lens
+                // sheets it is provably right: this arm reproduces the hand-patched
+                // (0.6322, 0.6239, 0.7255, 0.1804) and (0.6145, 0.6505, 0.7255, 0.251) and
+                // scores 21.583 -> 16.876 with `DYNCHAR_MESHRES=1`, recovering 4.707 of the
+                // 4.931 that folding the inert `_Color` costs there. What the corpus says is
+                // that something else in this pipeline already compensates for the wrong
+                // tint on the OTHER layers, exactly as the ×2 experiments above found.
+                if tint_census {
+                    eprintln!(
+                        "    [tintcensus] {:<26} shader={} via={how} _Color={:?} _MainColor={:?} root={}",
+                        host.go_name(all_objects, go_pid),
+                        mat.get("_shaderName").and_then(|v| v.as_str()).unwrap_or("?"),
+                        material_tint(mat),
+                        cprops.0.iter().find(|(n, _)| n == "_MainColor").map(|(_, c)| *c),
+                        own_root.map_or_else(|| "?".to_string(), |r| host.go_name(all_objects, r)),
+                    );
+                }
+                if main_color_decl_on {
+                    cprops.1 = Some("_MainColor".to_string());
+                    let mc = cprops
+                        .0
+                        .iter()
+                        .find(|(n, _)| n == "_MainColor")
+                        .map_or([1.0; 4], |(_, c)| *c);
+                    (mc, 1.0, false)
+                } else {
+                    (material_tint(mat), 1.0, false)
                 }
             } else {
                 (material_tint(mat), 1.0, false)
@@ -3281,6 +3343,41 @@ fn l2d_main_color_family(mat: &Value) -> bool {
             .and_then(|sp| sp.get("m_Colors"))
             .and_then(|c| c.as_object())
             .is_some_and(|c| c.contains_key("_MainColor"))
+}
+
+/// Does the material's own shader DECLARE `_MainColor`, and which test answered?
+///
+/// Declaration first: Unity keeps every property a material ever carried, so a
+/// `_MainColor` left over from the shader an asset was authored against survives as
+/// residue on a shader that cannot read it (630 such materials across the 87 dynchar
+/// bundles, counted where `reads_main_color` is derived). `shader_declares` returns
+/// `None` only when no shader bundle is staged, and then the material's slot list is
+/// the fallback so an under-staged export cannot silently flip families.
+fn main_color_declared(mat: &Value) -> (bool, &'static str) {
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    super::shader_map::shader_declares(shader, "_MainColor")
+        .map_or_else(|| (has_color_prop(mat, "_MainColor"), "mat"), |d| (d, "decl"))
+}
+
+/// A layer whose shader reads `_MainColor` and whose material carries NO `_TintColor`.
+///
+/// This is the population `material_tint` mishandles: with no `_TintColor` to fall back
+/// on it folds `_Color`, the inert Unity white placeholder, so the layer draws at full
+/// opacity in whatever colour the shader was never told to use. Ch'en the Holungday's
+/// two lens sheets are the measured case, authored `_MainColor` alpha 0.180 and 0.251
+/// and drawn at 1.0 over an ADDITIVE blend.
+///
+/// The `_TintColor`-absent requirement is what keeps this DISJOINT from the parked
+/// experiment at `reads_main_color`: that one is about materials carrying BOTH and
+/// picking the wrong one, and it is measured worse (Kal'tsit's `wenli`/`wenl1` carry
+/// both). Nothing here touches those.
+fn main_color_no_tint_color(mat: &Value) -> Option<&'static str> {
+    let (declared, how) = main_color_declared(mat);
+    (declared && !has_color_prop(mat, "_TintColor") && has_color_prop(mat, "_MainColor"))
+        .then_some(how)
 }
 
 /// Material colour multiply: `_Color` if present, else `_TintColor`, else white.
