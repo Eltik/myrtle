@@ -524,9 +524,28 @@ function inflateBounds(bounds: IAnimationBounds | null, factor: number): IAnimat
 
 /** A global calibration constant, overridable via a URL search param (e.g. `?rcal=0.6`)
  *  for on-page tuning against reference recordings. */
+/** Read a calibration constant from the query string, falling back when it is ABSENT.
+ *
+ *  🚨 The previous form was `parseFloat(get(name) || String(fallback)) || fallback`, which
+ *  carried the falsy trap this codebase documents everywhere else, TWICE in one expression:
+ *  an empty `?vbias=` fell back on the first `||`, and a parsed **0 fell back on the second**,
+ *  because 0 is falsy. So NO calibration knob could ever be set to zero, and asking for one
+ *  silently returned the default.
+ *
+ *  That is not hypothetical. Sweeping `?vbias=` across the five settled clips read
+ *  78.917 / 71.093 / 93.019 / 100.679 / 69.797 at BOTH 0.00 and the default 0.1815, five
+ *  identical pairs, which reads exactly like "the vertical bias does not reach this region"
+ *  and would have been recorded as a refutation. 0.30 and 0.45 moved, which is the only reason
+ *  it was caught.
+ *
+ *  Absence is now tested explicitly and a non-finite parse is rejected on its own terms. The
+ *  default is unchanged for every value that was previously expressible. */
 function calibrationParam(name: string, fallback: number): number {
     try {
-        return parseFloat(new URLSearchParams(window.location.search).get(name) || String(fallback)) || fallback;
+        const raw = new URLSearchParams(window.location.search).get(name);
+        if (raw == null || raw === "") return fallback;
+        const v = parseFloat(raw);
+        return Number.isFinite(v) ? v : fallback;
     } catch {
         return fallback;
     }
