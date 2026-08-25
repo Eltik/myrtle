@@ -47,7 +47,19 @@ print(f"[proc] {W}x{H} {n} frames @ {fps:.2f}fps  luma {lum.min():.1f}..{lum.max
 dark=np.where(lum<12)[0]
 if len(dark)==0:
     print("[proc] ❌ NO BLACKOUT — the PLAY tap missed (chrome was hidden). Retake."); sys.exit(3)
-b0=int(dark[0]); b1=int(dark[-1])
+# 🚨 ANCHOR ON THE FIRST CONTIGUOUS DARK RUN, never on `dark[-1]`.
+# `dark[-1]` is the last sub-12 frame ANYWHERE in the recording, so an entrance with dark
+# BEATS in it anchors t0 at the wrong end. Measured on skadi2, whose runs are 7.40-7.66,
+# 11.01-11.49, 18.36-18.54 and 22.06-22.28: the old form put t0 at 22.45 s, past the end of
+# her entrance, and truncated the clip to nothing usable. Identical result on skins with a
+# single dark run, so this is a strict improvement.
+runs=[]; s0=dark[0]; prev=dark[0]
+for i in dark[1:]:
+    if i!=prev+1: runs.append((int(s0),int(prev))); s0=i
+    prev=i
+runs.append((int(s0),int(prev)))
+print("[proc] dark runs (s): "+", ".join(f"{a/fps:.2f}-{b/fps:.2f}" for a,b in runs))
+b0,b1=runs[0]
 post=np.where(lum[b1:]>12)[0]
 t0=int(b1+post[0]) if len(post) else b1
 print(f"[proc] blackout frames {b0}-{b1} ({b0/fps:.2f}-{b1/fps:.2f}s) → entrance t0 = frame {t0} ({t0/fps:.2f}s) ✅")
