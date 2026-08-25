@@ -1669,17 +1669,23 @@ fn collect_dynchar_bg_quads(
                 .filter(|n| !n.is_empty())
                 .collect(),
         });
-    let main_color_decl: Option<Vec<String>> =
-        std::env::var("DYNCHAR_MAINCOLOR_DECL")
-            .ok()
-            .map(|v| match v.as_str() {
-                "1" => Vec::new(),
-                list => list
-                    .split(',')
+    // SHIPPED, so the variable is now the OFF switch: absent means ON for every
+    // qualifying layer, `=0` restores the pre-ship numbers exactly, and a
+    // comma-separated GameObject-name list still restricts it for ablation.
+    // Checked against the explicit string, never a falsy coercion.
+    let main_color_decl: Option<Vec<String>> = match std::env::var("DYNCHAR_MAINCOLOR_DECL") {
+        Err(_) => Some(Vec::new()),
+        Ok(v) => match v.as_str() {
+            "0" => None,
+            "1" => Some(Vec::new()),
+            list => Some(
+                list.split(',')
                     .map(|n| n.trim().to_string())
                     .filter(|n| !n.is_empty())
                     .collect(),
-            });
+            ),
+        },
+    };
     for (_, renderer) in renderers {
         let Some(go_pid) = renderer.get("m_GameObject").and_then(get_path_id) else {
             continue;
@@ -2169,7 +2175,9 @@ fn collect_dynchar_bg_quads(
                     // and refuted, and sharing it confounds the corpus: Mlynar is
                     // bit-identical under this arm alone and goes 17.007 -> 23.805 the moment
                     // the shared flag lights the other branch as well.
-                    if std::env::var("DYNCHAR_MC_X2_DECL").is_ok() && main_color_doubles(mat) {
+                    if std::env::var("DYNCHAR_MC_X2_DECL").as_deref() != Ok("0")
+                        && main_color_doubles(mat)
+                    {
                         (
                             [
                                 mc[0] * 2.0,
