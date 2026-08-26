@@ -3995,6 +3995,35 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // recording - the steady settle is a knees-up shot, not a full-body pull-out).
                     // A pull-out is only performed when the data authorizes one (`entrancePullOut`,
                     // cello) or when there was no cinematic at all (the standard archive open).
+                    // DIAGNOSTIC (`?entwhole=1`, default OFF): let an ENTRANCE skin's settled idle
+                    // converge on the same frame a NON-entrance skin settles at, the drawn content
+                    // contained with margins.
+                    //
+                    // 🔑 The two paths differ in exactly one place and it is NOT the authored
+                    // centre. `authoredTightBounds` and `authoredDisplayBounds` both come from
+                    // `bodyFrameBox`, so BOTH paths already discard `cameraOffsetPx`/`Px2`; that
+                    // cannot explain a difference between them. What the non-entrance branch below
+                    // does and this one never reaches is `whole = main.contentBounds` fitted
+                    // `mode: "contain"`. `contain` is what letterboxes; `fitRef.current` fits by
+                    // HEIGHT and crops the width, which is the full-bleed look. Its own comment
+                    // says so: "the 12 with an entrance are untouched, which is why the three
+                    // measured reference skins cannot move".
+                    //
+                    // Gated because it moves ONLY the post-hand-off idle, a region no scored beat
+                    // reaches, so MADC cannot adjudicate it and the five settled captures are the
+                    // only evidence. `bodyFrameBox` itself is deliberately untouched: `gameFrame`
+                    // and the entrance dolly are built from it, and re-seating
+                    // `authoredTightBounds` would move the entrance framing on all 12 entrance
+                    // skins and invalidate every recorded baseline (see `authoredTightShift`).
+                    const entWhole = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("entwhole") === "1";
+                    const entWholeBox = entWhole && opts?.fromEntrance && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
+                    if (entWholeBox) {
+                        const fit: ISpineFit = { mode: "contain", align: fitRef.current.align };
+                        main.bounds = entWholeBox;
+                        boundsRef.current = entWholeBox;
+                        layoutSpine(main.root, sw, sh, entWholeBox, fit);
+                        return;
+                    }
                     if (opts?.fromEntrance && !entrancePullOut && openTight) {
                         main.bounds = openTight; // resizes keep the held tight frame
                         layoutSpine(main.root, sw, sh, openTight, fitRef.current);
