@@ -18,20 +18,21 @@
 # the trim is whatever all8.sh already declares for that key. Both are READ from their existing
 # sources at run time rather than copied here, so a trim re-derivation lands on both instruments.
 #
-# ⚠️ COVERAGE IS 5 OF 13, and that is a property of the CAPTURES, not of the renderer. A reference
-# only qualifies if its clip runs past `entranceDuration + 9`:
+# ⚠️ COVERAGE IS 6 OF 13, and it is a property of the CAPTURES, not of the renderer. A reference
+# qualifies only if some clip of it runs past `entranceDuration + 9`:
 #
 #     REACHES     whitw2 (25.700s clip, needs 23.500)   chyue (32.267 / 29.000)
 #                 fugue  (29.767 / 18.767)              kalts (27.900 / 23.500)
 #                 excunew (18.233 / 15.500)
+#                 wis    (23.390 / 21.550)  <- via `wis_settled.mp4`, re-captured 2026-08-26
 #     CANNOT      ska (22.500 clip, needs 31.333)  exc (7.000 / 15.500)  cel (18.500 / 27.000)
 #                 mly (18.500 / 25.500)  mue (20.500 / 29.000)  eyja (10.500 / 18.767)
-#                 cet (19.500 / 28.000)  wis (13.500 / 21.550)
+#                 cet (19.500 / 28.000)
 #
-# The eight that cannot reach do not fall short of the LAST settled beat, they end before the
-# FIRST one: every one of them stops within 0.5 to 2.0 s of its own hand-off. Nothing partial can
-# be salvaged from them, so extending this instrument means re-capturing those eight past the cut,
-# not adjusting the beat offsets.
+# The seven that cannot reach do not fall short of the LAST settled beat, they end before the
+# FIRST one: every one stops within 0.5 to 2.0 s of its own hand-off. Nothing partial can be
+# salvaged, so extending this instrument means re-capturing them past the cut from the FLOT
+# lookbook viewer, not adjusting the beat offsets. `lookbook.py` addresses all seven.
 #
 # ⚠️ These frames carry a LARGE framing error that is not the thing you are usually measuring
 # (chyue 106.477, whitw2 99.303 against pre-cut 20.230 and 33.432). Read this instrument as a
@@ -67,10 +68,15 @@ PY
   want=3
   # A DROPOUT (black frame) reads as a missing beat, never as a score. Retry once, same rule
   # all8.sh uses, and print the beat count so a short read cannot pass as a full one.
+  # Prefer a LONGER re-capture when one exists. `_game_fresh` clips stop within 0.5 to 2.0 s of
+  # their own hand-off, so most of them cannot reach even the FIRST settled beat; `_settled` clips
+  # are recorded from the lookbook viewer at 20 Mbps specifically to clear `entranceDuration + 9`.
+  # The originals are never overwritten, so every all8.sh baseline stays reproducible.
+  if [[ -f $HERE/REF_NEW/${k}_settled.mp4 ]]; then sfx=_settled; else sfx=_game_fresh; fi
   for attempt in 1 2; do
-    line=$($HERE/score_new.sh $k "$d" "$beats" "$label" "$extra" $off 2>/dev/null || true)
+    line=$(REF_SUFFIX=$sfx $HERE/score_new.sh $k "$d" "$beats" "$label" "$extra" $off 2>/dev/null || true)
     got=$(print -r -- "$line" | grep -oE "over [0-9]+" | grep -oE "[0-9]+" || echo 0)
     [[ "$got" == "$want" ]] && break
   done
-  print -r -- "$line"
+  print -r -- "$line   [${sfx#_}]"
 done

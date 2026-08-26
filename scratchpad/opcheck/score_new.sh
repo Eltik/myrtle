@@ -48,5 +48,11 @@ EXTRA="$extra" node $HERE/rec.js "/spine/DynIllust/$enc/$fenc" $out "$shots" 900
 printf "%-16s %-4s " "$label" "$key"
 # Print the registration number on the same line as the score. MADC alone cannot distinguish
 # "missing content" from "right content, wrong place" — see mad.py's MEAN r note.
-python3 $HERE/mad.py $out $HERE/REF_NEW/${key}_game_fresh.mp4 "$beats" --inner --offset=$off --dy=0 --fps=30 \
+# REFERENCE CLIP. `_game_fresh` is the scoring baseline every recorded number was measured
+# against and it is NEVER overwritten. `REF_SUFFIX=_settled` selects a LONGER re-capture of the
+# same subject, which `settled.sh` needs because the originals stop within 0.5 to 2.0 s of their
+# own hand-off. Two files per subject, so a longer clip can never silently move an all8.sh
+# baseline: a re-encode alone shifts MADC even when the framing is identical.
+ref=$HERE/REF_NEW/${key}${REF_SUFFIX:-_game_fresh}.mp4
+python3 $HERE/mad.py $out "$ref" "$beats" --inner --offset=$off --dy=0 --fps=30 \
   | awk '/MEAN MADC/{m=$0} /MEAN r/{r=$4} END{printf "%s   r=%s\n", m, r}'
