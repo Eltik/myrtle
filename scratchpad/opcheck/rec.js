@@ -120,14 +120,33 @@ const initScript = () => {
     // Let assets load on the REAL clock (fetches don't depend on rAF), pumping a little
     // so any load-gated rAF work can proceed without advancing the scene meaningfully.
     page.on("console", (m) => { const t = m.text(); if (t.includes("DBGBG")) console.error("[page]", t); });
-    for (let i = 0; i < 40; i++) {
+    // 🚨 A CANVAS IS NOT A SCENE, and mistaking one for the other is silent.
+    // This used to break out on `document.querySelector("canvas")` alone after ~2.25 s. The canvas
+    // element exists long before `buildComposite` has finished, so under concurrent load the
+    // virtual clock started advancing while the scene was still loading, the entrance then began
+    // LATE in virtual time, and every sampled frame sat at the wrong scene time. It does not read
+    // as an error: the frames are sharp, plausible, and simply from the wrong moment. Measured on
+    // chyue at t=24.15, which is 4.15 s past her hand-off: three-way concurrency produced a frame
+    // whose corner was (230, 169, 106), mid-entrance art, where an unloaded run gives the settled
+    // (77, 77, 78). Two runs of the SAME command are bit-identical, 0 of 607500 px, so this is a
+    // load-dependent START OFFSET and not non-determinism.
+    //
+    // `__settleProbe` / `__dynXform` are installed immediately after the MAIN composite is built,
+    // so waiting for one of them is a real readiness signal rather than a proxy for it. That still
+    // does not cover the `_Start` composite, which builds afterwards: when a measurement depends on
+    // scene time, pass `PROBE=__settleProbe` and assert `dolly === null` at the sample the way
+    // `panelfit.py` does. The warmup duration is printed so a slow load is visible in the log.
+    const warm0 = Date.now();
+    let ready = false;
+    for (let i = 0; i < 160; i++) {
         await page.evaluate(() => window.__pump(window.__vt));
         await new Promise((r) => setTimeout(r, 250));
-        const ready = await page.evaluate(
-            () => !!document.querySelector("canvas"),
+        ready = await page.evaluate(
+            () => !!document.querySelector("canvas") && (typeof window.__settleProbe === "function" || typeof window.__dynXform === "function"),
         );
         if (ready && i > 8) break;
     }
+    console.error(`[rec] warmup ${((Date.now() - warm0) / 1000).toFixed(2)}s, composite hook ${ready ? "PRESENT" : "ABSENT -- frames may be at the wrong scene time"}`);
 
     let t = 0;
     for (const target of shots) {
