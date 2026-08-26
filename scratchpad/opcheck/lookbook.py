@@ -6,6 +6,31 @@ labelled by SKIN DISPLAY NAME while everything on our side is keyed by asset id.
 costs a screenshot per scroll and has already burned most of one session. `skin_table_cur.json`
 carries the whole mapping, so arrive knowing the brand grid and the tile caption.
 
+🚨 TWO NAVIGATION FACTS THAT COST A RUN EACH, so they live here rather than only in the notes.
+
+  SWIPE TRAVERSAL DOES NOT EXIST. Refuted on all three surfaces: the skin page's right panel is a
+  PER-OPERATOR carousel (Mousse has one card and it does not move; Wiš'adel ends after her third),
+  the page's art region ignores a horizontal swipe, and in the full-screen viewer the swipe PANS
+  THE ARTWORK, which also leaves the camera displaced for any capture taken afterwards. The grid
+  tile tap is the only route to a skin page.
+
+  THE ON SALE BANNER IS THE HAZARD DISCRIMINATOR, and it is on screen rather than in data. Each
+  brand grid splits into `in stock | On Sale` and `Previous`. Every tile that opened a
+  "Confirm purchase?" dialog was in the first (exc, mue, and ska's Red Countess which was therefore
+  not tapped); every tile that opened a preview page was in the second (cet, cel) or was marked
+  preview-only (wis). Sale state is server-driven and time-varying, which is why no field in
+  `skin_table.json` predicts it: `IsBuySkin` is true and `ObtainApproach` is "Store" on all 13
+  entrance skins without exception. READ THE SECTION HEADER BEFORE TAPPING, and never tap under
+  `On Sale`.
+
+  ⛔ The OP price is NOT in the pulled gamedata. Four search shapes over all 56 tables in
+  `assets/output/en/gamedata/excel`: a structural walk of `shop_client_table.json` (the skin
+  appears only as a `Carousels[].Items[]` good id with a display window), `item_table.json` (only
+  `UniqueInfo {key: skinId, value: 1}`), a key-name census for cost/price/diamond/originium/currency
+  across every table (`Price` is cash gift packs, `PurchasePrice` is the event shop, neither keyed
+  by a skin), and a raw-text context grep for the skin id, which occurs in exactly three files.
+  The cost is served by the shop endpoint at runtime. The 24 OP tier was read off the tile.
+
   lookbook.py                 census + the disk/table diff
   lookbook.py <key|skinid>..  addressing for named subjects (all8.sh keys work)
 
