@@ -18,21 +18,28 @@
 # the trim is whatever all8.sh already declares for that key. Both are READ from their existing
 # sources at run time rather than copied here, so a trim re-derivation lands on both instruments.
 #
-# ⚠️ COVERAGE IS 6 OF 13, and it is a property of the CAPTURES, not of the renderer. A reference
+# ⚠️ COVERAGE IS 8 OF 13, and it is a property of the CAPTURES, not of the renderer. A reference
 # qualifies only if some clip of it runs past `entranceDuration + 9`:
 #
-#     REACHES     whitw2 (25.700s clip, needs 23.500)   chyue (32.267 / 29.000)
-#                 fugue  (29.767 / 18.767)              kalts (27.900 / 23.500)
-#                 excunew (18.233 / 15.500)
-#                 wis    (23.390 / 21.550)  <- via `wis_settled.mp4`, re-captured 2026-08-26
-#     CANNOT      ska (22.500 clip, needs 31.333)  exc (7.000 / 15.500)  cel (18.500 / 27.000)
-#                 mly (18.500 / 25.500)  mue (20.500 / 29.000)  eyja (10.500 / 18.767)
-#                 cet (19.500 / 28.000)
+#     REACHES   whitw2 (25.700s clip, needs 23.500)  chyue (32.267 / 29.000)
+#               fugue  (29.767 / 18.767)             kalts (27.900 / 23.500)
+#               excunew (18.233 / 15.500)
+#               wis (23.390 / 21.550)  cet (40.140 / 28.000)  cel (40.190 / 27.000)
+#                     ^ the three re-captured 2026-08-26 from the FLOT lookbook viewer at 20 Mbps
+#     CANNOT    ska (22.500 clip, needs 31.333)  exc (7.000 / 15.500)  mly (18.500 / 25.500)
+#               mue (20.500 / 29.000)  eyja (10.500 / 18.767)
 #
-# The seven that cannot reach do not fall short of the LAST settled beat, they end before the
-# FIRST one: every one stops within 0.5 to 2.0 s of its own hand-off. Nothing partial can be
-# salvaged, so extending this instrument means re-capturing them past the cut from the FLOT
-# lookbook viewer, not adjusting the beat offsets. `lookbook.py` addresses all seven.
+# The five that cannot reach do not fall short of the LAST settled beat, they end before the FIRST:
+# every one stops within 0.5 to 2.0 s of its own hand-off. Nothing partial can be salvaged, so
+# extending this instrument means re-capturing them, not adjusting the beat offsets.
+#
+# 🚨 WHY THOSE FIVE ARE STILL MISSING, and it is a FENCE rather than a difficulty. Tapping an
+# unowned PURCHASABLE tile in the lookbook grid opens a "Confirm purchase?" dialog with a Buy
+# button rather than a preview page: observed on exc (Executor, 24 OP) and mue (Muelsyse, 24 OP).
+# Wiš'adel's Supernova is marked "Outfit is for preview only" and previews safely, and cel and cet
+# happened to open as pages. There is no reliable way yet to tell which a tile will do BEFORE
+# tapping it, so a capture sweep over the remaining five is a sweep past Buy buttons. Verify the
+# right panel after every tile tap and abort on a Buy button.
 #
 # ⚠️ These frames carry a LARGE framing error that is not the thing you are usually measuring
 # (chyue 106.477, whitw2 99.303 against pre-cut 20.230 and 33.432). Read this instrument as a
