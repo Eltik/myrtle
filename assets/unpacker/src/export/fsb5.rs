@@ -123,7 +123,7 @@ impl<'a> BitReader<'a> {
         self.bit_pos = bit_pos;
     }
 
-    fn read_bit(&mut self) -> u8 {
+    const fn read_bit(&mut self) -> u8 {
         if self.bit_pos / 8 >= self.data.len() {
             return 0;
         }

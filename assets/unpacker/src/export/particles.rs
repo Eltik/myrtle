@@ -1221,9 +1221,10 @@ pub(crate) fn collect_dynchar_particles(
         // note) and must fall back to the mean, or the mesh would vanish entirely.
         let axis_x = f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1]));
         let axis_y = f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1]));
-        let world_axis_mean = 0.5
-            * (f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1]))
-                + f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1])));
+        let world_axis_mean = f64::midpoint(
+            f64::from(ex[0] - origin[0]).hypot(f64::from(ex[1] - origin[1])),
+            f64::from(ey[0] - origin[0]).hypot(f64::from(ey[1] - origin[1])),
+        );
         // NARROWED variant (`DYNCHAR_SCALING_MODE=narrow`): only strip ANCESTOR contamination,
         // i.e. apply Local semantics solely where the system's OWN scale is already 1.0. That is
         // the conservative subset — it can only ever REMOVE a parent's contribution, never
@@ -1238,7 +1239,7 @@ pub(crate) fn collect_dynchar_particles(
             1 => host.local_scale_pos_of_go(all_objects, go_pid).map_or(
                 world_axis_mean,
                 |(sc, _)| {
-                    let own = 0.5 * (f64::from(sc[0].abs()) + f64::from(sc[1].abs()));
+                    let own = f64::midpoint(f64::from(sc[0].abs()), f64::from(sc[1].abs()));
                     if narrow && (own - 1.0).abs() > 0.02 {
                         world_axis_mean
                     } else {
@@ -1508,7 +1509,7 @@ pub(crate) fn collect_dynchar_particles(
             && axis_y > 1e-6
             && (axis_x - axis_y).abs() > 5e-3 * axis_x.max(axis_y);
         let (fx, fy) = if aniso {
-            let mean = 0.5 * (axis_x + axis_y);
+            let mean = f64::midpoint(axis_x, axis_y);
             ((axis_x / mean) as f32, (axis_y / mean) as f32)
         } else {
             (1.0f32, 1.0f32)
@@ -2331,7 +2332,7 @@ pub(crate) fn collect_dynchar_particles(
             let own = host
                 .local_scale_pos_of_go(all_objects, go_pid)
                 .map_or(f64::NAN, |(sc, _)| {
-                    0.5 * (f64::from(sc[0].abs()) + f64::from(sc[1].abs()))
+                    f64::midpoint(f64::from(sc[0].abs()), f64::from(sc[1].abs()))
                 });
             eprintln!(
                 "    [ptcl] SCALE mode={} world={world_axis_mean:.4} own={own:.4} ratio={:.4} {}",

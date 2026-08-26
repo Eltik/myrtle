@@ -43,3 +43,12 @@ opcheck/scoreable_skins.FULL.json
 opcheck/l2d_entrance_catalog.json
 opcheck/fit_chyue.json
 opcheck/cetnat/
+
+kapwing-assets/video/
+kapwing-assets/screenshots/
+kapwing-assets/upload-these/
+kapwing-assets/contact-sheets/
+kapwing-assets/_raw/
+kapwing-assets/*.zip
+kapwing/
+kapwing-assets
