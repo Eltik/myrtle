@@ -169,6 +169,18 @@ const initScript = () => {
             const cb = await page.evaluate(() => window.__camBox ?? null);
             console.log("CAMBOX " + file + " " + JSON.stringify(cb));
         }
+        // PROBE=<hookName>: call a DEV window hook once per shot and print it beside the frame.
+        // Generic on purpose -- the `dumplayers` block below is gated on a URL param that also
+        // CHANGES THE RENDER, so it cannot be used to read a hook during an ordinary measurement.
+        // Printed as `PROBE <file> <json>` so a grader can pair it with the frame it belongs to.
+        if (process.env.PROBE) {
+            try {
+                const pv = await page.evaluate((n) => (typeof window[n] === "function" ? window[n]() : "NO-HOOK"), process.env.PROBE);
+                console.log("PROBE " + file + " " + JSON.stringify(pv));
+            } catch (e) {
+                console.log("PROBE " + file + " null");
+            }
+        }
         if (process.env.EXTRA && /dumplayers/.test(process.env.EXTRA)) {
             // FIRST and guarded: the probes below throw when a ref is null (`__dumpSlots` does
             // at the settled idle), and one throw aborts the whole block — which silently ate
