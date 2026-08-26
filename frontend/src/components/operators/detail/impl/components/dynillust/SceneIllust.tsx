@@ -1503,7 +1503,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // interpolates the entrance's framing from `from` (close) to `to` (steady) over
     // `duration` seconds of REAL time (not animation progress - the zoom is a fixed
     // ~0.7s regardless of the 17s entrance), then clears itself so the framing holds.
-    const entranceZoomRef = useRef<{ container: PIXI.Container; from: IAnimationBounds; to: IAnimationBounds; elapsed: number; duration: number; delay: number } | null>(null);
+    const entranceZoomRef = useRef<{ container: PIXI.Container; from: IAnimationBounds; to: IAnimationBounds; elapsed: number; duration: number; delay: number; fit?: ISpineFit } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const mountedRef = useRef(true);
     const loadIdRef = useRef(0);
@@ -2155,7 +2155,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 };
                 const { width: sw, height: sh } = appRef.current.screen;
                 liveDisplayBox = b;
-                layoutSpine(ez.container, sw, sh, b, fitRef.current);
+                layoutSpine(ez.container, sw, sh, b, ez.fit ?? fitRef.current);
                 if (t >= 1) entranceZoomRef.current = null;
             }
             // Entrance→main crossfade: ramp the main IN and the dissolved entrance OUT, then
@@ -3657,6 +3657,36 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             screen: { w: app.screen.width, h: app.screen.height },
                         };
                     };
+                    // DIAGNOSTIC (`__settleProbe`, DEV only): where the SETTLE actually lands, and
+                    // what it was aimed at. The panel terminus is `main.contentBounds` fitted
+                    // `mode: "contain"`, the same expression the 70 non-entrance skins use, so a
+                    // panel that settles somewhere else has to be explained by one of three things
+                    // and this tells them apart:
+                    //
+                    //   `contentBounds`   the box itself. Measured by `paintedLocalBounds` over
+                    //                     THIS composite's own container, at `main` build time,
+                    //                     which is BEFORE the `_Start` composite is built at all.
+                    //   `dolly`           non-null means the post-hand-off move is still running,
+                    //                     so any margin read at this instant is mid-flight. Grade
+                    //                     on `dolly == null`, never on a guessed settle time.
+                    //   `root`            the live world transform, i.e. what the camera ended up
+                    //                     doing regardless of what it was handed.
+                    //
+                    // 🔑 Read `dolly` before believing a margin. A "framing" failure and a sample
+                    // taken 0.4 s early look identical in the pixels.
+                    const wS = window as unknown as { __settleProbe?: () => unknown };
+                    wS.__settleProbe = () => {
+                        const ez = entranceZoomRef.current;
+                        return {
+                            surface,
+                            contentBounds: main.contentBounds,
+                            bounds: main.bounds,
+                            live: boundsRef.current,
+                            dolly: ez ? { from: ez.from, to: ez.to, elapsed: ez.elapsed, duration: ez.duration, delay: ez.delay, fit: ez.fit ?? null } : null,
+                            root: m(main.root),
+                            screen: { w: app.screen.width, h: app.screen.height },
+                        };
+                    };
                     // Spine CLIPPING attachments, and whether pixi-spine actually applied them.
                     // Civilight Eterna's entrance is the only captured skin the game pillarboxes
                     // (a hard 1920x1080 aperture inside 2340x1080), and hers is the only `_Start`
@@ -4018,36 +4048,32 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // recording - the steady settle is a knees-up shot, not a full-body pull-out).
                     // A pull-out is only performed when the data authorizes one (`entrancePullOut`,
                     // cello) or when there was no cinematic at all (the standard archive open).
-                    // DIAGNOSTIC (`?entwhole=1`, default OFF): let an ENTRANCE skin's settled idle
-                    // converge on the same frame a NON-entrance skin settles at, the drawn content
-                    // contained with margins.
+                    // THE PANEL'S ENTRANCE TERMINATES AT THE CONTAIN BOX. The cinematic plays
+                    // on every surface; only where it ENDS differs. A non-entrance skin settles at
+                    // `whole = main.contentBounds` fitted `mode: "contain"`, which is what
+                    // letterboxes, while the entrance settle height-fits through `fitRef` and crops
+                    // the width into full bleed. On a panel the entrance now lands in the same box
+                    // the 70 non-entrance skins already use, so the idle after the cinematic
+                    // matches the idle without one.
                     //
-                    // 🔑 The two paths differ in exactly one place and it is NOT the authored
-                    // centre. `authoredTightBounds` and `authoredDisplayBounds` both come from
-                    // `bodyFrameBox`, so BOTH paths already discard `cameraOffsetPx`/`Px2`; that
-                    // cannot explain a difference between them. What the non-entrance branch below
-                    // does and this one never reaches is `whole = main.contentBounds` fitted
-                    // `mode: "contain"`. `contain` is what letterboxes; `fitRef.current` fits by
-                    // HEIGHT and crops the width, which is the full-bleed look. Its own comment
-                    // says so: "the 12 with an entrance are untouched, which is why the three
-                    // measured reference skins cannot move".
+                    // 🔑 It is a DOLLY TARGET, not a snap. Returning early and assigning the box
+                    // would jump at the hand-off, because the cinematic ends at the height-fit
+                    // camera. Feeding it to `entranceZoomRef` instead means the existing post-
+                    // hand-off dolly drives the whole move, and it carries its own `fit` so the
+                    // contain mode applies across the interpolation rather than switching under it.
                     //
-                    // Gated because it moves ONLY the post-hand-off idle, a region no scored beat
-                    // reaches, so MADC cannot adjudicate it and the five settled captures are the
-                    // only evidence. `bodyFrameBox` itself is deliberately untouched: `gameFrame`
-                    // and the entrance dolly are built from it, and re-seating
-                    // `authoredTightBounds` would move the entrance framing on all 12 entrance
-                    // skins and invalidate every recorded baseline (see `authoredTightShift`).
-                    const entWhole = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("entwhole") === "1";
-                    const entWholeBox = entWhole && opts?.fromEntrance && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
-                    if (entWholeBox) {
-                        const fit: ISpineFit = { mode: "contain", align: fitRef.current.align };
-                        main.bounds = entWholeBox;
-                        boundsRef.current = entWholeBox;
-                        layoutSpine(main.root, sw, sh, entWholeBox, fit);
-                        return;
-                    }
-                    if (opts?.fromEntrance && !entrancePullOut && openTight) {
+                    // ⚠️ Terminating at contain does NOT license contain during the cinematic. The
+                    // entrance's own framing is untouched; only the terminus moves.
+                    //
+                    // `?panelsettle=0` reverts a panel to the viewer's full-bleed terminus, kept as
+                    // the one deliberate A/B here. Read as an explicit "0" so an ABSENT parameter
+                    // keeps the shipped behaviour. (The previous `?entwhole=1` and `?panelentrance=1`
+                    // are GONE rather than left as dead toggles: this IS the entwhole behaviour, now
+                    // surface-gated, and the entrance is never suppressed.)
+                    const panelSettleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("panelsettle") !== "0";
+                    const panelTerminus = surface === "panel" && opts?.fromEntrance && panelSettleOn && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
+                    const panelFit: ISpineFit | undefined = panelTerminus ? { mode: "contain", align: fitRef.current.align } : undefined;
+                    if (opts?.fromEntrance && !entrancePullOut && openTight && !panelTerminus) {
                         main.bounds = openTight; // resizes keep the held tight frame
                         layoutSpine(main.root, sw, sh, openTight, fitRef.current);
                         boundsRef.current = openTight;
@@ -4122,11 +4148,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         }
                     }
                     const dur = entrancePullOut ? entrancePullOut.dur : 2.0;
-                    if (openFrom) {
-                        layoutSpine(main.root, sw, sh, openFrom, fitRef.current);
-                        entranceZoomRef.current = { container: main.root, from: openFrom, to: gameFrame, elapsed: 0, duration: dur, delay: 0.15 };
+                    // The panel's terminus replaces `gameFrame` as the dolly TARGET and carries the
+                    // contain fit with it, so the move is interpolated rather than snapped. A skin
+                    // with no pull-out has no `openFrom`, so it starts the dolly from the tight
+                    // frame the cinematic ended on.
+                    const target = panelTerminus ?? gameFrame;
+                    // A resize re-lays out from `main.bounds`, which was set to `gameFrame` before
+                    // the cinematic. Point it at the terminus or the panel loses its box on resize.
+                    if (panelTerminus) {
+                        main.bounds = panelTerminus;
+                        boundsRef.current = panelTerminus;
+                    }
+                    const startBox = openFrom ?? (panelTerminus ? openTight : null);
+                    if (startBox) {
+                        layoutSpine(main.root, sw, sh, startBox, panelFit ?? fitRef.current);
+                        entranceZoomRef.current = { container: main.root, from: startBox, to: target, elapsed: 0, duration: dur, delay: 0.15, fit: panelFit };
                     } else {
-                        layoutSpine(main.root, sw, sh, gameFrame, fitRef.current);
+                        layoutSpine(main.root, sw, sh, target, panelFit ?? fitRef.current);
                     }
                 };
 
@@ -4187,25 +4225,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // the standing idle STATIC at the settled frame - the game's own preview shot. Gating
                 // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
                 // the wire, so a statcam render is not perturbed by the entrance's assets at all.
-                // THE WINDOWED SURFACE DOES NOT PLAY THE ENTRANCE (see `surface` on the props).
-                // Gated at the BUILD for the same reason `staticCamOn` is: it keeps the `_Start`
-                // skel, atlas and scene off the wire entirely, so a panel render is not perturbed
-                // by the entrance's assets, and the fall-through opens the standing idle STATIC at
-                // the settled frame - the same path the 48 non-entrance skins already take.
+                // The entrance BUILDS AND PLAYS ON EVERY SURFACE. What differs by surface is where
+                // it ENDS, which `openStandingIdle` handles: a panel terminates at the contain box
+                // the non-entrance skins settle into, a viewer keeps the full-bleed authored frame.
                 //
-                // `?panelentrance=1` forces the entrance back on for a panel, for A/B only. Read as
-                // an explicit "1" so an ABSENT parameter keeps the shipped behaviour.
-                const panelEntrance = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("panelentrance") === "1";
-                const entranceOff = surface === "panel" && !panelEntrance;
-                const entrance =
-                    staticCamOn() || entranceOff
-                        ? null
-                        : await buildComposite(startSkel, startAtlas, {
-                              mode: "entrance",
-                              onEntranceEnd: () => {
-                                  doSwapRef.current = swapToMainIdle;
-                              },
-                          });
+                // ⚠️ An earlier pass gated the BUILD here so a panel skipped the cinematic entirely.
+                // That framed the idle correctly by deleting the thing being framed. The cinematic
+                // is wanted on the surface people browse; only its terminus was wrong.
+                const entrance = staticCamOn()
+                    ? null
+                    : await buildComposite(startSkel, startAtlas, {
+                          mode: "entrance",
+                          onEntranceEnd: () => {
+                              doSwapRef.current = swapToMainIdle;
+                          },
+                      });
                 if (aborted()) {
                     if (entrance && entrance !== "unsupported") entrance.destroy();
                     return; // main stays tracked in compositesRef; cleanup frees it.
