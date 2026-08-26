@@ -17,10 +17,9 @@ ROUTE, for the record, from `capture_l2d.sh::navigate_to_lookbook`:
 The lookbook then offers `Show Unowned` (checked by default) and `Sort by Release` / `Sort by
 Brand`; sort by brand and use `brand` below to pick the grid, `name` to pick the tile.
 
-⚠️ `skin_table_cur.json` IS A STALE PULL. It carries 69 skins with a `dynIllustId` where disk has
-86 directories holding a `dyn_illust_*.skel`, and the 17 it is missing include the two NEWEST
-entrance skins, whitw2 `sale#15` and cetsyr `epoque#50`. Those two cannot be addressed from it and
-have to be found by eye. Re-pull the table before trusting an absence here.
+⚠️ The scratch pull `skin_table_cur.json` beside this script IS STALE and is NOT used: 69
+dynIllust skins against this table's 82, missing whitw2 `sale#15` and cetsyr `epoque#50` entirely,
+which is why `cet` briefly looked unaddressable. Read the pipeline's table, never the pull.
 
 🔑 THE CROSS-CHECK, and it lands in our favour. On every skin both sources carry, 69 of 69, the
 table's `dynEntranceId` agrees exactly with whether disk ships a `_Start.skel`. Zero disagreements.
@@ -38,7 +37,12 @@ import json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DYN = "/Users/eltik/Documents/Coding/myrtle/assets/output/en/spine/DynIllust"
-TABLE = os.path.join(HERE, "skin_table_cur.json")
+# 🚨 THE REPO'S OWN EXTRACTED TABLE, not the scratch pull beside this script.
+# `skin_table_cur.json` is a hand pull from a client and it is BEHIND: 69 dynIllust skins where
+# this one has 82, missing the two newest entrance skins outright. This file is produced by the
+# asset pipeline and is current, so there is nothing to "refresh" and no pull to improvise.
+# Shape differs: `CharSkins` is a LIST of {key, value} and the fields are PascalCase.
+TABLE = "/Users/eltik/Documents/Coding/myrtle/assets/output/en/gamedata/excel/skin_table.json"
 
 # all8.sh's keys, so a caller can say `wis` rather than the directory name.
 KEYS = {
@@ -66,15 +70,15 @@ def dirkey(skin_id):
 
 
 def load():
-    cs = json.load(open(TABLE))["charSkins"]
+    cs = [e["value"] for e in json.load(open(TABLE))["CharSkins"]]
     tab = {}
-    for s in cs.values():
-        if s.get("dynIllustId"):
-            d = s["displaySkin"]
-            tab[dirkey(s["skinId"]).lower()] = dict(
-                skinId=s["skinId"], name=d.get("skinName"), brand=d.get("skinGroupName"),
-                year=d.get("onYear"), period=d.get("onPeriod"), sortId=d.get("sortId"),
-                entrance=bool(s.get("dynEntranceId")))
+    for s in cs:
+        if s.get("DynIllustId"):
+            d = s["DisplaySkin"]
+            tab[dirkey(s["SkinId"]).lower()] = dict(
+                skinId=s["SkinId"], name=d.get("SkinName"), brand=d.get("SkinGroupName"),
+                year=d.get("OnYear"), period=d.get("OnPeriod"), sortId=d.get("SortId"),
+                entrance=bool(s.get("DynEntranceId")))
     disk = {}
     for d in sorted(os.listdir(DYN)):
         p = os.path.join(DYN, d)
@@ -105,7 +109,7 @@ def main():
     print(f"table  {len(tab):3d} skins with dynIllustId,  {sum(v['entrance'] for v in tab.values()):3d} with a dynEntranceId")
     print(f"paired {len(both):3d}, entrance-flag disagreements {len(dis)}")
     od = sorted(set(disk) - set(tab))
-    print(f"\nON DISK, ABSENT FROM THE PULLED TABLE ({len(od)}), which is the table being behind:")
+    print(f"\nON DISK, ABSENT FROM GAMEDATA ({len(od)}), exported art the EN table does not list as skins:")
     for k in od:
         print(f"   {disk[k]['dir']:40s} _Start={disk[k]['start']}")
     ot = sorted(set(tab) - set(disk))
