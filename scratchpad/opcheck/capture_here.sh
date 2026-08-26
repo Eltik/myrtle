@@ -42,6 +42,21 @@ dur=float(subprocess.run(["ffprobe","-v","error","-show_entries","format=duratio
 g=subprocess.run(["ffmpeg","-v","error","-i",raw,"-f","rawvideo","-pix_fmt","gray","-"],capture_output=True).stdout
 n=len(g)//(W*H); G=np.frombuffer(g,np.uint8)[:n*W*H].reshape(n,H,W)
 fps=n/dur if dur>0 else 60.0
+# 🚨 FPS GATE. The emulator renders at ~20 fps WHEN ITS WINDOW IS NOT FOCUSED, and the resulting
+# clip looks entirely normal: right art, right timing, just fewer frames. Measured on Skadi2 at
+# 20 Mbps, same skin and settings minutes apart: 19.76 fps tabbed out -> 60.01 fps focused. That
+# supersedes the two explanations this project carried for the 20-23 fps clips (host load from a
+# concurrent puppeteer run, and screenrecord bitrate throttling); it retroactively accounts for
+# celnew, skanew and eyjanew, and it is why an under-rate clip is RE-TAKEN rather than annotated.
+#
+# ⚠️ Measure the rate on the RAW recording, here, never on a trimmed copy. `ffmpeg -ss -c copy`
+# shifts the frame count against the container duration: cel reads 60.01 on the raw and 47.94 on
+# its own `-c copy` trim, so auditing trimmed files invents degradations that never happened.
+MIN_FPS = 59.0
+if fps < MIN_FPS:
+    print(f"[proc] \u26d4 {fps:.2f} fps, under {MIN_FPS:.0f}. FOCUS THE EMULATOR WINDOW AND RETAKE.")
+    print("[proc]    Not written: an under-rate clip is retaken, not annotated.")
+    sys.exit(5)
 lum=G.reshape(n,-1).mean(axis=1)
 print(f"[proc] {W}x{H} {n} frames @ {fps:.2f}fps  luma {lum.min():.1f}..{lum.max():.1f}")
 dark=np.where(lum<12)[0]
