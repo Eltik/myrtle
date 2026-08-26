@@ -405,7 +405,7 @@ function staticCamBox(b: IAnimationBounds): IAnimationBounds {
 /** Frame a no-entrance skin to everything it PAINTS rather than to its authored `_adjustes`
  *  camera. **DISABLED by default - the target is real but only ONE reference exists.**
  *
- *  The observation is solid. 70 of the 82 dynchar skins have no `_Start`, and for those the
+ *  The observation is solid. 69 of the 82 dynchar skins have no `_Start`, and for those the
  *  game's viewer shows the whole cut-out with margins while the authored `_adjustes[0]` box
  *  crops well inside it - content exceeds the authored view on 61 of 80 skins (Ch'en the
  *  Holungday 2690x1789 against a 1171 px view; Virtuosa 2.7x; Ch'en Wei 3.8x). Against the
@@ -3659,7 +3659,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     };
                     // DIAGNOSTIC (`__settleProbe`, DEV only): where the SETTLE actually lands, and
                     // what it was aimed at. The panel terminus is `main.contentBounds` fitted
-                    // `mode: "contain"`, the same expression the 70 non-entrance skins use, so a
+                    // `mode: "contain"`, the same expression the 69 non-entrance skins use, so a
                     // panel that settles somewhere else has to be explained by one of three things
                     // and this tells them apart:
                     //
@@ -4053,7 +4053,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // `whole = main.contentBounds` fitted `mode: "contain"`, which is what
                     // letterboxes, while the entrance settle height-fits through `fitRef` and crops
                     // the width into full bleed. On a panel the entrance now lands in the same box
-                    // the 70 non-entrance skins already use, so the idle after the cinematic
+                    // the 69 non-entrance skins already use, so the idle after the cinematic
                     // matches the idle without one.
                     //
                     // 🔑 It is a DOLLY TARGET, not a snap. Returning early and assigning the box
@@ -4089,8 +4089,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         // A skin with NO `_Start` has no authored shot to hold - the game's viewer
                         // shows the whole cut-out with margins, and the `_adjustes[0]` box crops
                         // well inside it (Ch'en the Holungday: 2704x1804 of content against a
-                        // 1500 px view). Frame the drawn CONTENT instead. 70 of the 82 dynchar
-                        // skins take this path; the 12 with an entrance are untouched, which is
+                        // 1500 px view). Frame the drawn CONTENT instead. 69 of the 82 dynchar
+                        // skins take this path; the 13 with an entrance are untouched, which is
                         // why the three measured reference skins cannot move.
                         // `?statcam=1` reproduces the game's SKIN-PREVIEW shot, which is NOT this
                         // archive shot. The archive view contains the whole cut-out with margins;
