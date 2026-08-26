@@ -116,7 +116,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 (aligned behind the spine) so the full painted vista fills in even
                                 when the dynamic asset omits it (sky/interior). */}
                             <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
-                            {showDynamic && dynamicFiles && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
+                            {showDynamic && dynamicFiles && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
                             <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null}>
                                 <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">

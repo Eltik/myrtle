@@ -54,6 +54,29 @@ interface ISceneIllustProps {
      * own static counterpart and the missing backdrop fills in.
      */
     backdrop?: string;
+    /**
+     * Which PRESENTATION SURFACE this instance is. The game shows a dynamic skin on two
+     * differently shaped surfaces and behaves differently on each, so the caller states which
+     * one it is rather than the renderer inferring it.
+     *
+     * - `"viewer"` (default): the full-screen surface. The game plays the `_Start` cinematic
+     *   here, and this is what every parity reference was captured from.
+     * - `"panel"`: the windowed surface with UI beside it, our operator-detail card. **The game
+     *   does NOT play the entrance here.** It comes up already settled and idles.
+     *
+     * 🔑 Measured, because it is not obvious: across four archive-page captures the largest
+     * frame-to-frame MAD after the page-open cross-dissolve is 5.054, and on the two settled
+     * clips it is 1.051 and 0.566 over 37.6 s and 45.3 s. The entrance cuts in the VIEWER
+     * captures run 15.2984 to 97.8794 and are preceded by a flat 253.000 span. Nothing
+     * resembling a cinematic happens on the windowed surface.
+     *
+     * Gating on the SURFACE is deliberate. It must never be a skin id, a list of the twelve
+     * entrance skins, or a flag derived from one: the game's own split is by surface, and its
+     * windowed page shows no entrance/non-entrance difference at all (right-side letterbox
+     * 10.9-11.8% on an entrance skin, 14.9% on a non-entrance one, 17.6% on another entrance
+     * one, so the two entrance skins BRACKET the non-entrance one).
+     */
+    surface?: "viewer" | "panel";
     onReady?: () => void;
 }
 
@@ -1318,7 +1341,7 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     }
 }
 
-export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = "character", backdrop, onReady }: ISceneIllustProps) {
+export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = "character", backdrop, surface = "viewer", onReady }: ISceneIllustProps) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const boundsRef = useRef<IAnimationBounds | null>(null);
@@ -4164,14 +4187,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // the standing idle STATIC at the settled frame - the game's own preview shot. Gating
                 // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
                 // the wire, so a statcam render is not perturbed by the entrance's assets at all.
-                const entrance = staticCamOn()
-                    ? null
-                    : await buildComposite(startSkel, startAtlas, {
-                          mode: "entrance",
-                          onEntranceEnd: () => {
-                              doSwapRef.current = swapToMainIdle;
-                          },
-                      });
+                // THE WINDOWED SURFACE DOES NOT PLAY THE ENTRANCE (see `surface` on the props).
+                // Gated at the BUILD for the same reason `staticCamOn` is: it keeps the `_Start`
+                // skel, atlas and scene off the wire entirely, so a panel render is not perturbed
+                // by the entrance's assets, and the fall-through opens the standing idle STATIC at
+                // the settled frame - the same path the 48 non-entrance skins already take.
+                //
+                // `?panelentrance=1` forces the entrance back on for a panel, for A/B only. Read as
+                // an explicit "1" so an ABSENT parameter keeps the shipped behaviour.
+                const panelEntrance = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("panelentrance") === "1";
+                const entranceOff = surface === "panel" && !panelEntrance;
+                const entrance =
+                    staticCamOn() || entranceOff
+                        ? null
+                        : await buildComposite(startSkel, startAtlas, {
+                              mode: "entrance",
+                              onEntranceEnd: () => {
+                                  doSwapRef.current = swapToMainIdle;
+                              },
+                          });
                 if (aborted()) {
                     if (entrance && entrance !== "unsupported") entrance.destroy();
                     return; // main stays tracked in compositesRef; cleanup frees it.
@@ -4314,7 +4348,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             resizeObserver.disconnect();
             cleanup();
         };
-    }, [files.skel, files.atlas, files.png, server, backdrop]);
+    }, [files.skel, files.atlas, files.png, server, backdrop, surface]);
 
     return (
         <div className="absolute inset-0">
