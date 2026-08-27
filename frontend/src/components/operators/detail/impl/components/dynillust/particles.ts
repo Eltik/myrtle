@@ -2844,6 +2844,18 @@ void main() {
     // 6 = the MAIN sampler's alpha; 7 = the per-particle VERTEX colour alpha.
     if (uRamTerm > 5.5 && uRamTerm < 6.5) { gl_FragColor = vec4(vec3(texture2D(uMainTex, mUV).a), 1.0); return; }
     if (uRamTerm > 6.5 && uRamTerm < 7.5) { gl_FragColor = vec4(vec3(vColor.a), 1.0); return; }
+    // 10..13 = the RGB FACTORS, the twin of the alpha terms above. col.rgb is the product
+    // texture(uMainTex, mUV).rgb * uMainColor.rgb * vColor.rgb, doubled, and when the composite is
+    // short by a constant ratio the only way to say WHICH factor is short is to paint each one.
+    // NOTE: no backticks in this block. The whole shader is a TEMPLATE LITERAL, so one backtick in
+    // a comment terminates it and the rest of the GLSL is parsed as TypeScript.
+    // Written opaque so the reader is the painted value itself, not a blend with what is behind.
+    //   10 = the MAIN sampler's rgb at the warped UV   11 = uMainColor.rgb
+    //   12 = the per-particle vColor.rgb               13 = the doubled product, pre-tonemap
+    if (uRamTerm > 9.5 && uRamTerm < 10.5) { gl_FragColor = vec4(texture2D(uMainTex, mUV).rgb, 1.0); return; }
+    if (uRamTerm > 10.5 && uRamTerm < 11.5) { gl_FragColor = vec4(uMainColor.rgb, 1.0); return; }
+    if (uRamTerm > 11.5 && uRamTerm < 12.5) { gl_FragColor = vec4(vColor.rgb, 1.0); return; }
+    if (uRamTerm > 12.5 && uRamTerm < 13.5) { gl_FragColor = vec4(col.rgb, 1.0); return; }
     // 8/9 = BLEND PROBE. 8 writes premultiplied BLACK at alpha 0.8, 9 writes nothing.
     // Under ADD (One,One) both are a no-op and must measure identical; under NORMAL
     // premultiplied (One,1-a) 8 multiplies the destination by 0.2 and 9 does not.
