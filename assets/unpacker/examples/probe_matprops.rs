@@ -86,13 +86,17 @@ fn main() {
             if *cid != 23 && *cid != 199 {
                 continue;
             }
-            for mp in r.get("m_Materials").and_then(Value::as_array).into_iter().flatten() {
+            // The INDEX within `m_Materials` matters: a ParticleSystemRenderer draws with slot 0
+            // and may carry a trail material after it, so "this GO has a material with X" is not
+            // the same claim as "the emitter draws with X".
+            let cname = if *cid == 23 { "MeshRenderer" } else { "ParticleSystemRenderer" };
+            for (mi, mp) in r.get("m_Materials").and_then(Value::as_array).into_iter().flatten().enumerate() {
                 let Some(mp) = pid(mp) else { continue };
                 if !seen.insert(mp) {
                     continue;
                 }
                 let Some((_, mat)) = objs.get(&mp) else { continue };
-                println!("=== GO {name:?}  material {mp}");
+                println!("=== GO {name:?}  {cname} m_Materials[{mi}]  material {mp}");
                 let sp = mat.get("m_SavedProperties");
                 dump("float", sp.and_then(|s| s.get("m_Floats")));
                 dump("color", sp.and_then(|s| s.get("m_Colors")));
