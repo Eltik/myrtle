@@ -2711,6 +2711,49 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         else c.alpha = a;
                     }
                 }
+                // DIAGNOSTIC (`__srcProbe`, DEV only): which scene-JSON layer indices actually became
+                // meshes, and their live state. `?abl=src:` and `?abl=srconly:` address the SCENE
+                // CONTAINERS by `__srcIndex`, so an index that never became a mesh is INVISIBLE to
+                // both, and "ablating it changes nothing" then means "it is not there" rather than
+                // "it paints nothing". Excu2's aperture set that trap once and kalts's 47/48 look
+                // like it again, so this enumerates the built set instead of inferring it.
+                if (import.meta.env?.DEV && typeof window !== "undefined") {
+                    const wS2 = window as unknown as { __srcProbe?: () => unknown };
+                    wS2.__srcProbe = () => {
+                        const rows: unknown[] = [];
+                        // EVERY container the builder returns, not just two of them. The builder
+                        // hands back `{ aperture, background, foreground, gaps }` and a layer can be
+                        // routed into a separator GAP instead of either main container, so counting
+                        // only background+foreground reproduces the exact blind spot this probe was
+                        // written to close.
+                        const conts: (PIXI.Container | null | undefined)[] = [scene?.background, scene?.foreground];
+                        for (const g of scene?.gaps ?? []) conts.push(g);
+                        for (const c of conts) {
+                            if (!c) continue;
+                            for (const m of c.children) {
+                                const rt = m as unknown as ISceneLayerRuntime;
+                                rows.push({
+                                    src: rt.__srcIndex,
+                                    vis: m.visible,
+                                    rend: m.renderable,
+                                    a: Number(m.alpha.toFixed(3)),
+                                    camLocked: !!rt.__camLocked,
+                                });
+                            }
+                        }
+                        const built = rows.map((r) => (r as { src?: number }).src).filter((v) => v !== undefined);
+                        return {
+                            count: rows.length,
+                            built,
+                            has47: built.includes(47),
+                            has48: built.includes(48),
+                            gapCount: scene?.gaps?.length ?? 0,
+                            gapChildren: (scene?.gaps ?? []).map((g) => g.children.length),
+                            hasAperture: !!scene?.aperture,
+                            rows: rows.slice(0, 60),
+                        };
+                    };
+                }
                 // DIAGNOSTIC (`__partProbe`, DEV only, read via `PROBE=__partProbe` in rec.js):
                 // the particle containers' OWN alpha and their `worldAlpha`, plus the same for the
                 // scene containers as a control.
