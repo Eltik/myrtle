@@ -2665,13 +2665,48 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 {
                     const raw = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("partalpha") : null;
                     for (const tok of raw ? raw.split(",") : []) {
-                        const m = /^(bg|fg):([0-9.]+)$/.exec(tok);
+                        // `fgkids`/`bgkids` scale each EMITTER's own alpha instead of the
+                        // container's. The two are different questions and the container form
+                        // could not tell them apart: `__partProbe` reads the containers at a flat
+                        // alpha 1 / worldAlpha 1 on whitw2 while her emitter children carry
+                        // authored 0.1333, 0.2, 0.2667, 0.4 and 0.5333. So a container knob can
+                        // only ever test propagation, never whether the authored per-emitter
+                        // value reaches the draw.
+                        const m = /^(bg|fg|fgkids|bgkids):([0-9.]+)$/.exec(tok);
                         if (!m || !particles) continue;
                         const a = Number(m[2]);
                         if (!Number.isFinite(a)) continue;
-                        const c = m[1] === "bg" ? particles.background : particles.foreground;
-                        if (c) c.alpha = a;
+                        const kids = m[1].endsWith("kids");
+                        const c = m[1].startsWith("bg") ? particles.background : particles.foreground;
+                        if (!c) continue;
+                        if (kids) for (const ch of c.children) ch.alpha *= a;
+                        else c.alpha = a;
                     }
+                }
+                // DIAGNOSTIC (`__partProbe`, DEV only, read via `PROBE=__partProbe` in rec.js):
+                // the particle containers' OWN alpha and their `worldAlpha`, plus the same for the
+                // scene containers as a control.
+                //
+                // Why it is worth a hook rather than a guess. `?partalpha=` turned out to be a
+                // SWITCH on whitw2 rather than an intensity: 1.00/0.25/0.10/0.05/0.01 all render
+                // the same frame and only exactly 0 removes anything. That is consistent with the
+                // custom Disturb/Ram ports never reading world alpha, and it only MATTERS if some
+                // container is actually below 1 during the cinematic. A grep says nothing writes
+                // these, but a container inherits its ancestors' alpha through `worldAlpha`, so
+                // the grep is a claim and this is the measurement.
+                if (import.meta.env?.DEV && typeof window !== "undefined") {
+                    const wP = window as unknown as { __partProbe?: () => unknown };
+                    wP.__partProbe = () => ({
+                        partFg: particles ? { alpha: particles.foreground.alpha, world: particles.foreground.worldAlpha, n: particles.foreground.children.length } : null,
+                        partBg: particles ? { alpha: particles.background.alpha, world: particles.background.worldAlpha, n: particles.background.children.length } : null,
+                        sceneFg: scene ? { alpha: scene.foreground.alpha, world: scene.foreground.worldAlpha, n: scene.foreground.children.length } : null,
+                        sceneBg: scene ? { alpha: scene.background.alpha, world: scene.background.worldAlpha, n: scene.background.children.length } : null,
+                        // Per-child alpha inside the particle foreground, which is where a fade
+                        // would live if it is authored per emitter rather than on the container.
+                        fgChildren: particles
+                            ? particles.foreground.children.slice(0, 40).map((c) => Number(c.alpha.toFixed(4)))
+                            : null,
+                    });
                 }
                 // DIAGNOSTIC (`?layalpha=fg:20-25:0.5,bg:3:0`): scale one layer range's ALPHA.
                 //
