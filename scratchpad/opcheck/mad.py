@@ -94,6 +94,19 @@ def main():
     if srcaspect.lower() in ("none", "off", "0"):
         srcaspect = None
     beats = [float(t) for t in times.split(",")]
+    # `--ourtimes=t1,t2,...` overrides WHICH of our rendered frames each beat reads, leaving the
+    # GAME frame index alone. It exists for the CONTENT-CLOCK basis (see `cclock.py`): the
+    # reference captures dropped frames under host load, so a game frame can hold content the
+    # capture took up to several frames earlier, and comparing our render at container time
+    # against their content from earlier charges us for the recorder. One entry per beat.
+    #
+    # ⚠️ Not a beat move and not a trim change. `--offset` still applies on top, so a caller passes
+    # game-clock times here exactly as it would beats.
+    ourtimes = next((f.split("=", 1)[1] for f in flags if f.startswith("--ourtimes=")), None)
+    ourtimes = [float(t) for t in ourtimes.split(",")] if ourtimes else None
+    if ourtimes is not None and len(ourtimes) != len(beats):
+        print(f"--ourtimes has {len(ourtimes)} entries for {len(beats)} beats")
+        sys.exit(2)
 
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", game_mp4],
@@ -108,8 +121,9 @@ def main():
     G = np.frombuffer(raw, np.uint8)[: n * GW * GH * 3].reshape(n, GH, GW, 3)
 
     ys, cs, ms, rs = [], [], [], []
-    for b in beats:
-        o_img = Image.open(f"{ours_dir}/t{b + off:.2f}.png").convert("RGB")
+    for bi, b in enumerate(beats):
+        ot = b if ourtimes is None else ourtimes[bi]
+        o_img = Image.open(f"{ours_dir}/t{ot + off:.2f}.png").convert("RGB")
         gi = int(round(b * fps))
         if gi >= n:
             print(f"  t={b:<6} SKIPPED (game frame {gi} beyond {n})")

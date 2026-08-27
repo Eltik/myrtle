@@ -33,7 +33,15 @@ import sys
 
 import numpy as np
 
+# A frame that did not meaningfully advance. Used for the CLIP SURVEY, where the question is how
+# much of a capture is stale.
 DUP_PER_S = 15.0
+# A frame the recorder wrote TWICE: bit-exact, not merely slow. Only these are candidates for the
+# content-clock correction, and the distinction is load-bearing. Measured 2026-08-27: whitw2 t=2
+# reads 1.2109/s, which 15.0 flagged as a duplicate and which the frame sweep then showed is NOT
+# one (her optimum is 3 frames early and her curve is non-monotone, because her t=2 has a separate
+# 48.71-luma rendering error). Every genuine drop reads below 0.4/s.
+DROP_PER_S = 1.0
 MOTION_PER_S = 300.0
 
 
@@ -76,7 +84,7 @@ def beats(refdir):
     # control caught it.
     src = open("all8.sh").read()
     be = dict(re.findall(r"BEATS\[(\w+)\]=\"([^\"]+)\"", src))
-    print(f"{'skin':<9}{'beat':>7}{'gframe':>8}  {'dup?':<5}{'|d|/s':>9}  verdict")
+    print(f"{'skin':<9}{'beat':>7}{'gframe':>8}  {'drop?':<6}{'|d|/s here':>11}{'|d|/s near':>11}  verdict")
     bad = []
     for k in sorted(be):
         ref = f"{refdir}/{k}_game_fresh.mp4"
@@ -89,13 +97,13 @@ def beats(refdir):
             gi = int(round(b * 30))
             if gi < 1 or gi >= n:
                 continue
-            dup = d[gi - 1] < DUP_PER_S
+            dup = d[gi - 1] < DROP_PER_S
             loc = float(np.max(d[max(0, gi - 3): min(len(d), gi + 3)]))
             hit = dup and loc > MOTION_PER_S
             if hit:
                 bad.append((k, b, loc))
-            print(f"{k:<9}{b:7.1f}{gi:8d}  {'YES' if dup else 'no':<5}{loc:9.1f}  "
-                  f"{'CONTAMINATED' if hit else ('stalled, but static here' if dup else '')}")
+            print(f"{k:<9}{b:7.1f}{gi:8d}  {'YES' if dup else 'no':<6}{d[gi - 1]:11.4f}{loc:11.1f}  "
+                  f"{'CONTAMINATED' if hit else ('bit-exact, but static here' if dup else '')}")
     print(f"\nCONTAMINATED beats: {len(bad)}")
     for k, b, l in bad:
         print(f"   {k} t={b}  local motion {l:.0f}/s")
