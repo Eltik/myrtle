@@ -2703,9 +2703,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         sceneBg: scene ? { alpha: scene.background.alpha, world: scene.background.worldAlpha, n: scene.background.children.length } : null,
                         // Per-child alpha inside the particle foreground, which is where a fade
                         // would live if it is authored per emitter rather than on the container.
-                        fgChildren: particles
-                            ? particles.foreground.children.slice(0, 40).map((c) => Number(c.alpha.toFixed(4)))
-                            : null,
+                        fgChildren: particles ? particles.foreground.children.slice(0, 40).map((c) => Number(c.alpha.toFixed(4))) : null,
                     });
                 }
                 // DIAGNOSTIC (`?layalpha=fg:20-25:0.5,bg:3:0`): scale one layer range's ALPHA.
