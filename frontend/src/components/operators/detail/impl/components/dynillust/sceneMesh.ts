@@ -133,6 +133,8 @@ export interface ISceneLayer {
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
      *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
     scaleCurve?: [number, number][] | null;
+    /** Fixed point of `scaleCurve` in authored px (Y-up), exported from the animated owner. */
+    scalePivot?: [number, number] | null;
     /** ENTRANCE Transform POSITION offsets `[t, dx, dy]` in authored px, relative to this
      *  layer's rest `pos`. Only the scope rim carries one today. */
     posCurve?: [number, number, number][] | null;
@@ -952,6 +954,10 @@ export interface ISceneLayerRuntime {
     __camLocked?: boolean;
     /** Mirror of {@link ISceneLayer.camLockViewPx}. */
     __camLockView?: number;
+    /** Entrance transform replay, kept absent for layers with no authored curve. */
+    __scaleCurve?: [number, number][] | null;
+    __scalePivot?: [number, number] | null;
+    __posCurve?: [number, number, number][] | null;
     __colorCurve?: [number, number, number, number, number][] | null;
     /** The layer's STATIC authored tint - how the IDLE scene paints this same artwork, since
      *  the idle copies of the windowed layers carry neither a window nor a colour curve.
@@ -2192,10 +2198,14 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // MADC (17.405 -> 18.436) - so the layers belong, but their blue contribution may not.
         // His are three non-additive sort-10 sheets tinted [0.41, 0.46, 1.00] and [0.72, 0.82, 0.94].
         if (isForeground && fgAlphaScale() !== 1) mesh.alpha *= fgAlphaScale();
-        (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
+        const runtime = mesh as unknown as ISceneLayerRuntime;
+        runtime.__srcIndex = srcIndexOf.get(layer);
+        if (layer.scaleCurve?.length) runtime.__scaleCurve = layer.scaleCurve;
+        if (layer.scalePivot) runtime.__scalePivot = layer.scalePivot;
+        if (layer.posCurve?.length) runtime.__posCurve = layer.posCurve;
         if (layer.camLocked) {
-            (mesh as unknown as ISceneLayerRuntime).__camLocked = true;
-            if (layer.camLockViewPx) (mesh as unknown as ISceneLayerRuntime).__camLockView = layer.camLockViewPx;
+            runtime.__camLocked = true;
+            if (layer.camLockViewPx) runtime.__camLockView = layer.camLockViewPx;
         }
         // Same knob for layers with NO colour curve, which the runtime replay never visits.
         {

@@ -310,6 +310,8 @@ pub struct BgQuad {
     /// capture's radius to ~1% at four of five beats, so this is the missing input rather than an
     /// anchoring error. See `entrance_transform_curves`.
     pub scale_curve: Option<Vec<(f32, f32)>>,
+    /// Fixed point for `scale_curve`, in authored px (Y-up). `None` alongside an absent curve.
+    pub scale_pivot: Option<[f32; 2]>,
     /// ENTRANCE Transform POSITION keyframes for the quad's animated owner, as an OFFSET
     /// from its prefab pose, in UNITY units (scaled to authored px by `inv` at emission,
     /// like `follow.origin`). `entrance_transform_curves` has always decoded these alongside
@@ -932,6 +934,7 @@ pub fn collect_spine_assets(
                 own_root,
                 &skeleton_roots,
                 &host,
+                inv_scale,
                 resources,
             );
             claimed.extend(scene.claimed_tex.iter().copied());
@@ -1271,6 +1274,7 @@ fn collect_dynchar_bg_quads(
     own_root: Option<i64>,
     skeleton_roots: &HashSet<i64>,
     host: &BgParticleHost,
+    inv_scale: f64,
     resources: &HashMap<String, Vec<u8>>,
 ) -> BgScene {
     // GameObject path_id → Transform (class 4), and → MeshFilter mesh pid.
@@ -2845,6 +2849,19 @@ fn collect_dynchar_bg_quads(
                 // All-1.0 curves carry no information and would only bloat every scene JSON.
                 c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
             });
+        let scale_pivot = scale_curve.as_ref().and_then(|_| {
+            let owner = xform_owner?;
+            let tf = *go_to_transform.get(&owner)?;
+            // Match particles.rs's pivot: scaling a baked mesh must stay fixed at the animated
+            // owner's world origin, not at this child quad's origin or its father's.
+            let p = accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose).point([0.0, 0.0, 0.0]);
+            // The particle precedent emits authored px, so carry this scene pivot through the
+            // same skeleton-scale conversion used by the layer geometry and position curve.
+            Some([
+                (f64::from(p[0]) * inv_scale) as f32,
+                (f64::from(p[1]) * inv_scale) as f32,
+            ])
+        });
         // The OWNER's animated POSITION, resolved into the same space as `pos`. The curve is
         // authored in the owner's PARENT frame, so a parent-frame delta has to be carried
         // through the parent's world LINEAR part (rotation/scale) before it means anything in
@@ -2914,6 +2931,7 @@ fn collect_dynchar_bg_quads(
             src_blend,
             dst_blend,
             scale_curve,
+            scale_pivot,
             pos_curve,
             active_from: window.first().and_then(|w| w.0),
             active_until: window.first().and_then(|w| w.1),
@@ -5553,6 +5571,11 @@ fn export_scene(
         if let Some(sc) = &quad.scale_curve {
             layer["scaleCurve"] =
                 serde_json::json!(sc.iter().map(|&p| <[f32; 2]>::from(p)).collect::<Vec<_>>());
+        }
+        // Match particles.rs's fixed scale pivot; omit it with the curve so static exports stay
+        // byte-identical and the frontend never has a transform to replay.
+        if let Some(p) = &quad.scale_pivot {
+            layer["scalePivot"] = serde_json::json!(p);
         }
         // ENTRANCE reveal time (s) — the layer is hidden until its `m_IsActive` switches
         // ON in the `_Start` cinematic (cathedral first, mirror-world + throne later).

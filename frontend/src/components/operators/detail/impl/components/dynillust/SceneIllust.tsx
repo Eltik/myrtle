@@ -282,6 +282,12 @@ function apertureCenterOn(): boolean {
     return new URLSearchParams(window.location.search).get("apcenter") !== "0";
 }
 
+/** `?layxform=0` freezes scene-layer entrance scale and position at their baked pose. */
+function layerTransformOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("layxform") !== "0";
+}
+
 /** Linear sample of a `[t, value]` keyframe list, clamped at both ends. The scene's other
  *  samplers are shaped for XY and RGBA curves; this is the scalar case. */
 function sampleScalar(curve: [number, number][], t: number): number {
@@ -298,6 +304,23 @@ function sampleScalar(curve: [number, number][], t: number): number {
         }
     }
     return last[1];
+}
+
+/** Linear sample of a `[t, dx, dy]` layer-position curve, clamped at both ends. */
+function samplePosCurve(curve: [number, number, number][], t: number): [number, number] {
+    const first = curve[0];
+    if (t <= first[0]) return [first[1], first[2]];
+    const last = curve[curve.length - 1];
+    if (t >= last[0]) return [last[1], last[2]];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, x0, y0] = curve[i - 1];
+            const [t1, x1, y1] = curve[i];
+            const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+            return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f];
+        }
+    }
+    return [last[1], last[2]];
 }
 
 /** Blur radius as a fraction of the backdrop's on-screen height. `?gapblur=<f>` sweeps it. */
@@ -1992,6 +2015,39 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             m.renderable = true;
                             applySceneLayerColor(m, mm.__staticTint);
                             continue;
+                        }
+                        // Scene geometry is baked in absolute coordinates: `buildLayerMesh` copies
+                        // X and negates Y from `layer.pos`, so replay the exported Y-up pivot and
+                        // offset in that same Y-down mesh space. Set absolute transforms each tick
+                        // so held endpoint samples neither drift nor retain a previous frame.
+                        //
+                        // The SCALE term needs its fixed point and has no defensible default: a
+                        // uniform scale about the wrong pivot slides the layer across the frame
+                        // instead of resizing it in place, and the world origin is a guess, not a
+                        // derivation. So it applies ONLY where the exporter supplied `scalePivot`.
+                        // No deployed scene JSON carries that field yet (it is emitted by the
+                        // exporter change in this same commit and needs a FULL corpus re-export to
+                        // appear - exporting a bundle in isolation drops its `ram`, `uvScroll` and
+                        // `followBone` data, so it cannot be used to validate this), which is why
+                        // every current skin is bit-identical on this arm.
+                        //
+                        // `posCurve` needs no pivot. The exporter documents it as "authored-px
+                        // offsets the frontend ADDS to this layer's rest pose", so it is complete
+                        // on its own and applies now.
+                        if (mm.__scaleCurve || mm.__posCurve) {
+                            if (layerTransformOn()) {
+                                const piv = mm.__scalePivot;
+                                const s = mm.__scaleCurve && piv ? sampleScalar(mm.__scaleCurve, tt) : 1;
+                                const [px, py] = piv ?? [0, 0];
+                                const [dx, dy]: [number, number] = mm.__posCurve ? samplePosCurve(mm.__posCurve, tt) : [0, 0];
+                                if (Number.isFinite(s) && s > 0 && Number.isFinite(px) && Number.isFinite(py) && Number.isFinite(dx) && Number.isFinite(dy)) {
+                                    m.scale.set(s);
+                                    m.position.set(px * (1 - s) + dx, -py * (1 - s) - dy);
+                                }
+                            } else {
+                                m.scale.set(1);
+                                m.position.set(0, 0);
+                            }
                         }
                         // Material-colour replay: the `_Start` clip animates some layers'
                         // material colour (Mlynar's white flash alpha ramps 0→0.671 over
