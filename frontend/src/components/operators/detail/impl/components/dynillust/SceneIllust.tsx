@@ -754,6 +754,9 @@ interface IComposite {
     /** The game's SKIN-PREVIEW framing box - half the wide `_adjustes[0]` view. Consumed only by
      *  `?statcam=1`; see the derivation where it is built. Null for skins with no authored view. */
     previewBounds: IAnimationBounds | null;
+    /** `[scale, dx, dy]` in OUTPUT px: the measured settled-framing correction, applied RELATIVE
+     *  to whatever box the settled path produces. Null when no correction applies. */
+    settleFix: [number, number, number] | null;
     /** The TIGHT `_adjustes[1]` stop as a FRACTION of the wide display view (`viewPx2/viewPx`).
      *  Lets the settled main idle open on the SAME close-up the entrance held before pulling
      *  out to the wide frame. Null when the skin ships no tight stop. */
@@ -3303,44 +3306,51 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                  *  (both of her stops are -FLT_MAX); she rendered blank. Property-driven -
                  *  a no-op for every skin whose stops are real numbers. */
                 const usableExtent = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
-                /** DIAGNOSTIC (`?settlecam=1`, default OFF): the SETTLED crop from the authored
-                 *  camera rather than from the body, all three registration parameters at once.
+                /** THE SETTLED FRAMING CORRECTION (`?settlecam=0` reverts), as the
+                 *  three registration parameters measured against the captures.
                  *
-                 *  Measured by registering our settled frames onto the captures on EDGE structure
-                 *  (luma correlation cannot do it: one subject's backdrop is dark where the game's
-                 *  is white, and that flat anti-correlated area dominates at every alignment). The
-                 *  three recovered parameters each track a different authored field:
+                 *  Recovered by registering our settled frames onto the game on EDGE magnitude (luma
+                 *  correlation cannot do it: one subject's backdrop is dark where the game's is
+                 *  white, and that flat anti-correlated area dominates at every alignment). Each
+                 *  parameter tracks a DIFFERENT authored field:
                  *
                  *      scale = cameraViewPx / 1935.2        r +0.9612, R2 0.9999 over four of five
                  *      dx    = 0.399 * offsetPx.x + 16.26   r +0.9709
                  *      dy    = -0.754 * offsetPx.y          r -0.9717, origin-through
                  *
-                 *  `scale` is how much our output must SHRINK to match, and our crop extent is
-                 *  `viewPx * RCAL`, so `scale = viewPx / 1935.2` says the extent should be the
-                 *  CONSTANT `1935.2 * RCAL`. `dx`/`dy` are output-pixel corrections, and the crop
-                 *  HEIGHT maps to the container height, so one output px is `e / 416` render units;
-                 *  moving content right means moving the box left, hence both are subtracted.
+                 *  These are how much our OUTPUT must move to land on the game, in output pixels of
+                 *  the 900x416 frame, so they are applied RELATIVE to whatever box the settled path
+                 *  already produced rather than replacing it.
                  *
-                 *  ⚠️ This reverses a parked lead. `cameraOffsetPxY` was PARKED as needing a fitted
-                 *  constant, measured on `__frameProbe` against the body gap. The three constants
-                 *  here are global pipeline numbers in RCAL's class, not per-skin values, and they
-                 *  come from a different and much stronger instrument.
+                 *  🚨 An earlier version built an ABSOLUTE box from the authored fields instead, and
+                 *  that is what made the camera disagree with the warp (fugue +22.252, kalts
+                 *  +56.356) while the same numbers as an image warp were worth -84.947. The rule was
+                 *  never the problem; discarding the existing box was.
                  *
-                 *  ⚠️ Worth -84.947 across the five settled subjects as an image warp, every one
-                 *  improving on BOTH MADC and r. Scale ALONE cost +5.759, which is why this must
-                 *  never be applied partially. */
-                const settleCamOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settlecam") === "1";
+                 *  ⚠️ Worth -84.947 across the five settled subjects as a warp, every one improving
+                 *  on BOTH MADC and r. Scale ALONE costs +5.759, so it must never be applied
+                 *  partially. */
+                // DEFAULT ON. `?settlecam=0` reverts, tested for the STRING "0" rather than for
+                // falsiness: `Number(null)` is 0 and finite, and that has silently defeated a
+                // default in this file before.
+                const settleCamOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("settlecam") !== "0";
                 const SETTLE_VIEW_PX = calibrationParam("settleview", 1935.2);
-                const authoredCameraBox = (): IAnimationBounds | null => {
+                /** `[scale, dx, dy]` in OUTPUT pixels, or null when no correction applies. */
+                const settleFix = ((): [number, number, number] | null => {
+                    // `?settledxy=s,dx,dy` feeds the parameters directly, which is how the camera
+                    // path is checked against the warp that measured them: same numbers, two
+                    // implementations, and they must agree.
+                    const raw = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("settledxy");
+                    if (raw) {
+                        const v = raw.split(",").map(Number);
+                        if (v.length === 3 && v.every((n) => Number.isFinite(n)) && v[0] > 0) return [v[0], v[1], v[2]];
+                    }
+                    if (!settleCamOn) return null;
                     const off = authoredFrame?.offsetPx;
-                    if (!vis || !off) return null;
-                    const e = SETTLE_VIEW_PX * RCAL;
-                    const dxOut = 0.399 * off[0] + 16.26;
-                    const dyOut = -0.754 * off[1];
-                    const cx = bodyCx - (dxOut * e) / 416;
-                    const cy = bodyCy - VBIAS * e - (dyOut * e) / 416;
-                    return { x: cx - e / 2, y: cy - e / 2, width: e, height: e };
-                };
+                    const vpx = authoredFrame?.viewPx;
+                    if (!off || !usableExtent(vpx)) return null;
+                    return [(vpx as number) / SETTLE_VIEW_PX, 0.399 * off[0] + 16.26, -0.754 * off[1]];
+                })();
                 const authoredDisplayBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx) && vis ? bodyFrameBox(authoredFrame.viewPx as number) : null;
                 // The TIGHT open endpoint: the exact `cameraViewPx2` box (2nd `_adjustes` stop),
                 // same centre - the viewer dollies OUT from here. Null unless a 2nd camera stop.
@@ -3404,12 +3414,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `sceneFrameOf`, whereas `viewPx` can be an uninitialised -FLT_MAX (Nearl Epoque).
                 // `?statfrac=<f>` sweeps it.
                 const PREVIEW_CAM_FRAC = calibrationParam("statfrac", 0.9565);
-                // `?settlecam=1` replaces this with the authored-camera box (see `authoredCameraBox`).
-                // It hooks HERE rather than on `authoredDisplayBounds` because `settleBox` resolves
-                // to `previewBounds` first, so the display box never reaches the settled frame: an
-                // earlier version of this patch was measured BIT-IDENTICAL and a deliberate x0.35
-                // probe on the extent was inert too, which is how the wrong hook was caught.
-                const previewBounds: IAnimationBounds | null = (settleCamOn ? authoredCameraBox() : null) ?? (authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null);
+                const previewBounds: IAnimationBounds | null = authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null;
                 // Relative move between the two authored stops (see `IComposite.authoredTightShift`).
                 // Y is flipped because the authored offsets are spine-authored Y-UP and the framing
                 // boxes are screen-down - the same flip `authoredDisplayBounds` documents.
@@ -3750,6 +3755,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     authoredTightBounds,
                     authoredTightShift,
                     previewBounds,
+                    settleFix,
                     entranceViewRatio: authoredFrame?.viewPx2 && authoredFrame?.viewPx ? (authoredFrame.viewPx2 as number) / authoredFrame.viewPx : null,
                     entranceDuration: scene?.data.entranceDuration ?? null,
                     entranceFadeEnd: entranceFadeEnd(scene?.data ?? null),
@@ -3797,6 +3803,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 authoredTightBounds: null,
                 authoredTightShift: null,
                 previewBounds: null,
+                settleFix: null,
                 entranceViewRatio: null,
                 entranceDuration: null,
                 entranceFadeEnd: null,
@@ -4226,7 +4233,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                               height: settleBox.height * settleScale,
                           }
                         : settleBox;
-                const gameFrame = scaledSettleBox ?? main.bounds;
+                // THE SETTLED FRAMING CORRECTION (see `settleFix`), applied here because this is
+                // the last point the settled box exists before it becomes the camera.
+                //
+                // The parameters are in OUTPUT pixels: our render must SHRINK by `s` and move by
+                // (dx, dy) to land on the game. Content apparent size goes as 1/box.height, so
+                // shrinking the content by `s` means GROWING the box by 1/s. The fit maps the box
+                // HEIGHT onto the container height, so one output pixel is `box.height / 416`
+                // render units, and moving content right means moving the box LEFT, hence both
+                // offsets are subtracted. `?settleyflip=1` inverts the vertical, which is the one
+                // term a reading of the code cannot settle.
+                const fixedSettleBox = ((): IAnimationBounds | null => {
+                    const fx = main.settleFix;
+                    if (!scaledSettleBox || !fx) return scaledSettleBox;
+                    const [s, dx, dy] = fx;
+                    const w = scaledSettleBox.width / s;
+                    const h = scaledSettleBox.height / s;
+                    const yf = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settleyflip") === "1" ? -1 : 1;
+                    const cx = scaledSettleBox.x + scaledSettleBox.width / 2 - (dx * h) / 416;
+                    const cy = scaledSettleBox.y + scaledSettleBox.height / 2 - (yf * dy * h) / 416;
+                    return { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
+                })();
+                const gameFrame = fixedSettleBox ?? main.bounds;
                 const openTight =
                     main.authoredTightBounds && settleScale !== 1
                         ? {
