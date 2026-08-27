@@ -230,6 +230,11 @@ export interface IRamData {
     ramTex: number | null;
     ramST: RamST;
     disturbTex: number | null;
+    /** `_WeightTex`: MASKS the disturb offset per axis. Declared ONLY by the plain
+     *  `Disturb/Disturb(CustomData)` variant (16 mentions against 0 in both `Ram/` variants), so a
+     *  Ram material leaves it null and the multiply becomes a no-op. */
+    weightTex?: number | null;
+    weightST?: RamST;
     disturbST: RamST;
     dissolveTex: number | null;
     dissolveST: RamST;
@@ -395,6 +400,13 @@ function psDelayScale(): number {
 
 /** DIAGNOSTIC (`?ramtex=0`): drop the Ram shader's RAMP multiply, to tell "the ramp texture is
  *  bound and contributing" apart from "we are only seeing the warped MAIN texture". */
+/** DIAGNOSTIC (`?ptclweight=0`): ignore `_WeightTex` and run the disturb offset unmasked, which
+ *  is what the port did before the sampler existed. */
+function ptclWeightOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("ptclweight") !== "0";
+}
+
 function ramTexOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ramtex") !== "0";
@@ -2657,6 +2669,7 @@ uniform vec4 uMainST;
 uniform vec4 uDissolveST;
 uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
+uniform vec4 uWeightST;
 uniform vec4 uRamST;
 uniform vec2 uRamFlip;
 uniform float uSheeted;
@@ -2667,6 +2680,7 @@ varying vec2 vMainUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vWeightUV;
 varying vec2 vRamUV;
 varying vec2 vRawUV;
 varying vec4 vColor;
@@ -2713,6 +2727,7 @@ void main() {
     vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll + aCustom.zw;
     vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll + aCustom.zw;
     vDisturbUV = uvU * uDisturbST.xy + uDisturbST.zw + uDisturbScroll + aCustom2.zw;
+    vWeightUV = uvU * uWeightST.xy + uWeightST.zw;
     vRamUV = uvU * uRamST.xy + uRamST.zw;
     vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
     vRawUV = aUV;
@@ -2720,6 +2735,7 @@ void main() {
     vDissolveUV.y = 1.0 - vDissolveUV.y;
     vDissolveUV2.y = 1.0 - vDissolveUV2.y;
     vDisturbUV.y = 1.0 - vDisturbUV.y;
+    vWeightUV.y = 1.0 - vWeightUV.y;
     vRamUV.y = 1.0 - vRamUV.y;
     vColor = aColor;
     vCustom = aCustom;
@@ -2732,6 +2748,7 @@ varying vec2 vMainUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vWeightUV;
 varying vec2 vRamUV;
 varying vec2 vRawUV;
 varying vec4 vColor;
@@ -2739,6 +2756,8 @@ varying vec4 vCustom;
 uniform sampler2D uMainTex;
 uniform sampler2D uRamTex;
 uniform sampler2D uDisturbTex;
+uniform sampler2D uWeightTex;
+uniform float uHasWeight;
 uniform sampler2D uDissolveTex;
 uniform sampler2D uDissolveTex2;
 uniform vec4 uMainColor;
@@ -2769,7 +2788,12 @@ void main() {
     // DIAGNOSTIC (?ramdist=): uDisturbBias re-centres the warp. 0.0 = the shipped one-sided
     // read (offset 0..intensity); 0.5 = bipolar (-intensity/2..+intensity/2), which is how a
     // Unity flow/disturb map is normally consumed. uDisturbGain scales the whole term.
-    vec2 dOff = (vCustom.y + vec2(uIntensityU, uIntensityV)) * (disturbSample - uDisturbBias) * uDisturbGain;
+    // _WeightTex masks the offset PER AXIS, which is why it is a vec2 and not a scalar. Unity:
+    // dOff = (custom + intensity) * disturb.x * texture(_WeightTex, wUV).xy. An unbound slot is
+    // weight 1, so every material that does not bind one is bit-identical.
+    // (No backticks in this block: the shader is a TEMPLATE LITERAL and one would end it.)
+    vec2 weight = uHasWeight > 0.5 ? texture2D(uWeightTex, vWeightUV).xy : vec2(1.0);
+    vec2 dOff = (vCustom.y + vec2(uIntensityU, uIntensityV)) * (disturbSample - uDisturbBias) * uDisturbGain * weight;
     vec2 mUV = dOff * uDisturbInfluenceMainUV + vMainUV;
     vec2 dsUV = dOff * uDisturbInfluenceDissolveUV + vDissolveUV;
     vec4 col = mix(texture2D(uMainTex, mUV), vec4(1.0), uMainOff) * uMainColor * vColor;
@@ -2978,7 +3002,7 @@ class RamEmitter {
     constructor(
         data: IParticleSystemData,
         ram: IRamData,
-        tex: { main: PIXI.Texture | null; ram: PIXI.Texture | null; disturb: PIXI.Texture | null; dissolve: PIXI.Texture | null; dissolve2?: PIXI.Texture | null },
+        tex: { main: PIXI.Texture | null; ram: PIXI.Texture | null; disturb: PIXI.Texture | null; weight?: PIXI.Texture | null; dissolve: PIXI.Texture | null; dissolve2?: PIXI.Texture | null },
         blend: "additive" | "normal",
         private readonly getBudget: () => number,
     ) {
@@ -3073,6 +3097,9 @@ class RamEmitter {
             uMainTex: mainT,
             uRamTex: tex.ram ?? WHITE_TEX,
             uDisturbTex: tex.disturb ?? WHITE_TEX,
+            uWeightTex: tex.weight ?? WHITE_TEX,
+            uWeightST: ram.weightST ?? [1, 1, 0, 0],
+            uHasWeight: tex.weight && ptclWeightOn() ? 1 : 0,
             uDissolveTex: tex.dissolve ?? WHITE_TEX,
             uDissolveTex2: tex.dissolve2 ?? WHITE_TEX,
             uMainColor: ram.mainColor,
@@ -4397,6 +4424,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                     main: applyWrap(main, wrapOf(sys.ram.mainTex)),
                     ram: applyWrap(rawTex(sys.ram.ramTex), wrapOf(sys.ram.ramTex)),
                     disturb: applyWrap(rawTex(sys.ram.disturbTex), wrapOf(sys.ram.disturbTex)),
+                    weight: applyWrap(rawTex(sys.ram.weightTex ?? null), wrapOf(sys.ram.weightTex ?? null)),
                     dissolve: applyWrap(rawTex(sys.ram.dissolveTex), wrapOf(sys.ram.dissolveTex)),
                     dissolve2: applyWrap(rawTex(sys.ram.dissolveTex2 ?? null), wrapOf(sys.ram.dissolveTex2 ?? null)),
                 },

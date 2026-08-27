@@ -2788,6 +2788,15 @@ fn resolve_ram(
     let (main_pid, main_val, main_st) = mat_texenv(all_objects, mat, "_MainTex");
     let (ram_pid, ram_val, ram_st) = mat_texenv(all_objects, mat, "_RamTex");
     let (dist_pid, dist_val, dist_st) = mat_texenv(all_objects, mat, "_DisturbTex");
+    // `_WeightTex` MASKS the disturb offset per axis in the game: the plain
+    // `Disturb/Disturb(CustomData)` fragment reads
+    // `dOff = (custom + intensity) * disturb.x * texture(_WeightTex, wUV).xy`.
+    // Only that variant declares it (16 mentions against 0 in both `Ram/` variants), so on a Ram
+    // material the slot is unbound residue and this resolves to None, which the frontend treats as
+    // a weight of 1 and is therefore a no-op. Mlynar binds three named masks
+    // (`Mlynar_##_bg_01_mask`, `_bg_03_mask_01`, `_bg_03_mask_02`) and Ch'en the Holungday four
+    // external ones with an authored ST, so it is neither placeholder nor rare.
+    let (weight_pid, weight_val, weight_st) = mat_texenv(all_objects, mat, "_WeightTex");
     // The `Dissolve/` family names its maps `_DissolveTex_01`/`_02`; its single-name
     // `_DissolveTex`/`_Amount`/`_BorderWidth` are inert residue from the Standard shader the
     // asset was authored against. Prefer the two-map names wherever `_01` resolves.
@@ -2874,6 +2883,7 @@ fn resolve_ram(
         "mainTex": Value::Null,     "mainST": main_st,
         "ramTex": Value::Null,      "ramST": ram_st,
         "disturbTex": Value::Null,  "disturbST": dist_st,
+        "weightTex": Value::Null,   "weightST": weight_st,
         "dissolveTex": Value::Null, "dissolveST": diss_st,
         "dissolveTex2": Value::Null, "dissolveST2": diss2_st,
         "amount2": if two_map { mat_float(mat, "_Amount_02", 0.0) } else { 0.0 },
@@ -2906,6 +2916,7 @@ fn resolve_ram(
             ("mainTex", main_pid, main_val),
             ("ramTex", ram_pid, ram_val),
             ("disturbTex", dist_pid, dist_val),
+            ("weightTex", weight_pid, weight_val),
             ("dissolveTex", diss_pid, diss_val),
             ("dissolveTex2", diss2_pid, diss2_val),
             ("vertexDisturbTex", vd_pid, vd_val),
