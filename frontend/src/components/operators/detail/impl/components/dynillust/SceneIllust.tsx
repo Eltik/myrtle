@@ -3303,6 +3303,44 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                  *  (both of her stops are -FLT_MAX); she rendered blank. Property-driven -
                  *  a no-op for every skin whose stops are real numbers. */
                 const usableExtent = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
+                /** DIAGNOSTIC (`?settlecam=1`, default OFF): the SETTLED crop from the authored
+                 *  camera rather than from the body, all three registration parameters at once.
+                 *
+                 *  Measured by registering our settled frames onto the captures on EDGE structure
+                 *  (luma correlation cannot do it: one subject's backdrop is dark where the game's
+                 *  is white, and that flat anti-correlated area dominates at every alignment). The
+                 *  three recovered parameters each track a different authored field:
+                 *
+                 *      scale = cameraViewPx / 1935.2        r +0.9612, R2 0.9999 over four of five
+                 *      dx    = 0.399 * offsetPx.x + 16.26   r +0.9709
+                 *      dy    = -0.754 * offsetPx.y          r -0.9717, origin-through
+                 *
+                 *  `scale` is how much our output must SHRINK to match, and our crop extent is
+                 *  `viewPx * RCAL`, so `scale = viewPx / 1935.2` says the extent should be the
+                 *  CONSTANT `1935.2 * RCAL`. `dx`/`dy` are output-pixel corrections, and the crop
+                 *  HEIGHT maps to the container height, so one output px is `e / 416` render units;
+                 *  moving content right means moving the box left, hence both are subtracted.
+                 *
+                 *  ⚠️ This reverses a parked lead. `cameraOffsetPxY` was PARKED as needing a fitted
+                 *  constant, measured on `__frameProbe` against the body gap. The three constants
+                 *  here are global pipeline numbers in RCAL's class, not per-skin values, and they
+                 *  come from a different and much stronger instrument.
+                 *
+                 *  ⚠️ Worth -84.947 across the five settled subjects as an image warp, every one
+                 *  improving on BOTH MADC and r. Scale ALONE cost +5.759, which is why this must
+                 *  never be applied partially. */
+                const settleCamOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settlecam") === "1";
+                const SETTLE_VIEW_PX = calibrationParam("settleview", 1935.2);
+                const authoredCameraBox = (): IAnimationBounds | null => {
+                    const off = authoredFrame?.offsetPx;
+                    if (!vis || !off) return null;
+                    const e = SETTLE_VIEW_PX * RCAL;
+                    const dxOut = 0.399 * off[0] + 16.26;
+                    const dyOut = -0.754 * off[1];
+                    const cx = bodyCx - (dxOut * e) / 416;
+                    const cy = bodyCy - VBIAS * e - (dyOut * e) / 416;
+                    return { x: cx - e / 2, y: cy - e / 2, width: e, height: e };
+                };
                 const authoredDisplayBounds: IAnimationBounds | null = usableExtent(authoredFrame?.viewPx) && vis ? bodyFrameBox(authoredFrame.viewPx as number) : null;
                 // The TIGHT open endpoint: the exact `cameraViewPx2` box (2nd `_adjustes` stop),
                 // same centre - the viewer dollies OUT from here. Null unless a 2nd camera stop.
@@ -3366,7 +3404,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `sceneFrameOf`, whereas `viewPx` can be an uninitialised -FLT_MAX (Nearl Epoque).
                 // `?statfrac=<f>` sweeps it.
                 const PREVIEW_CAM_FRAC = calibrationParam("statfrac", 0.9565);
-                const previewBounds: IAnimationBounds | null = authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null;
+                // `?settlecam=1` replaces this with the authored-camera box (see `authoredCameraBox`).
+                // It hooks HERE rather than on `authoredDisplayBounds` because `settleBox` resolves
+                // to `previewBounds` first, so the display box never reaches the settled frame: an
+                // earlier version of this patch was measured BIT-IDENTICAL and a deliberate x0.35
+                // probe on the extent was inert too, which is how the wrong hook was caught.
+                const previewBounds: IAnimationBounds | null = (settleCamOn ? authoredCameraBox() : null) ?? (authoredFrame?.cameraSizePx && vis ? bodyFrameBox(authoredFrame.cameraSizePx * PREVIEW_CAM_FRAC) : null);
                 // Relative move between the two authored stops (see `IComposite.authoredTightShift`).
                 // Y is flipped because the authored offsets are spine-authored Y-UP and the framing
                 // boxes are screen-down - the same flip `authoredDisplayBounds` documents.
