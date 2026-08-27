@@ -2595,6 +2595,28 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         }
                     }
                 }
+                // DIAGNOSTIC (`?partalpha=fg:0.5,bg:0.25`): scale a PARTICLE container's alpha.
+                //
+                // The scene-layer twin of this is `?layalpha=` below, and it exists for the same
+                // reason: `?abl=partfg` answers "does this group contribute error" and cannot
+                // answer "should it be here at all, or just weaker". whitw2's particle foreground
+                // is worth dMADC -11.577 when ablated outright, which is large enough that the
+                // difference between a cull and a blend correction matters a great deal.
+                //
+                // Container-level rather than per-system, deliberately: it classifies the DEFECT
+                // before anyone spends a per-system sweep on it. Nothing in the frame loop writes
+                // a particle container's alpha, so this survives.
+                {
+                    const raw = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("partalpha") : null;
+                    for (const tok of raw ? raw.split(",") : []) {
+                        const m = /^(bg|fg):([0-9.]+)$/.exec(tok);
+                        if (!m || !particles) continue;
+                        const a = Number(m[2]);
+                        if (!Number.isFinite(a)) continue;
+                        const c = m[1] === "bg" ? particles.background : particles.foreground;
+                        if (c) c.alpha = a;
+                    }
+                }
                 // DIAGNOSTIC (`?layalpha=fg:20-25:0.5,bg:3:0`): scale one layer range's ALPHA.
                 //
                 // WHY THIS EXISTS AND `?abl=` DOES NOT REPLACE IT. Removing a layer tells you it
