@@ -4243,18 +4243,40 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // render units, and moving content right means moving the box LEFT, hence both
                 // offsets are subtracted. `?settleyflip=1` inverts the vertical, which is the one
                 // term a reading of the code cannot settle.
-                const applySettleFix = (box: IAnimationBounds | null): IAnimationBounds | null => {
+                //
+                // `asSettled` says the box is the SETTLED TARGET rather than a dolly endpoint, and
+                // it decides whether the extent is re-normalised. `openTight` has both roles: for a
+                // skin with an authored pull-out it is the tight endpoint the dolly starts from,
+                // where its own extent is the authored meaning and must be preserved; for a skin
+                // without one it is the frame that is HELD, i.e. the settled shot. Normalising it in
+                // the first role collapses the endpoint onto the settled size and measured whitw2
+                // 64.203 -> 74.555, which is how the two roles were told apart.
+                const applySettleFix = (box: IAnimationBounds | null, asSettled: boolean): IAnimationBounds | null => {
                     const fx = main.settleFix;
                     if (!box || !fx) return box;
                     const [s, dx, dy] = fx;
-                    const w = box.width / s;
-                    const h = box.height / s;
+                    // The corrected extent is defined by the PREVIEW box, whatever box we start
+                    // from. `scale = cameraViewPx / 1935.2` was calibrated on subjects that settle
+                    // at `previewBounds`, so 1935.2 is normalised against THAT extent; applying the
+                    // same ratio to a different box divides by the wrong number.
+                    //
+                    // Chyue is the case, and it is exact rather than approximate. She settles at
+                    // `authoredTightBounds` (extent `cameraViewPx2` = 1254.140) where the others
+                    // settle at `previewBounds` (extent `cameraSizePx * PREVIEW_CAM_FRAC` =
+                    // 1004.325). Their ratio is 1.2487 and her measured post-correction residual was
+                    // 1.260; equivalently `s_rule * tight/preview` = 0.7899 against a measured 0.790.
+                    // No constant is chosen here: the ratio is authored fields only, and for every
+                    // subject that DOES settle at the preview box it is exactly 1, which is the
+                    // built-in control.
+                    const target = asSettled ? (main.previewBounds?.height ?? box.height) : box.height;
+                    const h = target / s;
+                    const w = box.width * (h / box.height);
                     const yf = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settleyflip") === "1" ? -1 : 1;
                     const cx = box.x + box.width / 2 - (dx * h) / 416;
                     const cy = box.y + box.height / 2 - (yf * dy * h) / 416;
                     return { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
                 };
-                const fixedSettleBox = applySettleFix(scaledSettleBox);
+                const fixedSettleBox = applySettleFix(scaledSettleBox, true);
                 const gameFrame = fixedSettleBox ?? main.bounds;
                 const openTight =
                     main.authoredTightBounds && settleScale !== 1
@@ -4271,7 +4293,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // so correcting only the settle box leaves it untouched. Chyue is that case: she
                 // was inert even to an absurd `?settledxy=0.5,200,200` while `?settlescale=`
                 // reached her here, which is what located the second path.
-                const fixedOpenTight = applySettleFix(openTight);
+                // `openTight` in its SETTLED role: the frame a skin with no authored pull-out HOLDS
+                // as its steady shot. Chyue is the only settled subject there. Its dolly-endpoint
+                // uses (`openFrom`, `startBox` below) keep the RAW box, because there the authored
+                // extent is the meaning and the correction belongs only to the settled frame.
+                const heldSettleBox = applySettleFix(openTight, true);
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
                 // When we arrive from the `_Start` cinematic, the settled idle continues the
@@ -4329,10 +4355,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const panelSettleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("panelsettle") !== "0";
                     const panelTerminus = surface === "panel" && opts?.fromEntrance && panelSettleOn && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
                     const panelFit: ISpineFit | undefined = panelTerminus ? { mode: "contain", align: fitRef.current.align } : undefined;
-                    if (opts?.fromEntrance && !entrancePullOut && fixedOpenTight && !panelTerminus) {
-                        main.bounds = fixedOpenTight; // resizes keep the held tight frame
-                        layoutSpine(main.root, sw, sh, fixedOpenTight, fitRef.current);
-                        boundsRef.current = fixedOpenTight;
+                    if (opts?.fromEntrance && !entrancePullOut && heldSettleBox && !panelTerminus) {
+                        main.bounds = heldSettleBox; // resizes keep the held tight frame
+                        layoutSpine(main.root, sw, sh, heldSettleBox, fitRef.current);
+                        boundsRef.current = heldSettleBox;
                         return;
                     }
                     // Plain archive open (no `_Start` cinematic, so not an entrance hand-off) with no
