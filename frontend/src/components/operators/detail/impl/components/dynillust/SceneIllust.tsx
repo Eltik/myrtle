@@ -2743,6 +2743,12 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         }
                         const built = rows.map((r) => (r as { src?: number }).src).filter((v) => v !== undefined);
                         return {
+                            // STAGE COUNTS. The built set is CONTIGUOUS (0..46 of 51), and
+                            // contiguous means truncation rather than per-layer rejection, so the
+                            // question is where the count drops rather than which layer is refused.
+                            loop: (window as unknown as { __sceneCounts?: unknown }).__sceneCounts ?? null,
+                            jsonLayers: scene?.data?.layers?.length ?? -1,
+                            textureCount: scene?.data?.textureCount ?? -1,
                             count: rows.length,
                             built,
                             has47: built.includes(47),
@@ -2842,13 +2848,21 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 if (m) wanted.push([Number(m[2]), m[3] ? Number(m[3]) : Number(m[2]), !!m[1]]);
                             }
                             if (wanted.length && scene) {
-                                for (const side of [scene.background, scene.foreground]) {
+                                // 🚨 `sceneOverlay` MUST be here. Layers whose `__sort` exceeds every
+                                // emitter's are HOISTED out of `scene.foreground` into it (see the
+                                // hoist above), so a token that searched only background+foreground
+                                // silently matched nothing for them and "ablating it changes nothing"
+                                // read identically to "it does not exist". That cost several turns on
+                                // Kal'tsit's 47..50, which are hoisted and were reported as unbuilt.
+                                let matched = 0;
+                                for (const side of [scene.background, scene.foreground, sceneOverlay]) {
                                     if (!side) continue;
                                     for (const c of side.children) {
                                         const rt = c as unknown as ISceneLayerRuntime;
                                         const si = rt.__srcIndex;
                                         if (si == null) continue;
                                         const hit = wanted.some(([lo, hi]) => si >= lo && si <= hi);
+                                        if (hit) matched++;
                                         const anyOnly = wanted.some(([, , only]) => only);
                                         if (anyOnly) c.renderable = hit;
                                         else if (hit) c.renderable = false;
@@ -2865,6 +2879,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                             rt.__activeWindows = undefined;
                                         }
                                     }
+                                }
+                                // LOUD when a requested index matches nothing. Silence here is what
+                                // made "it contributes nothing" and "it is not in this container"
+                                // indistinguishable; now the null result names itself.
+                                if (matched === 0) {
+                                    const names = wanted.map(([lo, hi]) => (lo === hi ? `${lo}` : `${lo}-${hi}`)).join(",");
+                                    console.warn(`[abl] src token matched NO mesh: ${names}. The index may not exist, or its layer may live outside background/foreground/overlay.`);
+                                    (window as unknown as { __ablUnmatched?: string }).__ablUnmatched = names;
                                 }
                             }
                         }

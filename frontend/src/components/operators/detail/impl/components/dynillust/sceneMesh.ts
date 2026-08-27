@@ -2076,9 +2076,19 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // (`?dumplayers=1`), so a dump row names its scene-JSON layer instead of being guessed at
     // from its screen box.
     const srcIndexOf = new Map<ISceneLayer, number>(data.layers.map((l, i) => [l, i] as const));
+    // DIAGNOSTIC (`window.__sceneCounts`, DEV only): where the layer count drops between the parsed
+    // JSON and the mesh list. Kal'tsit parses 51 and builds 47, and the four lost are CONTIGUOUS in
+    // sort order, which is truncation rather than per-layer rejection: enumerating per-layer exits
+    // kept coming back negative. Counting each exit answers it in one run instead.
+    const counts = { iterations: 0, skipNoBase: 0, skipNoMesh: 0, built: 0, nullBases: [] as number[] };
+    for (let i = 0; i < bases.length; i++) if (!bases[i]) counts.nullBases.push(i);
     for (const layer of [...data.layers].sort((a, b) => a.sort - b.sort)) {
+        counts.iterations++;
         const base = bases[layer.tex];
-        if (!base) continue;
+        if (!base) {
+            counts.skipNoBase++;
+            continue;
+        }
         const geomKey = `${layer.tex}|${layer.pos.join(",")}|${layer.uv.join(",")}|${layer.idx.join(",")}`;
         const isDuplicateOfBackground = bgGeometrySignatures.has(geomKey);
         // A layer authored above the character's sort normally renders in front of
@@ -2193,7 +2203,11 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // effect-overlay gain (which tames caustics frozen without their animation)
         // would wrongly damp it (Mlynar's 0.671 white-out would peak at ~0.2).
         const mesh = buildLayerMesh(layer, base, ramTexOf(layer), forceAdditive, isLightGlowSheet || !!layer.colorCurve?.length, hasDarkBackdrop);
-        if (!mesh) continue;
+        if (!mesh) {
+            counts.skipNoMesh++;
+            continue;
+        }
+        counts.built++;
         // DIAGNOSTIC (`?fgalpha=<f>`): scale the opacity of FOREGROUND scene layers, to ask
         // whether they are drawn too strongly. Mlynar's render is a uniform +1.98 Cb too blue at
         // every beat, and ablating the foreground removes ALL of it (+1.98 -> +0.01) while costing
@@ -2303,5 +2317,16 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         return null;
     }
 
+    if (import.meta.env?.DEV && typeof window !== "undefined") {
+        (window as unknown as { __sceneCounts?: unknown }).__sceneCounts = {
+            ...counts,
+            jsonLayers: data.layers.length,
+            textureCount: data.textureCount,
+            // Bucket sizes AFTER routing. The loop builds every mesh, so any shortfall is here.
+            bgChildren: background.children.length,
+            fgChildren: foreground.children.length,
+            gapChildren: gaps.reduce((n, g) => n + g.children.length, 0),
+        };
+    }
     return { data, aperture: sceneAperture(data, bases), background, foreground, gaps, hasDarkBackdrop };
 }
