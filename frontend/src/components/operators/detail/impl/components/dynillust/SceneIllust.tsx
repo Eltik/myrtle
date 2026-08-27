@@ -4243,17 +4243,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // render units, and moving content right means moving the box LEFT, hence both
                 // offsets are subtracted. `?settleyflip=1` inverts the vertical, which is the one
                 // term a reading of the code cannot settle.
-                const fixedSettleBox = ((): IAnimationBounds | null => {
+                const applySettleFix = (box: IAnimationBounds | null): IAnimationBounds | null => {
                     const fx = main.settleFix;
-                    if (!scaledSettleBox || !fx) return scaledSettleBox;
+                    if (!box || !fx) return box;
                     const [s, dx, dy] = fx;
-                    const w = scaledSettleBox.width / s;
-                    const h = scaledSettleBox.height / s;
+                    const w = box.width / s;
+                    const h = box.height / s;
                     const yf = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settleyflip") === "1" ? -1 : 1;
-                    const cx = scaledSettleBox.x + scaledSettleBox.width / 2 - (dx * h) / 416;
-                    const cy = scaledSettleBox.y + scaledSettleBox.height / 2 - (yf * dy * h) / 416;
+                    const cx = box.x + box.width / 2 - (dx * h) / 416;
+                    const cy = box.y + box.height / 2 - (yf * dy * h) / 416;
                     return { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
-                })();
+                };
+                const fixedSettleBox = applySettleFix(scaledSettleBox);
                 const gameFrame = fixedSettleBox ?? main.bounds;
                 const openTight =
                     main.authoredTightBounds && settleScale !== 1
@@ -4264,6 +4265,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                               height: main.authoredTightBounds.height * settleScale,
                           }
                         : main.authoredTightBounds; // the game's `_adjustes[1]`, else null
+                // ...and the SAME correction on the tight box. A skin that arrives from `_Start`
+                // with no authored pull-out HOLDS this frame as its settled shot (see the
+                // `fromEntrance && !entrancePullOut` branch below) and never reaches `gameFrame`,
+                // so correcting only the settle box leaves it untouched. Chyue is that case: she
+                // was inert even to an absurd `?settledxy=0.5,200,200` while `?settlescale=`
+                // reached her here, which is what located the second path.
+                const fixedOpenTight = applySettleFix(openTight);
                 if (gameFrame) main.bounds = gameFrame; // the idle settles at the game display frame
 
                 // When we arrive from the `_Start` cinematic, the settled idle continues the
@@ -4321,10 +4329,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const panelSettleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("panelsettle") !== "0";
                     const panelTerminus = surface === "panel" && opts?.fromEntrance && panelSettleOn && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
                     const panelFit: ISpineFit | undefined = panelTerminus ? { mode: "contain", align: fitRef.current.align } : undefined;
-                    if (opts?.fromEntrance && !entrancePullOut && openTight && !panelTerminus) {
-                        main.bounds = openTight; // resizes keep the held tight frame
-                        layoutSpine(main.root, sw, sh, openTight, fitRef.current);
-                        boundsRef.current = openTight;
+                    if (opts?.fromEntrance && !entrancePullOut && fixedOpenTight && !panelTerminus) {
+                        main.bounds = fixedOpenTight; // resizes keep the held tight frame
+                        layoutSpine(main.root, sw, sh, fixedOpenTight, fitRef.current);
+                        boundsRef.current = fixedOpenTight;
                         return;
                     }
                     // Plain archive open (no `_Start` cinematic, so not an entrance hand-off) with no
