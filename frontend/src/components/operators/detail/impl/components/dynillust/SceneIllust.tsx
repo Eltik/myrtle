@@ -2593,6 +2593,47 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                 }
                             });
                         }
+                    }
+                }
+                // DIAGNOSTIC (`?layalpha=fg:20-25:0.5,bg:3:0`): scale one layer range's ALPHA.
+                //
+                // WHY THIS EXISTS AND `?abl=` DOES NOT REPLACE IT. Removing a layer tells you it
+                // contributes error; it cannot tell you WHICH error. The three cases need different
+                // fixes and only one of them is a visibility bug:
+                //
+                //   best alpha 0             the content should not be drawn at all
+                //   best alpha intermediate  it belongs but we draw it too strongly, an opacity or
+                //                            blend-mode question, and CULLING would be the wrong
+                //                            change shipped off the right measurement
+                //   best alpha 1             it belongs at full strength and the error is elsewhere,
+                //                            placement or timing
+                //
+                // 🚨 Removing content improves MADC whenever the content is imperfect, whether or
+                // not it belongs. This sweep is what separates "wrong" from merely "imperfect".
+                //
+                // Per-MESH alpha is safe to set here: the entrance tick rewrites `renderable` from
+                // the `m_IsActive` windows and sets the CONTAINER alpha to 1, but never touches an
+                // individual mesh's alpha, so this survives the frame loop.
+                {
+                    const raw = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("layalpha") : null;
+                    for (const tok of raw ? raw.split(",") : []) {
+                        const m = /^(bg|fg):(\d+)(?:-(\d+))?:([0-9.]+)$/.exec(tok);
+                        if (!m || !scene) continue;
+                        const side = m[1] === "bg" ? scene.background : scene.foreground;
+                        if (!side) continue;
+                        const lo = Number(m[2]);
+                        const hi = m[3] ? Number(m[3]) : lo;
+                        const a = Number(m[4]);
+                        if (!Number.isFinite(a)) continue;
+                        side.children.forEach((c, i) => {
+                            if (i >= lo && i <= hi) c.alpha = a;
+                        });
+                    }
+                }
+                {
+                    const abl2 = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("abl") : null;
+                    const off = new Set(abl2 ? abl2.split(",") : []);
+                    if (off.size) {
                         // `src:<i>` drops the layer whose SCENE-JSON index is `i`; `srconly:<i>`
                         // keeps only that one. Ranges allowed (`src:40-47`). Both sides are
                         // searched, so the caller does not need to know which container a sort
