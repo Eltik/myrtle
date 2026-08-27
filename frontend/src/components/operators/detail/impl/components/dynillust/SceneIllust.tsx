@@ -290,6 +290,27 @@ function layerTransformOn(): boolean {
 
 /** Linear sample of a `[t, value]` keyframe list, clamped at both ends. The scene's other
  *  samplers are shaped for XY and RGBA curves; this is the scalar case. */
+/** {@link sampleScalar} for the two-axis `[t, sx, sy]` curves. Kept separate rather than
+ *  generalising the scalar one, because every OTHER curve in this file really is scalar and
+ *  widening them all would invite pairing a y sample with the wrong x. */
+function sampleScale2(curve: [number, number, number][], t: number): [number, number] {
+    if (!curve.length) return [1, 1];
+    if (t <= curve[0][0]) return [curve[0][1], curve[0][2]];
+    const last = curve[curve.length - 1];
+    if (t >= last[0]) return [last[1], last[2]];
+    for (let i = 1; i < curve.length; i++) {
+        if (curve[i][0] >= t) {
+            const [t0, x0, y0] = curve[i - 1];
+            const [t1, x1, y1] = curve[i];
+            const span = t1 - t0;
+            if (span <= 1e-9) return [x1, y1];
+            const f = (t - t0) / span;
+            return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f];
+        }
+    }
+    return [last[1], last[2]];
+}
+
 function sampleScalar(curve: [number, number][], t: number): number {
     if (!curve.length) return 1;
     if (t <= curve[0][0]) return curve[0][1];
@@ -1969,8 +1990,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // against the capture - at t=4.0 the multiplier is 0.669 where the measured
                     // width/camera-scale ratio is 0.667. `?apscale=0` restores the frozen radius.
                     if (ap.scaleCurve?.length && apertureScaleOn()) {
-                        const m = sampleScalar(ap.scaleCurve, tt);
-                        if (Number.isFinite(m) && m > 0) eseq.apertureMask.scale.set(m);
+                        // Per axis now that the curve carries both. The rim is a circle whose x and
+                        // y were previously assumed equal; where they are, this is bit-identical.
+                        const [mx, my] = sampleScale2(ap.scaleCurve, tt);
+                        if (Number.isFinite(mx) && mx > 0 && Number.isFinite(my) && my > 0) eseq.apertureMask.scale.set(mx, my);
                     }
                     // The rim's own curve carries the whole beat - black hold, then the WHITE
                     // reveal flash, then alpha 0 - so replay it rather than inferring an end.
@@ -2037,12 +2060,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         if (mm.__scaleCurve || mm.__posCurve) {
                             if (layerTransformOn()) {
                                 const piv = mm.__scalePivot;
-                                const s = mm.__scaleCurve && piv ? sampleScalar(mm.__scaleCurve, tt) : 1;
+                                const [sx, sy] = mm.__scaleCurve && piv ? sampleScale2(mm.__scaleCurve, tt) : [1, 1];
                                 const [px, py] = piv ?? [0, 0];
                                 const [dx, dy]: [number, number] = mm.__posCurve ? samplePosCurve(mm.__posCurve, tt) : [0, 0];
-                                if (Number.isFinite(s) && s > 0 && Number.isFinite(px) && Number.isFinite(py) && Number.isFinite(dx) && Number.isFinite(dy)) {
-                                    m.scale.set(s);
-                                    m.position.set(px * (1 - s) + dx, -py * (1 - s) - dy);
+                                if (Number.isFinite(sx) && sx > 0 && Number.isFinite(sy) && sy > 0 && Number.isFinite(px) && Number.isFinite(py) && Number.isFinite(dx) && Number.isFinite(dy)) {
+                                    // Each axis compensates about the pivot with ITS OWN factor, or
+                                    // a non-uniform scale would slide the layer as well as resize it.
+                                    m.scale.set(sx, sy);
+                                    m.position.set(px * (1 - sx) + dx, -py * (1 - sy) - dy);
                                 }
                             } else {
                                 m.scale.set(1);

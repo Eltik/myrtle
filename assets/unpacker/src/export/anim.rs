@@ -655,8 +655,15 @@ pub fn entrance_ps_rate_curves(
 /// the emitter's pivot + px offset.
 #[derive(Default)]
 pub struct EntranceTransform {
-    /// Uniform scale factor (the x component) keyframes, absolute cinematic seconds.
+    /// Scale keyframes on X, absolute cinematic seconds.
+    ///
+    /// ⚠️ This used to be the whole story, documented as "uniform scale factor (the x
+    /// component)", and it is not: Kal'tsit's `st` scales x by 2.967 against y by 2.659 over her
+    /// entrance. Averaging the two would be a fitted constant, so {@link scale_y} carries y.
     pub scale: Vec<(f32, f32)>,
+    /// Scale keyframes on Y, paired with {@link scale} and taken from the SAME binding, so the
+    /// two can never come from different transforms. Empty when the clip binds only x.
+    pub scale_y: Vec<(f32, f32)>,
     /// Local position x/y keyframes (parent frame, Unity units); empty when unanimated.
     pub pos_x: Vec<(f32, f32)>,
     pub pos_y: Vec<(f32, f32)>,
@@ -696,8 +703,11 @@ pub fn entrance_transform_curves(
             continue;
         };
         // Pass 1: this clip's scale/pos curves per path + the set of ALL its binding hashes.
-        let mut scale_path: Option<u32> = None;
-        let mut scale = Vec::new();
+        // Scale curves keyed by their OWN binding path, exactly as `pos_by_path` below and for the
+        // same reason. A clip animates SEVERAL transforms' scale (Kal'tsit's `_Start_04` drives
+        // `st`, `st2` and `st3`) and the single `scale`/`scale_path` pair this replaces kept only
+        // the longest, silently dropping the other two.
+        let mut scale_by_path: HashMap<u32, PosXY> = HashMap::new();
         let mut pos_x = Vec::new();
         let mut pos_y = Vec::new();
         let mut pos_path: Option<u32> = None;
@@ -713,12 +723,17 @@ pub fn entrance_transform_curves(
             let (tid, attr, path) = binding_fields(b);
             all_hashes.insert(path);
             if tid == 4 && attr == 3 {
-                if let Some(c) = decode_curve_any(v, gidx)
-                    && c.len() > 1
-                    && c.len() > scale.len()
+                // A Transform-scale binding carries THREE curves, x/y/z at `gidx`, `gidx + 1` and
+                // `gidx + 2`, the same layout position uses for its two. Keep x AND y; z is not
+                // used by any 2D consumer here.
+                if let Some(cx) = decode_curve_any(v, gidx)
+                    && cx.len() > 1
                 {
-                    scale = c;
-                    scale_path = Some(path);
+                    let cy = decode_curve_any(v, gidx + 1).unwrap_or_default();
+                    let e = scale_by_path.entry(path).or_default();
+                    if cx.len() > e.0.len() {
+                        *e = (cx, cy);
+                    }
                 }
             } else if tid == 4 && attr == 1 {
                 pos_path = Some(path);
@@ -764,40 +779,46 @@ pub fn entrance_transform_curves(
                 .unwrap_or_default();
             eprintln!(
                 "  [poscurve] scaleAnimated={} keys={}/{} x[{xn:.2}..{xx:.2}] span {xs:.2}  y[{yn:.2}..{yx:.2}] span {ys:.2}  gos={names:?}",
-                scale.len() >= 2,
+                scale_by_path.values().any(|(x, _)| x.len() >= 2),
                 pos_x.len(),
                 pos_y.len(),
             );
         }
-        let Some(scale_path) = scale_path.filter(|_| scale.len() >= 2) else {
-            continue;
-        };
-        // The pos curves belong to the same ctrl only when they share the scale's path.
-        // (Re-scan is unnecessary — pos bindings on the same transform share the hash.)
-
-        // Pass 2: pick the target ctrl among the colliding candidates — the one whose
-        // subtree contains the most of the clip's OTHER bound GOs.
-        let Some(candidates) = hash_to_gos.get(&scale_path) else {
-            continue;
-        };
-        let candidates = scope_to_animator(
-            candidates,
-            clip_animators.get(clip_pid).map(Vec::as_slice),
-            &is_ancestor,
-        );
-        let other_hashes = all_hashes.iter().copied().filter(|&h| h != scale_path);
-        let Some(ctrl) = disambiguate_owner(&candidates, other_hashes, &hash_to_gos, &is_ancestor)
-        else {
-            continue;
-        };
-        // Take the position curve bound to the SCALE's own path — never whichever one the
-        // binding walk happened to end on (see `pos_by_path`).
-        let (own_pos_x, own_pos_y) = pos_by_path.remove(&scale_path).unwrap_or_default();
-        let e = out.entry(ctrl).or_default();
-        if scale.len() > e.scale.len() {
-            e.scale = scale;
-            e.pos_x = own_pos_x;
-            e.pos_y = own_pos_y;
+        // Pass 2, ONCE PER ANIMATED TRANSFORM rather than once per clip. Each path resolves its
+        // own ctrl, so a clip driving three transforms now yields three entries instead of one.
+        for (scale_path, (scale, scale_y)) in scale_by_path {
+            if scale.len() < 2 {
+                continue;
+            }
+            // The pos curves belong to the same ctrl only when they share the scale's path.
+            // (Re-scan is unnecessary — pos bindings on the same transform share the hash.)
+            //
+            // Pick the target ctrl among the colliding candidates — the one whose subtree
+            // contains the most of the clip's OTHER bound GOs.
+            let Some(candidates) = hash_to_gos.get(&scale_path) else {
+                continue;
+            };
+            let candidates = scope_to_animator(
+                candidates,
+                clip_animators.get(clip_pid).map(Vec::as_slice),
+                &is_ancestor,
+            );
+            let other_hashes = all_hashes.iter().copied().filter(|&h| h != scale_path);
+            let Some(ctrl) =
+                disambiguate_owner(&candidates, other_hashes, &hash_to_gos, &is_ancestor)
+            else {
+                continue;
+            };
+            // Take the position curve bound to the SCALE's own path — never whichever one the
+            // binding walk happened to end on (see `pos_by_path`).
+            let (own_pos_x, own_pos_y) = pos_by_path.remove(&scale_path).unwrap_or_default();
+            let e = out.entry(ctrl).or_default();
+            if scale.len() > e.scale.len() {
+                e.scale = scale;
+                e.scale_y = scale_y;
+                e.pos_x = own_pos_x;
+                e.pos_y = own_pos_y;
+            }
         }
     }
     out

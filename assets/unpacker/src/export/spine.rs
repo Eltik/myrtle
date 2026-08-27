@@ -309,7 +309,9 @@ pub struct BgQuad {
     /// animates it. Decoding her curve and scaling the measured aperture by it reproduces the
     /// capture's radius to ~1% at four of five beats, so this is the missing input rather than an
     /// anchoring error. See `entrance_transform_curves`.
-    pub scale_curve: Option<Vec<(f32, f32)>>,
+    /// `(t, sx, sy)`. BOTH axes: Kal'tsit's `st` scales x by 2.967 against y by 2.659, so a single
+    /// uniform factor cannot carry it and averaging the two would be a fitted constant.
+    pub scale_curve: Option<Vec<(f32, f32, f32)>>,
     /// Fixed point for `scale_curve`, in authored px (Y-up). `None` alongside an absent curve.
     pub scale_pivot: Option<[f32; 2]>,
     /// ENTRANCE Transform POSITION keyframes for the quad's animated owner, as an OFFSET
@@ -2834,20 +2836,41 @@ fn collect_dynchar_bg_quads(
                     return None;
                 }
                 // Normalise against the OWNER's prefab scale — the transform the curve belongs to,
-                // not the quad's own, or the multiplier is divided by the wrong number.
-                let base = xform_owner
+                // not the quad's own, or the multiplier is divided by the wrong number. EACH AXIS
+                // against ITS OWN component: dividing y by `m_LocalScale.x` was the second half of
+                // the uniform-scale defect, and it silently skews any non-square host.
+                let local = xform_owner
                     .and_then(|owner| go_to_transform.get(&owner))
                     .and_then(|tf| all_objects.get(tf))
-                    .and_then(|(_, tv)| tv.get("m_LocalScale"))
-                    .and_then(|s| s.get("x"))
-                    .and_then(Value::as_f64)
-                    .unwrap_or(1.0) as f32;
-                if base.abs() < 1e-6 {
+                    .and_then(|(_, tv)| tv.get("m_LocalScale"));
+                let axis = |k: &str| {
+                    local
+                        .and_then(|s| s.get(k))
+                        .and_then(Value::as_f64)
+                        .unwrap_or(1.0) as f32
+                };
+                let (bx, by) = (axis("x"), axis("y"));
+                if bx.abs() < 1e-6 || by.abs() < 1e-6 {
                     return None;
                 }
-                let c: Vec<(f32, f32)> = et.scale.iter().map(|&(t, v)| (t, v / base)).collect();
-                // All-1.0 curves carry no information and would only bloat every scene JSON.
-                c.iter().any(|&(_, v)| (v - 1.0).abs() > 1e-3).then_some(c)
+                // Pair y by index, which is safe because both come from the SAME binding and so
+                // share their key times. A clip that binds only x leaves `scale_y` empty; there the
+                // host really is uniform and the x multiplier stands in for both.
+                let uniform = et.scale_y.len() != et.scale.len();
+                let c: Vec<(f32, f32, f32)> = et
+                    .scale
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &(t, v))| {
+                        let sx = v / bx;
+                        (t, sx, if uniform { sx } else { et.scale_y[i].1 / by })
+                    })
+                    .collect();
+                // All-1.0 curves carry no information and would only bloat every scene JSON. BOTH
+                // axes have to be flat before a curve is discarded.
+                c.iter()
+                    .any(|&(_, x, y)| (x - 1.0).abs() > 1e-3 || (y - 1.0).abs() > 1e-3)
+                    .then_some(c)
             });
         let scale_pivot = scale_curve.as_ref().and_then(|_| {
             let owner = xform_owner?;
@@ -5570,7 +5593,7 @@ fn export_scene(
         // byte-identical.
         if let Some(sc) = &quad.scale_curve {
             layer["scaleCurve"] =
-                serde_json::json!(sc.iter().map(|&p| <[f32; 2]>::from(p)).collect::<Vec<_>>());
+                serde_json::json!(sc.iter().map(|&p| <[f32; 3]>::from(p)).collect::<Vec<_>>());
         }
         // Match particles.rs's fixed scale pivot; omit it with the curve so static exports stay
         // byte-identical and the frontend never has a transform to replay.

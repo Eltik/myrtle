@@ -132,7 +132,9 @@ export interface ISceneLayer {
     /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
      *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
-    scaleCurve?: [number, number][] | null;
+    /** `[t, sx, sy]`. Two axes, because a host can scale x and y differently (Kal'tsit's
+     *  `st` is 2.967 against 2.659) and averaging them would be a fitted constant. */
+    scaleCurve?: [number, number, number][] | null;
     /** Fixed point of `scaleCurve` in authored px (Y-up), exported from the animated owner. */
     scalePivot?: [number, number] | null;
     /** ENTRANCE Transform POSITION offsets `[t, dx, dy]` in authored px, relative to this
@@ -285,7 +287,7 @@ export interface ISceneAperture {
      *  Executor's scope is animated: the game scales the rim 0.69..1.25 across the cinematic and
      *  the aperture follows, which a frozen radius cannot express (measured width/camera-scale
      *  swings 295..521 where ours was a constant 425). */
-    scaleCurve: [number, number][] | null;
+    scaleCurve: [number, number, number][] | null;
     /** The rim's own ENTRANCE POSITION curve, `[t, dx, dy]` in authored px (see
      *  {@link ISceneLayer.posCurve}). The aperture is pinned to the CAMERA centre, which is
      *  only right while the rim rides the camera exactly. It does not: Executor's rim tracks
@@ -955,7 +957,7 @@ export interface ISceneLayerRuntime {
     /** Mirror of {@link ISceneLayer.camLockViewPx}. */
     __camLockView?: number;
     /** Entrance transform replay, kept absent for layers with no authored curve. */
-    __scaleCurve?: [number, number][] | null;
+    __scaleCurve?: [number, number, number][] | null;
     __scalePivot?: [number, number] | null;
     __posCurve?: [number, number, number][] | null;
     __colorCurve?: [number, number, number, number, number][] | null;
