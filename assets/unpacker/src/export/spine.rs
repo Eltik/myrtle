@@ -2877,7 +2877,8 @@ fn collect_dynchar_bg_quads(
             let tf = *go_to_transform.get(&owner)?;
             // Match particles.rs's pivot: scaling a baked mesh must stay fixed at the animated
             // owner's world origin, not at this child quad's origin or its father's.
-            let p = accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose).point([0.0, 0.0, 0.0]);
+            let p =
+                accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose).point([0.0, 0.0, 0.0]);
             // The particle precedent emits authored px, so carry this scene pivot through the
             // same skeleton-scale conversion used by the layer geometry and position curve.
             Some([

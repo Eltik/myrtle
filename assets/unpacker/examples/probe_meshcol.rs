@@ -51,7 +51,9 @@ fn main() {
                 if obj.class_id != 43 {
                     continue; // Mesh
                 }
-                let Ok(v) = read_object(&sf, obj) else { continue };
+                let Ok(v) = read_object(&sf, obj) else {
+                    continue;
+                };
                 let name = v.get("m_Name").and_then(Value::as_str).unwrap_or("?");
                 let vd = v.get("m_VertexData");
                 let vcount = vd
@@ -64,7 +66,9 @@ fn main() {
                     .and_then(Value::as_array)
                     .map_or(0, |a| a.len() / 2);
                 // channel 3 is Color
-                let ch = vd.and_then(|d| d.get("m_Channels")).and_then(Value::as_array);
+                let ch = vd
+                    .and_then(|d| d.get("m_Channels"))
+                    .and_then(Value::as_array);
                 let col_ch = ch.and_then(|c| c.get(3));
                 let dim = col_ch
                     .and_then(|c| c.get("dimension"))
@@ -105,7 +109,11 @@ fn super_parse(v: &Value) -> String {
             });
             format!(
                 "alpha {mn:.3}..{mx:.3} mean {mean:.3}  {}",
-                if white { "ALL OPAQUE WHITE -> col omitted" } else { "has vertex colour -> col emitted" }
+                if white {
+                    "ALL OPAQUE WHITE -> col omitted"
+                } else {
+                    "has vertex colour -> col emitted"
+                }
             )
         }
     }

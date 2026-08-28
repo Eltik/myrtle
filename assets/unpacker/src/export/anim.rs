@@ -659,7 +659,7 @@ pub struct EntranceTransform {
     ///
     /// ⚠️ This used to be the whole story, documented as "uniform scale factor (the x
     /// component)", and it is not: Kal'tsit's `st` scales x by 2.967 against y by 2.659 over her
-    /// entrance. Averaging the two would be a fitted constant, so {@link scale_y} carries y.
+    /// entrance. Averaging the two would be a fitted constant, so {@link `scale_y`} carries y.
     pub scale: Vec<(f32, f32)>,
     /// Scale keyframes on Y, paired with {@link scale} and taken from the SAME binding, so the
     /// two can never come from different transforms. Empty when the clip binds only x.

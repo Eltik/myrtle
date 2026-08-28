@@ -34,7 +34,10 @@ fn dump(label: &str, node: Option<&Value>) {
                     _ => continue,
                 },
             };
-            let ks = k.as_str().map(str::to_string).unwrap_or_else(|| k.to_string());
+            let ks = k
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| k.to_string());
             println!("      {label:<9} {ks:<26} {}", compact(&v));
         }
     }
@@ -42,12 +45,19 @@ fn dump(label: &str, node: Option<&Value>) {
 
 fn compact(v: &Value) -> String {
     let s = serde_json::to_string(v).unwrap_or_default();
-    if s.len() > 120 { format!("{}…", &s[..120]) } else { s }
+    if s.len() > 120 {
+        format!("{}…", &s[..120])
+    } else {
+        s
+    }
 }
 
 fn main() {
     let path = std::env::args().nth(1).expect("bundle.ab");
-    let want = std::env::args().nth(2).unwrap_or_default().to_ascii_lowercase();
+    let want = std::env::args()
+        .nth(2)
+        .unwrap_or_default()
+        .to_ascii_lowercase();
     let data = std::fs::read(&path).expect("read");
     let bundle = BundleFile::parse(data).expect("bundle");
     let mut objs: HashMap<i64, (i32, Value)> = HashMap::new();
@@ -56,7 +66,9 @@ fn main() {
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
             continue;
         }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         for obj in &sf.objects {
             if let Ok(v) = read_object(&sf, obj) {
                 objs.insert(obj.path_id, (obj.class_id, v));
@@ -69,33 +81,55 @@ fn main() {
             let comps = v
                 .get("m_Component")
                 .and_then(Value::as_array)
-                .map(|a| a.iter().filter_map(|c| c.get("component").and_then(pid).or_else(|| pid(c))).collect())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|c| c.get("component").and_then(pid).or_else(|| pid(c)))
+                        .collect()
+                })
                 .unwrap_or_default();
             go_components.insert(*id, comps);
         }
     }
     let mut seen: std::collections::HashSet<i64> = std::collections::HashSet::new();
     for (go, comps) in &go_components {
-        let name = objs.get(go).and_then(|(_, g)| g.get("m_Name")).and_then(Value::as_str).unwrap_or("");
+        let name = objs
+            .get(go)
+            .and_then(|(_, g)| g.get("m_Name"))
+            .and_then(Value::as_str)
+            .unwrap_or("");
         if !name.to_ascii_lowercase().contains(&want) {
             continue;
         }
         for c in comps {
             // 23 MeshRenderer, 199 ParticleSystemRenderer
-            let Some((cid, r)) = objs.get(c) else { continue };
+            let Some((cid, r)) = objs.get(c) else {
+                continue;
+            };
             if *cid != 23 && *cid != 199 {
                 continue;
             }
             // The INDEX within `m_Materials` matters: a ParticleSystemRenderer draws with slot 0
             // and may carry a trail material after it, so "this GO has a material with X" is not
             // the same claim as "the emitter draws with X".
-            let cname = if *cid == 23 { "MeshRenderer" } else { "ParticleSystemRenderer" };
-            for (mi, mp) in r.get("m_Materials").and_then(Value::as_array).into_iter().flatten().enumerate() {
+            let cname = if *cid == 23 {
+                "MeshRenderer"
+            } else {
+                "ParticleSystemRenderer"
+            };
+            for (mi, mp) in r
+                .get("m_Materials")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .enumerate()
+            {
                 let Some(mp) = pid(mp) else { continue };
                 if !seen.insert(mp) {
                     continue;
                 }
-                let Some((_, mat)) = objs.get(&mp) else { continue };
+                let Some((_, mat)) = objs.get(&mp) else {
+                    continue;
+                };
                 println!("=== GO {name:?}  {cname} m_Materials[{mi}]  material {mp}");
                 let sp = mat.get("m_SavedProperties");
                 dump("float", sp.and_then(|s| s.get("m_Floats")));
@@ -115,8 +149,15 @@ fn main() {
                             .get(&tp)
                             .and_then(|(_, t)| t.get("m_Name"))
                             .and_then(Value::as_str)
-                            .unwrap_or(if tp == 0 { "UNBOUND" } else { "external/absent" });
-                        rows.push((k, format!("{named:<28} pid {tp:<22} scale {sc} offset {of}")));
+                            .unwrap_or(if tp == 0 {
+                                "UNBOUND"
+                            } else {
+                                "external/absent"
+                            });
+                        rows.push((
+                            k,
+                            format!("{named:<28} pid {tp:<22} scale {sc} offset {of}"),
+                        ));
                     };
                     if let Some(map) = te.as_object() {
                         for (k, v) in map {
@@ -131,7 +172,10 @@ fn main() {
                                     _ => continue,
                                 },
                             };
-                            let ks = k.as_str().map(str::to_string).unwrap_or_else(|| k.to_string());
+                            let ks = k
+                                .as_str()
+                                .map(str::to_string)
+                                .unwrap_or_else(|| k.to_string());
                             push(ks, &v);
                         }
                     }

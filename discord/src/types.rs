@@ -1,4 +1,4 @@
-use serenity::model::id::{ChannelId, GuildId, MessageId, UserId};
+use serenity::model::id::{GuildId, MessageId, UserId};
 use sqlx::SqlitePool;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -8,7 +8,7 @@ use std::{
 use tokio::sync::{Mutex, RwLock};
 
 use crate::config::Config;
-use crate::db::AntiSpamPolicy;
+use crate::db::{AntiSpamPolicy, AuditSettings};
 use crate::watcher::AssetsStates;
 
 /// Per-`(guild, user)` rolling window of recent ping counts, keyed by send time.
@@ -22,11 +22,12 @@ pub type PingHistory = Arc<RwLock<HashMap<(GuildId, UserId), VecDeque<(Instant, 
 /// stays out of `SQLite`.
 pub type AntiSpamPolicies = Arc<RwLock<HashMap<GuildId, AntiSpamPolicy>>>;
 
-/// Cached `(guild, audit-log-channel)` bindings, mirroring `guild_audit_log`.
+/// Cached audit-log bindings (destination channel + per-event filter), mirroring
+/// `guild_audit_log`.
 ///
-/// Hydrated on startup and kept in sync by `/auditlog set` / `/auditlog clear` so the hot
-/// path (every logged event) doesn't hit `SQLite`.
-pub type AuditLogChannels = Arc<RwLock<HashMap<GuildId, ChannelId>>>;
+/// Hydrated on startup and kept in sync by `/auditlog set` / `clear` / `enable` / `disable`
+/// so the hot path (every logged event) doesn't hit `SQLite`.
+pub type AuditLogSettings = Arc<RwLock<HashMap<GuildId, AuditSettings>>>;
 
 pub struct Data {
     pub command_counter: Mutex<HashMap<String, u64>>,
@@ -37,7 +38,7 @@ pub struct Data {
     pub assets: AssetsStates,
     pub ping_history: PingHistory,
     pub antispam_policies: AntiSpamPolicies,
-    pub audit_log_channels: AuditLogChannels,
+    pub audit_log_settings: AuditLogSettings,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

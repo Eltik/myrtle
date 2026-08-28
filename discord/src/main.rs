@@ -110,14 +110,14 @@ async fn main() {
                     antispam_policies.len()
                 );
 
-                let audit_log_channels: std::collections::HashMap<_, _> =
-                    db::list_audit_log_channels(&pool)
+                let audit_log_settings: std::collections::HashMap<_, _> =
+                    db::list_audit_log_settings(&pool)
                         .await?
                         .into_iter()
                         .collect();
                 tracing::info!(
                     "Hydrated audit-log bindings for {} guild(s)",
-                    audit_log_channels.len()
+                    audit_log_settings.len()
                 );
 
                 let reconnect_secs = config.assets.reconnect_secs;
@@ -160,7 +160,7 @@ async fn main() {
                     assets: assets_states,
                     ping_history,
                     antispam_policies,
-                    audit_log_channels: Arc::new(RwLock::new(audit_log_channels)),
+                    audit_log_settings: Arc::new(RwLock::new(audit_log_settings)),
                 })
             })
         })

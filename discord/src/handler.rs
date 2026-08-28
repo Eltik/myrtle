@@ -13,7 +13,8 @@ use serenity::{
     client::FullEvent::{
         self, GuildAuditLogEntryCreate, GuildBanAddition, GuildBanRemoval, GuildDelete,
         GuildMemberAddition, GuildMemberRemoval, Message as MessageCreate, MessageDelete,
-        MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove,
+        MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove, ReactionRemoveAll,
+        ReactionRemoveEmoji,
     },
 };
 
@@ -84,10 +85,33 @@ pub async fn event_handler(
             audit::log_audit_entry(ctx, data, *guild_id, entry).await;
         }
         ReactionAdd { add_reaction } => {
+            audit::log_reaction(ctx, data, add_reaction, true).await;
             handle_reaction(ctx, data, bot_id, add_reaction, true).await?;
         }
         ReactionRemove { removed_reaction } => {
+            audit::log_reaction(ctx, data, removed_reaction, false).await;
             handle_reaction(ctx, data, bot_id, removed_reaction, false).await?;
+        }
+        // Clearing reactions fires these *instead of* per-user removes. Reaction roles are
+        // deliberately left alone - Discord doesn't revoke roles when a mod wipes reactions,
+        // and neither event names the members whose reactions went away.
+        ReactionRemoveAll {
+            channel_id,
+            removed_from_message_id,
+        } => {
+            audit::log_reaction_clear(ctx, data, *channel_id, *removed_from_message_id, None, None)
+                .await;
+        }
+        ReactionRemoveEmoji { removed_reactions } => {
+            audit::log_reaction_clear(
+                ctx,
+                data,
+                removed_reactions.channel_id,
+                removed_reactions.message_id,
+                removed_reactions.guild_id,
+                Some(&removed_reactions.emoji),
+            )
+            .await;
         }
         MessageCreate { new_message } => {
             if let Err(e) = handle_message(ctx, data, bot_id, new_message).await {
@@ -289,7 +313,7 @@ async fn handle_message(
 
 /// Count raw mention tokens — `<@123>`, `<@!123>`, `<@&123>` — in `content`. Each occurrence
 /// counts separately, so `@me @me @me` returns 3 (unlike `msg.mentions.len()` which dedupes).
-fn count_mention_tokens(content: &str) -> u32 {
+const fn count_mention_tokens(content: &str) -> u32 {
     let bytes = content.as_bytes();
     let mut count: u32 = 0;
     let mut i = 0;

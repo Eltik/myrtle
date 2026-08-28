@@ -66,9 +66,18 @@ fn color_of(mat: &Value, k: &str) -> Option<[f64; 4]> {
 
 fn blend_name(v: f64) -> &'static str {
     match v as i64 {
-        0 => "Zero", 1 => "One", 2 => "DstColor", 3 => "SrcColor", 4 => "OneMinusDstColor",
-        5 => "SrcAlpha", 6 => "OneMinusSrcColor", 7 => "DstAlpha", 8 => "OneMinusDstAlpha",
-        9 => "SrcAlphaSaturate", 10 => "OneMinusSrcAlpha", _ => "?",
+        0 => "Zero",
+        1 => "One",
+        2 => "DstColor",
+        3 => "SrcColor",
+        4 => "OneMinusDstColor",
+        5 => "SrcAlpha",
+        6 => "OneMinusSrcColor",
+        7 => "DstAlpha",
+        8 => "OneMinusDstAlpha",
+        9 => "SrcAlphaSaturate",
+        10 => "OneMinusSrcAlpha",
+        _ => "?",
     }
 }
 
@@ -84,7 +93,11 @@ fn main() {
         .map(|e| e.path().to_path_buf())
         .collect();
     let shader_map = build_shader_map(&files);
-    eprintln!("shader map: {} entries from {} files", shader_map.len(), files.len());
+    eprintln!(
+        "shader map: {} entries from {} files",
+        shader_map.len(),
+        files.len()
+    );
     for path in std::env::args().skip(1) {
         let Ok(data) = std::fs::read(&path) else {
             eprintln!("cannot read {path}");
@@ -153,7 +166,9 @@ fn main() {
                 continue;
             }
             let kind = if *cid == 23 { "mesh" } else { "PART" };
-            let Some(go) = v.get("m_GameObject").and_then(pid) else { continue };
+            let Some(go) = v.get("m_GameObject").and_then(pid) else {
+                continue;
+            };
             let go_name = objs
                 .get(&go)
                 .and_then(|(_, g)| g.get("m_Name"))
@@ -170,27 +185,43 @@ fn main() {
                 }
             }
             let mats = v.get("m_Materials").and_then(Value::as_array);
-            let Some(mp) = mats.and_then(|a| a.first()).and_then(pid) else { continue };
-            let Some((_, mat)) = objs.get(&mp) else { continue };
+            let Some(mp) = mats.and_then(|a| a.first()).and_then(pid) else {
+                continue;
+            };
+            let Some((_, mat)) = objs.get(&mp) else {
+                continue;
+            };
             let shader = shader_of.get(&mp).cloned().unwrap_or_else(|| "?".into());
             let g = |k: &str| float_of(mat, k);
             let src = g("_SrcBlend").map_or("-".into(), |v| format!("{}({v:.0})", blend_name(v)));
             let dst = g("_DstBlend").map_or("-".into(), |v| format!("{}({v:.0})", blend_name(v)));
-            let extra = ["_BlendMode", "_ZWrite", "_Cull", "_Mode", "_AlphaPremultiply"]
-                .iter()
-                .filter_map(|k| g(k).map(|v| format!("{k}={v:.2}")))
-                .collect::<Vec<_>>()
-                .join(" ");
+            let extra = [
+                "_BlendMode",
+                "_ZWrite",
+                "_Cull",
+                "_Mode",
+                "_AlphaPremultiply",
+            ]
+            .iter()
+            .filter_map(|k| g(k).map(|v| format!("{k}={v:.2}")))
+            .collect::<Vec<_>>()
+            .join(" ");
             let cols = ["_TintColor", "_MainColor", "_Color"]
                 .iter()
                 .filter_map(|k| {
-                    color_of(mat, k).map(|c| {
-                        format!("{k}=[{:.3} {:.3} {:.3} {:.3}]", c[0], c[1], c[2], c[3])
-                    })
+                    color_of(mat, k)
+                        .map(|c| format!("{k}=[{:.3} {:.3} {:.3} {:.3}]", c[0], c[1], c[2], c[3]))
                 })
                 .collect::<Vec<_>>()
                 .join("  ");
-            rows.push((idx, format!("[{kind}] {go_name}"), shader, src, dst, format!("{extra}  {cols}")));
+            rows.push((
+                idx,
+                format!("[{kind}] {go_name}"),
+                shader,
+                src,
+                dst,
+                format!("{extra}  {cols}"),
+            ));
         }
         rows.sort();
         for (idx, go, sh, src, dst, extra) in rows {

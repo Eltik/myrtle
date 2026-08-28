@@ -36,10 +36,14 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
 /// Subcommands: `channel`, `status`, `resources`. The `channel` group binds
 /// announcements to a specific channel; the pipeline daemon (`assets/run.mjs ws`) emits
 /// version/error events which the bot forwards as embeds.
+///
+/// Server-owner only. The check sits on this parent command, which is enough: poise runs
+/// every parent's checks before the invoked subcommand's, so the whole tree is gated here.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_GUILD",
+    default_member_permissions = "ADMINISTRATOR",
+    check = "crate::checks::guild_owner_check",
     subcommands("assets_channel", "assets_status", "assets_resources"),
     subcommand_required
 )]
@@ -49,7 +53,7 @@ pub async fn assets(_ctx: Context<'_>) -> Result<(), Error> {
 
 /// Configure which channel receives asset announcements for this guild.
 ///
-/// Subcommands: `set`, `clear`, `show`. Requires the Manage Server permission.
+/// Subcommands: `set`, `clear`, `show`. Server-owner only, via the `/assets` check.
 #[poise::command(
     slash_command,
     guild_only,
@@ -62,12 +66,7 @@ pub async fn assets_channel(_ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Bind asset announcements to a channel.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "set",
-    required_permissions = "MANAGE_GUILD"
-)]
+#[poise::command(slash_command, guild_only, rename = "set")]
 pub async fn assets_channel_set(
     ctx: Context<'_>,
     #[description = "Channel to announce updates in"] channel: serenity::ChannelId,
@@ -88,12 +87,7 @@ pub async fn assets_channel_set(
 }
 
 /// Stop sending asset announcements for this guild.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "clear",
-    required_permissions = "MANAGE_GUILD"
-)]
+#[poise::command(slash_command, guild_only, rename = "clear")]
 pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
         .guild_id()
@@ -112,12 +106,7 @@ pub async fn assets_channel_clear(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Show the configured asset-announcements channel for this guild.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "show",
-    required_permissions = "MANAGE_GUILD"
-)]
+#[poise::command(slash_command, guild_only, rename = "show")]
 pub async fn assets_channel_show(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
         .guild_id()
@@ -183,12 +172,7 @@ pub async fn assets_status(
 }
 
 /// Ask the asset pipeline for its current resource listing and reply with a summary.
-#[poise::command(
-    slash_command,
-    guild_only,
-    rename = "resources",
-    check = "crate::checks::owner_check"
-)]
+#[poise::command(slash_command, guild_only, rename = "resources")]
 pub async fn assets_resources(
     ctx: Context<'_>,
     #[description = "Server label (e.g. EN, CN)"] server: String,

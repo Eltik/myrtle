@@ -11,15 +11,16 @@ use serenity::all::{Context, Http, MessageUpdateEvent, Timestamp};
 use serenity::builder::{
     CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, CreateMessage,
 };
-use serenity::model::channel::Message;
+use serenity::model::channel::{Channel, Message, Reaction, ReactionType};
 use serenity::model::guild::Member;
 use serenity::model::guild::audit_log::{
     Action, AuditLogEntry, ChannelAction, ChannelOverwriteAction, EmojiAction, IntegrationAction,
     InviteAction, MemberAction, MessageAction, RoleAction, StickerAction, ThreadAction,
 };
-use serenity::model::id::{ChannelId, GuildId, MessageId};
+use serenity::model::id::{ChannelId, GuildId, MessageId, UserId};
 use serenity::model::user::User;
 
+use crate::db::AuditEvent;
 use crate::types::Data;
 
 #[allow(clippy::unreadable_literal)]
@@ -38,6 +39,10 @@ const COLOR_UNBAN: u32 = 0x57F287;
 const COLOR_MOD: u32 = 0xEB459E;
 #[allow(clippy::unreadable_literal)]
 const COLOR_STRUCT: u32 = 0x5865F2;
+#[allow(clippy::unreadable_literal)]
+const COLOR_REACT_ADD: u32 = 0x57F287;
+#[allow(clippy::unreadable_literal)]
+const COLOR_REACT_REMOVE: u32 = 0xFEE75C;
 
 /// Discord embed field-value limit.
 const FIELD_LIMIT: usize = 1024;
@@ -58,7 +63,7 @@ pub async fn log_message_update(
     let Some(guild_id) = event.guild_id.or_else(|| new.and_then(|m| m.guild_id)) else {
         return;
     };
-    let Some(channel) = audit_channel(data, guild_id).await else {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::MessageEdit).await else {
         return;
     };
     if event.channel_id == channel {
@@ -129,7 +134,8 @@ pub async fn log_message_delete(
     let Some(guild_id) = guild_id else {
         return;
     };
-    let Some(audit_channel_id) = audit_channel(data, guild_id).await else {
+    let Some(audit_channel_id) = audit_channel(data, guild_id, AuditEvent::MessageDelete).await
+    else {
         return;
     };
     if channel_id == audit_channel_id {
@@ -190,7 +196,8 @@ pub async fn log_message_bulk_delete(
     let Some(guild_id) = guild_id else {
         return;
     };
-    let Some(audit_channel_id) = audit_channel(data, guild_id).await else {
+    let Some(audit_channel_id) = audit_channel(data, guild_id, AuditEvent::MessageBulkDelete).await
+    else {
         return;
     };
     if channel_id == audit_channel_id {
@@ -252,8 +259,19 @@ pub async fn log_message_bulk_delete(
     dispatch(&ctx.http, audit_channel_id, embed, attachments).await;
 }
 
-async fn audit_channel(data: &Data, guild_id: GuildId) -> Option<ChannelId> {
-    data.audit_log_channels.read().await.get(&guild_id).copied()
+/// Resolve the audit-log destination for `event` in `guild_id`, or `None` when the guild has
+/// no binding at all or has switched that category off.
+///
+/// Every `log_*` helper starts here, so the per-guild filter is enforced in exactly one place
+/// and a new category can't accidentally ship unfilterable.
+async fn audit_channel(data: &Data, guild_id: GuildId, event: AuditEvent) -> Option<ChannelId> {
+    let guild = data
+        .audit_log_settings
+        .read()
+        .await
+        .get(&guild_id)
+        .copied()?;
+    guild.events.is_enabled(event).then_some(guild.channel_id)
 }
 
 async fn dispatch(
@@ -351,7 +369,7 @@ fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) 
 /// Log a guild join. Joins are gateway-only - Discord does not write an audit log entry for
 /// them, so the gateway event is the canonical source.
 pub async fn log_member_join(ctx: &Context, data: &Data, member: &Member) {
-    let Some(channel) = audit_channel(data, member.guild_id).await else {
+    let Some(channel) = audit_channel(data, member.guild_id, AuditEvent::MemberJoin).await else {
         return;
     };
     if member.user.bot {
@@ -395,7 +413,7 @@ pub async fn log_member_leave(
     user: &User,
     member_data: Option<&Member>,
 ) {
-    let Some(channel) = audit_channel(data, guild_id).await else {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::MemberLeave).await else {
         return;
     };
     if user.bot {
@@ -441,7 +459,7 @@ pub async fn log_member_leave(
 /// Log a ban (gateway-side, no actor). The `GuildAuditLogEntryCreate` for `MemberBanAdd` will
 /// carry the actor in its own embed.
 pub async fn log_member_ban(ctx: &Context, data: &Data, guild_id: GuildId, user: &User) {
-    let Some(channel) = audit_channel(data, guild_id).await else {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::MemberBan).await else {
         return;
     };
     let embed = CreateEmbed::new()
@@ -457,7 +475,7 @@ pub async fn log_member_ban(ctx: &Context, data: &Data, guild_id: GuildId, user:
 /// Log an unban (gateway-side, no actor). The `GuildAuditLogEntryCreate` for `MemberBanRemove`
 /// will carry the actor.
 pub async fn log_member_unban(ctx: &Context, data: &Data, guild_id: GuildId, user: &User) {
-    let Some(channel) = audit_channel(data, guild_id).await else {
+    let Some(channel) = audit_channel(data, guild_id, AuditEvent::MemberUnban).await else {
         return;
     };
     let embed = CreateEmbed::new()
@@ -477,7 +495,7 @@ pub async fn log_member_unban(ctx: &Context, data: &Data, guild_id: GuildId, use
 /// Log a `GuildAuditLogEntryCreate` event. This is the source of truth for moderator
 /// attribution on bans, kicks, timeouts, role/channel/guild edits, ownership transfer, etc.
 pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entry: &AuditLogEntry) {
-    let Some(channel) = audit_channel(data, guild_id).await else {
+    let Some(channel) = audit_channel(data, guild_id, action_event(entry.action)).await else {
         return;
     };
     let Some((title, color)) = action_title(entry.action) else {
@@ -520,6 +538,15 @@ pub async fn log_audit_entry(ctx: &Context, data: &Data, guild_id: GuildId, entr
     }
 
     dispatch(&ctx.http, channel, embed, Vec::new()).await;
+}
+
+/// Split audit-log actions into the two switchable categories: things a moderator did to a
+/// member or a message, versus edits to the server's own structure (channels, roles, emoji...).
+const fn action_event(action: Action) -> AuditEvent {
+    match action {
+        Action::Member(_) | Action::Message(_) | Action::AutoMod(_) => AuditEvent::ModAction,
+        _ => AuditEvent::ServerChange,
+    }
 }
 
 /// Map an `Action` to an embed title + color. Returns `None` for variants we deliberately
@@ -687,4 +714,218 @@ fn value_to_str(v: &serde_json::Value) -> String {
         other => other.to_string(),
     };
     truncate_oneline(&s, 80)
+}
+
+/// Log a reaction add (`added = true`) or remove. Skips DMs, reactions on messages in the
+/// audit channel itself, and bot reactors.
+///
+/// `Reaction::member` and `Reaction::message_author_id` are only populated on the add event,
+/// so the remove path falls back to the user and message caches. On a cache miss we render
+/// raw IDs rather than spending an HTTP fetch — reactions fire far more often than the
+/// message events above, and a mention renders fine without the user object.
+pub async fn log_reaction(ctx: &Context, data: &Data, reaction: &Reaction, added: bool) {
+    let Some(guild_id) = reaction.guild_id else {
+        return;
+    };
+    let event = if added {
+        AuditEvent::ReactionAdd
+    } else {
+        AuditEvent::ReactionRemove
+    };
+    let Some(channel) = audit_channel(data, guild_id, event).await else {
+        return;
+    };
+    if reaction.channel_id == channel {
+        return;
+    }
+    let Some(user_id) = reaction.user_id else {
+        return;
+    };
+    if user_id == ctx.cache.current_user().id {
+        return;
+    }
+
+    let user = reaction
+        .member
+        .as_ref()
+        .map(|m| m.user.clone())
+        .or_else(|| ctx.cache.user(user_id).map(|u| u.clone()));
+    if user.as_ref().is_some_and(|u| u.bot) {
+        return;
+    }
+
+    let (title, colour) = if added {
+        ("Reaction added", COLOR_REACT_ADD)
+    } else {
+        ("Reaction removed", COLOR_REACT_REMOVE)
+    };
+    let jump = message_link(Some(guild_id), reaction.channel_id, reaction.message_id);
+
+    let mut embed = CreateEmbed::new()
+        .title(title)
+        .colour(colour)
+        .field("User", format!("<@{user_id}>"), true)
+        .field("Emoji", format_emoji(&reaction.emoji), true)
+        .field("Channel", format!("<#{}>", reaction.channel_id), true)
+        .field("Jump", format!("[link]({jump})"), true)
+        .timestamp(Timestamp::now())
+        .footer(CreateEmbedFooter::new(format!(
+            "User ID: {user_id} • Message ID: {}",
+            reaction.message_id
+        )));
+
+    if let Some(u) = user.as_ref() {
+        embed = embed.author(CreateEmbedAuthor::new(u.tag()).icon_url(u.face()));
+    }
+    if let Some(url) = emoji_image_url(&reaction.emoji) {
+        embed = embed.thumbnail(url);
+    }
+    if reaction.burst {
+        embed = embed.description("*Super reaction.*");
+    }
+
+    embed = with_message_context(
+        ctx,
+        embed,
+        reaction.channel_id,
+        reaction.message_id,
+        reaction.message_author_id,
+    );
+
+    dispatch(&ctx.http, channel, embed, Vec::new()).await;
+}
+
+/// Log a moderator clearing reactions: every reaction on the message (`emoji = None`, from
+/// `ReactionRemoveAll`) or every reaction of one emoji (`ReactionRemoveEmoji`).
+///
+/// These fire *instead of* the per-user remove events, so without this arm a wiped message
+/// leaves no trace in the log at all. Discord attributes neither event to an actor and writes
+/// no audit-log entry for them, so the embed can only say what was cleared, not who did it.
+pub async fn log_reaction_clear(
+    ctx: &Context,
+    data: &Data,
+    channel_id: ChannelId,
+    message_id: MessageId,
+    guild_id: Option<GuildId>,
+    emoji: Option<&ReactionType>,
+) {
+    let guild_id = match guild_id {
+        Some(g) => g,
+        None => match reaction_clear_guild(ctx, channel_id, message_id).await {
+            Some(g) => g,
+            None => return,
+        },
+    };
+    let Some(audit_channel_id) = audit_channel(data, guild_id, AuditEvent::ReactionClear).await
+    else {
+        return;
+    };
+    if channel_id == audit_channel_id {
+        return;
+    }
+
+    let jump = message_link(Some(guild_id), channel_id, message_id);
+    let mut embed = CreateEmbed::new()
+        .title(if emoji.is_some() {
+            "Reactions cleared for one emoji"
+        } else {
+            "All reactions cleared"
+        })
+        .colour(COLOR_REACT_REMOVE)
+        .description("*Discord doesn't report who cleared them.*")
+        .field("Channel", format!("<#{channel_id}>"), true)
+        .field("Jump", format!("[link]({jump})"), true)
+        .timestamp(Timestamp::now())
+        .footer(CreateEmbedFooter::new(format!("Message ID: {message_id}")));
+
+    if let Some(e) = emoji {
+        embed = embed.field("Emoji", format_emoji(e), true);
+        if let Some(url) = emoji_image_url(e) {
+            embed = embed.thumbnail(url);
+        }
+    }
+
+    embed = with_message_context(ctx, embed, channel_id, message_id, None);
+
+    dispatch(&ctx.http, audit_channel_id, embed, Vec::new()).await;
+}
+
+/// Work out which guild `channel_id` belongs to. Only `ReactionRemoveAll` needs this - alone
+/// among the reaction events, it ships no guild id.
+///
+/// The message cache answers it for free in the common case (the message was live enough for
+/// someone to be reacting to it). The fallback costs one channel fetch, which is affordable
+/// because clearing reactions is a rare moderator action, and a DM resolves to `None` here,
+/// which drops the event as intended.
+async fn reaction_clear_guild(
+    ctx: &Context,
+    channel_id: ChannelId,
+    message_id: MessageId,
+) -> Option<GuildId> {
+    if let Some(guild_id) = ctx
+        .cache
+        .message(channel_id, message_id)
+        .and_then(|m| m.guild_id)
+    {
+        return Some(guild_id);
+    }
+    match channel_id.to_channel(ctx).await {
+        Ok(Channel::Guild(c)) => Some(c.guild_id),
+        Ok(_) => None,
+        Err(e) => {
+            tracing::warn!(
+                "audit: couldn't resolve guild for cleared reactions in {channel_id}: {e}"
+            );
+            None
+        }
+    }
+}
+
+/// Append the reacted-to message's author and a content snippet, when the cache still holds it.
+/// `author_hint` covers the `ReactionAdd` case where the gateway names the author even though
+/// the message itself has aged out.
+fn with_message_context(
+    ctx: &Context,
+    mut embed: CreateEmbed,
+    channel_id: ChannelId,
+    message_id: MessageId,
+    author_hint: Option<UserId>,
+) -> CreateEmbed {
+    let cached = ctx.cache.message(channel_id, message_id).map(|m| m.clone());
+    if let Some(msg) = cached.as_ref() {
+        embed = embed.field("Message author", format!("<@{}>", msg.author.id), true);
+        let snippet = truncate_oneline(&msg.content, 200);
+        if !snippet.is_empty() {
+            embed = embed.field("Message content", snippet, false);
+        }
+    } else if let Some(author) = author_hint {
+        embed = embed.field("Message author", format!("<@{author}>"), true);
+    }
+    embed
+}
+
+/// Render a reaction emoji for an embed field. Custom emoji keep their `<:name:id>` form so
+/// Discord renders them inline, with the name and id spelled out for emoji the log channel
+/// can't resolve.
+fn format_emoji(emoji: &ReactionType) -> String {
+    match emoji {
+        ReactionType::Custom { id, name, .. } => {
+            let label = name.as_deref().unwrap_or("unknown");
+            format!("{emoji} `:{label}:` (`{id}`)")
+        }
+        ReactionType::Unicode(s) => s.clone(),
+        _ => format!("`{emoji}`"),
+    }
+}
+
+/// CDN URL for a custom reaction emoji, used as the embed thumbnail. Unicode emoji have no
+/// such asset (they're rendered by the client font), so they get `None`.
+fn emoji_image_url(emoji: &ReactionType) -> Option<String> {
+    match emoji {
+        ReactionType::Custom { animated, id, .. } => {
+            let ext = if *animated { "gif" } else { "png" };
+            Some(format!("https://cdn.discordapp.com/emojis/{id}.{ext}"))
+        }
+        _ => None,
+    }
 }

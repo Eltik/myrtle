@@ -255,6 +255,10 @@ pub async fn clear_audit_log_channel(pool: &SqlitePool, guild_id: GuildId) -> Re
 }
 
 /// Look up the audit-log channel for `guild_id`, if any.
+///
+/// Note this is the raw binding: it says nothing about which categories the guild has switched
+/// off. Anything deciding whether to *log* something must go through `audit::audit_channel`,
+/// which consults the cached `AuditEventFilter` as well.
 pub async fn get_audit_log_channel(
     pool: &SqlitePool,
     guild_id: GuildId,
@@ -267,23 +271,169 @@ pub async fn get_audit_log_channel(
     Ok(row.map(|(id,)| ChannelId::new(id.cast_unsigned())))
 }
 
-/// Every configured `(guild, channel)` pair for audit logs. Used to hydrate the in-memory
-/// cache at startup so the hot path (every logged event) skips a DB roundtrip.
-pub async fn list_audit_log_channels(
+/// Every configured audit-log binding. Used to hydrate the in-memory cache at startup so the
+/// hot path (every logged event) skips a DB roundtrip.
+pub async fn list_audit_log_settings(
     pool: &SqlitePool,
-) -> Result<Vec<(GuildId, ChannelId)>, Error> {
-    let rows: Vec<(i64, i64)> = sqlx::query_as("SELECT guild_id, channel_id FROM guild_audit_log")
-        .fetch_all(pool)
-        .await?;
+) -> Result<Vec<(GuildId, AuditSettings)>, Error> {
+    let rows: Vec<(i64, i64, i64)> =
+        sqlx::query_as("SELECT guild_id, channel_id, disabled_events FROM guild_audit_log")
+            .fetch_all(pool)
+            .await?;
     Ok(rows
         .into_iter()
-        .map(|(g, c)| {
+        .map(|(g, c, disabled)| {
             (
                 GuildId::new(g.cast_unsigned()),
-                ChannelId::new(c.cast_unsigned()),
+                AuditSettings {
+                    channel_id: ChannelId::new(c.cast_unsigned()),
+                    events: AuditEventFilter::from_disabled_mask(mask_from_db(disabled)),
+                },
             )
         })
         .collect())
+}
+
+/// Persist `filter` for `guild_id`. Returns `false` when the guild has no audit-log binding
+/// yet - the filter hangs off that row, so there is nowhere to store it until `/auditlog set`
+/// has run.
+pub async fn set_audit_log_events(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    filter: AuditEventFilter,
+) -> Result<bool, Error> {
+    let res = sqlx::query("UPDATE guild_audit_log SET disabled_events = ? WHERE guild_id = ?")
+        .bind(i64::from(filter.disabled_mask()))
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(res.rows_affected() > 0)
+}
+
+/// A guild's audit-log destination plus its per-event filter.
+#[derive(Debug, Clone, Copy)]
+pub struct AuditSettings {
+    pub channel_id: ChannelId,
+    pub events: AuditEventFilter,
+}
+
+/// One switchable category of audit-log output.
+///
+/// Lives here (not in `audit.rs`) alongside `AntiSpamAction` so both the event handler and the
+/// slash command can name a category without depending on the other's module.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, poise::ChoiceParameter)]
+pub enum AuditEvent {
+    #[name = "Message edited"]
+    MessageEdit,
+    #[name = "Message deleted"]
+    MessageDelete,
+    #[name = "Bulk message delete"]
+    MessageBulkDelete,
+    #[name = "Reaction added"]
+    ReactionAdd,
+    #[name = "Reaction removed"]
+    ReactionRemove,
+    #[name = "Reactions cleared"]
+    ReactionClear,
+    #[name = "Member joined"]
+    MemberJoin,
+    #[name = "Member left"]
+    MemberLeave,
+    #[name = "Member banned"]
+    MemberBan,
+    #[name = "Member unbanned"]
+    MemberUnban,
+    #[name = "Moderator actions"]
+    ModAction,
+    #[name = "Server changes"]
+    ServerChange,
+}
+
+impl AuditEvent {
+    /// Every category, in the order `/auditlog show` lists them.
+    pub const ALL: [Self; 12] = [
+        Self::MessageEdit,
+        Self::MessageDelete,
+        Self::MessageBulkDelete,
+        Self::ReactionAdd,
+        Self::ReactionRemove,
+        Self::ReactionClear,
+        Self::MemberJoin,
+        Self::MemberLeave,
+        Self::MemberBan,
+        Self::MemberUnban,
+        Self::ModAction,
+        Self::ServerChange,
+    ];
+
+    /// This category's bit in `guild_audit_log.disabled_events`.
+    ///
+    /// The values are persisted, so they are written out explicitly rather than derived from
+    /// declaration order: reordering or removing a variant must never silently repoint an
+    /// existing guild's filter at a different category. A retired category's bit stays retired.
+    #[must_use]
+    pub const fn bit(self) -> u32 {
+        match self {
+            Self::MessageEdit => 1 << 0,
+            Self::MessageDelete => 1 << 1,
+            Self::MessageBulkDelete => 1 << 2,
+            Self::ReactionAdd => 1 << 3,
+            Self::ReactionRemove => 1 << 4,
+            Self::MemberJoin => 1 << 5,
+            Self::MemberLeave => 1 << 6,
+            Self::MemberBan => 1 << 7,
+            Self::MemberUnban => 1 << 8,
+            Self::ModAction => 1 << 9,
+            Self::ServerChange => 1 << 10,
+            // Added after the first ten, so it takes the next free bit rather than slotting in
+            // beside the other reaction categories and shifting everything after it.
+            Self::ReactionClear => 1 << 11,
+        }
+    }
+}
+
+/// Which audit-log categories a guild has switched off.
+///
+/// Held as the *disabled* mask so the default (`0`) logs everything - see the migration note in
+/// `20260827000000_audit_log_events.sql`. Nothing outside this type should touch the raw bits.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct AuditEventFilter(u32);
+
+impl AuditEventFilter {
+    #[must_use]
+    pub const fn from_disabled_mask(mask: u32) -> Self {
+        Self(mask)
+    }
+
+    #[must_use]
+    pub const fn disabled_mask(self) -> u32 {
+        self.0
+    }
+
+    #[must_use]
+    pub const fn is_enabled(self, event: AuditEvent) -> bool {
+        self.0 & event.bit() == 0
+    }
+
+    /// Switch `event` on or off. Returns whether this actually changed anything, so the command
+    /// can tell the admin "already off" instead of reporting a no-op as a change.
+    pub const fn set(&mut self, event: AuditEvent, enabled: bool) -> bool {
+        let before = self.0;
+        if enabled {
+            self.0 &= !event.bit();
+        } else {
+            self.0 |= event.bit();
+        }
+        before != self.0
+    }
+}
+
+/// Narrow a stored mask back to `u32`, dropping any bits `SQLite` hands back that no live
+/// category claims. A negative or oversized value can only come from hand-editing the DB;
+/// treating the unknown bits as "not disabled" keeps logging on rather than silently off.
+fn mask_from_db(raw: i64) -> u32 {
+    let known: u32 = AuditEvent::ALL.iter().fold(0, |acc, e| acc | e.bit());
+    u32::try_from(raw).unwrap_or(0) & known
 }
 
 /// Moderation action taken when a user trips an antispam check.
