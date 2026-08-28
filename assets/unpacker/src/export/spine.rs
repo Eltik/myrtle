@@ -3404,7 +3404,7 @@ const UV_ROTATION_SCRIPT: i64 = 7_163_214_010_000_414_217;
 /// `_Rotation0..3`, and spells the first angle `angle1` while the rest are `_angle2..4`.
 /// A slot whose `_rotateTexN` flag is off keeps 0, so an authored angle that the component
 /// does not actually apply cannot leak into the export.
-fn uv_rotation_of_go(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> [f32; 4] {
+pub(super) fn uv_rotation_of_go(all_objects: &HashMap<i64, (i32, Value)>, go_pid: i64) -> [f32; 4] {
     let mut out = [0.0f32; 4];
     for (cid, v) in all_objects.values() {
         if *cid != 114 {

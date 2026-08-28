@@ -235,6 +235,11 @@ export interface IRamData {
      *  Ram material leaves it null and the multiply becomes a no-op. */
     weightTex?: number | null;
     weightST?: RamST;
+    /** `_Rotation0..3` as DEGREES, `[main, dissolve, ram, disturb]`. The material never
+     *  serializes these; a MonoBehaviour writes them at runtime, so the exporter reads the
+     *  component off the GameObject (see the exporter's `uv_rotation_of_go`, shared with the
+     *  scene path's `SceneRam::uv_rot`). Absent or all-zero on every unrotated system. */
+    uvRot?: [number, number, number, number];
     disturbST: RamST;
     dissolveTex: number | null;
     dissolveST: RamST;
@@ -405,6 +410,28 @@ function psDelayScale(): number {
 function ptclWeightOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ptclweight") !== "0";
+}
+
+/** Per-lookup UV ROTATION scale for the PARTICLE path. **DEFAULT 0, OFF.** `?uvrot=1` enables
+ *  it, `?uvrot=-1` negates the angle. Deliberately the SAME `uvrot` parameter the scene path
+ *  reads, so the subsystem is one switch rather than two: the 100 `_HG_UV_ROTATION` materials
+ *  split across both renderer kinds and turning on half of it would measure neither half.
+ *
+ *  Read as a MISSING parameter, never a falsy one: `Number.parseFloat("")` is NaN so the
+ *  `Number.isFinite` guard returns 0, and `?uvrot=0` is an explicit, honoured zero. */
+function ptclUvRotScale(): number {
+    if (typeof window === "undefined") return 0;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("uvrot") ?? "");
+    return Number.isFinite(v) ? v : 0;
+}
+
+/** Pack a UV rotation (DEGREES) the way the Unity vertex program reads it: `dot(uv, R.xz)` /
+ *  `dot(uv, R.yw)`, i.e. the matrix is `[[R.x, R.z], [R.y, R.w]]`. Identity for 0, so an
+ *  unrotated system is bit-identical. Mirrors sceneMesh's `rotMat2`. */
+function ptclRotMat2(deg: number): [number, number, number, number] {
+    if (!deg) return [1, 0, 0, 1];
+    const a = (deg * Math.PI) / 180;
+    return [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a)];
 }
 
 function ramTexOn(): boolean {
@@ -2676,6 +2703,10 @@ uniform float uSheeted;
 uniform vec2 uMainScroll;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
+uniform vec4 uMainRot;
+uniform vec4 uDissolveRot;
+uniform vec4 uDisturbRot;
+uniform vec4 uRamRot;
 varying vec2 vMainUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
@@ -2685,6 +2716,12 @@ varying vec2 vRamUV;
 varying vec2 vRawUV;
 varying vec4 vColor;
 varying vec4 vCustom;
+// The vertex program packs each rotation as a 2x2 read via dot(uv, R.xz) / dot(uv, R.yw),
+// so R is [[x, z], [y, w]] and rotMat2(0) = [1,0,0,1] is the identity.
+vec2 ptclRot2(vec2 uv, vec4 r) {
+    vec2 p = uv - vec2(0.5, 0.5);
+    return vec2(dot(p, r.xz), dot(p, r.yw)) + vec2(0.5, 0.5);
+}
 void main() {
     gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
     // Unity samples textures V-bottom-up but the exported PNGs are top-down, so
@@ -2717,18 +2754,23 @@ void main() {
     // differ (cet 24.497 vs 24.928; cel and mue exactly unchanged rather than nudged), so the
     // gate is doing real work even though the reason is not yet pinned down.
     vec2 uvU = uSheeted > 0.5 ? vec2(1.0 - aUV.x, 1.0 - aUV.y) : aUV;
+    // Per-lookup UV ROTATION about the (0.5, 0.5) texel centre, applied BETWEEN the ST and the
+    // scroll, exactly as the decompiled Ram/Disturb vertex program does it and exactly as the
+    // scene path already does (see sceneMesh's rot2 + ISceneRam.uvRot). Identity when the
+    // matrix is [1,0,0,1], which is what rotMat2(0) returns, so an unrotated system is
+    // bit-identical. NOTE: no backticks in here, this is inside a template literal.
     // aCustom2.xy / .zw: per-particle MAIN and DISTURB uv offsets (payload 1,2 and 7,8),
     // the same positional CustomData decode as the dissolve offset below.
-    vMainUV = uvU * uMainST.xy + uMainST.zw + uMainScroll + aCustom2.xy;
+    vMainUV = ptclRot2(uvU * uMainST.xy + uMainST.zw, uMainRot) + uMainScroll + aCustom2.xy;
     // + aCustom.zw: the PER-PARTICLE dissolve-UV offset the game feeds through
     // in_TEXCOORD1.xy (u_xlat16_2.xy = dissolveUV + in_TEXCOORD1.xy in the Ram vertex
     // program). Zero for every system without a dissolve-UV curve, so this is inert
     // unless the CustomData actually authors it.
-    vDissolveUV = uvU * uDissolveST.xy + uDissolveST.zw + uDissolveScroll + aCustom.zw;
-    vDissolveUV2 = uvU * uDissolveST2.xy + uDissolveST2.zw + uDissolveScroll + aCustom.zw;
-    vDisturbUV = uvU * uDisturbST.xy + uDisturbST.zw + uDisturbScroll + aCustom2.zw;
+    vDissolveUV = ptclRot2(uvU * uDissolveST.xy + uDissolveST.zw, uDissolveRot) + uDissolveScroll + aCustom.zw;
+    vDissolveUV2 = ptclRot2(uvU * uDissolveST2.xy + uDissolveST2.zw, uDissolveRot) + uDissolveScroll + aCustom.zw;
+    vDisturbUV = ptclRot2(uvU * uDisturbST.xy + uDisturbST.zw, uDisturbRot) + uDisturbScroll + aCustom2.zw;
     vWeightUV = uvU * uWeightST.xy + uWeightST.zw;
-    vRamUV = uvU * uRamST.xy + uRamST.zw;
+    vRamUV = ptclRot2(uvU * uRamST.xy + uRamST.zw, uRamRot);
     vRamUV = mix(vRamUV, vec2(1.0) - vRamUV, uRamFlip);
     vRawUV = aUV;
     vMainUV.y = 1.0 - vMainUV.y;
@@ -3115,6 +3157,10 @@ class RamEmitter {
             uHasDissolve2: tex.dissolve2 ? 1 : 0,
             uAmount2: ram.amount2 ?? 0,
             uBorderWidth2: ram.borderWidth2 ?? 0.1,
+            uMainRot: ptclRotMat2((ram.uvRot?.[0] ?? 0) * ptclUvRotScale()),
+            uDissolveRot: ptclRotMat2((ram.uvRot?.[1] ?? 0) * ptclUvRotScale()),
+            uRamRot: ptclRotMat2((ram.uvRot?.[2] ?? 0) * ptclUvRotScale()),
+            uDisturbRot: ptclRotMat2((ram.uvRot?.[3] ?? 0) * ptclUvRotScale()),
             uHasRam: tex.ram && ramTexOn() ? 1 : 0,
             uTonemap: ramTonemap(),
             uRgb2: ramRgb2(),

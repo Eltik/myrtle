@@ -978,6 +978,7 @@ pub(crate) fn collect_dynchar_particles(
             renderer,
             entrance.color_channels.get(&go_pid).map(Vec::as_slice),
             blend,
+            go_pid,
         );
         // Same clip data, for the emitters the Ram path does not cover (see
         // `particle_color_curve`). Gated for measurement: `DYNCHAR_PTCL_COLORCURVE=1`.
@@ -2702,6 +2703,7 @@ fn resolve_ram(
     renderer: Option<&Value>,
     color_channels: Option<&[super::anim::MaterialColorChannel]>,
     additive: bool,
+    go_pid: i64,
 ) -> Option<RamData> {
     let materials = renderer?.get("m_Materials")?.as_array()?;
     let (mat, shader) = materials.iter().find_map(|mat_ref| {
@@ -2902,6 +2904,18 @@ fn resolve_ram(
         "disturbInfluenceDissolveUV": mat_float(mat, "_DisturbInfluenceDissolveUV", 0.0),
         "disturbInfluenceMainUV": mat_float(mat, "_DisturbInfluenceMainUV", 1.0),
         "mainSpeed": [mat_float(mat, "_MainUSpeed", 0.0), mat_float(mat, "_MainVSpeed", 0.0)],
+        // Per-lookup UV ROTATION, `[main, dissolve, ram, disturb]` in DEGREES.
+        //
+        // The SCENE path has carried this since `SceneRam::uv_rot`; the particle path did not,
+        // and the two are NOT redundant. Splitting the 100 `_HG_UV_ROTATION` materials by
+        // renderer kind shows four skins whose rotating objects are ALL ParticleSystemRenderers
+        // and which the scene-only port therefore could not reach at all: nian `cfa#1` 17
+        // particle / 0 mesh, amiya3 5 / 0, texas2 `epoque#36` 1 / 0, ling `nian#12` 1 / 0.
+        // Cello is 3 / 13, so she was only ever half-corrected.
+        //
+        // Same source as the scene side: the material never serializes `_Rotation0..3`, a
+        // MonoBehaviour writes them at runtime, so this reads the component off the GameObject.
+        "uvRot": super::spine::uv_rotation_of_go(all_objects, go_pid),
         "dissolveSpeed": [mat_float(mat, "_DissolveUSpeed", 0.0), mat_float(mat, "_DissolveVSpeed", 0.0)],
         "disturbSpeed": [mat_float(mat, "_DisturbUSpeed", 0.0), mat_float(mat, "_DisturbVSpeed", 0.0)],
         "vertexDisturbTex": Value::Null,
