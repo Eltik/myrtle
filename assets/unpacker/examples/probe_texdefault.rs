@@ -28,12 +28,23 @@ fn main() {
             println!("\n=== {name}");
             for p in props {
                 let pn = p.get("m_Name").and_then(Value::as_str).unwrap_or("");
-                let Some(dt) = p.get("m_DefTexture") else { continue };
-                let dn = dt.get("m_DefaultName").and_then(Value::as_str).unwrap_or("");
                 let ty = p.get("m_Type").and_then(Value::as_i64).unwrap_or(-1);
-                // m_Type 4 is the texture kind in SerializedProperty; print it so a
-                // non-texture property that happens to carry the field is visible as such.
-                println!("  {pn:<26} type={ty} defaultName={dn:?}");
+                let dn = p
+                    .get("m_DefTexture")
+                    .and_then(|dt| dt.get("m_DefaultName"))
+                    .and_then(Value::as_str)
+                    .unwrap_or("");
+                // A material that never SETS a property gets the shader's declared default,
+                // so for the non-texture kinds the answer is `m_DefValue`, not the texture
+                // name. whitw2's `sx (1)` sets no `_Rotation*` at all, which is why this
+                // matters: without it the rotation the game applies is unknown rather than
+                // absent. m_Type 4 is the texture kind.
+                let dv: Vec<f64> = p
+                    .get("m_DefValue")
+                    .and_then(Value::as_array)
+                    .map(|a| a.iter().filter_map(Value::as_f64).collect())
+                    .unwrap_or_default();
+                println!("  {pn:<26} type={ty} defaultName={dn:?} defValue={dv:?}");
             }
         }
     }
