@@ -54,5 +54,7 @@ printf "%-16s %-4s " "$label" "$key"
 # own hand-off. Two files per subject, so a longer clip can never silently move an all8.sh
 # baseline: a re-encode alone shifts MADC even when the framing is identical.
 ref=$HERE/REF_NEW/${key}${REF_SUFFIX:-_game_fresh}.mp4
-python3 $HERE/mad.py $out "$ref" "$beats" --inner --offset=$off --dy=0 --fps=30 \
-  | awk '/MEAN MADC/{m=$0} /MEAN r/{r=$4} END{printf "%s   r=%s\n", m, r}'
+# MADC_DC=1 adds mad.py's signed mean-luma readout to the line. It changes no score, it only
+# surfaces a systematic brightness BIAS that an absolute-difference metric cannot see.
+python3 $HERE/mad.py $out "$ref" "$beats" --inner --offset=$off --dy=0 --fps=30 ${MADC_DC:+--dc} \
+  | awk '/MEAN MADC/{m=$0} /MEAN r/{r=$4} /MEAN DC/{d=$4} END{printf "%s   r=%s%s\n", m, r, (d==""?"":"   DC=" d)}'

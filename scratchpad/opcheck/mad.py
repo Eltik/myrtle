@@ -53,6 +53,8 @@ def main():
     ours_dir, game_mp4, times = sys.argv[1], sys.argv[2], sys.argv[3]
     flags = sys.argv[4:]
     inner = "--inner" in flags
+    # `--dc` adds the SIGNED mean-luma readout; it changes no score.
+    dc = "--dc" in flags
     off = next((float(f.split("=", 1)[1]) for f in flags if f.startswith("--offset=")), 0.0)
     # `--dy=N` corrects a VERTICAL misalignment between our render and the reference by
     # comparing our row i against the reference's row i+N (cropping instead of wrapping).
@@ -120,7 +122,7 @@ def main():
     n = len(raw) // (GW * GH * 3)
     G = np.frombuffer(raw, np.uint8)[: n * GW * GH * 3].reshape(n, GH, GW, 3)
 
-    ys, cs, ms, rs = [], [], [], []
+    ys, cs, ms, rs, dcs = [], [], [], [], []
     for bi, b in enumerate(beats):
         ot = b if ourtimes is None else ourtimes[bi]
         o_img = Image.open(f"{ours_dir}/t{ot + off:.2f}.png").convert("RGB")
@@ -180,7 +182,15 @@ def main():
         ys.append(mad_y)
         cs.append(mad_c)
         ms.append(mad_y + mad_c)
+        # SIGNED mean-luma difference, ours minus game. MADC is an absolute value and is blind to
+        # a systematic brightness BIAS: a render uniformly too bright and one uniformly too dark
+        # score the same. That blindness is why the "DC excess" has been a suspicion in the
+        # ramMainTex notes for a long time without ever being a number. Collected always, printed
+        # only under `--dc`, so no existing output moves.
+        dcs.append(float(yo.mean() - yg.mean()))
         rtxt = f"{r:6.3f}" if np.isfinite(r) else "  flat"
+        if dc:
+            print(f"  t={b:<6} DC(ours-game) = {dcs[-1]:+8.3f}   ours {yo.mean():7.3f}  game {yg.mean():7.3f}")
         print(f"  t={b:<6} MADC={mad_y + mad_c:7.3f}  (Y={mad_y:7.3f}  C={mad_c:6.3f}  r={rtxt})")
     if ms:
         print(f"MEAN MAD(luma-only, legacy) = {np.mean(ys):.3f}  over {len(ms)} beats")
@@ -189,6 +199,8 @@ def main():
         # pre-2026-08-20 figure, which is ~0.44 pessimistic.
         print(f"  [basis: {'aspect-corrected 2340:1080' if srcaspect else 'RAW reference aspect (historical)'}]")
         print(f"MEAN MADC = {np.mean(ms):.3f}  over {len(ms)} beats")
+        if dc:
+            print(f"MEAN DC(ours-game) = {np.mean(dcs):+.3f}  over {len(ms)} beats")
         mr = float(np.mean(rs)) if rs else float("nan")
         # Every well-behaved reference sits at 0.87-0.99 (wisdel 0.99, cel 0.90, cet 0.88,
         # mlynar 0.87). Below ~0.70 the frames genuinely do not line up, which is EITHER a
