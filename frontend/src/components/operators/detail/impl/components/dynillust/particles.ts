@@ -98,6 +98,12 @@ export interface IParticleSystemData {
      *  transformation blast is (1, 1, 1, 1) - double-neutral in all four channels - so
      *  its additive output (`rgb × a`) is 4× what an untinted draw produces. */
     tint?: [number, number, number, number] | null;
+    /** The RAW, UNDOUBLED `_TintColor` of a NON-additive plain-mode material, null at the
+     *  neutral. `tint` is gated on additive, so alpha-blend systems carry nothing and we
+     *  multiply by 1, while both Unity programs compute `2 * _TintColor` identically
+     *  (`vs_COLOR0 = in_COLOR0 * _TintColor` then `vs_COLOR0 + vs_COLOR0`). Applied only
+     *  under `?abtint=1`; the renderer owns the x2 and the alpha clamp. */
+    abTint?: [number, number, number, number] | null;
     emission: { rate?: MMScalar; bursts?: { t: number; count: number }[] };
     /** The `_Start` cinematic's ANIMATED emission rate (particles/s over absolute
      *  cinematic seconds), when a clip drives `EmissionModule.rateOverTime` directly -
@@ -2062,7 +2068,10 @@ class Emitter {
             // apply it twice. Sampled on the CINEMATIC clock (absolute seconds since `_Start`),
             // not per-particle life - this is the clip fading the whole emitter, which is why a
             // system the cinematic switches off used to keep drawing at full strength.
-            const mt = this.sysColor ?? d.tint;
+            // `abTint` is the alpha-blend half of the same x2, off by default. The alpha term
+            // is clamped rather than doubled-then-used, matching `SV_Target0.w`.
+            const ab = abTintOn() && !d.tint ? d.abTint : null;
+            const mt = this.sysColor ?? d.tint ?? (ab ? ([ab[0] * 2, ab[1] * 2, ab[2] * 2, Math.min(1, ab[3] * 2)] as [number, number, number, number]) : undefined);
             const col = {
                 r: p.startCol.r * lifeCol.r * (mt ? mt[0] : 1),
                 g: p.startCol.g * lifeCol.g * (mt ? mt[1] : 1),
@@ -2378,6 +2387,23 @@ const ADDITIVE_BOOST_PLUGIN = "dynAdditiveBoost";
  * and all three benchmarks are bit-identical (17.525 / 19.270 / 10.530). A complete version would
  * need a plugin per quantised excess (the corpus spreads 1.0-2.0, with 208 systems at exactly
  * 2.0) - machinery that buys nothing measurable. */
+
+/** Apply the alpha-blend `_TintColor` doubling. **DEFAULT OFF**, `?abtint=1` enables.
+ *
+ *  Both `Particles-L2D/Additive` and `Particles-L2D/AlphaBlend` compute
+ *  `2 * (in_COLOR0 * _TintColor) * mainTex`, with alpha clamped to [0,1] after the doubling.
+ *  The exporter doubles `_TintColor` for the additive half only, so alpha-blend systems draw
+ *  at `1.0` where the game draws `2 * _TintColor`. Corpus: 2513 alpha-blend materials carry a
+ *  `_TintColor`, 56.1% off the 0.502 neutral, and on those `2 * maxRGB` averages 1.614.
+ *
+ *  ⚠️ Gated because the exporter-side version of this was MEASURED AND REJECTED once already
+ *  (mly 17.439 -> 17.464): doubling ALPHA on a coverage-semantics blend pins opacity. This
+ *  applies the x2 to RGB and clamps alpha exactly as `SV_Target0.w` does, which is the part
+ *  the earlier attempt did differently. Read as a MISSING parameter, never a falsy one. */
+function abTintOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("abtint") === "1";
+}
 
 function additiveSpriteBoost(): number {
     if (typeof window === "undefined") return 1;

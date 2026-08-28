@@ -966,7 +966,7 @@ pub(crate) fn collect_dynchar_particles(
             };
 
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
-        let (tex_val, alpha_val, tex_pid, blend, main_st, tint) =
+        let (tex_val, alpha_val, tex_pid, blend, main_st, tint, ab_tint) =
             resolve_renderer_texture(all_objects, renderer);
 
         // Ram shader family (`Ram/Disturb` / `Ram/VertexDisturb`): a ramp-tint +
@@ -1302,6 +1302,7 @@ pub(crate) fn collect_dynchar_particles(
             "blend": if blend { "additive" } else { "normal" },
             // The material's ×2 `_TintColor`, or null at the neutral — see `particle_tint`.
             "tint": tint.map_or(Value::Null, |t| json!(t)),
+            "abTint": ab_tint.map_or(Value::Null, |t| json!(t)),
 
             "renderMode": render_mode,
             "pos": pos,
@@ -2370,7 +2371,7 @@ pub(crate) fn collect_dynchar_particles(
 }
 
 /// `(main_tex, alpha_tex, main_pid, additive, main_st, tint)` of a resolved material.
-type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64; 4]>);
+type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64; 4]>, Option<[f64; 4]>);
 
 /// The ×2 `_TintColor` the material multiplies its sprite by, or `None` when the
 /// material is at (or has no) neutral tint and the draw is already faithful.
@@ -2404,6 +2405,56 @@ type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64;
 /// fade. Measured, not assumed: Skadi the Corrupting Heart's entrance touches ONLY
 /// alpha-blend tinted systems and doubling them cost her 19.396 → 19.415 MADC, while
 /// Mlynar's win came entirely from the additive side.
+/// The SAME `_TintColor`, raw and undoubled, for a NON-additive plain-mode material.
+///
+/// `particle_tint` is gated on `is_additive`, so alpha-blend systems get no tint at all and the
+/// renderer multiplies by 1. The Unity programs say that is wrong, and the two families are
+/// IDENTICAL here, read from the decompiled pair rather than inferred across them:
+///
+/// ```glsl
+/// // Particles-L2D/Additive AND Particles-L2D/AlphaBlend, vertex:
+/// vs_COLOR0 = in_COLOR0 * _TintColor;
+/// // ... fragment:
+/// u_xlat0 = vs_COLOR0 + vs_COLOR0;          // the x2, in RGBA
+/// SV_Target0.xyz = (u_xlat0 * mainTex).xyz;
+/// SV_Target0.w   = clamp((u_xlat0 * mainTex).w, 0.0, 1.0);
+/// ```
+///
+/// So the game draws `2 * _TintColor` on both, and we draw 1.0 on one of them. Corpus: 2513
+/// alpha-blend materials carry a `_TintColor`, **56.1% away from the 0.502 neutral**, and on
+/// those the game's `2 * maxRGB` averages **1.614** against our 1.0.
+///
+/// Emitted under a SEPARATE key so the default is untouched: the renderer ignores `abTint`
+/// unless `?abtint=1`. Undoubled here on purpose, so the renderer owns the x2 and the alpha
+/// clamp that goes with it.
+fn particle_tint_nonadditive(mat: &Value) -> Option<[f64; 4]> {
+    if is_additive(mat) {
+        return None;
+    }
+    let shader = mat.get("_shaderName").and_then(Value::as_str)?;
+    let plain_mode = |ns: &str| {
+        shader
+            .rfind(ns)
+            .map(|i| &shader[i + ns.len()..])
+            .is_some_and(|rest| !rest.is_empty() && !rest.contains('/'))
+    };
+    if !plain_mode("Particles-L2D/") && !plain_mode("Particles/") {
+        return None;
+    }
+    let tint = mat
+        .get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Colors"))
+        .and_then(|c| c.get("_TintColor"))?;
+    let v = [
+        fd(tint, "r", 0.5),
+        fd(tint, "g", 0.5),
+        fd(tint, "b", 0.5),
+        fd(tint, "a", 0.5),
+    ];
+    let neutral = v.iter().all(|c| (c - 0.5).abs() <= 1.5 / 255.0);
+    (!neutral).then_some(v)
+}
+
 fn particle_tint(mat: &Value) -> Option<[f64; 4]> {
     // GATED ON `is_additive` — RELAXING THIS WAS TRIED AND REVERTED (2026-08-03). The
     // `tex * (COLOR + COLOR)` doubling really is a property of the shader FAMILY rather than the
@@ -2534,10 +2585,11 @@ fn resolve_material(
         is_additive(mat),
         main_st,
         particle_tint(mat),
+        particle_tint_nonadditive(mat),
     ))
 }
 
-/// `(main_texture, alpha_texture, main_pid, additive, main_st, tint)` of a renderer's
+/// `(main_texture, alpha_texture, main_pid, additive, main_st, tint, ab_tint)` of a renderer's
 /// first usable material, with every optional slot unresolved.
 type RendererTexture = (
     Option<Value>,
@@ -2545,6 +2597,7 @@ type RendererTexture = (
     Option<i64>,
     bool,
     [f64; 4],
+    Option<[f64; 4]>,
     Option<[f64; 4]>,
 );
 
@@ -2614,14 +2667,14 @@ fn resolve_renderer_texture(
         .and_then(|r| r.get("m_Materials"))
         .and_then(Value::as_array)
     else {
-        return (None, None, None, false, ST_IDENTITY, None);
+        return (None, None, None, false, ST_IDENTITY, None, None);
     };
     for mat_ref in materials {
-        if let Some((tv, ta, pid, add, st, tint)) = resolve_material(all_objects, mat_ref) {
-            return (Some(tv), ta, Some(pid), add, st, tint);
+        if let Some((tv, ta, pid, add, st, tint, ab)) = resolve_material(all_objects, mat_ref) {
+            return (Some(tv), ta, Some(pid), add, st, tint, ab);
         }
     }
-    (None, None, None, false, ST_IDENTITY, None)
+    (None, None, None, false, ST_IDENTITY, None, None)
 }
 
 // ---------------------------------------------------------------------------
@@ -2983,7 +3036,7 @@ fn resolve_trail_material(
         .and_then(Value::as_array)
         .and_then(|m| m.get(1));
     match mat_ref.and_then(|mr| resolve_material(all_objects, mr)) {
-        Some((tv, ta, pid, add, st, _)) => (Some(tv), ta, Some(pid), add, st),
+        Some((tv, ta, pid, add, st, _, _)) => (Some(tv), ta, Some(pid), add, st),
         None => (None, None, None, false, ST_IDENTITY),
     }
 }
