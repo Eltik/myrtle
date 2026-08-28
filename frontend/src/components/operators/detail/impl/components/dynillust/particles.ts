@@ -2264,9 +2264,42 @@ void main() {
 }
 `;
 
-/** HDR boost for ADDITIVE mesh particles: Unity's ×2 additive particle shader plus
- *  headroom so thin glowing shards survive the tonemap. */
-const ADDITIVE_MESH_BOOST = 2.5;
+/** Light factor for ADDITIVE mesh particles. **2.0, the shader convention**, since every ported
+ *  family doubles exactly once (`col + col`). It was 2.5, a fitted stand-in whose extra 0.5 was
+ *  headroom "so thin glowing shards survive the tonemap" rather than anything read off a
+ *  program, and this path ports no Unity program at all.
+ *
+ *  Measured before switching: 2.0 against 2.5 is cel 16.997 -> 17.014 and mly 17.007 -> 17.003,
+ *  every other key BIT-IDENTICAL, net +0.013 across the corpus-8. So the derived value does NOT
+ *  beat the fitted one, it ties with it inside the noise, and it is preferred because it is
+ *  derived. `?meshboost=2.5` restores the old number exactly. */
+const ADDITIVE_MESH_BOOST = 2.0;
+
+/** DIAGNOSTIC. The two MESH-path light factors are our own stand-ins, not ports of a Unity
+ *  program, which makes them fitted rather than derived. Both are exposed so the derived value
+ *  can be measured against the fitted one.
+ *
+ *  `?meshboost=<f>` overrides {@link ADDITIVE_MESH_BOOST} (2.5, where the shader convention for
+ *  every ported family is exactly 2.0).
+ *  `?meshnorm=<f>` scales NORMAL-blend mesh particles, which get 1.0, i.e. no doubling, while
+ *  `Particles-L2D/AlphaBlend` doubles exactly as `/Additive` does. ⛔ DOUBLING THEM IS REFUTED:
+ *  `?meshnorm=2` costs cel 16.997 -> 22.985 with DC overshooting -4.915 -> +3.866 and r
+ *  0.916 -> 0.900, every other key bit-identical. It is cel's `air_01` haze plane, and doubling
+ *  it moves her DC by +8.781 against a deficit of 4.915, i.e. past the mark. A factor near 1.5
+ *  would nearly zero her DC and is exactly the fit not to take: no program licenses it.
+ *
+ *  Both read a MISSING parameter, never a falsy one, so `?meshboost=0` is an honoured zero. */
+function meshBoostOverride(): number {
+    if (typeof window === "undefined") return ADDITIVE_MESH_BOOST;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("meshboost") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : ADDITIVE_MESH_BOOST;
+}
+
+function meshNormGain(): number {
+    if (typeof window === "undefined") return 1;
+    const v = Number.parseFloat(new URLSearchParams(window.location.search).get("meshnorm") ?? "");
+    return Number.isFinite(v) && v >= 0 ? v : 1;
+}
 
 /** How the two independent additive attenuations combine.
  *
@@ -2528,7 +2561,7 @@ class RibbonTrail {
                 uSampler: texture,
                 uTint: [1, 1, 1],
                 uAlpha: 1,
-                uBoost: additive ? ADDITIVE_MESH_BOOST : 1,
+                uBoost: additive ? meshBoostOverride() : meshNormGain(),
             });
             const mesh = new PIXI.Mesh(geo, shader as unknown as PIXI.MeshMaterial);
             mesh.blendMode = additive ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
@@ -2682,7 +2715,7 @@ class MeshEmitter extends Emitter {
             uSampler: this.meshTexture,
             uTint: new Float32Array([1, 1, 1]),
             uAlpha: 1,
-            uBoost: this.blend === "additive" ? ADDITIVE_MESH_BOOST : this.gain,
+            uBoost: this.blend === "additive" ? meshBoostOverride() : this.gain * meshNormGain(),
         });
         const mesh = new PIXI.Mesh(this.geometry, shader);
         mesh.blendMode = this.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
