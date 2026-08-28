@@ -131,6 +131,21 @@ fn main() {
                     continue;
                 };
                 println!("=== GO {name:?}  {cname} m_Materials[{mi}]  material {mp}");
+                // SHADER KEYWORDS decide which compiled VARIANT runs, and the variants are not
+                // cosmetic: `Ram/Disturb(CustomData)`'s non-CustomData vertex program pins
+                // `vs_TEXCOORD2` to (0,0) AND rotates all four sampler UVs by `_Rotation0..3`.
+                // A material's property list cannot tell you which one it is, so print this.
+                let kw = mat
+                    .get("m_ValidKeywords")
+                    .and_then(Value::as_array)
+                    .map(|a| {
+                        a.iter()
+                            .filter_map(Value::as_str)
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    })
+                    .unwrap_or_default();
+                println!("      keywords  {}", if kw.is_empty() { "(none)" } else { &kw });
                 let sp = mat.get("m_SavedProperties");
                 dump("float", sp.and_then(|s| s.get("m_Floats")));
                 dump("color", sp.and_then(|s| s.get("m_Colors")));
