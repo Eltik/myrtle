@@ -56,5 +56,5 @@ printf "%-16s %-4s " "$label" "$key"
 ref=$HERE/REF_NEW/${key}${REF_SUFFIX:-_game_fresh}.mp4
 # MADC_DC=1 adds mad.py's signed mean-luma readout to the line. It changes no score, it only
 # surfaces a systematic brightness BIAS that an absolute-difference metric cannot see.
-python3 $HERE/mad.py $out "$ref" "$beats" --inner --offset=$off --dy=0 --fps=30 ${MADC_DC:+--dc} \
+python3 $HERE/mad.py $out "$ref" "$beats" --inner --offset=$off --dy=0 --fps=30 ${MADC_DC:+--dc} ${MADC_NODC:+--nodc} \
   | awk '/MEAN MADC/{m=$0} /MEAN r/{r=$4} /MEAN DC/{d=$4} END{printf "%s   r=%s%s\n", m, r, (d==""?"":"   DC=" d)}'

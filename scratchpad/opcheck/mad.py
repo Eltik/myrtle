@@ -55,6 +55,7 @@ def main():
     inner = "--inner" in flags
     # `--dc` adds the SIGNED mean-luma readout; it changes no score.
     dc = "--dc" in flags
+    nodc = "--nodc" in flags
     off = next((float(f.split("=", 1)[1]) for f in flags if f.startswith("--offset=")), 0.0)
     # `--dy=N` corrects a VERTICAL misalignment between our render and the reference by
     # comparing our row i against the reference's row i+N (cropping instead of wrapping).
@@ -162,6 +163,13 @@ def main():
         o, g = o[::2, ::2], g[::2, ::2]
         yo, cbo, cro = ycc(o)
         yg, cbg, crg = ycc(g)
+        # `--nodc` removes this beat's own signed mean-luma difference from OUR luma before
+        # scoring. It answers one question and only one: is a change worse because it shifts
+        # EXPOSURE, or because it changes STRUCTURE? A correction that only darkens an
+        # already-dark render scores worse under MADC and identical under this; a correction
+        # that moves content scores worse under both. Never a parity basis, a discriminator.
+        if nodc:
+            yo = yo - (yo.mean() - yg.mean())
         mad_y = np.abs(np.round(yo) - np.round(yg)).mean()
         mad_c = (np.abs(cbo - cbg).mean() + np.abs(cro - crg).mean()) / 2
         # PEARSON r between the two luma planes. MADC is a per-pixel MAGNITUDE difference and is
