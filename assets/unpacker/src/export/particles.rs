@@ -2781,11 +2781,35 @@ fn resolve_ram(
         let dissolve_live = shader.contains("Dissolve/")
             && mat_float(mat, "_Amount_01", 0.0) > 0.0
             && mat_texenv(all_objects, mat, "_DissolveTex_01").0.is_some();
-        (shader.contains("Ram/") || dissolve_live).then_some((mat, shader))
+        // Admit the PLAIN `Disturb/` family. The two paths disagreed about it: the SCENE path's
+        // `is_l2d_compositor` has always accepted `Disturb/`, while this one did not, so the
+        // same shader family was composited on a mesh quad and drawn as a FLAT SPRITE on a
+        // particle. That is 1834 materials across 75 of 87 bundles, the third largest family
+        // after Additive and AlphaBlend and more than double `Dissolve/`, and 60 of whitw2's
+        // 180 exported systems, 21 of skadi2's 44.
+        //
+        // ⚠️ Admitting a family here is the move the `Dissolve/` notes above warn against,
+        // because rerouting changes the COLOUR path. It is safe HERE and the difference is
+        // derived from the decompiled fragment, not assumed: plain `Disturb(CustomData)` is the
+        // Ram fragment with the ram multiply ABSENT (no `_RamTex` sampler at all) and the
+        // disturb offset masked by `_WeightTex` and scaled by `_DisturbScale`. Its colour is the
+        // identical `main * _MainColor * vs_COLOR0 * 2`, the identical `roundEven` dissolve on
+        // alpha, and the identical `_Opacity`. So the Ram port reproduces it exactly once
+        // `uHasRam` is 0, which it already is when no ramp is bound.
+        //
+        // Restricted to the two spellings that are actually used (1833 of the 1834). `Anchor`
+        // subtracts an anchor before the intensity and `GrabPass` needs a grab texture, so
+        // both are DIFFERENT programs and stay out.
+        let plain_disturb = shader.contains("/Disturb/")
+            && (shader.ends_with("/Disturb") || shader.ends_with("/Disturb(CustomData)"));
+        (shader.contains("Ram/") || dissolve_live || plain_disturb).then_some((mat, shader))
     })?;
 
     let is_vertex = shader.contains("VertexDisturb");
     let is_dissolve = !shader.contains("Ram/") && shader.contains("Dissolve/");
+    // Recomputed here because the closure above owns its own binding.
+    let is_plain_disturb = shader.contains("/Disturb/")
+        && (shader.ends_with("/Disturb") || shader.ends_with("/Disturb(CustomData)"));
 
     let (main_pid, main_val, main_st) = mat_texenv(all_objects, mat, "_MainTex");
     let (ram_pid, ram_val, ram_st) = mat_texenv(all_objects, mat, "_RamTex");
@@ -2881,7 +2905,7 @@ fn resolve_ram(
     });
 
     let json = json!({
-        "kind": if is_dissolve { "dissolve" } else if is_vertex { "vertexDisturb" } else { "disturb" },
+        "kind": if is_dissolve { "dissolve" } else if is_vertex { "vertexDisturb" } else if is_plain_disturb { "plainDisturb" } else { "disturb" },
         "mainTex": Value::Null,     "mainST": main_st,
         "ramTex": Value::Null,      "ramST": ram_st,
         "disturbTex": Value::Null,  "disturbST": dist_st,
@@ -2902,7 +2926,15 @@ fn resolve_ram(
         "intensityU": mat_float(mat, "_IntensityU", 0.0),
         "intensityV": mat_float(mat, "_IntensityV", 0.0),
         "disturbInfluenceDissolveUV": mat_float(mat, "_DisturbInfluenceDissolveUV", 0.0),
-        "disturbInfluenceMainUV": mat_float(mat, "_DisturbInfluenceMainUV", 1.0),
+        // The SAME quantity under two names. The Ram variant scales the disturb offset into the
+        // main UV with `_DisturbInfluenceMainUV`; the plain Disturb variant spells it
+        // `_DisturbScale` (`u_xlat0.xy * vec2(_DisturbScale) + vs_TEXCOORD0.xy`). Reading the
+        // Ram spelling on a plain material silently yields the 1.0 default.
+        "disturbInfluenceMainUV": if is_plain_disturb {
+            mat_float(mat, "_DisturbScale", 1.0)
+        } else {
+            mat_float(mat, "_DisturbInfluenceMainUV", 1.0)
+        },
         "mainSpeed": [mat_float(mat, "_MainUSpeed", 0.0), mat_float(mat, "_MainVSpeed", 0.0)],
         // Per-lookup UV ROTATION, `[main, dissolve, ram, disturb]` in DEGREES.
         //

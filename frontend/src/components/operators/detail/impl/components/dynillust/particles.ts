@@ -224,7 +224,11 @@ export interface IRamData {
     /** `dissolve` = the `Torappu/Particles-L2D/Dissolve/…` family: two multiplied masks, no
      *  disturb warp, no ramp, `_TintColor` in place of `_MainColor`. Verified against the
      *  decompiled `Dissolve Add Double` program. */
-    kind: "disturb" | "vertexDisturb" | "dissolve";
+    /** `plainDisturb` is the `Particles-L2D/Disturb/Disturb(CustomData)` family, admitted to
+     *  this port only when `?plaindisturb=1` is set. Its fragment is the Ram one with the ramp
+     *  multiply absent and the offset masked by `_WeightTex`, so the port reproduces it once
+     *  `uHasRam` is 0. See the exporter's `plain_disturb` gate. */
+    kind: "disturb" | "vertexDisturb" | "dissolve" | "plainDisturb";
     mainTex: number | null;
     mainST: RamST;
     ramTex: number | null;
@@ -432,6 +436,17 @@ function ptclRotMat2(deg: number): [number, number, number, number] {
     if (!deg) return [1, 0, 0, 1];
     const a = (deg * Math.PI) / 180;
     return [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a)];
+}
+
+/** Route the PLAIN `Disturb/` family through the Ram port. **DEFAULT OFF**, `?plaindisturb=1`
+ *  enables. The exporter now emits a ram block for them (`kind: "plainDisturb"`); with this off
+ *  they fall through to the plain sprite path exactly as before, so the default is
+ *  bit-identical and one export serves both arms of the A/B.
+ *
+ *  Read as a MISSING parameter rather than a falsy one. */
+function plainDisturbOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("plaindisturb") === "1";
 }
 
 function ramTexOn(): boolean {
@@ -4459,7 +4474,10 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // disturb/dissolve terms the raw texture stamps a huge opaque quad over the scene
         // (cel 15.152 -> 18.359). `?rammesh=0` restores the old drop.
         const ramMeshOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("rammesh") !== "0";
-        if (sys.ram && (!ramSheet || spriteWouldDrop)) {
+        // A `plainDisturb` block is INERT unless the gate is on: without it these systems keep
+        // taking the plain sprite path they have always taken.
+        const plainBlocked = sys.ram?.kind === "plainDisturb" && !plainDisturbOn();
+        if (sys.ram && !plainBlocked && (!ramSheet || spriteWouldDrop)) {
             if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3)) continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
