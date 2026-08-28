@@ -450,6 +450,13 @@ function ptclRotMat2(deg: number): [number, number, number, number] {
  *  bit-identical and one export serves both arms of the A/B.
  *
  *  Read as a MISSING parameter rather than a falsy one. */
+/** DIAGNOSTIC (`?geomdump=<system name>`): dump `RamEmitter.writeGeometry`'s inputs for the
+ *  named system, once per emitter. Read as a MISSING parameter; empty disables. */
+function geomDumpName(): string {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("geomdump") ?? "";
+}
+
 function plainDisturbOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("plaindisturb") === "1";
@@ -3067,6 +3074,8 @@ class RamEmitter {
      *  `simulationSpeed` and never advanced by the prewarm pre-roll. Drives the DIRECTOR's
      *  curves (`scaleCurve`, the Ram `_MainColor` ramp); {@link time} drives the simulation. */
     private cineTime = 0;
+    /** One `?geomdump=` line per emitter, not one per frame. */
+    private geomDumped = false;
     private emitAcc = 0;
     /** Has this system EVER had a live particle? See {@link liveCount}. */
     everLive = false;
@@ -3577,6 +3586,22 @@ class RamEmitter {
             const cy = -p.y;
             const vpp = this.vpp;
             const vp = q * vpp * 2;
+            // DIAGNOSTIC (`?geomdump=<name>`): the quad's INPUTS as values. Two retracted axis
+            // labels and a late-found rotation confound all came from inferring this geometry
+            // from rendered extents when the numbers were right here. A non-finite hx/hy/cos/sin
+            // degenerates the quad and the rasteriser fills whatever it clips to, which looks
+            // exactly like an extent that ignores size.
+            if (geomDumpName() && d.name === geomDumpName() && !this.geomDumped) {
+                this.geomDumped = true;
+                const fin = (v: number) => (Number.isFinite(v) ? v.toFixed(4) : `NON-FINITE(${String(v)})`);
+                console.log(
+                    `DBGBG[geomdump] "${d.name}" size=${fin(p.size)} sizeY=${fin(p.sizeY)} grow=${fin(grow)}` +
+                        ` rot=${fin(p.rot)}deg th=${fin(th)}rad cos=${fin(c)} sin=${fin(s)}` +
+                        ` hx=${fin(hx)} hy=${fin(hy)} pos=(${fin(cx)},${fin(cy)}) liveParticles=${n}` +
+                        ` startSize=${JSON.stringify(d.startSize)} startSizeY=${JSON.stringify(d.startSizeY ?? null)}` +
+                        ` pivot=${JSON.stringify(d.pivot ?? null)}`,
+                );
+            }
             // 4 corners: TL(-hx,-hy) TR(hx,-hy) BR(hx,hy) BL(-hx,hy), shifted so the Unity
             // PIVOT lands on the particle's position - the corner offsets are what the
             // rotation below is applied to, so shifting them here also makes the quad rotate
