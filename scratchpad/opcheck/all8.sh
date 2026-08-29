@@ -284,6 +284,29 @@ DIR[kalts]='char_003_kalts_boc#6';       BEATS[kalts]="1,2,3,4,5,6,8,12"
 DIR[excunew]='char_1032_excu2_sale#12';  BEATS[excunew]="1,2,3,4,4.8"
 REFOFF[excunew]=0.1667
 
+# mlynew / cetnew / wisnew — captured 2026-08-22, ADOPTED 2026-08-29. All three already existed on
+# disk and were never scored; §21 recorded mly as "still uncaptured", which was wrong. They are NOT
+# among the three that REF_NEW/NOT_FOR_SCORING.md rejects (celnew, skanew, eyjanew, all host-load
+# degraded on 08-25); this is the earlier 08-22 batch. mlynew and cetnew are FULL native 2340x1080.
+#
+# Deliberately scored on the SAME beat sets as their committed counterparts, so the number is
+# directly comparable to mly 17.003 / cet 16.652 / wis 5.557 and the only variable is the capture.
+# Trims derived geometrically with edgetrim.py, never swept on the score.
+DIR[mlynew]='char_4064_mlynar_epoque#28';  BEATS[mlynew]="4,7,9,10,11,11.8,12.4,13"
+DIR[cetnew]='char_4134_cetsyr_epoque#50';  BEATS[cetnew]="2,5,8,11,14,17,18.5"
+DIR[wisnew]='char_1035_wisdel_sale#14';    BEATS[wisnew]="2,4,6,8,10,12"
+REFOFF[mlynew]=0.4000
+REFOFF[cetnew]=0.0667
+# ⛔ wisnew is UNUSABLE and has no REFOFF: IT NEVER CAPTURED THE ENTRANCE. Its luma spans only
+# 134.4..157.8 over all 24.033 s, against 0.0..207.0 for the committed `wis` clip, i.e. 24 seconds
+# of a near-static idle screen with none of the entrance's swing. edgetrim duly finds no alignment
+# at any offset (edgeNCC 0.037..0.050 across +/-1.2 s where mlynew and cetnew read 0.79..0.91, the
+# per-beat trim scattering -1.2000..+1.2000 at SPREAD 2.4000, two beats pinned to the window edge).
+# A full-clip cross-correlation against `wis` peaks at only 0.7133 on a 60-frame overlap at the
+# extreme edge, which is an artefact of the tiny window; the mlynew/mly control peaks at 0.9692
+# over 548 frames. ⛔ NOT the 1170x540 framing trap, and not a lag: there is no content to align.
+# Re-capture is the only fix, and 1170x540 is not the reason.
+
 # NB: `${@:-a b c}` expands the default as a SINGLE word in zsh — spell the branch out.
 if (( $# )); then keys=($@); else keys=(ska exc cel mly mue eyja cet wis); fi
 
