@@ -110,8 +110,12 @@ const initScript = () => {
     await page.setViewport({ width: W, height: H, deviceScaleFactor: DSF });
     await page.evaluateOnNewDocument(initScript);
 
+    // DEV_PORT lets a SECOND vite dev server (one started with `DYNCHAR_ALT_ROOT` set, for
+    // scoring an exporter A/B off an alternate export root) be scored without disturbing the
+    // one already running on 3000. Defaults to 3000, so every historical number reproduces.
+    const PORT = process.env.DEV_PORT || "3000";
     const url =
-        `http://localhost:3000/dyntest?skel=${encodeURIComponent(skel)}` +
+        `http://localhost:${PORT}/dyntest?skel=${encodeURIComponent(skel)}` +
         `&server=en&framing=authored` +
         (process.env.EXTRA ? `&${process.env.EXTRA}` : "");
     page.on("console", (m) => { const t = m.text(); if (/error|Error|failed/.test(t)) console.error("[page]", t.slice(0, 200)); });

@@ -1224,8 +1224,52 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
  *  it is 0 or 1 and never in between (≥99.5% of interior pixels fully opaque at t=4…11, the
  *  remainder fully uncovered), so no semi-transparent leak exists to trade against. An earlier
  *  note here claimed one and blamed thin layer alphas; that was reading the chrome. */
+/*  RE-DERIVATION ATTEMPTED AND REFUTED, 2026-08-29. The exposed fill genuinely measures 83,
+ *  not 77, and raising it to 83 still costs +0.512 across the corpus. Both halves of that are
+ *  worth keeping, because they say the fill is NOT independently derivable.
+ *
+ *  The measurement. Render each skin twice differing ONLY in this fill and keep the pixels where
+ *  it is UNAMBIGUOUSLY exposed: within 3 of the fill in one arm AND within 3 of black in the
+ *  other. That subset is far smaller than "the two renders differ", because most differing
+ *  pixels carry SEMI-TRANSPARENT art over the fill (our uncovered median is 80/83/90 sd 8 on
+ *  Mlynar, 101/101/101 sd 22 on Wiš'adel), which also retracts the "0 or 1 and never in between"
+ *  claim above: partial coverage is common, it just is not what this constant is measured on.
+ *  Where the fill IS fully exposed two unrelated skins agree to the tenth - Wiš'adel 83.0/83.0/
+ *  83.0 over 82808 px (sd 0.57), Eyjafjalla 83.0/83.0/83.0 over 2185 px (sd 0.00). So 76-83 was
+ *  the right band and 83 is its value.
+ *
+ *  Why shipping it loses anyway. 77 -> 83 moved Mlynar 17.003 -> 16.958, exactly as the exposed
+ *  pixels predict, and left ska/exc/cel/excunew bit-identical. But it cost Chen 20.230 -> 20.622
+ *  and Wiš'adel 33.432 -> 33.540 (r 0.717 -> 0.713), for +0.512 net. Chen dominates because her
+ *  exposed region is not fill at all: it is a black PILLARBOX (0.0/0.0/0.0 over 22148 px) where
+ *  our art is narrower than the game's, 90.9% hole in the leftmost column band against ~0 through
+ *  the middle four, growing 10.1% -> 23.1% -> 27.7% as her camera pulls out. Wiš'adel regresses
+ *  despite 3.43% of her frame sitting at exactly 83, which says a brighter fill AMPLIFIES an
+ *  alpha error in the art composited over it.
+ *
+ *  ⛔ Do not re-derive this constant on its own. It can only be raised to its measured 83 once
+ *  the coverage and alpha errors it currently masks are fixed; until then 77 is the value that
+ *  scores, not the value that is true.
+ *
+ *  ⚠️ `?fill=` CANNOT reproduce the refuted arm, and cannot test any brighter fill. It sets
+ *  `envBg.tint`, which MULTIPLIES this texture, so `?fill=535353` renders 77x83/255 = 25, not 83
+ *  (chyue 20.230 -> 32.200, r .895 -> .763 - a much darker fill, not a brighter one). Reaching 83
+ *  would need a tint of 275. The arm above was produced by editing this constant, and that is the
+ *  only way to raise it. */
 // Fresh per-app texture (the app is destroyed with `texture: true`, so a shared/cached
 // texture would be torn down under later mounts).
+/** DEV diagnostic (`?assetroot=`): fetch this skin's spine, scene and particle data from an
+ *  ALTERNATE export root instead of the backend, so an EXPORTER change can be scored without
+ *  the deployed asset tree ever being written. The root is served by the `myrtle:alt-asset-root`
+ *  vite plugin (`DYNCHAR_ALT_ROOT`) under the same relative path shape the backend uses.
+ *
+ *  Read as a MISSING parameter, never a falsy one, and returns undefined when absent so
+ *  `chibiAssetURL` takes its normal backend branch and the default is unchanged. */
+function assetRoot(): string | undefined {
+    if (typeof window === "undefined") return undefined;
+    return new URLSearchParams(window.location.search).get("assetroot") ?? undefined;
+}
+
 const VIEWER_BACKDROP = "#4d4d4e";
 /** The ground the game shows once the entrance has passed its transform beat - a flat near-white,
  *  measured off the captures, not assumed: Muelsyse's surround settles to (252.7, 252.5, 252.3)
@@ -2322,7 +2366,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         const buildComposite = async (cSkel: string, cAtlas: string, opts: { mode: "main" | "entrance"; framingOverride?: IAnimationBounds | null; onEntranceEnd?: () => void }): Promise<IComposite | "unsupported" | null> => {
             let spine: import("pixi-spine").Spine;
             try {
-                spine = await loadSpineWithEncodedURLs(cSkel, cAtlas, server);
+                spine = await loadSpineWithEncodedURLs(cSkel, cAtlas, server, assetRoot());
             } catch (e) {
                 // An entrance set is OPTIONAL - a missing/failed "_Start" just means the
                 // skin has no cinematic entrance. A main-set failure propagates.
@@ -2437,8 +2481,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             // Some skins keep their painted backdrop in separate mesh layers (not the
             // spine). Load them if present; they share the spine's coordinate space, so we
             // nest the spine among them and frame the whole scene to the authored camera.
-            const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server);
-            const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server);
+            const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server, assetRoot());
+            const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server, assetRoot());
             const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust);
             if (aborted()) {
                 spine.destroy();
@@ -2479,8 +2523,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // emitters above the foreground layers.
                 let particles: ILoadedParticles | null = null;
                 if (scene) {
-                    const particlesURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server);
-                    const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server);
+                    const particlesURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server, assetRoot());
+                    const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server, assetRoot());
                     // Union of the character's own geometry bounds across its FULL played
                     // animation (idle loop, or the "Start" entrance clip) - used by particles.ts
                     // to detect a world-space background particle system whose static spawn disc

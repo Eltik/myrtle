@@ -52,7 +52,13 @@ function encodeAssetPath(path: string): string {
     return result;
 }
 
-export function chibiAssetURL(path: string, server?: "en" | "cn"): string {
+/** `root` (DEV ONLY) redirects the fetch at an ALTERNATE export root instead of the backend,
+ *  so an exporter A/B can be scored without writing the deployed asset tree. It is served by
+ *  the `myrtle:alt-asset-root` vite plugin under the SAME relative path shape the backend
+ *  uses, which is what makes the two interchangeable. Undefined, empty or production leaves
+ *  the URL exactly as it was, so the default is the previous behaviour byte for byte. */
+export function chibiAssetURL(path: string, server?: "en" | "cn", root?: string): string {
+    if (root && import.meta.env.DEV) return `${root}${encodeAssetPath(path)}`;
     const prefix = server && server !== "en" ? `${server}/` : "";
     return `${env.VITE_BACKEND_URL}/api/${prefix}assets${encodeAssetPath(path)}`;
 }
@@ -113,9 +119,9 @@ function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; de
     return pages;
 }
 
-export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string, server?: "en" | "cn"): Promise<Spine> {
-    const skelURL = chibiAssetURL(skelPath, server);
-    const atlasURL = chibiAssetURL(atlasPath, server);
+export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string, server?: "en" | "cn", root?: string): Promise<Spine> {
+    const skelURL = chibiAssetURL(skelPath, server, root);
+    const atlasURL = chibiAssetURL(atlasPath, server, root);
 
     // In dev, cache-bust the skel/atlas/page-image fetches so re-extracted spine
     // assets are picked up immediately. Without this, the backend's long
