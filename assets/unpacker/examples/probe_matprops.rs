@@ -145,7 +145,10 @@ fn main() {
                             .join(" ")
                     })
                     .unwrap_or_default();
-                println!("      keywords  {}", if kw.is_empty() { "(none)" } else { &kw });
+                println!(
+                    "      keywords  {}",
+                    if kw.is_empty() { "(none)" } else { &kw }
+                );
                 let sp = mat.get("m_SavedProperties");
                 dump("float", sp.and_then(|s| s.get("m_Floats")));
                 dump("color", sp.and_then(|s| s.get("m_Colors")));

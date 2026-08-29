@@ -2371,7 +2371,15 @@ pub(crate) fn collect_dynchar_particles(
 }
 
 /// `(main_tex, alpha_tex, main_pid, additive, main_st, tint)` of a resolved material.
-type ResolvedMaterial = (Value, Option<Value>, i64, bool, [f64; 4], Option<[f64; 4]>, Option<[f64; 4]>);
+type ResolvedMaterial = (
+    Value,
+    Option<Value>,
+    i64,
+    bool,
+    [f64; 4],
+    Option<[f64; 4]>,
+    Option<[f64; 4]>,
+);
 
 /// The ×2 `_TintColor` the material multiplies its sprite by, or `None` when the
 /// material is at (or has no) neutral tint and the draw is already faithful.
