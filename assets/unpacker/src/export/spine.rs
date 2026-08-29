@@ -2317,7 +2317,62 @@ fn collect_dynchar_bg_quads(
                     };
                     // A two-map material states its intent by BINDING the maps; it carries no
                     // `_ToggleUseDissolve` at all, so the switch must not veto it.
-                    let toggle_default = if shader.contains("Ram/") || two_map {
+                    //
+                    // A FOURTH SPELLING (`DYNCHAR_DISSOLVE_NOSWITCH=1`, default OFF): a family
+                    // with NO SWITCH AT ALL states its intent the same way the two-map materials
+                    // do. `Torappu/Particles-L2D/Dissolve/Dissolve AB` declares exactly
+                    // `_TintColor, _MainTex, _DissolveTex, _Amount, _BorderWidth, _ZTest`, and its
+                    // fragment applies the mask UNCONDITIONALLY, with no branch to switch:
+                    //
+                    //     u_xlat16_0 = clamp((tex(_DissolveTex).x - _Amount) / _BorderWidth, 0, 1)
+                    //     SV_Target0.w = clamp(u_xlat16_0 * u_xlat1.w, 0, 1)
+                    //
+                    // So reading `_ToggleUseDissolve` on it defaults to 0 and drops a live mask,
+                    // the same shape as the `_UseDissolveTex` third spelling above and as the
+                    // `_DisturbTex`/`_DisturTex` pair below.
+                    //
+                    // Kal'tsit's veil is the case that found it. Her scene layers 47 and 48 are GO
+                    // `wenli` on this shader, they author `_Amount` 0.134 and `_BorderWidth`
+                    // 0.569/0.453, and they carry NO `_ToggleUseDissolve`, `_UseDissolveTex` or
+                    // `_DissolveIntensity` whatsoever. We therefore draw the veil as a full sheet:
+                    // ablating `overlay` attributes +42.677 luma to it at her beat 3 against a
+                    // total signed error of only +33.368, so the veil alone over-explains the beat.
+                    //
+                    // ⚠️ The third spelling's caveat does NOT apply here. There the switch alone
+                    // was insufficient because 31 of 37 materials carried no `_Amount` and would
+                    // have masked on a 0.5 default; `Dissolve AB` authors a real `_Amount`.
+                    //
+                    // Gated because the two neighbouring shader-correct dissolve changes both
+                    // MEASURED WORSE (see the veto note above, and `DYNCHAR_TINT_DECL`): on this
+                    // pipeline the GLSL is necessary evidence and never sufficient. Keyed on the
+                    // shader positively DECLARING no switch, so `None` (no shader bundle staged)
+                    // changes nothing and an under-staged export cannot silently flip families.
+                    //
+                    // ⚠️ NARROWED, and the wide form is why. Keyed on the SWITCH alone this admits
+                    // 332 layers across 45 of 86 skins, and its biggest corpus movers are cel (52)
+                    // and mly (14) — precisely the two references the veto note above records as
+                    // MEASURED AND REFUTED (cel 15.342 -> 15.780, mly 17.360 -> 18.455). The wide
+                    // form IS that refuted change, so it must not ship.
+                    //
+                    // The narrowing is the third spelling's own caveat, applied here: a mask is
+                    // only portable when its THRESHOLD is authored rather than defaulted. So
+                    // require the shader to declare the threshold it actually reads (`_Amount`,
+                    // which `Dissolve AB` declares and `Dissolve(CustomData)` does not, spelling
+                    // it `_DissolveIntensity`) AND the material to carry a value for it.
+                    //
+                    // That alone was NOT enough: it still admitted 276 layers across 43 skins with
+                    // cel at 12 and mly at 14, and NEITHER of those skins has a single `Dissolve
+                    // AB` layer, so it was still handing masks to the families the veto note
+                    // measured as regressions. Scoped to the family the evidence actually covers,
+                    // the same way this file already scopes `Ram/` and `Disturb Anchor`. Widening
+                    // beyond it is a separate question that needs its own measurement.
+                    let no_switch = std::env::var("DYNCHAR_DISSOLVE_NOSWITCH").is_ok()
+                        && super::shader_map::shader_declares(shader, "_ToggleUseDissolve")
+                            == Some(false)
+                        && super::shader_map::shader_declares(shader, "_Amount") == Some(true)
+                        && has_float_prop(mat, "_Amount")
+                        && shader.contains("Dissolve AB");
+                    let toggle_default = if shader.contains("Ram/") || two_map || no_switch {
                         1.0
                     } else {
                         0.0
@@ -3239,6 +3294,21 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
     // in its VERTEX stage and doubles NOWHERE, while its `Disturb/` and `Ram/` siblings run
     // `c = c + c`. So this prefix admits layers whose shader has no ×2 to port — which looks
     // like a plain bug until it is measured.
+    //
+    // ⚠️ CORRECTION 2026-08-29: read that as a statement about `Dissolve(CustomData)`, NOT about
+    // `Dissolve/`. "The Dissolve family doubles nowhere" is FALSE as a family claim, and reading
+    // it that way is how this investigation went wrong for a full run. Two Dissolve shaders were
+    // dumped out of `[uc]shaders.ab` and both DO double:
+    //
+    //     Dissolve/Dissolve AB          vertex `vs_COLOR0 = in_COLOR0 * _TintColor`
+    //                                   fragment `u_xlat1 = vs_COLOR0 + vs_COLOR0`
+    //     Dissolve/Dissolve Add UVTween same pair (already recorded in `legacy_tint_scale`)
+    //
+    // The discriminator is not the sub-namespace, it is WHICH PROPERTY the shader declares.
+    // `Dissolve(CustomData)` declares `_MainColor` and does not double; `Dissolve AB` declares
+    // `_TintColor`, contains the string `_MainColor` zero times, and doubles. Both branches
+    // already key on the declaration (`reads_main_color`, `l2d_main_color_family`); only this
+    // comment generalised from one shader to its namespace. Read the shader that is bound.
     //
     // Narrowing the gate to the shaders that actually double changes exactly 2 layers across
     // the three references (cello `_Start` L0 sort −15 and L115, both 1.0039/α1.0 → 0.502/
