@@ -4089,6 +4089,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 resizeEnvironmentBg(envBg, width, height);
                 envBgRef.current = envBg;
                 app.stage.addChildAt(envBg, 0);
+                // 🚨 `?abl=` WALKS SCENE CONTAINERS ONLY, and this sprite lives on the STAGE.
+                // That blind spot has now cost three separate investigations: `srconly:` could
+                // not reach `sceneOverlay`, and nothing could reach THIS, so a full-frame 77.3
+                // fill read as an unexplained "grey floor" through several rounds of ablation
+                // that all came back clean. Two fixes, both here because this is where the
+                // stage is in scope:
+                //   `?abl=envbg` hides the fill, so it can be attributed like anything else;
+                //   any `abl=` token at all now logs the stage children, so a null result
+                //   NAMES what it could not reach instead of reading as a clean negative.
+                if (typeof window !== "undefined") {
+                    const q = new URLSearchParams(window.location.search).get("abl");
+                    if (q) {
+                        if (q.split(",").includes("envbg")) envBg.renderable = false;
+                        const names = app.stage.children.map((c, i) => `${i}:${(c as { name?: string }).name ?? c.constructor.name}`);
+                        console.warn(`[abl] scene containers only. STAGE children NOT walked by bg:/fg:/src:/part*/scene* tokens: ${names.join(" ")}. Use abl=envbg for the environment fill.`);
+                    }
+                }
                 // Settled ground, stacked directly above the backdrop and faded in by the tick.
                 // Skipped for the dark-backdrop family, which keeps its own measured fill.
                 if (!main.hasDarkBackdrop) {
