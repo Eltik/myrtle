@@ -1649,7 +1649,11 @@ pub(crate) fn collect_dynchar_particles(
         // theirs in stream 0, which is NEVER sent. Taking the first Vector-mode stream therefore
         // exported a 0.392 -> 0.465 dissolve threshold for a flare the game dissolves by 0, and
         // `dAlpha = saturate(dis - thr)` rendered it at ~20% of its intended brightness.
-        let vstream_uv2 = std::env::var("DYNCHAR_VSTREAM_UV2").as_deref() == Ok("1");
+        // Default ON since the overnight A/B of 2026-08-31: it rewrites 15 systems in 3 JSONs
+        // (Wis'adel's `disturb_p_*` and `name_rgb`, whose Custom1.z moves from a dissolve-UV
+        // scroll to the `_Amount` offset) and wis, whitw2, chyue and cel score bit-identical, so
+        // the corrected table costs nothing measurable and the data-derived one ships.
+        let vstream_uv2 = std::env::var("DYNCHAR_VSTREAM_UV2").as_deref() != Ok("0");
         // ⚠️ This table (Custom1 30..=33, Custom2 34..=37) is OFF BY ONE against the payload
         // table below and against the data; it lands on the right stream for `[34,38]` and
         // `[34,36]` only because 34 falls in its Custom2 range. Under `DYNCHAR_VSTREAM_UV2=1`
@@ -1711,7 +1715,7 @@ pub(crate) fn collect_dynchar_particles(
                     // TEXCOORD0.zw), so on a `[5,34]` list Custom1.z is payload 5, the `_Amount`
                     // offset, and Custom1.w the disturb intensity. Skipping them shifts every
                     // custom two slots early. 126 systems across 13 skins list one (wis 21,
-                    // whitw2 13, chyue 3, cel 2 in the corpus). Default OFF, unmeasured.
+                    // whitw2 13, chyue 3, cel 2 in the corpus). `DYNCHAR_VSTREAM_UV2=0` reverts.
                     let (slot, n) = match id {
                         31..=34 => (0usize, (id - 30) as usize),
                         35..=38 => (1usize, (id - 34) as usize),
