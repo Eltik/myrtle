@@ -3007,7 +3007,7 @@ fn collect_dynchar_bg_quads(
                 scale_curve.as_ref().map_or(0, Vec::len),
             );
         }
-        // EFFECT-ROOT DELAY (`DYNCHAR_SCENE_DELAY=1` enables; DEFAULT OFF, see below). A scene
+        // EFFECT-ROOT DELAY (`DYNCHAR_SCENE_DELAY=0` reverts, `=2` is a diagnostic). A scene
         // layer under a director
         // `_effects[]` sub-prefab that carries a `_delayTime` activator plays its clip in that
         // sub-prefab's LOCAL time: the game enables the root at `_delayTime` and the clip's
@@ -3028,17 +3028,29 @@ fn collect_dynchar_bg_quads(
         // whitw2 32.296 -> 35.847 with r .720 -> .729: her six moved layers (`yan`, `music_02`
         // and siblings under `start_langawei_Wolf_B_All` at 12.30 s and the two 13.00 s wolf
         // roots) improve every beat through 12.0 and then blow beat 13.5 from 21.593 to 51.269
-        // (DC -16.8 -> +50.9). MADC up while r is up is a sign disagreement, so this ships OFF
-        // until that beat is understood: which of the six carries the 13.5 brightness, and
-        // whether its colour curve belongs on the root's clock.
+        // (DC -16.8 -> +50.9). Attributed 2026-08-31: NONE of the six carries it. The delay
+        // ADMITS a 28th layer, `baizhuanchang_02` under `start_04(Clone)` (`_delayTime` 13.60),
+        // a full-frame white sheet whose alpha curve runs 0 -> 1 over 13.60..14.43, previously
+        // dropped as never-active. The game whites out on that schedule (101 at scene 13.75 ->
+        // 253 by 14.65, cut at 15.05) and the ON arm reproduces the ramp within ~0.15 s; beat
+        // 13.5 (scene 14.05) samples the middle of that ramp, where the phase costs ~40 luma,
+        // and the director's own fade sprite still plays on top (+15..+25) because
+        // `sceneDrivesEntranceFade` does not admit this sheet. Both are residuals of a layer the
+        // game draws, not of the clock. Ships ON: the schedule is authored, r improves on every
+        // moved skin, and OFF leaves kalts's veil six seconds early.
+        // `DYNCHAR_SCENE_DELAY=2`: WINDOWS ONLY on the root's clock, curves left clip-local.
+        // Measured WORSE (whitw2 43.523, fugue 30.305 with her sort-100 sheet's curve left
+        // clip-local), so the curves belong on the clock too. Kept as the diagnostic.
         let (window, scale_curve, pos_curve, color_curve) = {
-            let dly = if is_entrance && std::env::var("DYNCHAR_SCENE_DELAY").as_deref() == Ok("1") {
+            let mode = std::env::var("DYNCHAR_SCENE_DELAY").unwrap_or_else(|_| "1".to_string());
+            let dly = if is_entrance && (mode == "1" || mode == "2") {
                 host.delay_of_go(all_objects, go_pid)
             } else {
                 0.0
             };
             if dly > 1e-6 {
                 let d = dly as f32;
+                let curves_too = mode == "1";
                 let w: super::anim::ActiveWindowList = if window.is_empty() {
                     vec![(Some(d), None)]
                 } else {
@@ -3047,11 +3059,12 @@ fn collect_dynchar_bg_quads(
                         .map(|&(a, b)| (Some(a.map_or(d, |t| t + d)), b.map(|t| t + d)))
                         .collect()
                 };
+                let sh = |t: f32| if curves_too { t + d } else { t };
                 (
                     w,
-                    scale_curve.map(|c| c.into_iter().map(|(t, x, y)| (t + d, x, y)).collect()),
-                    pos_curve.map(|c| c.into_iter().map(|(t, x, y)| (t + d, x, y)).collect()),
-                    color_curve.map(|c| c.into_iter().map(|(t, v)| (t + d, v)).collect()),
+                    scale_curve.map(|c| c.into_iter().map(|(t, x, y)| (sh(t), x, y)).collect()),
+                    pos_curve.map(|c| c.into_iter().map(|(t, x, y)| (sh(t), x, y)).collect()),
+                    color_curve.map(|c| c.into_iter().map(|(t, v)| (sh(t), v)).collect()),
                 )
             } else {
                 (window, scale_curve, pos_curve, color_curve)
