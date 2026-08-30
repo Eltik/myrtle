@@ -1649,6 +1649,11 @@ pub(crate) fn collect_dynchar_particles(
         // theirs in stream 0, which is NEVER sent. Taking the first Vector-mode stream therefore
         // exported a 0.392 -> 0.465 dissolve threshold for a flare the game dissolves by 0, and
         // `dAlpha = saturate(dis - thr)` rendered it at ~20% of its intended brightness.
+        let vstream_uv2 = std::env::var("DYNCHAR_VSTREAM_UV2").as_deref() == Ok("1");
+        // ⚠️ This table (Custom1 30..=33, Custom2 34..=37) is OFF BY ONE against the payload
+        // table below and against the data; it lands on the right stream for `[34,38]` and
+        // `[34,36]` only because 34 falls in its Custom2 range. Under `DYNCHAR_VSTREAM_UV2=1`
+        // the `_Amount` source is taken from payload slot 5 instead and this is unused.
         let sent_stream = renderer
             .and_then(|r| r.get("m_VertexStreams"))
             .and_then(Value::as_array)
@@ -1696,9 +1701,21 @@ pub(crate) fn collect_dynchar_particles(
                 let mut out = Vec::new();
                 for id in arr.iter().filter_map(Value::as_i64) {
                     // Custom1X..Custom1XYZW = 31..=34, Custom2X..Custom2XYZW = 35..=38.
+                    //
+                    // Census 2026-08-30 over all 87 bundles settles the enumeration from the
+                    // data: `[5,34,35]`, `[34,36]` and `[34,37]` only parse as UV2 + C1.xyzw +
+                    // C2.x, C1.xyzw + C2.xy and C1.xyzw + C2.xyz under THIS table.
+                    //
+                    // `DYNCHAR_VSTREAM_UV2=1`: UV2/UV3/UV4 (ids 5..=7) are 2-float streams that
+                    // Unity packs into the texcoord payload BEFORE the customs (UV2 lands on
+                    // TEXCOORD0.zw), so on a `[5,34]` list Custom1.z is payload 5, the `_Amount`
+                    // offset, and Custom1.w the disturb intensity. Skipping them shifts every
+                    // custom two slots early. 126 systems across 13 skins list one (wis 21,
+                    // whitw2 13, chyue 3, cel 2 in the corpus). Default OFF, unmeasured.
                     let (slot, n) = match id {
                         31..=34 => (0usize, (id - 30) as usize),
                         35..=38 => (1usize, (id - 34) as usize),
+                        5..=7 if vstream_uv2 => (usize::MAX, 2usize),
                         _ => continue,
                     };
                     for c in 0..n {
@@ -1801,11 +1818,17 @@ pub(crate) fn collect_dynchar_particles(
             // as a `for` (rather than `if let`/`while let`) because the body's `continue`/`break`
             // rely on an actual loop construct.
             #[allow(for_loops_over_fallibles)]
-            for stream in sent_stream {
+            // The `_Amount` offset is payload slot 5 (`vs_TEXCOORD2.x = in_TEXCOORD1.z`).
+            let amount_src: Option<(usize, usize)> = if vstream_uv2 {
+                payload.get(4).copied().filter(|&(slot, _)| slot != usize::MAX)
+            } else {
+                sent_stream.map(|s| (s, 0usize))
+            };
+            for (stream, comp) in amount_src {
                 if i(cdm, &format!("mode{stream}")).unwrap_or(0) != 1 {
                     continue;
                 }
-                if let Some(v0) = cdm.get(format!("vector{stream}_0").as_str())
+                if let Some(v0) = cdm.get(format!("vector{stream}_{comp}").as_str())
                     && let Some(mc) = v0.get("maxCurve")
                 {
                     let scalar = fd(v0, "scalar", 1.0);
