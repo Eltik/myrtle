@@ -4576,7 +4576,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             previewBox = { ...previewBox, x: previewBox.x + tshift[0], y: previewBox.y + tshift[1] };
                         }
                         const preview = staticCamOn() ? staticCamBox(previewBox) : null;
-                        const whole = fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
+                        // SURFACE-GATED (2026-08-31): the whole-cut-out contain belongs to the
+                        // PANEL only. Ch'en the Holungday's two outfits captured in the game's
+                        // full-screen viewer ("Ten Thousand Mountains", "Holiday HD79", 60 fps,
+                        // DIAG/) render FULL-BLEED, and our render with this branch skipped
+                        // (`wholeart=0`, i.e. the authored `_adjustes[0]` gameFrame below)
+                        // matches their crop while the contain arm floats the cut-out in a grey
+                        // field over 46.7% fill. The 13 entrance skins never reach this branch
+                        // (they arrive `fromEntrance`), so the corpus cannot move. `?fitwhole=1`
+                        // restores the contain on the viewer for A/B.
+                        const fitWholeOverride = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fitwhole") === "1";
+                        const whole = (surface === "panel" || fitWholeOverride) && fitWholeArt() && !staticCamOn() ? main.contentBounds : null;
                         const settle = preview ?? whole ?? gameFrame;
                         // The authored framing fits by HEIGHT, which crops the width - fine for a
                         // shot composed around the character, wrong for "show the whole picture".
