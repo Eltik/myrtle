@@ -1287,6 +1287,14 @@ function camClearOn(): boolean {
     return new URLSearchParams(window.location.search).get("camclear") !== "0";
 }
 
+/** Draw the environment fill and settled ground INTO the HDR target, ahead of the scene, so they
+ *  take the same knee and composite gamma as the art (see the tick). `?fillpass=0` reverts to
+ *  the stage placement, where they reach the screen untransferred. */
+function fillPassOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("fillpass") !== "0";
+}
+
 function cssHex(rgb: [number, number, number]): string {
     const h = (v: number) =>
         Math.round(Math.max(0, Math.min(1, v)) * 255)
@@ -2361,7 +2369,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // accumulate past 1 without clipping), then let the stage's tonemap quad
                 // blit it to screen. Otherwise render the stage straight (8-bit).
                 if (hdrRef.current && hdrSceneRef.current) {
-                    currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear: true });
+                    // FILL THROUGH THE PASS (`?fillpass=0` reverts). The environment fill and the
+                    // settled ground are stage sprites under the tonemap quad, so they reached the
+                    // screen raw while every layer of art went through the knee and the composite
+                    // gamma. The game's clear colour is the first thing in its framebuffer and takes
+                    // the same transfer as its art, so draw them into the target first, in stage
+                    // order, and let the scene composite over them. The quad's alpha then reads 1
+                    // wherever a fill was drawn, which is exactly where the stage copy showed
+                    // through before. Predicted on the 0.3382 cameras: 86.25 -> 84.4 at gamma 1.02.
+                    let clear = true;
+                    if (fillPassOn()) {
+                        for (const s of [envBgRef.current, settledBgRef.current]) {
+                            if (!s || !s.renderable) continue;
+                            currentApp.renderer.render(s, { renderTexture: hdrRef.current.target, clear });
+                            clear = false;
+                        }
+                    }
+                    currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear });
                     // Update the bloom texture from the freshly-drawn target before the
                     // stage's tonemap quad (which samples both) blits to screen.
                     hdrRef.current.prepare(currentApp.renderer);
