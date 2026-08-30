@@ -1809,7 +1809,50 @@ pub(crate) fn collect_dynchar_particles(
                     && let Some(mc) = v0.get("maxCurve")
                 {
                     let scalar = fd(v0, "scalar", 1.0);
-                    let pts = sample_curve(mc, if scalar == 0.0 { 1.0 } else { scalar }, 1.0);
+                    let mut pts = sample_curve(mc, if scalar == 0.0 { 1.0 } else { scalar }, 1.0);
+                    // CLAMP TO THE DECLARED RANGE (`DYNCHAR_AMOUNT_CLAMP=0` reverts).
+                    //
+                    // This curve drives `_Amount`, the dissolve threshold, which every one of the
+                    // 26 staged shaders that declares it declares as ShaderLab `Range(min, max)`
+                    // (`m_Type` 3). Unity CLAMPS a Range property to those limits, so a curve
+                    // running outside them is clamped in the game and is not in ours.
+                    //
+                    // It is not a rounding detail. The mask is
+                    // `clamp((tex(_DissolveTex) - _Amount) / _BorderWidth, 0, 1)`, so a NEGATIVE
+                    // `_Amount` stops the carving entirely and the quad paints its full rectangle.
+                    // Wiš'adel's `sx (1)` is exactly that: its curve runs 1.0 -> 0 -> -0.018, and
+                    // isolated the sheet ends a flat dark 35.09 over 100% of the frame.
+                    //
+                    // Corpus census: of 511 exported `ramDissolveCurve`s, **266 dip below zero**
+                    // and 4 exceed one, across 19 skins; whitw2 alone carries 63 of them.
+                    //
+                    // Only the LOWER bound is applied, and it is read from the shader rather than
+                    // chosen: all 26 declare min 0.0, while the max is 1.0 on 25 and 1.1 on one,
+                    // so the upper limit is not uniform and touches only 4 curves. `shader_range`
+                    // returns `None` when no shader bundle is staged, and then nothing is clamped.
+                    //
+                    // MEASURED: whitw2 33.432 -> 33.160 with r 0.717 -> 0.719, both signs agreeing,
+                    // and the other twelve corpus keys BIT-IDENTICAL (cel and mue have 3 and 1
+                    // clamped systems but do not move). It reaches 245 systems across 16 skins.
+                    if std::env::var("DYNCHAR_AMOUNT_CLAMP").as_deref() != Ok("0")
+                        && let Some(lo) = renderer
+                            .and_then(|r| r.get("m_Materials"))
+                            .and_then(Value::as_array)
+                            .and_then(|a| a.first())
+                            .and_then(get_path_id)
+                            .and_then(|pid| all_objects.get(&pid))
+                            .and_then(|(_, m)| m.get("_shaderName"))
+                            .and_then(Value::as_str)
+                            .and_then(|sh| super::shader_map::shader_range(sh, "_Amount"))
+                            .map(|(lo, _)| lo)
+                    {
+                        for pt in &mut pts {
+                            if pt.get("v").and_then(Value::as_f64).is_some_and(|v| v < f64::from(lo))
+                            {
+                                pt["v"] = json!(lo);
+                            }
+                        }
+                    }
                     if pts.len() > 1 {
                         sys["ramDissolveCurve"] = json!(pts);
                     }

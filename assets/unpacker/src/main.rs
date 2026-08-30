@@ -167,11 +167,16 @@ fn cmd_extract(args: &cli::ExtractArgs) {
         // property a material is actually drawn with. Materials keep residue from
         // whatever shader they were authored against, so `m_SavedProperties` alone
         // mis-attributes 630 of them corpus-wide (`legacy_tint_scale`).
-        let props = export::shader_map::build_shader_props(&files);
+        let (props, ranges) = export::shader_map::build_shader_props(&files);
         if !props.is_empty() {
-            println!("Read declared properties for {} shader(s)", props.len());
+            println!(
+                "Read declared properties for {} shader(s), {} Range limits",
+                props.len(),
+                ranges.len()
+            );
         }
         export::shader_map::set_shader_props(props);
+        export::shader_map::set_shader_ranges(ranges);
         map
     } else {
         std::collections::HashMap::new()

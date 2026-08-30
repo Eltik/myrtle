@@ -51,6 +51,17 @@ fn main() {
                 continue;
             };
             println!("\n=== {name}");
+            // RANGE BOUNDS. `m_Type` 3 is Range, and Unity CLAMPS such a property to its
+            // declared limits, so an animation curve driving it out of range is clamped in the
+            // game and must be clamped at export too. The limits are not in `m_DefValue`, so
+            // print the whole property for the Range kinds and read them off the real field.
+            if std::env::var("RAWPROP").is_ok() {
+                for p in props {
+                    if p.get("m_Type").and_then(Value::as_i64) == Some(3) {
+                        println!("  RAW {}", serde_json::to_string(p).unwrap_or_default());
+                    }
+                }
+            }
             for p in props {
                 let pn = p.get("m_Name").and_then(Value::as_str).unwrap_or("");
                 let ty = p.get("m_Type").and_then(Value::as_i64).unwrap_or(-1);

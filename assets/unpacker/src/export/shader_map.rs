@@ -32,6 +32,33 @@ pub type ShaderPropMap = HashMap<String, HashSet<String>>;
 
 static SHADER_PROPS: OnceLock<ShaderPropMap> = OnceLock::new();
 
+/// `(shader_name, prop_name) -> (min, max)` for every property ShaderLab declares as
+/// `Range(min, max)`.
+///
+/// Unity CLAMPS a Range property to its declared limits, so an animation curve driving one
+/// out of range is clamped in the game and must be clamped at export too. `_Amount`, the
+/// dissolve threshold, is `Range(0, 1)`: 266 of the 511 exported `ramDissolveCurve`s dip
+/// BELOW zero, and a negative threshold stops the mask carving entirely.
+pub type ShaderRangeMap = HashMap<(String, String), (f32, f32)>;
+
+static SHADER_RANGES: OnceLock<ShaderRangeMap> = OnceLock::new();
+
+/// Publish the declared Range limits for the process. Called once from `main`.
+pub fn set_shader_ranges(map: ShaderRangeMap) {
+    let _ = SHADER_RANGES.set(map);
+}
+
+/// The `Range(min, max)` limits `shader` declares for `prop`, or `None` when the shader is
+/// unknown, the property is not declared, or it is not a Range. Callers must leave the value
+/// untouched on `None` so an under-staged export cannot silently start clamping.
+#[must_use]
+pub fn shader_range(shader: &str, prop: &str) -> Option<(f32, f32)> {
+    SHADER_RANGES
+        .get()?
+        .get(&(shader.to_string(), prop.to_string()))
+        .copied()
+}
+
 /// Publish the declared-property map for the process. Called once from `main`.
 pub fn set_shader_props(map: ShaderPropMap) {
     let _ = SHADER_PROPS.set(map);
@@ -81,8 +108,9 @@ fn scan_shader_props(data: &[u8], start: usize, size: usize) -> HashSet<String> 
 /// `files`. Empty when none are staged, which leaves `shader_declares` at `None`
 /// and every caller on its previous behaviour.
 #[must_use]
-pub fn build_shader_props(files: &[PathBuf]) -> ShaderPropMap {
+pub fn build_shader_props(files: &[PathBuf]) -> (ShaderPropMap, ShaderRangeMap) {
     let mut map = ShaderPropMap::new();
+    let mut ranges = ShaderRangeMap::new();
     for path in files.iter().filter(|p| is_shader_bundle(p)) {
         let Ok(bytes) = std::fs::read(path) else {
             continue;
@@ -108,10 +136,45 @@ pub fn build_shader_props(files: &[PathBuf]) -> ShaderPropMap {
                     );
                     map.entry(name).or_default().extend(props);
                 }
+                // RANGE LIMITS need the STRUCTURED property block, which the byte scan above
+                // cannot give: the limits live in `m_DefValue[1]`/`[2]` of each
+                // `SerializedProperty`, not in its name. Only 176 shaders are staged, so the
+                // extra parse is one-time and cheap.
+                if let Ok(v) = crate::unity::object_reader::read_object(&sf, obj)
+                    && let Some(sname) = v
+                        .get("m_ParsedForm")
+                        .and_then(|p| p.get("m_Name"))
+                        .and_then(serde_json::Value::as_str)
+                    && let Some(props) = v
+                        .get("m_ParsedForm")
+                        .and_then(|p| p.get("m_PropInfo"))
+                        .and_then(|p| p.get("m_Props"))
+                        .and_then(serde_json::Value::as_array)
+                {
+                    for pr in props {
+                        // `m_Type` 3 is ShaderLab's Range kind.
+                        if pr.get("m_Type").and_then(serde_json::Value::as_i64) != Some(3) {
+                            continue;
+                        }
+                        let (Some(pname), Some(lo), Some(hi)) = (
+                            pr.get("m_Name").and_then(serde_json::Value::as_str),
+                            pr.get("m_DefValue[1]").and_then(serde_json::Value::as_f64),
+                            pr.get("m_DefValue[2]").and_then(serde_json::Value::as_f64),
+                        ) else {
+                            continue;
+                        };
+                        if hi > lo {
+                            ranges.insert(
+                                (sname.to_string(), pname.to_string()),
+                                (lo as f32, hi as f32),
+                            );
+                        }
+                    }
+                }
             }
         }
     }
-    map
+    (map, ranges)
 }
 
 /// Extract a Shader's name (`m_ParsedForm.m_Name`) by scanning the object bytes.
