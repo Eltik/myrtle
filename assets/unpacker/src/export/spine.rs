@@ -3007,6 +3007,56 @@ fn collect_dynchar_bg_quads(
                 scale_curve.as_ref().map_or(0, Vec::len),
             );
         }
+        // EFFECT-ROOT DELAY (`DYNCHAR_SCENE_DELAY=1` enables; DEFAULT OFF, see below). A scene
+        // layer under a director
+        // `_effects[]` sub-prefab that carries a `_delayTime` activator plays its clip in that
+        // sub-prefab's LOCAL time: the game enables the root at `_delayTime` and the clip's
+        // windows and curves run from there. The particle path already compounds this through
+        // `delay_of_go`; the scene path exported clip-local times and drew every such layer early.
+        //
+        // Kal'tsit is the case that found it. `wenl1`/`wenli` (her veil pair, scene 47/48) sit
+        // under `Kalts_boc#6_Start_05`, delayed 6.20 s: the game's frame is a full white-out at
+        // scene 9.9 (luma 251.4, sd 1.3), exactly `wenl1`'s curve peak 3.7 + 6.2, while we drew the
+        // pulse at 3.7 and measured the game flat there. Her shards `st`/`st2`/`st3` (44/43/45)
+        // sit under `Start_04`, delayed 4.50 s, and were drawn full-size from 1.07 s where the
+        // game shows them only from 5.57 s. A layer with no window of its own under a delayed root
+        // starts at the delay.
+        //
+        // MEASURED 2026-08-31 on the five skins whose `_Start` scene it changes (the other nine
+        // corpus keys are bit-identical by construction): kalts 31.357 -> 30.339 with r .592 ->
+        // .650, fugue 9.759 -> 9.567 with r up, mue +0.035, exc/excunew bit-identical, but
+        // whitw2 32.296 -> 35.847 with r .720 -> .729: her six moved layers (`yan`, `music_02`
+        // and siblings under `start_langawei_Wolf_B_All` at 12.30 s and the two 13.00 s wolf
+        // roots) improve every beat through 12.0 and then blow beat 13.5 from 21.593 to 51.269
+        // (DC -16.8 -> +50.9). MADC up while r is up is a sign disagreement, so this ships OFF
+        // until that beat is understood: which of the six carries the 13.5 brightness, and
+        // whether its colour curve belongs on the root's clock.
+        let (window, scale_curve, pos_curve, color_curve) = {
+            let dly = if is_entrance && std::env::var("DYNCHAR_SCENE_DELAY").as_deref() == Ok("1") {
+                host.delay_of_go(all_objects, go_pid)
+            } else {
+                0.0
+            };
+            if dly > 1e-6 {
+                let d = dly as f32;
+                let w: super::anim::ActiveWindowList = if window.is_empty() {
+                    vec![(Some(d), None)]
+                } else {
+                    window
+                        .iter()
+                        .map(|&(a, b)| (Some(a.map_or(d, |t| t + d)), b.map(|t| t + d)))
+                        .collect()
+                };
+                (
+                    w,
+                    scale_curve.map(|c| c.into_iter().map(|(t, x, y)| (t + d, x, y)).collect()),
+                    pos_curve.map(|c| c.into_iter().map(|(t, x, y)| (t + d, x, y)).collect()),
+                    color_curve.map(|c| c.into_iter().map(|(t, v)| (t + d, v)).collect()),
+                )
+            } else {
+                (window, scale_curve, pos_curve, color_curve)
+            }
+        };
         quads.push(BgQuad {
             mesh,
             tex_val,

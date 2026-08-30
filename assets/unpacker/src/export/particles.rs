@@ -1817,13 +1817,13 @@ pub(crate) fn collect_dynchar_particles(
             // `sent_stream` is an `Option`, so this loop runs 0 or 1 times by construction; kept
             // as a `for` (rather than `if let`/`while let`) because the body's `continue`/`break`
             // rely on an actual loop construct.
-            #[allow(for_loops_over_fallibles)]
             // The `_Amount` offset is payload slot 5 (`vs_TEXCOORD2.x = in_TEXCOORD1.z`).
             let amount_src: Option<(usize, usize)> = if vstream_uv2 {
                 payload.get(4).copied().filter(|&(slot, _)| slot != usize::MAX)
             } else {
                 sent_stream.map(|s| (s, 0usize))
             };
+            #[allow(for_loops_over_fallibles)]
             for (stream, comp) in amount_src {
                 if i(cdm, &format!("mode{stream}")).unwrap_or(0) != 1 {
                     continue;
