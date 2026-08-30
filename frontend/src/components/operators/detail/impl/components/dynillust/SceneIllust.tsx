@@ -1113,7 +1113,16 @@ function sceneDrivesEntranceFade(data: ISceneData | null): boolean {
     if (!data || !fade || !dur || !data.cameraSizePx) return false;
     const ext = 2 * data.cameraSizePx;
     const rampStart = dur - ENTRANCE_FADE_HOLD - ENTRANCE_FADE_IN;
-    const rampEnd = dur - ENTRANCE_FADE_HOLD;
+    // The ramp window used to end at `dur - HOLD`, an inference. A scene sheet that is scheduled
+    // by the director (an effect root's `_delayTime` plus its own curve, see the exporter's
+    // effect-root delay) IS the authored fade timing, and it can reach white right at `dur`:
+    // whitw2's `baizhuanchang_02` under `start_04(Clone)` (13.60 s) reaches 0.995 at 14.40 and
+    // 1.0 at 14.43 against her `duration` 14.5, where the game is white by scene 14.65 and holds
+    // to the cut. Ending the window at HOLD before `dur` rejected it and the director sprite
+    // played on top of the sheet (+15 at 14.0, +25 at 14.2 against the game). `?sheetfade=0`
+    // restores the `dur - HOLD` end.
+    const sheetFadeOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("sheetfade") !== "0";
+    const rampEnd = sheetFadeOn ? dur : dur - ENTRANCE_FADE_HOLD;
     return data.layers.some((l: ISceneLayer) => {
         const cc = l.colorCurve;
         if (!cc?.length) return false;
