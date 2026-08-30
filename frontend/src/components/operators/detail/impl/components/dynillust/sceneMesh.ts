@@ -204,6 +204,10 @@ export interface ISceneData {
      *  idle underneath it, and lifts it again. Authored white at full alpha on every skin
      *  measured, but read from the data. Absent on non-entrance scenes. */
     entranceFade?: [number, number, number, number] | null;
+    /** The entrance camera's authored solid clear colour, rgb 0..1 (`m_BackGroundColor` under
+     *  `m_ClearFlags` 2): what the game shows wherever the art does not reach during the
+     *  cinematic. Absent when the skin ships no entrance camera. */
+    entranceClearColor?: [number, number, number] | null;
     /** ENTRANCE transform/reform beat in seconds (the dominant late `_delayTime` cluster) -
      *  the camera has dollied to the wide stop and the character has reformed by here, so it's
      *  the entrance→idle hand-off point AND the target time of the tight→wide camera dolly. */

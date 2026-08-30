@@ -771,6 +771,9 @@ interface IComposite {
     /** Straight RGBA of the director's end-of-entrance screen fade (`_params.fadeColor`), or
      *  null when the skin ships no entrance director. See {@link ENTRANCE_FADE_IN}. */
     entranceFade: [number, number, number, number] | null;
+    /** The entrance camera's authored solid clear colour (rgb 0..1), or null. See
+     *  {@link camClearOn}. */
+    entranceClearColor: [number, number, number] | null;
     entranceTransform: number | null;
     /** The `_Start` camera dolly ZOOM curve (`[t_s, ortho]` keyframes) - the game's actual
      *  data-driven camera motion (extracted from the clip animating the Main Camera's orthographic
@@ -1271,6 +1274,26 @@ function assetRoot(): string | undefined {
 }
 
 const VIEWER_BACKDROP = "#4d4d4e";
+
+/** ENTRANCE CAMERA CLEAR COLOUR as the environment fill. The skin's entrance `Camera` authors
+ *  `m_BackGroundColor` under `m_ClearFlags` 2 (SolidColor), so wherever the art does not reach
+ *  during the cinematic the game shows THAT colour, not the viewer's fixed #4d4d4e. It is read
+ *  from the data (`entranceClearColor`) rather than chosen: fourteen of the fifteen entrance
+ *  cameras author a grey or white the fixed fill approximates (0.3382 = 86 of 255 on nine of
+ *  them), and chyue authors pure black, which is exactly her pillarbox. `?camclear=0` reverts to
+ *  the fixed fill; without an authored colour the fixed fill is used unchanged. */
+function camClearOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("camclear") !== "0";
+}
+
+function cssHex(rgb: [number, number, number]): string {
+    const h = (v: number) =>
+        Math.round(Math.max(0, Math.min(1, v)) * 255)
+            .toString(16)
+            .padStart(2, "0");
+    return `#${h(rgb[0])}${h(rgb[1])}${h(rgb[2])}`;
+}
 /** The ground the game shows once the entrance has passed its transform beat - a flat near-white,
  *  measured off the captures, not assumed: Muelsyse's surround settles to (252.7, 252.5, 252.3)
  *  with a per-channel std of ~10. Flat is the tell that it is a ground and not content, and its
@@ -3869,6 +3892,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     entranceDuration: scene?.data.entranceDuration ?? null,
                     entranceFadeEnd: entranceFadeEnd(scene?.data ?? null),
                     entranceFade: sceneDrivesEntranceFade(scene?.data ?? null) ? null : (scene?.data.entranceFade ?? null),
+                    entranceClearColor: (scene?.data.entranceClearColor as [number, number, number] | undefined) ?? null,
                     entranceTransform: scene?.data.entranceTransform ?? null,
                     entranceOrthoCurve: (scene?.data.entranceOrthoCurve as [number, number][] | undefined) ?? null,
                     entrancePostFx: (scene?.data.entrancePostFx as IComposite["entrancePostFx"]) ?? null,
@@ -3917,6 +3941,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 entranceDuration: null,
                 entranceFadeEnd: null,
                 entranceFade: null,
+                entranceClearColor: null,
                 entranceTransform: null,
                 entranceOrthoCurve: null,
                 entrancePostFx: null,
@@ -4656,6 +4681,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // No cinematic: the idle path is live already, so take its target now.
                 if (!built) raiseToIdleResolution();
                 if (built) {
+                    // Repaint the environment fill with the entrance camera's authored clear colour
+                    // (see `camClearOn`). The fill sprite is created with the main composite, before
+                    // the `_Start` scene is loaded, so the swap happens here.
+                    if (camClearOn() && built.entranceClearColor && envBgRef.current) {
+                        const old = envBgRef.current.texture;
+                        envBgRef.current.texture = createEnvironmentBgTexture(false, cssHex(built.entranceClearColor));
+                        old.destroy(true);
+                        resizeEnvironmentBg(envBgRef.current, app.screen.width, app.screen.height);
+                    }
                     // The game HOLDS the entrance shot steadily through the whole transform and only
                     // pulls back to the wide frame AFTERWARD, on the settled idle (see
                     // `entrancePullOut` → `openStandingIdle`). Measured against the reference

@@ -107,6 +107,13 @@ pub struct SpineAsset {
     /// white by `duration - 0.2s`. Authored white at full alpha on every skin measured, but
     /// read from the data rather than assumed. `None` without an entrance director.
     pub bg_entrance_fade: Option<[f64; 4]>,
+    /// The ENTRANCE camera's authored CLEAR colour (`m_BackGroundColor` rgb, 0..1) when it
+    /// clears to a solid colour (`m_ClearFlags` 2). This is what the game shows wherever the
+    /// art does not reach during the cinematic. Census 2026-08-30: 15 entrance cameras across
+    /// the 87 dynchar bundles, all `m_ClearFlags` 2; 0.3382 grey on nine, white on cello and
+    /// Muelsyse, 0.963 on Wiš'adel, warm on Ling, and BLACK on chyue, whose pillarbox is the
+    /// one margin the viewer's fixed 77 grey was wrong for. `None` without an entrance camera.
+    pub bg_entrance_clear: Option<[f64; 3]>,
     /// ENTRANCE transform beat in seconds — the time of the dominant late cluster
     /// of per-object `_delayTime`s (the reform/gala burst; Virtuosa: 12.0s). The
     /// camera has dollied to the wide stop and the character has reformed by here,
@@ -1027,6 +1034,7 @@ pub fn collect_spine_assets(
         let (
             bg_entrance_duration,
             bg_entrance_fade,
+            bg_entrance_clear,
             bg_entrance_transform,
             bg_entrance_view,
             bg_entrance_cam_offset,
@@ -1041,6 +1049,7 @@ pub fn collect_spine_assets(
         ) = if category == SpineCategory::DynIllust && is_entrance_set {
             let (dur, tr, ortho, voice, _) = find_entrance_timing(all_objects);
             let fade = find_entrance_fade(all_objects);
+            let clear = find_entrance_clear_color(all_objects);
             // Entrance camera ortho size (world units) → authored-px full view (2·ortho·invScale),
             // the tight close-up the cinematic opens on before dollying out to the display frame.
             let inv = 1.0 / skel_scale.unwrap_or(0.01);
@@ -1078,6 +1087,7 @@ pub fn collect_spine_assets(
             (
                 dur,
                 fade,
+                clear,
                 tr,
                 persp_view.or_else(|| ortho.map(|o| 2.0 * o * inv)),
                 cam_off,
@@ -1092,7 +1102,7 @@ pub fn collect_spine_assets(
             )
         } else {
             (
-                None, None, None, None, None, None, None, None, None, None, None, None, None,
+                None, None, None, None, None, None, None, None, None, None, None, None, None, None,
             )
         };
 
@@ -1116,6 +1126,7 @@ pub fn collect_spine_assets(
             bg_entrance_duration,
             bg_entrance_clip_stop,
             bg_entrance_fade,
+            bg_entrance_clear,
             bg_entrance_transform,
             bg_entrance_view,
             // `entranceOrthoCurve` falls back to the DOLLY curve for a perspective rig, and a
@@ -3852,6 +3863,20 @@ fn find_entrance_fade(all_objects: &HashMap<i64, (i32, Value)>) -> Option<[f64; 
     Some([g("r")?, g("g")?, g("b")?, g("a")?])
 }
 
+/// The entrance camera's solid clear colour (see `SpineAsset::bg_entrance_clear`). Read from
+/// the class-20 Camera the director names, and only when `m_ClearFlags` is 2 (SolidColor);
+/// any other clear mode leaves nothing authored to show.
+fn find_entrance_clear_color(all_objects: &HashMap<i64, (i32, Value)>) -> Option<[f64; 3]> {
+    let pid = entrance_camera_pid(all_objects)?;
+    let (cid, cam) = all_objects.get(&pid)?;
+    if *cid != 20 || cam.get("m_ClearFlags").and_then(Value::as_i64) != Some(2) {
+        return None;
+    }
+    let c = cam.get("m_BackGroundColor")?;
+    let g = |k: &str| c.get(k).and_then(Value::as_f64);
+    Some([g("r")?, g("g")?, g("b")?])
+}
+
 fn find_entrance_timing(all_objects: &HashMap<i64, (i32, Value)>) -> EntranceTiming {
     let ordered = objects_by_path_id(all_objects);
     let params = ordered.iter().find_map(|(_, (cid, v))| {
@@ -4616,6 +4641,7 @@ pub fn collect_enemy_spine_assets(
             bg_entrance_duration: None,
             bg_entrance_clip_stop: None,
             bg_entrance_fade: None,
+            bg_entrance_clear: None,
             bg_entrance_transform: None,
             bg_entrance_view: None,
             bg_entrance_persp: false,
@@ -6003,6 +6029,8 @@ fn export_scene(
         "entranceClipStop": asset.bg_entrance_clip_stop,
         // Straight RGBA of the director's end-of-entrance screen fade (see `bg_entrance_fade`).
         "entranceFade": asset.bg_entrance_fade.map(|c| Value::from(vec![c[0], c[1], c[2], c[3]])),
+        // The entrance camera's solid clear colour, rgb 0..1 (see `bg_entrance_clear`).
+        "entranceClearColor": asset.bg_entrance_clear.map(|c| Value::from(vec![c[0], c[1], c[2]])),
         "entranceTransform": asset.bg_entrance_transform.map(|v| v as f32),
         // Tight entrance close-up view (authored px) from the entrance camera's ortho size.
         "entranceViewPx": asset.bg_entrance_view.map(|v| v as f32),
