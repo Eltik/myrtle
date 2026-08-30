@@ -294,6 +294,10 @@ REFOFF[excunew]=0.1667
 # Trims derived geometrically with edgetrim.py, never swept on the score.
 DIR[mlynew]='char_4064_mlynar_epoque#28';  BEATS[mlynew]="4,7,9,10,11,11.8,12.4,13"
 DIR[cetnew]='char_4134_cetsyr_epoque#50';  BEATS[cetnew]="2,5,8,11,14,17,18.5"
+# mlynew2 — captured 2026-08-31 (the fps-gate session: real-click focus, 60.02 fps native).
+# Trim derived GEOMETRICALLY by edgetrim.py, never swept on the score: REFOFF +0.1333 at
+# SPREAD 0.0000, edgeNCC 0.857..0.868 on every non-flat beat, rate FLAT. Same beat set as mly.
+DIR[mlynew2]='char_4064_mlynar_epoque#28'; REFOFF[mlynew2]=0.1333; BEATS[mlynew2]="4,7,9,10,11,11.8,12.4,13"
 DIR[wisnew]='char_1035_wisdel_sale#14';    BEATS[wisnew]="2,4,6,8,10,12"
 REFOFF[mlynew]=0.4000
 REFOFF[cetnew]=0.0667
