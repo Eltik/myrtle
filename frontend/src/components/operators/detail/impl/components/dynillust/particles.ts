@@ -4689,8 +4689,17 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // shortfall. ON by default (`?sortroute=0` disables): swept across all 39 separator skins,
         // 0 anomalies, max change 0.59 on any skin other than the two references.
         const sortRoute = typeof window === "undefined" || new URLSearchParams(window.location.search).get("sortroute") !== "0";
+        // ADDITIVE systems take the part depths too (`?addroute=0` reverts). The game's part
+        // depths do not care about blend: whitw2's `lizi_jinfeng (1)` (sort 6, additive) lands
+        // between her parts [0, 5, 10] and is drawn UNDER her third spine part, where this loader
+        // used to send every additive system above characterSort to `foreground`, over the whole
+        // skeleton. Measured on the live tree, 15 keys: whitw2 33.565 -> 32.392 (r .717 -> .723,
+        // six of seven beats improve, t=6 by 5.266), cel 17.014 -> 16.941, the other thirteen
+        // bit-identical, because only ska, cel and whitw2 author an additive system inside a gap
+        // and ska's three do not reach the frame. No sign disagreement.
+        const addRoute = typeof window === "undefined" || new URLSearchParams(window.location.search).get("addroute") !== "0";
         const sheetTarget = (): PIXI.Container => {
-            if ((isBackdropParticle || (sortRoute && effBlend === "normal")) && hasParts && routeOn) {
+            if ((isBackdropParticle || (sortRoute && (effBlend === "normal" || (addRoute && effBlend === "additive")))) && hasParts && routeOn) {
                 // The last part drawn at or below this sheet's own depth; the sheet goes in the
                 // gap immediately after it.
                 let j = -1;
@@ -4887,7 +4896,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // promoted over-body copy - the background rain (and every other system) is untouched.
         if (unoccludeOverlap) emitter.container.alpha *= FOREGROUND_SHEEN_ALPHA;
         applyPsDiag(data, sys, emitter.container);
-        (unoccludeOverlap ? foreground : isBackdropParticle || (sortRoute && hasParts && effBlend === "normal") ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
+        (unoccludeOverlap ? foreground : isBackdropParticle || (sortRoute && hasParts && (effBlend === "normal" || (addRoute && effBlend === "additive"))) ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
     }
     if (emitters.length === 0) return null;
 
