@@ -519,6 +519,14 @@ function makeQuad(width: number, height: number): PIXI.Geometry {
  *  unavailable (caller falls back to plain 8-bit compositing). */
 export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: number, resolution: number, knee: number = kneeParam(), gamma = 1): IHDRScene | null {
     if (!supportsFloatTarget(renderer)) return null;
+    // DIAGNOSTIC (`?ldr=1`): render the scene into a fixed-point RGBA8 target instead of the
+    // half-float one. A fixed-point framebuffer SATURATES on every blend, so each additive
+    // draw clamps into [0,1] as it accumulates - Unity's LDR path (the dynchar camera does
+    // not serialize m_AllowHDR; the mobile tier default renders LDR). The ceiling is the
+    // target's own 1.0, a documented GL semantic, nothing chosen here. Under this arm the
+    // bright-pass (threshold 1.0) is automatically empty, so bloom is off in the same arm -
+    // that is part of the LDR semantic, not a side effect. Missing param = HDR, unchanged.
+    const ldrArm = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ldr") === "1";
     let target: PIXI.RenderTexture;
     try {
         target = PIXI.RenderTexture.create({
@@ -526,7 +534,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
             height,
             resolution,
             format: PIXI.FORMATS.RGBA,
-            type: PIXI.TYPES.HALF_FLOAT,
+            type: ldrArm ? PIXI.TYPES.UNSIGNED_BYTE : PIXI.TYPES.HALF_FLOAT,
             scaleMode: PIXI.SCALE_MODES.LINEAR,
         });
     } catch {
