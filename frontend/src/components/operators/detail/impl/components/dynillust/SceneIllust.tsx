@@ -2460,6 +2460,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
 
             const animations = spine.spineData.animations.map((a: { name: string }) => a.name);
             const idle = animations.includes(IDLE_ANIMATION) ? IDLE_ANIMATION : (animations[0] ?? IDLE_ANIMATION);
+            // The clip actually PLAYED at settle. The game binds the skeleton's serialized
+            // `_animationName` (exported as `settleAnimation`), which is "Idle" on 86 of 104
+            // dynchar bindings but AUTHORED per skin: cel settles into "Interact" and
+            // rosmon_2 into "Special", and hardcoding "Idle" plays a different animation
+            // than the game on exactly those settled surfaces. Assigned after the scene
+            // JSON loads (play() runs later); `?settleclip=0` restores the "Idle" binding.
+            let settleClip = idle;
 
             // A MAIN skeleton with no looping "Idle" (only a one-shot "Start" entrance)
             // has no resting frame to display - the entrance never settles into the
@@ -2515,11 +2522,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // once when present, else start straight on the idle loop. When handing off FROM
                 // the `_Start` cinematic (skipStart), go straight to the idle so the gala cellist
                 // appears promptly as the cinematic dissolves - no slow second intro beat.
-                if (!playOpts?.skipStart && animations.includes("Start") && idle !== "Start") {
+                if (!playOpts?.skipStart && animations.includes("Start") && settleClip !== "Start") {
                     state.setAnimation(0, "Start", false);
-                    state.addAnimation(0, idle, true, 0);
+                    state.addAnimation(0, settleClip, true, 0);
                 } else {
-                    state.setAnimation(0, idle, true);
+                    state.setAnimation(0, settleClip, true);
                 }
                 if (specials.length === 0) return;
                 // After every couple of idle loops, play one Special, then fall back to the
@@ -2530,14 +2537,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 state.addListener({
                     complete: (entry) => {
                         const name = (entry as unknown as { animation?: { name?: string } }).animation?.name;
-                        if (name !== idle) return;
+                        if (name !== settleClip) return;
                         idleLoops += 1;
                         if (idleLoops < LOOPS_BETWEEN) return;
                         idleLoops = 0;
                         const special = specials[si % specials.length];
                         si += 1;
                         state.setAnimation(0, special, false);
-                        state.addAnimation(0, idle, true, 0);
+                        state.addAnimation(0, settleClip, true, 0);
                     },
                 });
             };
@@ -2551,6 +2558,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
             if (aborted()) {
                 spine.destroy();
                 return null;
+            }
+            // EXPERIMENT (`?settleclip=1`) - MEASURED AND REFUTED AS A DEFAULT. The exporter
+            // now emits the SkeletonMecanim's serialized `_animationName` (settleAnimation:
+            // "Interact" on cel, "Special" on rosmon_2, null elsewhere), and the hypothesis
+            // was that the game binds it at settle. The measurement says otherwise: under
+            // "Interact" cel's settled mean moves AWAY from the game (133.1 -> 141..143 vs
+            // the game's flat 133.8, which matches our Idle plateau to 0.7 luma) and the
+            // control-validated edge instrument drops 0.101 -> 0.022 across all 105 phases.
+            // So the serialized name is the inspector's initial value and the runtime action
+            // system (DynIllust.ChangeAction/_ApplyAnimation in the IL2CPP dump) plays Idle
+            // at rest; "Interact"-class clips are action/touch responses. Default stays the
+            // Idle binding, bit-exact with the previous behaviour; the opt-in arm remains
+            // for action-response work.
+            {
+                const authored = (scene?.data as { settleAnimation?: string | null } | undefined)?.settleAnimation;
+                const on = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settleclip") === "1";
+                if (on && authored && animations.includes(authored)) settleClip = authored;
             }
 
             // Static-art backdrop: some dynamic assets omit the full painted vista

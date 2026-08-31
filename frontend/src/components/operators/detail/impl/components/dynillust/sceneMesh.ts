@@ -180,6 +180,10 @@ export interface ISceneData {
     cameraOffsetPx2?: [number, number] | null;
     /** TIGHT/zoomed-in display-frame square full extent in spine-authored px (`_adjustes[1].size`). */
     cameraViewPx2?: number | null;
+    /** The clip the game binds on this skeleton at settle (the SkeletonMecanim's serialized
+     *  `_animationName`). Authored per skin: "Interact" on cel, "Special" on rosmon_2, absent
+     *  or "Idle" everywhere else in the corpus. */
+    settleAnimation?: string | null;
     /** Sort index at which the character spine is inserted. */
     characterSort: number;
     /** Spine-Unity `SkeletonRenderer.separatorSlotNames` - slot names at which the GAME splits

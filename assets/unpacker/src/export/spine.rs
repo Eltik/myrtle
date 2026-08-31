@@ -49,6 +49,13 @@ pub struct SpineAsset {
     pub bg_quads: Vec<BgQuad>,
     /// `SkeletonDataAsset.scale` (spine px → Unity units, typically `0.01`).
     pub bg_skel_scale: Option<f64>,
+    /// The clip the game binds on this skeleton at settle: the SkeletonMecanim's serialized
+    /// `_animationName`. "Idle" on 86 of 104 dynchar bindings, but AUTHORED per skin: cel
+    /// (char_245_cello_sale#12) binds "Interact" and char_391_rosmon_2 binds "Special" on
+    /// their MAIN dyn_illust skeletons, and a client that hardcodes "Idle" plays a different
+    /// animation than the game on exactly those settled surfaces. None when the field is
+    /// empty or names the entrance ("Start").
+    pub settle_animation: Option<String>,
     /// Orthographic camera half-height, if a display controller exposes it.
     pub bg_camera_size: Option<f64>,
     /// Render-target aspect (`maxSize.x / maxSize.y`) for the camera frame.
@@ -1114,6 +1121,8 @@ pub fn collect_spine_assets(
             category,
             bg_quads: scene.quads,
             bg_skel_scale: skel_scale,
+            settle_animation: (!anim_name.is_empty() && anim_name != "Start")
+                .then(|| anim_name.to_string()),
             bg_camera_size: scene.camera_size,
             bg_max_aspect: scene.max_aspect,
             bg_camera_offset: scene.camera_offset,
@@ -4702,6 +4711,7 @@ pub fn collect_enemy_spine_assets(
             category: SpineCategory::Enemy,
             bg_quads: Vec::new(),
             bg_skel_scale: None,
+            settle_animation: None,
             bg_camera_size: None,
             bg_max_aspect: None,
             bg_camera_offset: None,
@@ -6098,6 +6108,9 @@ fn export_scene(
         // `_params.duration` + the reform `_delayTime` cluster. Present only on `_Start`
         // scenes; drives the client entrance camera dolly (tight→wide across `_adjustes`)
         // and the hand-off to the settled idle — so those are gamedata, not guessed.
+        // The clip the game binds at settle (`SkeletonMecanim._animationName`, see
+        // `SpineAsset::settle_animation`). Null where the binding is "Idle"-equivalent absent.
+        "settleAnimation": asset.settle_animation,
         "entranceDuration": asset.bg_entrance_duration.map(|v| v as f32),
         "entranceClipStop": asset.bg_entrance_clip_stop,
         // Straight RGBA of the director's end-of-entrance screen fade (see `bg_entrance_fade`).
