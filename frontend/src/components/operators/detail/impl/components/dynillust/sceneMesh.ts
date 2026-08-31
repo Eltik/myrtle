@@ -2075,11 +2075,22 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // the default. The recorded refinement path: seat only gaps whose layers sort at or
     // above characterSort (the only layers that can occlude the character), re-A/B against
     // FRESH no-rule baselines, and re-arbitrate wang_2 against a capture before any default.
-    const bgRuleOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapbg") === "1";
+    // DEFAULT ON since the sort-scoped A/B (2026-09-03): chyue's entrance returned to
+    // 15.253 r .945 exactly (arm byte-identical at the checked beat), shu_nian#11 held
+    // +0.2 at 4.5% occlusion, shu_2 16.8%, ling_nian#12 +31.2 -> +12.9, controls
+    // ska/cel/exc/wis byte-stable, and the only mover left is whitw2 +0.020 with r
+    // unchanged. `?gapbg=0` restores the unseated behaviour exactly.
+    const bgRuleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapbg") !== "0";
     const gapSeats = (gj: number): boolean => {
         if (gapLayersEnabled()) return true;
         if (!bgRuleOn) return false;
         const slot = slotNames[gj];
+        // SORT SCOPE: seat only a gap whose bounding sorts sit at or above characterSort.
+        // The class this rule exists for is CHARACTER OCCLUSION, and a layer sorted below
+        // characterSort already draws behind the character, so seating it can only move
+        // correct geometry (chyue's BG_A_Back gap bounds -25..-10 and seating it cost her
+        // entrance 15.253 -> 18.307). Both bounds are authored values, nothing chosen.
+        if (!(partSorts[gj] >= data.characterSort)) return false;
         return typeof slot === "string" && slot.startsWith("BG_");
     };
     const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && slotNames.some((s) => typeof s === "string" && s.startsWith("BG_"))));
