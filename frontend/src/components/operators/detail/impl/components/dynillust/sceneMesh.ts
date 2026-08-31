@@ -2054,7 +2054,35 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // layer's in the way it is to a particle system's. Do not retry without first establishing
     // that the two sorts live in the same space.
     const partSorts = data.separatorPartSorts ?? [];
-    const gapsOn = partSorts.length >= 2 && gapLayersEnabled();
+    // Seat scene layers between skeleton parts ONLY across a BG_ boundary slot. The
+    // separator's own slot name marks what the split is FOR, and the game arbitrates by it:
+    // shu's BG_Pan4 and BG_Taoist20 splits are game-SEATED (occlusion 54.1 -> 4.5 and
+    // 82.1 -> 16.8 under seating, matching their captures), while ska's Skadi_glow is
+    // game-UNSEATED (base-vs-game -3.5 vs seated +7.9), cel's L_C_Paper_Gc indifferent
+    // (-0.4 vs +0.1) and wisdel's HM_R_Redline_B/Fly_F HURT by seating (+8 -> +12). Five of
+    // five arbitrated keys agree, and every serialized separator flag is identical between
+    // them, so the slot-name convention is the only authored discriminator, the same
+    // evidence class as STATE_ONLY. `?gaplayers=1` still force-seats every gap (the old
+    // arm); `?gapbg=0` reverts the BG rule to the previous no-seating default exactly.
+    const slotNames = data.separatorSlots ?? [];
+    // MEASURED 2026-09-02 and left OPT-IN (`?gapbg=1`), not default. The rule fixes the shu
+    // family decisively (shu_nian#11 occlusion 54.1 -> 4.5%, row -10.6 -> +0.2; shu_2
+    // 82.1 -> 16.8%, +5.5) and helps ling_nian#12 (+32.2 -> +12.9) and pepe_2
+    // (-18.3 -> -6.0), with ska/cel/wis controls unmoved. But chyue's ENTRANCE goes
+    // 15.253 -> 18.307 (r .945 -> .915, a sign-agreeing regression: her BG_A_Back gap
+    // bounds NEGATIVE sorts -25..-10, nothing the class's occlusion definition covers) and
+    // wang_2's settled reads -7.0 -> -17.9 against a stale baseline. Corpus-green blocks
+    // the default. The recorded refinement path: seat only gaps whose layers sort at or
+    // above characterSort (the only layers that can occlude the character), re-A/B against
+    // FRESH no-rule baselines, and re-arbitrate wang_2 against a capture before any default.
+    const bgRuleOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gapbg") === "1";
+    const gapSeats = (gj: number): boolean => {
+        if (gapLayersEnabled()) return true;
+        if (!bgRuleOn) return false;
+        const slot = slotNames[gj];
+        return typeof slot === "string" && slot.startsWith("BG_");
+    };
+    const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && slotNames.some((s) => typeof s === "string" && s.startsWith("BG_"))));
     const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
     /** Which gap does this sort fall in? -1 = behind every part, gaps.length = in front of all. */
     const gapOf = (sort: number): number => {
@@ -2265,7 +2293,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // A solid backdrop WALL stays at the very back whatever its sort - it is the scenery
         // every part is drawn against, not something to interleave.
         const gj = gapsOn && !isBackdrop ? gapOf(layer.sort) : -1;
-        if (gj >= 0 && gj < gapMeshes.length) gapMeshes[gj].push({ mesh, sort: layer.sort });
+        if (gj >= 0 && gj < gapMeshes.length && gapSeats(gj)) gapMeshes[gj].push({ mesh, sort: layer.sort });
         else (isBackdrop ? backdropMeshes : otherBg).push({ mesh, sort: layer.sort });
         bgGeometrySignatures.add(geomKey);
     }
@@ -2304,7 +2332,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     for (const p of fgPending) {
         if (otherBg.includes(p)) continue;
         const gj = gapsOn ? gapOf(p.sort) : -1;
-        if (gj >= 0 && gj < gapMeshes.length) gapMeshes[gj].push(p);
+        if (gj >= 0 && gj < gapMeshes.length && gapSeats(gj)) gapMeshes[gj].push(p);
         else foreground.addChild(p.mesh);
     }
     for (const g of gapMeshes) g.sort((a, b) => a.sort - b.sort);
