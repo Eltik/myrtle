@@ -4636,7 +4636,18 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         boundsRef.current = panelTerminus;
                     }
                     const startBox = openFrom ?? (panelTerminus ? openTight : null);
-                    if (startBox) {
+                    // The authored transform -> duration pull-out happens INSIDE the cinematic:
+                    // the game performs it before `duration` and then CUTS to the settled frame
+                    // (measured on fugue/kalts/chyue: the cut lands at dur +0.116..0.267 and the
+                    // settled camera is STATIC afterwards, cel_settled2 phase-corr shift (0,0)
+                    // scale 1.00). Replaying that dolly on the MAIN composite after the hand-off
+                    // kept our settled camera moving for (duration - transform) seconds per skin
+                    // (cel 6.0, mue 7.0, ska 12.833, kalts 4.4, each matching its audited settle
+                    // transient), so the main now opens AT the terminus. The durations above are
+                    // read from the authored fields, never chosen. `?handoffdolly=1` restores the
+                    // previous post-handoff replay exactly.
+                    const replayDolly = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("handoffdolly") === "1";
+                    if (startBox && replayDolly) {
                         layoutSpine(main.root, sw, sh, startBox, panelFit ?? fitRef.current);
                         entranceZoomRef.current = { container: main.root, from: startBox, to: target, elapsed: 0, duration: dur, delay: 0.15, fit: panelFit };
                     } else {
