@@ -2347,6 +2347,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     cf.mainRoot.alpha = 1;
                     cf.wrapper.removeChild(cf.mainRoot); // keep the main; it renders directly again
                     hdrSceneRef.current = cf.mainRoot;
+                    // EXPERIMENT (`?gammadomain=entrance`): confine the fitted composite gamma
+                    // to the entrance domain it was calibrated on by restoring exponent 1.0 at
+                    // the handoff. Every point in GAMMA_CAL is an entrance-capture sweep minimum
+                    // and the table nonetheless applies at settle, where it is uncalibrated
+                    // (measured: it currently masks ~7.5 luma of mly's settled deficit). Missing
+                    // param = unchanged behaviour.
+                    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gammadomain") === "entrance") {
+                        hdrRef.current?.setGamma(1.0);
+                    }
                     cf.ent.destroy(); // frees the entrance root (detaches it from the wrapper)
                     const i = compositesRef.current.indexOf(cf.ent);
                     if (i >= 0) compositesRef.current.splice(i, 1);

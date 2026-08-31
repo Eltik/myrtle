@@ -498,6 +498,11 @@ export interface IHDRScene {
     prepare(renderer: PIXI.IRenderer): void;
     /** Resize the target + quad to a new screen size. */
     resize(width: number, height: number, resolution: number): void;
+    /** Replace the composite-transfer exponent at runtime (see sceneCompositeGamma). Exists
+     *  for the `?gammadomain=entrance` arm: the calibration table's every data point is
+     *  entrance-domain, and this lets the handoff restore 1.0 for the settled phase so the
+     *  fitted exponent is confined to the domain it has data for. */
+    setGamma(g: number): void;
     destroy(): void;
 }
 
@@ -636,6 +641,9 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         prepare(renderer: PIXI.IRenderer) {
             renderer.render(brightContainer, { renderTexture: bloomRT, clear: true });
             if (coverageOn()) renderer.render(covContainer, { renderTexture: covRT, clear: true });
+        },
+        setGamma(g: number) {
+            shader.uniforms.uGamma = g;
         },
         resize(w: number, h: number, res: number) {
             // ⚠️ setResolution BEFORE resize, never after. `BaseTexture.setResolution` RESCALES the
