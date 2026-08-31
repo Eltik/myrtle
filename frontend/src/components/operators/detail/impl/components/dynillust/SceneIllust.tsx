@@ -268,6 +268,18 @@ function gapFillOn(): boolean {
     return new URLSearchParams(window.location.search).get("gapfill") !== "0";
 }
 
+/** PANEL-ONLY (2026-09-01): present the static backdrop SHARP and never cover-toggle or retire
+ *  it, so the windowed card shows the ENTIRE static illustration - the game's own archive
+ *  viewer composites the static art behind the animated spine, and the card's job is the whole
+ *  artwork. The blur/coverage behaviour it replaces is the VIEWER's defocused-vista rule and is
+ *  untouched there (`surface === "viewer"` never reaches this). The framing needs no change:
+ *  `contentBounds` is measured AFTER the backdrop joins the container, so the panel's contain
+ *  already spans the full art. `?panelart=0` reverts the panel to the viewer behaviour exactly. */
+function panelArtOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("panelart") !== "0";
+}
+
 /** `?apscale=0` freezes the scope aperture at its baked radius, ignoring the rim transform's
  *  animated scale (diagnostic). */
 function apertureScaleOn(): boolean {
@@ -3335,7 +3347,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     if (bdAblated) bd.renderable = false;
-                    if (gapFill) {
+                    // The card surface presents the artwork itself: sharp, never toggled (see panelArtOn).
+                    const panelArt = surface === "panel" && panelArtOn();
+                    if (gapFill && !panelArt) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff
                         // is a spatial frequency, not a pixel count (see gapFillOn).
                         const blur = new PIXI.BlurFilter();
@@ -3348,14 +3362,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     sceneContainer.addChildAt(bd, 0);
                     // Tracked so the transform beat can retire it. Only the GAP FILL: a `useStatic`
                     // backdrop IS the artwork, and retiring that would blank the view.
-                    if (gapFill) gapFillSpritesRef.current.push(bd);
+                    if (gapFill && !panelArt) gapFillSpritesRef.current.push(bd);
                     // ⚠️ Do NOT register the per-frame coverage toggle when this sprite has been
                     // ABLATED. The toggle below assigns `renderable` every frame, so it silently
                     // overwrote `?abl=backdrop` and the token appeared to do nothing - which is
                     // exactly how a gap-fill wash got mis-attributed as an unexplained base layer
                     // (`?gapfill=0` removed it; `?abl=backdrop` did not). Same failure as the
                     // `?abl=fg:` tokens that never cleared `__activeWindows`.
-                    if (gapFill && sceneCoversFrame && !bdAblated) gapFillRef.current = { sprite: bd, covers: coverLayers };
+                    if (gapFill && sceneCoversFrame && !bdAblated && !panelArt) gapFillRef.current = { sprite: bd, covers: coverLayers };
                 }
                 // Framing. When a framingOverride is given (the entrance), reuse it verbatim
                 // so the entrance renders through the SAME authored camera box as the main
