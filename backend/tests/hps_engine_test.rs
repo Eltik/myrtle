@@ -57,7 +57,7 @@ fn test_hps_engine_vs_python_expected() {
         std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
     let data_dir = Path::new(&data_dir_str);
     let assets_dir = Path::new(&assets_dir_str);
-    let game_data =
+    let (game_data, _assets) =
         gamedata::init_game_data(data_dir, assets_dir).expect("Failed to load game data");
 
     let expected = load_expected_hps();

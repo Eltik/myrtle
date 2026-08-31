@@ -11,6 +11,7 @@ use crate::core::gamedata::{
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
         skins::enrich_all_skins,
+        stage_class::StageClassifier,
         stage_index::build_stage_index,
         voice::enrich_all_voices,
     },
@@ -44,6 +45,7 @@ use crate::core::gamedata::{
         zone::ZoneTableFile,
     },
 };
+use crate::core::startup;
 
 pub mod assets;
 pub mod enrich;
@@ -86,7 +88,86 @@ fn load_pool_details(assets_dir: &Path, warnings: &mut Vec<String>) -> Option<Po
     }
 }
 
-pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, DataError> {
+/// The excel tables [`init_game_data`] reads, in the order it reads them. Used
+/// only to build the boot plan; the loads name their own table.
+const BOOT_TABLES: &[&str] = &[
+    "character_table",
+    "char_patch_table",
+    "skill_table",
+    "uniequip_table",
+    "battle_equip_table",
+    "handbook_info_table",
+    "skin_table",
+    "item_table",
+    "favor_table",
+    "range_table",
+    "gacha_table",
+    "zone_table",
+    "stage_table",
+    "medal_table",
+    "campaign_table",
+    "climb_tower_table",
+    "charword_table",
+    "audio_data",
+    "enemy_handbook_table",
+    "building_data",
+    "roguelike_topic_table",
+    "activity_table",
+    "retro_table",
+    "gamedata_const",
+];
+
+/// The steps [`AssetIndex::build`] reports, in order.
+const ASSET_STEPS: [&str; 3] = ["textures", "portraits", "audio"];
+
+/// The steps [`init_game_data`] reports, in order, for the boot progress plan.
+///
+/// Table steps carry a size hint from disk. The tables are wildly unequal - EN's
+/// `activity_table` is 2.3 GB against under 20 MB for almost everything else -
+/// so weighting them by step count would be badly off until they have been
+/// measured.
+pub fn boot_steps(data_dir: &Path) -> Vec<startup::StepSpec> {
+    let mut steps = ASSET_STEPS.map(startup::StepSpec::new).to_vec();
+    steps.extend(BOOT_TABLES.iter().map(|name| table_step(data_dir, name)));
+    steps.push(startup::StepSpec::new("derive tables"));
+    steps.push(table_step(data_dir, "sandbox_perm_table"));
+    steps.extend(
+        [
+            "sandbox universe",
+            "skills",
+            "skins",
+            "modules",
+            "voices",
+            "battle audio",
+            "operators",
+            "enemies",
+            "stage classifier",
+            "enemy index · scan",
+            "enemy index · parse",
+            "enemy index · bosses",
+            "stage index · art",
+            "stage index · stages",
+            "stage index · modes",
+            "chibis",
+            "enemy chibis",
+        ]
+        .map(startup::StepSpec::new),
+    );
+    steps
+}
+
+fn table_step(data_dir: &Path, name: &'static str) -> startup::StepSpec {
+    let step = startup::StepSpec::new(name);
+    match startup::table_hint_ms(&data_dir.join(format!("{name}.json"))) {
+        Some(ms) => step.hint(ms),
+        None => step,
+    }
+}
+
+pub fn init_game_data(
+    data_dir: &Path,
+    assets_dir: &Path,
+) -> Result<(GameData, AssetIndex), DataError> {
     let mut warnings: Vec<String> = Vec::new();
 
     let assets = AssetIndex::build(assets_dir);
@@ -144,6 +225,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
     let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
 
+    startup::step("derive tables");
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
     let battle_equip = battle_equip_file.into_battle_equip();
@@ -172,15 +254,20 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
 
     let sandbox_perm_raw: serde_json::Value =
         load_table_or_warn(data_dir, "sandbox_perm_table", &mut warnings);
+    startup::step("sandbox universe");
     let sandbox_universe = SandboxUniverse::build(&sandbox_perm_raw);
 
+    startup::step("skills");
     let skills = enrich_all_skills(skill_file.skills, &assets);
     let drones = extract_all_drones(&raw_operators);
+    startup::step("skins");
     let mut skins = skins;
     skins.enriched_skins = enrich_all_skins(&skins.char_skins, &assets);
+    startup::step("modules");
     let modules = enrich_modules_global(&raw_modules, &battle_equip, &materials, &assets);
 
     // Voice enrichment
+    startup::step("voices");
     let enriched_char_words =
         enrich_all_voices(&voice_file.char_words, &voice_file.voice_lang_dict);
     let voices = Voices {
@@ -194,10 +281,12 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
 
     // Map battle SoundFX banks (deploy/attack/skill sounds, voice barks) to
     // operators by char id, resolving each asset to a playable URL.
+    startup::step("battle audio");
     let op_ids: std::collections::HashSet<&str> =
         raw_operators.keys().map(String::as_str).collect();
     let operator_audio = build_operator_audio(&audio_file, &op_ids, &assets);
 
+    startup::step("operators");
     let operators = enrich_all_operators(
         &raw_operators,
         &EnrichCtx {
@@ -217,6 +306,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     );
 
     // Enemy database lives outside excel/, in the levels directory
+    startup::step("enemies");
     let enemy_db_path = assets_dir.join("gamedata/levels/enemydata/enemy_database.json");
     let enemies = if let Ok(enemy_db) = std::fs::File::open(&enemy_db_path)
         .map_err(|e| e.to_string())
@@ -236,55 +326,67 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     // own ExpireTimes, which are empty/placeholder for this content.
     medals.link_content_windows(&climb_tower_file.tower_windows(), &activity_file.basic_info);
 
-    // Inverted enemy -> stages index, parsed from per-stage level files.
-    let enemy_stage_index = build_enemy_stage_index(
-        &assets_dir.join("gamedata/levels"),
-        data_dir,
-        &stages,
-        &zones,
-        &activity_file.basic_info,
-    );
+    // One classifier for both indexes: building it reads roguelike_topic_table
+    // (1.8 GB on CN), climb_tower, sandbox, sandbox_perm, crisis_v2 and
+    // handbook_info as loose JSON. Scoped so the borrows of
+    // `stages`/`zones`/`activities` end before they move into `GameData`.
+    let levels_dir = assets_dir.join("gamedata/levels");
+    let (enemy_stage_index, stage_index, mode_levels) = {
+        startup::step("stage classifier");
+        let classifier = StageClassifier::new(data_dir, &stages, &zones, &activity_file.basic_info);
 
-    let (stage_index, mode_levels) = build_stage_index(
-        assets_dir,
-        &assets_dir.join("gamedata/levels"),
-        data_dir,
-        &stages,
-        &zones,
-        &activity_file.basic_info,
-    );
+        // Inverted enemy -> stages index, parsed from per-stage level files.
+        let enemies_by_stage = build_enemy_stage_index(&levels_dir, data_dir, &classifier);
+        let (index, modes) = build_stage_index(
+            assets_dir,
+            &levels_dir,
+            &classifier,
+            &stages,
+            &zones,
+            &activity_file.basic_info,
+        );
+        (enemies_by_stage, index, modes)
+    };
+
+    startup::step("chibis");
+    let chibis = init_chibi_data(assets_dir);
+    startup::step("enemy chibis");
+    let enemy_chibis = init_enemy_chibi_data(assets_dir, &enemies);
 
     for w in &warnings {
-        eprintln!("warning: {w}");
+        tracing::warn!("{w}");
     }
 
-    Ok(GameData {
-        operators,
-        skills,
-        materials,
-        modules,
-        skins,
-        handbook,
-        ranges,
-        favor,
-        voices,
-        gacha,
-        chibis: init_chibi_data(assets_dir),
-        enemy_chibis: init_enemy_chibi_data(assets_dir, &enemies),
-        zones,
-        stages,
-        activities: activity_file.basic_info,
-        retro_acts: retro_file.retro_act_list,
-        medals,
-        roguelike,
-        enemies,
-        enemy_stage_index,
-        stage_index,
-        mode_levels,
-        building: building_file,
-        stage_universe,
-        sandbox_universe,
-        campaign_rotations,
-        consts,
-    })
+    Ok((
+        GameData {
+            operators,
+            skills,
+            materials,
+            modules,
+            skins,
+            handbook,
+            ranges,
+            favor,
+            voices,
+            gacha,
+            chibis,
+            enemy_chibis,
+            zones,
+            stages,
+            activities: activity_file.basic_info,
+            retro_acts: retro_file.retro_act_list,
+            medals,
+            roguelike,
+            enemies,
+            enemy_stage_index,
+            stage_index,
+            mode_levels,
+            building: building_file,
+            stage_universe,
+            sandbox_universe,
+            campaign_rotations,
+            consts,
+        },
+        assets,
+    ))
 }

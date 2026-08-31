@@ -15,6 +15,7 @@
 #   scripts/check.sh biome [paths...]    lint+format check (default: the whole frontend)
 #   scripts/check.sh fix [paths...]      biome check --write, then re-check
 #   scripts/check.sh cargo               cargo check the unpacker
+#   scripts/check.sh backend             cargo check + clippy + test the backend
 #   scripts/check.sh all                 tsc, biome and cargo; exits non-zero if ANY failed
 #
 # `set -e` is deliberately NOT used: a non-zero tool must reach the reporting line rather than
@@ -72,6 +73,16 @@ cargo)
     # before it compiles anything, which is a environment failure masquerading as a build failure.
     run "cargo" "$ROOT/assets/unpacker" env RUSTC_WRAPPER= cargo check
     ;;
+backend)
+    # The server crate. `cargo` above does NOT cover it - that target is the unpacker.
+    # --all-targets so the examples and tests are linted too; the crate opts into
+    # pedantic/nursery in src/lib.rs.
+    rc=0
+    run "clippy backend" "$ROOT/backend" env RUSTC_WRAPPER= cargo clippy --all-targets || rc=1
+    run "test backend" "$ROOT/backend" env RUSTC_WRAPPER= cargo test --lib || rc=1
+    printf '%-24s %s (exit %d)\n' "CHECK backend" "$( ((rc == 0)) && echo PASS || echo FAIL )" "$rc"
+    exit $rc
+    ;;
 all)
     rc=0
     run "tsc" "$ROOT/frontend" npx tsc --noEmit || rc=1
@@ -81,7 +92,7 @@ all)
     exit $rc
     ;;
 *)
-    echo "usage: scripts/check.sh {tsc|biome|fix|cargo|all} [paths...]" >&2
+    echo "usage: scripts/check.sh {tsc|biome|fix|cargo|backend|all} [paths...]" >&2
     exit 2
     ;;
 esac

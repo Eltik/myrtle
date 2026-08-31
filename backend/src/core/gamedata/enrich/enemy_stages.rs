@@ -13,10 +13,8 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use super::stage_class::{StageClassifier, StageInfo};
-use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::core::gamedata::types::enemy_stages::{EnemyStageIndex, EnemyStageRef};
-use crate::core::gamedata::types::stage::Stage;
-use crate::core::gamedata::types::zone::Zone;
+use crate::core::startup;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -146,18 +144,20 @@ fn push_ref(
 pub fn build_enemy_stage_index(
     levels_dir: &Path,
     data_dir: &Path,
-    stages: &HashMap<String, Stage>,
-    zones: &HashMap<String, Zone>,
-    activities: &HashMap<String, ActivityBasicInfo>,
+    classifier: &StageClassifier,
 ) -> EnemyStageIndex {
-    let classifier = StageClassifier::new(data_dir, stages, zones, activities);
-
+    startup::step("enemy index · scan");
     let mut files = Vec::new();
     collect_level_files(levels_dir, &mut files);
 
     let mut index: EnemyStageIndex = HashMap::new();
 
-    for path in &files {
+    // ~2800 files, a count the boot bar can use directly instead of guessing
+    // from elapsed time.
+    startup::step("enemy index · parse");
+    let total = files.len() as u64;
+    for (done, path) in files.iter().enumerate() {
+        startup::step_progress(done as u64, total);
         let Some(rel) = relative_level_id(levels_dir, path) else {
             continue;
         };
@@ -172,6 +172,7 @@ pub fn build_enemy_stage_index(
     }
 
     // Boss declarations that never appear in a level file.
+    startup::step("enemy index · bosses");
     for (enemy_id, info) in classifier.boss_appearances(data_dir) {
         let already = index.get(&enemy_id).is_some_and(|refs| {
             refs.iter()

@@ -160,7 +160,7 @@ async fn main() -> Result<()> {
 
     tracing::info!("loading game data...");
     let t0 = Instant::now();
-    let game_data = init_game_data(Path::new(&data_dir), Path::new(&assets_dir))
+    let (game_data, _assets) = init_game_data(Path::new(&data_dir), Path::new(&assets_dir))
         .context("failed to load game data")?;
     tracing::info!(
         operators = game_data.operators.len(),

@@ -178,10 +178,10 @@ fn main() {
             // sibling MeshFilter (class 33) -> Mesh
             let mut idx = 0usize;
             for c in go_components.get(&go).into_iter().flatten() {
-                if let Some((33, mf)) = objs.get(c) {
-                    if let Some(mp) = mf.get("m_Mesh").and_then(pid) {
-                        idx = idx_count_of(mp);
-                    }
+                if let Some((33, mf)) = objs.get(c)
+                    && let Some(mp) = mf.get("m_Mesh").and_then(pid)
+                {
+                    idx = idx_count_of(mp);
                 }
             }
             let mats = v.get("m_Materials").and_then(Value::as_array);

@@ -1823,7 +1823,10 @@ pub(crate) fn collect_dynchar_particles(
             // rely on an actual loop construct.
             // The `_Amount` offset is payload slot 5 (`vs_TEXCOORD2.x = in_TEXCOORD1.z`).
             let amount_src: Option<(usize, usize)> = if vstream_uv2 {
-                payload.get(4).copied().filter(|&(slot, _)| slot != usize::MAX)
+                payload
+                    .get(4)
+                    .copied()
+                    .filter(|&(slot, _)| slot != usize::MAX)
             } else {
                 sent_stream.map(|s| (s, 0usize))
             };
@@ -1874,7 +1877,10 @@ pub(crate) fn collect_dynchar_particles(
                             .map(|(lo, _)| lo)
                     {
                         for pt in &mut pts {
-                            if pt.get("v").and_then(Value::as_f64).is_some_and(|v| v < f64::from(lo))
+                            if pt
+                                .get("v")
+                                .and_then(Value::as_f64)
+                                .is_some_and(|v| v < f64::from(lo))
                             {
                                 pt["v"] = json!(lo);
                             }

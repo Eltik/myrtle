@@ -2,6 +2,7 @@ use arc_swap::ArcSwap;
 use backend::app::server;
 use backend::core::hypergryph::{config, loaders};
 use backend::core::service_account::ServiceAccounts;
+use backend::core::startup;
 use backend::core::{
     asset_watcher, dps_watcher, gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job,
     operator_ownership_job, regrade_job, trending_job,
@@ -11,10 +12,7 @@ use backend::{
         cache::store::CacheStore,
         state::{AppConfig, AppState, ServerData, derive_assets_dir, derive_game_data_dir},
     },
-    core::{
-        gamedata::assets::AssetIndex,
-        hypergryph::{config::GlobalConfig, constants::Server},
-    },
+    core::hypergryph::{config::GlobalConfig, constants::Server},
 };
 use dotenv::dotenv;
 use std::collections::HashMap;
@@ -32,31 +30,42 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 pub static MALLOC_CONF: &[u8] = b"background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000\0";
 
 #[tokio::main]
+// Startup wiring is inherently a long, linear sequence of `.await`s; splitting it into
+// helpers would not make it more readable. Matches the crate-wide allow in `lib.rs`,
+// which does not cover this binary's separate crate root.
+#[allow(clippy::too_many_lines)]
 async fn main() {
     dotenv().ok();
 
-    // Tracing
+    // The writer clears the boot progress bars before a line lands, so startup
+    // logging and the bars can share a terminal.
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "backend=info,tower_http=info".into()),
         )
+        .with_writer(startup::log_writer())
         .init();
 
     // Game data (per-server). ASSETS_DIR is a base dir; each server loads from
     // `{base}/{server}` (+ `/gamedata/excel`). SERVERS selects which to load.
     let config = AppConfig::from_env();
+
+    // Costed from the previous boot's timings (see `core::startup`).
+    let boot = startup::Boot::start(boot_plan(&config));
+
     let mut servers: HashMap<Server, Arc<ServerData>> = HashMap::new();
     for &srv in &config.servers {
         let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
         let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
-        info!(server = srv.as_str(), "loading game data...");
-        let game_data = backend::core::gamedata::init_game_data(
-            Path::new(&game_data_dir),
-            Path::new(&assets_dir),
-        )
-        .unwrap_or_else(|e| panic!("failed to load game data for {}: {e}", srv.as_str()));
-        let asset_index = AssetIndex::build(Path::new(&assets_dir));
+        let (game_data, asset_index) = {
+            let _phase = boot.phase(&format!("gamedata:{}", srv.as_str()));
+            backend::core::gamedata::init_game_data(
+                Path::new(&game_data_dir),
+                Path::new(&assets_dir),
+            )
+            .unwrap_or_else(|e| panic!("failed to load game data for {}: {e}", srv.as_str()))
+        };
         info!(
             server = srv.as_str(),
             operators = game_data.operators.len(),
@@ -80,11 +89,16 @@ async fn main() {
 
     // Database (pool + migrations + seeding)
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let db = backend::database::init(&database_url)
-        .await
-        .expect("failed to initialize database");
+    let db = {
+        let _phase = boot.phase("database");
+        backend::database::init(&database_url)
+            .await
+            .expect("failed to initialize database")
+    };
 
     // Cache (Redis or in-memory fallback)
+    let cache_phase = boot.phase("cache");
+    startup::step("connect");
     let cache = if let Ok(url) = std::env::var("REDIS_URL") {
         match redis::Client::open(url) {
             Ok(client) => match redis::aio::ConnectionManager::new(client).await {
@@ -107,18 +121,26 @@ async fn main() {
         CacheStore::new_memory()
     };
     cache.spawn_cleanup();
+    drop(cache_phase);
 
     // reqwest client
     let http_client = reqwest::Client::new();
 
     // Initialize configs
-    config::init_config(GlobalConfig::new());
-    loaders::init(&http_client).await;
+    {
+        let _phase = boot.phase("hypergryph");
+        config::init_config(GlobalConfig::new());
+        loaders::init(&http_client).await;
+    }
 
     // The backend's own game accounts, one per configured server. Optional:
     // without them the pool-detail refresh is skipped and banners fall back to
     // their static rate-up blobs.
-    let service_accounts = ServiceAccounts::load(&config.servers);
+    let service_accounts = {
+        let _phase = boot.phase("accounts");
+        startup::step("load");
+        ServiceAccounts::load(&config.servers)
+    };
 
     // Start server
     let state = AppState::new(
@@ -135,6 +157,8 @@ async fn main() {
     // `regrade_job`) fan out parallel workers across every user, which is heavy
     // and pointless for local stage-viewer / API work. Set
     // `DISABLE_BACKGROUND_JOBS=1` to skip them during local development.
+    let jobs_phase = boot.phase("jobs");
+    startup::step("spawn");
     let jobs_disabled = std::env::var("DISABLE_BACKGROUND_JOBS")
         .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes"));
     if jobs_disabled {
@@ -155,5 +179,47 @@ async fn main() {
         gacha_detail_job::spawn(state.clone());
     }
 
+    drop(jobs_phase);
+
+    // Finish before `server::run`, so the listener's log line lands after the
+    // bars are gone.
+    boot.finish();
+
     server::run(state).await.expect("server error");
+}
+
+/// The boot, phase by phase, costed from the previous boot's timings.
+///
+/// The per-server game-data steps come from `gamedata::boot_steps`, declared
+/// next to the code that reports them.
+fn boot_plan(config: &AppConfig) -> Vec<startup::PhaseSpec> {
+    let mut plan = Vec::new();
+    for &srv in &config.servers {
+        let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
+        plan.push(
+            startup::PhaseSpec::new(
+                format!("gamedata:{}", srv.as_str()),
+                format!("game data · {}", srv.as_str().to_uppercase()),
+            )
+            .with_steps(backend::core::gamedata::boot_steps(Path::new(
+                &game_data_dir,
+            ))),
+        );
+    }
+    plan.push(startup::PhaseSpec::new("database", "database").with_steps([
+        "connect",
+        "migrations",
+        "seed",
+    ]));
+    plan.push(startup::PhaseSpec::new("cache", "cache").with_steps(["connect"]));
+    plan.push(
+        startup::PhaseSpec::new("hypergryph", "hypergryph").with_steps([
+            "device ids",
+            "network config",
+            "version config",
+        ]),
+    );
+    plan.push(startup::PhaseSpec::new("accounts", "service accounts").with_steps(["load"]));
+    plan.push(startup::PhaseSpec::new("jobs", "background jobs").with_steps(["spawn"]));
+    plan
 }

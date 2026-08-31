@@ -67,7 +67,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
                 .execute(&mut *tx)
                 .await?;
             tx.commit().await?;
-            println!("Applied migration: {name}");
+            tracing::info!(migration = name, "applied migration");
         }
     }
 

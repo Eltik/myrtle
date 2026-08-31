@@ -60,6 +60,9 @@ impl AssetIndex {
         let textures_dir = assets_dir.join("textures");
         let portraits_dir = assets_dir.join("portraits");
 
+        // No cheap count for these walks (~90k textures, ~73k audio per server),
+        // so the bar interpolates across three steps.
+        crate::core::startup::step("textures");
         for entry in walkdir::WalkDir::new(&textures_dir).min_depth(1) {
             let Ok(entry) = entry else { continue };
             let path = entry.path();
@@ -115,6 +118,7 @@ impl AssetIndex {
             }
         }
 
+        crate::core::startup::step("portraits");
         if let Ok(entries) = std::fs::read_dir(&portraits_dir) {
             let portraits = idx.map.get_mut(&AssetKind::Portrait).unwrap();
             for entry in entries.flatten() {
@@ -124,6 +128,7 @@ impl AssetIndex {
             }
         }
 
+        crate::core::startup::step("audio");
         let audio_root = assets_dir.join("audio/audio/sound_beta_2");
         for entry in walkdir::WalkDir::new(&audio_root).min_depth(1) {
             let Ok(entry) = entry else { continue };

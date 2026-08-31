@@ -9,8 +9,11 @@ use sqlx::PgPool;
 
 /// Initialize database: create pool, run migrations, seed data, return pool
 pub async fn init(database_url: &str) -> Result<PgPool, sqlx::Error> {
+    crate::core::startup::step("connect");
     let pool = create_pool(database_url).await?;
+    crate::core::startup::step("migrations");
     run_migrations(&pool).await?;
+    crate::core::startup::step("seed");
     seed(&pool).await?;
     Ok(pool)
 }

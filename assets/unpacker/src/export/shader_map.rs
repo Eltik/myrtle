@@ -32,7 +32,7 @@ pub type ShaderPropMap = HashMap<String, HashSet<String>>;
 
 static SHADER_PROPS: OnceLock<ShaderPropMap> = OnceLock::new();
 
-/// `(shader_name, prop_name) -> (min, max)` for every property ShaderLab declares as
+/// `(shader_name, prop_name) -> (min, max)` for every property `ShaderLab` declares as
 /// `Range(min, max)`.
 ///
 /// Unity CLAMPS a Range property to its declared limits, so an animation curve driving one

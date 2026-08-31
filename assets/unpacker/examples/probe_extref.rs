@@ -14,53 +14,95 @@
 //! Usage: cargo run --release --example probe_extref -- <bundle.ab> [slot-substr]
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
-use unpacker::unity::{bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile};
+use unpacker::unity::{
+    bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
+};
 
 fn main() {
     let path = std::env::args().nth(1).expect("bundle.ab");
     let want = std::env::args().nth(2).unwrap_or_default();
-    let Ok(data) = std::fs::read(&path) else { return };
-    let Ok(bundle) = BundleFile::parse(data) else { return };
+    let Ok(data) = std::fs::read(&path) else {
+        return;
+    };
+    let Ok(bundle) = BundleFile::parse(data) else {
+        return;
+    };
     let mut internal = 0usize;
     let mut external: HashMap<String, usize> = HashMap::new();
     let mut unbound = 0usize;
     let mut missing = 0usize;
     for entry in &bundle.files {
         let lower = entry.path.to_ascii_lowercase();
-        if lower.ends_with(".ress") || lower.ends_with(".resource") { continue }
-        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else { continue };
+        if lower.ends_with(".ress") || lower.ends_with(".resource") {
+            continue;
+        }
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
         let here: HashSet<i64> = sf.objects.iter().map(|o| o.path_id).collect();
         for obj in &sf.objects {
-            if obj.class_id != 21 { continue }
-            let Ok(mat) = read_object(&sf, obj) else { continue };
-            let name = format!("{} [{}]", mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"), obj.path_id);
-            let Some(te) = mat.get("m_SavedProperties").and_then(|s| s.get("m_TexEnvs")).and_then(Value::as_object) else { continue };
+            if obj.class_id != 21 {
+                continue;
+            }
+            let Ok(mat) = read_object(&sf, obj) else {
+                continue;
+            };
+            let name = format!(
+                "{} [{}]",
+                mat.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                obj.path_id
+            );
+            let Some(te) = mat
+                .get("m_SavedProperties")
+                .and_then(|s| s.get("m_TexEnvs"))
+                .and_then(Value::as_object)
+            else {
+                continue;
+            };
             for (slot, v) in te {
-                let Some(t) = v.get("m_Texture") else { continue };
+                let Some(t) = v.get("m_Texture") else {
+                    continue;
+                };
                 let fid = t.get("m_FileID").and_then(Value::as_i64).unwrap_or(0);
                 let pid = t.get("m_PathID").and_then(Value::as_i64).unwrap_or(0);
                 let show = want.is_empty() || slot.contains(&want) || name.contains(&want);
                 if pid == 0 {
                     unbound += 1;
-                    if show && !want.is_empty() { println!("  {name:<40} {slot:<18} UNBOUND"); }
+                    if show && !want.is_empty() {
+                        println!("  {name:<40} {slot:<18} UNBOUND");
+                    }
                 } else if fid == 0 {
                     if here.contains(&pid) {
                         internal += 1;
-                        if show && !want.is_empty() { println!("  {name:<40} {slot:<18} INTERNAL  pid {pid}"); }
+                        if show && !want.is_empty() {
+                            println!("  {name:<40} {slot:<18} INTERNAL  pid {pid}");
+                        }
                     } else {
                         missing += 1;
-                        if show { println!("  {name:<40} {slot:<18} MISSING-IN-FILE  pid {pid}"); }
+                        if show {
+                            println!("  {name:<40} {slot:<18} MISSING-IN-FILE  pid {pid}");
+                        }
                     }
                 } else {
-                    let cab = sf.externals.get((fid - 1) as usize).map_or("<out of range>", |e| e.path.as_str());
+                    let cab = sf
+                        .externals
+                        .get((fid - 1) as usize)
+                        .map_or("<out of range>", |e| e.path.as_str());
                     *external.entry(cab.to_string()).or_default() += 1;
-                    if show { println!("  {name:<40} {slot:<18} EXTERNAL fid {fid} pid {pid} -> {cab}"); }
+                    if show {
+                        println!("  {name:<40} {slot:<18} EXTERNAL fid {fid} pid {pid} -> {cab}");
+                    }
                 }
             }
         }
     }
-    println!("TOTALS internal={internal} external={} unbound={unbound} missing_in_file={missing}", external.values().sum::<usize>());
+    println!(
+        "TOTALS internal={internal} external={} unbound={unbound} missing_in_file={missing}",
+        external.values().sum::<usize>()
+    );
     let mut v: Vec<_> = external.into_iter().collect();
     v.sort_by_key(|(_, n)| std::cmp::Reverse(*n));
-    for (cab, n) in v.iter().take(8) { println!("  EXT {n:>5}  {cab}"); }
+    for (cab, n) in v.iter().take(8) {
+        println!("  EXT {n:>5}  {cab}");
+    }
 }

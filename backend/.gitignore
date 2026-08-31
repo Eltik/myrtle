@@ -8,6 +8,8 @@ regrade_state.json
 regrade_state.json.tmp
 device_ids.json
 device_ids.json.tmp
+startup_timings.json
+startup_timings.json.tmp
 .session.json
 game_sessions/
 backup

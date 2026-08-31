@@ -33,6 +33,8 @@ impl From<std::io::Error> for DataError {
 impl std::error::Error for DataError {}
 
 pub fn load_table<T: DeserializeOwned>(data_dir: &Path, table_name: &str) -> Result<T, DataError> {
+    // Reported here rather than at the 25 call sites; inert outside a boot.
+    crate::core::startup::step(table_name);
     let path = data_dir.join(format!("{table_name}.json"));
     let file = std::fs::File::open(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {

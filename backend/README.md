@@ -74,6 +74,18 @@ The server starts on `http://localhost:3060`. All routes are prefixed with `/api
 curl http://localhost:3060/api/health
 ```
 
+Startup runs tens of seconds - game data per server, a 2.3 GB `activity_table`,
+~2800 level files - so it draws a bar per phase (game data per server, database,
+cache, hypergryph config, service accounts, jobs) under one bar for the whole
+boot.
+
+The estimate is measured rather than counted: each step's duration is written to
+`startup_timings.json` and read back on the next boot, so the second boot on a
+machine knows how long it has left. The first says `estimating`. Off a terminal
+(pm2, Docker without `-t`) the bars become one log line per phase, with its
+duration against what was expected. `NO_PROGRESS=1` takes that path on a terminal
+too; `STARTUP_TIMINGS_FILE` moves the timing file.
+
 ### 3. Docker
 
 ```bash

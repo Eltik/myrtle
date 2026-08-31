@@ -76,7 +76,7 @@ fn test_engine_vs_python_expected() {
         std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
     let data_dir = Path::new(&data_dir_str);
     let assets_dir = Path::new(&assets_dir_str);
-    let game_data =
+    let (game_data, _assets) =
         gamedata::init_game_data(data_dir, assets_dir).expect("Failed to load game data");
 
     let expected = load_expected_dps();
@@ -294,8 +294,9 @@ fn test_unavailable_module_returns_none() {
         .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into());
     let assets_dir_str =
         std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
-    let game_data = gamedata::init_game_data(Path::new(&data_dir_str), Path::new(&assets_dir_str))
-        .expect("Failed to load game data");
+    let (game_data, _assets) =
+        gamedata::init_game_data(Path::new(&data_dir_str), Path::new(&assets_dir_str))
+            .expect("Failed to load game data");
 
     use backend::core::gamedata::types::module::ModuleType;
     let formulas = engine::load_formulas();

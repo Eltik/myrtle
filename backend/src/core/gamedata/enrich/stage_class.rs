@@ -177,6 +177,11 @@ struct ModeNames {
     node_named: HashMap<String, (String, String)>,
     /// Contingency Contract (`crisis_v2`) season number -> display name.
     cc_seasons: HashMap<u32, String>,
+    /// IS: lowercased level id -> node id (`obt/roguelike/ro1/level_rogue1_4-5`
+    /// -> `ro1_n_4_5`), so a node resolves its `stage_mappreview_h2_ro*` preview.
+    is_node_ids: HashMap<String, String>,
+    /// IS: season id (`rogue_1`) -> active KV banner stem (`pic_rogue_1_KV2`).
+    is_kv: HashMap<String, String>,
 }
 
 fn load_mode_names(data_dir: &Path) -> ModeNames {
@@ -190,8 +195,11 @@ fn load_mode_names(data_dir: &Path) -> ModeNames {
         .unwrap_or_default();
 
     let mut node_named = HashMap::new();
+    let mut is_node_ids = HashMap::new();
+    let mut is_kv = HashMap::new();
     if let Some(t) = &roguelike {
         collect_level_named(t, &mut node_named);
+        collect_is_topics(t, &mut is_node_ids, &mut is_kv);
     }
     if let Some(t) = read_json(data_dir, "sandbox_table") {
         collect_level_named(&t, &mut node_named);
@@ -207,6 +215,47 @@ fn load_mode_names(data_dir: &Path) -> ModeNames {
         towers,
         node_named,
         cc_seasons: load_cc_seasons(data_dir),
+        is_node_ids,
+        is_kv,
+    }
+}
+
+/// Value of a `[{key,value}]` `FlatBuffer`-map entry's field, as a `&str`.
+fn fb_str<'a>(entry: &'a Value, field: &str) -> Option<&'a str> {
+    entry.get(field).and_then(Value::as_str)
+}
+
+/// Pull the IS level -> node-id map and each season's active KV banner stem out
+/// of `roguelike_topic_table`. Read off the value `load_mode_names` already has,
+/// so the table (1.8 GB on CN) is parsed once per load.
+fn collect_is_topics(
+    table: &Value,
+    node_ids: &mut HashMap<String, String>,
+    kv: &mut HashMap<String, String>,
+) {
+    let Some(details) = table.get("Details").and_then(Value::as_array) else {
+        return;
+    };
+    for entry in details {
+        let Some(season) = entry.get("key").and_then(Value::as_str) else {
+            continue;
+        };
+        let value = entry.get("value").unwrap_or(entry);
+        if let Some(auto) = fb_str(value, "AutoSetKV").or_else(|| {
+            value
+                .get("DetailConst")
+                .and_then(|c| fb_str(c, "AutoSetKV"))
+        }) {
+            kv.insert(season.to_owned(), auto.to_owned());
+        }
+        if let Some(stages) = value.get("Stages").and_then(Value::as_array) {
+            for st in stages {
+                let sv = st.get("value").unwrap_or(st);
+                if let (Some(id), Some(level_id)) = (fb_str(sv, "Id"), fb_str(sv, "LevelId")) {
+                    node_ids.insert(level_id.to_lowercase(), id.to_owned());
+                }
+            }
+        }
     }
 }
 
@@ -389,6 +438,16 @@ impl<'a> StageClassifier<'a> {
             memory_meta: load_memory_meta(data_dir),
             stage_by_level,
         }
+    }
+
+    /// IS level id -> node id, for map-preview lookups.
+    pub const fn is_node_ids(&self) -> &HashMap<String, String> {
+        &self.modes.is_node_ids
+    }
+
+    /// IS season -> active KV banner stem.
+    pub const fn is_kv(&self) -> &HashMap<String, String> {
+        &self.modes.is_kv
     }
 
     /// The canonical `stage_table` stage at a level file, if any.

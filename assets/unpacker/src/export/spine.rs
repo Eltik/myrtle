@@ -49,10 +49,10 @@ pub struct SpineAsset {
     pub bg_quads: Vec<BgQuad>,
     /// `SkeletonDataAsset.scale` (spine px → Unity units, typically `0.01`).
     pub bg_skel_scale: Option<f64>,
-    /// The clip the game binds on this skeleton at settle: the SkeletonMecanim's serialized
+    /// The clip the game binds on this skeleton at settle: the `SkeletonMecanim`'s serialized
     /// `_animationName`. "Idle" on 86 of 104 dynchar bindings, but AUTHORED per skin: cel
-    /// (char_245_cello_sale#12) binds "Interact" and char_391_rosmon_2 binds "Special" on
-    /// their MAIN dyn_illust skeletons, and a client that hardcodes "Idle" plays a different
+    /// (`char_245_cello_sale#12`) binds "Interact" and `char_391_rosmon_2` binds "Special" on
+    /// their MAIN `dyn_illust` skeletons, and a client that hardcodes "Idle" plays a different
     /// animation than the game on exactly those settled surfaces. None when the field is
     /// empty or names the entrance ("Start").
     pub settle_animation: Option<String>,

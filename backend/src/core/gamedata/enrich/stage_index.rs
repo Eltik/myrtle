@@ -17,14 +17,13 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use serde_json::Value;
-
 use super::enemy_stages::{collect_level_files, relative_level_id};
-use super::stage_class::{StageClassifier, StageInfo, read_json};
+use super::stage_class::{StageClassifier, StageInfo};
 use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
 use crate::core::gamedata::types::stage_index::{StageIndex, StageIndexEntry};
 use crate::core::gamedata::types::zone::Zone;
+use crate::core::startup;
 
 const fn difficulty_str(d: &StageDifficulty) -> &'static str {
     match d {
@@ -85,56 +84,16 @@ fn level_exists(levels_dir: &Path, level_id: Option<&str>) -> bool {
 /// for procedural modes, its node (`mem_gdglow_1.png`, `crisis_v2_01-02.png`),
 /// so a single stem lookup resolves the full path regardless of the folder's
 /// family/variant suffix.
-struct ArtIndex {
+struct ArtIndex<'a> {
     /// preview filename stem -> asset-relative path.
     preview: HashMap<String, String>,
     /// banner filename stem -> asset-relative path.
     banner: HashMap<String, String>,
     /// IS: lowercased level id -> node id (`obt/roguelike/ro1/level_rogue1_4-5`
     /// -> `ro1_n_4_5`), so a node resolves its `stage_mappreview_h2_ro*` preview.
-    is_node_ids: HashMap<String, String>,
+    is_node_ids: &'a HashMap<String, String>,
     /// IS: season id (`rogue_1`) -> active KV banner stem (`pic_rogue_1_KV2`).
-    is_kv: HashMap<String, String>,
-}
-
-/// Value of a `[{key,value}]` FlatBuffer-map entry's field, as a &str.
-fn fb_str<'a>(entry: &'a Value, field: &str) -> Option<&'a str> {
-    entry.get(field).and_then(Value::as_str)
-}
-
-/// Parse `roguelike_topic_table` for the IS level->node-id map and each season's
-/// active KV banner stem (`AutoSetKV`).
-fn build_is_topic_maps(data_dir: &Path) -> (HashMap<String, String>, HashMap<String, String>) {
-    let mut node_ids = HashMap::new();
-    let mut kv = HashMap::new();
-    let Some(table) = read_json(data_dir, "roguelike_topic_table") else {
-        return (node_ids, kv);
-    };
-    let Some(details) = table.get("Details").and_then(Value::as_array) else {
-        return (node_ids, kv);
-    };
-    for entry in details {
-        let Some(season) = entry.get("key").and_then(Value::as_str) else {
-            continue;
-        };
-        let value = entry.get("value").unwrap_or(entry);
-        if let Some(auto) = fb_str(value, "AutoSetKV").or_else(|| {
-            value
-                .get("DetailConst")
-                .and_then(|c| fb_str(c, "AutoSetKV"))
-        }) {
-            kv.insert(season.to_owned(), auto.to_owned());
-        }
-        if let Some(stages) = value.get("Stages").and_then(Value::as_array) {
-            for st in stages {
-                let sv = st.get("value").unwrap_or(st);
-                if let (Some(id), Some(level_id)) = (fb_str(sv, "Id"), fb_str(sv, "LevelId")) {
-                    node_ids.insert(level_id.to_lowercase(), id.to_owned());
-                }
-            }
-        }
-    }
-    (node_ids, kv)
+    is_kv: &'a HashMap<String, String>,
 }
 
 /// Index every `*.png` in each immediate subfolder of `parent` whose folder
@@ -174,7 +133,7 @@ fn index_pngs(
     }
 }
 
-fn build_art_index(assets_dir: &Path, data_dir: &Path) -> ArtIndex {
+fn build_art_index<'a>(assets_dir: &Path, classifier: &'a StageClassifier) -> ArtIndex<'a> {
     let mut preview = HashMap::new();
     // Stage map previews: textures/arts/ui/stage_mappreview_h2_*  (includes the
     // Integrated Strategies per-node folders `..._ro<N>_<type>_0`, keyed by node id).
@@ -211,12 +170,11 @@ fn build_art_index(assets_dir: &Path, data_dir: &Path) -> ArtIndex {
         &mut banner,
     );
 
-    let (is_node_ids, is_kv) = build_is_topic_maps(data_dir);
     ArtIndex {
         preview,
         banner,
-        is_node_ids,
-        is_kv,
+        is_node_ids: classifier.is_node_ids(),
+        is_kv: classifier.is_kv(),
     }
 }
 
@@ -289,7 +247,7 @@ fn preview_keys(stage_id: &str, level_id: Option<&str>, code: &str) -> Vec<Strin
 }
 
 fn resolve_preview(
-    art: &ArtIndex,
+    art: &ArtIndex<'_>,
     stage_id: &str,
     level_id: Option<&str>,
     code: &str,
@@ -303,7 +261,7 @@ fn resolve_preview(
 /// are keyed directly (`main_9`, `act2mainss_zone1`); other events have no
 /// reliably-keyed banner, so the UI falls back to a stage preview.
 fn resolve_banner(
-    art: &ArtIndex,
+    art: &ArtIndex<'_>,
     zone_id: &str,
     group: &str,
     episode: Option<i64>,
@@ -333,7 +291,7 @@ fn entry_from_stage(
     zones: &HashMap<String, Zone>,
     activities: &HashMap<String, ActivityBasicInfo>,
     can_view: bool,
-    art: &ArtIndex,
+    art: &ArtIndex<'_>,
 ) -> StageIndexEntry {
     let episode = zones
         .get(&info.zone_id)
@@ -376,7 +334,7 @@ fn entry_from_mode_level(
     info: &StageInfo,
     zones: &HashMap<String, Zone>,
     activities: &HashMap<String, ActivityBasicInfo>,
-    art: &ArtIndex,
+    art: &ArtIndex<'_>,
 ) -> StageIndexEntry {
     let id = mode_stage_id(rel);
     // IS per-node previews are keyed by the topic-table node id (`ro1_n_4_5`),
@@ -410,13 +368,13 @@ fn entry_from_mode_level(
 pub fn build_stage_index(
     assets_dir: &Path,
     levels_dir: &Path,
-    data_dir: &Path,
+    classifier: &StageClassifier,
     stages: &HashMap<String, Stage>,
     zones: &HashMap<String, Zone>,
     activities: &HashMap<String, ActivityBasicInfo>,
 ) -> (StageIndex, HashMap<String, String>) {
-    let classifier = StageClassifier::new(data_dir, stages, zones, activities);
-    let art = build_art_index(assets_dir, data_dir);
+    startup::step("stage index · art");
+    let art = build_art_index(assets_dir, classifier);
 
     let mut out: StageIndex = Vec::with_capacity(stages.len() + 512);
     // Flat mode-node id -> relative level path, so the map viewer can resolve a
@@ -424,7 +382,10 @@ pub fn build_stage_index(
     let mut mode_levels: HashMap<String, String> = HashMap::new();
 
     // 1. Every stage_table stage, classified into its authoritative group.
-    for stage in stages.values() {
+    startup::step("stage index · stages");
+    let total = stages.len() as u64;
+    for (done, stage) in stages.values().enumerate() {
+        startup::step_progress(done as u64, total);
         let info = classifier.classify_stage_id(&stage.stage_id);
         let can_view = level_exists(levels_dir, stage.level_id.as_deref());
         out.push(entry_from_stage(
@@ -436,11 +397,14 @@ pub fn build_stage_index(
     //    Paradox). Skip anything already covered by a stage_table stage, and any
     //    non-mode orphan (event sub-levels are represented by their stage_table
     //    stage above).
+    startup::step("stage index · modes");
     let mut files = Vec::new();
     collect_level_files(levels_dir, &mut files);
     let mut seen_mode: std::collections::HashSet<(String, String)> =
         std::collections::HashSet::new();
-    for path in &files {
+    let total = files.len() as u64;
+    for (done, path) in files.iter().enumerate() {
+        startup::step_progress(done as u64, total);
         let Some(rel) = relative_level_id(levels_dir, path) else {
             continue;
         };

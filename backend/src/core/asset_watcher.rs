@@ -6,7 +6,6 @@ use tokio_tungstenite::connect_async;
 
 use crate::app::state::AppState;
 use crate::core::gacha_resync::reconcile_rarities;
-use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::init_game_data;
 use crate::core::gamedata::tables::DataError;
 use crate::core::hypergryph::constants::Server;
@@ -156,8 +155,8 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server) {
     let is_default = server == state.default_server;
 
     let result = tokio::task::spawn_blocking(move || {
-        let game_data = init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
-        let asset_index = AssetIndex::build(Path::new(&assets_dir));
+        let (game_data, asset_index) =
+            init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
         Ok::<_, DataError>((game_data, asset_index))
     })
     .await;

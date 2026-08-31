@@ -44,7 +44,7 @@ fn main() {
             .filter(|(_, (c, _))| *c == 1)
             .map(|(k, (_, v))| (*k, v["m_Name"].as_str().unwrap_or("").to_string()))
             .collect();
-        for (_, (cid, v)) in &all {
+        for (cid, v) in all.values() {
             if *cid != 23 {
                 continue;
             } // MeshRenderer

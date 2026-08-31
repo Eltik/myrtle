@@ -23,6 +23,7 @@ pub fn load_game_data() -> &'static GameData {
             std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
         gamedata::init_game_data(Path::new(&data_dir_str), Path::new(&assets_dir_str))
             .expect("Failed to load game data")
+            .0
     })
 }
 
