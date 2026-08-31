@@ -3251,9 +3251,19 @@ fn legacy_tint_scale(mat: &Value, animated_color: bool) -> (f32, bool) {
     };
     let sub_l2d = l2d_rest.is_some_and(|rest| rest.contains('/') && !rest.starts_with("Ram/"))
         && !reads_main_color;
+    // STATIC plain-L2D layers are admitted too (`DYNCHAR_STATIC_L2D_TINT=0` reverts).
+    // The animated-only caution above dated from when the idle surface had no recording to
+    // verify against. It now does: Executor's idle `glow` layers (`Particles-L2D/Additive`,
+    // static, `_TintColor` (0.368,0.314,0.257, a 0.378) and (0.360,0.629,1.0, a 0.309))
+    // exported tint white 1.0 under the old rule and rendered a blown white disc over the
+    // face, 55% of the authored eye boxes above luma 250 where the 60 fps capture shows 0%
+    // and eye mean 225.4 against our 237.8. The family convention is the same one already
+    // proven for animated layers and for every Torappu particle program read so far
+    // (vs_COLOR0 = in_COLOR0 * _TintColor; col = vs_COLOR0 + vs_COLOR0).
+    let static_l2d_tint = std::env::var("DYNCHAR_STATIC_L2D_TINT").as_deref() != Ok("0");
     let legacy = shader.contains("/Particles/")
         || shader.starts_with("Particles/")
-        || (animated_color && plain_l2d)
+        || ((animated_color || static_l2d_tint) && plain_l2d)
         || sub_l2d;
     let has_tint_color = mat
         .get("m_SavedProperties")
@@ -3927,7 +3937,7 @@ fn find_entrance_fade(all_objects: &HashMap<i64, (i32, Value)>) -> Option<[f64; 
 }
 
 /// The entrance camera's solid clear colour (see `SpineAsset::bg_entrance_clear`). Read from
-/// the class-20 Camera the director names, and only when `m_ClearFlags` is 2 (SolidColor);
+/// the class-20 Camera the director names, and only when `m_ClearFlags` is 2 (`SolidColor`);
 /// any other clear mode leaves nothing authored to show.
 fn find_entrance_clear_color(all_objects: &HashMap<i64, (i32, Value)>) -> Option<[f64; 3]> {
     let pid = entrance_camera_pid(all_objects)?;
