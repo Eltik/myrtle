@@ -54,6 +54,7 @@ uniform float uBloomIntensity;
 uniform float uGamma;
 uniform float uClip;
 uniform float uProbe;
+uniform float uDstA;
 uniform sampler2D uCov;
 uniform float uCovOn;
 uniform float uCovLo;
@@ -122,6 +123,13 @@ void main() {
     // (~202 at t = 14) rather than dim only at the corners. The vignette cost us the flash:
     // it held our margins at a flat 237 for the full hold. Do not reintroduce it without
     // re-measuring the HELD frames, not the ramp.
+    // EXPERIMENT (?dsta=1): composite the scene by its own DESTINATION ALPHA, modeling the
+    // game UI drawing the RT with straight alpha over a near-black backdrop. Only meaningful
+    // when the carve blend (SceneIllust patchAdditiveBlendAlpha) is active under the same
+    // param; uDstA is 0 otherwise and this is skipped.
+    if (uDstA > 0.5) {
+        rgb *= clamp(c.a, 0.0, 1.0);
+    }
     vec3 bloom = texture2D(uBloom, vUV).rgb * uBloomIntensity;
     vec3 outc = rgb + bloom;
     // Scene-composite transfer (see sceneCompositeGamma). Applied LAST, on the assembled
@@ -608,6 +616,7 @@ export function createHDRScene(renderer: PIXI.IRenderer, width: number, height: 
         uGamma: gamma,
         uClip: tonemapClip(),
         uProbe: hdrProbe(),
+        uDstA: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dsta") === "1" ? 1 : 0,
         uCov: covRT,
         uCovOn: coverageOn() ? 1 : 0,
         uCovLo: coverageLo(),

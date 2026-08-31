@@ -1169,11 +1169,19 @@ function patchAdditiveBlendAlpha(app: PIXI.Application): void {
     const st = renderer.state;
     const gl = renderer.gl;
     if (!st?.blendModes || !gl) return;
+    // EXPERIMENT (`?dsta=1`): the authored Particles-L2D alpha convention instead. Every port
+    // in the family writes alpha `Zero OneMinusSrcAlpha` (drawing REMOVES destination alpha,
+    // see probe_rt) into a target cleared at a=0, and if the game's UI composites the RT with
+    // straight alpha, additive-heavy regions dim in proportion to draw count. This arm sets
+    // the carve on the ADD modes; the tonemap multiplies by the carved alpha under the same
+    // param (uDstA). Additive-only on purpose: the spine draws through NORMAL and does not
+    // carry the family's convention.
+    const carve = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dsta") === "1";
     for (const mode of [PIXI.BLEND_MODES.ADD, PIXI.BLEND_MODES.ADD_NPM]) {
         const cur = st.blendModes[mode];
         // Only the plain two-argument forms; anything already separate is left as authored.
         if (!cur || cur.length !== 2) continue;
-        st.blendModes[mode] = [cur[0], cur[1], gl.ZERO, gl.ONE];
+        st.blendModes[mode] = carve ? [cur[0], cur[1], gl.ZERO, gl.ONE_MINUS_SRC_ALPHA] : [cur[0], cur[1], gl.ZERO, gl.ONE];
     }
     // Drop the cached mode so the new function is applied on the next state change rather
     // than being skipped by StateSystem's early-out.
