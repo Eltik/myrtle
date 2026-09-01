@@ -175,6 +175,12 @@ export interface ISceneData {
     cameraOffsetPx?: [number, number] | null;
     /** Authored display-frame square full extent in spine-authored px (`_adjustes[0].size`). */
     cameraViewPx?: number | null;
+    /** DERIVED at export (see the exporter's derive_backdrop_transform): scene px per art px
+     *  for the static-illustration backdrop, from the scene meshes' own texture-to-position
+     *  mapping matched against the illustration. Absent when no confident match exists. */
+    backdropScale?: number | null;
+    /** DERIVED at export: the illustration's CENTRE in spine-authored px (Y-up). */
+    backdropOffsetPx?: [number, number] | null;
     /** TIGHT/zoomed-in display-frame centre in spine-authored px (`_adjustes[1].offset`),
      *  the close-up the in-game viewer dollies out FROM at open. Absent on ordinary skins. */
     cameraOffsetPx2?: [number, number] | null;
@@ -1787,6 +1793,11 @@ export interface ISceneFrame {
      *  frame the `_Start` cinematic opens on before dollying out. `_Start` scenes only. */
     entranceViewPx?: number | null;
 }
+// ⚠️ The derived backdrop fields (`backdropScale`/`backdropOffsetPx`, see ISceneData) are
+// deliberately NOT carried on ISceneFrame: adding keys to the sceneFrameOf result object
+// re-phased the seeded particle simulation on shu_nian#11 (1.165 percent of pixels moved,
+// deterministic, measured 2026-09-01) and broke viewer byte-identity. Consumers read them
+// straight off ISceneData, whose shape the render path does not enumerate.
 
 /** Sample the entrance camera dolly at time `t` (seconds) and return the ZOOM RATIO relative to
  *  the curve's first keyframe - 1.0 at the open, <1 while zoomed in, >1 while zoomed out. Linear

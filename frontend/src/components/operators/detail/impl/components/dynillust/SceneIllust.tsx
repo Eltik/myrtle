@@ -280,6 +280,18 @@ function panelArtOn(): boolean {
     return new URLSearchParams(window.location.search).get("panelart") !== "0";
 }
 
+/** PANEL-ONLY (2026-09-01): place the static backdrop by the EXPORT-DERIVED art-to-scene
+ *  transform (`backdropScale`/`backdropOffsetPx`, computed by the exporter from the scene
+ *  meshes' own texture-to-position mapping) instead of the camera-extent heuristic, which
+ *  under-scales any composition wider than the authored camera (chen2_2: 2704 px of content
+ *  against a 2000 px camera hid the art's outer composition under the scene). Viewer
+ *  behaviour is untouched: the derived transform is consumed only where `panelArt` holds.
+ *  `?bdxf=0` reverts the panel to the camera-extent scale exactly. */
+function bdxfOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("bdxf") !== "0";
+}
+
 /** `?apscale=0` freezes the scope aperture at its baked radius, ignoring the rim transform's
  *  animated scale (diagnostic). */
 function apertureScaleOn(): boolean {
@@ -1200,9 +1212,17 @@ function patchAdditiveBlendAlpha(app: PIXI.Application): void {
     st.blendMode = -1;
 }
 
-function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }): PIXI.Sprite {
+function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }, derived?: { scale: number; offset: [number, number] } | null): PIXI.Sprite {
     const { texture, centroid } = backdrop;
     const sprite = new PIXI.Sprite(texture);
+    if (derived) {
+        // Export-derived placement (see bdxfOn): scale is scene px per art px, offset is the
+        // art CENTRE in authored Y-up scene px; the container is Y-down, hence the negation.
+        sprite.anchor.set(0.5, 0.5);
+        sprite.scale.set(derived.scale);
+        sprite.position.set(derived.offset[0], -derived.offset[1]);
+        return sprite;
+    }
     // Anchor at the illustration's own centroid so `position` places THAT point;
     // register it onto the spine's centroid so the two illustrations overlap by
     // mass (robust where a bounding-box centre is skewed by an arch/railing).
@@ -3344,11 +3364,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // built AFTER the latch is set.
                 const gapFill = !useStatic && gapFillOn() && !(settledGroundOn() && settledRef.current) && !!backdropData && !!backdropFrame;
                 if ((useStatic || gapFill) && backdropData && backdropFrame) {
-                    const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid);
-                    const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
-                    if (bdAblated) bd.renderable = false;
                     // The card surface presents the artwork itself: sharp, never toggled (see panelArtOn).
                     const panelArt = surface === "panel" && panelArtOn();
+                    // Read straight from scene data, NOT via ISceneFrame: see the sceneMesh note
+                    // (frame-object keys re-phase the seeded particles). Spine-only skins have no
+                    // scene and never need the derived placement (their backdrop IS the artwork).
+                    const bdd = scene?.data;
+                    const bdDerived = panelArt && bdxfOn() && typeof bdd?.backdropScale === "number" && bdd.backdropOffsetPx ? { scale: bdd.backdropScale, offset: bdd.backdropOffsetPx } : null;
+                    const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
+                    const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
+                    if (bdAblated) bd.renderable = false;
                     if (gapFill && !panelArt) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff
                         // is a spatial frequency, not a pixel count (see gapFillOn).

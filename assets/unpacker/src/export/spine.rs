@@ -5193,6 +5193,292 @@ fn st_eq(a: [f64; 4], b: [f64; 4]) -> bool {
     a.iter().zip(b.iter()).all(|(x, y)| (x - y).abs() < 1e-4)
 }
 
+/// CARD BACKDROP TRANSFORM (2026-09-01). The windowed card composites the STATIC
+/// illustration behind the animated scene, and needs the exact art-to-scene placement.
+/// The scene layers carry authored uv (a rect of an exported scene texture) and pos
+/// (a rect in scene px), so atlas-to-scene is authored; the one missing link is the
+/// correspondence between those texture crops and the skinpack/chararts PNG, which are
+/// different images. That correspondence is COMPUTED here, at export time, per key:
+/// masked normalized cross-correlation of the largest opaque layers' texture crops
+/// against the illustration over a geometric scale sweep, refined, and taken by
+/// consensus. The result is a similarity (uniform scale + offset), written into the
+/// scene JSON as `backdropScale` (scene px per art px) and `backdropOffsetPx` (the
+/// art CENTRE in authored Y-up scene coords). Derivation, not choice: every input is
+/// an authored asset or authored geometry, and no per-skin value exists in code.
+/// Absent fields (no art file, no confident consensus) leave the frontend on its
+/// camera-extent fallback. Art root: `DYNCHAR_ART_ROOT` env, else `../../../textures`
+/// relative to the spine dir (the installed output tree).
+fn derive_backdrop_transform(
+    layers: &[serde_json::Value],
+    tex_dir: &Path,
+    spine_dir: &Path,
+) -> Option<(f64, [f64; 2])> {
+    use image::imageops::{FilterType, resize};
+    // PARKED (2026-09-01): the instrument FAILED its known-answer control. Three matcher
+    // variants (luma NCC, luma NCC + refine, gradient NCC + derived scale band) recover the
+    // truth on shu_nian#11 (1.1506 vs 1.10 measured) but not on chen2_2 or dusk_nian#12,
+    // whose scene textures are DEFOCUSED REPAINTS of the illustration rather than crops of
+    // it, so texture-vs-art matching cannot anchor their scale. A failed control means the
+    // output must not ship: OFF unless DYNCHAR_BD_DERIVE=1 (measurement runs only), so every
+    // default export stays byte-identical. The refutation and the surviving path (a
+    // character-anchored correspondence, which needs feature matching the exporter does not
+    // have) are recorded in docs/DYNCHAR_GATES.md.
+    std::env::var("DYNCHAR_BD_DERIVE").ok()?;
+    let key = spine_dir.file_name()?.to_str()?.to_string();
+    let op = key.rsplit_once('_').map(|(a, _)| a)?.to_string();
+    let art_root = std::env::var("DYNCHAR_ART_ROOT")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| spine_dir.join("../../../textures"));
+    let art_path = ["chararts", "skinpack"]
+        .iter()
+        .map(|d| art_root.join(d).join(&op).join(format!("{key}.png")))
+        .find(|p| p.exists())?;
+    let art = image::open(&art_path).ok()?.to_rgba8();
+    let (aw, ah) = (art.width() as f64, art.height() as f64);
+    // Luma pyramid of the illustration at two working widths.
+    let mk = |w: u32| -> (Vec<f32>, u32, u32) {
+        let h = ((ah * f64::from(w) / aw).round() as u32).max(1);
+        let im = resize(&art, w, h, FilterType::Triangle);
+        let v = im
+            .pixels()
+            .map(|p| {
+                let a = f32::from(p[3]) / 255.0;
+                (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) * a
+            })
+            .collect();
+        (v, w, h)
+    };
+    let (art320, a320w, a320h) = mk(320);
+    let (art640, a640w, a640h) = mk(640);
+    // Candidate layers: the largest opaque non-additive quads.
+    struct Cand {
+        idx: u64,
+        u0: f64,
+        v0: f64,
+        u1: f64,
+        v1: f64,
+        px: f64,
+        py: f64,
+        pw: f64,
+        ph: f64,
+    }
+    let mut cands: Vec<Cand> = Vec::new();
+    for l in layers {
+        if l.get("additive").and_then(serde_json::Value::as_bool) == Some(true) {
+            continue;
+        }
+        if let Some(t) = l.get("tint").and_then(serde_json::Value::as_array)
+            && t.len() == 4
+            && t[3].as_f64().unwrap_or(1.0) < 0.98
+        {
+            continue;
+        }
+        let idx = l.get("tex").and_then(serde_json::Value::as_u64)?;
+        let nums = |k: &str, step0: usize| -> Vec<f64> {
+            l.get(k)
+                .and_then(serde_json::Value::as_array)
+                .map(|a| {
+                    a.iter()
+                        .skip(step0)
+                        .step_by(2)
+                        .filter_map(serde_json::Value::as_f64)
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
+        let (xs, ys) = (nums("pos", 0), nums("pos", 1));
+        let (us, vs) = (nums("uv", 0), nums("uv", 1));
+        if xs.len() < 3 || us.len() < 3 {
+            continue;
+        }
+        let mm = |v: &[f64]| {
+            (
+                v.iter().copied().fold(f64::INFINITY, f64::min),
+                v.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+            )
+        };
+        let ((x0, x1), (y0, y1)) = (mm(&xs), mm(&ys));
+        let ((u0, u1), (v0, v1)) = (mm(&us), mm(&vs));
+        if !(x1 - x0).is_finite() || (x1 - x0) <= 1.0 || (u1 - u0) <= 0.001 {
+            continue;
+        }
+        cands.push(Cand {
+            idx,
+            u0,
+            v0,
+            u1,
+            v1,
+            px: x0,
+            py: y0,
+            pw: x1 - x0,
+            ph: y1 - y0,
+        });
+    }
+    cands.sort_by(|a, b| (b.pw * b.ph).total_cmp(&(a.pw * a.ph)));
+    cands.truncate(5);
+    // Masked NCC of a template over a luma image, best position at a fixed step.
+    let ncc_best = |img: &[f32], iw: u32, ih: u32, tpl: &[f32], tw: u32, th: u32, step: usize, x0: i64, y0: i64, x1: i64, y1: i64| -> (f32, i64, i64) {
+        let (iw, ih) = (iw as i64, ih as i64);
+        let (twi, thi) = (tw as i64, th as i64);
+        let n = (tw * th) as f32;
+        let tmean = tpl.iter().sum::<f32>() / n;
+        let tvar: f32 = tpl.iter().map(|v| (v - tmean) * (v - tmean)).sum();
+        if tvar < 1e-3 {
+            return (-2.0, 0, 0);
+        }
+        let mut best = (-2.0f32, 0i64, 0i64);
+        let mut y = y0.max(0);
+        while y + thi <= ih.min(y1 + thi) {
+            let mut x = x0.max(0);
+            while x + twi <= iw.min(x1 + twi) {
+                let mut s = 0.0f32;
+                let mut ss = 0.0f32;
+                let mut sc = 0.0f32;
+                for ty in 0..thi {
+                    let row = ((y + ty) * iw + x) as usize;
+                    let trow = (ty * twi) as usize;
+                    for tx in 0..twi as usize {
+                        let a = img[row + tx];
+                        let b = tpl[trow + tx];
+                        s += a;
+                        ss += a * a;
+                        sc += a * b;
+                    }
+                }
+                let mean = s / n;
+                let var = ss - s * mean;
+                if var > 1e-3 {
+                    let score = (sc - s * tmean) / (var * tvar).sqrt();
+                    if score > best.0 {
+                        best = (score, x, y);
+                    }
+                }
+                x += step as i64;
+            }
+            y += step as i64;
+        }
+        best
+    };
+    let mut accepted: Vec<(f32, f64, f64, f64)> = Vec::new(); // score, scene_per_art, ox, oy
+    for c in &cands {
+        let Ok(tex) = image::open(tex_dir.join(format!("{}.png", c.idx))) else {
+            continue;
+        };
+        let tex = tex.to_rgba8();
+        let (tw_full, th_full) = (f64::from(tex.width()), f64::from(tex.height()));
+        // Two vertical readings: exported UVs are GL-style (frontend samples 1-v), but
+        // the safe move is to score both orientations and keep the better one.
+        for flip in [true, false] {
+            let (cy0, cy1) = if flip {
+                ((1.0 - c.v1) * th_full, (1.0 - c.v0) * th_full)
+            } else {
+                (c.v0 * th_full, c.v1 * th_full)
+            };
+            let (cx0, cx1) = (c.u0 * tw_full, c.u1 * tw_full);
+            let (cw, ch) = (cx1 - cx0, cy1 - cy0);
+            if cw < 24.0 || ch < 24.0 {
+                continue;
+            }
+            let crop = image::imageops::crop_imm(
+                &tex,
+                cx0.max(0.0) as u32,
+                cy0.max(0.0) as u32,
+                (cw as u32).min(tex.width()),
+                (ch as u32).min(tex.height()),
+            )
+            .to_image();
+            let mut best: Option<(f32, f64, i64, i64)> = None; // score, s_art_per_croppx(at320), x, y
+            let mut twf = 14.0f64;
+            while twf <= 300.0 {
+                let tw = twf as u32;
+                let th = ((ch * twf / cw).round() as u32).max(4);
+                if th <= (a320h as u32).saturating_sub(1) && tw < a320w {
+                    let tpl = resize(&crop, tw, th, FilterType::Triangle);
+                    let tl: Vec<f32> = tpl
+                        .pixels()
+                        .map(|p| {
+                            let a = f32::from(p[3]) / 255.0;
+                            (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) * a
+                        })
+                        .collect();
+                    let (sc, bx, by) = ncc_best(&art320, a320w, a320h, &tl, tw, th, 2, 0, 0, i64::from(a320w), i64::from(a320h));
+                    if best.is_none() || sc > best.unwrap().0 {
+                        best = Some((sc, twf / cw, bx, by));
+                    }
+                }
+                twf *= 1.09;
+            }
+            let Some((sc320, s320, bx, by)) = best else {
+                continue;
+            };
+            if sc320 < 0.45 {
+                continue;
+            }
+            // Refine at 640: same parametrization, double coords.
+            let mut fine: Option<(f32, f64, i64, i64)> = None;
+            let mut fs = s320 * 0.94;
+            while fs <= s320 * 1.06 {
+                let tw = ((cw * fs * 2.0).round() as u32).max(8);
+                let th = ((ch * fs * 2.0).round() as u32).max(8);
+                if tw < a640w && th < a640h {
+                    let tpl = resize(&crop, tw, th, FilterType::Triangle);
+                    let tl: Vec<f32> = tpl
+                        .pixels()
+                        .map(|p| {
+                            let a = f32::from(p[3]) / 255.0;
+                            (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) * a
+                        })
+                        .collect();
+                    let (sc, fx, fy) = ncc_best(&art640, a640w, a640h, &tl, tw, th, 1, bx * 2 - 8, by * 2 - 8, bx * 2 + 8, by * 2 + 8);
+                    if fine.is_none() || sc > fine.unwrap().0 {
+                        fine = Some((sc, fs, fx, fy));
+                    }
+                }
+                fs *= 1.015;
+            }
+            let Some((score, s_art, fx, fy)) = fine else {
+                continue;
+            };
+            if score < 0.55 {
+                continue;
+            }
+            // s_art: art-320-pyramid px per crop px. Native art px per crop px scales by
+            // the 640 template being 2 x s_art wide and native being aw/640 per 640 px.
+            let art_per_crop_native = s_art * 2.0 * (aw / f64::from(a640w));
+            let scene_per_crop = c.pw / cw;
+            let scene_per_art = scene_per_crop / art_per_crop_native;
+            // Matched region centre: fx is art-640 px, template width there is cw*s_art*2.
+            let up = aw / f64::from(a640w);
+            let mx = (fx as f64 + cw * s_art) * up;
+            let my = (fy as f64 + ch * s_art) * up;
+            // Scene coords (Y-up) of the ART CENTRE.
+            let (cxs, cys) = (c.px + c.pw / 2.0, c.py + c.ph / 2.0);
+            let ox = cxs + (aw / 2.0 - mx) * scene_per_art;
+            let oy = cys - (ah / 2.0 - my) * scene_per_art;
+            accepted.push((score, scene_per_art, ox, oy));
+        }
+    }
+    if accepted.is_empty() {
+        return None;
+    }
+    accepted.sort_by(|a, b| a.1.total_cmp(&b.1));
+    let med_scale = accepted[accepted.len() / 2].1;
+    let close: Vec<&(f32, f64, f64, f64)> = accepted
+        .iter()
+        .filter(|a| (a.1 / med_scale - 1.0).abs() < 0.04)
+        .collect();
+    let pick = |sel: fn(&(f32, f64, f64, f64)) -> f64, from: &[&(f32, f64, f64, f64)]| -> f64 {
+        let mut v: Vec<f64> = from.iter().map(|a| sel(a)).collect();
+        v.sort_by(f64::total_cmp);
+        v[v.len() / 2]
+    };
+    if close.len() >= 2 {
+        return Some((pick(|a| a.1, &close), [pick(|a| a.2, &close), pick(|a| a.3, &close)]));
+    }
+    let best = accepted.iter().max_by(|a, b| a.0.total_cmp(&b.0))?;
+    (best.0 >= 0.70).then_some((best.1, [best.2, best.3]))
+}
+
 /// Export the full multi-layer scene for the live renderer. Every non-character
 /// mesh quad becomes a textured 2D mesh in spine-authored pixels (Y-up, origin at
 /// the skeleton root), geometry inlined in `{name}[scene].json`, textures written
@@ -6145,6 +6431,18 @@ fn export_scene(
         "textureCount": next_idx,
         "layers": layers,
     });
+    // Derived card-backdrop placement (see derive_backdrop_transform). Appended onto the
+    // meta afterwards so an absent derivation leaves the JSON byte-identical to before.
+    let meta = {
+        let mut meta = meta;
+        if let Some((s, o)) = derive_backdrop_transform(&layers, &tex_dir, spine_dir)
+            && let Some(map) = meta.as_object_mut()
+        {
+            map.insert("backdropScale".into(), serde_json::json!(s));
+            map.insert("backdropOffsetPx".into(), serde_json::json!([o[0], o[1]]));
+        }
+        meta
+    };
     if let Ok(text) = serde_json::to_string(&meta)
         && std::fs::write(spine_dir.join(format!("{}[scene].json", asset.name)), text).is_ok()
     {
