@@ -595,6 +595,7 @@ pub(crate) fn go_effectively_active(
     go_to_transform: &HashMap<i64, i64>,
     idle_active: &HashMap<i64, bool>,
     start_state_active: bool,
+    honor_inactive: bool,
 ) -> bool {
     let mut cur_tr = match go_to_transform.get(&go_pid) {
         Some(&t) => t,
@@ -627,17 +628,20 @@ pub(crate) fn go_effectively_active(
                     if gv.get("m_IsActive").and_then(Value::as_i64).unwrap_or(1) == 0 {
                         return false;
                     }
-                    // DEFAULT ON (2026-09-01, was the DYNCHAR_HONOR_INACTIVE measurement
-                    // arm): honour the serialized bool for NON-cinematic exports. The dead
-                    // static check above stays dead for entrances, whose rigs ship
-                    // m_IsActive=0 and are runtime-activated; the settled MAIN scene is the
-                    // other side of that split, where the corpus was resurrecting
-                    // statically-disabled objects. A/B measured before flipping: 9 wins,
-                    // 5 neutral, 0 deletes-art across the 15 scoreable changed keys, with
-                    // texas2_2's -70.19 luma mean (one inactive dark plane over her smoke)
-                    // falling to -4.11 and zero art deleted at the settled surface.
-                    // DYNCHAR_KEEP_INACTIVE=1 reverts to the pre-rule export exactly.
-                    if !start_state_active
+                    // DEFAULT ON FOR SCENE QUADS ONLY (2026-09-01, was the
+                    // DYNCHAR_HONOR_INACTIVE measurement arm): honour the serialized bool
+                    // for NON-cinematic SCENE exports. The dead static check above stays
+                    // dead for entrances (rigs ship m_IsActive=0, runtime-activated), and
+                    // `honor_inactive` is FALSE on the particle path: the scene A/B that
+                    // justified the flip (9 wins, 5 neutral, 0 deletes-art; texas2_2
+                    // -70.19 -> -4.11) never covered particles, and the shipped rule
+                    // silently dropped 10 of cetsyr epoque#50's 107 settled emitters and
+                    // cost her +4.1 MADC (17.701 -> 21.838, re-run clean), on the one key
+                    // most dependent on her particles. Particle gating would need its own
+                    // A/B before ever turning on. DYNCHAR_KEEP_INACTIVE=1 reverts the
+                    // scene rule to the pre-rule export exactly.
+                    if honor_inactive
+                        && !start_state_active
                         && std::env::var("DYNCHAR_KEEP_INACTIVE").is_err()
                         && gv.get("m_IsActive").and_then(Value::as_bool) == Some(false)
                     {
@@ -1851,6 +1855,7 @@ fn collect_dynchar_bg_quads(
             &go_to_transform,
             &idle_pose.active,
             is_entrance,
+            true,
         );
         // A colour-reveal admission must not override the state gate: a group the game
         // reserves for another state stays out no matter what its curves do.
@@ -4237,6 +4242,7 @@ impl BgParticleHost {
             &self.go_to_transform,
             &self.idle.active,
             start_state_active,
+            false,
         )
     }
 
