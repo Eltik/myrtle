@@ -3179,7 +3179,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     // slot's SETUP alpha, and the tracks currently playing. Built for the never-keyed
                     // slot census (kalts Mo_A..E held at alpha 0 at every beat, 2026-09-02): it says
                     // which clip keys a slot on and whether that clip is the one bound.
-                    (window as unknown as { __dumpColorTracks?: () => unknown }).__dumpColorTracks = () => {
+                    // Registered under the plain name AND per composite mode
+                    // (`__dumpColorTracks_main` / `__dumpColorTracks_entrance`): the plain name is
+                    // whichever composite was built last, and once the entrance composite is gone
+                    // its hook returns null, which is how kalts's MAIN skeleton went unread.
+                    const dumpColorTracks = () => {
                         const sp = spine as unknown as {
                             skeleton: { data: { slots: { name: string; color: { a: number } }[]; animations: { name: string; duration: number; timelines: unknown[] }[] } };
                             state?: { tracks?: ({ animation?: { name?: string }; trackIndex?: number; loop?: boolean } | null)[] };
@@ -3211,6 +3215,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             anims,
                         };
                     };
+                    const hookHost = window as unknown as Record<string, () => unknown>;
+                    hookHost.__dumpColorTracks = dumpColorTracks;
+                    hookHost[`__dumpColorTracks_${opts.mode}`] = dumpColorTracks;
                     (window as unknown as { __dumpSlots?: () => unknown }).__dumpSlots = () => {
                         const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
                         return sk.slots.map((slotU) => {
