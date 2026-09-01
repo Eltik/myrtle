@@ -627,6 +627,20 @@ pub(crate) fn go_effectively_active(
                     if gv.get("m_IsActive").and_then(Value::as_i64).unwrap_or(1) == 0 {
                         return false;
                     }
+                    // MEASUREMENT ARM (DYNCHAR_HONOR_INACTIVE=1, default absent = the dead
+                    // check above stands): honour the serialized bool for NON-cinematic
+                    // exports only. The static check above is documented dead-and-load-
+                    // bearing because entrance rigs ship m_IsActive=0 and are runtime-
+                    // activated; the settled MAIN scene is the other side of that split,
+                    // where nian_2's undriven red additive sheets (and their class) are
+                    // suspected to be statically-disabled objects we resurrect. This arm
+                    // exists to measure that corpus-wide before any rule ships.
+                    if !start_state_active
+                        && std::env::var("DYNCHAR_HONOR_INACTIVE").is_ok()
+                        && gv.get("m_IsActive").and_then(Value::as_bool) == Some(false)
+                    {
+                        return false;
+                    }
                 }
             }
             let name = gv
