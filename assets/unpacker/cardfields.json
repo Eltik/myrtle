@@ -1,0 +1,641 @@
+{
+ "char_003_kalts_sale#14": {
+  "backdropScale": 0.7475759622594668,
+  "backdropOffsetPx": [
+   -29.268591207253195,
+   567.1530771746571
+  ],
+  "src": "sift",
+  "inl": 108
+ },
+ "char_1001_amiya2_sale#16": {
+  "backdropScale": 0.8548727387190059,
+  "backdropOffsetPx": [
+   -17.81637798836067,
+   880.4788409118684
+  ],
+  "src": "sift",
+  "inl": 81
+ },
+ "char_1012_skadi2_boc#4": {
+  "backdropScale": 0.9774834591412994,
+  "backdropOffsetPx": [
+   43.99079418439935,
+   688.4767046104511
+  ],
+  "src": "sift",
+  "inl": 155
+ },
+ "char_1013_chen2_2": {
+  "backdropScale": 1.0474866203804878,
+  "backdropOffsetPx": [
+   18.049050385548423,
+   777.6308408467899
+  ],
+  "src": "sift",
+  "inl": 180
+ },
+ "char_1013_chen2_boc#6": {
+  "backdropScale": 1.032870124950097,
+  "backdropOffsetPx": [
+   -59.71771029900884,
+   830.841403591441
+  ],
+  "src": "sift",
+  "inl": 206
+ },
+ "char_1013_chen2_summer#20": {
+  "backdropScale": 0.907200086046277,
+  "backdropOffsetPx": [
+   -7.673298991890499,
+   801.070807690952
+  ],
+  "src": "sift",
+  "inl": 249
+ },
+ "char_1014_nearl2_epoque#17": {
+  "backdropScale": 1.237844614702739,
+  "backdropOffsetPx": [
+   53.67226807176817,
+   823.4089922429101
+  ],
+  "src": "sift",
+  "inl": 115
+ },
+ "char_1019_siege2_epoque#50": {
+  "backdropScale": 0.8120027041076902,
+  "backdropOffsetPx": [
+   -40.33946152024934,
+   863.0471690538193
+  ],
+  "src": "sift",
+  "inl": 155
+ },
+ "char_1020_reed2_epoque#30": {
+  "backdropScale": 0.8118471719783014,
+  "backdropOffsetPx": [
+   44.22660947677866,
+   720.7672558361957
+  ],
+  "src": "sift",
+  "inl": 211
+ },
+ "char_1020_reed2_summer#17": {
+  "backdropScale": 0.8115190696668557,
+  "backdropOffsetPx": [
+   148.84564299503378,
+   580.4856148435844
+  ],
+  "src": "sift",
+  "inl": 126
+ },
+ "char_1023_ghost2_boc#6": {
+  "backdropScale": 0.8074243689835242,
+  "backdropOffsetPx": [
+   25.878977308383714,
+   895.7580997501589
+  ],
+  "src": "sift",
+  "inl": 103
+ },
+ "char_1026_gvial2_summer#12": {
+  "backdropScale": 0.805204219449325,
+  "backdropOffsetPx": [
+   24.5383168978363,
+   720.3745879135835
+  ],
+  "src": "sift",
+  "inl": 372
+ },
+ "char_1028_texas2_2": {
+  "backdropScale": 0.8678603384946213,
+  "backdropOffsetPx": [
+   -8.927951933126787,
+   351.88265696045744
+  ],
+  "src": "sift",
+  "inl": 146
+ },
+ "char_1028_texas2_epoque#36": {
+  "backdropScale": 0.9422510147025306,
+  "backdropOffsetPx": [
+   -1.6385038078857157,
+   928.1246321012259
+  ],
+  "src": "sift",
+  "inl": 257
+ },
+ "char_1028_texas2_iteration#1": {
+  "backdropScale": 0.8666241829947514,
+  "backdropOffsetPx": [
+   -12.66817751291149,
+   878.5507586657038
+  ],
+  "src": "sift",
+  "inl": 358
+ },
+ "char_1035_wisdel_2": {
+  "backdropScale": 0.8411413378042825,
+  "backdropOffsetPx": [
+   103.78986580337178,
+   800.3853489392313
+  ],
+  "src": "sift",
+  "inl": 110
+ },
+ "char_1037_amiya3_sale#13": {
+  "backdropScale": 0.9028091536265932,
+  "backdropOffsetPx": [
+   102.62362152592563,
+   946.9159928510269
+  ],
+  "src": "sift",
+  "inl": 217
+ },
+ "char_1038_whitw2_2": {
+  "backdropScale": 0.8082381002267768,
+  "backdropOffsetPx": [
+   26.725354391985164,
+   413.76191285069365
+  ],
+  "src": "sift",
+  "inl": 171
+ },
+ "char_1041_angel2_2": {
+  "backdropScale": 0.8067028518748784,
+  "backdropOffsetPx": [
+   22.793575105848138,
+   954.165443396516
+  ],
+  "src": "sift",
+  "inl": 111
+ },
+ "char_124_kroos_sale#14": {
+  "backdropScale": 0.9374432621987118,
+  "backdropOffsetPx": [
+   -147.4908055987462,
+   667.746288161514
+  ],
+  "src": "sift",
+  "inl": 253
+ },
+ "char_172_svrash_ambiencesynesthesia#4": {
+  "backdropScale": 0.8842968058474844,
+  "backdropOffsetPx": [
+   -20.8814385889687,
+   966.6921383845984
+  ],
+  "src": "sift",
+  "inl": 250
+ },
+ "char_179_cgbird_sightseer#1": {
+  "backdropScale": 0.9731040542136973,
+  "backdropOffsetPx": [
+   -1.8276512510440601,
+   710.8498474649357
+  ],
+  "src": "sift",
+  "inl": 87
+ },
+ "char_2014_nian_cfa#1": {
+  "backdropScale": 0.9221104443796558,
+  "backdropOffsetPx": [
+   -3.6172161782006444,
+   488.9186370140205
+  ],
+  "src": "sift",
+  "inl": 192
+ },
+ "char_2014_nian_nian#4": {
+  "backdropScale": 1.000233877891693,
+  "backdropOffsetPx": [
+   29.050643101141112,
+   253.53559063172634
+  ],
+  "src": "sift",
+  "inl": 392
+ },
+ "char_2015_dusk_nian#12": {
+  "backdropScale": 0.8518063356823619,
+  "backdropOffsetPx": [
+   123.26625625824154,
+   946.3858352630846
+  ],
+  "src": "sift",
+  "inl": 127
+ },
+ "char_2015_dusk_nian#7": {
+  "backdropScale": 1.749080706012882,
+  "backdropOffsetPx": [
+   -14.4959616343006,
+   678.0498814813013
+  ],
+  "src": "sift",
+  "inl": 89
+ },
+ "char_2023_ling_ncg#1": {
+  "backdropScale": 0.7885113322180939,
+  "backdropOffsetPx": [
+   34.07121730788654,
+   890.8672394385864
+  ],
+  "src": "sift",
+  "inl": 186
+ },
+ "char_2023_ling_nian#12": {
+  "backdropScale": 0.8207788499900656,
+  "backdropOffsetPx": [
+   -21.189403695081992,
+   1079.5984872327233
+  ],
+  "src": "sift",
+  "inl": 171
+ },
+ "char_2023_ling_nian#9": {
+  "backdropScale": 1.4123921620268742,
+  "backdropOffsetPx": [
+   -22.196747014478312,
+   912.7141348565132
+  ],
+  "src": "sift",
+  "inl": 200
+ },
+ "char_2024_chyue_2": {
+  "backdropScale": 0.8401191500610098,
+  "backdropOffsetPx": [
+   36.278204151044385,
+   1016.8880746925814
+  ],
+  "src": "sift",
+  "inl": 221
+ },
+ "char_2024_chyue_nian#10": {
+  "backdropScale": 0.8928091388232514,
+  "backdropOffsetPx": [
+   61.17698601854196,
+   1019.675010996377
+  ],
+  "src": "sift",
+  "inl": 528
+ },
+ "char_2025_shu_2": {
+  "backdropScale": 1.027234015285434,
+  "backdropOffsetPx": [
+   18.989706970389644,
+   984.566151639359
+  ],
+  "src": "sift",
+  "inl": 132
+ },
+ "char_2025_shu_nian#11": {
+  "backdropScale": 1.142602457914455,
+  "backdropOffsetPx": [
+   -13.869213212744958,
+   940.9557287101745
+  ],
+  "src": "sift",
+  "inl": 475
+ },
+ "char_2026_yu_2": {
+  "backdropScale": 0.8185860882330035,
+  "backdropOffsetPx": [
+   10.137699534881195,
+   919.7233249331974
+  ],
+  "src": "sift",
+  "inl": 133
+ },
+ "char_2026_yu_nian#12": {
+  "backdropScale": 0.9254504863995502,
+  "backdropOffsetPx": [
+   -2.8823604538227205,
+   982.5590739521152
+  ],
+  "src": "sift",
+  "inl": 169
+ },
+ "char_2027_wang_2": {
+  "backdropScale": 0.8217067530216751,
+  "backdropOffsetPx": [
+   12.320245359984858,
+   803.1173860491208
+  ],
+  "src": "sift",
+  "inl": 128
+ },
+ "char_245_cello_2": {
+  "backdropScale": 0.9051753796779964,
+  "backdropOffsetPx": [
+   -82.50572465457859,
+   909.7467212992846
+  ],
+  "src": "sift",
+  "inl": 157
+ },
+ "char_249_mlyss_ambiencesynesthesia#6": {
+  "backdropScale": 0.8072783347975412,
+  "backdropOffsetPx": [
+   -79.06434294548265,
+   938.5799983024576
+  ],
+  "src": "sift",
+  "inl": 237
+ },
+ "char_250_phatom_sale#4": {
+  "backdropScale": 1.085088288709597,
+  "backdropOffsetPx": [
+   -45.67860964380363,
+   1072.8596127203705
+  ],
+  "src": "sift",
+  "inl": 134
+ },
+ "char_322_lmlee_witch#3": {
+  "backdropScale": 0.9989903629445736,
+  "backdropOffsetPx": [
+   -72.09741937457719,
+   517.3802085902919
+  ],
+  "src": "sift",
+  "inl": 334
+ },
+ "char_332_archet_sale#14": {
+  "backdropScale": 0.8668123011907531,
+  "backdropOffsetPx": [
+   81.75760321620098,
+   689.3649144404983
+  ],
+  "src": "sift",
+  "inl": 322
+ },
+ "char_350_surtr_summer#9": {
+  "backdropScale": 0.9954969092548891,
+  "backdropOffsetPx": [
+   36.92614178904295,
+   869.8765100506483
+  ],
+  "src": "sift",
+  "inl": 267
+ },
+ "char_377_gdglow_summer#12": {
+  "backdropScale": 1.030010359832111,
+  "backdropOffsetPx": [
+   -14.892254077730671,
+   916.942108597374
+  ],
+  "src": "sift",
+  "inl": 137
+ },
+ "char_391_rosmon_epoque#17": {
+  "backdropScale": 0.9391174257165078,
+  "backdropOffsetPx": [
+   136.0530273074987,
+   695.3334557164452
+  ],
+  "src": "sift",
+  "inl": 329
+ },
+ "char_391_rosmon_sale#16": {
+  "backdropScale": 0.8156422280885485,
+  "backdropOffsetPx": [
+   -29.57020903764476,
+   963.7500108134426
+  ],
+  "src": "sift",
+  "inl": 104
+ },
+ "char_4010_etlchi_winter#5": {
+  "backdropScale": 0.8134199051969768,
+  "backdropOffsetPx": [
+   -1.9973678915154611,
+   820.0747613034963
+  ],
+  "src": "sift",
+  "inl": 563
+ },
+ "char_4055_bgsnow_wild#7": {
+  "backdropScale": 1.020581857341477,
+  "backdropOffsetPx": [
+   9.066821273216478,
+   474.4610545334629
+  ],
+  "src": "sift",
+  "inl": 169
+ },
+ "char_4058_pepe_2": {
+  "backdropScale": 0.977030029854429,
+  "backdropOffsetPx": [
+   18.56701076726879,
+   928.5671379870189
+  ],
+  "src": "sift",
+  "inl": 103
+ },
+ "char_4058_pepe_sightseer#2": {
+  "backdropScale": 0.9122209232765188,
+  "backdropOffsetPx": [
+   17.188007329486055,
+   715.1540708734702
+  ],
+  "src": "sift",
+  "inl": 224
+ },
+ "char_4080_lin_summer#19": {
+  "backdropScale": 0.8878927999308553,
+  "backdropOffsetPx": [
+   -29.049054160091117,
+   758.0468191856867
+  ],
+  "src": "sift",
+  "inl": 118
+ },
+ "char_4087_ines_ambiencesynesthesia#5": {
+  "backdropScale": 0.8073103003133439,
+  "backdropOffsetPx": [
+   -38.26617427555796,
+   169.0138134675174
+  ],
+  "src": "sift",
+  "inl": 145
+ },
+ "char_4121_zuole_nian#11": {
+  "backdropScale": 0.8061025186815001,
+  "backdropOffsetPx": [
+   95.54512759417078,
+   723.6911566419084
+  ],
+  "src": "sift",
+  "inl": 362
+ },
+ "char_4132_ascln_iteration#4": {
+  "backdropScale": 0.8125088258361711,
+  "backdropOffsetPx": [
+   31.096755222606678,
+   1028.8905603948556
+  ],
+  "src": "sift",
+  "inl": 272
+ },
+ "char_4133_logos_ambiencesynesthesia#6": {
+  "backdropScale": 0.8753906298202604,
+  "backdropOffsetPx": [
+   94.39050559159273,
+   784.5745125924075
+  ],
+  "src": "sift",
+  "inl": 135
+ },
+ "char_437_mizuki_sale#7": {
+  "backdropScale": 1.0001204989033947,
+  "backdropOffsetPx": [
+   -10.772779506805703,
+   913.0510271196027
+  ],
+  "src": "sift",
+  "inl": 117
+ },
+ "char_450_necras_summer#20": {
+  "backdropScale": 0.8076571235183784,
+  "backdropOffsetPx": [
+   13.973629652115156,
+   752.7574156838582
+  ],
+  "src": "sift",
+  "inl": 427
+ },
+ "char_1012_skadi2_2": {
+  "backdropScale": 0.8619,
+  "backdropOffsetPx": [
+   40.0,
+   815.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5718
+ },
+ "char_1014_nearl2_2": {
+  "backdropScale": 0.8723,
+  "backdropOffsetPx": [
+   -159.0,
+   939.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.6038
+ },
+ "char_1023_ghost2_2": {
+  "backdropScale": 0.9151,
+  "backdropOffsetPx": [
+   58.0,
+   861.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5405
+ },
+ "char_1026_gvial2_2": {
+  "backdropScale": 0.9151,
+  "backdropOffsetPx": [
+   -37.0,
+   963.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.4987
+ },
+ "char_1039_thorn2_marthe#9": {
+  "backdropScale": 0.8118,
+  "backdropOffsetPx": [
+   121.0,
+   738.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5823
+ },
+ "char_1044_hsgma2_2": {
+  "backdropScale": 0.8021,
+  "backdropOffsetPx": [
+   -25.0,
+   796.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.633
+ },
+ "char_1045_svash2_2": {
+  "backdropScale": 0.8116,
+  "backdropOffsetPx": [
+   26.0,
+   868.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5883
+ },
+ "char_113_cqbw_2": {
+  "backdropScale": 1.0073,
+  "backdropOffsetPx": [
+   91.0,
+   868.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5139
+ },
+ "char_2014_nian_2": {
+  "backdropScale": 0.9832,
+  "backdropOffsetPx": [
+   73.0,
+   761.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.4722
+ },
+ "char_2015_dusk_2": {
+  "backdropScale": 1.0315,
+  "backdropOffsetPx": [
+   -1.0,
+   1037.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.6715
+ },
+ "char_2023_ling_2": {
+  "backdropScale": 1.0195,
+  "backdropOffsetPx": [
+   10.0,
+   1003.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.4755
+ },
+ "char_249_mlyss_2": {
+  "backdropScale": 0.783,
+  "backdropOffsetPx": [
+   -53.0,
+   890.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5776
+ },
+ "char_391_rosmon_2": {
+  "backdropScale": 1.1087,
+  "backdropOffsetPx": [
+   4.0,
+   984.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.7433
+ },
+ "char_4087_ines_boc#8": {
+  "backdropScale": 0.8021,
+  "backdropOffsetPx": [
+   15.0,
+   713.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.5955
+ },
+ "char_4116_blkkgt_witch#5": {
+  "backdropScale": 0.8116,
+  "backdropOffsetPx": [
+   -59.0,
+   774.0
+  ],
+  "src": "ncc-ablated",
+  "peak": 0.4308
+ }
+}

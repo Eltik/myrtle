@@ -1,6 +1,7 @@
 pub mod alpha_merge;
 pub mod anim;
 pub mod audio;
+pub mod cardfields;
 pub mod fsb5;
 pub mod fx_textures;
 pub mod gamedata;

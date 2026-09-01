@@ -230,6 +230,11 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     pb.finish_with_message("done");
     let total = exported.load(Ordering::Relaxed);
     println!("Exported {total} assets");
+    if extract_spine {
+        // Regenerate the derived card placement fields into the fresh scene JSONs so an
+        // install of this export cannot silently revert fielded cards to square.
+        export::cardfields::merge(&args.output);
+    }
 }
 
 /// Search input dir and its parent for a .idx manifest file
