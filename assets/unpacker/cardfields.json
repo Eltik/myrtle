@@ -637,5 +637,14 @@
   ],
   "src": "ncc-ablated",
   "peak": 0.4308
+ },
+ "char_1016_agoat2_2": {
+  "backdropScale": 0.783,
+  "backdropOffsetPx": [
+   23.0,
+   674.0
+  ],
+  "src": "ncc-ablated",
+  "note": "game-view adjudicated 2026-09-02: zoom-bridged game solve 0.7890 (23.5,670.5) agrees 0.77 pct 3.5 px; pan arm 0.8116 (21,699) rejected by 28..36 px"
  }
 }
