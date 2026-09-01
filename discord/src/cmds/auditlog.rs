@@ -13,11 +13,10 @@ use crate::types::{Context, Error};
 /// Subcommands: `set`, `clear`, `show`, `enable`, `disable`. When bound, the bot mirrors
 /// message, reaction, membership and moderation events from every channel into the chosen log
 /// channel; `enable`/`disable` switch individual categories off. Requires the Manage Server
-/// permission.
+/// permission or this server's mod role.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_GUILD",
     subcommands("set", "clear", "show", "enable", "disable"),
     subcommand_required
 )]
@@ -30,7 +29,7 @@ pub async fn auditlog(_ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "set",
-    required_permissions = "MANAGE_GUILD"
+    check = "crate::checks::manage_guild_check"
 )]
 pub async fn set(
     ctx: Context<'_>,
@@ -71,7 +70,7 @@ pub async fn set(
     slash_command,
     guild_only,
     rename = "clear",
-    required_permissions = "MANAGE_GUILD"
+    check = "crate::checks::manage_guild_check"
 )]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -96,7 +95,7 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "show",
-    required_permissions = "MANAGE_GUILD"
+    check = "crate::checks::manage_guild_check"
 )]
 pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -135,7 +134,7 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "enable",
-    required_permissions = "MANAGE_GUILD"
+    check = "crate::checks::manage_guild_check"
 )]
 pub async fn enable(
     ctx: Context<'_>,
@@ -149,7 +148,7 @@ pub async fn enable(
     slash_command,
     guild_only,
     rename = "disable",
-    required_permissions = "MANAGE_GUILD"
+    check = "crate::checks::manage_guild_check"
 )]
 pub async fn disable(
     ctx: Context<'_>,

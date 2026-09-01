@@ -68,6 +68,46 @@ pub async fn clear_auto_role(pool: &SqlitePool, guild_id: GuildId) -> Result<(),
     Ok(())
 }
 
+/// Look up the moderator role for `guild_id`, if any.
+///
+/// Read on the denial path of every elevated command (see `checks::elevated`), so it stays a
+/// plain query: unlike the antispam and audit-log caches it is not on an event hot path, and a
+/// cache here would only add an invalidation surface.
+pub async fn get_mod_role(pool: &SqlitePool, guild_id: GuildId) -> Result<Option<RoleId>, Error> {
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT mod_role_id FROM guild_mod_role WHERE guild_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .fetch_optional(pool)
+            .await?;
+    Ok(row.map(|(id,)| RoleId::new(id.cast_unsigned())))
+}
+
+/// Set the moderator role for `guild_id`, replacing any previous one.
+pub async fn set_mod_role(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    role_id: RoleId,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_mod_role (guild_id, mod_role_id) VALUES (?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET mod_role_id = excluded.mod_role_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(role_id.get().cast_signed())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove the moderator role for `guild_id`. Returns whether a row was removed.
+pub async fn clear_mod_role(pool: &SqlitePool, guild_id: GuildId) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM guild_mod_role WHERE guild_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
 pub struct ReactionRoleRow {
     pub guild_id: GuildId,
     pub channel_id: ChannelId,

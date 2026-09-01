@@ -15,11 +15,11 @@ use poise::serenity_prelude as serenity;
 
 /// Manage rich embeds sent by the bot.
 ///
-/// Subcommands: `create`, `edit`, `source`. Requires the Manage Messages permission.
+/// Subcommands: `create`, `edit`, `source`.
+/// Requires the Manage Messages permission or this server's mod role.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_MESSAGES",
     subcommands("create", "edit", "source"),
     subcommand_required
 )]
@@ -32,7 +32,11 @@ pub async fn embed(_ctx: Context<'_>) -> Result<(), Error> {
 /// Provide individual fields, or a raw `json` payload (e.g. from `/embed source`) for full
 /// control including multiple fields. Fields are layered on top of `json` when both are given.
 #[allow(clippy::too_many_arguments)]
-#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
+#[poise::command(
+    slash_command,
+    guild_only,
+    check = "crate::checks::manage_messages_check"
+)]
 pub async fn create(
     ctx: Context<'_>,
     #[description = "Channel to send the embed to (defaults to the current channel)"]
@@ -103,7 +107,11 @@ pub async fn create(
 /// Identify the message by link, `channel-message` id pair, or raw message id. Provided fields are
 /// layered on top of the existing embed; pass `json` to replace the embed wholesale.
 #[allow(clippy::too_many_arguments)]
-#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
+#[poise::command(
+    slash_command,
+    guild_only,
+    check = "crate::checks::manage_messages_check"
+)]
 pub async fn edit(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
@@ -183,7 +191,11 @@ pub async fn edit(
 ///
 /// Identify the message by link, `channel-message` id pair, or raw message id. The output can be
 /// pasted straight back into `/embed create` or `/embed edit` via their `json` field.
-#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
+#[poise::command(
+    slash_command,
+    guild_only,
+    check = "crate::checks::manage_messages_check"
+)]
 pub async fn source(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
@@ -229,13 +241,9 @@ pub async fn source(
 /// Ban an user from the guild.
 ///
 /// Optionally provide a reason (recorded in the audit log) and the number of days of recent
-/// messages to delete (0-7). Requires the Ban Members permission.
-#[poise::command(
-    slash_command,
-    guild_only,
-    default_member_permissions = "BAN_MEMBERS",
-    required_permissions = "BAN_MEMBERS"
-)]
+/// messages to delete (0-7).
+/// Requires the Ban Members permission or this server's mod role.
+#[poise::command(slash_command, guild_only, check = "crate::checks::ban_members_check")]
 pub async fn ban_user(
     ctx: Context<'_>,
     #[description = "User to ban"] user: User,
@@ -318,13 +326,8 @@ async fn autocomplete_banned_user(
 ///
 /// The `user` field autocompletes against currently banned users; you can also paste a raw user
 /// ID. Optionally provide a reason (recorded in the audit log). Requires the Ban Members
-/// permission.
-#[poise::command(
-    slash_command,
-    guild_only,
-    default_member_permissions = "BAN_MEMBERS",
-    required_permissions = "BAN_MEMBERS"
-)]
+/// permission or this server's mod role.
+#[poise::command(slash_command, guild_only, check = "crate::checks::ban_members_check")]
 pub async fn unban_user(
     ctx: Context<'_>,
     #[description = "Banned user (autocompletes) or a raw user ID"]
@@ -364,14 +367,9 @@ pub async fn unban_user(
 
 /// Kick a user from the guild.
 ///
-/// Kicks an user from the guild. Requires the `KICK_MEMBERS`
-/// permission.
-#[poise::command(
-    slash_command,
-    guild_only,
-    default_member_permissions = "KICK_MEMBERS",
-    required_permissions = "KICK_MEMBERS"
-)]
+/// Kicks an user from the guild. Requires the `KICK_MEMBERS` permission or this server's
+/// mod role.
+#[poise::command(slash_command, guild_only, check = "crate::checks::kick_members_check")]
 pub async fn kick_user(
     ctx: Context<'_>,
     #[description = "User to kick"] user: User,
@@ -425,7 +423,7 @@ const PURGE_OLD_CAP: usize = 50;
 /// Scans up to 1000 of the most recent messages and removes the first `amount` that match. Bulk
 /// removal covers messages younger than 14 days; older matches fall back to single-delete and
 /// are capped at 50 per invocation. Pinned messages are skipped by default. Requires the Manage
-/// Messages permission.
+/// Messages permission or this server's mod role.
 ///
 /// `too_many_lines` allowed: the scan / partition / delete / report phases share enough state
 /// (cursor, counters, error tally) that splitting them just scatters the wiring.
@@ -433,8 +431,7 @@ const PURGE_OLD_CAP: usize = 50;
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_MESSAGES",
-    required_permissions = "MANAGE_MESSAGES"
+    check = "crate::checks::manage_messages_check"
 )]
 pub async fn purge(
     ctx: Context<'_>,
@@ -603,14 +600,96 @@ pub async fn purge(
     Ok(())
 }
 
-/// Manage the role automatically granted to new members of this guild.
+/// Manage this server's moderator role.
 ///
-/// Subcommands: `set`, `clear`, `show`.
-/// Requires the Manage Roles permission.
+/// Subcommands: `set`, `show`, `remove`. Only the server owner can use them.
+///
+/// The role is an alternative to the Discord permission each elevated command asks for, not a
+/// replacement: members who already hold the permission keep their access whether or not a mod
+/// role is configured.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_ROLES",
+    default_member_permissions = "ADMINISTRATOR",
+    check = "crate::checks::guild_owner_check",
+    subcommands("modrole_set", "modrole_show", "modrole_remove"),
+    subcommand_required
+)]
+pub async fn modrole(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Set the moderator role for this guild, replacing any previous one.
+#[poise::command(slash_command, guild_only, rename = "set")]
+pub async fn modrole_set(
+    ctx: Context<'_>,
+    #[description = "Role whose holders may use every elevated command"] role: serenity::Role,
+) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    db::set_mod_role(&ctx.data().pool, guild, role.id)
+        .await
+        .map_err(|e| format!("Couldn't save the mod role: {e}"))?;
+    ctx.send(
+        CreateReply::default()
+            .content(format!(
+                "Mod role set to <@&{}>. Members with it can now use every elevated command, \
+                 on top of anyone who already holds the matching permission.",
+                role.id
+            ))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Show the current moderator role for this guild.
+#[poise::command(slash_command, guild_only, rename = "show")]
+pub async fn modrole_show(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let content = match db::get_mod_role(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't read the mod role: {e}"))?
+    {
+        Some(role_id) => format!("Mod role: <@&{role_id}>"),
+        None => {
+            "No mod role configured. Elevated commands go by Discord permissions alone.".to_string()
+        }
+    };
+    ctx.send(CreateReply::default().content(content).ephemeral(true))
+        .await?;
+    Ok(())
+}
+
+/// Remove the moderator role for this guild.
+#[poise::command(slash_command, guild_only, rename = "remove")]
+pub async fn modrole_remove(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let content = if db::clear_mod_role(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't remove the mod role: {e}"))?
+    {
+        "Mod role removed. Elevated commands go by Discord permissions alone again."
+    } else {
+        "No mod role was configured."
+    };
+    ctx.send(CreateReply::default().content(content).ephemeral(true))
+        .await?;
+    Ok(())
+}
+
+/// Manage the role automatically granted to new members of this guild.
+///
+/// Subcommands: `set`, `clear`, `show`.
+/// Requires the Manage Roles permission or this server's mod role.
+#[poise::command(
+    slash_command,
+    guild_only,
     subcommands("autorole_set", "autorole_clear", "autorole_show"),
     subcommand_required
 )]
@@ -623,7 +702,7 @@ pub async fn autorole(_ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "set",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn autorole_set(
     ctx: Context<'_>,
@@ -649,7 +728,7 @@ pub async fn autorole_set(
     slash_command,
     guild_only,
     rename = "clear",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn autorole_clear(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -672,7 +751,7 @@ pub async fn autorole_clear(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "show",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn autorole_show(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -693,11 +772,10 @@ pub async fn autorole_show(ctx: Context<'_>) -> Result<(), Error> {
 /// Manage antispam bindings.
 ///
 /// Subcommands: `set`, `clear`, `show`.
-/// Requires the Manage Messages permission.
+/// Requires the Manage Messages permission or this server's mod role.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_MESSAGES",
     subcommands("antispam_set", "antispam_clear", "antispam_show"),
     subcommand_required
 )]
@@ -714,7 +792,7 @@ pub async fn antispam(_ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "set",
-    required_permissions = "MANAGE_MESSAGES"
+    check = "crate::checks::manage_messages_check"
 )]
 pub async fn antispam_set(
     ctx: Context<'_>,
@@ -775,7 +853,7 @@ pub async fn antispam_set(
     slash_command,
     guild_only,
     rename = "clear",
-    required_permissions = "MANAGE_MESSAGES"
+    check = "crate::checks::manage_messages_check"
 )]
 pub async fn antispam_clear(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -800,7 +878,7 @@ pub async fn antispam_clear(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "show",
-    required_permissions = "MANAGE_MESSAGES"
+    check = "crate::checks::manage_messages_check"
 )]
 pub async fn antispam_show(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -836,11 +914,10 @@ fn format_policy(p: &db::AntiSpamPolicy) -> String {
 ///
 /// Subcommands: `add`, `remove`, `list`, `delete`. Use `/embed create` first to send the message
 /// users will react on, then bind one or more `(emoji -> role)` mappings with `/reactionrole add`.
-/// Requires the Manage Roles permission.
+/// Requires the Manage Roles permission or this server's mod role.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "MANAGE_ROLES",
     subcommands(
         "reactionrole_add",
         "reactionrole_remove",
@@ -858,7 +935,7 @@ pub async fn reactionrole(_ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "add",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn reactionrole_add(
     ctx: Context<'_>,
@@ -918,7 +995,7 @@ pub async fn reactionrole_add(
     slash_command,
     guild_only,
     rename = "remove",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn reactionrole_remove(
     ctx: Context<'_>,
@@ -964,7 +1041,7 @@ pub async fn reactionrole_remove(
     slash_command,
     guild_only,
     rename = "list",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn reactionrole_list(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx
@@ -1015,7 +1092,7 @@ pub async fn reactionrole_list(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     guild_only,
     rename = "delete",
-    required_permissions = "MANAGE_ROLES"
+    check = "crate::checks::manage_roles_check"
 )]
 pub async fn reactionrole_delete(
     ctx: Context<'_>,

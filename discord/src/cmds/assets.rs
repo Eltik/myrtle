@@ -37,13 +37,15 @@ fn assets_state_for(ctx: &Context<'_>, server: &str) -> Result<Arc<AssetsState>,
 /// announcements to a specific channel; the pipeline daemon (`assets/run.mjs ws`) emits
 /// version/error events which the bot forwards as embeds.
 ///
-/// Server-owner only. The check sits on this parent command, which is enough: poise runs
-/// every parent's checks before the invoked subcommand's, so the whole tree is gated here.
+/// Bot-owner only: this drives the export pipeline the bot operators run, not anything a
+/// server configures for itself, so neither the server owner nor the mod role opens it.
+///
+/// The check sits on this parent command, which is enough: poise runs every parent's checks
+/// before the invoked subcommand's, so the whole tree is gated here.
 #[poise::command(
     slash_command,
     guild_only,
-    default_member_permissions = "ADMINISTRATOR",
-    check = "crate::checks::guild_owner_check",
+    check = "crate::checks::owner_check",
     subcommands("assets_channel", "assets_status", "assets_resources"),
     subcommand_required
 )]

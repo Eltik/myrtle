@@ -18,8 +18,7 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     slash_command,
     prefix_command,
     guild_only,
-    default_member_permissions = "MANAGE_MESSAGES",
-    required_permissions = "MANAGE_MESSAGES"
+    check = "crate::checks::manage_messages_check"
 )]
 pub async fn say(
     ctx: Context<'_>,
