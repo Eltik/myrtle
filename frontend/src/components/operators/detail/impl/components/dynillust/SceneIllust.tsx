@@ -300,18 +300,19 @@ function bdxfOn(): boolean {
  *  scene's sky plane. The mask is the static illustration itself, placed by the SAME
  *  transform as the backdrop sprite, so no new geometry is chosen.
  *
- *  OPT-IN, not default (2026-09-01, measured): with the mask on, chen's pocket-sky
- *  fraction drops 89.1 -> 0.0 percent, but the centroid-anchored camera-extent placement
- *  misregisters the mask against the scene content badly enough to shatter the
- *  composition (the character sits off the silhouette's centre and the mask cuts through
- *  content). The accurate art-to-scene transform this needs is exactly the PARKED
- *  DYNCHAR_BD_DERIVE derivation, whose control failed on defocused-repaint scenes. Until
- *  a character-anchored correspondence or a GPU-capture read lands, the card keeps the
- *  game-unfaithful sky rectangle over a broken silhouette. `?silmask=1` enables the arm
- *  for inspection; absent or any other value leaves the panel unclipped. */
-function silMaskOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("silmask") === "1";
+ *  DATA-GATED DEFAULT (2026-09-01, measured): the mask is ON exactly when the scene JSON
+ *  carries the export-derived `backdropScale`/`backdropOffsetPx` (the character-anchored
+ *  correspondence: SIFT of the illustration onto the panel render composed through the
+ *  probed sceneRoot matrix; control recovered chen 1.0475 vs 1.04 and shu 1.1426 vs the
+ *  1.10/1.1506 pair). With derived placement the pocket fill measures 0.0 to 0.4 percent
+ *  across six keys against the game's own 0.2 to 9.9; without it the centroid-anchored
+ *  camera-extent placement shatters the composition, so keys whose derivation failed its
+ *  guards (17 of 73, mostly small-character chararts defaults) keep the unclipped panel
+ *  rather than a broken one. `?silmask=0` forces the mask off everywhere; `?silmask=1`
+ *  forces it on even without derived placement (inspection of the failure mode). */
+function silMaskParam(): string | null {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("silmask");
 }
 
 /** `?apscale=0` freezes the scope aperture at its baked radius, ignoring the rim transform's
@@ -3396,9 +3397,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     if (bdAblated) bd.renderable = false;
-                    // Silhouette clip (see silMaskOn): a second copy of the illustration, same
+                    // Silhouette clip (see silMaskParam): a second copy of the illustration, same
                     // derived-or-heuristic placement as `bd`, used as the composite's alpha mask.
-                    if (panelArt && silMaskOn()) {
+                    const silOn = silMaskParam() === "1" || (silMaskParam() !== "0" && bdDerived != null);
+                    if (panelArt && silOn) {
                         const silhouette = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
                         sceneContainer.addChild(silhouette);
                         sceneContainer.mask = silhouette;
