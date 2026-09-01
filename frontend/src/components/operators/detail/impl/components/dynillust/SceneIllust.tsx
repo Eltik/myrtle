@@ -1235,8 +1235,9 @@ function patchAdditiveBlendAlpha(app: PIXI.Application): void {
     st.blendMode = -1;
 }
 
-function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }, derived?: { scale: number; offset: [number, number] } | null): PIXI.Sprite {
-    const { texture, centroid } = backdrop;
+function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spineCentroid: { x: number; y: number }, derived?: { scale: number; offset: [number, number] } | null, textureOverride?: PIXI.Texture): PIXI.Sprite {
+    const { centroid } = backdrop;
+    const texture = textureOverride ?? backdrop.texture;
     const sprite = new PIXI.Sprite(texture);
     if (derived) {
         // Export-derived placement (see bdxfOn): scale is scene px per art px, offset is the
@@ -3397,13 +3398,73 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     if (bdAblated) bd.renderable = false;
-                    // Silhouette clip (see silMaskParam): a second copy of the illustration, same
-                    // derived-or-heuristic placement as `bd`, used as the composite's alpha mask.
+                    // Silhouette clip (see silMaskParam): the illustration's COVERAGE, placed like
+                    // `bd`, as the composite's alpha mask. NOT the illustration itself: a Pixi
+                    // sprite mask MULTIPLIES by the mask sample (red x alpha), so masking with the
+                    // painting dimmed every interior pixel by its own partial alpha and colour
+                    // (measured on chen: interior luma -20.39 mean, -39.99 in blue regions, 12.6
+                    // percent of her covered pixels are partial). The mask is therefore a WHITE
+                    // texture whose alpha is the painting's coverage (alpha > 0, a definition, not
+                    // a threshold): outside becomes transparent, the interior passes untouched,
+                    // and the boundary keeps the source feather only where alpha is genuinely
+                    // fractional at the edge. Canvas failure skips the mask rather than fading.
+                    // Implementation is an ERASE-blend cutout, NOT a Pixi mask: a sprite mask
+                    // renders the composite through a SpriteMaskFilter RT and that recomposition
+                    // alone still cost the interior -12.23 luma (blue -24.25) even with a pure
+                    // white full-alpha mask texture. The cutout is the INVERSE coverage (opaque
+                    // exactly where the painting has zero alpha) drawn last with ERASE, which
+                    // clears the composite's alpha in the same render pass with no intermediate
+                    // target and leaves every interior pixel byte-untouched.
                     const silOn = silMaskParam() === "1" || (silMaskParam() !== "0" && bdDerived != null);
                     if (panelArt && silOn) {
-                        const silhouette = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
-                        sceneContainer.addChild(silhouette);
-                        sceneContainer.mask = silhouette;
+                        let silhouette: PIXI.Sprite | null = null;
+                        try {
+                            const src = backdropData.texture.baseTexture.resource as unknown as { source?: CanvasImageSource & { width: number; height: number } };
+                            const im = src?.source;
+                            if (im && im.width > 0 && bdDerived) {
+                                // PAD the cutout so it also erases scene content drawn BEYOND the
+                                // art rect (chen's sky plane is wider than her painting; a finite
+                                // sprite erases nothing outside itself and left sky bars at the
+                                // frame edges). The pad is DERIVED per key: the scene's own local
+                                // bounds, converted to art px through the derived scale, measured
+                                // against the art rect; symmetric, so the padded canvas centre
+                                // stays the art centre and the derived anchor/scale/offset hold.
+                                const lb = sceneContainer.getLocalBounds();
+                                const cxs = bdDerived.offset[0];
+                                const cys = -bdDerived.offset[1];
+                                const halfW = (im.width / 2) * bdDerived.scale;
+                                const halfH = (im.height / 2) * bdDerived.scale;
+                                const overhang = Math.max(0, lb.x + lb.width - (cxs + halfW), cxs - halfW - lb.x, lb.y + lb.height - (cys + halfH), cys - halfH - lb.y);
+                                const padArt = Math.min(im.width * 4, Math.ceil(overhang / bdDerived.scale));
+                                const cv = document.createElement("canvas");
+                                cv.width = im.width + 2 * padArt;
+                                cv.height = im.height + 2 * padArt;
+                                const cx = cv.getContext("2d", { willReadFrequently: true });
+                                if (cx) {
+                                    cx.drawImage(im, padArt, padArt);
+                                    const id = cx.getImageData(0, 0, cv.width, cv.height);
+                                    const px = id.data;
+                                    for (let p = 0; p < px.length; p += 4) {
+                                        const a = px[p + 3];
+                                        px[p] = 255;
+                                        px[p + 1] = 255;
+                                        px[p + 2] = 255;
+                                        px[p + 3] = a > 0 ? 0 : 255;
+                                    }
+                                    cx.putImageData(id, 0, 0);
+                                    silhouette = new PIXI.Sprite(PIXI.Texture.from(cv));
+                                    silhouette.anchor.set(0.5, 0.5);
+                                    silhouette.scale.set(bdDerived.scale);
+                                    silhouette.position.set(cxs, cys);
+                                }
+                            }
+                        } catch {
+                            silhouette = null;
+                        }
+                        if (silhouette) {
+                            silhouette.blendMode = PIXI.BLEND_MODES.ERASE;
+                            sceneContainer.addChild(silhouette);
+                        }
                     }
                     if (gapFill && !panelArt) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff
