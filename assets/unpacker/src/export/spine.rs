@@ -627,16 +627,18 @@ pub(crate) fn go_effectively_active(
                     if gv.get("m_IsActive").and_then(Value::as_i64).unwrap_or(1) == 0 {
                         return false;
                     }
-                    // MEASUREMENT ARM (DYNCHAR_HONOR_INACTIVE=1, default absent = the dead
-                    // check above stands): honour the serialized bool for NON-cinematic
-                    // exports only. The static check above is documented dead-and-load-
-                    // bearing because entrance rigs ship m_IsActive=0 and are runtime-
-                    // activated; the settled MAIN scene is the other side of that split,
-                    // where nian_2's undriven red additive sheets (and their class) are
-                    // suspected to be statically-disabled objects we resurrect. This arm
-                    // exists to measure that corpus-wide before any rule ships.
+                    // DEFAULT ON (2026-09-01, was the DYNCHAR_HONOR_INACTIVE measurement
+                    // arm): honour the serialized bool for NON-cinematic exports. The dead
+                    // static check above stays dead for entrances, whose rigs ship
+                    // m_IsActive=0 and are runtime-activated; the settled MAIN scene is the
+                    // other side of that split, where the corpus was resurrecting
+                    // statically-disabled objects. A/B measured before flipping: 9 wins,
+                    // 5 neutral, 0 deletes-art across the 15 scoreable changed keys, with
+                    // texas2_2's -70.19 luma mean (one inactive dark plane over her smoke)
+                    // falling to -4.11 and zero art deleted at the settled surface.
+                    // DYNCHAR_KEEP_INACTIVE=1 reverts to the pre-rule export exactly.
                     if !start_state_active
-                        && std::env::var("DYNCHAR_HONOR_INACTIVE").is_ok()
+                        && std::env::var("DYNCHAR_KEEP_INACTIVE").is_err()
                         && gv.get("m_IsActive").and_then(Value::as_bool) == Some(false)
                     {
                         return false;
