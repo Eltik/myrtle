@@ -3174,6 +3174,43 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                         }
                         return { name, err: "slot not found" };
                     };
+                    // DIAGNOSTIC (`__dumpColorTracks`, DEV only, a PROBE hook): per animation, the
+                    // slots whose alpha a colour timeline keys and the alpha range it spans, each
+                    // slot's SETUP alpha, and the tracks currently playing. Built for the never-keyed
+                    // slot census (kalts Mo_A..E held at alpha 0 at every beat, 2026-09-02): it says
+                    // which clip keys a slot on and whether that clip is the one bound.
+                    (window as unknown as { __dumpColorTracks?: () => unknown }).__dumpColorTracks = () => {
+                        const sp = spine as unknown as {
+                            skeleton: { data: { slots: { name: string; color: { a: number } }[]; animations: { name: string; duration: number; timelines: unknown[] }[] } };
+                            state?: { tracks?: ({ animation?: { name?: string }; trackIndex?: number; loop?: boolean } | null)[] };
+                        };
+                        const slots = sp.skeleton.data.slots;
+                        const anims = sp.skeleton.data.animations.map((an) => {
+                            const keyed: Record<string, [number, number, number]> = {};
+                            for (const tlU of an.timelines) {
+                                const tl = tlU as { slotIndex?: number; frames?: ArrayLike<number>; getFrameEntries?: () => number; constructor: { name: string } };
+                                if (typeof tl.slotIndex !== "number" || !tl.frames) continue;
+                                const cn = tl.constructor.name;
+                                if (!/Color|RGBA|Alpha/.test(cn)) continue;
+                                const stride = typeof tl.getFrameEntries === "function" ? tl.getFrameEntries() : cn.includes("Two") ? 8 : 5;
+                                const fr = tl.frames;
+                                let lo = Number.POSITIVE_INFINITY;
+                                let hi = Number.NEGATIVE_INFINITY;
+                                for (let i = 0; i + stride - 1 < fr.length; i += stride) {
+                                    const a = /^Alpha/.test(cn) ? fr[i + 1] : fr[i + 4];
+                                    lo = Math.min(lo, a);
+                                    hi = Math.max(hi, a);
+                                }
+                                keyed[slots[tl.slotIndex]?.name ?? String(tl.slotIndex)] = [Number(lo.toFixed(3)), Number(hi.toFixed(3)), fr.length / stride];
+                            }
+                            return { name: an.name, duration: Number(an.duration.toFixed(3)), keyed };
+                        });
+                        return {
+                            setup: Object.fromEntries(slots.map((s) => [s.name, Number(s.color.a.toFixed(3))])),
+                            playing: (sp.state?.tracks ?? []).filter(Boolean).map((t) => ({ track: t?.trackIndex, anim: t?.animation?.name, loop: t?.loop })),
+                            anims,
+                        };
+                    };
                     (window as unknown as { __dumpSlots?: () => unknown }).__dumpSlots = () => {
                         const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
                         return sk.slots.map((slotU) => {

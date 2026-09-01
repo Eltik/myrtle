@@ -1097,6 +1097,18 @@ function customUVOn(): boolean {
     return new URLSearchParams(window.location.search).get("customuv") === "1";
 }
 
+/** MEASUREMENT ARM (`?rambbv=1`, default off): billboard quads on the Ram path carry v=0 on
+ *  their screen-top corners, and the Ram vertex program then applies `1.0 - v` to every lookup.
+ *  That flip is what a MESH particle needs (Unity mesh UVs are bottom-up), but on a billboard
+ *  it samples the PNG's bottom row at the screen top: Virtuosa's apple copy draws stem-down
+ *  where the game's is stem-up (crops, 2026-09-02). With the arm on, the billboard corners
+ *  carry v=1 at the top so the shader's flip lands the PNG upright; mesh particles are
+ *  untouched. Read as "is the string 1", never as truthiness. */
+function ramBillboardVOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("rambbv") === "1";
+}
+
 function uniformFieldSkipOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("uniskip") !== "0";
@@ -3191,14 +3203,15 @@ class RamEmitter {
             // live flipbook TILE's sub-rect (see {@link writeGeometry}) - exactly
             // Unity's order, where the Texture Sheet module rewrites the vertex UV
             // and each sampler's `_ST` then applies on top of the tile.
+            const vTop = ramBillboardVOn() ? 1 : 0;
             this.uvData[u] = 0;
-            this.uvData[u + 1] = 0;
+            this.uvData[u + 1] = vTop;
             this.uvData[u + 2] = 1;
-            this.uvData[u + 3] = 0;
+            this.uvData[u + 3] = vTop;
             this.uvData[u + 4] = 1;
-            this.uvData[u + 5] = 1;
+            this.uvData[u + 5] = 1 - vTop;
             this.uvData[u + 6] = 0;
-            this.uvData[u + 7] = 1;
+            this.uvData[u + 7] = 1 - vTop;
         }
 
         // PIXI.Buffer's constructor param type doesn't structurally match TS 5.7's
@@ -3691,7 +3704,7 @@ class RamEmitter {
                     }
                 } else {
                     const us = [u0, u0 + cw, u0 + cw, u0];
-                    const vs = [v0, v0, v0 + ch, v0 + ch];
+                    const vs = ramBillboardVOn() ? [v0 + ch, v0 + ch, v0, v0] : [v0, v0, v0 + ch, v0 + ch];
                     for (let k = 0; k < 4; k++) {
                         uv[vp + k * 2] = us[k];
                         uv[vp + k * 2 + 1] = vs[k];
