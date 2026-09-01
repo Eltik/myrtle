@@ -292,6 +292,28 @@ function bdxfOn(): boolean {
     return new URLSearchParams(window.location.search).get("bdxf") !== "0";
 }
 
+/** PANEL-ONLY (2026-09-01): clip the composite to the ILLUSTRATION'S OWN SILHOUETTE. The
+ *  game's zoomed-out dynamic view keeps the painting's ragged alpha edge, MEASURED on the
+ *  three phone-captured keys: the fraction of the painting's transparent pockets that the
+ *  game paints is 0.2 percent (shu_nian#11), 2.5 (dusk_nian#12), 9.9 (chen2_2, weakest
+ *  registration), while our unmasked card filled 89.1 percent of chen's pockets with the
+ *  scene's sky plane. The mask is the static illustration itself, placed by the SAME
+ *  transform as the backdrop sprite, so no new geometry is chosen.
+ *
+ *  OPT-IN, not default (2026-09-01, measured): with the mask on, chen's pocket-sky
+ *  fraction drops 89.1 -> 0.0 percent, but the centroid-anchored camera-extent placement
+ *  misregisters the mask against the scene content badly enough to shatter the
+ *  composition (the character sits off the silhouette's centre and the mask cuts through
+ *  content). The accurate art-to-scene transform this needs is exactly the PARKED
+ *  DYNCHAR_BD_DERIVE derivation, whose control failed on defocused-repaint scenes. Until
+ *  a character-anchored correspondence or a GPU-capture read lands, the card keeps the
+ *  game-unfaithful sky rectangle over a broken silhouette. `?silmask=1` enables the arm
+ *  for inspection; absent or any other value leaves the panel unclipped. */
+function silMaskOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("silmask") === "1";
+}
+
 /** `?apscale=0` freezes the scope aperture at its baked radius, ignoring the rim transform's
  *  animated scale (diagnostic). */
 function apertureScaleOn(): boolean {
@@ -3374,6 +3396,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     if (bdAblated) bd.renderable = false;
+                    // Silhouette clip (see silMaskOn): a second copy of the illustration, same
+                    // derived-or-heuristic placement as `bd`, used as the composite's alpha mask.
+                    if (panelArt && silMaskOn()) {
+                        const silhouette = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
+                        sceneContainer.addChild(silhouette);
+                        sceneContainer.mask = silhouette;
+                    }
                     if (gapFill && !panelArt) {
                         // Defocused vista fill. Radius follows the art's own height so the cutoff
                         // is a spatial frequency, not a pixel count (see gapFillOn).
