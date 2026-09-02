@@ -1111,6 +1111,19 @@ function ramBillboardVOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("rambbv") !== "0";
 }
+/** DIAGNOSTIC (`?rambbvskip=<i,j,...>`): system indices that keep the OLD (pre-flip) billboard
+ *  V, to attribute a frame's residual to one Ram billboard system at a time. Measurement
+ *  only; absent parameter = the shipped default for every system. */
+function ramBillboardVSkip(): Set<number> {
+    if (typeof window === "undefined") return new Set();
+    const raw = new URLSearchParams(window.location.search).get("rambbvskip");
+    return new Set(
+        (raw ?? "")
+            .split(",")
+            .map((t) => Number.parseInt(t, 10))
+            .filter((n) => Number.isFinite(n)),
+    );
+}
 
 function uniformFieldSkipOn(): boolean {
     if (typeof window === "undefined") return true;
@@ -3080,6 +3093,8 @@ const WHITE_TEX = PIXI.Texture.WHITE;
  *  running the ported ramp/dissolve/disturb shader. */
 class RamEmitter {
     readonly container = new PIXI.Container();
+    /** The system's index in the export, set by the loader; read by the `?rambbvskip=` diagnostic. */
+    sysIndex?: number;
     private readonly data: IParticleSystemData;
     private readonly ram: IRamData;
     private readonly particles: IRamParticle[] = [];
@@ -3145,7 +3160,10 @@ class RamEmitter {
         tex: { main: PIXI.Texture | null; ram: PIXI.Texture | null; disturb: PIXI.Texture | null; weight?: PIXI.Texture | null; dissolve: PIXI.Texture | null; dissolve2?: PIXI.Texture | null },
         blend: "additive" | "normal",
         private readonly getBudget: () => number,
+        sysIndex?: number,
     ) {
+        // set first: the billboard corner UVs below consult the per-system skip diagnostic
+        this.sysIndex = sysIndex;
         this.blend = blend;
         this.data = data;
         // Start dormant through the cinematic delay (see the billboard system's ctor).
@@ -3206,7 +3224,7 @@ class RamEmitter {
             // live flipbook TILE's sub-rect (see {@link writeGeometry}) - exactly
             // Unity's order, where the Texture Sheet module rewrites the vertex UV
             // and each sampler's `_ST` then applies on top of the tile.
-            const vTop = ramBillboardVOn() ? 1 : 0;
+            const vTop = ramBillboardVOn() && !ramBillboardVSkip().has(this.sysIndex ?? -1) ? 1 : 0;
             this.uvData[u] = 0;
             this.uvData[u + 1] = vTop;
             this.uvData[u + 2] = 1;
@@ -3707,7 +3725,7 @@ class RamEmitter {
                     }
                 } else {
                     const us = [u0, u0 + cw, u0 + cw, u0];
-                    const vs = ramBillboardVOn() ? [v0 + ch, v0 + ch, v0, v0] : [v0, v0, v0 + ch, v0 + ch];
+                    const vs = ramBillboardVOn() && !ramBillboardVSkip().has(this.sysIndex ?? -1) ? [v0 + ch, v0 + ch, v0, v0] : [v0, v0, v0 + ch, v0 + ch];
                     for (let k = 0; k < 4; k++) {
                         uv[vp + k * 2] = us[k];
                         uv[vp + k * 2 + 1] = vs[k];
@@ -4594,7 +4612,9 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 },
                 sys.blend,
                 budget,
+                sysIndex,
             );
+            (emitter as { sysIndex?: number }).sysIndex = sysIndex;
             emitters.push(emitter);
             emitterSys.push(sysIndex);
             applyPsDiag(data, sys, emitter.container);
@@ -4631,6 +4651,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 // (Virtuosa t=2 32.19 → 34.75, her `window_bg_01` backdrop panel carries a
                 // 180° emitter angle the game plainly does not draw it with).
                 const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, untexMeshGain(), sys.rot ?? 0);
+                (emitter as { sysIndex?: number }).sysIndex = sysIndex;
                 emitters.push(emitter);
                 emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
@@ -4846,6 +4867,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
             const meshOK = (meshBlend === "additive" || !tex.desatPanel || isBackdropPanel) && !isStaticMeshProp;
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
+                (emitter as { sysIndex?: number }).sysIndex = sysIndex;
                 emitters.push(emitter);
                 emitterSys.push(sysIndex);
                 // A LARGE additive glow mesh (Hoshiguma the Breacher's lightning-bolt
@@ -4888,6 +4910,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // See ILoadedTex.noOrbBase. `?orb=1` restores the old behaviour for A/B.
         const drawBase = sys.blend === "additive" && !orbOnAdditive() ? tex.noOrbBase : tex.base;
         const emitter = new Emitter(sys, new PIXI.Texture(drawBase), trailTexture, blend, budget);
+        (emitter as { sysIndex?: number }).sysIndex = sysIndex;
         emitters.push(emitter);
         emitterSys.push(sysIndex);
         // Tame a LARGE additive billboard on a self-lit dark-backdrop scene (mirrors the

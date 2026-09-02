@@ -3321,11 +3321,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     // One level deeper: a slot container's own children (the drawn
                                     // sprite or mesh, or whatever else was parented in), with texture ids.
                                     const grand = ((k as unknown as { children?: PIXI.DisplayObject[] }).children ?? []).slice(0, 6).map((g) => {
-                                        const gg = g as unknown as { texture?: { baseTexture?: { uid?: number; resource?: { url?: string } } }; blendMode?: number; renderable?: boolean; visible?: boolean };
+                                        const gg = g as unknown as { texture?: { baseTexture?: { uid?: number; resource?: { url?: string } } }; blendMode?: number; renderable?: boolean; visible?: boolean; region?: { name?: string }; name?: string };
                                         const gb = g.getBounds();
-                                        return `${g.constructor.name} tex ${gg.texture?.baseTexture?.uid ?? "-"} ${(gg.texture?.baseTexture?.resource?.url ?? "").split("/").pop() ?? ""} blend ${gg.blendMode ?? "-"} r${gg.renderable ? 1 : 0}v${gg.visible ? 1 : 0} [${Math.round(gb.x)},${Math.round(gb.y)},${Math.round(gb.width)},${Math.round(gb.height)}]`;
+                                        return `${g.constructor.name}${gg.region?.name ? `:${gg.region.name}` : gg.name ? `:${gg.name}` : ""} tex ${gg.texture?.baseTexture?.uid ?? "-"} ${(gg.texture?.baseTexture?.resource?.url ?? "").split("/").pop() ?? ""} blend ${gg.blendMode ?? "-"} r${gg.renderable ? 1 : 0}v${gg.visible ? 1 : 0} [${Math.round(gb.x)},${Math.round(gb.y)},${Math.round(gb.width)},${Math.round(gb.height)}]`;
                                     });
-                                    return `${k.constructor.name}${kk.name ? `:${kk.name}` : ""} src ${kk.__srcIndex ?? "-"} tex ${kk.texture?.baseTexture?.uid ?? "-"} blend ${kk.blendMode ?? "-"} r${kk.renderable ? 1 : 0}v${kk.visible ? 1 : 0} wa ${typeof kk.worldAlpha === "number" ? kk.worldAlpha.toFixed(2) : "-"} box [${Math.round(kb.x)},${Math.round(kb.y)},${Math.round(kb.width)},${Math.round(kb.height)}] {${grand.join(" ; ")}}`;
+                                    const owner = (sk.slots as { data: { name: string }; currentSprite?: unknown; currentMesh?: unknown; getAttachment?: () => { name?: string } | null }[]).find(
+                                        (sl) => (k as unknown as { children?: unknown[] }).children?.includes(sl.currentSprite) || (k as unknown as { children?: unknown[] }).children?.includes(sl.currentMesh),
+                                    );
+                                    return `${k.constructor.name}${kk.name ? `:${kk.name}` : ""}${owner ? ` slot ${owner.data.name} att ${owner.getAttachment?.()?.name ?? "-"}` : ""} src ${kk.__srcIndex ?? "-"} tex ${kk.texture?.baseTexture?.uid ?? "-"} blend ${kk.blendMode ?? "-"} r${kk.renderable ? 1 : 0}v${kk.visible ? 1 : 0} wa ${typeof kk.worldAlpha === "number" ? kk.worldAlpha.toFixed(2) : "-"} box [${Math.round(kb.x)},${Math.round(kb.y)},${Math.round(kb.width)},${Math.round(kb.height)}] {${grand.join(" ; ")}}`;
                                 });
                                 return {
                                     name: `__extra:${c.constructor.name}${cc.name ? `:${cc.name}` : ""}`,
