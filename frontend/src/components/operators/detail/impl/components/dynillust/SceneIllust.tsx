@@ -279,6 +279,18 @@ function mainAtRigSpine(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("mainunder") === "3";
 }
+/** `?mainstart=<seconds>`: how long after the cinematic's first frame the main skeleton's own
+ *  Start clip begins under the rig. READ FROM IAN'S PHONE CLIP of kalts boc#6 (2026-09-03): her
+ *  crystals (Mo_C, keyed on 1.267 s into the main Start) cut in 5.353 s after the cinematic's
+ *  first frame, so the game starts the clip at 4.09 s; the bundle holds no field for it. Until
+ *  it lands the arm keeps its old behaviour (missing parameter = 0 = start at t=0). */
+function mainStartDelay(): number {
+    if (typeof window === "undefined") return 0;
+    const v = new URLSearchParams(window.location.search).get("mainstart");
+    if (v === null) return 0;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+}
 /** `?mainunder=2`: the admitted main slots drawn ABOVE the rig instead of under it (the
  *  rig's opaque scene planes otherwise cover near-field content such as kalts's crystals). */
 function mainAboveRig(): boolean {
@@ -1900,11 +1912,14 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     ms.scale.set(1, 1);
                     ms.rotation = 0;
                     const rigSk = es.skeleton as unknown as { findSlot: (n: string) => { color: { a: number } } | null };
+                    // Before a delayed Start begins, the current track entry is the empty hold.
+                    const cur = (ms.state as unknown as { getCurrent: (i: number) => { animation?: { name?: string } } | null }).getCurrent(0);
+                    const holding = !cur?.animation?.name || cur.animation.name === "<empty>";
                     let none = 0;
                     type GuardSlot = { data: { name: string }; currentMesh?: PIXI.DisplayObject; currentSprite?: PIXI.DisplayObject };
                     for (const sl of (ms.skeleton as unknown as { slots: GuardSlot[] }).slots) {
                         const rs = rigSk.findSlot(sl.data.name);
-                        const show = !!rs && rs.color.a <= 0.001 && mu.rigNever.has(sl.data.name);
+                        const show = !holding && !!rs && rs.color.a <= 0.001 && mu.rigNever.has(sl.data.name);
                         if (!rs) none += 1;
                         const disp = sl.currentMesh ?? sl.currentSprite;
                         if (disp) disp.renderable = show;
@@ -3246,8 +3261,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             state?: { tracks?: ({ animation?: { name?: string }; trackIndex?: number; loop?: boolean } | null)[] };
                         };
                         const slots = sp.skeleton.data.slots;
+                        // `?ctracks=<regex>`: for the matching SLOTS, every colour key as [time, alpha]
+                        // per animation (kalts Mo_A..E: when the main Start clip fades them in).
+                        const ctq = new URLSearchParams(window.location.search).get("ctracks");
+                        const ctre = ctq ? new RegExp(ctq) : null;
                         const anims = sp.skeleton.data.animations.map((an) => {
                             const keyed: Record<string, [number, number, number]> = {};
+                            const ckeys: Record<string, number[][]> = {};
                             for (const tlU of an.timelines) {
                                 const tl = tlU as { slotIndex?: number; frames?: ArrayLike<number>; getFrameEntries?: () => number; constructor: { name: string } };
                                 if (typeof tl.slotIndex !== "number" || !tl.frames) continue;
@@ -3262,9 +3282,15 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     lo = Math.min(lo, a);
                                     hi = Math.max(hi, a);
                                 }
-                                keyed[slots[tl.slotIndex]?.name ?? String(tl.slotIndex)] = [Number(lo.toFixed(3)), Number(hi.toFixed(3)), fr.length / stride];
+                                const sn = slots[tl.slotIndex]?.name ?? String(tl.slotIndex);
+                                keyed[sn] = [Number(lo.toFixed(3)), Number(hi.toFixed(3)), fr.length / stride];
+                                if (ctre?.test(sn)) {
+                                    const pairs: number[][] = [];
+                                    for (let i = 0; i + stride - 1 < fr.length; i += stride) pairs.push([Number(fr[i].toFixed(3)), Number((/^Alpha/.test(cn) ? fr[i + 1] : fr[i + 4]).toFixed(3))]);
+                                    ckeys[`${sn}:${cn}`] = pairs;
+                                }
                             }
-                            return { name: an.name, duration: Number(an.duration.toFixed(3)), keyed };
+                            return { name: an.name, duration: Number(an.duration.toFixed(3)), keyed, ckeys };
                         });
                         // `?tracks=<regex>`: per animation, the translate/rotate/scale timelines of the
                         // matching BONES with their frame ranges (chen2_2's ship bobbing question).
@@ -5178,7 +5204,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                         app.stage.addChild(wrap);
                                     }
                                 }
-                                main.spine.state.setAnimation(0, "Start", false);
+                                // A delayed Start holds an empty animation first; the frame-loop guard
+                                // draws nothing while that empty entry is current (the setup pose has
+                                // kalts's crystals at alpha 1, so the hold must not render).
+                                const msd = mainStartDelay();
+                                if (msd > 0) {
+                                    main.spine.state.setEmptyAnimation(0, 0);
+                                    main.spine.state.addAnimation(0, "Start", false, msd);
+                                } else {
+                                    main.spine.state.setAnimation(0, "Start", false);
+                                }
                                 if (main.spine.spineData.findAnimation(IDLE_ANIMATION)) main.spine.state.addAnimation(0, IDLE_ANIMATION, true, 0);
                                 // THE GUARD'S SET, derived from the rig's own data: a rig slot is "never
                                 // visible" when no colour timeline of any rig animation ever keys its alpha
