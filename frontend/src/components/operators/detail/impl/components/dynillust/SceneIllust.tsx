@@ -263,6 +263,29 @@ const SCENE_ZOOM_OUT = 1.7;
  *  Refuted variants are recorded in `hdrTonemap.ts` so none is retried. NOTE for the harness:
  *  `rec.js` must be given `&backdrop=<url>` or this whole path is inert - the production viewer
  *  always passes it (`SkinsContent.tsx`), the recorder does not. */
+/** MEASUREMENT ARM (`?mainunder=1`, default off): keep the MAIN skeleton live UNDER the
+ *  entrance rig, playing its own Start clip, and draw only the slots the rig currently holds
+ *  at alpha 0 (a per-frame property read off the rig's slot colours, never a list). Read as
+ *  "is the string 1", never as truthiness. */
+function mainUnderOn(): boolean {
+    if (typeof window === "undefined") return false;
+    const v = new URLSearchParams(window.location.search).get("mainunder");
+    return v === "1" || v === "2" || v === "3";
+}
+/** `?mainunder=3`: the admitted main slots at the RIG SPINE's own depth (a sibling right above
+ *  it): under the rig's overlay and mist planes, above its scene background, which is where
+ *  the game's defocused near-field crystals sit at kalts t=5. */
+function mainAtRigSpine(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("mainunder") === "3";
+}
+/** `?mainunder=2`: the admitted main slots drawn ABOVE the rig instead of under it (the
+ *  rig's opaque scene planes otherwise cover near-field content such as kalts's crystals). */
+function mainAboveRig(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("mainunder") === "2";
+}
+
 function gapFillOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("gapfill") !== "0";
@@ -1693,6 +1716,10 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
      *  entrance hands off, TWO composites are alive and each builds its own. */
     const gapFillSpritesRef = useRef<PIXI.Sprite[]>([]);
     const crossfadeRef = useRef<{ wrapper: PIXI.Container; mainRoot: PIXI.Container; entRoot: PIXI.Container; ent: IComposite; elapsed: number; duration: number } | null>(null);
+    /** `?mainunder=1` state: the main composite drawn under the rig, where its spine was
+     *  taken from (to put back at the hand-off), and how many main slots had no same-name
+     *  rig slot (excluded by the guard, counted for the report). */
+    const mainUnderRef = useRef<{ main: IComposite; ent: IComposite; underRoot: PIXI.Container; spineParent: PIXI.Container; spineIndex: number; noCounterpart: number; rigNever: Set<string> } | null>(null);
     // The opening zoom: the in-game viewer opens on a tight close-up of the character
     // and zooms OUT to the steady framing over a fraction of a second, then holds. This
     // interpolates the entrance's framing from `from` (close) to `to` (steady) over
@@ -1854,6 +1881,36 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 // `update` rebuilds the dark shadow slots' meshes each frame; flip them
                 // back to non-renderable so the static backdrop's version shows instead.
                 if (hideShadowsRef.current) hideRedundantShadowSlots(spineRef.current);
+                const mu = mainUnderRef.current;
+                if (mu && spineRef.current === mu.ent.spine) {
+                    // The main skeleton under the rig (`?mainunder=1`): tick it, mirror the rig's
+                    // transforms so both skeletons share pixels (same scene space), then the GUARD:
+                    // a main slot renders only while the rig's same-name slot is at alpha 0. The
+                    // symmetric idle-under-entrance arm cost -9.53, so nothing the rig draws itself
+                    // is admitted, and a slot with no rig counterpart is excluded and counted.
+                    mu.main.spine.update(dt);
+                    // The rig's framing lives on a nested scene root, not on `ent.root` (copying
+                    // that root's transform put the main skeleton unframed at the canvas origin), so
+                    // take the rig SPINE's world matrix as of the last render and hold the main
+                    // spine at identity under it.
+                    const es = mu.ent.spine;
+                    const ms = mu.main.spine;
+                    mu.underRoot.transform.setFromMatrix(mainAtRigSpine() ? es.transform.localTransform : es.worldTransform);
+                    ms.position.set(0, 0);
+                    ms.scale.set(1, 1);
+                    ms.rotation = 0;
+                    const rigSk = es.skeleton as unknown as { findSlot: (n: string) => { color: { a: number } } | null };
+                    let none = 0;
+                    type GuardSlot = { data: { name: string }; currentMesh?: PIXI.DisplayObject; currentSprite?: PIXI.DisplayObject };
+                    for (const sl of (ms.skeleton as unknown as { slots: GuardSlot[] }).slots) {
+                        const rs = rigSk.findSlot(sl.data.name);
+                        const show = !!rs && rs.color.a <= 0.001 && mu.rigNever.has(sl.data.name);
+                        if (!rs) none += 1;
+                        const disp = sl.currentMesh ?? sl.currentSprite;
+                        if (disp) disp.renderable = show;
+                    }
+                    mu.noCounterpart = none;
+                }
                 applySlotDiagnostic(spineRef.current);
                 // BONE-FOLLOWING scene layers: a spine-unity `BoneFollower` snaps these
                 // quads onto a bone at runtime, so their baked geometry is only an editor
@@ -4882,6 +4939,20 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const startAtlas = atlasPath.replace(/\.atlas$/, "_Start.atlas");
                 const swapToMainIdle = () => {
                     if (aborted()) return;
+                    const mu = mainUnderRef.current;
+                    if (mu) {
+                        // Put the main spine back where the composite expects it before the
+                        // hand-off cross-fade wraps main.root, and lift the guard's renderable flags.
+                        mu.spineParent.addChildAt(mu.main.spine, Math.min(mu.spineIndex, mu.spineParent.children.length));
+                        mu.underRoot.parent?.removeChild(mu.underRoot);
+                        mu.underRoot.destroy({ children: false });
+                        type GuardSlot = { currentMesh?: PIXI.DisplayObject; currentSprite?: PIXI.DisplayObject };
+                        for (const sl of (mu.main.spine.skeleton as unknown as { slots: GuardSlot[] }).slots) {
+                            const disp = sl.currentMesh ?? sl.currentSprite;
+                            if (disp) disp.renderable = true;
+                        }
+                        mainUnderRef.current = null;
+                    }
                     const ent = composites.find((c) => c !== main);
                     // Capture the entrance camera's actual pan (its live centre at hand-off minus
                     // its own t=0 centre) BEFORE `entranceFollowRef` is nulled below - this is what
@@ -5008,6 +5079,106 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             aperture: built.aperture,
                             apertureMask: built.apertureMask,
                         };
+                        // `?mainunder=1`: the MAIN skeleton live under the rig from t=0, on its own
+                        // Start clip then the idle (see mainUnderOn and the frame-loop guard). Only the
+                        // spine is taken under; the main's scene and particles stay where they are and
+                        // stay unrendered until the hand-off, which puts the spine back.
+                        if (mainUnderOn() && main.spine !== built.spine && main.spine.spineData.findAnimation("Start")) {
+                            const spineParent = main.spine.parent as PIXI.Container | null;
+                            if (spineParent) {
+                                const spineIndex = spineParent.getChildIndex(main.spine);
+                                const underRoot = new PIXI.Container();
+                                underRoot.addChild(main.spine);
+                                const wrap = new PIXI.Container();
+                                const rigSpineParent = built.spine.parent as PIXI.Container | null;
+                                if (mainAtRigSpine() && rigSpineParent) {
+                                    rigSpineParent.addChildAt(underRoot, rigSpineParent.getChildIndex(built.spine) + 1);
+                                } else {
+                                    if (mainAboveRig()) {
+                                        wrap.addChild(built.root);
+                                        wrap.addChild(underRoot);
+                                    } else {
+                                        wrap.addChild(underRoot);
+                                        wrap.addChild(built.root);
+                                    }
+                                    if (hdr) {
+                                        hdrSceneRef.current = wrap;
+                                    } else {
+                                        app.stage.removeChild(built.root);
+                                        app.stage.addChild(wrap);
+                                    }
+                                }
+                                main.spine.state.setAnimation(0, "Start", false);
+                                if (main.spine.spineData.findAnimation(IDLE_ANIMATION)) main.spine.state.addAnimation(0, IDLE_ANIMATION, true, 0);
+                                // THE GUARD'S SET, derived from the rig's own data: a rig slot is "never
+                                // visible" when no colour timeline of any rig animation ever keys its alpha
+                                // above 0 and its setup alpha is 0, or every key is 0. Only main slots whose
+                                // rig twin is in this set may draw: the first guard (rig alpha 0 at the
+                                // current frame) admitted body parts the rig fades in later or draws under
+                                // other names (cel +27, ska +63, kalts double-drawn at t=1).
+                                const rigNever = new Set<string>();
+                                {
+                                    const rd = built.spine.skeleton.data as unknown as { slots: { name: string; color: { a: number } }[]; animations: { timelines: unknown[] }[] };
+                                    const setupA = new Map<string, number>();
+                                    for (const sl of rd.slots) setupA.set(sl.name, sl.color.a);
+                                    const keyedMax = new Map<string, number>();
+                                    for (const an of rd.animations) {
+                                        for (const tlU of an.timelines) {
+                                            const tl = tlU as { slotIndex?: number; frames?: ArrayLike<number>; getFrameEntries?: () => number; constructor: { name: string } };
+                                            if (typeof tl.slotIndex !== "number" || !tl.frames) continue;
+                                            const cn = tl.constructor.name;
+                                            if (!/Color|RGBA|Alpha/.test(cn)) continue;
+                                            const stride = typeof tl.getFrameEntries === "function" ? tl.getFrameEntries() : cn.includes("Two") ? 8 : 5;
+                                            const fr = tl.frames;
+                                            const nm = rd.slots[tl.slotIndex]?.name;
+                                            if (!nm) continue;
+                                            let hi = 0;
+                                            for (let i = 0; i + stride - 1 < fr.length; i += stride) hi = Math.max(hi, /^Alpha/.test(cn) ? fr[i + 1] : fr[i + 4]);
+                                            keyedMax.set(nm, Math.max(hi, keyedMax.get(nm) ?? 0));
+                                        }
+                                    }
+                                    // a keyed slot's visibility is what its keys say; an unkeyed one keeps its setup pose
+                                    for (const [nm, a] of setupA) if ((keyedMax.has(nm) ? (keyedMax.get(nm) as number) : a) <= 0.001) rigNever.add(nm);
+                                }
+                                mainUnderRef.current = { main, ent: built, underRoot, spineParent, spineIndex, noCounterpart: 0, rigNever };
+                                if (import.meta.env.DEV) {
+                                    // PROBE hook for the arm: where the main spine sits and whether it renders.
+                                    (window as unknown as { __mainUnder?: () => unknown }).__mainUnder = () => {
+                                        const ms = main.spine as unknown as { visible: boolean; renderable: boolean; worldAlpha: number; alpha: number; parent: unknown; worldTransform: PIXI.Matrix; skeleton: { slots: { data: { name: string }; currentMesh?: PIXI.DisplayObject; currentSprite?: PIXI.DisplayObject }[] } };
+                                        const rendered = ms.skeleton.slots
+                                            .filter((sl) => (sl.currentMesh ?? sl.currentSprite)?.renderable)
+                                            .map((sl) => {
+                                                const d = (sl.currentMesh ?? sl.currentSprite) as unknown as { getBounds?: () => { x: number; y: number; width: number; height: number }; alpha?: number } | undefined;
+                                                const b = d?.getBounds?.();
+                                                const c = (sl as unknown as { color: { a: number }; getAttachment?: () => { name?: string } | null }).color;
+                                                return {
+                                                    n: sl.data.name,
+                                                    a: Number(c.a.toFixed(3)),
+                                                    da: d?.alpha ?? null,
+                                                    att: (sl as unknown as { getAttachment?: () => { name?: string } | null }).getAttachment?.()?.name ?? null,
+                                                    box: b ? [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)] : null,
+                                                };
+                                            });
+                                        const es = built.spine as unknown as { worldTransform: PIXI.Matrix };
+                                        return {
+                                            visible: ms.visible,
+                                            renderable: ms.renderable,
+                                            worldAlpha: ms.worldAlpha,
+                                            alpha: ms.alpha,
+                                            hasParent: !!ms.parent,
+                                            under: underRoot.transform.worldTransform.toArray(false),
+                                            rig: es.worldTransform.toArray(false),
+                                            main: ms.worldTransform.toArray(false),
+                                            renderedSlots: rendered.length,
+                                            sample: rendered,
+                                            noCounterpart: mainUnderRef.current?.noCounterpart ?? null,
+                                            wrapKids: wrap.children.length,
+                                            hdrIsWrap: hdrSceneRef.current === wrap,
+                                        };
+                                    };
+                                }
+                            }
+                        }
                         // Drive the entrance camera PURELY from gamedata: the exporter-accumulated camera
                         // rig track (`entranceCamCenterCurve`, absolute mesh-px frame centre) for the
                         // pan/dolly, and the `_adjustes[1]` view extent (`entranceFrameSize`) × the ortho
