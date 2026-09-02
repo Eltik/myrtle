@@ -2001,6 +2001,69 @@ pub type EntrancePostFx = (String, f32, Vec<(f32, f32)>, Vec<(String, f32)>);
 #[must_use]
 pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<EntrancePostFx> {
     let ordered = super::spine::objects_by_path_id_pub(all_objects);
+    // DIAGNOSTIC (`DYNCHAR_PPCENSUS`, presence-checked): print every camera, every
+    // MonoBehaviour with its script class, EVERY settings entry of EVERY post-process
+    // profile (this reader only consumes the first entry of the first volume), and every
+    // renderer's sorting fields. Built to confirm from the source whether a bundle carries
+    // a depth blur or a veil sort term that the export never surfaces (kalts, 2026-09-02).
+    if std::env::var("DYNCHAR_PPCENSUS").is_ok() {
+        let class_of = |v: &Value| -> String {
+            v.get("m_Script")
+                .and_then(get_path_id)
+                .and_then(|sp| ordered.iter().find(|(p, _)| **p == sp))
+                .and_then(|(_, (_, sv))| sv.get("m_ClassName").and_then(Value::as_str))
+                .unwrap_or("?")
+                .to_string()
+        };
+        let go_name = |v: &Value| -> String {
+            v.get("m_GameObject")
+                .and_then(get_path_id)
+                .and_then(|gp| ordered.iter().find(|(p, _)| **p == gp))
+                .and_then(|(_, (_, gv))| gv.get("m_Name").and_then(Value::as_str))
+                .unwrap_or("?")
+                .to_string()
+        };
+        for (pid, (cid, v)) in &ordered {
+            match *cid {
+                20 => eprintln!(
+                    "PPCENSUS camera pid {pid} go {} clearFlags {:?} depth {:?} ortho {:?} size {:?} near {:?} far {:?} cullingMask {:?}",
+                    go_name(v),
+                    v.get("m_ClearFlags"),
+                    v.get("m_Depth"),
+                    v.get("orthographic"),
+                    v.get("orthographic size"),
+                    v.get("near clip plane"),
+                    v.get("far clip plane"),
+                    v.get("m_CullingMask")
+                ),
+                114 => {
+                    let cls = class_of(v);
+                    let keys: Vec<&String> = v.as_object().into_iter().flatten().map(|(k, _)| k).filter(|k| !k.starts_with("m_")).take(12).collect();
+                    eprintln!("PPCENSUS mono pid {pid} class {cls} go {} keys {:?}", go_name(v), keys);
+                    // The volume and every settings object in full: the reader above consumes
+                    // only the first entry of the first volume, so the census shows the rest.
+                    if v.get("sharedProfile").is_some() || v.get("blurDegree").is_some() || v.get("blurSpread").is_some() || v.get("intensity").is_some() {
+                        eprintln!("PPCENSUS   full pid {pid} {}", serde_json::to_string(v).unwrap_or_default());
+                    }
+                    if let Some(settings) = v.get("settings").and_then(Value::as_array) {
+                        for (i, e) in settings.iter().enumerate() {
+                            let sp = e.get("m_PathID").and_then(Value::as_i64).unwrap_or(0);
+                            let nm = ordered.iter().find(|(p, _)| **p == sp).and_then(|(_, (_, sv))| sv.get("m_Name").and_then(Value::as_str)).unwrap_or("?");
+                            eprintln!("PPCENSUS   profile pid {pid} settings[{i}] -> pid {sp} name {nm}");
+                        }
+                    }
+                }
+                23 | 137 | 212 => eprintln!(
+                    "PPCENSUS renderer cid {cid} pid {pid} go {} sortingOrder {:?} sortingLayerID {:?} sortingLayer {:?}",
+                    go_name(v),
+                    v.get("m_SortingOrder"),
+                    v.get("m_SortingLayerID"),
+                    v.get("m_SortingLayer")
+                ),
+                _ => {}
+            }
+        }
+    }
     // The `pp` volume: a MonoBehaviour carrying `sharedProfile` + `isGlobal`.
     let (vol_go, profile_pid) = ordered.iter().find_map(|(_, (cid, v))| {
         if *cid != 114 {

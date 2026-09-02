@@ -3266,10 +3266,35 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                             }
                             return { name: an.name, duration: Number(an.duration.toFixed(3)), keyed };
                         });
+                        // `?tracks=<regex>`: per animation, the translate/rotate/scale timelines of the
+                        // matching BONES with their frame ranges (chen2_2's ship bobbing question).
+                        const trq = new URLSearchParams(window.location.search).get("tracks");
+                        const bones: Record<string, Record<string, unknown>> = {};
+                        if (trq) {
+                            const re = new RegExp(trq);
+                            const bd = (sp.skeleton.data as unknown as { bones: { name: string; x: number; y: number }[] }).bones;
+                            for (const an of sp.skeleton.data.animations) {
+                                for (const tlU of an.timelines) {
+                                    const tl = tlU as { boneIndex?: number; frames?: ArrayLike<number>; getFrameEntries?: () => number; constructor: { name: string } };
+                                    if (typeof tl.boneIndex !== "number" || !tl.frames) continue;
+                                    const bn = bd[tl.boneIndex]?.name;
+                                    if (!bn || !re.test(bn)) continue;
+                                    const cn = tl.constructor.name;
+                                    const stride = typeof tl.getFrameEntries === "function" ? tl.getFrameEntries() : /Rotate/.test(cn) ? 2 : 3;
+                                    const fr = tl.frames;
+                                    const cols: number[][] = [];
+                                    for (let i = 0; i + stride - 1 < fr.length; i += stride) cols.push(Array.from({ length: stride }, (_, j) => fr[i + j]));
+                                    const rng = cols.length ? cols[0].map((_, j) => [Math.min(...cols.map((c) => c[j])), Math.max(...cols.map((c) => c[j]))].map((v) => Number(v.toFixed(2)))) : [];
+                                    if (!bones[bn]) bones[bn] = {};
+                                    bones[bn][`${an.name}:${cn}`] = { keys: cols.length, range: rng };
+                                }
+                            }
+                        }
                         return {
                             setup: Object.fromEntries(slots.map((s) => [s.name, Number(s.color.a.toFixed(3))])),
                             playing: (sp.state?.tracks ?? []).filter(Boolean).map((t) => ({ track: t?.trackIndex, anim: t?.animation?.name, loop: t?.loop })),
                             anims,
+                            bones,
                         };
                     };
                     const hookHost = window as unknown as Record<string, () => unknown>;
@@ -3277,44 +3302,86 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     hookHost[`__dumpColorTracks_${opts.mode}`] = dumpColorTracks;
                     (window as unknown as { __dumpSlots?: () => unknown }).__dumpSlots = () => {
                         const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
-                        return sk.slots.map((slotU) => {
-                            const sl = slotU as {
-                                data: { name: string; blendMode: number; darkColor?: unknown };
-                                color: { r: number; g: number; b: number; a: number };
-                                darkColor?: { r: number; g: number; b: number };
-                                getAttachment?: () => { name?: string } | null;
-                                currentMesh?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
-                                currentSprite?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
-                            };
-                            const disp = sl.currentMesh ?? sl.currentSprite;
-                            const d2 = disp as unknown as { renderable?: boolean; visible?: boolean; worldAlpha?: number } | undefined;
-                            return {
-                                name: sl.data.name,
-                                // Bone + its ROOT ancestor: the only structural handle for
-                                // splitting scenery slots from character slots.
-                                bone: (sl as unknown as { bone?: { data?: { name?: string } } }).bone?.data?.name ?? null,
-                                root: (() => {
-                                    let b = (sl as unknown as { bone?: { parent?: unknown; data?: { name?: string } } }).bone as { parent?: { parent?: unknown; data?: { name?: string } } | null; data?: { name?: string } } | undefined;
-                                    let guard = 0;
-                                    while (b?.parent && guard++ < 64) b = b.parent as typeof b;
-                                    return b?.data?.name ?? null;
-                                })(),
-                                dataBlend: sl.data.blendMode,
-                                drawnBlend: disp ? disp.blendMode : null,
-                                col: [sl.color.r, sl.color.g, sl.color.b, sl.color.a].map((x) => Number(x.toFixed(3))),
-                                dark: sl.darkColor ? [sl.darkColor.r, sl.darkColor.g, sl.darkColor.b].map((x) => Number(x.toFixed(3))) : null,
-                                att: sl.getAttachment ? (sl.getAttachment()?.name ?? null) : null,
-                                rend: d2 ? !!d2.renderable : null,
-                                vis: d2 ? !!d2.visible : null,
-                                wa: d2 && typeof d2.worldAlpha === "number" ? Number(d2.worldAlpha.toFixed(3)) : null,
-                                // Canvas-space bounds, so a slot can be matched to a REGION of
-                                // the residual instead of guessed at from its name.
-                                box: (() => {
-                                    const b = (disp as unknown as { getBounds?: () => { x: number; y: number; width: number; height: number } } | undefined)?.getBounds?.();
-                                    return b ? [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)] : null;
-                                })(),
-                            };
-                        });
+                        // Children of the Spine container that are NOT slot containers (separator
+                        // wash, seated layers, anything else parented in): reported after the slots
+                        // as `__extra:<ctor>` rows with bounds, for the reed2 painter question.
+                        const spc = spine as unknown as { children: PIXI.DisplayObject[]; slotContainers?: PIXI.DisplayObject[] };
+                        const slotSet = new Set(spc.slotContainers ?? []);
+                        const extras = spc.children
+                            .filter((c) => !slotSet.has(c))
+                            .map((c) => {
+                                const b = c.getBounds();
+                                const cc = c as unknown as { renderable?: boolean; visible?: boolean; worldAlpha?: number; blendMode?: number; children?: PIXI.DisplayObject[]; name?: string };
+                                // Name the kids (constructor, the builder's `__srcIndex`, texture id,
+                                // blend, bounds) so a seated container's content can be matched back
+                                // to the scene JSON.
+                                const kids = (cc.children ?? []).slice(0, 24).map((k) => {
+                                    const kk = k as unknown as { __srcIndex?: number; texture?: { baseTexture?: { uid?: number } }; blendMode?: number; renderable?: boolean; visible?: boolean; worldAlpha?: number; name?: string };
+                                    const kb = k.getBounds();
+                                    // One level deeper: a slot container's own children (the drawn
+                                    // sprite or mesh, or whatever else was parented in), with texture ids.
+                                    const grand = ((k as unknown as { children?: PIXI.DisplayObject[] }).children ?? []).slice(0, 6).map((g) => {
+                                        const gg = g as unknown as { texture?: { baseTexture?: { uid?: number; resource?: { url?: string } } }; blendMode?: number; renderable?: boolean; visible?: boolean };
+                                        const gb = g.getBounds();
+                                        return `${g.constructor.name} tex ${gg.texture?.baseTexture?.uid ?? "-"} ${(gg.texture?.baseTexture?.resource?.url ?? "").split("/").pop() ?? ""} blend ${gg.blendMode ?? "-"} r${gg.renderable ? 1 : 0}v${gg.visible ? 1 : 0} [${Math.round(gb.x)},${Math.round(gb.y)},${Math.round(gb.width)},${Math.round(gb.height)}]`;
+                                    });
+                                    return `${k.constructor.name}${kk.name ? `:${kk.name}` : ""} src ${kk.__srcIndex ?? "-"} tex ${kk.texture?.baseTexture?.uid ?? "-"} blend ${kk.blendMode ?? "-"} r${kk.renderable ? 1 : 0}v${kk.visible ? 1 : 0} wa ${typeof kk.worldAlpha === "number" ? kk.worldAlpha.toFixed(2) : "-"} box [${Math.round(kb.x)},${Math.round(kb.y)},${Math.round(kb.width)},${Math.round(kb.height)}] {${grand.join(" ; ")}}`;
+                                });
+                                return {
+                                    name: `__extra:${c.constructor.name}${cc.name ? `:${cc.name}` : ""}`,
+                                    bone: null,
+                                    root: kids.join(" | "),
+                                    dataBlend: null,
+                                    drawnBlend: cc.blendMode ?? null,
+                                    col: null,
+                                    dark: null,
+                                    att: cc.children ? `kids:${cc.children.length}` : null,
+                                    rend: cc.renderable ?? null,
+                                    vis: cc.visible ?? null,
+                                    wa: typeof cc.worldAlpha === "number" ? Number(cc.worldAlpha.toFixed(3)) : null,
+                                    box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
+                                };
+                            });
+                        return sk.slots
+                            .map((slotU) => {
+                                const sl = slotU as {
+                                    data: { name: string; blendMode: number; darkColor?: unknown };
+                                    color: { r: number; g: number; b: number; a: number };
+                                    darkColor?: { r: number; g: number; b: number };
+                                    getAttachment?: () => { name?: string } | null;
+                                    currentMesh?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
+                                    currentSprite?: { blendMode: number; alpha: number; renderable: boolean; visible: boolean; worldAlpha: number };
+                                };
+                                const disp = sl.currentMesh ?? sl.currentSprite;
+                                const d2 = disp as unknown as { renderable?: boolean; visible?: boolean; worldAlpha?: number } | undefined;
+                                return {
+                                    name: sl.data.name,
+                                    // Bone + its ROOT ancestor: the only structural handle for
+                                    // splitting scenery slots from character slots.
+                                    bone: (sl as unknown as { bone?: { data?: { name?: string } } }).bone?.data?.name ?? null,
+                                    root: (() => {
+                                        let b = (sl as unknown as { bone?: { parent?: unknown; data?: { name?: string } } }).bone as { parent?: { parent?: unknown; data?: { name?: string } } | null; data?: { name?: string } } | undefined;
+                                        let guard = 0;
+                                        while (b?.parent && guard++ < 64) b = b.parent as typeof b;
+                                        return b?.data?.name ?? null;
+                                    })(),
+                                    dataBlend: sl.data.blendMode,
+                                    drawnBlend: disp ? disp.blendMode : null,
+                                    col: [sl.color.r, sl.color.g, sl.color.b, sl.color.a].map((x) => Number(x.toFixed(3))),
+                                    dark: sl.darkColor ? [sl.darkColor.r, sl.darkColor.g, sl.darkColor.b].map((x) => Number(x.toFixed(3))) : null,
+                                    att: sl.getAttachment ? (sl.getAttachment()?.name ?? null) : null,
+                                    rend: d2 ? !!d2.renderable : null,
+                                    vis: d2 ? !!d2.visible : null,
+                                    wa: d2 && typeof d2.worldAlpha === "number" ? Number(d2.worldAlpha.toFixed(3)) : null,
+                                    // Canvas-space bounds, so a slot can be matched to a REGION of
+                                    // the residual instead of guessed at from its name.
+                                    box: (() => {
+                                        const b = (disp as unknown as { getBounds?: () => { x: number; y: number; width: number; height: number } } | undefined)?.getBounds?.();
+                                        return b ? [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)] : null;
+                                    })(),
+                                };
+                            })
+                            .concat(extras as never[]);
                     };
                     (window as unknown as { __dumpTex?: () => unknown }).__dumpTex = () => {
                         const cache = (PIXI.utils as unknown as { BaseTextureCache: Record<string, PIXI.BaseTexture> }).BaseTextureCache;
