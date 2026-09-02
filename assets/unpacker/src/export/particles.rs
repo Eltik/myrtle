@@ -2941,6 +2941,20 @@ fn resolve_ram(
             && (shader.ends_with("/Disturb") || shader.ends_with("/Disturb(CustomData)"));
         (shader.contains("Ram/") || dissolve_live || plain_disturb).then_some((mat, shader))
     })?;
+    // DIAGNOSTIC (`DYNCHAR_PPCENSUS`, presence-checked): the port spelling behind every emitter
+    // this path admits, joined to its GameObject name. The exported `kind` collapses the two
+    // plain `Disturb/` spellings into one, so this is the only place the spelling is readable.
+    if std::env::var("DYNCHAR_PPCENSUS").is_ok() {
+        let go_name = all_objects
+            .get(&go_pid)
+            .and_then(|(_, go)| go.get("m_Name"))
+            .and_then(Value::as_str)
+            .unwrap_or("?");
+        eprintln!(
+            "PPCENSUS sysshader go {go_name} mat {:?} shader {shader}",
+            mat.get("m_Name").and_then(Value::as_str).unwrap_or("?")
+        );
+    }
 
     let is_vertex = shader.contains("VertexDisturb");
     let is_dissolve = !shader.contains("Ram/") && shader.contains("Dissolve/");

@@ -2038,21 +2038,56 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                 ),
                 114 => {
                     let cls = class_of(v);
-                    let keys: Vec<&String> = v.as_object().into_iter().flatten().map(|(k, _)| k).filter(|k| !k.starts_with("m_")).take(12).collect();
-                    eprintln!("PPCENSUS mono pid {pid} class {cls} go {} keys {:?}", go_name(v), keys);
+                    let keys: Vec<&String> = v
+                        .as_object()
+                        .into_iter()
+                        .flatten()
+                        .map(|(k, _)| k)
+                        .filter(|k| !k.starts_with("m_"))
+                        .take(12)
+                        .collect();
+                    eprintln!(
+                        "PPCENSUS mono pid {pid} class {cls} go {} keys {:?}",
+                        go_name(v),
+                        keys
+                    );
                     // The volume and every settings object in full: the reader above consumes
                     // only the first entry of the first volume, so the census shows the rest.
-                    if v.get("sharedProfile").is_some() || v.get("blurDegree").is_some() || v.get("blurSpread").is_some() || v.get("intensity").is_some() {
-                        eprintln!("PPCENSUS   full pid {pid} {}", serde_json::to_string(v).unwrap_or_default());
+                    if v.get("sharedProfile").is_some()
+                        || v.get("blurDegree").is_some()
+                        || v.get("blurSpread").is_some()
+                        || v.get("intensity").is_some()
+                    {
+                        eprintln!(
+                            "PPCENSUS   full pid {pid} {}",
+                            serde_json::to_string(v).unwrap_or_default()
+                        );
                     }
                     if let Some(settings) = v.get("settings").and_then(Value::as_array) {
                         for (i, e) in settings.iter().enumerate() {
                             let sp = e.get("m_PathID").and_then(Value::as_i64).unwrap_or(0);
-                            let nm = ordered.iter().find(|(p, _)| **p == sp).and_then(|(_, (_, sv))| sv.get("m_Name").and_then(Value::as_str)).unwrap_or("?");
-                            eprintln!("PPCENSUS   profile pid {pid} settings[{i}] -> pid {sp} name {nm}");
+                            let nm = ordered
+                                .iter()
+                                .find(|(p, _)| **p == sp)
+                                .and_then(|(_, (_, sv))| sv.get("m_Name").and_then(Value::as_str))
+                                .unwrap_or("?");
+                            eprintln!(
+                                "PPCENSUS   profile pid {pid} settings[{i}] -> pid {sp} name {nm}"
+                            );
                         }
                     }
                 }
+                21 => eprintln!(
+                    "PPCENSUS material pid {pid} name {:?} shader {:?} shaderPid {:?}",
+                    v.get("m_Name"),
+                    v.get("_shaderName"),
+                    v.get("m_Shader").and_then(get_path_id)
+                ),
+                48 => eprintln!(
+                    "PPCENSUS shader pid {pid} name {:?}",
+                    v.get("m_Name")
+                        .or_else(|| v.get("m_ParsedForm").and_then(|p| p.get("m_Name")))
+                ),
                 199 => eprintln!(
                     "PPCENSUS psrenderer pid {pid} go {} renderMode {:?} flip {:?} pivot {:?} sortMode {:?} normalDir {:?} materials {:?}",
                     go_name(v),
@@ -2061,7 +2096,9 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                     v.get("m_Pivot"),
                     v.get("m_SortMode"),
                     v.get("m_NormalDirection"),
-                    v.get("m_Materials").and_then(Value::as_array).map(Vec::len)
+                    v.get("m_Materials")
+                        .and_then(Value::as_array)
+                        .map(|a| a.iter().filter_map(get_path_id).collect::<Vec<_>>())
                 ),
                 23 | 137 | 212 => eprintln!(
                     "PPCENSUS renderer cid {cid} pid {pid} go {} sortingOrder {:?} sortingLayerID {:?} sortingLayer {:?}",
