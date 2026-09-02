@@ -1097,16 +1097,19 @@ function customUVOn(): boolean {
     return new URLSearchParams(window.location.search).get("customuv") === "1";
 }
 
-/** MEASUREMENT ARM (`?rambbv=1`, default off): billboard quads on the Ram path carry v=0 on
+/** SHIPPED, default ON (`?rambbv=0` reverts): billboard quads on the Ram path carry v=0 on
  *  their screen-top corners, and the Ram vertex program then applies `1.0 - v` to every lookup.
  *  That flip is what a MESH particle needs (Unity mesh UVs are bottom-up), but on a billboard
- *  it samples the PNG's bottom row at the screen top: Virtuosa's apple copy draws stem-down
- *  where the game's is stem-up (crops, 2026-09-02). With the arm on, the billboard corners
- *  carry v=1 at the top so the shader's flip lands the PNG upright; mesh particles are
- *  untouched. Read as "is the string 1", never as truthiness. */
+ *  it samples the PNG's bottom row at the screen top: Virtuosa's apple copy drew stem-down
+ *  where the game's is stem-up (crops, 2026-09-02). With this on, the billboard corners carry
+ *  v=1 at the top so the shader's flip lands the PNG upright; mesh particles are untouched.
+ *  Measured on the entrance corpus before shipping: zero pixels move on 9 of 12 keys; wis t=12
+ *  moves toward the game on the pixels it changes (mean |luma - game| 65.59 -> 51.21); cet
+ *  t=17 moves away by 1.0 over 73 percent of her frame, an open item in the register, not an
+ *  accepted cost. Read as "is the string 0", never as truthiness. */
 function ramBillboardVOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("rambbv") === "1";
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("rambbv") !== "0";
 }
 
 function uniformFieldSkipOn(): boolean {
