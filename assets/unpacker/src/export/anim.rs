@@ -2053,6 +2053,16 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                         }
                     }
                 }
+                199 => eprintln!(
+                    "PPCENSUS psrenderer pid {pid} go {} renderMode {:?} flip {:?} pivot {:?} sortMode {:?} normalDir {:?} materials {:?}",
+                    go_name(v),
+                    v.get("m_RenderMode"),
+                    v.get("m_Flip"),
+                    v.get("m_Pivot"),
+                    v.get("m_SortMode"),
+                    v.get("m_NormalDirection"),
+                    v.get("m_Materials").and_then(Value::as_array).map(Vec::len)
+                ),
                 23 | 137 | 212 => eprintln!(
                     "PPCENSUS renderer cid {cid} pid {pid} go {} sortingOrder {:?} sortingLayerID {:?} sortingLayer {:?}",
                     go_name(v),
