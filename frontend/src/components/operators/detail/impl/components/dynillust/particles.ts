@@ -457,9 +457,16 @@ function geomDumpName(): string {
     return new URLSearchParams(window.location.search).get("geomdump") ?? "";
 }
 
+/** SHIPPED, default ON (`?plaindisturb=0` reverts): plain `Disturb/` particle materials get the
+ *  Ram/Disturb treatment the scene path already gives the same family, instead of the plain
+ *  sprite path. Ruled correct from the material family (2026-09-02): reed2's `fire_balck_*`
+ *  black fire drew as the bare orange flame, cell 199.0 -> 102.1 against the art's 86.0 with
+ *  the treatment. Settled corpus: 50 rows bit-identical, kalts_sale#14 30.54 -> 23.99,
+ *  whitw2_2 30.75 -> 22.40, reed2 22.94 -> 19.22; ines_as#5 17.66 -> 18.27 and the entrance
+ *  costs on cel and whitw2 are open items in the register. Read as "is the string 0". */
 function plainDisturbOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("plaindisturb") === "1";
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("plaindisturb") !== "0";
 }
 
 function ramTexOn(): boolean {
