@@ -1141,7 +1141,16 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
  *  to apply (statcam's preview box, the hand-off's standing-idle dolly).
  *
  *  `RES_CAP` bounds the buffer for small containers (a 200px-tall thumbnail would otherwise ask
- *  for 10x); the floor keeps us at no less than the display's own density. `?rt2048=0` reverts. */
+ *  for 10x); the floor keeps us at no less than the display's own density.
+ *
+ *  OFF BY DEFAULT since the second performance run (register, "PERFORMANCE, SECOND RUN"): on a
+ *  120 Hz panel the idle target put a 2980x2048 back buffer behind a 780x536 CSS canvas and one
+ *  frame in four fell to the next vsync (20.2 pct missed slots, worst second 23.3 pct), while the
+ *  same skin at the display's own density ran 119.9 fps with none missed. GPU hardware time was
+ *  3.4 against 2.5 ms per frame; the miss is the GPU process's fill-proportional command
+ *  execution and swap. `devicePixelRatio` is the measured device capability the default now
+ *  follows; `?rt2048=1` restores the fixed 2048 / 1080 targets (the parity harness has always
+ *  rendered with `rt2048=0`, so its tables are the density path). */
 const DYN_RT_SIZE = 2048;
 /** The client's ENTRANCE does not go through the square RT - it renders through `ui_camera`
  *  straight onto the screen surface, measured at **2340x1080**. So its faithful target is that
@@ -1151,7 +1160,7 @@ const RES_CAP = 4;
 function dynRenderResolution(cssHeight: number, path: "entrance" | "idle"): number {
     if (typeof window === "undefined") return 1;
     const dpr = window.devicePixelRatio || 1;
-    if (new URLSearchParams(window.location.search).get("rt2048") === "0") return dpr;
+    if (new URLSearchParams(window.location.search).get("rt2048") !== "1") return dpr;
     if (!(cssHeight > 0)) return dpr;
     const want = path === "idle" ? DYN_RT_SIZE : DYN_SCREEN_H;
     return Math.min(RES_CAP, Math.max(dpr, want / cssHeight));
