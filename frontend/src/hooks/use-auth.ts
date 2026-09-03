@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouteContext, useRouter } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
-import type { LoginInput } from "#/lib/auth/login";
-import { getSessionFn, loginFn, logoutFn } from "#/lib/auth/server";
+import type { BilibiliLoginInput, BilibiliSmsLoginInput, CnLoginInput, LoginInput } from "#/lib/auth/login";
+import { getSessionFn, loginBilibiliFn, loginBilibiliSmsFn, loginCnFn, loginFn, logoutFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
 
 export function useAuth() {
@@ -38,6 +38,49 @@ export function useAuth() {
         }
     };
 
+    // Same completion shape as `login` (set user, drop cached anon views,
+    // invalidate route data); only which server fn mints the session differs.
+    const finishLogin = async (u: Awaited<ReturnType<typeof loginFn>>) => {
+        authActions.setUser(u);
+        queryClient.removeQueries({ queryKey: ["user"] });
+        await router.invalidate();
+        return u;
+    };
+
+    const loginBilibili = async (data: BilibiliLoginInput) => {
+        authActions.setLoading();
+        try {
+            return await finishLogin(await loginBilibiliFn({ data }));
+        } catch (err) {
+            authActions.clear();
+            throw err;
+        }
+    };
+
+    // Experimental: see login.ts bilibiliSmsLoginSchema doc comment. May fail
+    // even with a correct code until the guessed SMS endpoints are confirmed.
+    const loginBilibiliSms = async (data: BilibiliSmsLoginInput) => {
+        authActions.setLoading();
+        try {
+            return await finishLogin(await loginBilibiliSmsFn({ data }));
+        } catch (err) {
+            authActions.clear();
+            throw err;
+        }
+    };
+
+    // Experimental: see the CN entry in SERVERS. May fail even with correct
+    // credentials until the real game-client appCode is known.
+    const loginCn = async (data: CnLoginInput) => {
+        authActions.setLoading();
+        try {
+            return await finishLogin(await loginCnFn({ data }));
+        } catch (err) {
+            authActions.clear();
+            throw err;
+        }
+    };
+
     const logout = async () => {
         await logoutFn();
         authActions.clear();
@@ -58,6 +101,9 @@ export function useAuth() {
         loading,
         isAuthenticated,
         login,
+        loginBilibili,
+        loginBilibiliSms,
+        loginCn,
         logout,
         fetchUser,
     };

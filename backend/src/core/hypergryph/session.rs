@@ -2,11 +2,12 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::core::hypergryph::{
+    bilibili,
     config::config,
     constants::{AuthSession, Domain, Server},
     crypto::generate_u8_sign,
     fetch::{FetchError, FetchRequest, fetch_domain, parse_json},
-    loaders,
+    loaders, passport,
     yostar::{AccountPortalSession, account_portal_login, request_token, submit_auth},
 };
 
@@ -181,6 +182,89 @@ async fn get_u8_token(
     .await?;
 
     parse_json(response, "get_u8_token").await
+}
+
+/// Logs into the Bilibili channel (`BiliGame` publisher SDK) and runs it
+/// through the same u8/gs pipeline Yostar's `uid`/`token` go through, with
+/// `channel_id = "2"`.
+pub async fn login_bilibili(
+    client: &Client,
+    username: &str,
+    password: &str,
+) -> Result<AuthSession, FetchError> {
+    let server = Server::Bilibili;
+
+    let bili_data = bilibili::login(client, username, password).await?;
+    let u8_data = get_u8_token(client, &bili_data.uid, &bili_data.access_key, server).await?;
+    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
+
+    Ok(AuthSession {
+        uid: u8_data.uid.into(),
+        secret: secret.into(),
+        seqnum: 1,
+        token: u8_data.token.into(),
+        yostar_uid: bili_data.uid.into(),
+        yostar_token: bili_data.access_key.into(),
+    })
+}
+
+/// Requests an SMS code for the Bilibili channel login below. UNVERIFIED:
+/// see `core::hypergryph::bilibili` module docs, the endpoint itself is a
+/// structural guess.
+pub async fn send_bilibili_sms(client: &Client, phone: &str) -> Result<(), FetchError> {
+    bilibili::send_sms_code(client, phone).await
+}
+
+/// Same as [`login_bilibili`] but via phone + SMS code instead of
+/// username/password. UNVERIFIED: see `core::hypergryph::bilibili` module
+/// docs.
+pub async fn login_bilibili_sms(
+    client: &Client,
+    phone: &str,
+    sms_code: &str,
+) -> Result<AuthSession, FetchError> {
+    let server = Server::Bilibili;
+
+    let bili_data = bilibili::login_sms(client, phone, sms_code).await?;
+    let u8_data = get_u8_token(client, &bili_data.uid, &bili_data.access_key, server).await?;
+    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
+
+    Ok(AuthSession {
+        uid: u8_data.uid.into(),
+        secret: secret.into(),
+        seqnum: 1,
+        token: u8_data.token.into(),
+        yostar_uid: bili_data.uid.into(),
+        yostar_token: bili_data.access_key.into(),
+    })
+}
+
+/// Experimental: official CN (Hypergryph) login via the passport system
+/// documented in `core::hypergryph::passport`. Runs the passport login, then
+/// an oauth2 grant, then the shared u8/gs pipeline with `channel_id = "1"`.
+/// See that module's docs: the appCode the grant step depends on is an
+/// unverified placeholder, so this is expected to fail until the real
+/// game-client appCode is known.
+pub async fn login_cn(
+    client: &Client,
+    credential: passport::PassportCredential<'_>,
+) -> Result<AuthSession, FetchError> {
+    let server = Server::CN;
+
+    let passport_token = passport::login(client, credential).await?;
+    let grant = passport::oauth2_grant(client, &passport_token).await?;
+
+    let u8_data = get_u8_token(client, &grant.uid, &grant.code, server).await?;
+    let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
+
+    Ok(AuthSession {
+        uid: u8_data.uid.into(),
+        secret: secret.into(),
+        seqnum: 1,
+        token: u8_data.token.into(),
+        yostar_uid: grant.uid.into(),
+        yostar_token: grant.code.into(),
+    })
 }
 
 pub struct LoginResult {

@@ -100,6 +100,177 @@ pub async fn login(
     })
 }
 
+pub async fn login_bilibili(
+    state: &AppState,
+    username: &str,
+    password: &str,
+) -> Result<LoginResponse, ApiError> {
+    let server = Server::Bilibili;
+
+    let auth_session = match session::login_bilibili(&state.http_client, username, password).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!(username = %username, error = ?e, "bilibili login failed");
+            return Err(e.into());
+        }
+    };
+
+    let session_json =
+        serde_json::to_string(&auth_session).map_err(|e| ApiError::Internal(e.into()))?;
+    let uid = &*auth_session.uid;
+
+    state
+        .cache
+        .set(&CacheKey::GameSession { uid }, &session_json)
+        .await;
+
+    let user = match find_raw_by_uid(&state.db, uid, server.index() as i16).await? {
+        Some(u) => u,
+        None => create_user(&state.db, uid, server.index() as i16).await?,
+    };
+
+    let token = create_token(
+        &state.config.jwt_secret,
+        &user.id.to_string(),
+        uid,
+        server.as_str(),
+        &user.role,
+        7,
+    )?;
+
+    Ok(LoginResponse {
+        token,
+        uid: uid.to_owned(),
+        server: server.as_str().to_owned(),
+    })
+}
+
+pub async fn send_bilibili_sms(state: &AppState, phone: &str) -> Result<(), ApiError> {
+    if let Err(e) = session::send_bilibili_sms(&state.http_client, phone).await {
+        tracing::warn!(phone = %phone, error = ?e, "bilibili send_sms_code failed");
+        return Err(e.into());
+    }
+    Ok(())
+}
+
+pub async fn login_bilibili_sms(
+    state: &AppState,
+    phone: &str,
+    sms_code: &str,
+) -> Result<LoginResponse, ApiError> {
+    let server = Server::Bilibili;
+
+    let auth_session = match session::login_bilibili_sms(&state.http_client, phone, sms_code).await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!(phone = %phone, error = ?e, "bilibili sms login failed");
+            return Err(e.into());
+        }
+    };
+
+    let session_json =
+        serde_json::to_string(&auth_session).map_err(|e| ApiError::Internal(e.into()))?;
+    let uid = &*auth_session.uid;
+
+    state
+        .cache
+        .set(&CacheKey::GameSession { uid }, &session_json)
+        .await;
+
+    let user = match find_raw_by_uid(&state.db, uid, server.index() as i16).await? {
+        Some(u) => u,
+        None => create_user(&state.db, uid, server.index() as i16).await?,
+    };
+
+    let token = create_token(
+        &state.config.jwt_secret,
+        &user.id.to_string(),
+        uid,
+        server.as_str(),
+        &user.role,
+        7,
+    )?;
+
+    Ok(LoginResponse {
+        token,
+        uid: uid.to_owned(),
+        server: server.as_str().to_owned(),
+    })
+}
+
+pub async fn send_code_cn(state: &AppState, phone: &str) -> Result<(), ApiError> {
+    use crate::core::hypergryph::passport;
+
+    if let Err(e) = passport::send_phone_code(&state.http_client, phone).await {
+        tracing::warn!(phone = %phone, error = ?e, "hypergryph passport send_phone_code failed");
+        return Err(e.into());
+    }
+    Ok(())
+}
+
+/// Experimental CN login via the Hypergryph passport. See
+/// `core::hypergryph::passport` module docs: the appCode this depends on is
+/// an unverified placeholder, so this is expected to fail until the real
+/// game-client appCode is known.
+pub async fn login_cn(
+    state: &AppState,
+    phone: &str,
+    password: Option<&str>,
+    sms_code: Option<&str>,
+) -> Result<LoginResponse, ApiError> {
+    use crate::core::hypergryph::passport::PassportCredential;
+
+    let credential = match (password, sms_code) {
+        (Some(password), _) => PassportCredential::Password { phone, password },
+        (None, Some(code)) => PassportCredential::SmsCode { phone, code },
+        (None, None) => {
+            return Err(ApiError::BadRequest(
+                "provide either password or code".into(),
+            ));
+        }
+    };
+
+    let server = Server::CN;
+
+    let auth_session = match session::login_cn(&state.http_client, credential).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!(phone = %phone, error = ?e, "hypergryph CN login failed");
+            return Err(e.into());
+        }
+    };
+
+    let session_json =
+        serde_json::to_string(&auth_session).map_err(|e| ApiError::Internal(e.into()))?;
+    let uid = &*auth_session.uid;
+
+    state
+        .cache
+        .set(&CacheKey::GameSession { uid }, &session_json)
+        .await;
+
+    let user = match find_raw_by_uid(&state.db, uid, server.index() as i16).await? {
+        Some(u) => u,
+        None => create_user(&state.db, uid, server.index() as i16).await?,
+    };
+
+    let token = create_token(
+        &state.config.jwt_secret,
+        &user.id.to_string(),
+        uid,
+        server.as_str(),
+        &user.role,
+        7,
+    )?;
+
+    Ok(LoginResponse {
+        token,
+        uid: uid.to_owned(),
+        server: server.as_str().to_owned(),
+    })
+}
+
 pub async fn update_settings(
     state: &AppState,
     user_id: Uuid,

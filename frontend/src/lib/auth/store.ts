@@ -8,6 +8,23 @@ interface ILoginFormState {
     otp: string;
     isOTPSent: boolean;
     cooldownUntil: number;
+    // Bilibili: username/password, or phone plus an SMS code requested for
+    // that phone (mirrors the CN flow below).
+    biliUsername: string;
+    biliPassword: string;
+    biliPhone: string;
+    biliSmsCode: string;
+    biliUseSms: boolean;
+    isBiliCodeSent: boolean;
+    biliCooldownUntil: number;
+    // CN (Hypergryph passport, experimental): phone plus either a password or
+    // an SMS code requested for that phone.
+    cnPhone: string;
+    cnPassword: string;
+    cnSmsCode: string;
+    cnUseSms: boolean;
+    isCnCodeSent: boolean;
+    cnCooldownUntil: number;
 }
 
 interface IAuthState {
@@ -24,6 +41,19 @@ const initialLogin: ILoginFormState = {
     otp: "",
     isOTPSent: false,
     cooldownUntil: 0,
+    biliUsername: "",
+    biliPassword: "",
+    biliPhone: "",
+    biliSmsCode: "",
+    biliUseSms: false,
+    isBiliCodeSent: false,
+    biliCooldownUntil: 0,
+    cnPhone: "",
+    cnPassword: "",
+    cnSmsCode: "",
+    cnUseSms: false,
+    isCnCodeSent: false,
+    cnCooldownUntil: 0,
 };
 
 export const authStore = new Store<IAuthState>({ user: null, status: "idle", login: initialLogin, dialogOpen: false, postLoginRedirect: null });
@@ -42,6 +72,31 @@ export const authActions = {
             login: { ...s.login, isOTPSent: true, cooldownUntil: Date.now() + cooldownSeconds * 1000 },
         })),
     resetLoginOTP: () => authStore.setState((s) => ({ ...s, login: { ...s.login, otp: "", isOTPSent: false, cooldownUntil: 0 } })),
+
+    setBiliUsername: (biliUsername: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliUsername } })),
+    setBiliPassword: (biliPassword: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliPassword } })),
+
+    setBiliPhone: (biliPhone: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliPhone } })),
+    setBiliSmsCode: (biliSmsCode: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliSmsCode } })),
+    setBiliUseSms: (biliUseSms: boolean) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliUseSms } })),
+    markBiliCodeSent: (cooldownSeconds = 60) =>
+        authStore.setState((s) => ({
+            ...s,
+            login: { ...s.login, isBiliCodeSent: true, biliCooldownUntil: Date.now() + cooldownSeconds * 1000 },
+        })),
+    resetBiliCode: () => authStore.setState((s) => ({ ...s, login: { ...s.login, biliSmsCode: "", isBiliCodeSent: false, biliCooldownUntil: 0 } })),
+
+    setCnPhone: (cnPhone: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnPhone } })),
+    setCnPassword: (cnPassword: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnPassword } })),
+    setCnSmsCode: (cnSmsCode: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnSmsCode } })),
+    setCnUseSms: (cnUseSms: boolean) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnUseSms } })),
+    markCnCodeSent: (cooldownSeconds = 60) =>
+        authStore.setState((s) => ({
+            ...s,
+            login: { ...s.login, isCnCodeSent: true, cnCooldownUntil: Date.now() + cooldownSeconds * 1000 },
+        })),
+    resetCnCode: () => authStore.setState((s) => ({ ...s, login: { ...s.login, cnSmsCode: "", isCnCodeSent: false, cnCooldownUntil: 0 } })),
+
     resetLoginForm: () => authStore.setState((s) => ({ ...s, login: initialLogin })),
 
     openLoginDialog: (postLoginRedirect: string | null = null) => authStore.setState((s) => ({ ...s, dialogOpen: true, postLoginRedirect })),

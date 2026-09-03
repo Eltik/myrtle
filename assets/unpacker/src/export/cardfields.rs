@@ -1,13 +1,13 @@
-//! Merge the DERIVED card placement fields into freshly exported DynIllust scene JSONs.
+//! Merge the DERIVED card placement fields into freshly exported `DynIllust` scene JSONs.
 //!
 //! `backdropScale` / `backdropOffsetPx` place the operator illustration in scene space for
 //! the Evolved Art card, and the frontend's silhouette clip is data-gated on their
 //! presence. The values are per-key registrations SOLVED FROM MEASUREMENT (56
 //! character-anchored SIFT solves, 15 masked-NCC solves cross-validated on an art-ablated
-//! render; provenance and control statistics in docs/DYNCHAR_GATES.md, 2026-09-01) and are
+//! render; provenance and control statistics in `docs/DYNCHAR_GATES.md`, 2026-09-01) and are
 //! not derivable inside this exporter, which has no renderer. Before this pass existed the
 //! values lived only as post-export patches, and an install silently wiped all 56, which is
-//! how a fielded card shipped square (chen2_2, 2026-09-01). Re-exports now REGENERATE the
+//! how a fielded card shipped square (`chen2_2`, 2026-09-01). Re-exports now REGENERATE the
 //! fields from the committed `cardfields.json`, so the cost of the solve is paid once and
 //! an install can no longer revert them.
 //!
@@ -30,7 +30,9 @@ pub fn merge(output_root: impl AsRef<Path>) {
     let raw = match std::fs::read_to_string(&values_path) {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("cardfields: FAILED to read {values_path}: {e} (derived card placements NOT merged; cards for fielded keys will render square)");
+            eprintln!(
+                "cardfields: FAILED to read {values_path}: {e} (derived card placements NOT merged; cards for fielded keys will render square)"
+            );
             return;
         }
     };
@@ -54,19 +56,25 @@ pub fn merge(output_root: impl AsRef<Path>) {
             continue;
         }
         let scene_json = std::fs::read_dir(&dir).ok().and_then(|rd| {
-            rd.filter_map(Result::ok)
-                .map(|e| e.path())
-                .find(|p| p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.ends_with("[scene].json")))
+            rd.filter_map(Result::ok).map(|e| e.path()).find(|p| {
+                p.file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| n.ends_with("[scene].json"))
+            })
         });
         let Some(path) = scene_json else {
             absent += 1;
             continue;
         };
         let merged_ok = (|| -> Option<()> {
-            let mut scene: Value = serde_json::from_str(&std::fs::read_to_string(&path).ok()?).ok()?;
+            let mut scene: Value =
+                serde_json::from_str(&std::fs::read_to_string(&path).ok()?).ok()?;
             let obj = scene.as_object_mut()?;
             obj.insert("backdropScale".into(), val.get("backdropScale")?.clone());
-            obj.insert("backdropOffsetPx".into(), val.get("backdropOffsetPx")?.clone());
+            obj.insert(
+                "backdropOffsetPx".into(),
+                val.get("backdropOffsetPx")?.clone(),
+            );
             std::fs::write(&path, serde_json::to_string(&scene).ok()?).ok()?;
             Some(())
         })()
@@ -78,7 +86,10 @@ pub fn merge(output_root: impl AsRef<Path>) {
             eprintln!("cardfields: FAILED to merge into {}", path.display());
         }
     }
-    println!("cardfields: merged {merged} of {} derived card placements ({absent} keys not in this export, {failed} failed)", map.len());
+    println!(
+        "cardfields: merged {merged} of {} derived card placements ({absent} keys not in this export, {failed} failed)",
+        map.len()
+    );
 }
 
 #[cfg(test)]
@@ -111,7 +122,10 @@ mod tests {
         let out: Value = serde_json::from_str(&std::fs::read_to_string(&scene).unwrap()).unwrap();
         assert_eq!(out["backdropScale"], 1.25);
         assert_eq!(out["backdropOffsetPx"][1], -7.5);
-        assert_eq!(out["frame"]["cameraSizePx"], 1000, "unrelated fields preserved");
+        assert_eq!(
+            out["frame"]["cameraSizePx"], 1000,
+            "unrelated fields preserved"
+        );
         assert_eq!(out["layers"][1], 2);
         std::fs::remove_dir_all(&tmp).unwrap();
     }

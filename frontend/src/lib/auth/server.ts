@@ -1,14 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { env } from "#/env";
+import { parseError } from "#/lib/api/_shared";
 import type { IUserProfile } from "#/types/user";
 import { backendFetch } from "../fetch";
-import { type AKServer, type LoginInput, loginSchema } from "./login";
+import { type AKServer, type BilibiliLoginInput, type BilibiliSmsLoginInput, bilibiliLoginSchema, bilibiliSmsLoginSchema, type CnLoginInput, cnLoginSchema, type LoginInput, loginSchema } from "./login";
 
 export const loginFn = createServerFn({ method: "POST" })
     .inputValidator((d: LoginInput) => loginSchema.parse(d))
     .handler(async ({ data }) => {
         return await login(data);
+    });
+
+export const loginBilibiliFn = createServerFn({ method: "POST" })
+    .inputValidator((d: BilibiliLoginInput) => bilibiliLoginSchema.parse(d))
+    .handler(async ({ data }) => {
+        return await loginBilibili(data);
+    });
+
+export const loginBilibiliSmsFn = createServerFn({ method: "POST" })
+    .inputValidator((d: BilibiliSmsLoginInput) => bilibiliSmsLoginSchema.parse(d))
+    .handler(async ({ data }) => {
+        return await loginBilibiliSms(data);
+    });
+
+export const loginCnFn = createServerFn({ method: "POST" })
+    .inputValidator((d: CnLoginInput) => cnLoginSchema.parse(d))
+    .handler(async ({ data }) => {
+        return await loginCn(data);
     });
 
 export const getSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -23,6 +42,18 @@ export const sendCodeFn = createServerFn({ method: "POST" })
     .inputValidator((d: { email: string; server: AKServer }) => d)
     .handler(async ({ data }) => {
         return await sendCode(data);
+    });
+
+export const sendCodeCnFn = createServerFn({ method: "POST" })
+    .inputValidator((d: { phone: string }) => d)
+    .handler(async ({ data }) => {
+        return await sendCodeCn(data);
+    });
+
+export const sendBiliSmsFn = createServerFn({ method: "POST" })
+    .inputValidator((d: { phone: string }) => d)
+    .handler(async ({ data }) => {
+        return await sendBiliSms(data);
     });
 
 const COOKIE_BASE = {
@@ -42,11 +73,9 @@ function clearAuthCookies() {
     deleteCookie("auth_indicator", { path: "/" });
 }
 
-const login = async (data: LoginInput) => {
-    const loginRes = await backendFetch("/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-    });
+// Shared by every login method: each just gets a {token, uid} pair out of a
+// different backend endpoint, then finishes identically from there.
+const completeLogin = async (loginRes: Response): Promise<IUserProfile> => {
     if (!loginRes.ok) throw new Error("Invalid credentials");
     const { token, uid } = (await loginRes.json()) as { token: string; uid: string };
 
@@ -59,6 +88,44 @@ const login = async (data: LoginInput) => {
     if (!userRes.ok) throw new Error("Failed to fetch user data");
     return (await userRes.json()) as IUserProfile;
 };
+
+const login = async (data: LoginInput) =>
+    completeLogin(
+        await backendFetch("/login", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    );
+
+const loginBilibili = async (data: BilibiliLoginInput) =>
+    completeLogin(
+        await backendFetch("/login/bilibili", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    );
+
+// Experimental: see the login.ts bilibiliSmsLoginSchema doc comment and the
+// backend core::hypergryph::bilibili module docs. The SMS endpoints are an
+// unverified structural guess, unlike the username/password flow above.
+const loginBilibiliSms = async (data: BilibiliSmsLoginInput) =>
+    completeLogin(
+        await backendFetch("/login/bilibili/sms", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    );
+
+// Experimental: see the CN entry in SERVERS and the backend's
+// core::hypergryph::passport module docs. May fail even with correct
+// credentials until the real game-client appCode is known.
+const loginCn = async (data: CnLoginInput) =>
+    completeLogin(
+        await backendFetch("/login/cn", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    );
 
 const getSession = async () => {
     const token = getCookie("site_token");
@@ -89,14 +156,29 @@ const sendCode = async (data: { email: string; server: AKServer }) => {
         body: JSON.stringify({ email: data.email, server: data.server }),
     });
 
-    const res = (await req.json()) as {
-        status: string;
-        error?: string;
-    };
+    if (!req.ok) throw await parseError(req);
 
-    if (res.status !== "ok") {
-        throw new Error(res.error ?? "Failed to send OTP");
-    }
+    return (await req.json()) as { status: string };
+};
 
-    return res;
+const sendCodeCn = async (data: { phone: string }) => {
+    const req = await backendFetch("/login/cn/send-code", {
+        method: "POST",
+        body: JSON.stringify({ phone: data.phone }),
+    });
+
+    if (!req.ok) throw await parseError(req);
+
+    return (await req.json()) as { status: string };
+};
+
+const sendBiliSms = async (data: { phone: string }) => {
+    const req = await backendFetch("/login/bilibili/send-code", {
+        method: "POST",
+        body: JSON.stringify({ phone: data.phone }),
+    });
+
+    if (!req.ok) throw await parseError(req);
+
+    return (await req.json()) as { status: string };
 };

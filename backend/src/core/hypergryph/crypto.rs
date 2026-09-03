@@ -105,3 +105,20 @@ pub fn generate_u8_sign(data: &[(&str, &str)]) -> String {
     mac.update(query.as_bytes());
     hex::encode(mac.finalize().into_bytes())
 }
+
+const BILIBILI_SALT: &str = "8783abfb533544c59e598cddc933d1bf";
+
+pub fn generate_bilibili_sign(data: &[(&str, &str)]) -> String {
+    let mut entries: Vec<_> = data.to_vec();
+    entries.sort_unstable_by_key(|(k, _)| *k);
+
+    let mut concatenated = String::new();
+    for (_, v) in &entries {
+        concatenated.push_str(v);
+    }
+    concatenated.push_str(BILIBILI_SALT);
+
+    let mut hasher = Md5::new();
+    hasher.update(concatenated.as_bytes());
+    format!("{:x}", hasher.finalize())
+}

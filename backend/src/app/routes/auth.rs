@@ -40,6 +40,88 @@ pub async fn login(
     Ok(Json(result))
 }
 
+#[derive(Deserialize)]
+pub struct BilibiliLoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+pub async fn login_bilibili(
+    State(state): State<AppState>,
+    Json(body): Json<BilibiliLoginRequest>,
+) -> Result<Json<services::auth::LoginResponse>, ApiError> {
+    let result = services::auth::login_bilibili(&state, &body.username, &body.password).await?;
+    Ok(Json(result))
+}
+
+#[derive(Deserialize)]
+pub struct BilibiliSendSmsRequest {
+    pub phone: String,
+}
+
+pub async fn send_bilibili_sms(
+    State(state): State<AppState>,
+    Json(body): Json<BilibiliSendSmsRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    services::auth::send_bilibili_sms(&state, &body.phone).await?;
+    Ok(ok_status())
+}
+
+#[derive(Deserialize)]
+pub struct BilibiliSmsLoginRequest {
+    pub phone: String,
+    pub code: String,
+}
+
+/// Experimental: see `core::hypergryph::bilibili` module docs. The SMS
+/// endpoints themselves are unverified guesses, unlike username/password
+/// login.
+pub async fn login_bilibili_sms(
+    State(state): State<AppState>,
+    Json(body): Json<BilibiliSmsLoginRequest>,
+) -> Result<Json<services::auth::LoginResponse>, ApiError> {
+    let result = services::auth::login_bilibili_sms(&state, &body.phone, &body.code).await?;
+    Ok(Json(result))
+}
+
+#[derive(Deserialize)]
+pub struct CnSendCodeRequest {
+    pub phone: String,
+}
+
+pub async fn send_code_cn(
+    State(state): State<AppState>,
+    Json(body): Json<CnSendCodeRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    services::auth::send_code_cn(&state, &body.phone).await?;
+    Ok(ok_status())
+}
+
+#[derive(Deserialize)]
+pub struct CnLoginRequest {
+    pub phone: String,
+    #[serde(default)]
+    pub password: Option<String>,
+    #[serde(default)]
+    pub code: Option<String>,
+}
+
+/// Experimental: see `core::hypergryph::passport` module docs. Expected to
+/// fail until the real game-client appCode is known.
+pub async fn login_cn(
+    State(state): State<AppState>,
+    Json(body): Json<CnLoginRequest>,
+) -> Result<Json<services::auth::LoginResponse>, ApiError> {
+    let result = services::auth::login_cn(
+        &state,
+        &body.phone,
+        body.password.as_deref(),
+        body.code.as_deref(),
+    )
+    .await?;
+    Ok(Json(result))
+}
+
 pub async fn verify(
     State(state): State<AppState>,
     auth: AuthUser,

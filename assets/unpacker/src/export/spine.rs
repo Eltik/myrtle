@@ -1748,27 +1748,29 @@ fn collect_dynchar_bg_quads(
                     .then(|| super::mesh::parse_mesh(mv, resources))
                     .flatten()
             })
-            .map(|m| {
-                let world = go_to_transform
-                    .get(&go_pid)
-                    .map_or_else(super::mesh::Mat4::identity, |&tf| {
-                        accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose)
-                    });
-                let mut lo = [f32::MAX; 2];
-                let mut hi = [f32::MIN; 2];
-                for p in &m.positions {
-                    let w = world.point(*p);
-                    lo[0] = lo[0].min(w[0]);
-                    lo[1] = lo[1].min(w[1]);
-                    hi[0] = hi[0].max(w[0]);
-                    hi[1] = hi[1].max(w[1]);
-                }
-                format!("x {:.0}..{:.0} y {:.0}..{:.0}", lo[0], hi[0], lo[1], hi[1])
-            })
-            .unwrap_or_else(|| "no in-bundle mesh".to_string());
-        let curves = color_channels
-            .get(&go_pid)
-            .map(|chs| {
+            .map_or_else(
+                || "no in-bundle mesh".to_string(),
+                |m| {
+                    let world = go_to_transform
+                        .get(&go_pid)
+                        .map_or_else(super::mesh::Mat4::identity, |&tf| {
+                            accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose)
+                        });
+                    let mut lo = [f32::MAX; 2];
+                    let mut hi = [f32::MIN; 2];
+                    for p in &m.positions {
+                        let w = world.point(*p);
+                        lo[0] = lo[0].min(w[0]);
+                        lo[1] = lo[1].min(w[1]);
+                        hi[0] = hi[0].max(w[0]);
+                        hi[1] = hi[1].max(w[1]);
+                    }
+                    format!("x {:.0}..{:.0} y {:.0}..{:.0}", lo[0], hi[0], lo[1], hi[1])
+                },
+            );
+        let curves = color_channels.get(&go_pid).map_or_else(
+            || "none".to_string(),
+            |chs| {
                 chs.iter()
                     .map(|c| {
                         let t0 = c.curve.first().map_or(0.0, |k| k.0);
@@ -1777,8 +1779,8 @@ fn collect_dynchar_bg_quads(
                     })
                     .collect::<Vec<_>>()
                     .join(",")
-            })
-            .unwrap_or_else(|| "none".to_string());
+            },
+        );
         format!("mats={mats:?} ext={ext} colorcurves={curves}")
     };
     // Tint-source census and switch for the `_MainColor`-without-`_TintColor` population
@@ -5339,15 +5341,16 @@ fn derive_backdrop_transform(
     std::env::var("DYNCHAR_BD_DERIVE").ok()?;
     let key = spine_dir.file_name()?.to_str()?.to_string();
     let op = key.rsplit_once('_').map(|(a, _)| a)?.to_string();
-    let art_root = std::env::var("DYNCHAR_ART_ROOT")
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|_| spine_dir.join("../../../textures"));
+    let art_root = std::env::var("DYNCHAR_ART_ROOT").map_or_else(
+        |_| spine_dir.join("../../../textures"),
+        std::path::PathBuf::from,
+    );
     let art_path = ["chararts", "skinpack"]
         .iter()
         .map(|d| art_root.join(d).join(&op).join(format!("{key}.png")))
         .find(|p| p.exists())?;
     let art = image::open(&art_path).ok()?.to_rgba8();
-    let (aw, ah) = (art.width() as f64, art.height() as f64);
+    let (aw, ah) = (f64::from(art.width()), f64::from(art.height()));
     // Luma pyramid of the illustration at two working widths.
     let mk = |w: u32| -> (Vec<f32>, u32, u32) {
         let h = ((ah * f64::from(w) / aw).round() as u32).max(1);
@@ -5430,9 +5433,20 @@ fn derive_backdrop_transform(
     cands.sort_by(|a, b| (b.pw * b.ph).total_cmp(&(a.pw * a.ph)));
     cands.truncate(5);
     // Masked NCC of a template over a luma image, best position at a fixed step.
-    let ncc_best = |img: &[f32], iw: u32, ih: u32, tpl: &[f32], tw: u32, th: u32, step: usize, x0: i64, y0: i64, x1: i64, y1: i64| -> (f32, i64, i64) {
-        let (iw, ih) = (iw as i64, ih as i64);
-        let (twi, thi) = (tw as i64, th as i64);
+    let ncc_best = |img: &[f32],
+                    iw: u32,
+                    ih: u32,
+                    tpl: &[f32],
+                    tw: u32,
+                    th: u32,
+                    step: usize,
+                    x0: i64,
+                    y0: i64,
+                    x1: i64,
+                    y1: i64|
+     -> (f32, i64, i64) {
+        let (iw, ih) = (i64::from(iw), i64::from(ih));
+        let (twi, thi) = (i64::from(tw), i64::from(th));
         let n = (tw * th) as f32;
         let tmean = tpl.iter().sum::<f32>() / n;
         let tvar: f32 = tpl.iter().map(|v| (v - tmean) * (v - tmean)).sum();
@@ -5502,19 +5516,35 @@ fn derive_backdrop_transform(
             .to_image();
             let mut best: Option<(f32, f64, i64, i64)> = None; // score, s_art_per_croppx(at320), x, y
             let mut twf = 14.0f64;
+            #[allow(clippy::while_float)]
             while twf <= 300.0 {
                 let tw = twf as u32;
                 let th = ((ch * twf / cw).round() as u32).max(4);
-                if th <= (a320h as u32).saturating_sub(1) && tw < a320w {
+                if th <= a320h.saturating_sub(1) && tw < a320w {
                     let tpl = resize(&crop, tw, th, FilterType::Triangle);
                     let tl: Vec<f32> = tpl
                         .pixels()
                         .map(|p| {
                             let a = f32::from(p[3]) / 255.0;
-                            (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) * a
+                            (0.299 * f32::from(p[0])
+                                + 0.587 * f32::from(p[1])
+                                + 0.114 * f32::from(p[2]))
+                                * a
                         })
                         .collect();
-                    let (sc, bx, by) = ncc_best(&art320, a320w, a320h, &tl, tw, th, 2, 0, 0, i64::from(a320w), i64::from(a320h));
+                    let (sc, bx, by) = ncc_best(
+                        &art320,
+                        a320w,
+                        a320h,
+                        &tl,
+                        tw,
+                        th,
+                        2,
+                        0,
+                        0,
+                        i64::from(a320w),
+                        i64::from(a320h),
+                    );
                     if best.is_none() || sc > best.unwrap().0 {
                         best = Some((sc, twf / cw, bx, by));
                     }
@@ -5530,6 +5560,7 @@ fn derive_backdrop_transform(
             // Refine at 640: same parametrization, double coords.
             let mut fine: Option<(f32, f64, i64, i64)> = None;
             let mut fs = s320 * 0.94;
+            #[allow(clippy::while_float)]
             while fs <= s320 * 1.06 {
                 let tw = ((cw * fs * 2.0).round() as u32).max(8);
                 let th = ((ch * fs * 2.0).round() as u32).max(8);
@@ -5539,10 +5570,25 @@ fn derive_backdrop_transform(
                         .pixels()
                         .map(|p| {
                             let a = f32::from(p[3]) / 255.0;
-                            (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) * a
+                            (0.299 * f32::from(p[0])
+                                + 0.587 * f32::from(p[1])
+                                + 0.114 * f32::from(p[2]))
+                                * a
                         })
                         .collect();
-                    let (sc, fx, fy) = ncc_best(&art640, a640w, a640h, &tl, tw, th, 1, bx * 2 - 8, by * 2 - 8, bx * 2 + 8, by * 2 + 8);
+                    let (sc, fx, fy) = ncc_best(
+                        &art640,
+                        a640w,
+                        a640h,
+                        &tl,
+                        tw,
+                        th,
+                        1,
+                        bx * 2 - 8,
+                        by * 2 - 8,
+                        bx * 2 + 8,
+                        by * 2 + 8,
+                    );
                     if fine.is_none() || sc > fine.unwrap().0 {
                         fine = Some((sc, fs, fx, fy));
                     }
@@ -5586,7 +5632,10 @@ fn derive_backdrop_transform(
         v[v.len() / 2]
     };
     if close.len() >= 2 {
-        return Some((pick(|a| a.1, &close), [pick(|a| a.2, &close), pick(|a| a.3, &close)]));
+        return Some((
+            pick(|a| a.1, &close),
+            [pick(|a| a.2, &close), pick(|a| a.3, &close)],
+        ));
     }
     let best = accepted.iter().max_by(|a, b| a.0.total_cmp(&b.0))?;
     (best.0 >= 0.70).then_some((best.1, [best.2, best.3]))
