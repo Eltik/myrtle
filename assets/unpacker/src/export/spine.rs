@@ -1692,6 +1692,95 @@ fn collect_dynchar_bg_quads(
     // element back to its authored node (and to WHICH prefab root) otherwise means
     // re-deriving the walk by hand. Output-neutral.
     let attrib_dbg = std::env::var("SCENE_ATTRIB").is_ok();
+    // DIAGNOSTIC (`SCENE_ATTRIB=1`): describe a renderer the walk is about to DROP by its
+    // own data, so a dropped plate can be identified without re-admitting it: each
+    // material as name:port:_MainTex, the mesh's world extent in scene px, and the time
+    // window of any animated colour channel on the GameObject (chyue's side bands and
+    // Lappland's cut fade, 2026-09-03).
+    let drop_desc = |go_pid: i64, renderer: &Value| -> String {
+        let mats: Vec<String> = renderer
+            .get("m_Materials")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|r| get_path_id(r).filter(|&p| p != 0))
+                    .filter_map(|mp| all_objects.get(&mp).map(|(_, m)| m))
+                    .map(|m| {
+                        let tex = m
+                            .get("m_SavedProperties")
+                            .and_then(|sp| sp.get("m_TexEnvs"))
+                            .and_then(|te| te.as_array())
+                            .and_then(|te| {
+                                te.iter().find_map(|e| {
+                                    let key = e.get("first").and_then(|k| k.as_str())?;
+                                    if key != "_MainTex" {
+                                        return None;
+                                    }
+                                    let tp = e
+                                        .get("second")
+                                        .and_then(|s| s.get("m_Texture"))
+                                        .and_then(get_path_id)?;
+                                    all_objects
+                                        .get(&tp)
+                                        .and_then(|(_, t)| t.get("m_Name"))
+                                        .and_then(|n| n.as_str())
+                                        .map(str::to_string)
+                                })
+                            })
+                            .unwrap_or_else(|| "?".to_string());
+                        format!(
+                            "{}:{}:{}",
+                            m.get("m_Name").and_then(|n| n.as_str()).unwrap_or("?"),
+                            m.get("_shaderName").and_then(|n| n.as_str()).unwrap_or("?"),
+                            tex
+                        )
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let ext = go_to_mesh
+            .get(&go_pid)
+            .copied()
+            .filter(|&mp| mp != 0)
+            .and_then(|mp| all_objects.get(&mp))
+            .and_then(|(cid, mv)| {
+                (*cid == 43)
+                    .then(|| super::mesh::parse_mesh(mv, resources))
+                    .flatten()
+            })
+            .map(|m| {
+                let world = go_to_transform
+                    .get(&go_pid)
+                    .map_or_else(super::mesh::Mat4::identity, |&tf| {
+                        accumulate_matrix(all_objects, tf, &spine_gos, &idle_pose)
+                    });
+                let mut lo = [f32::MAX; 2];
+                let mut hi = [f32::MIN; 2];
+                for p in &m.positions {
+                    let w = world.point(*p);
+                    lo[0] = lo[0].min(w[0]);
+                    lo[1] = lo[1].min(w[1]);
+                    hi[0] = hi[0].max(w[0]);
+                    hi[1] = hi[1].max(w[1]);
+                }
+                format!("x {:.0}..{:.0} y {:.0}..{:.0}", lo[0], hi[0], lo[1], hi[1])
+            })
+            .unwrap_or_else(|| "no in-bundle mesh".to_string());
+        let curves = color_channels
+            .get(&go_pid)
+            .map(|chs| {
+                chs.iter()
+                    .map(|c| {
+                        let t0 = c.curve.first().map_or(0.0, |k| k.0);
+                        let t1 = c.curve.last().map_or(0.0, |k| k.0);
+                        format!("ch{} {:.2}..{:.2}", c.channel, t0, t1)
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",")
+            })
+            .unwrap_or_else(|| "none".to_string());
+        format!("mats={mats:?} ext={ext} colorcurves={curves}")
+    };
     // Tint-source census and switch for the `_MainColor`-without-`_TintColor` population
     // (see `main_color_no_tint_color`). Read once here, not per layer.
     //
@@ -1871,53 +1960,11 @@ fn collect_dynchar_bg_quads(
                     is_entrance,
                 )
                 .unwrap_or_else(|| ("?".to_string(), "?"));
-                // Name the dropped renderer's materials by content: `_MainTex` texture name
-                // and the resolved shader port, so a state-gated plate can be identified
-                // without re-admitting it (chyue's side bands, 2026-09-03).
-                let mats: Vec<String> = renderer
-                    .get("m_Materials")
-                    .and_then(|v| v.as_array())
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|r| get_path_id(r).filter(|&p| p != 0))
-                            .filter_map(|mp| all_objects.get(&mp).map(|(_, m)| m))
-                            .map(|m| {
-                                let tex = m
-                                    .get("m_SavedProperties")
-                                    .and_then(|sp| sp.get("m_TexEnvs"))
-                                    .and_then(|te| te.as_array())
-                                    .and_then(|te| {
-                                        te.iter().find_map(|e| {
-                                            let key = e.get("first").and_then(|k| k.as_str())?;
-                                            if key != "_MainTex" {
-                                                return None;
-                                            }
-                                            let tp = e
-                                                .get("second")
-                                                .and_then(|s| s.get("m_Texture"))
-                                                .and_then(get_path_id)?;
-                                            all_objects
-                                                .get(&tp)
-                                                .and_then(|(_, t)| t.get("m_Name"))
-                                                .and_then(|n| n.as_str())
-                                                .map(str::to_string)
-                                        })
-                                    })
-                                    .unwrap_or_else(|| "?".to_string());
-                                format!(
-                                    "{}:{}:{}",
-                                    m.get("m_Name").and_then(|n| n.as_str()).unwrap_or("?"),
-                                    m.get("_shaderName").and_then(|n| n.as_str()).unwrap_or("?"),
-                                    tex
-                                )
-                            })
-                            .collect()
-                    })
-                    .unwrap_or_default();
                 eprintln!(
-                    "    [scene] DROP inactive-group  {:<26} blocked_by='{by}' ({why}) root={} mats={mats:?}",
+                    "    [scene] DROP inactive-group  {:<26} blocked_by='{by}' ({why}) root={} {}",
                     host.go_name(all_objects, go_pid),
-                    host.root_name_of_go(all_objects, go_pid)
+                    host.root_name_of_go(all_objects, go_pid),
+                    drop_desc(go_pid, renderer)
                 );
             }
             continue;
@@ -1998,8 +2045,9 @@ fn collect_dynchar_bg_quads(
             let (Some(main_pid), Some(tex_val)) = (main_pid, tex_val) else {
                 if attrib_dbg {
                     eprintln!(
-                        "    [scene] DROP no _MainTex       {:<26} mat={mat_pid}",
-                        host.go_name(all_objects, go_pid)
+                        "    [scene] DROP no _MainTex       {:<26} mat={mat_pid} {}",
+                        host.go_name(all_objects, go_pid),
+                        drop_desc(go_pid, renderer)
                     );
                 }
                 continue;
