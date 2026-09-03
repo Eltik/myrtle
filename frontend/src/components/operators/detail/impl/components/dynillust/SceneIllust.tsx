@@ -3338,7 +3338,23 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                     const hookHost = window as unknown as Record<string, () => unknown>;
                     hookHost.__dumpColorTracks = dumpColorTracks;
                     hookHost[`__dumpColorTracks_${opts.mode}`] = dumpColorTracks;
-                    (window as unknown as { __dumpSlots?: () => unknown }).__dumpSlots = () => {
+                    // Registered per composite mode with a fallback: after the hand-off the
+                    // entrance composite's dump returns null (its skeleton is gone), and the
+                    // plain name must then reach the MAIN composite's slots (W's settled dump,
+                    // 2026-09-03), the same trap `__dumpColorTracks` hit before.
+                    const dumpHost = window as unknown as Record<string, (() => unknown) | undefined>;
+                    dumpHost.__dumpSlots = () => {
+                        for (const m of ["entrance", "main"]) {
+                            try {
+                                const r = dumpHost[`__dumpSlots_${m}`]?.();
+                                if (r != null) return r;
+                            } catch {
+                                // a destroyed composite's dump throws; fall through to the next mode
+                            }
+                        }
+                        return null;
+                    };
+                    dumpHost[`__dumpSlots_${opts.mode}`] = () => {
                         const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
                         // Children of the Spine container that are NOT slot containers (separator
                         // wash, seated layers, anything else parented in): reported after the slots
