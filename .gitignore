@@ -14,3 +14,6 @@ backend/.dps-updater-state.json
 # IL2CPP recovery working dir (APKs, dumps, frida-server) — see assets/il2cpp-recover.sh
 il2cpp-work/
 assets/il2cpp-work/
+
+# Local scratch work (renders, captures, one-off instruments), never published
+scratchpad/
