@@ -2083,6 +2083,29 @@ pub fn entrance_post_fx(all_objects: &HashMap<i64, (i32, Value)>) -> Option<Entr
                     v.get("_shaderName"),
                     v.get("m_Shader").and_then(get_path_id)
                 ),
+                // AnimationClips with their AUTHORED EVENTS: a skin-side trigger for a client
+                // transition (Lappland's cut fade question, 2026-09-03) would live here.
+                74 => eprintln!(
+                    "PPCENSUS clip pid {pid} name {:?} length {:?} events {:?}",
+                    v.get("m_Name"),
+                    v.get("m_MuscleClipInfo").and_then(|m| m.get("m_StopTime")),
+                    v.get("m_Events").and_then(|e| e.as_array()).map(|arr| arr
+                        .iter()
+                        .map(|e| format!(
+                            "{}:{}:{}:{}",
+                            e.get("time")
+                                .and_then(serde_json::Value::as_f64)
+                                .unwrap_or(-1.0),
+                            e.get("functionName")
+                                .and_then(|f| f.as_str())
+                                .unwrap_or("?"),
+                            e.get("data").and_then(|f| f.as_str()).unwrap_or(""),
+                            e.get("floatParameter")
+                                .and_then(serde_json::Value::as_f64)
+                                .unwrap_or(0.0)
+                        ))
+                        .collect::<Vec<_>>())
+                ),
                 48 => eprintln!(
                     "PPCENSUS shader pid {pid} name {:?}",
                     v.get("m_Name")

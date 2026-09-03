@@ -3383,6 +3383,13 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     box: [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)],
                                 };
                             });
+                        // `?bonepos=<regex>`: the matching BONES' world positions in skeleton space
+                        // (spine authored px, Y-up, origin at the root), appended as `__bone:<name>`
+                        // rows, for the settle-anchor test (2026-09-03).
+                        const bpq = new URLSearchParams(window.location.search).get("bonepos");
+                        const boneRows = bpq
+                            ? ((spine as unknown as { skeleton: { bones: { data: { name: string }; worldX: number; worldY: number }[] } }).skeleton.bones ?? []).filter((b) => new RegExp(bpq).test(b.data.name)).map((b) => ({ name: `__bone:${b.data.name}`, wx: Math.round(b.worldX), wy: Math.round(b.worldY) }))
+                            : [];
                         return sk.slots
                             .map((slotU) => {
                                 const sl = slotU as {
@@ -3422,7 +3429,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     })(),
                                 };
                             })
-                            .concat(extras as never[]);
+                            .concat(extras as never[])
+                            .concat(boneRows as never[]);
                     };
                     (window as unknown as { __dumpTex?: () => unknown }).__dumpTex = () => {
                         const cache = (PIXI.utils as unknown as { BaseTextureCache: Record<string, PIXI.BaseTexture> }).BaseTextureCache;
