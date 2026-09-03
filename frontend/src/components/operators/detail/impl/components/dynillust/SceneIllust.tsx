@@ -1390,6 +1390,18 @@ const VIEWER_BACKDROP = "#4d4d4e";
  *  cameras author a grey or white the fixed fill approximates (0.3382 = 86 of 255 on nine of
  *  them), and chyue authors pure black, which is exactly her pillarbox. `?camclear=0` reverts to
  *  the fixed fill; without an authored colour the fixed fill is used unchanged. */
+/** MEASUREMENT ARM (`?pagebg=1`, default off): at settle, hide the environment fill so the
+ *  PAGE behind the canvas shows wherever the illustration is transparent (the canvas already
+ *  clears to alpha 0). The game draws no fill behind a margin-transparent illustration at rest:
+ *  chyue's settled bands are her operator page's background (231 / 198 luma, flat, achromatic)
+ *  showing through art whose margins are alpha 0.2, where the viewer paints its fill (her
+ *  authored entrance clear colour, black). Derived from the art's own alpha by construction,
+ *  no per-skin term. Read as the string "1", never as truthiness. */
+function pageBgOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("pagebg") === "1";
+}
+
 function camClearOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("camclear") !== "0";
@@ -5034,6 +5046,8 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 const startSkel = skelPath.replace(/\.skel$/, "_Start.skel");
                 const startAtlas = atlasPath.replace(/\.atlas$/, "_Start.atlas");
                 const swapToMainIdle = () => {
+                    // Page background at settle (see `pageBgOn`): the fill served the cinematic.
+                    if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
                     if (aborted()) return;
                     const mu = mainUnderRef.current;
                     if (mu) {
@@ -5116,7 +5130,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
                 const built = entrance && entrance !== "unsupported" ? entrance : null;
                 // No cinematic: the idle path is live already, so take its target now.
-                if (!built) raiseToIdleResolution();
+                if (!built) {
+                    raiseToIdleResolution();
+                    // Page background at settle (see `pageBgOn`): no cinematic, so from the start.
+                    if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
+                }
                 if (built) {
                     // Repaint the environment fill with the entrance camera's authored clear colour
                     // (see `camClearOn`). The fill sprite is created with the main composite, before
