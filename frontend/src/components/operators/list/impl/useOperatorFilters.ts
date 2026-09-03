@@ -2,9 +2,9 @@ import { useCallback, useMemo } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { rarityToNumber } from "#/lib/utils";
-import type { OperatorRarityTier } from "#/types/operators";
 import { CLASS_SORT_ORDER } from "./constants";
-import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
+import { buildFilterOptions, countSharedFilters, matchesSharedFilters, toFilterSets } from "./shared-filters";
+import type { ArrayFilterKey, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
 
 const initialState: IFilterState = {
     searchQuery: "",
@@ -39,73 +39,31 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     );
 
     // Build the option-lists for the sidebar from the full dataset.
-    const filterOptions = useMemo<IFilterOptions>(() => {
-        const subclasses = new Set<string>();
-        const nations = new Set<string>();
-        const factions = new Set<string>();
-        const races = new Set<string>();
-        const birthPlaces = new Set<string>();
-        const artists = new Set<string>();
-        const voiceActors = new Set<string>();
-
-        for (const op of data) {
-            const { race, placeOfBirth } = op;
-            if (op.subProfessionId) subclasses.add(op.subProfessionId);
-            if (op.nationId) nations.add(op.nationId);
-            if (op.groupId) factions.add(op.groupId);
-            if (op.teamId) factions.add(op.teamId);
-            if (race && race !== "Unknown") races.add(race);
-            if (placeOfBirth) birthPlaces.add(placeOfBirth);
-            for (const a of op.artists) artists.add(a);
-            for (const v of op.voiceActors) voiceActors.add(v);
-        }
-
-        return {
-            subclasses: [...subclasses].sort(),
-            nations: [...nations].sort(),
-            factions: [...factions].sort(),
-            races: [...races].sort(),
-            birthPlaces: [...birthPlaces].sort(),
-            artists: [...artists].sort(),
-            voiceActors: [...voiceActors].sort(),
-        };
-    }, [data]);
+    const filterOptions = useMemo(() => buildFilterOptions(data), [data]);
 
     // Filter first, then sort - separating the two memos means changing sort
     // doesn't rerun the (more expensive) filter pass.
     const filtered = useMemo(() => {
         const query = compactForSearch(filters.searchQuery.trim());
-        const sets = {
-            classes: new Set(filters.classes),
-            subclasses: new Set(filters.subclasses),
-            rarities: new Set(filters.rarities),
-            genders: new Set(filters.genders),
-            nations: new Set(filters.nations),
-            factions: new Set(filters.factions),
-            races: new Set(filters.races),
-            birthPlaces: new Set(filters.birthPlaces),
-            artists: new Set(filters.artists),
-            voiceActors: new Set(filters.voiceActors),
-        };
+        const sets = toFilterSets({
+            classes: filters.classes,
+            subclasses: filters.subclasses,
+            rarities: filters.rarities,
+            genders: filters.genders,
+            nations: filters.nations,
+            factions: filters.factions,
+            races: filters.races,
+            birthPlaces: filters.birthPlaces,
+            artists: filters.artists,
+            voiceActors: filters.voiceActors,
+        });
 
         return data.filter((op) => {
             if (query) {
                 const haystack = compactForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`);
                 if (!haystack.includes(query)) return false;
             }
-            if (sets.classes.size && !sets.classes.has(op.profession)) return false;
-            if (sets.subclasses.size && !sets.subclasses.has(op.subProfessionId)) return false;
-            if (sets.rarities.size && !sets.rarities.has(`TIER_${op.rarity}` as OperatorRarityTier)) return false;
-            if (sets.genders.size && (!op.gender || !sets.genders.has(op.gender))) return false;
-            if (sets.nations.size && (!op.nationId || !sets.nations.has(op.nationId))) return false;
-            if (sets.factions.size) {
-                const hit = (op.groupId && sets.factions.has(op.groupId)) || (op.teamId && sets.factions.has(op.teamId));
-                if (!hit) return false;
-            }
-            if (sets.races.size && (!op.race || !sets.races.has(op.race))) return false;
-            if (sets.birthPlaces.size && (!op.placeOfBirth || !sets.birthPlaces.has(op.placeOfBirth))) return false;
-            if (sets.artists.size && !op.artists.some((a) => sets.artists.has(a))) return false;
-            if (sets.voiceActors.size && !op.voiceActors.some((v) => sets.voiceActors.has(v))) return false;
+            if (!matchesSharedFilters(op, sets)) return false;
             if (filters.hasNotes === "yes" && !op.hasNotes) return false;
             if (filters.hasNotes === "no" && op.hasNotes) return false;
             return true;
@@ -146,19 +104,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
 
     const clearFilters = useCallback(() => setFilters(initialState), [setFilters]);
 
-    const activeFilterCount =
-        filters.classes.length +
-        filters.subclasses.length +
-        filters.rarities.length +
-        filters.genders.length +
-        filters.nations.length +
-        filters.factions.length +
-        filters.races.length +
-        filters.birthPlaces.length +
-        filters.artists.length +
-        filters.voiceActors.length +
-        (filters.searchQuery ? 1 : 0) +
-        (filters.hasNotes !== "any" ? 1 : 0);
+    const activeFilterCount = countSharedFilters(filters) + (filters.searchQuery ? 1 : 0) + (filters.hasNotes !== "any" ? 1 : 0);
 
     const setters = useMemo(
         () => ({

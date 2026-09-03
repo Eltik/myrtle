@@ -1,4 +1,4 @@
-import type { IOperatorIndexEntry, OperatorRarityTier } from "#/types/operators";
+import type { IOperatorIndexEntry, OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
 export type ViewMode = "grid" | "compact" | "list";
 export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership";
@@ -43,8 +43,8 @@ export interface IOperatorExportRow extends IOperatorView {
     skin: string | null;
 }
 
-export interface IFilterState {
-    searchQuery: string;
+/** The array-valued filters every operator-list surface shares (the /operators page, the profile roster). Page-specific single selects (availability, notes, ownership) live beside these on each page's own state. */
+export interface ISharedFilters {
     classes: string[];
     subclasses: string[];
     rarities: OperatorRarityTier[];
@@ -55,6 +55,10 @@ export interface IFilterState {
     birthPlaces: string[];
     artists: string[];
     voiceActors: string[];
+}
+
+export interface IFilterState extends ISharedFilters {
+    searchQuery: string;
     hasNotes: HasNotesFilter;
     /** "upcoming" swaps the grid to CN operators not yet on Global. */
     availability: AvailabilityFilter;
@@ -62,7 +66,7 @@ export interface IFilterState {
     sortOrder: SortOrder;
 }
 
-export type ArrayFilterKey = "classes" | "subclasses" | "rarities" | "genders" | "nations" | "factions" | "races" | "birthPlaces" | "artists" | "voiceActors";
+export type ArrayFilterKey = keyof ISharedFilters;
 
 export interface IFilterOptions {
     subclasses: string[];
@@ -70,6 +74,21 @@ export interface IFilterOptions {
     factions: string[];
     races: string[];
     birthPlaces: string[];
+    artists: string[];
+    voiceActors: string[];
+}
+
+/** The per-operator fields the shared predicate and option builder read. `IOperatorView` satisfies it directly; the roster builds one from an index entry plus the voices table. */
+export interface IFilterSubject {
+    profession: string;
+    subProfessionId: string;
+    rarity: OperatorRarity;
+    gender: string;
+    nationId: string;
+    groupId: string | null;
+    teamId: string | null;
+    race: string;
+    placeOfBirth: string;
     artists: string[];
     voiceActors: string[];
 }

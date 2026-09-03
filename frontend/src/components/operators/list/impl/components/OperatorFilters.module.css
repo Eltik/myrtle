@@ -1,10 +1,16 @@
+/*
+ * --filter-sidebar-offset is the bottom edge of whatever sticky chrome the page
+ * keeps above the panel. The site header alone is 64px; a page that stacks more
+ * (the profile's tab bar) raises it through FilterPanel's stickyOffset prop.
+ * The 16px gap and the 96px (= offset + 32) viewport reservation stay fixed.
+ */
 .filterSidebar {
     position: sticky;
-    top: 80px;
+    top: calc(var(--filter-sidebar-offset, 64px) + 16px);
     flex: 0 0 280px;
     width: 280px;
     align-self: stretch;
-    max-height: calc(100vh - 96px);
+    max-height: calc(100vh - var(--filter-sidebar-offset, 64px) - 32px);
     overflow: hidden;
     margin-right: 8px;
     box-sizing: border-box;
@@ -27,7 +33,7 @@
 .filterSidebarInner {
     width: 280px;
     height: 100%;
-    max-height: calc(100vh - 96px);
+    max-height: calc(100vh - var(--filter-sidebar-offset, 64px) - 32px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 18px 16px;

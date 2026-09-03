@@ -1,18 +1,20 @@
+import type { FilterSets } from "#/components/operators/list/impl/shared-filters";
+import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
 import { compactForSearch } from "#/lib/search/fuzzy";
-import { rarityToNumber } from "#/lib/utils";
-import type { OperatorRarityTier } from "#/types/operators";
 import { isMaxed } from "./helpers.card";
-import type { IDisplayEntry, RarityFilter, SortKey, SortOrder } from "./types";
+import type { IDisplayEntry, SortKey, SortOrder } from "./types";
 
-export function filterEntries(entries: IDisplayEntry[], rarity: RarityFilter, search: string): IDisplayEntry[] {
+export function filterEntries(entries: IDisplayEntry[], search: string, sets: FilterSets): IDisplayEntry[] {
     const q = compactForSearch(search);
-    const tierNum = rarity === "all" ? null : rarityToNumber(rarity as OperatorRarityTier);
-    if (!q && tierNum === null) return entries;
+    const active = hasAnySharedFilter(sets);
+    if (!q && !active) return entries;
 
     return entries.filter((e) => {
-        if (tierNum !== null && e.rarity !== tierNum) return false;
         if (q && !compactForSearch(e.name).includes(q)) return false;
-        return true;
+        if (!active) return true;
+        // An operator missing from the index cannot be shown as matching any attribute filter.
+        if (!e.meta) return false;
+        return matchesSharedFilters({ ...e.meta, voiceActors: e.voiceActors }, sets);
     });
 }
 

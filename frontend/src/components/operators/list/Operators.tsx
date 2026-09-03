@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Filter, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -13,14 +13,17 @@ import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
+import { ActiveFilterChips } from "./impl/components/ActiveFilterChips";
+import { FilterToggleButton } from "./impl/components/FilterToggleButton";
 import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
 import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorCardUpcoming } from "./impl/components/OperatorCardUpcoming";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
-import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
+import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
 
@@ -159,13 +162,7 @@ export function OperatorsList() {
     }, [filteredOperators, upcomingFiltered, page, itemsPerPage, totalCount]);
 
     const activeChips = useMemo(() => {
-        const chips = CHIP_CONFIG.flatMap(({ key, prefix, label }) =>
-            (filters[key] as string[]).map((v) => ({
-                key: `${prefix}-${v}`,
-                label: label(v),
-                onRemove: () => removeFrom(key, v),
-            })),
-        );
+        const chips = buildSharedChips(filters, removeFrom);
         if (filters.hasNotes !== "any") {
             chips.push({
                 key: `notes-${filters.hasNotes}`,
@@ -234,30 +231,7 @@ export function OperatorsList() {
 
                 <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label="Operator results">
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <button
-                                        type="button"
-                                        data-on={filtersVisible || undefined}
-                                        className="relative box-border inline-flex h-9 w-9 shrink-0 cursor-pointer appearance-none items-center justify-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-0 font-[inherit] text-muted-foreground transition-[background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_24%,transparent)] focus-visible:outline-none data-on:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] data-on:bg-card data-on:text-foreground motion-reduce:transition-none md:w-auto md:min-w-20 md:px-1.5"
-                                        onClick={toggleFilters}
-                                        aria-label={filtersVisible ? "Hide filters" : "Show filters"}
-                                        aria-expanded={filtersVisible}
-                                    />
-                                }
-                            >
-                                <span className="hidden border-border border-r pr-1 font-medium font-mono text-[10px] uppercase leading-none tracking-[0.12em] md:inline">Filter</span>
-                                <Filter className="hidden h-3.5 w-3.5 md:block" aria-hidden="true" />
-                                {filtersVisible ? <ChevronLeft className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" />}
-                                {!filtersVisible && activeFilterCount > 0 && (
-                                    <span className="absolute -top-1.25 -right-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono font-semibold text-[9px] text-primary-foreground leading-none shadow-[0_0_0_2px_var(--background)]">{activeFilterCount}</span>
-                                )}
-                            </TooltipTrigger>
-                            <TooltipPopup side="top" sideOffset={8}>
-                                {filtersVisible ? "Hide filters" : "Show filters"}
-                            </TooltipPopup>
-                        </Tooltip>
+                        <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
 
                         <div className="flex h-10 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] sm:max-w-115 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
                             <Search className="h-3.75 w-3.75" aria-hidden="true" />
@@ -383,25 +357,7 @@ export function OperatorsList() {
                         </Tooltip>
                     </div>
 
-                    {activeChips.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                            <span className="mr-0.5">Active:</span>
-                            {activeChips.map((chip) => (
-                                <span
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklch,var(--primary)_10%,transparent)] py-1 pr-1 pl-2.25 font-medium font-sans text-[11.5px] text-primary leading-none [&>button:hover]:bg-[color-mix(in_oklch,var(--primary)_32%,transparent)] [&>button]:inline-flex [&>button]:h-3.75 [&>button]:w-3.75 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:border-0 [&>button]:bg-[color-mix(in_oklch,var(--primary)_22%,transparent)] [&>button]:p-0"
-                                    key={chip.key}
-                                >
-                                    {chip.label}
-                                    <button type="button" onClick={chip.onRemove} aria-label={`Remove ${chip.label}`}>
-                                        <X className="h-2 w-2" aria-hidden="true" />
-                                    </button>
-                                </span>
-                            ))}
-                            <button type="button" className="cursor-pointer appearance-none border-0 bg-transparent p-0 font-medium font-sans text-[12px] text-muted-foreground leading-none underline underline-offset-[3px] hover:text-foreground" onClick={clearFilters}>
-                                Clear all
-                            </button>
-                        </div>
-                    )}
+                    <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
 
                     <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                         <span>

@@ -5,7 +5,7 @@ import type { IOperatorOwnershipInfo, IOperatorView } from "./types";
 export type NotedSet = ReadonlySet<string>;
 export type OwnershipLookup = ReadonlyMap<string, IOperatorOwnershipInfo>;
 
-function extractVoiceActors(charId: string, voices: IVoices | undefined): string[] {
+export function extractVoiceActors(charId: string, voices: IVoices | undefined): string[] {
     const entry = voices?.voiceLangDict[charId];
     if (!entry) return [];
     const names = new Set<string>();

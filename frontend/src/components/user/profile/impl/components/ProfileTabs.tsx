@@ -15,6 +15,15 @@ interface IProfileTabsProps {
     onChange: Dispatch<SetStateAction<TabId>>;
 }
 
+/**
+ * Bottom edge of the profile's sticky stack at >= 640px: the 64px site header
+ * plus this tab bar, which MEASURES 44px in the browser (14px padding above and
+ * below a 14px line, the 1px border, and a rounding pixel from the badge row).
+ * Anything else that sticks on this page (the roster filter panel) must start
+ * below it. Kept next to the CSS that produces it.
+ */
+export const PROFILE_STICKY_OFFSET_PX = 64 + 44;
+
 export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
     const wrapRef = useRef<HTMLDivElement>(null);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });

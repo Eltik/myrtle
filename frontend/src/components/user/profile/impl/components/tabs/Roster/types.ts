@@ -1,9 +1,9 @@
+import type { ISharedFilters } from "#/components/operators/list/impl/types";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry, IOperatorListItem, OperatorRarityTier } from "#/types/operators";
+import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 
 export type SortKey = "level" | "rarity" | "obtained" | "potential" | "trust" | "maxed";
 export type SortOrder = "asc" | "desc";
-export type RarityFilter = "all" | OperatorRarityTier;
 export type OwnershipFilter = "all" | "owned" | "unowned";
 export type ViewMode = "detailed" | "compact";
 
@@ -13,6 +13,7 @@ export interface IOwnedEntry extends IRosterEntry {
     static: IOperatorListItem | null;
     name: string;
     rarity: number;
+    voiceActors: string[];
 }
 
 export interface IUnownedEntry {
@@ -22,14 +23,14 @@ export interface IUnownedEntry {
     rarity: number;
     meta: IOperatorIndexEntry;
     static: IOperatorListItem | null;
+    voiceActors: string[];
 }
 
 export type IDisplayEntry = IOwnedEntry | IUnownedEntry;
 
-export interface IRosterFilterState {
+export interface IRosterFilterState extends ISharedFilters {
     search: string;
     ownership: OwnershipFilter;
-    rarity: RarityFilter;
     sortBy: SortKey;
     sortOrder: SortOrder;
     viewMode: ViewMode;
