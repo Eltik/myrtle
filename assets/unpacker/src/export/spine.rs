@@ -1871,8 +1871,51 @@ fn collect_dynchar_bg_quads(
                     is_entrance,
                 )
                 .unwrap_or_else(|| ("?".to_string(), "?"));
+                // Name the dropped renderer's materials by content: `_MainTex` texture name
+                // and the resolved shader port, so a state-gated plate can be identified
+                // without re-admitting it (chyue's side bands, 2026-09-03).
+                let mats: Vec<String> = renderer
+                    .get("m_Materials")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|r| get_path_id(r).filter(|&p| p != 0))
+                            .filter_map(|mp| all_objects.get(&mp).map(|(_, m)| m))
+                            .map(|m| {
+                                let tex = m
+                                    .get("m_SavedProperties")
+                                    .and_then(|sp| sp.get("m_TexEnvs"))
+                                    .and_then(|te| te.as_array())
+                                    .and_then(|te| {
+                                        te.iter().find_map(|e| {
+                                            let key = e.get("first").and_then(|k| k.as_str())?;
+                                            if key != "_MainTex" {
+                                                return None;
+                                            }
+                                            let tp = e
+                                                .get("second")
+                                                .and_then(|s| s.get("m_Texture"))
+                                                .and_then(get_path_id)?;
+                                            all_objects
+                                                .get(&tp)
+                                                .and_then(|(_, t)| t.get("m_Name"))
+                                                .and_then(|n| n.as_str())
+                                                .map(str::to_string)
+                                        })
+                                    })
+                                    .unwrap_or_else(|| "?".to_string());
+                                format!(
+                                    "{}:{}:{}",
+                                    m.get("m_Name").and_then(|n| n.as_str()).unwrap_or("?"),
+                                    m.get("_shaderName").and_then(|n| n.as_str()).unwrap_or("?"),
+                                    tex
+                                )
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default();
                 eprintln!(
-                    "    [scene] DROP inactive-group  {:<26} blocked_by='{by}' ({why}) root={}",
+                    "    [scene] DROP inactive-group  {:<26} blocked_by='{by}' ({why}) root={} mats={mats:?}",
                     host.go_name(all_objects, go_pid),
                     host.root_name_of_go(all_objects, go_pid)
                 );
