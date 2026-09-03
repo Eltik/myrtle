@@ -1870,12 +1870,26 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         setError(null);
         setUnsupported(false);
 
+        // PixiJS re-uploads every batch flush into the same GL buffer pair unless this flag is
+        // false; its own rule is `!isMobile.apple.device`, set for Apple GPUs that stall on it,
+        // and Chrome's WebGL on this Mac (ANGLE over Metal) stalls the same way: a native
+        // sample of the GPU process showed 68 pct of its main thread in
+        // `-[_MTLCommandBuffer waitUntilCompleted]` inside drawElements, 6.69 ms of every
+        // 8.33 ms frame at 120 Hz, and 2.45 with a geometry per flush (register,
+        // "PERFORMANCE, THIRD RUN"). Pixels are identical; the cost is one geometry per flush.
+        // `?batchpool=0` restores PixiJS's rule.
+        PIXI.BatchRenderer.canUploadSameBuffer = new URLSearchParams(window.location.search).get("batchpool") === "0";
         ensureAdditiveSpriteBoost(); // MUST precede Renderer construction (plugins bind at build)
         const app = new PIXI.Application({
             width: container.clientWidth || 600,
             height: container.clientHeight || 450,
             backgroundAlpha: 0,
-            antialias: true,
+            // Every one of the 86 dynamic illustrations has a scene, so the canvas only ever
+            // receives the HDR tonemap quad and a multisampled canvas antialiases nothing: the
+            // five parity rows are byte-identical either way, and the resolve cost 1.12 ms of GPU
+            // time per frame against 0.39 for the plain blit (register, "PERFORMANCE, THIRD
+            // RUN"). `?msaa=1` restores the multisampled canvas.
+            antialias: new URLSearchParams(window.location.search).get("msaa") === "1",
             // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
             // steps up to the square-2048 RT target when the idle path takes over - which is
             // exactly where the client itself switches between the two.
