@@ -1,5 +1,7 @@
 import * as PIXI from "pixi.js";
+import { type DecodedImage, decodedSize, loadDecoded } from "#/lib/utils";
 import type { IAnimationBounds } from "../chibi/helpers";
+import { baseTextureOf } from "../chibi/helpers";
 import { sampleColorCurve } from "./sceneMesh";
 
 /**
@@ -4033,7 +4035,7 @@ function sheetBadCells(base: PIXI.BaseTexture, tx: number, ty: number): Set<numb
  * blend, dark texels contribute ~nothing and only the light glows. Textures that
  * already carry real transparency (soft sprites) are returned untouched.
  */
-function processGlowTexture(img: HTMLImageElement): ILoadedTex {
+function processGlowTexture(img: DecodedImage): ILoadedTex {
     /** Minimum alpha coverage for a desaturated texture to count as a FLOW/HAZE panel rather
      *  than artwork. DIAGNOSTIC ONLY - `?desatcov=<f>` overrides both gates; the shipped
      *  defaults are the historical ones and are passed in per call site. */
@@ -4043,12 +4045,11 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         return Number.isFinite(v) && v >= 0 ? v : dflt;
     };
     const plain = (skip = false, desatPanel = false, hazePanel = false): ILoadedTex => {
-        const base = PIXI.BaseTexture.from(img);
+        const base = baseTextureOf(img);
         return { base, glow: false, rawBase: base, darkDropBase: base, noOrbBase: base, skip, desatPanel, hazePanel };
     };
     try {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
+        const [w, h] = decodedSize(img);
         if (!w || !h) return plain();
         const canvas = document.createElement("canvas");
         canvas.width = w;
@@ -4194,12 +4195,12 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         const ddCtx = ddCanvas.getContext("2d");
         let darkDropBase: PIXI.BaseTexture;
         if (!hasDarkField) {
-            darkDropBase = PIXI.BaseTexture.from(img);
+            darkDropBase = baseTextureOf(img);
         } else if (ddCtx) {
             ddCtx.putImageData(imgData, 0, 0);
             darkDropBase = PIXI.BaseTexture.from(ddCanvas);
         } else {
-            darkDropBase = PIXI.BaseTexture.from(img);
+            darkDropBase = baseTextureOf(img);
         }
         // An opaque texture billboarded as-is stamps a hard square (dark
         // distortion/cloud maps, solid fills). Two shape corrections:
@@ -4318,7 +4319,7 @@ function processGlowTexture(img: HTMLImageElement): ILoadedTex {
         // Opaque glow textures render additive, so desatPanel (a normal-blend mesh
         // gate) never applies - but keep the field consistent.
         const base = PIXI.BaseTexture.from(canvas);
-        return { base, glow: true, rawBase: PIXI.BaseTexture.from(img), darkDropBase, noOrbBase: noOrbBase ?? base, skip, desatPanel: false, hazePanel: false };
+        return { base, glow: true, rawBase: baseTextureOf(img), darkDropBase, noOrbBase: noOrbBase ?? base, skip, desatPanel: false, hazePanel: false };
     } catch {
         return plain();
     }
@@ -4345,13 +4346,7 @@ function unskipSet(): Set<number> {
 }
 
 function loadTexture(url: string): Promise<ILoadedTex> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(processGlowTexture(img));
-        img.onerror = () => reject(new Error(`Failed to load particle texture: ${url}`));
-        img.src = url;
-    });
+    return loadDecoded(url, "particle texture").then(processGlowTexture);
 }
 
 /** Max value a MinMaxScalar can take (for "is it ~stationary?" / life-span tests). */

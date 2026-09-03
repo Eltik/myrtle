@@ -480,6 +480,73 @@ export function formatRelative(iso: string | null | undefined): string {
     const then = new Date(iso).getTime();
     if (Number.isNaN(then)) return "-";
     const diffMs = Date.now() - then;
+/** A loaded texture source: the bare element, or its pixels already decoded off-thread. */
+export type DecodedImage = HTMLImageElement | ImageBitmap;
+
+/** Load a texture image with its pixels decoded off the main thread. A browser decodes a
+ *  PNG lazily at its first draw and keeps that decode only per draw size, so a loader that
+ *  reads pixels inside `onload`, or a texture upload that follows it, pays the whole decode
+ *  on the main thread, once per distinct draw: traced at 4x CPU throttling, one dynamic skin
+ *  open carried 1176 ms of "Decode Image" on the main thread inside onload tasks of 574,
+ *  572 and 235 ms (docs/DYNCHAR_GATES.md, "PERFORMANCE, FIRST RUN"). Neither
+ *  `HTMLImageElement.decode()` nor `createImageBitmap(element)` moved them (both traced
+ *  decoding inside the calling task). `createImageBitmap(blob)` is the platform's off-thread
+ *  decode, the path PixiJS's own bitmap loader takes; the bitmap's pixels then serve canvas
+ *  reads and the GPU upload without another decode. Any failure on that path falls back to
+ *  the element loader, whose error is the one callers report. `?syncdecode=1` takes the
+ *  element path directly for A/B measurement. */
+export function loadDecoded(url: string, what: string): Promise<DecodedImage> {
+    const element = () =>
+        new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Failed to load ${what}: ${url}`));
+            img.src = url;
+        });
+    if (typeof createImageBitmap !== "function" || typeof fetch !== "function" || syncDecodeOn()) return element();
+    return (
+        fetch(url, { mode: "cors" })
+            .then((r) => {
+                if (!r.ok) throw new Error(`${r.status}`);
+                return r.blob();
+            })
+            // Two bitmaps from one decode. The unpremultiplied one holds the PNG's own bytes,
+            // so a canvas read sees what it saw from the element (a premultiplied bitmap read
+            // back through a canvas is rounded twice, which moved 71 of 73 settled parity rows
+            // by 1..5 levels on soft edges). WebGL uploads a bitmap's bytes as they are, ignoring
+            // the premultiply unpack flag, so the upload needs the premultiplied twin, derived
+            // from the first bitmap without a second decode (see uploadSource).
+            .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "none" }))
+            .then((raw) =>
+                createImageBitmap(raw, { premultiplyAlpha: "premultiply" }).then((pma) => {
+                    uploadTwin.set(raw, pma);
+                    return raw;
+                }),
+            )
+            .catch(element)
+    );
+}
+
+const uploadTwin = new WeakMap<ImageBitmap, ImageBitmap>();
+
+/** The source to upload to the GPU for a decoded image: the element itself, or the
+ *  premultiplied twin of a bitmap made by loadDecoded (the bitmap itself if it has none). */
+export function uploadSource(img: DecodedImage): DecodedImage {
+    return img instanceof HTMLImageElement ? img : (uploadTwin.get(img) ?? img);
+}
+
+/** Pixel size of a decoded source (an element reports its natural size, a bitmap its own). */
+export function decodedSize(img: DecodedImage): [number, number] {
+    if (img instanceof HTMLImageElement) return [img.naturalWidth || img.width, img.naturalHeight || img.height];
+    return [img.width, img.height];
+}
+
+function syncDecodeOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("syncdecode") === "1";
+}
+
     if (diffMs < 60_000) return "just now";
     const mins = Math.floor(diffMs / 60_000);
     if (mins < 60) return `${mins}m ago`;

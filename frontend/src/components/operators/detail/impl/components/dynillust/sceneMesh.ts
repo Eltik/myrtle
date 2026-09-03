@@ -1,4 +1,6 @@
 import * as PIXI from "pixi.js";
+import { type DecodedImage, decodedSize, loadDecoded } from "#/lib/utils";
+import { baseTextureOf } from "../chibi/helpers";
 
 /**
  * Live renderer for a dynamic illustration's BACKGROUND mesh layers.
@@ -395,10 +397,9 @@ function ramTexOn(): boolean {
 /** Rebuild an opaque additive texture with alpha = luminance (black-point) so its
  *  dark/grey field premultiplies to ~nothing; returns null for real-alpha sprites
  *  (nothing to drop) or on any canvas failure. */
-function darkDropGlow(img: HTMLImageElement): PIXI.BaseTexture | null {
+function darkDropGlow(img: DecodedImage): PIXI.BaseTexture | null {
     try {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
+        const [w, h] = decodedSize(img);
         if (!w || !h) return null;
         const canvas = document.createElement("canvas");
         canvas.width = w;
@@ -433,10 +434,9 @@ function darkDropGlow(img: HTMLImageElement): PIXI.BaseTexture | null {
  *  (1 - saturation)` - a bright desaturated veil → ~1, a saturated red halftone →
  *  ~0) and `opaqueFrac` (fraction of texels with alpha > 0.9 → ~1 for a solid
  *  painted backdrop). Both default to 0 on any canvas failure. */
-function analyzeTexture(img: HTMLImageElement): { whiteness: number; opaqueFrac: number; sat: number } {
+function analyzeTexture(img: DecodedImage): { whiteness: number; opaqueFrac: number; sat: number } {
     try {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
+        const [w, h] = decodedSize(img);
         if (!w || !h) return { whiteness: 0, opaqueFrac: 0, sat: 0 };
         const canvas = document.createElement("canvas");
         canvas.width = w;
@@ -481,10 +481,9 @@ function analyzeTexture(img: HTMLImageElement): { whiteness: number; opaqueFrac:
  *
  *  This is the signature of a viewport APERTURE - see {@link sceneAperture}. Sampled
  *  on a fixed 128x128 grid so the cost is independent of the source texture size. */
-function annulusInner(img: HTMLImageElement): number | null {
+function annulusInner(img: DecodedImage): number | null {
     try {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
+        const [w, h] = decodedSize(img);
         // A ring is authored square and centred; a non-square texture is something else.
         if (!w || !h || w !== h || w < 32) return null;
         const N = 128;
@@ -534,23 +533,17 @@ function annulusInner(img: HTMLImageElement): number | null {
 }
 
 function loadTexture(url: string): Promise<ISceneTex> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-            const raw = PIXI.BaseTexture.from(img);
-            // Scene layers bake the material's `_MainTex` Scale/Offset into their UVs
-            // (see the exporter's collect_dynchar_bg_quads). Many layers tile or mirror
-            // (negative scale) and so reference UVs OUTSIDE [0,1] - REPEAT wrap makes those
-            // sample correctly instead of edge-smearing under Pixi's default CLAMP.
-            raw.wrapMode = PIXI.WRAP_MODES.REPEAT;
-            const glow = darkDropGlow(img);
-            if (glow) glow.wrapMode = PIXI.WRAP_MODES.REPEAT;
-            const { whiteness, opaqueFrac, sat } = analyzeTexture(img);
-            resolve({ raw, glow: glow ?? raw, whiteness, opaqueFrac, sat, annulusInner: annulusInner(img) });
-        };
-        img.onerror = () => reject(new Error(`Failed to load scene texture: ${url}`));
-        img.src = url;
+    return loadDecoded(url, "scene texture").then((src) => {
+        const raw = baseTextureOf(src);
+        // Scene layers bake the material's `_MainTex` Scale/Offset into their UVs
+        // (see the exporter's collect_dynchar_bg_quads). Many layers tile or mirror
+        // (negative scale) and so reference UVs OUTSIDE [0,1] - REPEAT wrap makes those
+        // sample correctly instead of edge-smearing under Pixi's default CLAMP.
+        raw.wrapMode = PIXI.WRAP_MODES.REPEAT;
+        const glow = darkDropGlow(src);
+        if (glow) glow.wrapMode = PIXI.WRAP_MODES.REPEAT;
+        const { whiteness, opaqueFrac, sat } = analyzeTexture(src);
+        return { raw, glow: glow ?? raw, whiteness, opaqueFrac, sat, annulusInner: annulusInner(src) };
     });
 }
 

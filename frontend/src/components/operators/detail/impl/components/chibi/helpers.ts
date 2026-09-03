@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
 import { env } from "#/env";
 import { type IChibiCharacter, type IChibiSkin, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
-import { loadImage } from "#/lib/utils";
+import { type DecodedImage, decodedSize, loadDecoded, uploadSource } from "#/lib/utils";
 import { patchBakedIkRedundancy } from "./bakedIkFix";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DYNAMIC_FIT_MARGIN, EXPORT_HEIGHT, EXPORT_PADDING, EXPORT_WIDTH, MAX_EXPORT_DIM, type ViewType } from "./constants";
 import { patchSpine38PathConstraint } from "./pathConstraintFix";
@@ -79,15 +79,25 @@ export function chibiAssetURL(path: string, server?: "en" | "cn", root?: string)
  *  matters only because the dynchar ATLAS pages are 2280 and fall outside that default. */
 const ATLAS_MIPMAP = PIXI.MIPMAP_MODES.ON;
 
+/** A base texture over a decoded source: the element, or the premultiplied upload twin
+ *  of a bitmap (see loadDecoded). The resource owns the twin, so destroying the texture
+ *  releases those pixels as PixiJS's own image resource released its bitmap. */
+export function baseTextureOf(img: DecodedImage, options?: PIXI.IBaseTextureOptions): PIXI.BaseTexture {
+    const src = uploadSource(img);
+    if (src instanceof HTMLImageElement) return PIXI.BaseTexture.from(src, options);
+    return new PIXI.BaseTexture(new PIXI.ImageBitmapResource(src, { ownsImageBitmap: true }), options);
+}
+
 /**
  * Build a BaseTexture from an image. If the actual PNG is smaller than the
  * atlas-declared size, the image is upscaled onto a canvas so atlas UV
  * coordinates remain valid (the game ships downscaled textures but the atlas
  * still references full-resolution coordinates).
  */
-function buildPageTexture(img: HTMLImageElement, declaredW: number, declaredH: number): PIXI.BaseTexture {
-    if (img.naturalWidth >= declaredW && img.naturalHeight >= declaredH) {
-        return PIXI.BaseTexture.from(img, { mipmap: ATLAS_MIPMAP });
+function buildPageTexture(img: DecodedImage, declaredW: number, declaredH: number): PIXI.BaseTexture {
+    const [w, h] = decodedSize(img);
+    if (w >= declaredW && h >= declaredH) {
+        return baseTextureOf(img, { mipmap: ATLAS_MIPMAP });
     }
 
     const canvas = document.createElement("canvas");
@@ -144,7 +154,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     const textureCache = new Map<string, PIXI.BaseTexture>();
     await Promise.all(
         Array.from(pageInfo, async ([pageName, { declaredW, declaredH }]) => {
-            const img = await loadImage(`${atlasBaseDir}${encodeURIComponent(pageName)}${bust}`, { crossOrigin: true });
+            const img = await loadDecoded(`${atlasBaseDir}${encodeURIComponent(pageName)}${bust}`, "image");
             textureCache.set(pageName, buildPageTexture(img, declaredW, declaredH));
         }),
     );

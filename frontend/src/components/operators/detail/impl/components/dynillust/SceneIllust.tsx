@@ -2,9 +2,9 @@ import * as PIXI from "pixi.js";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "#/components/ui/spinner";
 import type { IChibiSpineFiles } from "#/lib/api/chibis";
-import { cn } from "#/lib/utils";
+import { cn, decodedSize, loadDecoded } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
-import { chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
+import { baseTextureOf, chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles, particleCensus } from "./particles";
 import {
@@ -923,48 +923,41 @@ interface IComposite {
  *  same art, so their mass centres correspond - robust to composition, unlike a
  *  bounding-box centre which the arch/railing skew). */
 function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-            const texture = PIXI.Texture.from(img);
-            let centroid = { nx: 0.5, ny: 0.5 };
-            try {
-                const w = img.naturalWidth || img.width;
-                const h = img.naturalHeight || img.height;
-                const S = 200;
-                const scale = Math.min(S / w, S / h, 1);
-                const cw = Math.max(1, Math.round(w * scale));
-                const ch = Math.max(1, Math.round(h * scale));
-                const canvas = document.createElement("canvas");
-                canvas.width = cw;
-                canvas.height = ch;
-                const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                if (ctx) {
-                    ctx.drawImage(img, 0, 0, cw, ch);
-                    const px = ctx.getImageData(0, 0, cw, ch).data;
-                    let sx = 0;
-                    let sy = 0;
-                    let sw = 0;
-                    for (let y = 0; y < ch; y++) {
-                        for (let x = 0; x < cw; x++) {
-                            const a = px[(y * cw + x) * 4 + 3];
-                            if (a > 8) {
-                                sx += x * a;
-                                sy += y * a;
-                                sw += a;
-                            }
+    return loadDecoded(url, "backdrop").then((src) => {
+        const texture = new PIXI.Texture(baseTextureOf(src));
+        let centroid = { nx: 0.5, ny: 0.5 };
+        try {
+            const [w, h] = decodedSize(src);
+            const S = 200;
+            const scale = Math.min(S / w, S / h, 1);
+            const cw = Math.max(1, Math.round(w * scale));
+            const ch = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = cw;
+            canvas.height = ch;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            if (ctx) {
+                ctx.drawImage(src, 0, 0, cw, ch);
+                const px = ctx.getImageData(0, 0, cw, ch).data;
+                let sx = 0;
+                let sy = 0;
+                let sw = 0;
+                for (let y = 0; y < ch; y++) {
+                    for (let x = 0; x < cw; x++) {
+                        const a = px[(y * cw + x) * 4 + 3];
+                        if (a > 8) {
+                            sx += x * a;
+                            sy += y * a;
+                            sw += a;
                         }
                     }
-                    if (sw > 0) centroid = { nx: sx / sw / cw, ny: sy / sw / ch };
                 }
-            } catch {
-                /* keep default 0.5,0.5 */
+                if (sw > 0) centroid = { nx: sx / sw / cw, ny: sy / sw / ch };
             }
-            resolve({ texture, centroid });
-        };
-        img.onerror = () => reject(new Error(`Failed to load backdrop: ${url}`));
-        img.src = url;
+        } catch {
+            /* keep default 0.5,0.5 */
+        }
+        return { texture, centroid };
     });
 }
 
@@ -1415,6 +1408,13 @@ function fillPassOn(): boolean {
     return new URLSearchParams(window.location.search).get("fillpass") !== "0";
 }
 
+/** `?alwaystick=1`: keep the render loop armed while the canvas is out of view (the
+ *  behaviour before the off-screen gate), for A/B measurement. */
+function alwaysTickOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("alwaystick") === "1";
+}
+
 function cssHex(rgb: [number, number, number]): string {
     const h = (v: number) =>
         Math.round(Math.max(0, Math.min(1, v)) * 255)
@@ -1786,6 +1786,17 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         mountedRef.current = true;
         const currentLoadId = ++loadIdRef.current;
         let animationFrameId: number | null = null;
+        // Off-screen gate. The tick kept rendering with the canvas scrolled out of view:
+        // measured 2.57 s of script per 10 s off-screen against 2.75 s in view (register,
+        // "PERFORMANCE, FIRST RUN"). IntersectionObserver is the platform's own answer to
+        // "is this element in the viewport"; while it reports the container out of view the
+        // loop parks instead of re-arming, and the next intersection re-arms it. Scene time
+        // does not advance while parked (dt is already clamped at 0.1 s on resume). A hidden
+        // tab needs nothing here: the browser already withholds animation frames from it.
+        // `?alwaystick=1` restores the unconditional loop for A/B measurement.
+        let inView = true;
+        let parked = false;
+        let viewObserver: IntersectionObserver | null = null;
 
         /** Step to the idle target when the idle path takes over: the hand-off, or load completion
          *  for a skin that plays no cinematic. Resizes the density-dependent targets ONLY -
@@ -1806,6 +1817,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         };
 
         const cleanup = () => {
+            viewObserver?.disconnect();
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             hideShadowsRef.current = false;
             spineRef.current = null;
@@ -2558,9 +2570,25 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                 }
                 currentApp.renderer.render(currentApp.stage);
             }
-            animationFrameId = requestAnimationFrame(tick);
+            if (inView || alwaysTickOn()) {
+                animationFrameId = requestAnimationFrame(tick);
+            } else {
+                animationFrameId = null;
+                parked = true;
+            }
         };
         animationFrameId = requestAnimationFrame(tick);
+        if (typeof IntersectionObserver !== "undefined") {
+            viewObserver = new IntersectionObserver((entries) => {
+                inView = entries[entries.length - 1].isIntersecting;
+                if (inView && parked && mountedRef.current) {
+                    parked = false;
+                    lastTick = performance.now();
+                    animationFrameId = requestAnimationFrame(tick);
+                }
+            });
+            viewObserver.observe(container);
+        }
 
         const aborted = () => currentLoadId !== loadIdRef.current || !mountedRef.current || !appRef.current;
 
