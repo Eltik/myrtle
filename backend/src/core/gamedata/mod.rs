@@ -326,14 +326,20 @@ pub fn init_game_data(
     // own ExpireTimes, which are empty/placeholder for this content.
     medals.link_content_windows(&climb_tower_file.tower_windows(), &activity_file.basic_info);
 
-    // One classifier for both indexes: building it reads roguelike_topic_table
-    // (1.8 GB on CN), climb_tower, sandbox, sandbox_perm, crisis_v2 and
-    // handbook_info as loose JSON. Scoped so the borrows of
+    // One classifier for both indexes: building it reads climb_tower, sandbox,
+    // sandbox_perm, crisis_v2 and handbook_info as loose JSON, while reusing
+    // the already-parsed roguelike table. Scoped so the borrows of
     // `stages`/`zones`/`activities` end before they move into `GameData`.
     let levels_dir = assets_dir.join("gamedata/levels");
     let (enemy_stage_index, stage_index, mode_levels) = {
         startup::step("stage classifier");
-        let classifier = StageClassifier::new(data_dir, &stages, &zones, &activity_file.basic_info);
+        let classifier = StageClassifier::new(
+            data_dir,
+            &stages,
+            &zones,
+            &activity_file.basic_info,
+            &roguelike_file,
+        );
 
         // Inverted enemy -> stages index, parsed from per-stage level files.
         let enemies_by_stage = build_enemy_stage_index(&levels_dir, data_dir, &classifier);

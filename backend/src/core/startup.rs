@@ -24,7 +24,7 @@ use std::collections::HashMap;
 use std::io::{self, IsTerminal, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use arc_swap::ArcSwapOption;
@@ -343,6 +343,63 @@ impl Inner {
 
 // ── reporting from the work ─────────────────────────────────────────────────
 
+/// Current resident set size in MiB, or `None` if it can't be read.
+///
+/// Linux: `/proc/self/statm`'s second field is the resident page count; the
+/// page size is assumed to be 4096 bytes, which holds on every target we ship
+/// to. macOS: `libc` is not a dependency of this crate, so shell out to
+/// `ps -o rss=`, which reports KiB. The macOS path forks a process per call and
+/// is only ever reached under `STEP_RSS=1`.
+#[must_use]
+pub fn rss_mib() -> Option<f64> {
+    #[cfg(target_os = "linux")]
+    {
+        let statm = std::fs::read_to_string("/proc/self/statm").ok()?;
+        let resident_pages: f64 = statm.split_whitespace().nth(1)?.parse().ok()?;
+        Some(resident_pages * 4096.0 / (1024.0 * 1024.0))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let out = std::process::Command::new("ps")
+            .args(["-o", "rss=", "-p"])
+            .arg(std::process::id().to_string())
+            .output()
+            .ok()?;
+        let kib: f64 = String::from_utf8_lossy(&out.stdout).trim().parse().ok()?;
+        Some(kib / 1024.0)
+    }
+}
+
+/// Whether `STEP_RSS=1` asked for the per-step memory trace. Read once.
+fn step_rss_enabled() -> bool {
+    static ENABLED: OnceLock<bool> = OnceLock::new();
+    *ENABLED.get_or_init(|| std::env::var("STEP_RSS").is_ok_and(|v| v == "1"))
+}
+
+/// Wall clock for the `step_rss` trace, started at the first [`step`] call.
+fn step_rss_epoch() -> Instant {
+    static EPOCH: OnceLock<Instant> = OnceLock::new();
+    *EPOCH.get_or_init(Instant::now)
+}
+
+/// One `step_rss` line on stderr, before the step's own bookkeeping.
+///
+/// Why this ships rather than living in a scratch patch: the CN load once
+/// peaked at 5.3 GiB of RSS against a 542 MiB result, and because the peak is
+/// transient and inside a step nobody could say *which* step allocated it -
+/// reproducing it meant rebuilding an instrumented binary. Every load step
+/// already calls [`step`], so hanging the measurement here turns "where did the
+/// boot spend 5 GiB?" into a one-env-var question, in production, on the real
+/// data, at no cost when the variable is unset.
+fn trace_step_rss(key: &str) {
+    if !step_rss_enabled() {
+        return;
+    }
+    let elapsed_ms = step_rss_epoch().elapsed().as_millis();
+    let rss = rss_mib().unwrap_or(f64::NAN);
+    eprintln!("step_rss key={key} elapsed_ms={elapsed_ms} rss_mib={rss:.1}");
+}
+
 /// Enter a named step of the running phase, banking the previous step's
 /// duration.
 ///
@@ -350,6 +407,7 @@ impl Inner {
 /// step without touching the plan costs accuracy for one boot rather than
 /// breaking the bar. Does nothing when no boot is in flight.
 pub fn step(key: &str) {
+    trace_step_rss(key);
     let Some(inner) = ACTIVE.load_full() else {
         return;
     };

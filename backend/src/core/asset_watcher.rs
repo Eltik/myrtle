@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
 use futures_util::StreamExt;
@@ -166,6 +167,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server) {
             let op_count = game_data.operators.len();
             state.swap_game_data(server, game_data);
             state.swap_asset_index(server, asset_index);
+            let was_loaded = sd.loaded.swap(true, Ordering::Release);
 
             let prefix = if is_default {
                 "static:".to_string()
@@ -174,11 +176,19 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server) {
             };
             state.cache.invalidate_by_prefix(&prefix).await;
 
-            tracing::info!(
-                server = server.as_str(),
-                operators = op_count,
-                "hot-reload complete"
-            );
+            if was_loaded {
+                tracing::info!(
+                    server = server.as_str(),
+                    operators = op_count,
+                    "hot-reload complete"
+                );
+            } else {
+                tracing::info!(
+                    server = server.as_str(),
+                    operators = op_count,
+                    "hot-reload complete, server now loaded"
+                );
+            }
 
             if is_default {
                 state.cache.invalidate_by_prefix("dps:list:").await;

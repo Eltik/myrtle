@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 
 use arc_swap::ArcSwap;
 use reqwest::Client;
@@ -34,6 +37,11 @@ pub struct ServerData {
     pub asset_index: ArcSwap<AssetIndex>,
     pub game_data_dir: String,
     pub assets_dir: String,
+    /// False while this entry is a placeholder: the server was configured but its game data
+    /// failed to load at boot, so `game_data`/`asset_index` hold the DEFAULT server's Arcs
+    /// until a hot reload (`asset_watcher::perform_reload`) succeeds and flips this. Explicit
+    /// per-server lookups treat an unloaded entry as absent; internal fallbacks keep working.
+    pub loaded: AtomicBool,
 }
 
 pub struct AppStateInner {
@@ -85,7 +93,10 @@ impl AppState {
     /// explicit per-server requests can answer 404 instead of serving default
     /// data. Aliases (such as `Bilibili`) are real map entries and resolve here.
     pub fn try_server_data(&self, server: Server) -> Option<Arc<ServerData>> {
-        self.servers.get(&server).cloned()
+        self.servers
+            .get(&server)
+            .filter(|server_data| server_data.loaded.load(Ordering::Acquire))
+            .cloned()
     }
 
     /// Current game data for a server as a single atomic Arc clone. Callers that

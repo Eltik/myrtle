@@ -17,7 +17,7 @@ use backend::{
 use dotenv::dotenv;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, atomic::AtomicBool};
 use tracing::{info, warn};
 
 #[cfg(not(target_env = "msvc"))]
@@ -58,28 +58,55 @@ async fn main() {
     for &srv in &config.servers {
         let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
         let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
-        let (game_data, asset_index) = {
+        let load_result = {
             let _phase = boot.phase(&format!("gamedata:{}", srv.as_str()));
             backend::core::gamedata::init_game_data(
                 Path::new(&game_data_dir),
                 Path::new(&assets_dir),
             )
-            .unwrap_or_else(|e| panic!("failed to load game data for {}: {e}", srv.as_str()))
         };
-        info!(
-            server = srv.as_str(),
-            operators = game_data.operators.len(),
-            "game data loaded"
-        );
-        servers.insert(
-            srv,
-            Arc::new(ServerData {
-                game_data: ArcSwap::from_pointee(game_data),
-                asset_index: ArcSwap::from_pointee(asset_index),
-                game_data_dir,
-                assets_dir,
-            }),
-        );
+        match load_result {
+            Ok((game_data, asset_index)) => {
+                info!(
+                    server = srv.as_str(),
+                    operators = game_data.operators.len(),
+                    "game data loaded"
+                );
+                servers.insert(
+                    srv,
+                    Arc::new(ServerData {
+                        game_data: ArcSwap::from_pointee(game_data),
+                        asset_index: ArcSwap::from_pointee(asset_index),
+                        game_data_dir,
+                        assets_dir,
+                        loaded: AtomicBool::new(true),
+                    }),
+                );
+            }
+            Err(e) if srv == config.default_server => {
+                panic!("failed to load game data for {}: {e}", srv.as_str());
+            }
+            Err(e) => {
+                tracing::error!(
+                    server = srv.as_str(),
+                    error = %e,
+                    "game data failed to load; serving default-server data for this server until a hot reload succeeds"
+                );
+                let default_entry = servers
+                    .get(&config.default_server)
+                    .expect("default server data must be present");
+                servers.insert(
+                    srv,
+                    Arc::new(ServerData {
+                        game_data: ArcSwap::new(default_entry.game_data.load_full()),
+                        asset_index: ArcSwap::new(default_entry.asset_index.load_full()),
+                        game_data_dir,
+                        assets_dir,
+                        loaded: AtomicBool::new(false),
+                    }),
+                );
+            }
+        }
     }
     // Bilibili shares CN's Hypergryph data (same Arc cell, hot-reloads together).
     if let Some(cn) = servers.get(&Server::CN).cloned() {

@@ -14,7 +14,9 @@ use std::path::Path;
 
 use serde_json::Value;
 
+use crate::core::gamedata::tables::SanitizingReader;
 use crate::core::gamedata::types::activity::ActivityBasicInfo;
+use crate::core::gamedata::types::roguelike::RoguelikeTopicTableFile;
 use crate::core::gamedata::types::stage::{Stage, StageDifficulty};
 use crate::core::gamedata::types::zone::{Zone, ZoneType};
 
@@ -44,19 +46,26 @@ pub struct StageInfo {
 /// Read `data_dir/<name>.json` as a loose JSON value.
 ///
 /// Some tables (e.g. `roguelike_topic_table`, `activity_table`) carry invalid
-/// UTF-8 in flavor text, which makes `serde_json::from_slice` reject the whole
-/// file. Lossy-decode first so the table still parses - the bad bytes only ever
-/// live in descriptions, never in the keys/names/level ids read here.
+/// UTF-8 in flavor text, which makes direct JSON parsing reject the whole file.
+/// The streaming reader lossily decodes it so the table still parses - the bad
+/// bytes only ever live in descriptions, never in the keys/names/level ids read here.
 pub fn read_json(data_dir: &Path, name: &str) -> Option<Value> {
-    let bytes = std::fs::read(data_dir.join(format!("{name}.json"))).ok()?;
-    serde_json::from_str(&String::from_utf8_lossy(&bytes)).ok()
+    let file = std::fs::File::open(data_dir.join(format!("{name}.json"))).ok()?;
+    serde_json::from_reader(SanitizingReader::new(std::io::BufReader::new(file))).ok()
 }
 
 /// Pull `{key -> value.<field>}` out of a FlatBuffer-style map (a JSON array of
 /// `{ "key": ..., "value": {...} }` objects).
 fn fb_map_names(table: &Value, list_key: &str, field: &str) -> HashMap<String, String> {
+    table
+        .get(list_key)
+        .map_or_else(HashMap::new, |list| fb_list_names(list, field))
+}
+
+/// Pull `{key -> value.<field>}` out of a FlatBuffer-style map list.
+fn fb_list_names(list: &Value, field: &str) -> HashMap<String, String> {
     let mut out = HashMap::new();
-    if let Some(arr) = table.get(list_key).and_then(Value::as_array) {
+    if let Some(arr) = list.as_array() {
         for item in arr {
             if let (Some(k), Some(name)) = (
                 item.get("key").and_then(Value::as_str),
@@ -184,12 +193,8 @@ struct ModeNames {
     is_kv: HashMap<String, String>,
 }
 
-fn load_mode_names(data_dir: &Path) -> ModeNames {
-    let roguelike = read_json(data_dir, "roguelike_topic_table");
-    let is_topics = roguelike
-        .as_ref()
-        .map(|t| fb_map_names(t, "Topics", "Name"))
-        .unwrap_or_default();
+fn load_mode_names(data_dir: &Path, roguelike: &RoguelikeTopicTableFile) -> ModeNames {
+    let is_topics = fb_list_names(&roguelike.topics, "Name");
     let towers = read_json(data_dir, "climb_tower_table")
         .map(|t| fb_map_names(&t, "Towers", "Name"))
         .unwrap_or_default();
@@ -197,10 +202,11 @@ fn load_mode_names(data_dir: &Path) -> ModeNames {
     let mut node_named = HashMap::new();
     let mut is_node_ids = HashMap::new();
     let mut is_kv = HashMap::new();
-    if let Some(t) = &roguelike {
-        collect_level_named(t, &mut node_named);
-        collect_is_topics(t, &mut is_node_ids, &mut is_kv);
-    }
+    // These are the only roguelike top-level subtrees with LevelId entries;
+    // Modules, Constant, and CustomizeData carry none.
+    collect_level_named(&roguelike.topics, &mut node_named);
+    collect_level_named(&roguelike.details, &mut node_named);
+    collect_is_topics(&roguelike.details, &mut is_node_ids, &mut is_kv);
     if let Some(t) = read_json(data_dir, "sandbox_table") {
         collect_level_named(&t, &mut node_named);
     }
@@ -229,11 +235,11 @@ fn fb_str<'a>(entry: &'a Value, field: &str) -> Option<&'a str> {
 /// of `roguelike_topic_table`. Read off the value `load_mode_names` already has,
 /// so the table (1.8 GB on CN) is parsed once per load.
 fn collect_is_topics(
-    table: &Value,
+    details: &Value,
     node_ids: &mut HashMap<String, String>,
     kv: &mut HashMap<String, String>,
 ) {
-    let Some(details) = table.get("Details").and_then(Value::as_array) else {
+    let Some(details) = details.as_array() else {
         return;
     };
     for entry in details {
@@ -405,6 +411,7 @@ impl<'a> StageClassifier<'a> {
         stages: &'a HashMap<String, Stage>,
         zones: &'a HashMap<String, Zone>,
         activities: &'a HashMap<String, ActivityBasicInfo>,
+        roguelike: &RoguelikeTopicTableFile,
     ) -> Self {
         // Canonical stage per level file (a CM `#f#` reuses its base level).
         let mut stage_by_level: HashMap<String, &Stage> = HashMap::new();
@@ -434,7 +441,7 @@ impl<'a> StageClassifier<'a> {
             stages,
             zones,
             acts_by_len,
-            modes: load_mode_names(data_dir),
+            modes: load_mode_names(data_dir, roguelike),
             memory_meta: load_memory_meta(data_dir),
             stage_by_level,
         }
