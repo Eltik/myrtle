@@ -9,6 +9,13 @@ interface IDynamicArtOverlayProps {
     skinId: string | null | undefined;
     /** Framing to match the static image this overlays (its object-fit/position). */
     fit?: ISpineFit;
+    /** The viewer's scene framing; "authored" places the whole scene at the game's frame, which
+     *  is what a static hero image shows, so an overlay on one should use it with `backdrop`. */
+    framing?: "character" | "authored";
+    /** The static illustration the viewer composites behind the scene (see SceneIllust). */
+    backdrop?: string;
+    /** The presentation surface the viewer is on (see SceneIllust). */
+    surface?: "viewer" | "panel";
     /**
      * Defer mounting the (multi-MB) player until the host scrolls into view.
      * Use for grid/list surfaces where many overlays exist at once; leave off
@@ -29,7 +36,7 @@ interface IDynamicArtOverlayProps {
  * it's layered over, when the page-wide toggle is on and the operator/skin has
  * a dynamic set. Absolutely fills its positioned parent and is click-through.
  */
-export function DynamicArtOverlay({ operatorCode, skinId, fit, viewportGated = false, onActiveChange, className }: IDynamicArtOverlayProps) {
+export function DynamicArtOverlay({ operatorCode, skinId, fit, framing, backdrop, surface, viewportGated = false, onActiveChange, className }: IDynamicArtOverlayProps) {
     const ctx = useDynamicArt();
     const files = ctx?.getDynamicFiles(operatorCode, skinId) ?? null;
 
@@ -62,7 +69,7 @@ export function DynamicArtOverlay({ operatorCode, skinId, fit, viewportGated = f
 
     return (
         <div ref={hostRef} className={cn("pointer-events-none absolute inset-0", className)}>
-            {mounted && <SceneIllustPlayer files={files} server={ctx?.server} fit={fit} onReady={() => onActiveChange?.(true)} />}
+            {mounted && <SceneIllustPlayer files={files} server={ctx?.server} fit={fit} framing={framing} backdrop={backdrop} surface={surface} onReady={() => onActiveChange?.(true)} />}
         </div>
     );
 }

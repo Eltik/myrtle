@@ -1592,7 +1592,7 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     }
 }
 
-export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = "character", backdrop, surface = "viewer", onReady }: ISceneIllustProps) {
+export function SceneIllust({ files, server, fit, framing = "character", backdrop, surface = "viewer", onReady }: ISceneIllustProps) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const boundsRef = useRef<IAnimationBounds | null>(null);
@@ -1770,8 +1770,11 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
     // A square+`cover` would instead inflate the character with the container's aspect ratio
     // (game-sized only at ~2.16:1, ~2× too small on a tall mobile card). Character-framing
     // contexts keep the caller's fit (contain).
-    const fitRef = useRef(fit);
-    fitRef.current = framing === "authored" ? { mode: "height", align: "center" } : fit;
+    // A caller that states a fit explicitly gets it under either framing: the roster's cards and
+    // dialog overlay the L2D on a static hero image drawn with a specific object-fit, and the two
+    // must share one crop.
+    const fitRef = useRef(fit ?? DEFAULT_SPINE_FIT);
+    fitRef.current = fit ?? (framing === "authored" ? { mode: "height", align: "center" } : DEFAULT_SPINE_FIT);
     const framingRef = useRef(framing);
     framingRef.current = framing;
     // When compositing a static backdrop, the spine's dark shadow silhouettes are
