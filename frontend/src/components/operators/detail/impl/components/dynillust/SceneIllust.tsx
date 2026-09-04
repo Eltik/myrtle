@@ -1795,6 +1795,9 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         mountedRef.current = true;
         const currentLoadId = ++loadIdRef.current;
         let animationFrameId: number | null = null;
+        /** Counts ticks, so the batch renderer's flush pool can be reset once per frame instead
+         *  of once per render call (see the prerender hook below). */
+        let frameSeq = 0;
         // Off-screen gate. The tick kept rendering with the canvas scrolled out of view:
         // measured 2.57 s of script per 10 s off-screen against 2.75 s in view (register,
         // "PERFORMANCE, FIRST RUN"). IntersectionObserver is the platform's own answer to
@@ -1905,6 +1908,24 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         });
         app.ticker.stop();
         patchAdditiveBlendAlpha(app);
+        // PixiJS resets its batch flush pool at every render call, and the tick renders two to
+        // four times a frame (fill passes, HDR scene, stage), so the first flushes of a later call
+        // rewrite geometries whose draws from the earlier call are still pending: on cca21701 the
+        // native sample still put 25 pct of the GPU process in waitUntilCompleted inside
+        // drawElements (register, "PERFORMANCE, FOURTH RUN"). Reset the pool once per tick
+        // instead; the pool grows to the frame's flush count and no geometry is rewritten within
+        // a frame. Pixels are identical. `?batchframe=0` restores the per-call reset.
+        if (new URLSearchParams(window.location.search).get("batchframe") !== "0") {
+            const batch = app.renderer.plugins.batch as PIXI.BatchRenderer;
+            app.renderer.off("prerender", batch.onPrerender, batch);
+            let seen = -1;
+            app.renderer.on("prerender", () => {
+                if (frameSeq !== seen) {
+                    seen = frameSeq;
+                    batch.onPrerender();
+                }
+            });
+        }
         appRef.current = app;
         container.appendChild(app.view as HTMLCanvasElement);
 
@@ -1912,6 +1933,7 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
         let sceneClock = 0;
         const tick = (now: number) => {
             if (!mountedRef.current) return;
+            frameSeq++;
             const dt = Math.min((now - lastTick) / 1000, 0.1);
             lastTick = now;
             // Capability A - continuous shader UV-scroll. The Ram-family scene layers scroll
@@ -3485,6 +3507,16 @@ export function SceneIllust({ files, server, fit = DEFAULT_SPINE_FIT, framing = 
                                     col: [sl.color.r, sl.color.g, sl.color.b, sl.color.a].map((x) => Number(x.toFixed(3))),
                                     dark: sl.darkColor ? [sl.darkColor.r, sl.darkColor.g, sl.darkColor.b].map((x) => Number(x.toFixed(3))) : null,
                                     att: sl.getAttachment ? (sl.getAttachment()?.name ?? null) : null,
+                                    // Attachment class and, for a clipping attachment, its polygon's vertex
+                                    // count and the slot span it clips (register, "PERFORMANCE, FOURTH RUN").
+                                    attType: (() => {
+                                        const a = sl.getAttachment?.() as { constructor?: { name?: string }; type?: number } | null | undefined;
+                                        return a ? (a.constructor?.name ?? (typeof a.type === "number" ? `type${a.type}` : null)) : null;
+                                    })(),
+                                    clipN: (() => {
+                                        const a = sl.getAttachment?.() as { worldVerticesLength?: number; endSlot?: { name?: string } | null } | null | undefined;
+                                        return a && typeof a.worldVerticesLength === "number" && a.endSlot !== undefined ? { verts: a.worldVerticesLength / 2, endSlot: a.endSlot?.name ?? null } : null;
+                                    })(),
                                     rend: d2 ? !!d2.renderable : null,
                                     vis: d2 ? !!d2.visible : null,
                                     wa: d2 && typeof d2.worldAlpha === "number" ? Number(d2.worldAlpha.toFixed(3)) : null,
