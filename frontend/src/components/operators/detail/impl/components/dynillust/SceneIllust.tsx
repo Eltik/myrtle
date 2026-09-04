@@ -1392,7 +1392,7 @@ const VIEWER_BACKDROP = "#4d4d4e";
  *  cameras author a grey or white the fixed fill approximates (0.3382 = 86 of 255 on nine of
  *  them), and chyue authors pure black, which is exactly her pillarbox. `?camclear=0` reverts to
  *  the fixed fill; without an authored colour the fixed fill is used unchanged. */
-/** MEASUREMENT ARM (`?pagebg=1`, default off): at settle, hide the environment fill so the
+/** PAGE BACKGROUND AT SETTLE (default on since 2026-09-04, `?pagebg=0` restores the fill): at settle, hide the environment fill so the
  *  PAGE behind the canvas shows wherever the illustration is transparent (the canvas already
  *  clears to alpha 0). The game draws no fill behind a margin-transparent illustration at rest:
  *  chyue's settled bands are her operator page's background (231 / 198 luma, flat, achromatic)
@@ -1400,8 +1400,12 @@ const VIEWER_BACKDROP = "#4d4d4e";
  *  authored entrance clear colour, black). Derived from the art's own alpha by construction,
  *  no per-skin term. Read as the string "1", never as truthiness. */
 function pageBgOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("pagebg") === "1";
+    // DEFAULT ON since Ian's ruling of 2026-09-04 (register, "THE PAGE BACKGROUND AT SETTLE,
+    // RULED THE OTHER WAY"): the page shows through the illustration's transparent margins once
+    // the idle plays, as the game's own operator page does; the entrance cinematic keeps its
+    // authored clear colour. `?pagebg=0` restores the fill at settle.
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("pagebg") !== "0";
 }
 
 function camClearOn(): boolean {
