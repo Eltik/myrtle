@@ -239,6 +239,22 @@ fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles
         .collect()
 }
 
+/// `<stem>_Start` or `<stem>_Start#<n>`: the intro-animation companion of a dynamic
+/// illustration, which is never a skin set of its own.
+fn is_start_companion(cleaned: &str) -> bool {
+    let lower = cleaned.to_ascii_lowercase();
+    if lower.ends_with("_start") {
+        return true;
+    }
+    match lower.rfind("_start#") {
+        Some(i) => {
+            let suffix = &lower[i + "_start#".len()..];
+            !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit())
+        }
+        None => false,
+    }
+}
+
 fn strip_known_prefix(stem: &str) -> &str {
     for prefix in KNOWN_PREFIXES {
         if let Some(rest) = stem.strip_prefix(prefix) {
@@ -339,7 +355,12 @@ fn resolve_dyn_illust_skins(
 
     for (stem, files) in sets {
         let cleaned = strip_known_prefix(&stem);
-        if cleaned.ends_with("_Start") || cleaned.ends_with("_start") {
+        // An intro companion is `<stem>_Start`, and for one exported skin the game names it
+        // with the skin suffix after the marker: `dyn_illust_char_2023_ling_nian_Start#12`.
+        // Without this the entrance rig won the skin's slot (same `dyn_illust_` priority,
+        // last insert wins) and the page played the entrance skeleton as the idle, with no
+        // scene and no ready signal.
+        if is_start_companion(cleaned) {
             continue;
         }
 
@@ -364,4 +385,19 @@ fn resolve_dyn_illust_skins(
     }
 
     by_skin.into_iter().map(|(s, (_, f))| (s, f)).collect()
+}
+
+#[cfg(test)]
+mod start_companion_tests {
+    use super::is_start_companion;
+
+    #[test]
+    fn start_marker_with_and_without_skin_suffix() {
+        assert!(is_start_companion("char_003_kalts_boc#6_Start"));
+        assert!(is_start_companion("char_2023_ling_nian_Start#12"));
+        assert!(is_start_companion("char_2023_ling_nian_start#12"));
+        assert!(!is_start_companion("char_2023_ling_nian#12"));
+        assert!(!is_start_companion("char_2023_ling_nian_Start#"));
+        assert!(!is_start_companion("char_2023_ling_nian_Starter#12"));
+    }
 }

@@ -5159,6 +5159,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // corrupt the update it fired from.
                 const startSkel = skelPath.replace(/\.skel$/, "_Start.skel");
                 const startAtlas = atlasPath.replace(/\.atlas$/, "_Start.atlas");
+                // One exported skin names its entrance set with the skin suffix AFTER the marker,
+                // `dyn_illust_char_2023_ling_nian_Start#12`; when the plain `_Start` set is missing
+                // and the stem ends in `#<n>`, that spelling is tried second.
+                const suffixed = skelPath.match(/#\d+\.skel$/) ? [skelPath.replace(/(#\d+)\.skel$/, "_Start$1.skel"), atlasPath.replace(/(#\d+)\.atlas$/, "_Start$1.atlas")] : null;
                 const swapToMainIdle = () => {
                     // Page background at settle (see `pageBgOn`): the fill served the cinematic.
                     if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
@@ -5230,14 +5234,14 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // ⚠️ An earlier pass gated the BUILD here so a panel skipped the cinematic entirely.
                 // That framed the idle correctly by deleting the thing being framed. The cinematic
                 // is wanted on the surface people browse; only its terminus was wrong.
-                const entrance = staticCamOn()
-                    ? null
-                    : await buildComposite(startSkel, startAtlas, {
-                          mode: "entrance",
-                          onEntranceEnd: () => {
-                              doSwapRef.current = swapToMainIdle;
-                          },
-                      });
+                const entranceOpts = {
+                    mode: "entrance" as const,
+                    onEntranceEnd: () => {
+                        doSwapRef.current = swapToMainIdle;
+                    },
+                };
+                let entrance = staticCamOn() ? null : await buildComposite(startSkel, startAtlas, entranceOpts);
+                if (entrance === null && suffixed && !staticCamOn() && !aborted()) entrance = await buildComposite(suffixed[0], suffixed[1], entranceOpts);
                 if (aborted()) {
                     if (entrance && entrance !== "unsupported") entrance.destroy();
                     return; // main stays tracked in compositesRef; cleanup frees it.
