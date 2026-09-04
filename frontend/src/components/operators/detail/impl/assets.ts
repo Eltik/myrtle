@@ -23,6 +23,26 @@ export function operatorElite2(opId: string, skin: string | null, portrait: stri
     return asset(path, server);
 }
 
+/** The card thumbnail for a skin. The game ships a reduced variant of almost every outfit
+ *  art beside the full one, `<skin>b.png` at 1024 or 1280 square (471 of 481 skinpack arts
+ *  here; mean 1.26 MB against 4.77 MB, kalts boc#6 1.61 MB against 8.88), and a 72 px card
+ *  never shows more than that. Opening a Skins tab loaded 17.4 MB of full-size art for two
+ *  cards on kalts before any skin was chosen (register, "PERFORMANCE, FIFTH RUN"). Where no
+ *  `b` variant exists the card's onError falls back to the full art. Elite arts have no
+ *  reduced variant and keep the full one. `?fullthumb=1` restores the full art everywhere. */
+export function skinThumbnail(opId: string, skinId: string, server?: AssetServer): string {
+    if (skinId.includes("@") && !fullThumbOn()) {
+        const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
+        return asset(`/textures/skinpack/${opId}/${file}b.png`, server);
+    }
+    return skinTexture(opId, skinId, server);
+}
+
+function fullThumbOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("fullthumb") === "1";
+}
+
 export function skinTexture(opId: string, skinId: string, server?: AssetServer): string {
     // Skin ids without `@` are elite/default-art variants (e.g. `char_002_amiya#1+`)
     // and live under `/textures/chararts/`. Skins with `@` are alternate outfits

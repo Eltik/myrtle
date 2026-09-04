@@ -140,7 +140,17 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             className={cn("flex w-72 shrink-0 items-stretch gap-3 rounded-lg border bg-card p-2.5 text-left transition-colors lg:w-full", selected?.id === skin.id ? "border-primary ring-1 ring-primary/40" : "border-border hover:border-primary/40")}
                         >
                             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-secondary/30">
-                                <img alt={skin.name} className="h-full w-full object-cover" decoding="async" loading="lazy" src={skin.thumbnail} />
+                                <img
+                                    alt={skin.name}
+                                    className="h-full w-full object-cover"
+                                    decoding="async"
+                                    loading="lazy"
+                                    src={skin.thumbnail}
+                                    // The reduced `b` variant is missing for a few outfits; fall back to the full art once.
+                                    onError={(e) => {
+                                        if (e.currentTarget.src !== skin.image) e.currentTarget.src = skin.image;
+                                    }}
+                                />
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{skin.kicker}</div>

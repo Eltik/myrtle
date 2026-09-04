@@ -1,5 +1,5 @@
 import type { IDisplaySkin, ISkin } from "#/lib/api/skins";
-import { operatorElite0, operatorElite2, skinTexture } from "./assets";
+import { operatorElite0, operatorElite2, skinTexture, skinThumbnail } from "./assets";
 
 export interface IUISkin {
     id: string;
@@ -81,7 +81,7 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
             kicker: display?.skinGroupName ?? "Skin",
             sub: artistFallback ? `Artist · ${artistFallback}` : (display?.obtainApproach ?? "Special Outfit"),
             image: tex,
-            thumbnail: tex,
+            thumbnail: skinThumbnail(operatorId, id, server),
             isDefault: false,
             displaySkin: display,
         });
