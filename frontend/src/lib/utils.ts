@@ -115,171 +115,105 @@ export const formatProfession = (profession: string): string => {
     }
 };
 
+/**
+ * Bare archetype names, keyed by subProfessionId, as the game itself labels them.
+ * SOURCE: assets/output/en/gamedata/excel/uniequip_table.json, SubProfDict[id].SubProfessionName,
+ * with the placeholder ids (notchar*, none*) dropped. Caster names carry "Caster" in the
+ * game data; every other class is bare. Regenerate this table from that file after a data
+ * update. The two ids the table no longer lists (supportiveranger, watchman) keep their last
+ * known names so older exports still resolve.
+ */
+export const SUB_PROFESSION_NAMES: Record<string, string> = {
+    agent: "Agent",
+    alchemist: "Alchemist",
+    aoesniper: "Artilleryman",
+    artsfghter: "Arts Fighter",
+    artsprotector: "Arts Protector",
+    bard: "Bard",
+    bearer: "Standard Bearer",
+    blastcaster: "Blast Caster",
+    blessing: "Abjurer",
+    bombarder: "Flinger",
+    centurion: "Centurion",
+    chain: "Chain Caster",
+    chainhealer: "Chain Medic",
+    charger: "Charger",
+    closerange: "Heavyshooter",
+    corecaster: "Core Caster",
+    counsellor: "Strategist",
+    craftsman: "Artificer",
+    crusher: "Crusher",
+    dollkeeper: "Dollkeeper",
+    duelist: "Duelist",
+    executor: "Executor",
+    fastshot: "Marksman",
+    fearless: "Dreadnought",
+    fighter: "Fighter",
+    fortress: "Fortress",
+    funnel: "Mech-accord Caster",
+    geek: "Geek",
+    guardian: "Guardian",
+    hammer: "Earthshaker",
+    healer: "Therapist",
+    hookmaster: "Hookmaster",
+    hunter: "Hunter",
+    incantationmedic: "Incantation Medic",
+    instructor: "Instructor",
+    librator: "Liberator",
+    longrange: "Deadeye",
+    loopshooter: "Loopshooter",
+    lord: "Lord",
+    mercenary: "Mercenary",
+    merchant: "Merchant",
+    musha: "Soloblade",
+    mystic: "Mystic Caster",
+    phalanx: "Phalanx Caster",
+    physician: "Medic",
+    pioneer: "Pioneer",
+    primcaster: "Primal Caster",
+    primguard: "Primal Guard",
+    primprotector: "Primal Protector",
+    protector: "Protector",
+    pusher: "Push Stroker",
+    reaper: "Reaper",
+    reaperrange: "Spreadshooter",
+    ringhealer: "Multi-target Medic",
+    ritualist: "Ritualist",
+    shotprotector: "Sentry Protector",
+    siegesniper: "Besieger",
+    skybreaker: "Skybreaker",
+    skywalker: "Skyranger",
+    slower: "Decel Binder",
+    soulcaster: "Shaper Caster",
+    splashcaster: "Splash Caster",
+    stalker: "Ambusher",
+    summoner: "Summoner",
+    supportiveranger: "Supportive Ranger",
+    sword: "Swordmaster",
+    tactician: "Tactician",
+    traper: "Trapmaster",
+    underminer: "Hexer",
+    unyield: "Juggernaut",
+    wandermedic: "Wandering Medic",
+    watchman: "Watchman Medic",
+};
+
+/** The bare archetype name ("Centurion", "Medic", "Blast Caster"); the id itself when unknown. */
+export const formatArchetype = (subProfession: string): string => SUB_PROFESSION_NAMES[subProfession] ?? subProfession;
+
+/**
+ * Archetype with its class appended ("Centurion Guard", "Blast Caster"). The class is
+ * skipped when the game's name already ends with it, and when the name IS the class
+ * (physician -> "Medic", not "Medic Medic"). Unknown ids come back unchanged so a new
+ * archetype after a data update shows as a raw id instead of hiding behind a guess.
+ */
 export const formatSubProfession = (subProfession: string): string => {
-    switch (subProfession) {
-        // Caster
-        case "blastcaster":
-            return "Blast Caster";
-        case "chain":
-            return "Chain Caster";
-        case "corecaster":
-            return "Core Caster";
-        case "funnel":
-            return "Mech-Accord Caster";
-        case "mystic":
-            return "Mystic Caster";
-        case "phalanx":
-            return "Phalanx Caster";
-        case "primcaster":
-            return "Primal Caster";
-        case "soulcaster":
-            return "Shaper Caster";
-        case "splashcaster":
-            return "Splash Caster";
-
-        // Defender
-        case "artsprotector":
-            return "Arts Protector Defender";
-        case "duelist":
-            return "Duelist Defender";
-        case "fortress":
-            return "Fortress Defender";
-        case "guardian":
-            return "Guardian Defender";
-        case "unyield":
-            return "Juggernaut Defender";
-        case "primprotector":
-            return "Primal Protector Defender";
-        case "protector":
-            return "Protector Defender";
-        case "shotprotector":
-            return "Sentry Protector Defender";
-
-        // Guard
-        case "artsfghter":
-            return "Arts Fighter Guard";
-        case "centurion":
-            return "Centurion Guard";
-        case "crusher":
-            return "Crusher Guard";
-        case "fearless":
-            return "Dreadnought Guard";
-        case "hammer":
-            return "Earthshaker Guard";
-        case "fighter":
-            return "Fighter Guard";
-        case "instructor":
-            return "Instructor Guard";
-        case "librator":
-            return "Liberator Guard";
-        case "lord":
-            return "Lord Guard";
-        case "mercenary":
-            return "Mercenary Guard";
-        case "primguard":
-            return "Primal Guard";
-        case "reaper":
-            return "Reaper Guard";
-        case "musha":
-            return "Soloblade Guard";
-        case "sword":
-            return "Swordmaster Guard";
-
-        // Medic
-        case "chainhealer":
-            return "Chain Medic";
-        case "incantationmedic":
-            return "Incantation Medic";
-        case "physician":
-            return "Medic Medic";
-        case "ringhealer":
-            return "Multi-target Medic";
-        case "healer":
-            return "Therapist Medic";
-        case "wandermedic":
-            return "Wandering Medic";
-        case "watchman":
-            return "Watchman Medic";
-
-        // Sniper
-        case "aoesniper":
-            return "Artilleryman Sniper";
-        case "siegesniper":
-            return "Besieger Sniper";
-        case "longrange":
-            return "Deadeye Sniper";
-        case "bombarder":
-            return "Flinger Sniper";
-        case "closerange":
-            return "Heavyshooter Sniper";
-        case "hunter":
-            return "Hunter Sniper";
-        case "loopshooter":
-            return "Loopshooter Sniper";
-        case "fastshot":
-            return "Marksman Sniper";
-        case "skybreaker":
-            return "Skybreaker Sniper";
-        case "reaperrange":
-            return "Spreadshooter Sniper";
-
-        // Specialist
-        case "alchemist":
-            return "Alchemist Specialist";
-        case "stalker":
-            return "Ambusher Specialist";
-        case "dollkeeper":
-            return "Dollkeeper Specialist";
-        case "executor":
-            return "Executor Specialist";
-        case "geek":
-            return "Geek Specialist";
-        case "hookmaster":
-            return "Hookmaster Specialist";
-        case "merchant":
-            return "Merchant Specialist";
-        case "pusher":
-            return "Push Stroker Specialist";
-        case "skywalker":
-            return "Skyranger Specialist";
-        case "traper":
-            return "Trapmaster Specialist";
-
-        // Supporter
-        case "blessing":
-            return "Abjurer Supporter";
-        case "craftsman":
-            return "Artificer Supporter";
-        case "bard":
-            return "Bard Supporter";
-        case "slower":
-            return "Decel Binder Supporter";
-        case "underminer":
-            return "Hexer Supporter";
-        case "ritualist":
-            return "Ritualist Supporter";
-        case "summoner":
-            return "Summoner Supporter";
-        case "supportiveranger":
-            return "Supportive Ranger";
-
-        // Vanguard
-        case "agent":
-            return "Agent Vanguard";
-        case "charger":
-            return "Charger Vanguard";
-        case "pioneer":
-            return "Pioneer Vanguard";
-        case "bearer":
-            return "Standard Bearer Vanguard";
-        case "counsellor":
-            return "Strategist Vanguard";
-        case "tactician":
-            return "Tactician Vanguard";
-
-        default:
-            return subProfession;
-    }
+    const name = SUB_PROFESSION_NAMES[subProfession];
+    if (!name) return subProfession;
+    const profession = subProfessionToProfession(subProfession);
+    if (profession === "OTHER") return name;
+    const cls = formatProfession(profession);
+    return name === cls || name.endsWith(` ${cls}`) ? name : `${name} ${cls}`;
 };
 
 export const SUB_PROFESSION_TO_PROFESSION: Record<string, string> = {
@@ -480,6 +414,72 @@ export function formatRelative(iso: string | null | undefined): string {
     const then = new Date(iso).getTime();
     if (Number.isNaN(then)) return "-";
     const diffMs = Date.now() - then;
+    if (diffMs < 60_000) return "just now";
+    const mins = Math.floor(diffMs / 60_000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return "yesterday";
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks === 1) return "last week";
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+}
+
+/**
+ * Verbose "5 min ago / 3 h ago / 2 d ago" style used by admin dashboards and
+ * the settings page. Falls back to a locale date for anything older than 30
+ * days. Accepts either an ISO timestamp or a unix epoch (seconds or ms).
+ */
+export function formatRelativeShort(input: string | number | null | undefined): string {
+    if (input == null) return "-";
+    let ms: number;
+    if (typeof input === "number") {
+        ms = input > 1e12 ? input : input * 1000;
+    } else {
+        ms = Date.parse(input);
+    }
+    if (!Number.isFinite(ms)) return typeof input === "string" ? input : "-";
+    const diff = (Date.now() - ms) / 1000;
+    if (diff < 0) return "just now";
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
+    return new Date(ms).toLocaleDateString();
+}
+
+export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
+    if (maxLevel <= 1) return base;
+    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function loadImage(url: string, options?: { crossOrigin?: boolean }): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        if (options?.crossOrigin) img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+    });
+}
+
 /** A loaded texture source: the bare element, or its pixels already decoded off-thread. */
 export type DecodedImage = HTMLImageElement | ImageBitmap;
 
@@ -545,72 +545,6 @@ export function decodedSize(img: DecodedImage): [number, number] {
 function syncDecodeOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("syncdecode") === "1";
-}
-
-    if (diffMs < 60_000) return "just now";
-    const mins = Math.floor(diffMs / 60_000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    if (days === 1) return "yesterday";
-    if (days < 7) return `${days}d ago`;
-    const weeks = Math.floor(days / 7);
-    if (weeks === 1) return "last week";
-    if (weeks < 5) return `${weeks}w ago`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months}mo ago`;
-    return `${Math.floor(days / 365)}y ago`;
-}
-
-/**
- * Verbose "5 min ago / 3 h ago / 2 d ago" style used by admin dashboards and
- * the settings page. Falls back to a locale date for anything older than 30
- * days. Accepts either an ISO timestamp or a unix epoch (seconds or ms).
- */
-export function formatRelativeShort(input: string | number | null | undefined): string {
-    if (input == null) return "-";
-    let ms: number;
-    if (typeof input === "number") {
-        ms = input > 1e12 ? input : input * 1000;
-    } else {
-        ms = Date.parse(input);
-    }
-    if (!Number.isFinite(ms)) return typeof input === "string" ? input : "-";
-    const diff = (Date.now() - ms) / 1000;
-    if (diff < 0) return "just now";
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(ms).toLocaleDateString();
-}
-
-export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
-    if (maxLevel <= 1) return base;
-    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
-}
-
-export function downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-export function loadImage(url: string, options?: { crossOrigin?: boolean }): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        if (options?.crossOrigin) img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-        img.src = url;
-    });
 }
 
 export function rarityGradient(rarity: number): string {

@@ -1,6 +1,12 @@
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 
+/**
+ * Toolbar toggle for the filter panel. Below md it is the compact 24px chevron the
+ * /operators toolbar has always shown on phones; from md up it is the 36px "Filter"
+ * button with the funnel icon introduced on 2026-09-03 for desktop. Both surfaces
+ * (the /operators page and the profile roster) render this one element.
+ */
 export function FilterToggleButton({ visible, onToggle, activeCount }: { visible: boolean; onToggle: () => void; activeCount: number }) {
     return (
         <Tooltip>
@@ -9,7 +15,7 @@ export function FilterToggleButton({ visible, onToggle, activeCount }: { visible
                     <button
                         type="button"
                         data-on={visible || undefined}
-                        className="relative box-border inline-flex h-9 w-9 shrink-0 cursor-pointer appearance-none items-center justify-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-0 font-[inherit] text-muted-foreground transition-[background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_24%,transparent)] focus-visible:outline-none data-on:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] data-on:bg-card data-on:text-foreground motion-reduce:transition-none md:w-auto md:min-w-20 md:px-1.5"
+                        className="relative box-border inline-flex h-6 w-6 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-md border border-border bg-[color-mix(in_oklch,var(--secondary)_70%,var(--card))] p-0 font-[inherit] text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_6%,transparent)] transition-[background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground hover:shadow-[0_2px_8px_color-mix(in_oklch,var(--foreground)_10%,transparent)] focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_24%,transparent)] focus-visible:outline-none motion-reduce:transition-none md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] md:px-1.5 md:shadow-none md:data-on:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] md:data-on:bg-card md:data-on:text-foreground md:hover:shadow-none"
                         onClick={onToggle}
                         aria-label={visible ? "Hide filters" : "Show filters"}
                         aria-expanded={visible}

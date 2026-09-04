@@ -1,4 +1,4 @@
-import { formatNationId, formatProfession, formatSubProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
+import { formatArchetype, formatNationId, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { CampIcon, ClassIcon } from "./Icons";
 import styles from "./OperatorPreview.module.css";
@@ -11,7 +11,7 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
     const rarity = rarityToNumber(operator.rarity);
     const initial = operator.name.charAt(0).toUpperCase();
     const nationLabel = operator.nationId ? formatNationId(operator.nationId) : null;
-    const archetype = formatSubProfession(operator.subProfessionId).replace(formatProfession(operator.profession), "");
+    const archetype = formatArchetype(operator.subProfessionId);
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
     const gender = operator.gender;
     const race = operator.race;

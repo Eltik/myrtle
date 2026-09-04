@@ -4,7 +4,7 @@ import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { Markdown } from "#/lib/markdown";
-import { formatProfession, formatRelative, formatSubProfession, RARITY_LABELS } from "#/lib/utils";
+import { formatArchetype, formatProfession, formatRelative, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ExpandableDescription } from "../ExpandableDescription";
 import { operatorPlacementNote } from "../shared";
@@ -137,7 +137,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                                         {op.rarity}★
                                                     </span>
                                                     <span className="mx-1 opacity-50">·</span>
-                                                    <span>{formatSubProfession(op.subProfessionId).replace(formatProfession(op.profession), "").trim() || formatProfession(op.profession)}</span>
+                                                    <span>{formatArchetype(op.subProfessionId)}</span>
                                                 </span>
                                             </span>
                                             <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" aria-hidden="true" />

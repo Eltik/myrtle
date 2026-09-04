@@ -1,7 +1,7 @@
 import { cn } from "#/lib/utils";
 
 const GRADE_STYLES: Record<string, string> = {
-    "SS+": "bg-[color-mix(in_srgb,oklch(0.7_0.22_25)_25%,var(--card))] text-[oklch(0.7_0.22_25)] border-[color-mix(in_srgb,oklch(0.7_0.22_25)_40%,transparent)]",
+    "S+": "bg-[color-mix(in_srgb,oklch(0.7_0.22_25)_25%,var(--card))] text-[oklch(0.7_0.22_25)] border-[color-mix(in_srgb,oklch(0.7_0.22_25)_40%,transparent)]",
     SS: "bg-[color-mix(in_srgb,oklch(0.72_0.18_50)_22%,var(--card))] text-[oklch(0.72_0.18_50)] border-[color-mix(in_srgb,oklch(0.72_0.18_50)_40%,transparent)]",
     S: "bg-[color-mix(in_srgb,oklch(0.75_0.16_80)_22%,var(--card))] text-[oklch(0.7_0.16_80)] border-[color-mix(in_srgb,oklch(0.75_0.16_80)_40%,transparent)]",
     A: "bg-[color-mix(in_srgb,oklch(0.7_0.16_145)_20%,var(--card))] text-[oklch(0.55_0.16_145)] border-[color-mix(in_srgb,oklch(0.7_0.16_145)_35%,transparent)]",

@@ -1,7 +1,7 @@
 import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import type { ITierOperator } from "#/lib/api/tier-lists";
 import { stripMarkdown } from "#/lib/markdown";
-import { formatNationId, formatProfession, formatSubProfession, getAvatarById, parseOperatorName } from "#/lib/utils";
+import { formatArchetype, formatNationId, formatProfession, getAvatarById, parseOperatorName } from "#/lib/utils";
 import { operatorPlacementNote } from "../shared";
 import styles from "./TierOperatorPreview.module.css";
 
@@ -12,7 +12,7 @@ interface ITierOperatorPreviewProps {
 export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
     const { displayName, subtitle } = parseOperatorName(operator.name);
     const note = operatorPlacementNote(operator);
-    const archetype = formatSubProfession(operator.subProfessionId).replace(formatProfession(operator.profession), "").trim();
+    const archetype = formatArchetype(operator.subProfessionId);
     const factionId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : "rhodes";
     const positionLabel = operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : null;
     const initial = operator.name.charAt(0).toUpperCase();
