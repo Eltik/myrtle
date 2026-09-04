@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_FavorDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FavorData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FavorData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FavorData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -27,8 +27,7 @@ impl<'a> clz_Torappu_FavorData<'a> {
     pub const VT_BATTLEPHASE: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FavorData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -48,7 +47,6 @@ impl<'a> clz_Torappu_FavorData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FavorDataT {
         let favorPoint = self.favorPoint();
         let percent = self.percent();
@@ -61,7 +59,6 @@ impl<'a> clz_Torappu_FavorData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn favorPoint(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -73,7 +70,6 @@ impl<'a> clz_Torappu_FavorData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn percent(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -85,7 +81,6 @@ impl<'a> clz_Torappu_FavorData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn battlePhase(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -120,7 +115,7 @@ pub struct clz_Torappu_FavorDataArgs {
 impl<'a> Default for clz_Torappu_FavorDataArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_FavorDataArgs {
             favorPoint: 0,
             percent: 0,
             battlePhase: 0,
@@ -149,7 +144,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FavorDataBuilder<
             .push_slot::<i32>(clz_Torappu_FavorData::VT_BATTLEPHASE, battlePhase, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FavorDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FavorDataBuilder {
             fbb_: _fbb,
@@ -157,7 +154,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FavorDataBuilder<
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FavorData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -208,7 +204,7 @@ impl clz_Torappu_FavorDataT {
     }
 }
 pub enum clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Offset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -217,7 +213,7 @@ pub struct clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -231,8 +227,7 @@ impl<'a> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'
     pub const VT_DATA: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_ { _tab: table }
     }
     #[allow(unused_mut)]
@@ -258,7 +253,6 @@ impl<'a> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_T {
         let level = self.level();
         let data = self.data().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -266,7 +260,6 @@ impl<'a> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'
     }
 
     #[inline]
-    #[must_use]
     pub fn level(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -281,7 +274,6 @@ impl<'a> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn data(&self) -> Option<clz_Torappu_FavorData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -319,7 +311,7 @@ pub struct clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_
     pub level: i32,
     pub data: Option<::flatbuffers::WIPOffset<clz_Torappu_FavorData<'a>>>,
 }
-impl Default for clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Args<'_> {
+impl<'a> Default for clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Args<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Args {
@@ -357,7 +349,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Builder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_Builder {
             fbb_: _fbb,
@@ -365,7 +360,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -420,14 +414,14 @@ impl clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_T {
     }
 }
 pub enum clz_Torappu_FavorTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FavorTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FavorTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FavorTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -441,8 +435,7 @@ impl<'a> clz_Torappu_FavorTable<'a> {
     pub const VT_FAVORFRAMES: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FavorTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -463,7 +456,6 @@ impl<'a> clz_Torappu_FavorTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FavorTableT {
         let maxFavor = self.maxFavor();
         let favorFrames = self
@@ -476,7 +468,6 @@ impl<'a> clz_Torappu_FavorTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn maxFavor(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -488,7 +479,6 @@ impl<'a> clz_Torappu_FavorTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn favorFrames(
         &self,
     ) -> Option<
@@ -548,7 +538,7 @@ pub struct clz_Torappu_FavorTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_FavorTableArgs<'_> {
+impl<'a> Default for clz_Torappu_FavorTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_FavorTableArgs {
@@ -586,7 +576,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FavorTableBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FavorTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FavorTableBuilder {
             fbb_: _fbb,
@@ -594,7 +586,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FavorTableBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FavorTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -695,18 +686,16 @@ pub fn size_prefixed_root_as_clz_torappu_favor_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_FavorTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_FavorTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_FavorTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_FavorTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_favor_table_unchecked(buf: &[u8]) -> clz_Torappu_FavorTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_FavorTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_FavorTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_FavorTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_FavorTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_favor_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_FavorTable<'_> {

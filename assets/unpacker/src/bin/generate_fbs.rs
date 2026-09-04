@@ -99,152 +99,99 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
 /// `VTable` slots by declaration order, so a field inserted in the middle
 /// (rather than appended) breaks all subsequent offsets.
 ///
-/// Each patch is documented with the symptom and root cause.
+/// AS OF CN 2.7.71 (upstream `b24069f`) THE ARRAY IS EMPTY: every patch this
+/// function ever carried was REFUTED by running the FlatBuffers verifier over
+/// the live binary. In each case pristine upstream verifies and the patched
+/// schema does not — the patches were written against older binaries and each
+/// one outlived the mismatch it was correcting, then started corrupting the
+/// decode itself. The per-patch records below keep the measurement that
+/// retired each one.
+///
+/// BEFORE ADDING A NEW PATCH, two measurements are required. First, the CN
+/// `root_as_*_with_opts` verifier must FAIL on the live binary with pristine
+/// upstream. Second, it must PASS with the patch applied. A patch that cannot
+/// show both is not fixing a misalignment — see `select_schema_by_verification`
+/// in the generated decoder for the check.
+///
+/// Note that a verifier failure alone does not prove the schema is wrong: the
+/// verifier is stricter about alignment than the game's writer, and CN
+/// activity_table and roguelike_topic_table both fail "unaligned" on schemas
+/// whose decode is known-good.
 fn patch_schemas(fbs_dir: &Path) {
-    let patches: &[(&str, &str, &str)] = &[
-        // roguelike_topic_table.fbs: `relicTipsData` was inserted before `activity`
-        // in clz_Torappu_RoguelikeTopicDetail, but the binary has `activity` at
-        // slot 51 (matching CN-gamedata field order). Moving `relicTipsData` after
-        // `activity` fixes the VTable alignment and allows Details to decode.
-        (
-            "roguelike_topic_table.fbs",
-            // old: relicTipsData before activity
-            "    rollNodeData: [dict__string__clz_Torappu_RoguelikeRollNodeData]; \n\
-             \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData]; \n\
-             \x20   activity: clz_Torappu_RoguelikeActivityData; \n\
-             }",
-            // new: activity before relicTipsData
-            "    rollNodeData: [dict__string__clz_Torappu_RoguelikeRollNodeData];\n\
-             \x20   activity: clz_Torappu_RoguelikeActivityData;\n\
-             \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData];\n\
-             }",
-        ),
-        // skin_table.fbs: NO patch needed as of CN 2.7.41 (upstream commit
-        // 6121fa9). Upstream correctly ships spAvatarId (after avatarId) and
-        // spPortraitId (after portraitId) in clz_Torappu_CharSkinData — 20
-        // vtable fields, matching the live binary.
-        //
-        // A prior patch here REMOVED those two fields. That was correct at
-        // 2.7.21, when the binary lacked them but upstream's schema had them;
-        // it became WRONG once the binary started shipping them (as that patch's
-        // own comment predicted). Dropping to 18 fields shifted every slot from
-        // idx 14 on, so battleSkin / voiceId / displaySkin misread — a string
-        // field landed on table bytes → invalid UTF-8 → the whole
-        // skin_table.json was unparseable and the backend got nothing. Deleting
-        // the patch (letting pristine upstream through) fixes it. Verified by
-        // decoding the live 2.7.41 binary with flatc: char_355_ethan@epoque#7's
-        // DisplaySkin.SkinName decodes as 渗透 and BattleSkin resolves.
-        //
-        // If upstream ever drops the fields again, add a corrective patch here.
-        // activity_table.fbs: commit 4975a03 inserted `defaultEnemyTag` into
-        // the middle of clz_Torappu_ActivityEnemyDuelConstData, between
-        // `defaultEmoticonPicId` and `modeOperationRoundNumber`. The binary
-        // doesn't have it, shifting all subsequent slots. Remove to restore
-        // alignment. Backend does not load activity_table.
-        (
-            "activity_table.fbs",
-            "    defaultEmoticonPicId: string; \n\
-             \x20   defaultEnemyTag: string; \n\
-             \x20   modeOperationRoundNumber: int; ",
-            "    defaultEmoticonPicId: string;\n\
-             \x20   modeOperationRoundNumber: int; ",
-        ),
-        // open_server_table.fbs: commit 4975a03 inserted `compensateEndDay`
-        // mid-struct in clz_Torappu_NewbieCheckInPackageData (between
-        // `checkInDuration` and `totalCheckInDay`). The same commit also
-        // appended `trigStartTime`/`trigEndTime` to the END of the struct,
-        // which is forward-compatible (absent fields read as None) — so we
-        // only need to remove the mid-struct insertion. Backend does not
-        // load open_server_table.
-        (
-            "open_server_table.fbs",
-            "    checkInDuration: int; \n\
-             \x20   compensateEndDay: int; \n\
-             \x20   totalCheckInDay: int; ",
-            "    checkInDuration: int;\n\
-             \x20   totalCheckInDay: int; ",
-        ),
-        // display_meta_table.fbs: commit 4975a03 made three breaking changes.
-        // (1) Inserted `limitId` at the START of clz_Torappu_NameCardV2TimeLimitInfo,
-        //     shifting every field after it by +2 slots.
-        // (2) Inserted `keyCodeType` mid-struct in clz_Torappu_KeyItem, between
-        //     `useIcon` and `keyCodes`.
-        // (3) Changed `timeLimitInfoList` element type from
-        //     `[clz_Torappu_NameCardV2TimeLimitInfo]` to the dict-wrapped
-        //     `[dict__string__clz_Torappu_NameCardV2TimeLimitInfo]`. The binary
-        //     still stores plain table elements, so every element misreads.
-        // Revert all three. Backend does not load display_meta_table.
-        (
-            "display_meta_table.fbs",
-            "table clz_Torappu_NameCardV2TimeLimitInfo {\n\
-             \x20   limitId: string; \n\
-             \x20   id: string; ",
-            "table clz_Torappu_NameCardV2TimeLimitInfo {\n\
-             \x20   id: string; ",
-        ),
-        (
-            "display_meta_table.fbs",
-            "    useIcon: bool; \n\
-             \x20   keyCodeType: enum__Torappu_KeyCodeType; \n\
-             \x20   keyCodes: [int]; ",
-            "    useIcon: bool;\n\
-             \x20   keyCodes: [int]; ",
-        ),
-        (
-            "display_meta_table.fbs",
-            "    timeLimitInfoList: [dict__string__clz_Torappu_NameCardV2TimeLimitInfo]; ",
-            "    timeLimitInfoList: [clz_Torappu_NameCardV2TimeLimitInfo]; ",
-        ),
-        // ep_breakbuff_table.fbs: commit 4975a03 inserted `enemyElementBreakDuration`
-        // mid-struct in clz_Torappu_EPBreakBuffData (between `elementBreakDuration`
-        // and `elementBuffs`). ep_breakbuff has a Yostar variant fallback already,
-        // but the CN path emits panic noise on every decode attempt. Remove the
-        // field to silence the noise. Backend does not load ep_breakbuff_table.
-        (
-            "ep_breakbuff_table.fbs",
-            "    elementBreakDuration: float; \n\
-             \x20   enemyElementBreakDuration: float; \n\
-             \x20   elementBuffs: [string]; ",
-            "    elementBreakDuration: float;\n\
-             \x20   elementBuffs: [string]; ",
-        ),
-        // stage_table.fbs: clz_Torappu_CGGalleryGroupData is mid-struct
-        // misaligned vs the current CN binary. The decoder reads slot 8
-        // (locationId) and follows a garbage offset, writing raw bytes into
-        // the output string. This produces invalid UTF-8 in the JSON file,
-        // which causes serde_json::from_reader in the backend's
-        // load_table_or_warn to fail → StageTableFile silently loads as
-        // Default::default() → every stage-dependent feature breaks.
-        //
-        // stage_table.fbs has not been modified upstream since 94bf1f8 (game
-        // version 2.7.11); the game is now at 2.7.21, so ten minor versions
-        // of schema drift have accumulated. The actual misalignment inside
-        // CGGalleryGroupData is unknown (binary inspection required to
-        // diagnose precisely).
-        //
-        // Mitigation: truncate CGGalleryGroupData to only its first two
-        // fields (storySetId, storylineId — which decode cleanly). Removing
-        // trailing fields from a FlatBuffers table is SAFE — each table has
-        // its own VTable, so slot numbers in other structs are unaffected,
-        // and absent trailing fields in the binary simply aren't read.
-        // The backend's StageTableFile only deserializes the top-level
-        // `Stages` field and ignores CgGalleryGroups entirely
-        // (backend/src/core/gamedata/types/stage.rs:166-171), so zero
-        // functionality is lost.
-        (
-            "stage_table.fbs",
-            "table clz_Torappu_CGGalleryGroupData {\n\
-             \x20   storySetId: string; \n\
-             \x20   storylineId: string; \n\
-             \x20   locationId: string; \n\
-             \x20   displays: [string]; \n\
-             }",
-            "table clz_Torappu_CGGalleryGroupData {\n\
-             \x20   storySetId: string;\n\
-             \x20   storylineId: string;\n\
-             }",
-        ),
-    ];
+    // roguelike_topic_table.fbs: NO patch as of CN 2.7.71 (upstream commit
+    // b24069f). Upstream declares the tail of clz_Torappu_RoguelikeTopicDetail
+    // as `rollNodeData, relicTipsData, legacyItems, activity`, and the live
+    // binary agrees: decoded against that order every one of the four fields
+    // holds data of its own shape (Activity populated for all 6 topics,
+    // LegacyItems = real LegacyItemData, rogue_6 CharBuffData 6.7 KB with 49/49
+    // readable blackboard keys, whole table 18.9 MB).
+    //
+    // A prior patch here swapped `relicTipsData` and `activity`. That was
+    // right for the 2.7.41 binary, which lacked `legacyItems`; against 2.7.71
+    // the same swap reads the legacy-item vector through the RelicTips schema
+    // and leaves Activity empty, and the pinned pre-rebase schema decodes
+    // rogue_6 CharBuffData into 1.6 GB of vtable garbage (a 1.8 GB table that
+    // took the backend to a 5.3 GiB load peak). The rebased submodule carries
+    // no roguelike change, so there is nothing for a patch to match.
+    //
+    // skin_table.fbs: NO patch needed as of CN 2.7.41 (upstream commit
+    // 6121fa9). Upstream correctly ships spAvatarId (after avatarId) and
+    // spPortraitId (after portraitId) in clz_Torappu_CharSkinData — 20
+    // vtable fields, matching the live binary.
+    //
+    // A prior patch here REMOVED those two fields. That was correct at
+    // 2.7.21, when the binary lacked them but upstream's schema had them;
+    // it became WRONG once the binary started shipping them (as that patch's
+    // own comment predicted). Dropping to 18 fields shifted every slot from
+    // idx 14 on, so battleSkin / voiceId / displaySkin misread — a string
+    // field landed on table bytes → invalid UTF-8 → the whole
+    // skin_table.json was unparseable and the backend got nothing. Deleting
+    // the patch (letting pristine upstream through) fixes it. Verified by
+    // decoding the live 2.7.41 binary with flatc: char_355_ethan@epoque#7's
+    // DisplaySkin.SkinName decodes as 渗透 and BattleSkin resolves.
+    //
+    // ---- The five June 2026 patches, all DROPPED at 2.7.71 ----
+    // Each was measured on CN 26-09-03-04-06-00_ed95a2 by generating twice, once
+    // from the patched fork and once from pristine b24069f, and diffing the
+    // extraction. Pristine verifies in every row; four of the five patched
+    // schemas fail verification outright.
+    //
+    // activity_table.fbs: the patch removed `defaultEnemyTag` from
+    // clz_Torappu_ActivityEnemyDuelConstData. The 2.7.71 binary HAS the field
+    // (3 occurrences under pristine, 0 under the patch). Patched output carries
+    // 167,669 escaped NUL bytes inside strings and is not valid UTF-8
+    // ("MilestoneName": "\u0000\u0000\u0003..."); pristine has zero and parses.
+    // Patched CN verify FAILS (`u32 @2354602 unaligned`), pristine PASSES.
+    //
+    // open_server_table.fbs: the patch removed `compensateEndDay` from
+    // clz_Torappu_NewbieCheckInPackageData. Patched CheckInRewardDict starts
+    // with a valueless `{"key": 0}` head — the slot-shift artifact — and the
+    // file is not valid UTF-8; pristine starts at key 1 with its reward list
+    // intact. Patched CN verify FAILS (`u32 @56739 unaligned`), pristine PASSES.
+    //
+    // display_meta_table.fbs: the patch reverted three upstream changes
+    // (`limitId`, `keyCodeType`, and the dict-wrapped `timeLimitInfoList`).
+    // It loses data: "KeyCodes" 4 occurrences vs 95 pristine, "LimitId" 0 vs 40,
+    // "KeyCodeType" 0 vs 95. A pristine KeyItem reads
+    // {"KeyCodeType": "KEYBOARD", "KeyCodes": [50, 84], "KeyId": "num0", ...};
+    // the patched one has neither field. Patched CN verify FAILS
+    // (`i64 @121364 unaligned`), pristine PASSES.
+    //
+    // ep_breakbuff_table.fbs: the patch removed `enemyElementBreakDuration`
+    // from clz_Torappu_EPBreakBuffData. The live binary has it — pristine, which
+    // keeps it, is the layout that verifies. Patched CN verify FAILS with an
+    // out-of-bounds read (`Range [1092616552, 1092616556)`) because a float is
+    // read as a vector offset; pristine PASSES. Output is byte-identical either
+    // way only because the Yostar schema (same 3-field layout) already rescued
+    // the patched path via verification.
+    //
+    // stage_table.fbs: the patch truncated clz_Torappu_CGGalleryGroupData to
+    // its first two fields to dodge a garbage `locationId` offset. That symptom
+    // does not reproduce on 2.7.71: pristine CgGalleryGroups decode cleanly
+    // ({"Displays": ["cgId_mainline_0_1_1", ...], "LocationId": "mainline_0_1",
+    // ...}) and the file is valid UTF-8. Both schemas verify here, so this one
+    // was merely discarding two real fields rather than corrupting the table.
+    let patches: &[(&str, &str, &str)] = &[];
 
     for (filename, old, new) in patches {
         let path = fbs_dir.join(filename);
@@ -260,6 +207,120 @@ fn patch_schemas(fbs_dir: &Path) {
             }
         }
     }
+}
+
+/// A `.fbs` reduced to the part that can change how flatc generates code:
+/// comments gone, every run of whitespace collapsed to one space.
+///
+/// The Yostar repo pins each table to the CN commit it was forked from and
+/// records that as a leading `// https://github.com/MooncellWiki/...` comment,
+/// so a comment-sensitive comparison calls all 57 files "different" when most
+/// are byte-identical CN copies.
+fn normalize_fbs(src: &str) -> String {
+    let mut out = String::with_capacity(src.len());
+    let bytes = src.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'/' && i + 1 < bytes.len() && bytes[i + 1] == b'/' {
+            while i < bytes.len() && bytes[i] != b'\n' {
+                i += 1;
+            }
+        } else if bytes[i] == b'/' && i + 1 < bytes.len() && bytes[i + 1] == b'*' {
+            i += 2;
+            while i + 1 < bytes.len() && !(bytes[i] == b'*' && bytes[i + 1] == b'/') {
+                i += 1;
+            }
+            i = (i + 2).min(bytes.len());
+            out.push(' ');
+        } else if bytes[i].is_ascii_whitespace() {
+            if !out.ends_with(' ') {
+                out.push(' ');
+            }
+            i += 1;
+        } else {
+            out.push(bytes[i] as char);
+            i += 1;
+        }
+    }
+    out.trim().to_string()
+}
+
+/// Which tables need a Yostar (EN/Global) schema variant.
+///
+/// A table needs one exactly when its Yostar `.fbs` differs from the CN `.fbs`
+/// after normalisation. Two identical schemas produce identical flatc output
+/// and therefore cannot decode a buffer differently: a variant for such a table
+/// is dead weight in the binary and a second, pointless verifier pass at
+/// runtime. Measured on OpenArknightsFBS b24069f vs ArknightsFlatbuffers
+/// 2026-09-04: 31 of 57 differ, and every one of the 26 identical ones produced
+/// a flatc-generated `.rs` byte-identical to its CN counterpart.
+///
+/// This replaces a hand-curated list. A curated list has to be revisited every
+/// time either upstream moves, and the failure mode is silent — a table whose
+/// EN layout has just diverged keeps decoding to garbage because nobody added
+/// it. The computed set cannot go stale.
+fn compute_yostar_schemas(
+    cn_fbs_dir: &Path,
+    yostar_fbs_dir: &Path,
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let mut differ = Vec::new();
+    let mut identical = Vec::new();
+    let mut orphan = Vec::new();
+
+    let mut entries: Vec<PathBuf> = fs::read_dir(yostar_fbs_dir)?
+        .filter_map(std::result::Result::ok)
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|ext| ext == "fbs"))
+        .collect();
+    entries.sort();
+
+    for yostar in &entries {
+        let Some(stem) = yostar.file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        let cn = cn_fbs_dir.join(format!("{stem}.fbs"));
+        if !cn.exists() {
+            orphan.push(stem.to_string());
+            continue;
+        }
+        let (Ok(cn_src), Ok(yostar_src)) = (fs::read_to_string(&cn), fs::read_to_string(yostar))
+        else {
+            continue;
+        };
+        if normalize_fbs(&cn_src) == normalize_fbs(&yostar_src) {
+            identical.push(stem.to_string());
+        } else {
+            differ.push(stem.to_string());
+        }
+    }
+
+    println!(
+        "Yostar variants: {} of {} schemas differ from CN and get a variant",
+        differ.len(),
+        entries.len()
+    );
+    println!("  variant:   {}", differ.join(" "));
+    println!("  identical: {}", identical.join(" "));
+    if !orphan.is_empty() {
+        println!("  no CN counterpart (skipped): {}", orphan.join(" "));
+    }
+    Ok(differ)
+}
+
+/// Removes stale generated modules so a table that no longer needs a Yostar
+/// variant stops being compiled in (and stops being listed by
+/// `has_yostar_schema`).
+fn clear_generated_dir(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    if !dir.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(dir)? {
+        let path = entry?.path();
+        if path.extension().is_some_and(|ext| ext == "rs") {
+            fs::remove_file(path)?;
+        }
+    }
+    Ok(())
 }
 
 fn fetch_yostar_schemas() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -789,8 +850,11 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
             out.push_str("            map.insert(\"key\".to_string(), k.to_json_value());\n");
             out.push_str("        }\n");
         } else if kf.is_option {
+            let value = json_expr(kf, "k");
             out.push_str("        if let Some(k) = self.key() {\n");
-            out.push_str("            map.insert(\"key\".to_string(), json!(k));\n");
+            out.push_str(&format!(
+                "            map.insert(\"key\".to_string(), {value});\n"
+            ));
             out.push_str("        }\n");
         } else if kf.is_enum {
             out.push_str(
@@ -799,10 +863,13 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
             out.push_str("            map.insert(\"key\".to_string(), k.to_json_value());\n");
             out.push_str("        }\n");
         } else {
+            let value = json_expr(kf, "k");
             out.push_str(
                 "        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {\n",
             );
-            out.push_str("            map.insert(\"key\".to_string(), json!(k));\n");
+            out.push_str(&format!(
+                "            map.insert(\"key\".to_string(), {value});\n"
+            ));
             out.push_str("        }\n");
         }
     }
@@ -828,17 +895,27 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
                     out.push_str("            map.insert(\"value\".to_string(), json!(arr));\n");
                     out.push_str("        }\n");
                 } else {
+                    let elem = if vf.element_type.as_deref() == Some("string") {
+                        "crate::fb_json_macros::json_str(v)"
+                    } else {
+                        "json!(v)"
+                    };
                     out.push_str("        if let Some(vec) = self.value() {\n");
                     out.push_str(
                         "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
                     );
-                    out.push_str("            let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();\n");
+                    out.push_str(&format!(
+                        "            let arr: Vec<Value> = vec.iter().map(|v| {elem}).collect();\n"
+                    ));
                     out.push_str("            map.insert(\"value\".to_string(), json!(arr));\n");
                     out.push_str("        }\n");
                 }
             } else {
+                let value = json_expr(vf, "v");
                 out.push_str("        if let Some(v) = self.value() {\n");
-                out.push_str("            map.insert(\"value\".to_string(), json!(v));\n");
+                out.push_str(&format!(
+                    "            map.insert(\"value\".to_string(), {value});\n"
+                ));
                 out.push_str("        }\n");
             }
         } else if vf.is_nested {
@@ -848,7 +925,10 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
                 "        map.insert(\"value\".to_string(), self.value().to_json_value());\n",
             );
         } else {
-            out.push_str("        map.insert(\"value\".to_string(), json!(self.value()));\n");
+            let value = json_expr(vf, "self.value()");
+            out.push_str(&format!(
+                "        map.insert(\"value\".to_string(), {value});\n"
+            ));
         }
     }
 
@@ -869,7 +949,7 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                 out.push_str(
                     "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
                 );
-                out.push_str("                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();\n");
+                out.push_str("                let arr: Vec<Value> = (0..vec.len()).map(|i| crate::fb_json_macros::json_str(vec.get(i))).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"
                 ));
@@ -944,18 +1024,19 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
         ));
         out.push_str("            }\n");
     } else if field.is_option {
+        let value = json_expr(field, "v");
         out.push_str(&format!(
             "            if let Some(v) = self.{}() {{\n",
             field.name
         ));
         out.push_str(&format!(
-            "                return Some((\"{pascal_name}\".to_string(), json!(v)));\n"
+            "                return Some((\"{pascal_name}\".to_string(), {value}));\n"
         ));
         out.push_str("            }\n");
     } else {
+        let value = json_expr(field, &format!("self.{}()", field.name));
         out.push_str(&format!(
-            "            return Some((\"{pascal_name}\".to_string(), json!(self.{}())));\n",
-            field.name
+            "            return Some((\"{pascal_name}\".to_string(), {value}));\n"
         ));
     }
 
@@ -966,12 +1047,291 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
     out.push_str("        }\n");
 }
 
+/// Does this accessor return a `FlatBuffer` string (`&'a str`), directly or
+/// wrapped in `Option`?
+///
+/// Vectors are asked about through `Field::element_type` instead, so a
+/// `Vector<'a, ForwardsUOffset<&'a str>>` must never reach here.
+fn is_string_type(return_type: &str) -> bool {
+    return_type.contains("&'a str") || return_type.contains("&str")
+}
+
+/// `json!(expr)` for a scalar, `json_str(expr)` for a string. The generated
+/// accessors build their `&str` with `from_utf8_unchecked`, so a string field
+/// can hand back bytes that are not valid UTF-8 and `json!` would write them
+/// straight into the `.json` file, making the whole file unparseable. See
+/// `fb_json_macros::json_str`.
+fn json_expr(field: &Field, expr: &str) -> String {
+    if is_string_type(&field.return_type) {
+        format!("crate::fb_json_macros::json_str({expr})")
+    } else {
+        format!("json!({expr})")
+    }
+}
+
 fn pascal_case(s: &str) -> String {
     let mut chars = s.chars();
     match chars.next() {
         Some(c) => c.to_uppercase().to_string() + chars.as_str(),
         None => String::new(),
     }
+}
+
+/// `root_as_x_unchecked` → `root_as_x_with_opts`, the verified root flatc emits
+/// next to the unchecked one.
+fn with_opts_fn(root_fn: &str) -> Option<String> {
+    root_fn
+        .strip_suffix("_unchecked")
+        .map(|base| format!("{base}_with_opts"))
+}
+
+/// The first root accessor a generated module exposes (one root per module).
+fn root_fn_for(structs: &HashMap<String, Vec<ParsedStruct>>, module: &str) -> Option<String> {
+    structs
+        .get(module)?
+        .iter()
+        .find_map(|s| s.root_fn_name.clone())
+}
+
+/// Emits `SchemaChoice`, `verifier_opts` and `select_schema_by_verification`:
+/// the CN-vs-Yostar schema pick that runs *before* any decode.
+fn emit_schema_verification(
+    out: &mut String,
+    cn_structs: &HashMap<String, Vec<ParsedStruct>>,
+    yostar_structs: &HashMap<String, Vec<ParsedStruct>>,
+    schema_to_module: &[(&'static str, &'static str)],
+) {
+    let mut arms = String::new();
+    for (schema_type, module) in schema_to_module {
+        let Some(cn_fn) = root_fn_for(cn_structs, module)
+            .as_deref()
+            .and_then(with_opts_fn)
+        else {
+            continue;
+        };
+        let yostar_fn = root_fn_for(yostar_structs, module)
+            .as_deref()
+            .and_then(with_opts_fn);
+
+        arms.push_str(&format!(
+            "        \"{schema_type}\" => {{\n\
+             \x20           let cn_err = {{\n\
+             \x20               use crate::generated_fbs::{module}::*;\n\
+             \x20               {cn_fn}(&opts, data).err().map(|e| first_line(&e))\n\
+             \x20           }};\n"
+        ));
+        match yostar_fn {
+            None => arms.push_str("            (cn_err, None)\n        }\n"),
+            Some(yostar_fn) => arms.push_str(&format!(
+                "            if cn_err.is_none() && !full {{\n\
+                 \x20               // The CN schema verified and the caller only wants\n\
+                 \x20               // the routing decision: skip the second verify.\n\
+                 \x20               return (None, None);\n\
+                 \x20           }}\n\
+                 \x20           let yostar_err = {{\n\
+                 \x20               use crate::generated_fbs_yostar::{module}::*;\n\
+                 \x20               {yostar_fn}(&opts, data).err().map(|e| first_line(&e))\n\
+                 \x20           }};\n\
+                 \x20           (cn_err, Some(yostar_err))\n\
+                 \x20       }}\n"
+            )),
+        }
+    }
+
+    out.push_str(
+        r#"/// Which schema a buffer actually verifies against.
+ #[derive(Clone, Copy, PartialEq, Eq)]
+ enum SchemaChoice {
+     /// The CN schema verified. Decode exactly as before.
+     Cn,
+     /// The CN schema did not verify but the Yostar (EN/Global) one did.
+     Yostar,
+     /// Neither verified — fall back to the legacy decode-then-inspect path.
+     Neither,
+ }
+
+ /// One table's verification verdict, for the `unpacker verify` report.
+ pub struct TableVerdict {
+     /// The schema type `guess_root_type` resolved the filename to.
+     pub table: &'static str,
+     /// `None` when the CN schema verified, else the first line of the error.
+     pub cn: Option<String>,
+     /// Outer `None` when the table has no Yostar variant; inner `None` when
+     /// the Yostar schema verified.
+     pub yostar: Option<Option<String>>,
+     /// What `decode_flatbuffer` will actually do with this buffer:
+     /// `"CN"` (CN schema verified), `"Yostar"` (routed to the Yostar schema),
+     /// or `"none"` (nothing verified — the table is skipped, no file written).
+     pub chosen: &'static str,
+ }
+
+ /// `InvalidFlatbuffer` Displays as a multi-line trace; one line per table is
+ /// what every caller here wants.
+ fn first_line(e: &::flatbuffers::InvalidFlatbuffer) -> String {
+     e.to_string().lines().next().unwrap_or_default().to_string()
+ }
+
+ /// Verifier options for schema selection.
+ ///
+ /// Deliberately generous. These buffers are real game data, not adversarial
+ /// input, and the only question being asked is "do the offsets in this buffer
+ /// make sense under this schema". A false *negative* would push a perfectly
+ /// good CN table onto the legacy path, so every limit sits far above what any
+ /// real table needs; `max_apparent_size` is the flatbuffers default (2 GiB).
+ ///
+ /// `max_alignment` is not an upstream flatbuffers option; it comes from the
+ /// vendored copy in `vendor/flatbuffers` (see MYRTLE-PATCH.md). Hypergryph's
+ /// serializer aligns 8-byte scalars to 4 bytes, so upstream's `is_aligned`
+ /// rejects a buffer the crate then reads back perfectly well through its
+ /// unaligned scalar reads: `roguelike_topic_table` failed verification under
+ /// BOTH schemas on BOTH servers with `Type f64 at position N is unaligned`,
+ /// N % 8 == 4 (CN 7819508, EN 7285868). Capping the demand at 4 accepts that
+ /// layout and leaves every other check untouched.
+ ///
+ /// `ignore_utf8_errors` is the second vendored option. Upstream rejects a
+ /// buffer when a string's BYTES do not decode as UTF-8, which is right for a
+ /// reader that hands the `&str` to code assuming valid UTF-8. Ours does not:
+ /// every string reaching the emitter goes through `fb_json_macros::json_str`,
+ /// i.e. `String::from_utf8_lossy`, so the bad byte becomes U+FFFD and nothing
+ /// downstream can observe it. Now that an unverified table is SKIPPED rather
+ /// than decoded, a content check the emitter already handles must not be
+ /// allowed to cost a whole table.
+ ///
+ /// `ignore_missing_null_terminator` stays FALSE, deliberately. It is tempting
+ /// for the same reason — this reader is length-prefixed and never scans for a
+ /// NUL — but it is measurably load-bearing for schema SELECTION. The
+ /// `battle/level_script_table` buffer verifies under its own schema and fails
+ /// `level_data` on exactly that check; with the option on it verifies under
+ /// BOTH and the wrong one wins. EN `roguelike_topic_table` and `building_data`
+ /// likewise fail the CN schema only on a missing null terminator, and routing
+ /// them back to CN is the multi-GB garbage this whole mechanism exists to
+ /// prevent. A missing terminator is a good discriminator; a bad UTF-8 byte is
+ /// not.
+ fn verifier_opts() -> ::flatbuffers::VerifierOptions {
+     ::flatbuffers::VerifierOptions {
+         max_depth: 256,
+         max_tables: usize::MAX >> 1,
+         max_apparent_size: 1 << 31,
+         ignore_missing_null_terminator: false,
+         max_alignment: 4,
+         ignore_utf8_errors: true,
+     }
+ }
+
+ /// Verify `data` against the schemas available for `schema_type`.
+ ///
+ /// Returns `(cn_err, yostar_err)`, where a `None` error means that schema
+ /// verified, and the outer `None` on `yostar_err` means "no Yostar variant, or
+ /// not run". `full = false` short-circuits: once the CN schema verifies the
+ /// routing decision is already made, so the Yostar verifier is not run.
+ /// `full = true` (the `verify` subcommand) always runs both.
+ ///
+ /// The whole function returns `None` if a verifier panics — it is not supposed
+ /// to, but neither was the decoder, and this is the one place that can still
+ /// contain it.
+ fn verify_schemas(
+     data: &[u8],
+     schema_type: &str,
+     full: bool,
+ ) -> Option<(Option<String>, Option<Option<String>>)> {
+     let opts = verifier_opts();
+     panic::catch_unwind(AssertUnwindSafe(|| match schema_type {
+"#,
+    );
+    if arms.is_empty() {
+        out.push_str("        _ => (None, None),\n");
+    } else {
+        out.push_str(&arms);
+        out.push_str("        _ => (None, None),\n");
+    }
+    out.push_str("    }))\n    .ok()\n}\n\n");
+
+    out.push_str(
+        r#"/// Pick CN or Yostar for `schema_type` by VERIFYING the buffer, before any
+ /// decode runs.
+ ///
+ /// WHY: only a handful of tables have a Yostar (EN/Global) schema variant, and
+ /// the CN→Yostar fallback used to fire only when the CN decode came out EMPTY.
+ /// That catches a mismatch that nulls everything out. It does not catch a
+ /// mismatch that produces plausible-looking garbage. Measured on EN
+ /// 26-08-28-10-20-08_ea3678: `activity_table` under the CN schema writes
+ /// 5,211,117,589 bytes of JSON where the Yostar schema writes 13,143,425, and
+ /// CN's own activity_table is 15,867,159. Not empty, so nothing detected it,
+ /// and it takes peak RSS for one EN extraction from 431 MB to 8.56 GB — which
+ /// is the 10 GB OOM kill the unpacker took on the VPS on 2026-08-04.
+ ///
+ /// Verification is the only signal that fires BEFORE the garbage is
+ /// materialised. Every emptiness heuristic runs on a fully built
+ /// `serde_json::Value`, i.e. after the memory has already been spent, whereas
+ /// `root_as_*_with_opts` only walks offsets and vtables: it allocates no
+ /// `Value` and serialises nothing.
+ ///
+ /// A verifier panic (it is not supposed to, but a decode panic was not supposed
+ /// to happen either) is treated as `Neither`, which is the pre-existing path.
+ ///
+ /// Silent on purpose: several callers ask the same question about the same
+ /// buffer (the pre-decode skip check, the decode itself, `verify`), so the
+ /// routing note is printed once by `decode_flatbuffer`, not here.
+ fn select_schema_by_verification(data: &[u8], schema_type: &str) -> SchemaChoice {
+     match verify_schemas(data, schema_type, false) {
+         None => SchemaChoice::Neither,
+         Some((None, _)) => SchemaChoice::Cn,
+         Some((Some(_), Some(None))) => SchemaChoice::Yostar,
+         Some((Some(_), _)) => SchemaChoice::Neither,
+     }
+ }
+
+ /// The verification verdict for one gamedata buffer, for `unpacker verify`.
+ ///
+ /// `chosen` comes from `select_schema_by_verification` itself, so the report
+ /// cannot drift from what `extract` does; the error strings come from the same
+ /// emitted match arms, run once more with `full = true` so the Yostar column is
+ /// filled in even when the CN schema verified.
+ #[must_use]
+ pub fn verify_table(data: &[u8], filename: &str) -> TableVerdict {
+     let table = guess_root_type(filename);
+     let (cn, yostar) = verify_schemas(data, table, true)
+         .unwrap_or_else(|| (Some("verifier panicked".to_string()), None));
+     let routed_yostar = has_yostar_schema(table)
+         && select_schema_by_verification(data, table) == SchemaChoice::Yostar;
+     let chosen = if routed_yostar {
+         "Yostar"
+     } else if cn.is_none() {
+         "CN"
+     } else {
+         "none"
+     };
+     TableVerdict {
+         table,
+         cn,
+         yostar,
+         chosen,
+     }
+ }
+
+ /// `Some(table)` when NO schema verifies this buffer, i.e. the caller must SKIP
+ /// it: no decode, no file written. `None` when it will decode (CN or Yostar),
+ /// and also when `guess_root_type` has no schema for the filename at all —
+ /// there is nothing to verify against there, and that path only ever produces
+ /// the harmless `extract_strings` listing.
+ ///
+ /// Callers use this to skip BEFORE `export_text_asset` runs, because the
+ /// fall-through inside it would otherwise write the raw payload as `.bytes`
+ /// over a perfectly good `.json` from the previous extraction.
+ #[must_use]
+ pub fn unverified_table(data: &[u8], filename: &str) -> Option<&'static str> {
+     let schema_type = guess_root_type(filename);
+     if schema_type == "unknown" {
+         return None;
+     }
+     match select_schema_by_verification(data, schema_type) {
+         SchemaChoice::Cn | SchemaChoice::Yostar => None,
+         SchemaChoice::Neither => Some(schema_type),
+     }
+ }
+
+"#,
+    );
 }
 
 fn generate_decode_dispatch(
@@ -1021,7 +1381,16 @@ fn generate_decode_dispatch(
  fn guess_root_type(filename: &str) -> &'static str {
      let lower = filename.to_lowercase();
 
-     if lower.starts_with("level_") {
+     // `level_script_table` MUST be tested before the `level_` prefix: it is a
+     // battle/ table with its own schema, not a level. Under `level_data`
+     // (prts___levels) its 312-byte buffer decoded to a 541-byte nonsense
+     // record — `MapId` holding raw bytes, everything else empty — and once an
+     // unverified table is skipped rather than decoded it would have been
+     // dropped outright. Under its own schema it verifies and decodes to a
+     // populated `LevelScriptDataLevelDict`.
+     if lower.contains("level_script_table") {
+         "level_script_table"
+     } else if lower.starts_with("level_") {
          "level_data"
      } else if lower.contains("enemy_database") {
          "enemy_database"
@@ -1143,8 +1512,13 @@ fn generate_decode_dispatch(
 
     let schema_to_module = build_schema_to_module_map();
 
-    let yostar_types: Vec<&str> = yostar_structs
-        .keys()
+    // Sorted so the emitted file is byte-stable across runs (HashMap iteration
+    // order is not).
+    let mut yostar_modules: Vec<&String> = yostar_structs.keys().collect();
+    yostar_modules.sort();
+    let yostar_types: Vec<&str> = yostar_modules
+        .iter()
+        .copied()
         .filter_map(|module| {
             let structs = &yostar_structs[module];
             if structs.iter().any(|s| s.is_root) {
@@ -1171,6 +1545,8 @@ fn generate_decode_dispatch(
     }
     out.push_str("}\n\n");
 
+    emit_schema_verification(&mut out, cn_structs, yostar_structs, &schema_to_module);
+
     out.push_str("/// Try decoding with Yostar-specific schemas\n");
     out.push_str(
         "fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {\n",
@@ -1188,11 +1564,12 @@ fn generate_decode_dispatch(
         out.push_str("        let data = &data_clone;\n");
         out.push_str("        match schema_type {\n");
 
-        for (module, structs) in yostar_structs {
+        for module in &yostar_modules {
+            let structs = &yostar_structs[*module];
             for s in structs {
                 if let Some(ref root_fn) = s.root_fn_name
                     && let Some((schema_type, _)) =
-                        schema_to_module.iter().find(|(_, m)| *m == module)
+                        schema_to_module.iter().find(|(_, m)| *m == *module)
                 {
                     out.push_str(&format!(
                         "            \"{schema_type}\" => {{\n\
@@ -1210,7 +1587,7 @@ fn generate_decode_dispatch(
         out.push_str("    }));\n");
         out.push_str("    match decode_result {\n");
         out.push_str("        Ok(Ok(value)) => {\n");
-        out.push_str("            if value.as_object().map_or(false, |o| o.is_empty()) {\n");
+        out.push_str("            if value.as_object().is_some_and(|o| o.is_empty()) {\n");
         out.push_str("                Err(\"Yostar decode returned empty\".to_string())\n");
         out.push_str("            } else { Ok(value) }\n");
         out.push_str("        }\n");
@@ -1231,7 +1608,50 @@ fn generate_decode_dispatch(
     out.push_str("    if !is_flatbuffer(data) {\n");
     out.push_str("        return Err(\"Data is not a valid FlatBuffer\".to_string());\n");
     out.push_str("    }\n\n");
-    out.push_str("    let schema_type = guess_root_type(filename);\n");
+    out.push_str("    let schema_type = guess_root_type(filename);\n\n");
+    out.push_str(
+        r#"    // DECODE ONLY WHAT VERIFIES. `guess_root_type` names a schema; the
+     // buffer is verified against it (and against the Yostar variant, if the
+     // table has one) BEFORE anything is decoded, and a buffer that verifies
+     // under neither is skipped rather than decoded.
+     //
+     // WHY there is no unchecked fallback any more: `root_as_*_unchecked` on a
+     // buffer the schema does not match has no termination guarantee. It reads
+     // a scalar as a vector length and walks a multi-million-element phantom
+     // vector, one caught panic per element. Measured twice: EN stage_table
+     // 26-08-28 under the 2.7.71 CN schema never finished (>45 min on one
+     // 5,022,624-byte buffer), and the committed March-2026 CN fixture under
+     // the same schema burned 10 min at 97% CPU writing 3.7 GB of garbage
+     // before it was killed (sampled: 129 of 129 frames in
+     // stage_table_generated). Verification rejects both in microseconds.
+     //
+     // WHY skipping beats decoding anyway: a missing table is explicit and a
+     // garbage table is not. The caller (`export_gamedata`) writes no file, so
+     // the previous extraction's JSON stays on disk — the backend tolerates a
+     // missing non-critical table and degrades a non-default server, where a
+     // multi-GB garbage table takes the process out (a 10 GB RSS OOM kill on
+     // the VPS on 2026-08-04) and a plausible-looking one is worse still.
+     //
+     // Verification also costs nothing to be wrong about in the safe direction:
+     // it allocates no `Value` and serialises nothing, it only walks offsets
+     // and vtables.
+     if schema_type != "unknown" {
+         match select_schema_by_verification(data, schema_type) {
+             SchemaChoice::Yostar => {
+                 if let Some((Some(e), _)) = verify_schemas(data, schema_type, false) {
+                     eprintln!("schema: {schema_type} CN verify failed ({e}), Yostar verified");
+                 }
+                 return decode_flatbuffer_yostar(data, schema_type);
+             }
+             SchemaChoice::Neither => {
+                 return Err(format!("No schema verifies {schema_type}"));
+             }
+             SchemaChoice::Cn => {}
+         }
+     }
+
+ "#,
+    );
     out.push_str("    let data_clone = data.to_vec();\n\n");
     out.push_str("    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {\n");
     out.push_str("        let data = &data_clone;\n");
@@ -1257,96 +1677,50 @@ fn generate_decode_dispatch(
     out.push_str("        }\n");
     out.push_str("    }));\n\n");
 
-    out.push_str(r#"    match decode_result {
-                     Ok(Ok(value)) => {
-                         // A result is "useless" if either:
-                         //   (a) the top-level object has no keys at all, or
-                         //   (b) the root collection is present but empty because every
-                         //       element was dropped by the filter_map safety net.
-                         // Case (b) happens when the CN schema has fields the binary
-                         // doesn't (e.g., validModeIndices in EquipTalentData for the
-                         // Apr 2026 CN binary) and every element panics on decode.
-                         // Without this check the Yostar fallback never fires.
-                         let is_content_empty = match schema_type {
-                             "battle_equip_table" => value
-                                 .get("Equips")
-                                 .and_then(|v| v.as_array())
-                                 .map_or(false, |a| a.is_empty()),
-                             // The EN (Yostar) skin_table binary decodes "successfully"
-                             // under the CN schema but every entry's DisplaySkin reads
-                             // as null (vtable shift — see the yostar_schemas note). The
-                             // top object isn't empty (CharSkins is populated), so detect
-                             // the partial decode directly: CharSkins non-empty yet not a
-                             // single entry carries a populated DisplaySkin. On a real CN
-                             // binary, ~1300 skins have a DisplaySkin, so this never fires.
-                             "skin_table" => value
-                                 .get("CharSkins")
-                                 .and_then(|v| v.as_array())
-                                 .map_or(false, |a| {
-                                     !a.is_empty()
-                                         && !a.iter().any(|e| {
-                                             e.get("value")
-                                                 .and_then(|v| v.get("DisplaySkin"))
-                                                 .and_then(|d| d.as_object())
-                                                 .map_or(false, |o| !o.is_empty())
-                                         })
-                                 }),
-                             _ => false,
-                         };
-                         if value.as_object().map_or(false, |o| o.is_empty()) || is_content_empty {
-                             if has_yostar_schema(schema_type) {
-                                 if let Ok(v) = decode_flatbuffer_yostar(data, schema_type) {
-                                     return Ok(v);
-                                 }
-                             }
-                             Err(format!("Schema mismatch for {} (empty result)", schema_type))
-                         } else {
-                             Ok(value)
-                         }
-                     }
-                     Ok(Err(e)) => {
-                         if has_yostar_schema(schema_type) {
-                             if let Ok(v) = decode_flatbuffer_yostar(data, schema_type) {
-                                 return Ok(v);
-                             }
-                         }
-                         if schema_type == "unknown" {
-                             let strings = extract_strings(data);
-                             if !strings.is_empty() {
-                                 return Ok(json!({ "type": "unknown", "strings": strings }));
-                             }
-                         }
-                         Err(format!("Decode failed for {}: {}", schema_type, e))
-                     }
-                     Err(_) => {
-                         if has_yostar_schema(schema_type) {
-                             if let Ok(v) = decode_flatbuffer_yostar(data, schema_type) {
-                                 return Ok(v);
-                             }
-                         }
-                         Err(format!("Decode panic for {}", schema_type))
-                     }
-                 }
-             }
+    out.push_str(
+        r#"    match decode_result {
+        Ok(Ok(value)) => Ok(value),
+        Ok(Err(e)) => {
+            // `guess_root_type` found no schema for this filename, so nothing
+            // was verified and nothing was decoded. The string scavenger is the
+            // only thing left, and it is bounds-checked and UTF-8-checked.
+            if schema_type == "unknown" {
+                let strings = extract_strings(data);
+                if !strings.is_empty() {
+                    return Ok(json!({ "type": "unknown", "strings": strings }));
+                }
+            }
+            Err(format!("Decode failed for {schema_type}: {e}"))
+        }
+        // The buffer verified under this exact schema, so a panic here is a bug
+        // in the emitted `to_json`, not a schema mismatch: report it, do not
+        // silently retry under a schema that just failed verification.
+        Err(_) => Err(format!("Decode panic for {schema_type}")),
+    }
+}
 
-             /// Extract strings from FlatBuffer (fallback for unknown types)
-             pub fn extract_strings(data: &[u8]) -> Vec<String> {
-                 let mut strings = Vec::new();
-                 let mut i = 0;
-                 while i + 4 < data.len() {
-                     let len = u32::from_le_bytes([data[i], data[i+1], data[i+2], data[i+3]]) as usize;
-                     if len > 0 && len < 1000 && i + 4 + len <= data.len() {
-                         if let Ok(s) = std::str::from_utf8(&data[i+4..i+4+len]) {
-                             if s.len() >= 2 && s.chars().all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace() || !c.is_ascii()) {
-                                 strings.push(s.to_string());
-                             }
-                         }
-                     }
-                     i += 1;
-                 }
-                 strings
-             }
-             "#);
+/// Extract strings from FlatBuffer (fallback for unknown types)
+pub fn extract_strings(data: &[u8]) -> Vec<String> {
+    let mut strings = Vec::new();
+    let mut i = 0;
+    while i + 4 < data.len() {
+        let len = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]) as usize;
+        if len > 0
+            && len < 1000
+            && i + 4 + len <= data.len()
+            && let Ok(s) = std::str::from_utf8(&data[i + 4..i + 4 + len])
+            && s.len() >= 2
+            && s.chars()
+                .all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace() || !c.is_ascii())
+        {
+            strings.push(s.to_string());
+        }
+        i += 1;
+    }
+    strings
+}
+"#,
+    );
 
     fs::write(output_path, &out)?;
     println!("Generated {}", output_path.display());
@@ -1414,6 +1788,7 @@ fn build_schema_to_module_map() -> Vec<(&'static str, &'static str)> {
         ("legion_mode_buff_table", "legion_mode_buff_table_generated"),
         ("token_table", "token_table_generated"),
         ("level_data", "prts___levels_generated"),
+        ("level_script_table", "level_script_table_generated"),
     ]
 }
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1429,21 +1804,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(&yostar_output)?;
 
     run_flatc_all(&cn_fbs_dir, &cn_output)?;
-    let yostar_schemas = [
-        "character_table",
-        "battle_equip_table",
-        "token_table",
-        "ep_breakbuff_table",
-        // skin_table: the Global/EN (Yostar) gamedata binary lags CN and omits
-        // the `spAvatarId`/`spPortraitId` fields CN added (18 vtable fields vs
-        // CN's 20). Decoding the EN binary with the CN schema shifts every slot
-        // after `avatarId` by 2, pushing `displaySkin` past the vtable end so it
-        // (and `drawerList`, the artist names) reads as null for every skin —
-        // emptying the operators page artists filter. The Yostar schema matches
-        // the EN layout. See the `is_content_empty` skin_table arm below for the
-        // CN→Yostar fallback trigger.
-        "skin_table",
-    ];
+
+    // The Yostar variant set is COMPUTED, not curated: a table gets one exactly
+    // when its Yostar .fbs differs from the CN one. See `compute_yostar_schemas`.
+    // The output dir is cleared first so a table that stops differing stops
+    // being compiled in.
+    let yostar_schemas = compute_yostar_schemas(&cn_fbs_dir, &yostar_fbs_dir)?;
+    clear_generated_dir(&yostar_output)?;
     for name in &yostar_schemas {
         let fbs = yostar_fbs_dir.join(format!("{name}.fbs"));
         if fbs.exists() {

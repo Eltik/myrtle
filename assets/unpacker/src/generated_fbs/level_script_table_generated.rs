@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum dict__string__list_stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__list_string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -26,8 +26,7 @@ impl<'a> dict__string__list_string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -50,7 +49,6 @@ impl<'a> dict__string__list_string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_stringT {
         let key = {
             let x = self.key();
@@ -65,7 +63,6 @@ impl<'a> dict__string__list_string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -80,19 +77,16 @@ impl<'a> dict__string__list_string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__list_string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -130,7 +124,7 @@ pub struct dict__string__list_stringArgs<'a> {
         >,
     >,
 }
-impl Default for dict__string__list_stringArgs<'_> {
+impl<'a> Default for dict__string__list_stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_stringArgs {
@@ -165,7 +159,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__list_stringBuil
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__list_stringBuilder {
             fbb_: _fbb,
@@ -173,7 +169,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__list_stringBuil
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -221,14 +216,14 @@ impl dict__string__list_stringT {
     }
 }
 pub enum clz_Torappu_Battle_LevelScriptDataMapOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_LevelScriptDataMap<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_LevelScriptDataMap<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_LevelScriptDataMap<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -245,8 +240,7 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
     pub const VT_LEVELSCRIPTDATAMISCLIST: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_LevelScriptDataMap { _tab: table }
     }
     #[allow(unused_mut)]
@@ -278,7 +272,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_LevelScriptDataMapT {
         let levelScriptDataCharacterDict = self
             .levelScriptDataCharacterDict()
@@ -307,7 +300,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn levelScriptDataCharacterDict(
         &self,
     ) -> Option<
@@ -329,7 +321,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn levelScriptDataEnemyDict(
         &self,
     ) -> Option<
@@ -351,7 +342,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn levelScriptDataLevelDict(
         &self,
     ) -> Option<
@@ -373,7 +363,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn levelScriptDataGameModeDict(
         &self,
     ) -> Option<
@@ -395,7 +384,6 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn levelScriptDataMiscList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -510,7 +498,7 @@ pub struct clz_Torappu_Battle_LevelScriptDataMapArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_LevelScriptDataMapArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_LevelScriptDataMapArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_LevelScriptDataMapArgs {
@@ -607,7 +595,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_LevelScriptDataMapBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_LevelScriptDataMapBuilder {
             fbb_: _fbb,
@@ -615,7 +605,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_LevelScriptDataMap<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -749,20 +738,18 @@ pub fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_with_opts<
     )
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_Battle_LevelScriptDataMap` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_Battle_LevelScriptDataMap and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Battle_LevelScriptDataMap`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_LevelScriptDataMap<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_Battle_LevelScriptDataMap` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Battle_LevelScriptDataMap and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Battle_LevelScriptDataMap`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_LevelScriptDataMap<'_> {

@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_MeetingClueData_ClueDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MeetingClueData_ClueData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ClueData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MeetingClueData_ClueData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -28,8 +28,7 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
     pub const VT_NUMBER: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MeetingClueData_ClueData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -56,7 +55,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ClueDataT {
         let clueId = self.clueId().map(|x| alloc::string::ToString::to_string(x));
         let clueName = self
@@ -75,7 +73,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn clueId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -88,7 +85,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clueName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -101,7 +97,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clueType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -114,7 +109,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn number(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -156,7 +150,7 @@ pub struct clz_Torappu_MeetingClueData_ClueDataArgs<'a> {
     pub clueType: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub number: i32,
 }
-impl Default for clz_Torappu_MeetingClueData_ClueDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MeetingClueData_ClueDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MeetingClueData_ClueDataArgs {
@@ -203,7 +197,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i32>(clz_Torappu_MeetingClueData_ClueData::VT_NUMBER, number, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MeetingClueData_ClueDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MeetingClueData_ClueDataBuilder {
             fbb_: _fbb,
@@ -211,7 +207,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ClueData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -267,14 +262,14 @@ impl clz_Torappu_MeetingClueData_ClueDataT {
     }
 }
 pub enum clz_Torappu_MeetingClueData_ClueTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MeetingClueData_ClueTypeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ClueTypeData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MeetingClueData_ClueTypeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -288,8 +283,7 @@ impl<'a> clz_Torappu_MeetingClueData_ClueTypeData<'a> {
     pub const VT_CLUENUMBER: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MeetingClueData_ClueTypeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -310,7 +304,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueTypeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ClueTypeDataT {
         let clueType = self
             .clueType()
@@ -323,7 +316,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn clueType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -336,7 +328,6 @@ impl<'a> clz_Torappu_MeetingClueData_ClueTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clueNumber(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -373,7 +364,7 @@ pub struct clz_Torappu_MeetingClueData_ClueTypeDataArgs<'a> {
     pub clueType: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub clueNumber: i32,
 }
-impl Default for clz_Torappu_MeetingClueData_ClueTypeDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MeetingClueData_ClueTypeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MeetingClueData_ClueTypeDataArgs {
@@ -410,7 +401,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MeetingClueData_ClueTypeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MeetingClueData_ClueTypeDataBuilder {
             fbb_: _fbb,
@@ -418,7 +411,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ClueTypeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -464,14 +456,14 @@ impl clz_Torappu_MeetingClueData_ClueTypeDataT {
     }
 }
 pub enum clz_Torappu_MeetingClueData_ReceiveTimeBonusOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -485,8 +477,7 @@ impl<'a> clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
     pub const VT_RECEIVEBONUS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MeetingClueData_ReceiveTimeBonus { _tab: table }
     }
     #[allow(unused_mut)]
@@ -505,7 +496,6 @@ impl<'a> clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
         let receiveTimes = self.receiveTimes();
         let receiveBonus = self.receiveBonus();
@@ -516,7 +506,6 @@ impl<'a> clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn receiveTimes(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -531,7 +520,6 @@ impl<'a> clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn receiveBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -567,7 +555,7 @@ pub struct clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
 impl<'a> Default for clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
             receiveTimes: 0,
             receiveBonus: 0,
         }
@@ -602,7 +590,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MeetingClueData_ReceiveTimeBonusBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MeetingClueData_ReceiveTimeBonusBuilder {
             fbb_: _fbb,
@@ -610,7 +600,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a>> {
@@ -658,14 +647,14 @@ impl clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
     }
 }
 pub enum clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -685,8 +674,7 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
     pub const VT_RECORDSTEXTTIP: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MeetingClueData_MessageLeaveBoardConstData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -720,7 +708,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
         let visitorBonus = self.visitorBonus();
         let visitorBonusLimit = self.visitorBonusLimit();
@@ -751,7 +738,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn visitorBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -766,7 +752,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn visitorBonusLimit(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -781,7 +766,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn visitorToWeek(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -796,7 +780,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn visitorPreWeek(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -811,7 +794,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bonusToast(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -824,7 +806,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bonusLimitText(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -837,7 +818,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recordsTextBonus(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -850,7 +830,6 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recordsTextTip(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -909,7 +888,7 @@ pub struct clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs<'a> {
     pub recordsTextBonus: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub recordsTextTip: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs {
@@ -997,7 +976,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataBuilder {
             fbb_: _fbb,
@@ -1005,7 +986,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a>> {
@@ -1086,14 +1066,14 @@ impl clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
     }
 }
 pub enum clz_Torappu_MeetingClueDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MeetingClueData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MeetingClueData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1121,8 +1101,7 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
     pub const VT_COMMUFOLDDURATION: ::flatbuffers::VOffsetT = 34;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MeetingClueData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1163,7 +1142,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MeetingClueDataT {
         let clues = self.clues().map(|x| x.iter().map(|t| t.unpack()).collect());
         let clueTypes = self
@@ -1208,7 +1186,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn clues(
         &self,
     ) -> Option<
@@ -1230,7 +1207,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clueTypes(
         &self,
     ) -> Option<
@@ -1252,7 +1228,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn receiveTimeBonus(
         &self,
     ) -> Option<
@@ -1274,7 +1249,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn messageLeaveBoardConstData(
         &self,
     ) -> Option<clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a>> {
@@ -1291,7 +1265,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn inventoryLimit(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1303,7 +1276,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn outputBasicBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1315,7 +1287,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn outputOperatorsBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1330,7 +1301,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn cluePointLimit(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1342,7 +1312,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn expiredDays(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1354,7 +1323,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn transferBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1366,7 +1334,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recycleBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1378,7 +1345,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn expiredBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1390,7 +1356,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn communicationDuration(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1405,7 +1370,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn initiatorBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1417,7 +1381,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn participantsBonus(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1429,7 +1392,6 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn commuFoldDuration(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1510,7 +1472,7 @@ pub struct clz_Torappu_MeetingClueDataArgs<'a> {
     pub participantsBonus: i32,
     pub commuFoldDuration: f32,
 }
-impl Default for clz_Torappu_MeetingClueDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MeetingClueDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MeetingClueDataArgs {
@@ -1687,7 +1649,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MeetingClueDataBu
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MeetingClueDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MeetingClueDataBuilder {
             fbb_: _fbb,
@@ -1695,7 +1659,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MeetingClueDataBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MeetingClueData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1877,20 +1840,18 @@ pub fn size_prefixed_root_as_clz_torappu_meeting_clue_data_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_MeetingClueData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_MeetingClueData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_MeetingClueData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_MeetingClueData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_meeting_clue_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MeetingClueData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_MeetingClueData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_MeetingClueData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MeetingClueData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_MeetingClueData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_meeting_clue_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MeetingClueData<'_> {

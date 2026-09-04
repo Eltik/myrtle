@@ -38,8 +38,7 @@ impl enum__Torappu_CharWordVoiceType {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::ONLY_TEXT, Self::HAVE_CV, Self::ENUM];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::ONLY_TEXT => Some("ONLY_TEXT"),
             Self::HAVE_CV => Some("HAVE_CV"),
@@ -64,7 +63,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_CharWordVoiceType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_CharWordVoiceType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -87,7 +86,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_CharWordVoiceType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_CharWordVoiceType {
-    type Output = Self;
+    type Output = enum__Torappu_CharWordVoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -172,8 +171,7 @@ impl enum__Torappu_DataUnlockType {
         Self::NONE,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::DIRECT => Some("DIRECT"),
             Self::AWAKE => Some("AWAKE"),
@@ -203,7 +201,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_DataUnlockType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_DataUnlockType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -226,7 +224,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_DataUnlockType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_DataUnlockType {
-    type Output = Self;
+    type Output = enum__Torappu_DataUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -395,8 +393,7 @@ impl enum__Torappu_CharWordShowType {
         Self::E_ALL,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::HOME_SHOW => Some("HOME_SHOW"),
             Self::HOME_PLACE => Some("HOME_PLACE"),
@@ -454,7 +451,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_CharWordShowType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_CharWordShowType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -477,7 +474,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_CharWordShowType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_CharWordShowType {
-    type Output = Self;
+    type Output = enum__Torappu_CharWordShowType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -574,8 +571,7 @@ impl enum__Torappu_VoiceLangType {
         Self::SPA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::JP => Some("JP"),
@@ -609,7 +605,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_VoiceLangType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_VoiceLangType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -632,7 +628,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_VoiceLangType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_VoiceLangType {
-    type Output = Self;
+    type Output = enum__Torappu_VoiceLangType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -714,8 +710,7 @@ impl enum__Torappu_VoiceLangGroupType {
         Self::LINKAGE,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CN_MANDARIN => Some("CN_MANDARIN"),
@@ -744,7 +739,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_VoiceLangGroupType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_VoiceLangGroupType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -767,7 +762,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_VoiceLangGroupType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_VoiceLangGroupType {
-    type Output = Self;
+    type Output = enum__Torappu_VoiceLangGroupType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -834,8 +829,7 @@ impl enum__Torappu_FestivalVoiceTimeType {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::FESTIVAL, Self::BIRTHDAY];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::FESTIVAL => Some("FESTIVAL"),
@@ -860,7 +854,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_FestivalVoiceTimeType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_FestivalVoiceTimeType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -883,7 +877,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_FestivalVoiceTimeType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_FestivalVoiceTimeType {
-    type Output = Self;
+    type Output = enum__Torappu_FestivalVoiceTimeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -916,14 +910,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_FestivalVoiceTimeType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_FestivalVoiceTimeType {}
 pub enum clz_Torappu_CharWordUnlockParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharWordUnlockParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharWordUnlockParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharWordUnlockParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -937,8 +931,7 @@ impl<'a> clz_Torappu_CharWordUnlockParam<'a> {
     pub const VT_VALUEINT: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharWordUnlockParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -959,7 +952,6 @@ impl<'a> clz_Torappu_CharWordUnlockParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharWordUnlockParamT {
         let valueStr = self
             .valueStr()
@@ -969,7 +961,6 @@ impl<'a> clz_Torappu_CharWordUnlockParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn valueStr(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -982,7 +973,6 @@ impl<'a> clz_Torappu_CharWordUnlockParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn valueInt(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1016,7 +1006,7 @@ pub struct clz_Torappu_CharWordUnlockParamArgs<'a> {
     pub valueStr: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub valueInt: i32,
 }
-impl Default for clz_Torappu_CharWordUnlockParamArgs<'_> {
+impl<'a> Default for clz_Torappu_CharWordUnlockParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharWordUnlockParamArgs {
@@ -1046,7 +1036,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i32>(clz_Torappu_CharWordUnlockParam::VT_VALUEINT, valueInt, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharWordUnlockParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharWordUnlockParamBuilder {
             fbb_: _fbb,
@@ -1054,7 +1046,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharWordUnlockParam<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1097,14 +1088,14 @@ impl clz_Torappu_CharWordUnlockParamT {
     }
 }
 pub enum clz_Torappu_CharWordDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharWordData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharWordData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharWordData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1129,8 +1120,7 @@ impl<'a> clz_Torappu_CharWordData<'a> {
     pub const VT_VOICEASSET: ::flatbuffers::VOffsetT = 28;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharWordData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1178,7 +1168,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharWordDataT {
         let charWordId = self
             .charWordId()
@@ -1227,7 +1216,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn charWordId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1240,7 +1228,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn wordKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1253,7 +1240,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1266,7 +1252,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1279,7 +1264,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceText(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1292,7 +1276,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceTitle(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1305,7 +1288,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1317,7 +1299,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceType(&self) -> enum__Torappu_CharWordVoiceType {
         // Safety:
         // Created from valid Table for this object
@@ -1332,7 +1313,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockType(&self) -> enum__Torappu_DataUnlockType {
         // Safety:
         // Created from valid Table for this object
@@ -1347,7 +1327,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockParam(
         &self,
     ) -> Option<
@@ -1369,7 +1348,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn lockDescription(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1382,7 +1360,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn placeType(&self) -> enum__Torappu_CharWordShowType {
         // Safety:
         // Created from valid Table for this object
@@ -1397,7 +1374,6 @@ impl<'a> clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceAsset(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1490,7 +1466,7 @@ pub struct clz_Torappu_CharWordDataArgs<'a> {
     pub placeType: enum__Torappu_CharWordShowType,
     pub voiceAsset: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CharWordDataArgs<'_> {
+impl<'a> Default for clz_Torappu_CharWordDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharWordDataArgs {
@@ -1617,7 +1593,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharWordDataBuild
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharWordDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharWordDataBuilder {
             fbb_: _fbb,
@@ -1625,7 +1603,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharWordDataBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharWordData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1729,14 +1706,14 @@ impl clz_Torappu_CharWordDataT {
     }
 }
 pub enum dict__string__clz_Torappu_CharWordDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CharWordData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharWordData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CharWordData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1750,8 +1727,7 @@ impl<'a> dict__string__clz_Torappu_CharWordData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CharWordData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1774,7 +1750,6 @@ impl<'a> dict__string__clz_Torappu_CharWordData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CharWordDataT {
         let key = {
             let x = self.key();
@@ -1785,7 +1760,6 @@ impl<'a> dict__string__clz_Torappu_CharWordData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1800,19 +1774,16 @@ impl<'a> dict__string__clz_Torappu_CharWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharWordData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CharWordData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1848,7 +1819,7 @@ pub struct dict__string__clz_Torappu_CharWordDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharWordData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CharWordDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CharWordDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CharWordDataArgs {
@@ -1885,7 +1856,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CharWordDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CharWordDataBuilder {
             fbb_: _fbb,
@@ -1893,7 +1866,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharWordData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -1941,14 +1913,14 @@ impl dict__string__clz_Torappu_CharWordDataT {
     }
 }
 pub enum clz_Torappu_CharExtraWordDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharExtraWordData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharExtraWordData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharExtraWordData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1964,8 +1936,7 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
     pub const VT_VOICETEXT: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharExtraWordData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1994,7 +1965,6 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharExtraWordDataT {
         let wordKey = self
             .wordKey()
@@ -2015,7 +1985,6 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn wordKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2028,7 +1997,6 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2041,7 +2009,6 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2054,7 +2021,6 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceText(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2101,7 +2067,7 @@ pub struct clz_Torappu_CharExtraWordDataArgs<'a> {
     pub voiceId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub voiceText: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CharExtraWordDataArgs<'_> {
+impl<'a> Default for clz_Torappu_CharExtraWordDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharExtraWordDataArgs {
@@ -2147,7 +2113,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharExtraWordData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharExtraWordDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharExtraWordDataBuilder {
             fbb_: _fbb,
@@ -2155,7 +2123,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharExtraWordData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharExtraWordData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2211,14 +2178,14 @@ impl clz_Torappu_CharExtraWordDataT {
     }
 }
 pub enum dict__string__clz_Torappu_CharExtraWordDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CharExtraWordData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharExtraWordData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CharExtraWordData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2232,8 +2199,7 @@ impl<'a> dict__string__clz_Torappu_CharExtraWordData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CharExtraWordData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2256,7 +2222,6 @@ impl<'a> dict__string__clz_Torappu_CharExtraWordData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CharExtraWordDataT {
         let key = {
             let x = self.key();
@@ -2267,7 +2232,6 @@ impl<'a> dict__string__clz_Torappu_CharExtraWordData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2282,19 +2246,16 @@ impl<'a> dict__string__clz_Torappu_CharExtraWordData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharExtraWordData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CharExtraWordData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2330,7 +2291,7 @@ pub struct dict__string__clz_Torappu_CharExtraWordDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharExtraWordData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CharExtraWordDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CharExtraWordDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CharExtraWordDataArgs {
@@ -2370,7 +2331,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CharExtraWordDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CharExtraWordDataBuilder {
             fbb_: _fbb,
@@ -2378,7 +2341,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharExtraWordData<'a>> {
@@ -2431,14 +2393,14 @@ impl dict__string__clz_Torappu_CharExtraWordDataT {
     }
 }
 pub enum clz_Torappu_VoiceLangInfoDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_VoiceLangInfoData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_VoiceLangInfoData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_VoiceLangInfoData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2454,8 +2416,7 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
     pub const VT_VOICEPATH: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_VoiceLangInfoData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2482,7 +2443,6 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_VoiceLangInfoDataT {
         let wordkey = self
             .wordkey()
@@ -2505,7 +2465,6 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn wordkey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2518,7 +2477,6 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceLangType(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -2533,7 +2491,6 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn cvName(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -2547,7 +2504,6 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voicePath(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2600,7 +2556,7 @@ pub struct clz_Torappu_VoiceLangInfoDataArgs<'a> {
     >,
     pub voicePath: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_VoiceLangInfoDataArgs<'_> {
+impl<'a> Default for clz_Torappu_VoiceLangInfoDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_VoiceLangInfoDataArgs {
@@ -2652,7 +2608,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangInfoData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_VoiceLangInfoDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_VoiceLangInfoDataBuilder {
             fbb_: _fbb,
@@ -2660,7 +2618,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangInfoData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_VoiceLangInfoData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2719,7 +2676,7 @@ impl clz_Torappu_VoiceLangInfoDataT {
     }
 }
 pub enum dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -2728,7 +2685,7 @@ pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> 
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2742,8 +2699,7 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2767,7 +2723,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
         let key = self.key();
         let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -2775,7 +2730,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -2790,7 +2744,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData,
@@ -2799,7 +2752,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(
         &self,
         val: enum__Torappu_VoiceLangType,
@@ -2808,7 +2760,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_VoiceLangInfoData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2846,7 +2797,7 @@ pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataArgs<
     pub key: enum__Torappu_VoiceLangType,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_VoiceLangInfoData<'a>>>,
 }
-impl Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataArgs<'_> {
+impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataArgs {
@@ -2887,7 +2838,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataBuilder {
             fbb_: _fbb,
@@ -2895,7 +2848,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -2945,14 +2897,14 @@ impl dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
     }
 }
 pub enum clz_Torappu_VoiceLangDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_VoiceLangData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_VoiceLangData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_VoiceLangData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2967,8 +2919,7 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
     pub const VT_DICT: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_VoiceLangData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2994,7 +2945,6 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_VoiceLangDataT {
         let wordkeys = self.wordkeys().map(|x| {
             x.iter()
@@ -3011,7 +2961,6 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn wordkeys(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -3025,7 +2974,6 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3038,7 +2986,6 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dict(
         &self,
     ) -> Option<
@@ -3106,7 +3053,7 @@ pub struct clz_Torappu_VoiceLangDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_VoiceLangDataArgs<'_> {
+impl<'a> Default for clz_Torappu_VoiceLangDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_VoiceLangDataArgs {
@@ -3159,7 +3106,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangDataBuil
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_VoiceLangDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_VoiceLangDataBuilder {
             fbb_: _fbb,
@@ -3167,7 +3116,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangDataBuil
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_VoiceLangData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3225,14 +3173,14 @@ impl clz_Torappu_VoiceLangDataT {
     }
 }
 pub enum dict__string__clz_Torappu_VoiceLangDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_VoiceLangData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_VoiceLangData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_VoiceLangData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3246,8 +3194,7 @@ impl<'a> dict__string__clz_Torappu_VoiceLangData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_VoiceLangData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3270,7 +3217,6 @@ impl<'a> dict__string__clz_Torappu_VoiceLangData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_VoiceLangDataT {
         let key = {
             let x = self.key();
@@ -3281,7 +3227,6 @@ impl<'a> dict__string__clz_Torappu_VoiceLangData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3296,19 +3241,16 @@ impl<'a> dict__string__clz_Torappu_VoiceLangData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_VoiceLangData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_VoiceLangData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3344,7 +3286,7 @@ pub struct dict__string__clz_Torappu_VoiceLangDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_VoiceLangData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_VoiceLangDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_VoiceLangDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_VoiceLangDataArgs {
@@ -3381,7 +3323,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_VoiceLangDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_VoiceLangDataBuilder {
             fbb_: _fbb,
@@ -3389,7 +3333,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_VoiceLangData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -3437,14 +3380,14 @@ impl dict__string__clz_Torappu_VoiceLangDataT {
     }
 }
 pub enum clz_Torappu_VoiceLangTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_VoiceLangTypeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_VoiceLangTypeData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_VoiceLangTypeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3458,8 +3401,7 @@ impl<'a> clz_Torappu_VoiceLangTypeData<'a> {
     pub const VT_GROUPTYPE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_VoiceLangTypeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3480,7 +3422,6 @@ impl<'a> clz_Torappu_VoiceLangTypeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_VoiceLangTypeDataT {
         let name = self.name().map(|x| alloc::string::ToString::to_string(x));
         let groupType = self.groupType();
@@ -3488,7 +3429,6 @@ impl<'a> clz_Torappu_VoiceLangTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3501,7 +3441,6 @@ impl<'a> clz_Torappu_VoiceLangTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupType(&self) -> enum__Torappu_VoiceLangGroupType {
         // Safety:
         // Created from valid Table for this object
@@ -3538,7 +3477,7 @@ pub struct clz_Torappu_VoiceLangTypeDataArgs<'a> {
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub groupType: enum__Torappu_VoiceLangGroupType,
 }
-impl Default for clz_Torappu_VoiceLangTypeDataArgs<'_> {
+impl<'a> Default for clz_Torappu_VoiceLangTypeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_VoiceLangTypeDataArgs {
@@ -3569,7 +3508,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangTypeData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_VoiceLangTypeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_VoiceLangTypeDataBuilder {
             fbb_: _fbb,
@@ -3577,7 +3518,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_VoiceLangTypeData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_VoiceLangTypeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3620,7 +3560,7 @@ impl clz_Torappu_VoiceLangTypeDataT {
     }
 }
 pub enum dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -3629,7 +3569,7 @@ pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> 
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3643,8 +3583,7 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3668,7 +3607,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
         let key = self.key();
         let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -3676,7 +3614,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -3691,7 +3628,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData,
@@ -3700,7 +3636,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(
         &self,
         val: enum__Torappu_VoiceLangType,
@@ -3709,7 +3644,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_VoiceLangTypeData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3747,7 +3681,7 @@ pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataArgs<
     pub key: enum__Torappu_VoiceLangType,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_VoiceLangTypeData<'a>>>,
 }
-impl Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataArgs<'_> {
+impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataArgs {
@@ -3788,7 +3722,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataBuilder {
             fbb_: _fbb,
@@ -3796,7 +3732,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -3846,14 +3781,14 @@ impl dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
     }
 }
 pub enum clz_Torappu_VoiceLangGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_VoiceLangGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_VoiceLangGroupData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_VoiceLangGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3867,8 +3802,7 @@ impl<'a> clz_Torappu_VoiceLangGroupData<'a> {
     pub const VT_MEMBERS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_VoiceLangGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3891,7 +3825,6 @@ impl<'a> clz_Torappu_VoiceLangGroupData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_VoiceLangGroupDataT {
         let name = self.name().map(|x| alloc::string::ToString::to_string(x));
         let members = self.members().map(|x| x.into_iter().collect());
@@ -3899,7 +3832,6 @@ impl<'a> clz_Torappu_VoiceLangGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3912,7 +3844,6 @@ impl<'a> clz_Torappu_VoiceLangGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn members(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangType>> {
         // Safety:
         // Created from valid Table for this object
@@ -3943,7 +3874,7 @@ pub struct clz_Torappu_VoiceLangGroupDataArgs<'a> {
     pub members:
         Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangType>>>,
 }
-impl Default for clz_Torappu_VoiceLangGroupDataArgs<'_> {
+impl<'a> Default for clz_Torappu_VoiceLangGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_VoiceLangGroupDataArgs {
@@ -3978,7 +3909,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_VoiceLangGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_VoiceLangGroupDataBuilder {
             fbb_: _fbb,
@@ -3986,7 +3919,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_VoiceLangGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4029,7 +3961,7 @@ impl clz_Torappu_VoiceLangGroupDataT {
     }
 }
 pub enum dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -4038,7 +3970,7 @@ pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDat
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4052,8 +3984,7 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4081,7 +4012,6 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(
         &self,
     ) -> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
@@ -4091,7 +4021,6 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> enum__Torappu_VoiceLangGroupType {
         // Safety:
         // Created from valid Table for this object
@@ -4106,7 +4035,6 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData,
@@ -4115,7 +4043,6 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(
         &self,
         val: enum__Torappu_VoiceLangGroupType,
@@ -4124,7 +4051,6 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_VoiceLangGroupData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -4162,7 +4088,9 @@ pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDat
     pub key: enum__Torappu_VoiceLangGroupType,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_VoiceLangGroupData<'a>>>,
 }
-impl Default for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataArgs<'_> {
+impl<'a> Default
+    for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataArgs<'a>
+{
     #[inline]
     fn default() -> Self {
         dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataArgs {
@@ -4203,7 +4131,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataBuilder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataBuilder {
             fbb_: _fbb,
@@ -4211,7 +4142,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -4266,14 +4196,14 @@ impl dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
     }
 }
 pub enum dict__string__enum__Torappu_VoiceLangTypeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__enum__Torappu_VoiceLangType<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__enum__Torappu_VoiceLangType<'a> {
-    type Inner = Self;
+    type Inner = dict__string__enum__Torappu_VoiceLangType<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4287,8 +4217,7 @@ impl<'a> dict__string__enum__Torappu_VoiceLangType<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__enum__Torappu_VoiceLangType { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4309,7 +4238,6 @@ impl<'a> dict__string__enum__Torappu_VoiceLangType<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__enum__Torappu_VoiceLangTypeT {
         let key = {
             let x = self.key();
@@ -4320,7 +4248,6 @@ impl<'a> dict__string__enum__Torappu_VoiceLangType<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4335,19 +4262,16 @@ impl<'a> dict__string__enum__Torappu_VoiceLangType<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__enum__Torappu_VoiceLangType) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -4380,7 +4304,7 @@ pub struct dict__string__enum__Torappu_VoiceLangTypeArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: enum__Torappu_VoiceLangType,
 }
-impl Default for dict__string__enum__Torappu_VoiceLangTypeArgs<'_> {
+impl<'a> Default for dict__string__enum__Torappu_VoiceLangTypeArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__enum__Torappu_VoiceLangTypeArgs {
@@ -4417,7 +4341,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__enum__Torappu_VoiceLangTypeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__enum__Torappu_VoiceLangTypeBuilder {
             fbb_: _fbb,
@@ -4425,7 +4351,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__enum__Torappu_VoiceLangType<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -4473,14 +4398,14 @@ impl dict__string__enum__Torappu_VoiceLangTypeT {
     }
 }
 pub enum clz_Torappu_NewVoiceTimeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_NewVoiceTimeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_NewVoiceTimeData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_NewVoiceTimeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4494,8 +4419,7 @@ impl<'a> clz_Torappu_NewVoiceTimeData<'a> {
     pub const VT_CHARSET: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_NewVoiceTimeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4516,7 +4440,6 @@ impl<'a> clz_Torappu_NewVoiceTimeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_NewVoiceTimeDataT {
         let timestamp = self.timestamp();
         let charSet = self.charSet().map(|x| {
@@ -4528,7 +4451,6 @@ impl<'a> clz_Torappu_NewVoiceTimeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn timestamp(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4540,7 +4462,6 @@ impl<'a> clz_Torappu_NewVoiceTimeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charSet(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -4578,7 +4499,7 @@ pub struct clz_Torappu_NewVoiceTimeDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_NewVoiceTimeDataArgs<'_> {
+impl<'a> Default for clz_Torappu_NewVoiceTimeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_NewVoiceTimeDataArgs {
@@ -4611,7 +4532,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_NewVoiceTimeDataB
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_NewVoiceTimeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_NewVoiceTimeDataBuilder {
             fbb_: _fbb,
@@ -4619,7 +4542,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_NewVoiceTimeDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_NewVoiceTimeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4665,7 +4587,7 @@ impl clz_Torappu_NewVoiceTimeDataT {
     }
 }
 pub enum dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -4674,7 +4596,7 @@ pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4688,8 +4610,7 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4715,7 +4636,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
         let key = self.key();
         let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
@@ -4723,7 +4643,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -4738,7 +4657,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData,
@@ -4747,7 +4665,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(
         &self,
         val: enum__Torappu_VoiceLangType,
@@ -4756,7 +4673,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<
@@ -4810,7 +4726,7 @@ pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataA
         >,
     >,
 }
-impl Default for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataArgs<'_> {
+impl<'a> Default for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataArgs {
@@ -4855,7 +4771,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataBuilder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataBuilder {
             fbb_: _fbb,
@@ -4863,7 +4782,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -4921,14 +4839,14 @@ impl dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
     }
 }
 pub enum clz_Torappu_FestivalTimeIntervalOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FestivalTimeInterval<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FestivalTimeInterval<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FestivalTimeInterval<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4942,8 +4860,7 @@ impl<'a> clz_Torappu_FestivalTimeInterval<'a> {
     pub const VT_ENDTS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FestivalTimeInterval { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4962,7 +4879,6 @@ impl<'a> clz_Torappu_FestivalTimeInterval<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FestivalTimeIntervalT {
         let startTs = self.startTs();
         let endTs = self.endTs();
@@ -4970,7 +4886,6 @@ impl<'a> clz_Torappu_FestivalTimeInterval<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn startTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4982,7 +4897,6 @@ impl<'a> clz_Torappu_FestivalTimeInterval<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5015,7 +4929,7 @@ pub struct clz_Torappu_FestivalTimeIntervalArgs {
 impl<'a> Default for clz_Torappu_FestivalTimeIntervalArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_FestivalTimeIntervalArgs {
             startTs: 0,
             endTs: 0,
         }
@@ -5040,7 +4954,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i64>(clz_Torappu_FestivalTimeInterval::VT_ENDTS, endTs, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FestivalTimeIntervalBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FestivalTimeIntervalBuilder {
             fbb_: _fbb,
@@ -5048,7 +4964,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FestivalTimeInterval<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5091,14 +5006,14 @@ impl clz_Torappu_FestivalTimeIntervalT {
     }
 }
 pub enum clz_Torappu_FestivalTimeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FestivalTimeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FestivalTimeData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FestivalTimeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5112,8 +5027,7 @@ impl<'a> clz_Torappu_FestivalTimeData<'a> {
     pub const VT_INTERVAL: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FestivalTimeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5134,7 +5048,6 @@ impl<'a> clz_Torappu_FestivalTimeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FestivalTimeDataT {
         let timeType = self.timeType();
         let interval = self.interval().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -5142,7 +5055,6 @@ impl<'a> clz_Torappu_FestivalTimeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn timeType(&self) -> enum__Torappu_FestivalVoiceTimeType {
         // Safety:
         // Created from valid Table for this object
@@ -5157,7 +5069,6 @@ impl<'a> clz_Torappu_FestivalTimeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn interval(&self) -> Option<clz_Torappu_FestivalTimeInterval<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -5197,7 +5108,7 @@ pub struct clz_Torappu_FestivalTimeDataArgs<'a> {
     pub timeType: enum__Torappu_FestivalVoiceTimeType,
     pub interval: Option<::flatbuffers::WIPOffset<clz_Torappu_FestivalTimeInterval<'a>>>,
 }
-impl Default for clz_Torappu_FestivalTimeDataArgs<'_> {
+impl<'a> Default for clz_Torappu_FestivalTimeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_FestivalTimeDataArgs {
@@ -5232,7 +5143,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FestivalTimeDataB
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FestivalTimeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FestivalTimeDataBuilder {
             fbb_: _fbb,
@@ -5240,7 +5153,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FestivalTimeDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FestivalTimeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5283,14 +5195,14 @@ impl clz_Torappu_FestivalTimeDataT {
     }
 }
 pub enum clz_Torappu_FestivalVoiceDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FestivalVoiceData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FestivalVoiceData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FestivalVoiceData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5304,8 +5216,7 @@ impl<'a> clz_Torappu_FestivalVoiceData<'a> {
     pub const VT_TIMEDATA: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FestivalVoiceData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5326,7 +5237,6 @@ impl<'a> clz_Torappu_FestivalVoiceData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FestivalVoiceDataT {
         let showType = self.showType();
         let timeData = self
@@ -5336,7 +5246,6 @@ impl<'a> clz_Torappu_FestivalVoiceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showType(&self) -> enum__Torappu_CharWordShowType {
         // Safety:
         // Created from valid Table for this object
@@ -5351,7 +5260,6 @@ impl<'a> clz_Torappu_FestivalVoiceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn timeData(
         &self,
     ) -> Option<
@@ -5400,7 +5308,7 @@ pub struct clz_Torappu_FestivalVoiceDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_FestivalVoiceDataArgs<'_> {
+impl<'a> Default for clz_Torappu_FestivalVoiceDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_FestivalVoiceDataArgs {
@@ -5439,7 +5347,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FestivalVoiceData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FestivalVoiceDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FestivalVoiceDataBuilder {
             fbb_: _fbb,
@@ -5447,7 +5357,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_FestivalVoiceData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5493,14 +5402,14 @@ impl clz_Torappu_FestivalVoiceDataT {
     }
 }
 pub enum dict__string__clz_Torappu_FestivalVoiceDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_FestivalVoiceData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_FestivalVoiceData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_FestivalVoiceData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5514,8 +5423,7 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_FestivalVoiceData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5538,7 +5446,6 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_FestivalVoiceDataT {
         let key = {
             let x = self.key();
@@ -5549,7 +5456,6 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5564,19 +5470,16 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_FestivalVoiceData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_FestivalVoiceData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -5612,7 +5515,7 @@ pub struct dict__string__clz_Torappu_FestivalVoiceDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_FestivalVoiceDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_FestivalVoiceDataArgs {
@@ -5652,7 +5555,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_FestivalVoiceDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_FestivalVoiceDataBuilder {
             fbb_: _fbb,
@@ -5660,7 +5565,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_FestivalVoiceData<'a>> {
@@ -5713,14 +5617,14 @@ impl dict__string__clz_Torappu_FestivalVoiceDataT {
     }
 }
 pub enum clz_Torappu_FestivalVoiceWeightDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_FestivalVoiceWeightData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_FestivalVoiceWeightData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_FestivalVoiceWeightData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5735,8 +5639,7 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
     pub const VT_PRIORITY: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_FestivalVoiceWeightData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5756,7 +5659,6 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_FestivalVoiceWeightDataT {
         let showType = self.showType();
         let weight = self.weight();
@@ -5769,7 +5671,6 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showType(&self) -> enum__Torappu_CharWordShowType {
         // Safety:
         // Created from valid Table for this object
@@ -5784,7 +5685,6 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn weight(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -5796,7 +5696,6 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn priority(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -5831,7 +5730,7 @@ pub struct clz_Torappu_FestivalVoiceWeightDataArgs {
 impl<'a> Default for clz_Torappu_FestivalVoiceWeightDataArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_FestivalVoiceWeightDataArgs {
             showType: enum__Torappu_CharWordShowType::HOME_SHOW,
             weight: 0.0,
             priority: 0,
@@ -5869,7 +5768,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_FestivalVoiceWeightDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_FestivalVoiceWeightDataBuilder {
             fbb_: _fbb,
@@ -5877,7 +5778,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceWeightData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5928,14 +5828,14 @@ impl clz_Torappu_FestivalVoiceWeightDataT {
     }
 }
 pub enum dict__string__clz_Torappu_FestivalVoiceWeightDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_FestivalVoiceWeightData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5949,8 +5849,7 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_FestivalVoiceWeightData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5973,7 +5872,6 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_FestivalVoiceWeightDataT {
         let key = {
             let x = self.key();
@@ -5984,7 +5882,6 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5999,7 +5896,6 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_FestivalVoiceWeightData,
@@ -6008,13 +5904,11 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_FestivalVoiceWeightData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6050,7 +5944,7 @@ pub struct dict__string__clz_Torappu_FestivalVoiceWeightDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceWeightData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_FestivalVoiceWeightDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceWeightDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_FestivalVoiceWeightDataArgs {
@@ -6090,7 +5984,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_FestivalVoiceWeightDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_FestivalVoiceWeightDataBuilder {
             fbb_: _fbb,
@@ -6098,7 +5994,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_FestivalVoiceWeightData<'a>> {
@@ -6151,14 +6046,14 @@ impl dict__string__clz_Torappu_FestivalVoiceWeightDataT {
     }
 }
 pub enum clz_Torappu_ExtraVoiceConfigDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ExtraVoiceConfigData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ExtraVoiceConfigData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ExtraVoiceConfigData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6172,8 +6067,7 @@ impl<'a> clz_Torappu_ExtraVoiceConfigData<'a> {
     pub const VT_VALIDVOICELANG: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ExtraVoiceConfigData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6196,7 +6090,6 @@ impl<'a> clz_Torappu_ExtraVoiceConfigData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ExtraVoiceConfigDataT {
         let voiceId = self
             .voiceId()
@@ -6209,7 +6102,6 @@ impl<'a> clz_Torappu_ExtraVoiceConfigData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn voiceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6222,7 +6114,6 @@ impl<'a> clz_Torappu_ExtraVoiceConfigData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn validVoiceLang(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangType>> {
         // Safety:
         // Created from valid Table for this object
@@ -6253,7 +6144,7 @@ pub struct clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     pub validVoiceLang:
         Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangType>>>,
 }
-impl Default for clz_Torappu_ExtraVoiceConfigDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ExtraVoiceConfigDataArgs {
@@ -6290,7 +6181,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ExtraVoiceConfigDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ExtraVoiceConfigDataBuilder {
             fbb_: _fbb,
@@ -6298,7 +6191,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ExtraVoiceConfigData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6344,14 +6236,14 @@ impl clz_Torappu_ExtraVoiceConfigDataT {
     }
 }
 pub enum dict__string__clz_Torappu_ExtraVoiceConfigDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ExtraVoiceConfigData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6365,8 +6257,7 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ExtraVoiceConfigData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6389,7 +6280,6 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ExtraVoiceConfigDataT {
         let key = {
             let x = self.key();
@@ -6400,7 +6290,6 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6415,7 +6304,6 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_ExtraVoiceConfigData,
@@ -6424,13 +6312,11 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ExtraVoiceConfigData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6466,7 +6352,7 @@ pub struct dict__string__clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ExtraVoiceConfigData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ExtraVoiceConfigDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ExtraVoiceConfigDataArgs {
@@ -6506,7 +6392,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ExtraVoiceConfigDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ExtraVoiceConfigDataBuilder {
             fbb_: _fbb,
@@ -6514,7 +6402,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ExtraVoiceConfigData<'a>> {
@@ -6567,14 +6454,14 @@ impl dict__string__clz_Torappu_ExtraVoiceConfigDataT {
     }
 }
 pub enum clz_Torappu_CharWordTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharWordTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharWordTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharWordTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6601,8 +6488,7 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
     pub const VT_EXTRAVOICECONFIGDATA: ::flatbuffers::VOffsetT = 32;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharWordTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6660,7 +6546,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharWordTableT {
         let charWords = self
             .charWords()
@@ -6721,7 +6606,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn charWords(
         &self,
     ) -> Option<
@@ -6743,7 +6627,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charExtraWords(
         &self,
     ) -> Option<
@@ -6765,7 +6648,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceLangDict(
         &self,
     ) -> Option<
@@ -6787,7 +6669,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn defaultLangType(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -6802,7 +6683,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn newTagList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -6816,7 +6696,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceLangTypeDict(
         &self,
     ) -> Option<
@@ -6842,7 +6721,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceLangGroupTypeDict(
         &self,
     ) -> Option<
@@ -6868,7 +6746,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charDefaultTypeDict(
         &self,
     ) -> Option<
@@ -6890,7 +6767,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTimeWithTypeDict(
         &self,
     ) -> Option<
@@ -6916,7 +6792,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayGroupTypeList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangGroupType>> {
@@ -6930,7 +6805,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayTypeList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, enum__Torappu_VoiceLangType>> {
@@ -6944,7 +6818,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn playVoiceRange(&self) -> enum__Torappu_CharWordShowType {
         // Safety:
         // Created from valid Table for this object
@@ -6959,7 +6832,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fesVoiceData(
         &self,
     ) -> Option<
@@ -6981,7 +6853,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fesVoiceWeight(
         &self,
     ) -> Option<
@@ -7005,7 +6876,6 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn extraVoiceConfigData(
         &self,
     ) -> Option<
@@ -7156,7 +7026,7 @@ pub struct clz_Torappu_CharWordTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_CharWordTableArgs<'_> {
+impl<'a> Default for clz_Torappu_CharWordTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharWordTableArgs {
@@ -7395,7 +7265,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharWordTableBuil
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharWordTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharWordTableBuilder {
             fbb_: _fbb,
@@ -7403,7 +7275,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharWordTableBuil
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharWordTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7606,20 +7477,18 @@ pub fn size_prefixed_root_as_clz_torappu_char_word_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_CharWordTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_CharWordTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_CharWordTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_CharWordTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_char_word_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CharWordTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_CharWordTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_CharWordTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CharWordTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_CharWordTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_char_word_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CharWordTable<'_> {

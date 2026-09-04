@@ -36,7 +36,9 @@ pub enum Commands {
         packages: Option<String>,
         /// Content profile(s), comma-separated & OR-combined: "operators"
         /// (operator assets), "stages" (stage-viewer level scenes + preview &
-        /// banner art), or "full" (everything). Omit for full.
+        /// banner art), "gamedata" (the anon/ bundles + .idx manifests, i.e.
+        /// exactly what `unpacker extract --gamedata` reads), or "full"
+        /// (everything). Omit for full.
         #[arg(long)]
         profile: Option<String>,
     },

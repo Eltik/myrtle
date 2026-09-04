@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_Resource_ResourceManifest_BundleMetaOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Resource_ResourceManifest_BundleMeta<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -28,8 +28,7 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
     pub const VT_ALLDEPENDENCIES: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Resource_ResourceManifest_BundleMeta { _tab: table }
     }
     #[allow(unused_mut)]
@@ -54,7 +53,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifest_BundleMetaT {
         let name = self.name().map(|x| alloc::string::ToString::to_string(x));
         let props = self.props();
@@ -69,7 +67,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -82,7 +79,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn props(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -97,7 +93,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sccIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -112,7 +107,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn allDependencies(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
         // Safety:
         // Created from valid Table for this object
@@ -152,7 +146,7 @@ pub struct clz_Torappu_Resource_ResourceManifest_BundleMetaArgs<'a> {
     pub sccIndex: i32,
     pub allDependencies: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
 }
-impl Default for clz_Torappu_Resource_ResourceManifest_BundleMetaArgs<'_> {
+impl<'a> Default for clz_Torappu_Resource_ResourceManifest_BundleMetaArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Resource_ResourceManifest_BundleMetaArgs {
@@ -209,7 +203,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Resource_ResourceManifest_BundleMetaBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Resource_ResourceManifest_BundleMetaBuilder {
             fbb_: _fbb,
@@ -217,7 +213,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest_BundleMeta<'a>> {
@@ -275,14 +270,14 @@ impl clz_Torappu_Resource_ResourceManifest_BundleMetaT {
     }
 }
 pub enum clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -298,8 +293,7 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
     pub const VT_PATH: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta { _tab: table }
     }
     #[allow(unused_mut)]
@@ -327,7 +321,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
         let assetName = self
             .assetName()
@@ -344,7 +337,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn assetName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -357,7 +349,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bundleIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -372,7 +363,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -385,7 +375,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn path(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -424,7 +413,7 @@ pub struct clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs<'a> {
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub path: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs<'_> {
+impl<'a> Default for clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs {
@@ -477,7 +466,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaBuilder {
             fbb_: _fbb,
@@ -485,7 +476,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a>> {
@@ -543,14 +533,14 @@ impl clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
     }
 }
 pub enum clz_Torappu_Resource_ResourceManifestOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Resource_ResourceManifest<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Resource_ResourceManifest<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -565,8 +555,7 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
     pub const VT_ASSETTOBUNDLELIST: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Resource_ResourceManifest { _tab: table }
     }
     #[allow(unused_mut)]
@@ -590,7 +579,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifestT {
         let rawCount = self.rawCount();
         let bundles = self
@@ -607,7 +595,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn rawCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -619,7 +606,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bundles(
         &self,
     ) -> Option<
@@ -643,7 +629,6 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn assetToBundleList(
         &self,
     ) -> Option<
@@ -724,7 +709,7 @@ pub struct clz_Torappu_Resource_ResourceManifestArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Resource_ResourceManifestArgs<'_> {
+impl<'a> Default for clz_Torappu_Resource_ResourceManifestArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Resource_ResourceManifestArgs {
@@ -789,7 +774,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Resource_ResourceManifestBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Resource_ResourceManifestBuilder {
             fbb_: _fbb,
@@ -797,7 +784,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -907,20 +893,18 @@ pub fn size_prefixed_root_as_clz_torappu_resource_resource_manifest_with_opts<'b
     )
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_Resource_ResourceManifest` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_Resource_ResourceManifest and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Resource_ResourceManifest`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_resource_resource_manifest_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Resource_ResourceManifest<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_Resource_ResourceManifest>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_Resource_ResourceManifest` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Resource_ResourceManifest and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Resource_ResourceManifest`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_resource_resource_manifest_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Resource_ResourceManifest<'_> {

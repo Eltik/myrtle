@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_HandbookTeamData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_HandbookTeamData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_HandbookTeamData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -32,8 +32,7 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
     pub const VT_ISRAW: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_HandbookTeamData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -66,7 +65,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_HandbookTeamDataT {
         let powerId = self
             .powerId()
@@ -95,7 +93,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn powerId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -108,7 +105,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn orderNum(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -120,7 +116,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn powerLevel(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -132,7 +127,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn powerName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -145,7 +139,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn powerCode(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -158,7 +151,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn color(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -171,7 +163,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isLimited(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -183,7 +174,6 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isRaw(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -237,7 +227,7 @@ pub struct clz_Torappu_HandbookTeamDataArgs<'a> {
     pub isLimited: bool,
     pub isRaw: bool,
 }
-impl Default for clz_Torappu_HandbookTeamDataArgs<'_> {
+impl<'a> Default for clz_Torappu_HandbookTeamDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_HandbookTeamDataArgs {
@@ -307,7 +297,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_HandbookTeamDataB
             .push_slot::<bool>(clz_Torappu_HandbookTeamData::VT_ISRAW, isRaw, false);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_HandbookTeamDataBuilder {
             fbb_: _fbb,
@@ -315,7 +307,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_HandbookTeamDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -391,14 +382,14 @@ impl clz_Torappu_HandbookTeamDataT {
     }
 }
 pub enum dict__string__clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_HandbookTeamData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_HandbookTeamData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_HandbookTeamData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -412,8 +403,7 @@ impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_HandbookTeamData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -436,7 +426,6 @@ impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_HandbookTeamDataT {
         let key = {
             let x = self.key();
@@ -447,7 +436,6 @@ impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -462,19 +450,16 @@ impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_HandbookTeamData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_HandbookTeamData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -510,7 +495,7 @@ pub struct dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_HandbookTeamDataArgs {
@@ -547,7 +532,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_HandbookTeamDataBuilder {
             fbb_: _fbb,
@@ -555,7 +542,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'a>> {
@@ -605,14 +591,14 @@ impl dict__string__clz_Torappu_HandbookTeamDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -625,8 +611,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
     pub const VT_HANDBOOK_TEAMS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -647,7 +632,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
         let handbook_teams = self
             .handbook_teams()
@@ -656,7 +640,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn handbook_teams(
         &self,
     ) -> Option<
@@ -709,7 +692,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs {
@@ -745,7 +728,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder {
             fbb_: _fbb,
@@ -753,7 +738,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a>> {
@@ -866,10 +850,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_tea
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
@@ -878,10 +861,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {

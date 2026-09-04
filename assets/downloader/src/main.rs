@@ -114,7 +114,10 @@ async fn run_download(
                 keep_fns.push(match p {
                     "operators" => downloader::profile::keep_for_operators,
                     "stages" => downloader::profile::keep_for_stages,
-                    _ => anyhow::bail!("unknown profile: {p} (expected: operators, stages, full)"),
+                    "gamedata" => downloader::profile::keep_for_gamedata,
+                    _ => anyhow::bail!(
+                        "unknown profile: {p} (expected: operators, stages, gamedata, full)"
+                    ),
                 });
             }
             let kept: Vec<_> = all_files

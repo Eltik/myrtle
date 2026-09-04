@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -113,6 +113,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -213,9 +215,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -310,10 +314,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -408,6 +413,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -428,7 +435,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -451,7 +458,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -484,14 +491,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -506,8 +513,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -529,7 +535,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -538,7 +543,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -549,7 +553,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -561,7 +564,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -596,7 +598,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -631,7 +633,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -639,7 +643,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -683,14 +686,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_ReplicateDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ReplicateData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ReplicateData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ReplicateData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -704,8 +707,7 @@ impl<'a> clz_Torappu_ReplicateData<'a> {
     pub const VT_REPLICATETOKENITEM: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ReplicateData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -728,7 +730,6 @@ impl<'a> clz_Torappu_ReplicateData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ReplicateDataT {
         let item = self.item().map(|x| alloc::boxed::Box::new(x.unpack()));
         let replicateTokenItem = self
@@ -741,7 +742,6 @@ impl<'a> clz_Torappu_ReplicateData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn item(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -755,7 +755,6 @@ impl<'a> clz_Torappu_ReplicateData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn replicateTokenItem(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -795,7 +794,7 @@ pub struct clz_Torappu_ReplicateDataArgs<'a> {
     pub item: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
     pub replicateTokenItem: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
 }
-impl Default for clz_Torappu_ReplicateDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ReplicateDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ReplicateDataArgs {
@@ -830,7 +829,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ReplicateDataBuil
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReplicateDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ReplicateDataBuilder {
             fbb_: _fbb,
@@ -838,7 +839,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ReplicateDataBuil
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ReplicateData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -884,14 +884,14 @@ impl clz_Torappu_ReplicateDataT {
     }
 }
 pub enum clz_Torappu_ReplicateTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ReplicateTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ReplicateTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ReplicateTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -904,8 +904,7 @@ impl<'a> clz_Torappu_ReplicateTable<'a> {
     pub const VT_REPLICATELIST: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ReplicateTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -925,7 +924,6 @@ impl<'a> clz_Torappu_ReplicateTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ReplicateTableT {
         let replicateList = self
             .replicateList()
@@ -934,7 +932,6 @@ impl<'a> clz_Torappu_ReplicateTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn replicateList(
         &self,
     ) -> Option<
@@ -981,7 +978,7 @@ pub struct clz_Torappu_ReplicateTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ReplicateTableArgs<'_> {
+impl<'a> Default for clz_Torappu_ReplicateTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ReplicateTableArgs {
@@ -1011,7 +1008,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ReplicateTableBui
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReplicateTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ReplicateTableBuilder {
             fbb_: _fbb,
@@ -1019,7 +1018,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ReplicateTableBui
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ReplicateTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1058,14 +1056,14 @@ impl clz_Torappu_ReplicateTableT {
     }
 }
 pub enum dict__string__clz_Torappu_ReplicateTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ReplicateTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReplicateTable<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ReplicateTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1079,8 +1077,7 @@ impl<'a> dict__string__clz_Torappu_ReplicateTable<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ReplicateTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1103,7 +1100,6 @@ impl<'a> dict__string__clz_Torappu_ReplicateTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ReplicateTableT {
         let key = {
             let x = self.key();
@@ -1114,7 +1110,6 @@ impl<'a> dict__string__clz_Torappu_ReplicateTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1129,19 +1124,16 @@ impl<'a> dict__string__clz_Torappu_ReplicateTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ReplicateTable) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ReplicateTable<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1177,7 +1169,7 @@ pub struct dict__string__clz_Torappu_ReplicateTableArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ReplicateTable<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ReplicateTableArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ReplicateTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ReplicateTableArgs {
@@ -1214,7 +1206,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReplicateTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ReplicateTableBuilder {
             fbb_: _fbb,
@@ -1222,7 +1216,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ReplicateTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -1270,14 +1263,14 @@ impl dict__string__clz_Torappu_ReplicateTableT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1290,8 +1283,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a> {
     pub const VT_REPLICATIONS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1311,7 +1303,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableT {
         let replications = self
             .replications()
@@ -1320,7 +1311,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn replications(
         &self,
     ) -> Option<
@@ -1373,7 +1363,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs { replications: None }
@@ -1407,7 +1397,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableBuilder {
             fbb_: _fbb,
@@ -1415,7 +1407,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'a>> {
@@ -1526,10 +1517,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_ta
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'_> {
@@ -1538,10 +1528,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unc
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'_> {

@@ -46,8 +46,7 @@ impl enum__Torappu_StoryReviewEntryType {
         Self::MAINLINE,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::ACTIVITY => Some("ACTIVITY"),
@@ -73,7 +72,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_StoryReviewEntryType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_StoryReviewEntryType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -96,7 +95,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_StoryReviewEntryType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_StoryReviewEntryType {
-    type Output = Self;
+    type Output = enum__Torappu_StoryReviewEntryType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -169,8 +168,7 @@ impl enum__Torappu_StoryReviewType {
         Self::MAIN_STORY,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::ACTIVITY_STORY => Some("ACTIVITY_STORY"),
@@ -196,7 +194,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_StoryReviewType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_StoryReviewType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -219,7 +217,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_StoryReviewType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_StoryReviewType {
-    type Output = Self;
+    type Output = enum__Torappu_StoryReviewType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -260,13 +258,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -360,6 +358,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -460,9 +460,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -557,10 +559,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -655,6 +658,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -675,7 +680,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -698,7 +703,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -772,8 +777,7 @@ impl enum__Torappu_StoryReviewUnlockType {
         Self::NOTHING,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::STAGE_CLEAR => Some("STAGE_CLEAR"),
             Self::USE_ITEM => Some("USE_ITEM"),
@@ -799,7 +803,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_StoryReviewUnlockType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_StoryReviewUnlockType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -822,7 +826,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_StoryReviewUnlockType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_StoryReviewUnlockType {
-    type Output = Self;
+    type Output = enum__Torappu_StoryReviewUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -891,8 +895,7 @@ impl enum__Torappu_PlayerStageState {
     pub const ENUM_VALUES: &'static [Self] =
         &[Self::UNLOCKED, Self::PLAYED, Self::PASS, Self::COMPLETE];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::UNLOCKED => Some("UNLOCKED"),
             Self::PLAYED => Some("PLAYED"),
@@ -918,7 +921,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_PlayerStageState {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_PlayerStageState::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -941,7 +944,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_PlayerStageState {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_PlayerStageState {
-    type Output = Self;
+    type Output = enum__Torappu_PlayerStageState;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -974,14 +977,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_PlayerStageState {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_PlayerStageState {}
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -996,8 +999,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1019,7 +1021,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -1028,7 +1029,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1039,7 +1039,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1051,7 +1050,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -1086,7 +1084,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -1121,7 +1119,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -1129,7 +1129,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1173,14 +1172,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_StoryData_Condition_StageConditionOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_StoryData_Condition_StageCondition<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_StoryData_Condition_StageCondition<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_StoryData_Condition_StageCondition<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1195,8 +1194,7 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
     pub const VT_MAXSTATE: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_StoryData_Condition_StageCondition { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1218,7 +1216,6 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_StoryData_Condition_StageConditionT {
         let stageId = self
             .stageId()
@@ -1233,7 +1230,6 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn stageId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1246,7 +1242,6 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn minState(&self) -> enum__Torappu_PlayerStageState {
         // Safety:
         // Created from valid Table for this object
@@ -1261,7 +1256,6 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxState(&self) -> enum__Torappu_PlayerStageState {
         // Safety:
         // Created from valid Table for this object
@@ -1300,7 +1294,7 @@ pub struct clz_Torappu_StoryData_Condition_StageConditionArgs<'a> {
     pub minState: enum__Torappu_PlayerStageState,
     pub maxState: enum__Torappu_PlayerStageState,
 }
-impl Default for clz_Torappu_StoryData_Condition_StageConditionArgs<'_> {
+impl<'a> Default for clz_Torappu_StoryData_Condition_StageConditionArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StoryData_Condition_StageConditionArgs {
@@ -1346,7 +1340,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_StoryData_Condition_StageConditionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_StoryData_Condition_StageConditionBuilder {
             fbb_: _fbb,
@@ -1354,7 +1350,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_StoryData_Condition_StageCondition<'a>> {
@@ -1407,14 +1402,14 @@ impl clz_Torappu_StoryData_Condition_StageConditionT {
     }
 }
 pub enum clz_Torappu_StoryReviewInfoClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_StoryReviewInfoClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_StoryReviewInfoClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_StoryReviewInfoClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1445,8 +1440,7 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
     pub const VT_REQUIREDSTAGES: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_StoryReviewInfoClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1504,7 +1498,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_StoryReviewInfoClientDataT {
         let storyReviewType = self.storyReviewType();
         let storyId = self
@@ -1569,7 +1562,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn storyReviewType(&self) -> enum__Torappu_StoryReviewType {
         // Safety:
         // Created from valid Table for this object
@@ -1584,7 +1576,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1597,7 +1588,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyGroup(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1610,7 +1600,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storySort(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1622,7 +1611,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyDependence(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1635,7 +1623,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyCanShow(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1650,7 +1637,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyCode(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1663,7 +1649,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1676,7 +1661,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyPic(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1689,7 +1673,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyInfo(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1702,7 +1685,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyCanEnter(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1717,7 +1699,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyTxt(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1730,7 +1711,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn avgTag(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1743,7 +1723,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unLockType(&self) -> enum__Torappu_StoryReviewUnlockType {
         // Safety:
         // Created from valid Table for this object
@@ -1758,7 +1737,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn costItemType(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -1773,7 +1751,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn costItemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1786,7 +1763,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn costItemCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1801,7 +1777,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn stageCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1816,7 +1791,6 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn requiredStages(
         &self,
     ) -> Option<
@@ -1949,7 +1923,7 @@ pub struct clz_Torappu_StoryReviewInfoClientDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_StoryReviewInfoClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_StoryReviewInfoClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StoryReviewInfoClientDataArgs {
@@ -2137,7 +2111,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_StoryReviewInfoClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_StoryReviewInfoClientDataBuilder {
             fbb_: _fbb,
@@ -2145,7 +2121,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_StoryReviewInfoClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2279,14 +2254,14 @@ impl clz_Torappu_StoryReviewInfoClientDataT {
     }
 }
 pub enum clz_Torappu_StoryReviewGroupClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_StoryReviewGroupClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_StoryReviewGroupClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_StoryReviewGroupClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2315,8 +2290,7 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
     pub const VT_INFOUNLOCKDATAS: ::flatbuffers::VOffsetT = 36;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_StoryReviewGroupClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2366,7 +2340,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_StoryReviewGroupClientDataT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let name = self.name().map(|x| alloc::string::ToString::to_string(x));
@@ -2419,7 +2392,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2432,7 +2404,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2445,7 +2416,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn entryType(&self) -> enum__Torappu_StoryReviewEntryType {
         // Safety:
         // Created from valid Table for this object
@@ -2460,7 +2430,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn actType(&self) -> enum__Torappu_StoryReviewType {
         // Safety:
         // Created from valid Table for this object
@@ -2475,7 +2444,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2490,7 +2458,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2502,7 +2469,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startShowTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2517,7 +2483,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endShowTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2532,7 +2497,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn remakeStartTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2547,7 +2511,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn remakeEndTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2562,7 +2525,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyEntryPicId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2575,7 +2537,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyPicId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2588,7 +2549,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyMainColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2601,7 +2561,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn customType(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2616,7 +2575,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storyCompleteMedalId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2629,7 +2587,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewards(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
@@ -2644,7 +2601,6 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn infoUnlockDatas(
         &self,
     ) -> Option<
@@ -2755,7 +2711,7 @@ pub struct clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_StoryReviewGroupClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StoryReviewGroupClientDataArgs {
@@ -2936,7 +2892,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_StoryReviewGroupClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_StoryReviewGroupClientDataBuilder {
             fbb_: _fbb,
@@ -2944,7 +2902,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_StoryReviewGroupClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3074,14 +3031,14 @@ impl clz_Torappu_StoryReviewGroupClientDataT {
     }
 }
 pub enum dict__string__clz_Torappu_StoryReviewGroupClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_StoryReviewGroupClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3095,8 +3052,7 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_StoryReviewGroupClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3119,7 +3075,6 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_StoryReviewGroupClientDataT {
         let key = {
             let x = self.key();
@@ -3130,7 +3085,6 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3145,7 +3099,6 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_StoryReviewGroupClientData,
@@ -3154,13 +3107,11 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_StoryReviewGroupClientData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3196,7 +3147,7 @@ pub struct dict__string__clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_StoryReviewGroupClientData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_StoryReviewGroupClientDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_StoryReviewGroupClientDataArgs {
@@ -3236,7 +3187,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_StoryReviewGroupClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_StoryReviewGroupClientDataBuilder {
             fbb_: _fbb,
@@ -3244,7 +3197,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_StoryReviewGroupClientData<'a>> {
@@ -3297,7 +3249,7 @@ impl dict__string__clz_Torappu_StoryReviewGroupClientDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -3306,7 +3258,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> 
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3319,8 +3271,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> {
     pub const VT_STORY_REVIEWS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3343,7 +3294,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
         let story_reviews = self
             .story_reviews()
@@ -3352,7 +3302,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn story_reviews(
         &self,
     ) -> Option<
@@ -3415,7 +3364,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataArgs<
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataArgs {
@@ -3453,7 +3402,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataBuilder {
             fbb_: _fbb,
@@ -3461,7 +3412,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -3585,10 +3535,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_> {
@@ -3599,10 +3548,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_> {

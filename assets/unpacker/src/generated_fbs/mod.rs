@@ -10,6 +10,7 @@
 )]
 
 pub mod activity_table_generated;
+pub mod arkvent_table_generated;
 pub mod audio_data_generated;
 pub mod bake_muzzle_data_generated;
 pub mod battle_equip_table_generated;

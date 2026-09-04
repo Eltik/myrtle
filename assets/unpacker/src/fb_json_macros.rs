@@ -21,6 +21,25 @@ pub fn check_vector_len(len: usize, field_name: &str) {
     );
 }
 
+/// A `FlatBuffer` string as a JSON string, with invalid UTF-8 replaced.
+///
+/// The generated accessors hand back `&str` values that came out of
+/// `from_utf8_unchecked`, so a table whose bytes are wrong for the schema — or
+/// simply carries a truncated string — can produce a `&str` that is not valid
+/// UTF-8. Feeding that straight to `json!` writes those bytes into the `.json`
+/// file, and `serde_json` (and the backend, and `json.load`) then rejects the
+/// whole file: one bad string silently costs the entire table.
+///
+/// Measured: CN `battle/level_script_table.json` and EN
+/// `excel/roguelike_topic_table.json` were both unreadable for this reason.
+/// Every string that reaches the JSON emitter goes through here, so the
+/// emitter can never write invalid UTF-8. Valid input is borrowed, not copied,
+/// so the only cost is one UTF-8 scan per string.
+#[must_use]
+pub fn json_str(s: &str) -> Value {
+    Value::String(String::from_utf8_lossy(s.as_bytes()).into_owned())
+}
+
 /// Trait for `FlatBuffer` types that can be serialized to JSON
 pub trait FlatBufferToJson {
     fn to_json(&self) -> Value;
@@ -84,7 +103,7 @@ macro_rules! fb_field {
         if let Some(v) = $value {
             $map.insert(
                 $crate::fb_json_macros::to_pascal_case($name),
-                serde_json::json!(v),
+                $crate::fb_json_macros::json_str(v),
             );
         }
     };
@@ -93,7 +112,7 @@ macro_rules! fb_field {
     ($map:expr, $name:expr, $value:expr, string_required) => {
         $map.insert(
             $crate::fb_json_macros::to_pascal_case($name),
-            serde_json::json!($value),
+            $crate::fb_json_macros::json_str($value),
         );
     };
 
@@ -128,7 +147,7 @@ macro_rules! fb_field {
         if let Some(vec) = $value {
             $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let arr: Vec<serde_json::Value> = (0..vec.len())
-                .map(|i| serde_json::json!(vec.get(i)))
+                .map(|i| $crate::fb_json_macros::json_str(vec.get(i)))
                 .collect();
             $map.insert(
                 $crate::fb_json_macros::to_pascal_case($name),
@@ -158,7 +177,7 @@ macro_rules! fb_field {
             let mut kv_map = serde_json::Map::new();
             for i in 0..vec.len() {
                 let entry = vec.get(i);
-                let key = entry.key().to_string();
+                let key = String::from_utf8_lossy(entry.key().as_bytes()).into_owned();
                 if let Some(value) = entry.value() {
                     kv_map.insert(
                         key,
@@ -180,7 +199,7 @@ macro_rules! fb_field {
             let mut kv_map = serde_json::Map::new();
             for i in 0..vec.len() {
                 let entry = vec.get(i);
-                let key = entry.key().to_string();
+                let key = String::from_utf8_lossy(entry.key().as_bytes()).into_owned();
                 if let Some(values) = entry.value() {
                     $crate::fb_json_macros::check_vector_len(values.len(), $name);
                     let arr: Vec<serde_json::Value> = (0..values.len())
@@ -242,7 +261,10 @@ macro_rules! impl_dict_to_json {
         impl $crate::fb_json_macros::FlatBufferToJson for $type {
             fn to_json(&self) -> serde_json::Value {
                 let mut map = serde_json::Map::new();
-                map.insert("key".to_string(), serde_json::json!(self.key()));
+                map.insert(
+                    "key".to_string(),
+                    $crate::fb_json_macros::json_str(self.key()),
+                );
                 if let Some(value) = self.value() {
                     map.insert(
                         "value".to_string(),

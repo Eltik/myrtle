@@ -1,11 +1,10 @@
-//! Auto-generated `FlatBuffer` decode dispatch
+//! Auto-generated FlatBuffer decode dispatch
 //! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs
 
 use serde_json::{Value, json};
 use std::panic::{self, AssertUnwindSafe};
 
-/// Check if data is likely a `FlatBuffer`
-#[must_use]
+/// Check if data is likely a FlatBuffer
 pub fn is_flatbuffer(data: &[u8]) -> bool {
     if data.len() < 8 {
         return false;
@@ -35,7 +34,16 @@ pub fn is_flatbuffer(data: &[u8]) -> bool {
 fn guess_root_type(filename: &str) -> &'static str {
     let lower = filename.to_lowercase();
 
-    if lower.starts_with("level_") {
+    // `level_script_table` MUST be tested before the `level_` prefix: it is a
+    // battle/ table with its own schema, not a level. Under `level_data`
+    // (prts___levels) its 312-byte buffer decoded to a 541-byte nonsense
+    // record — `MapId` holding raw bytes, everything else empty — and once an
+    // unverified table is skipped rather than decoded it would have been
+    // dropped outright. Under its own schema it verifies and decodes to a
+    // populated `LevelScriptDataLevelDict`.
+    if lower.contains("level_script_table") {
+        "level_script_table"
+    } else if lower.starts_with("level_") {
         "level_data"
     } else if lower.contains("enemy_database") {
         "enemy_database"
@@ -156,12 +164,901 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "battle_equip_table"
-            | "ep_breakbuff_table"
-            | "character_table"
-            | "token_table"
-            | "skin_table"
+        "activity_table"
+            | "audio_data"
+            | "buff_table"
+            | "building_data"
+            | "campaign_table"
+            | "char_meta_table"
+            | "charm_table"
+            | "charword_table"
+            | "checkin_table"
+            | "climb_tower_table"
+            | "cooperate_battle_table"
+            | "crisis_table"
+            | "crisis_v2_table"
+            | "display_meta_table"
+            | "enemy_database"
+            | "gacha_table"
+            | "handbook_info_table"
+            | "item_table"
+            | "medal_table"
+            | "replicate_table"
+            | "retro_table"
+            | "roguelike_topic_table"
+            | "sandbox_perm_table"
+            | "shop_client_table"
+            | "skill_table"
+            | "stage_table"
+            | "story_review_meta_table"
+            | "story_review_table"
+            | "story_table"
+            | "uniequip_table"
+            | "zone_table"
     )
+}
+
+/// Which schema a buffer actually verifies against.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SchemaChoice {
+    /// The CN schema verified. Decode exactly as before.
+    Cn,
+    /// The CN schema did not verify but the Yostar (EN/Global) one did.
+    Yostar,
+    /// Neither verified — fall back to the legacy decode-then-inspect path.
+    Neither,
+}
+
+/// One table's verification verdict, for the `unpacker verify` report.
+pub struct TableVerdict {
+    /// The schema type `guess_root_type` resolved the filename to.
+    pub table: &'static str,
+    /// `None` when the CN schema verified, else the first line of the error.
+    pub cn: Option<String>,
+    /// Outer `None` when the table has no Yostar variant; inner `None` when
+    /// the Yostar schema verified.
+    pub yostar: Option<Option<String>>,
+    /// What `decode_flatbuffer` will actually do with this buffer:
+    /// `"CN"` (CN schema verified), `"Yostar"` (routed to the Yostar schema),
+    /// or `"none"` (nothing verified — the table is skipped, no file written).
+    pub chosen: &'static str,
+}
+
+/// `InvalidFlatbuffer` Displays as a multi-line trace; one line per table is
+/// what every caller here wants.
+fn first_line(e: &::flatbuffers::InvalidFlatbuffer) -> String {
+    e.to_string().lines().next().unwrap_or_default().to_string()
+}
+
+/// Verifier options for schema selection.
+///
+/// Deliberately generous. These buffers are real game data, not adversarial
+/// input, and the only question being asked is "do the offsets in this buffer
+/// make sense under this schema". A false *negative* would push a perfectly
+/// good CN table onto the legacy path, so every limit sits far above what any
+/// real table needs; `max_apparent_size` is the flatbuffers default (2 GiB).
+///
+/// `max_alignment` is not an upstream flatbuffers option; it comes from the
+/// vendored copy in `vendor/flatbuffers` (see MYRTLE-PATCH.md). Hypergryph's
+/// serializer aligns 8-byte scalars to 4 bytes, so upstream's `is_aligned`
+/// rejects a buffer the crate then reads back perfectly well through its
+/// unaligned scalar reads: `roguelike_topic_table` failed verification under
+/// BOTH schemas on BOTH servers with `Type f64 at position N is unaligned`,
+/// N % 8 == 4 (CN 7819508, EN 7285868). Capping the demand at 4 accepts that
+/// layout and leaves every other check untouched.
+///
+/// `ignore_utf8_errors` is the second vendored option. Upstream rejects a
+/// buffer when a string's BYTES do not decode as UTF-8, which is right for a
+/// reader that hands the `&str` to code assuming valid UTF-8. Ours does not:
+/// every string reaching the emitter goes through `fb_json_macros::json_str`,
+/// i.e. `String::from_utf8_lossy`, so the bad byte becomes U+FFFD and nothing
+/// downstream can observe it. Now that an unverified table is SKIPPED rather
+/// than decoded, a content check the emitter already handles must not be
+/// allowed to cost a whole table.
+///
+/// `ignore_missing_null_terminator` stays FALSE, deliberately. It is tempting
+/// for the same reason — this reader is length-prefixed and never scans for a
+/// NUL — but it is measurably load-bearing for schema SELECTION. The
+/// `battle/level_script_table` buffer verifies under its own schema and fails
+/// `level_data` on exactly that check; with the option on it verifies under
+/// BOTH and the wrong one wins. EN `roguelike_topic_table` and `building_data`
+/// likewise fail the CN schema only on a missing null terminator, and routing
+/// them back to CN is the multi-GB garbage this whole mechanism exists to
+/// prevent. A missing terminator is a good discriminator; a bad UTF-8 byte is
+/// not.
+fn verifier_opts() -> ::flatbuffers::VerifierOptions {
+    ::flatbuffers::VerifierOptions {
+        max_depth: 256,
+        max_tables: usize::MAX >> 1,
+        max_apparent_size: 1 << 31,
+        ignore_missing_null_terminator: false,
+        max_alignment: 4,
+        ignore_utf8_errors: true,
+    }
+}
+
+/// Verify `data` against the schemas available for `schema_type`.
+///
+/// Returns `(cn_err, yostar_err)`, where a `None` error means that schema
+/// verified, and the outer `None` on `yostar_err` means "no Yostar variant, or
+/// not run". `full = false` short-circuits: once the CN schema verifies the
+/// routing decision is already made, so the Yostar verifier is not run.
+/// `full = true` (the `verify` subcommand) always runs both.
+///
+/// The whole function returns `None` if a verifier panics — it is not supposed
+/// to, but neither was the decoder, and this is the one place that can still
+/// contain it.
+fn verify_schemas(
+    data: &[u8],
+    schema_type: &str,
+    full: bool,
+) -> Option<(Option<String>, Option<Option<String>>)> {
+    let opts = verifier_opts();
+    panic::catch_unwind(AssertUnwindSafe(|| match schema_type {
+        "character_table" => {
+            let cn_err = {
+                use crate::generated_fbs::character_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "char_master_table" => {
+            let cn_err = {
+                use crate::generated_fbs::char_master_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_master_data_bundle_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "char_meta_table" => {
+            let cn_err = {
+                use crate::generated_fbs::char_meta_table_generated::*;
+                root_as_clz_torappu_char_meta_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::char_meta_table_generated::*;
+                root_as_clz_torappu_char_meta_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "char_patch_table" => {
+            let cn_err = {
+                use crate::generated_fbs::char_patch_table_generated::*;
+                root_as_clz_torappu_char_patch_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "charword_table" => {
+            let cn_err = {
+                use crate::generated_fbs::charword_table_generated::*;
+                root_as_clz_torappu_char_word_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::charword_table_generated::*;
+                root_as_clz_torappu_char_word_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "skill_table" => {
+            let cn_err = {
+                use crate::generated_fbs::skill_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::skill_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "enemy_database" => {
+            let cn_err = {
+                use crate::generated_fbs::enemy_database_generated::*;
+                root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::enemy_database_generated::*;
+                root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "enemy_handbook_table" => {
+            let cn_err = {
+                use crate::generated_fbs::enemy_handbook_table_generated::*;
+                root_as_clz_torappu_enemy_hand_book_data_group_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "item_table" => {
+            let cn_err = {
+                use crate::generated_fbs::item_table_generated::*;
+                root_as_clz_torappu_inventory_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::item_table_generated::*;
+                root_as_clz_torappu_inventory_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "skin_table" => {
+            let cn_err = {
+                use crate::generated_fbs::skin_table_generated::*;
+                root_as_clz_torappu_skin_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "uniequip_table" => {
+            let cn_err = {
+                use crate::generated_fbs::uniequip_table_generated::*;
+                root_as_clz_torappu_uni_equip_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::uniequip_table_generated::*;
+                root_as_clz_torappu_uni_equip_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "battle_equip_table" => {
+            let cn_err = {
+                use crate::generated_fbs::battle_equip_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "handbook_info_table" => {
+            let cn_err = {
+                use crate::generated_fbs::handbook_info_table_generated::*;
+                root_as_clz_torappu_handbook_info_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::handbook_info_table_generated::*;
+                root_as_clz_torappu_handbook_info_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "handbook_team_table" => {
+            let cn_err = {
+                use crate::generated_fbs::handbook_team_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "gacha_table" => {
+            let cn_err = {
+                use crate::generated_fbs::gacha_table_generated::*;
+                root_as_clz_torappu_gacha_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::gacha_table_generated::*;
+                root_as_clz_torappu_gacha_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "stage_table" => {
+            let cn_err = {
+                use crate::generated_fbs::stage_table_generated::*;
+                root_as_clz_torappu_stage_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::stage_table_generated::*;
+                root_as_clz_torappu_stage_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "activity_table" => {
+            let cn_err = {
+                use crate::generated_fbs::activity_table_generated::*;
+                root_as_clz_torappu_activity_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::activity_table_generated::*;
+                root_as_clz_torappu_activity_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "audio_data" => {
+            let cn_err = {
+                use crate::generated_fbs::audio_data_generated::*;
+                root_as_clz_torappu_audio_middleware_data_torappu_audio_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::audio_data_generated::*;
+                root_as_clz_torappu_audio_middleware_data_torappu_audio_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "building_data" => {
+            let cn_err = {
+                use crate::generated_fbs::building_data_generated::*;
+                root_as_clz_torappu_building_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::building_data_generated::*;
+                root_as_clz_torappu_building_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "building_local_data" => {
+            let cn_err = {
+                use crate::generated_fbs::building_local_data_generated::*;
+                root_as_clz_torappu_building_data_building_local_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "campaign_table" => {
+            let cn_err = {
+                use crate::generated_fbs::campaign_table_generated::*;
+                root_as_clz_torappu_campaign_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::campaign_table_generated::*;
+                root_as_clz_torappu_campaign_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "chapter_table" => {
+            let cn_err = {
+                use crate::generated_fbs::chapter_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "charm_table" => {
+            let cn_err = {
+                use crate::generated_fbs::charm_table_generated::*;
+                root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::charm_table_generated::*;
+                root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "checkin_table" => {
+            let cn_err = {
+                use crate::generated_fbs::checkin_table_generated::*;
+                root_as_clz_torappu_check_in_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::checkin_table_generated::*;
+                root_as_clz_torappu_check_in_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "climb_tower_table" => {
+            let cn_err = {
+                use crate::generated_fbs::climb_tower_table_generated::*;
+                root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::*;
+                root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "clue_data" => {
+            let cn_err = {
+                use crate::generated_fbs::clue_data_generated::*;
+                root_as_clz_torappu_meeting_clue_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "crisis_table" => {
+            let cn_err = {
+                use crate::generated_fbs::crisis_table_generated::*;
+                root_as_clz_torappu_crisis_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::crisis_table_generated::*;
+                root_as_clz_torappu_crisis_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "crisis_v2_table" => {
+            let cn_err = {
+                use crate::generated_fbs::crisis_v2_table_generated::*;
+                root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::*;
+                root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "display_meta_table" => {
+            let cn_err = {
+                use crate::generated_fbs::display_meta_table_generated::*;
+                root_as_clz_torappu_display_meta_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::display_meta_table_generated::*;
+                root_as_clz_torappu_display_meta_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "favor_table" => {
+            let cn_err = {
+                use crate::generated_fbs::favor_table_generated::*;
+                root_as_clz_torappu_favor_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "gamedata_const" => {
+            let cn_err = {
+                use crate::generated_fbs::gamedata_const_generated::*;
+                root_as_clz_torappu_game_data_consts_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "hotupdate_meta_table" => {
+            let cn_err = {
+                use crate::generated_fbs::hotupdate_meta_table_generated::*;
+                root_as_clz_torappu_hot_update_meta_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "medal_table" => {
+            let cn_err = {
+                use crate::generated_fbs::medal_table_generated::*;
+                root_as_clz_torappu_medal_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::medal_table_generated::*;
+                root_as_clz_torappu_medal_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "meta_ui_table" => {
+            let cn_err = {
+                use crate::generated_fbs::meta_ui_table_generated::*;
+                root_as_clz_torappu_meta_uidisplay_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "mission_table" => {
+            let cn_err = {
+                use crate::generated_fbs::mission_table_generated::*;
+                root_as_clz_torappu_mission_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "open_server_table" => {
+            let cn_err = {
+                use crate::generated_fbs::open_server_table_generated::*;
+                root_as_clz_torappu_open_server_schedule_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "retro_table" => {
+            let cn_err = {
+                use crate::generated_fbs::retro_table_generated::*;
+                root_as_clz_torappu_retro_stage_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::retro_table_generated::*;
+                root_as_clz_torappu_retro_stage_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "roguelike_topic_table" => {
+            let cn_err = {
+                use crate::generated_fbs::roguelike_topic_table_generated::*;
+                root_as_clz_torappu_roguelike_topic_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::roguelike_topic_table_generated::*;
+                root_as_clz_torappu_roguelike_topic_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "sandbox_perm_table" => {
+            let cn_err = {
+                use crate::generated_fbs::sandbox_perm_table_generated::*;
+                root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::*;
+                root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "sandbox_table" => {
+            let cn_err = {
+                use crate::generated_fbs::sandbox_table_generated::*;
+                root_as_clz_torappu_sandbox_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "shop_client_table" => {
+            let cn_err = {
+                use crate::generated_fbs::shop_client_table_generated::*;
+                root_as_clz_torappu_shop_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::shop_client_table_generated::*;
+                root_as_clz_torappu_shop_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "special_operator_table" => {
+            let cn_err = {
+                use crate::generated_fbs::special_operator_table_generated::*;
+                root_as_clz_torappu_special_operator_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "story_review_meta_table" => {
+            let cn_err = {
+                use crate::generated_fbs::story_review_meta_table_generated::*;
+                root_as_clz_torappu_story_review_meta_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::story_review_meta_table_generated::*;
+                root_as_clz_torappu_story_review_meta_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "story_review_table" => {
+            let cn_err = {
+                use crate::generated_fbs::story_review_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::story_review_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "story_table" => {
+            let cn_err = {
+                use crate::generated_fbs::story_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::story_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "tip_table" => {
+            let cn_err = {
+                use crate::generated_fbs::tip_table_generated::*;
+                root_as_clz_torappu_tip_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "zone_table" => {
+            let cn_err = {
+                use crate::generated_fbs::zone_table_generated::*;
+                root_as_clz_torappu_zone_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::zone_table_generated::*;
+                root_as_clz_torappu_zone_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "buff_table" => {
+            let cn_err = {
+                use crate::generated_fbs::buff_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::buff_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "cooperate_battle_table" => {
+            let cn_err = {
+                use crate::generated_fbs::cooperate_battle_table_generated::*;
+                root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::cooperate_battle_table_generated::*;
+                root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "language_data" => {
+            let cn_err = {
+                use crate::generated_fbs::init_text_generated::*;
+                root_as_clz_torappu_language_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "ep_breakbuff_table" => {
+            let cn_err = {
+                use crate::generated_fbs::ep_breakbuff_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "extra_battlelog_table" => {
+            let cn_err = {
+                use crate::generated_fbs::extra_battlelog_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "replicate_table" => {
+            let cn_err = {
+                use crate::generated_fbs::replicate_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, None);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::replicate_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, Some(yostar_err))
+        }
+        "legion_mode_buff_table" => {
+            let cn_err = {
+                use crate::generated_fbs::legion_mode_buff_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "token_table" => {
+            let cn_err = {
+                use crate::generated_fbs::token_table_generated::*;
+                root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "level_data" => {
+            let cn_err = {
+                use crate::generated_fbs::prts___levels_generated::*;
+                root_as_clz_torappu_level_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        "level_script_table" => {
+            let cn_err = {
+                use crate::generated_fbs::level_script_table_generated::*;
+                root_as_clz_torappu_battle_level_script_data_map_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, None)
+        }
+        _ => (None, None),
+    }))
+    .ok()
+}
+
+/// Pick CN or Yostar for `schema_type` by VERIFYING the buffer, before any
+/// decode runs.
+///
+/// WHY: only a handful of tables have a Yostar (EN/Global) schema variant, and
+/// the CN→Yostar fallback used to fire only when the CN decode came out EMPTY.
+/// That catches a mismatch that nulls everything out. It does not catch a
+/// mismatch that produces plausible-looking garbage. Measured on EN
+/// 26-08-28-10-20-08_ea3678: `activity_table` under the CN schema writes
+/// 5,211,117,589 bytes of JSON where the Yostar schema writes 13,143,425, and
+/// CN's own activity_table is 15,867,159. Not empty, so nothing detected it,
+/// and it takes peak RSS for one EN extraction from 431 MB to 8.56 GB — which
+/// is the 10 GB OOM kill the unpacker took on the VPS on 2026-08-04.
+///
+/// Verification is the only signal that fires BEFORE the garbage is
+/// materialised. Every emptiness heuristic runs on a fully built
+/// `serde_json::Value`, i.e. after the memory has already been spent, whereas
+/// `root_as_*_with_opts` only walks offsets and vtables: it allocates no
+/// `Value` and serialises nothing.
+///
+/// A verifier panic (it is not supposed to, but a decode panic was not supposed
+/// to happen either) is treated as `Neither`, which is the pre-existing path.
+///
+/// Silent on purpose: several callers ask the same question about the same
+/// buffer (the pre-decode skip check, the decode itself, `verify`), so the
+/// routing note is printed once by `decode_flatbuffer`, not here.
+fn select_schema_by_verification(data: &[u8], schema_type: &str) -> SchemaChoice {
+    match verify_schemas(data, schema_type, false) {
+        None => SchemaChoice::Neither,
+        Some((None, _)) => SchemaChoice::Cn,
+        Some((Some(_), Some(None))) => SchemaChoice::Yostar,
+        Some((Some(_), _)) => SchemaChoice::Neither,
+    }
+}
+
+/// The verification verdict for one gamedata buffer, for `unpacker verify`.
+///
+/// `chosen` comes from `select_schema_by_verification` itself, so the report
+/// cannot drift from what `extract` does; the error strings come from the same
+/// emitted match arms, run once more with `full = true` so the Yostar column is
+/// filled in even when the CN schema verified.
+#[must_use]
+pub fn verify_table(data: &[u8], filename: &str) -> TableVerdict {
+    let table = guess_root_type(filename);
+    let (cn, yostar) = verify_schemas(data, table, true)
+        .unwrap_or_else(|| (Some("verifier panicked".to_string()), None));
+    let routed_yostar = has_yostar_schema(table)
+        && select_schema_by_verification(data, table) == SchemaChoice::Yostar;
+    let chosen = if routed_yostar {
+        "Yostar"
+    } else if cn.is_none() {
+        "CN"
+    } else {
+        "none"
+    };
+    TableVerdict {
+        table,
+        cn,
+        yostar,
+        chosen,
+    }
+}
+
+/// `Some(table)` when NO schema verifies this buffer, i.e. the caller must SKIP
+/// it: no decode, no file written. `None` when it will decode (CN or Yostar),
+/// and also when `guess_root_type` has no schema for the filename at all —
+/// there is nothing to verify against there, and that path only ever produces
+/// the harmless `extract_strings` listing.
+///
+/// Callers use this to skip BEFORE `export_text_asset` runs, because the
+/// fall-through inside it would otherwise write the raw payload as `.bytes`
+/// over a perfectly good `.json` from the previous extraction.
+#[must_use]
+pub fn unverified_table(data: &[u8], filename: &str) -> Option<&'static str> {
+    let schema_type = guess_root_type(filename);
+    if schema_type == "unknown" {
+        return None;
+    }
+    match select_schema_by_verification(data, schema_type) {
+        SchemaChoice::Cn | SchemaChoice::Yostar => None,
+        SchemaChoice::Neither => Some(schema_type),
+    }
 }
 
 /// Try decoding with Yostar-specific schemas
@@ -171,45 +1068,181 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
-            "battle_equip_table" => {
-                use crate::generated_fbs_yostar::battle_equip_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked;
+            "activity_table" => {
+                use crate::generated_fbs_yostar::activity_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_activity_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "audio_data" => {
+                use crate::generated_fbs_yostar::audio_data_generated::*;
                 let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
+                    root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
-            "ep_breakbuff_table" => {
-                use crate::generated_fbs_yostar::ep_breakbuff_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked;
+            "buff_table" => {
+                use crate::generated_fbs_yostar::buff_table_generated::*;
                 let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
-            "character_table" => {
-                use crate::generated_fbs_yostar::character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+            "building_data" => {
+                use crate::generated_fbs_yostar::building_data_generated::*;
+                let root = unsafe { root_as_clz_torappu_building_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "campaign_table" => {
+                use crate::generated_fbs_yostar::campaign_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_campaign_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "char_meta_table" => {
+                use crate::generated_fbs_yostar::char_meta_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_char_meta_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "charm_table" => {
+                use crate::generated_fbs_yostar::charm_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_charm_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "charword_table" => {
+                use crate::generated_fbs_yostar::charword_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_char_word_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "checkin_table" => {
+                use crate::generated_fbs_yostar::checkin_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_check_in_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "climb_tower_table" => {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_climb_tower_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "cooperate_battle_table" => {
+                use crate::generated_fbs_yostar::cooperate_battle_table_generated::*;
                 let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                    root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+            "crisis_table" => {
+                use crate::generated_fbs_yostar::crisis_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_crisis_client_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "crisis_v2_table" => {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_crisis_v2_shared_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "display_meta_table" => {
+                use crate::generated_fbs_yostar::display_meta_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_display_meta_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "enemy_database" => {
+                use crate::generated_fbs_yostar::enemy_database_generated::*;
+                let root = unsafe { root_as_clz_torappu_enemy_database_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "gacha_table" => {
+                use crate::generated_fbs_yostar::gacha_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_gacha_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "handbook_info_table" => {
+                use crate::generated_fbs_yostar::handbook_info_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_handbook_info_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "item_table" => {
+                use crate::generated_fbs_yostar::item_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_inventory_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "medal_table" => {
+                use crate::generated_fbs_yostar::medal_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_medal_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "replicate_table" => {
+                use crate::generated_fbs_yostar::replicate_table_generated::*;
                 let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unchecked(data)
                 };
                 Ok(root.to_json())
             }
-            "skin_table" => {
-                use crate::generated_fbs_yostar::skin_table_generated::root_as_clz_torappu_skin_table_unchecked;
-                let root = unsafe { root_as_clz_torappu_skin_table_unchecked(data) };
+            "retro_table" => {
+                use crate::generated_fbs_yostar::retro_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_retro_stage_table_unchecked(data) };
                 Ok(root.to_json())
             }
-            _ => Err(format!("No Yostar schema for {schema_type}")),
+            "roguelike_topic_table" => {
+                use crate::generated_fbs_yostar::roguelike_topic_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_roguelike_topic_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "sandbox_perm_table" => {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_sandbox_perm_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "shop_client_table" => {
+                use crate::generated_fbs_yostar::shop_client_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_shop_client_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "skill_table" => {
+                use crate::generated_fbs_yostar::skill_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "stage_table" => {
+                use crate::generated_fbs_yostar::stage_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_stage_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "story_review_meta_table" => {
+                use crate::generated_fbs_yostar::story_review_meta_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_story_review_meta_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "story_review_table" => {
+                use crate::generated_fbs_yostar::story_review_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "story_table" => {
+                use crate::generated_fbs_yostar::story_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "uniequip_table" => {
+                use crate::generated_fbs_yostar::uniequip_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_uni_equip_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "zone_table" => {
+                use crate::generated_fbs_yostar::zone_table_generated::*;
+                let root = unsafe { root_as_clz_torappu_zone_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            _ => Err(format!("No Yostar schema for {}", schema_type)),
         }
     }));
     match decode_result {
         Ok(Ok(value)) => {
-            if value.as_object().is_some_and(serde_json::Map::is_empty) {
+            if value.as_object().is_some_and(|o| o.is_empty()) {
                 Err("Yostar decode returned empty".to_string())
             } else {
                 Ok(value)
@@ -220,71 +1253,8 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
     }
 }
 
-/// Decode `FlatBuffer` data to JSON using schema-based decoding.
-///
-/// Runs the actual decode on a worker thread with a wall-clock budget. The
-/// `_unchecked` accessors trust offsets blindly, so a schema/data mismatch (a
-/// stale binary vs. freshly regenerated bindings) sends the recursive `to_json`
-/// chasing garbage offsets — each bad read caught by a per-field `catch_unwind`.
-/// That can be millions of caught panics: finite, but on Windows (slow SEH
-/// unwinding) it can run for hours. Bounding the time keeps one bad table from
-/// hanging CI; valid tables decode in well under a second. Override the default
-/// 30s budget with `UNPACKER_FB_DECODE_TIMEOUT_SECS`.
+/// Decode FlatBuffer data to JSON using schema-based decoding
 pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
-    install_quiet_decode_hook();
-
-    let timeout_secs = std::env::var("UNPACKER_FB_DECODE_TIMEOUT_SECS")
-        .ok()
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(30);
-
-    // Owned, `Send` copies for the worker. The large stack mirrors what callers
-    // allocate for the deep recursion (the gamedata test / `RUST_MIN_STACK`).
-    let data_owned = data.to_vec();
-    let filename_owned = filename.to_string();
-    let (tx, rx) = std::sync::mpsc::channel();
-    let spawned = std::thread::Builder::new()
-        .name("fb-decode".to_string())
-        .stack_size(64 * 1024 * 1024)
-        .spawn(move || {
-            let _ = tx.send(decode_flatbuffer_inner(&data_owned, &filename_owned));
-        });
-
-    match spawned {
-        Ok(_handle) => match rx.recv_timeout(std::time::Duration::from_secs(timeout_secs)) {
-            Ok(result) => result,
-            // Timed out (or the worker died/panicked). The detached worker is
-            // reaped at process exit. Returning `Err` lets callers fall back.
-            Err(_) => Err(format!(
-                "Decode for '{filename}' exceeded {timeout_secs}s budget (likely schema/data mismatch)"
-            )),
-        },
-        // Thread spawn failed (extremely rare): decode inline as a fallback.
-        Err(_) => decode_flatbuffer_inner(data, filename),
-    }
-}
-
-/// Silence the panics raised (and caught) while decoding on `fb-decode` worker
-/// threads. Decoding a stale buffer with the `_unchecked` accessors panics on
-/// nearly every field — millions of times — and the default hook prints each
-/// one, flooding stderr (gigabytes of logs) and slowing the run. We suppress
-/// only our own decode threads; panics from anywhere else still report normally.
-/// Installed once, lazily, so we don't clobber a hook a binary set up earlier.
-fn install_quiet_decode_hook() {
-    static HOOK: std::sync::Once = std::sync::Once::new();
-    HOOK.call_once(|| {
-        let default = std::panic::take_hook();
-        std::panic::set_hook(Box::new(move |info| {
-            if std::thread::current().name() == Some("fb-decode") {
-                return;
-            }
-            default(info);
-        }));
-    });
-}
-
-/// Inner decode body, run on a budgeted worker thread by `decode_flatbuffer`.
-fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
 
     if !is_flatbuffer(data) {
@@ -292,87 +1262,128 @@ fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String>
     }
 
     let schema_type = guess_root_type(filename);
+
+    // DECODE ONLY WHAT VERIFIES. `guess_root_type` names a schema; the
+    // buffer is verified against it (and against the Yostar variant, if the
+    // table has one) BEFORE anything is decoded, and a buffer that verifies
+    // under neither is skipped rather than decoded.
+    //
+    // WHY there is no unchecked fallback any more: `root_as_*_unchecked` on a
+    // buffer the schema does not match has no termination guarantee. It reads
+    // a scalar as a vector length and walks a multi-million-element phantom
+    // vector, one caught panic per element. Measured twice: EN stage_table
+    // 26-08-28 under the 2.7.71 CN schema never finished (>45 min on one
+    // 5,022,624-byte buffer), and the committed March-2026 CN fixture under
+    // the same schema burned 10 min at 97% CPU writing 3.7 GB of garbage
+    // before it was killed (sampled: 129 of 129 frames in
+    // stage_table_generated). Verification rejects both in microseconds.
+    //
+    // WHY skipping beats decoding anyway: a missing table is explicit and a
+    // garbage table is not. The caller (`export_gamedata`) writes no file, so
+    // the previous extraction's JSON stays on disk — the backend tolerates a
+    // missing non-critical table and degrades a non-default server, where a
+    // multi-GB garbage table takes the process out (a 10 GB RSS OOM kill on
+    // the VPS on 2026-08-04) and a plausible-looking one is worse still.
+    //
+    // Verification also costs nothing to be wrong about in the safe direction:
+    // it allocates no `Value` and serialises nothing, it only walks offsets
+    // and vtables.
+    if schema_type != "unknown" {
+        match select_schema_by_verification(data, schema_type) {
+            SchemaChoice::Yostar => {
+                if let Some((Some(e), _)) = verify_schemas(data, schema_type, false) {
+                    eprintln!("schema: {schema_type} CN verify failed ({e}), Yostar verified");
+                }
+                return decode_flatbuffer_yostar(data, schema_type);
+            }
+            SchemaChoice::Neither => {
+                return Err(format!("No schema verifies {schema_type}"));
+            }
+            SchemaChoice::Cn => {}
+        }
+    }
+
     let data_clone = data.to_vec();
 
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
             "character_table" => {
-                use crate::generated_fbs::character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+                use crate::generated_fbs::character_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "char_master_table" => {
-                use crate::generated_fbs::char_master_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_master_data_bundle_unchecked;
+                use crate::generated_fbs::char_master_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_master_data_bundle_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "char_meta_table" => {
-                use crate::generated_fbs::char_meta_table_generated::root_as_clz_torappu_char_meta_table_unchecked;
+                use crate::generated_fbs::char_meta_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_char_meta_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "char_patch_table" => {
-                use crate::generated_fbs::char_patch_table_generated::root_as_clz_torappu_char_patch_data_unchecked;
+                use crate::generated_fbs::char_patch_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_char_patch_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "charword_table" => {
-                use crate::generated_fbs::charword_table_generated::root_as_clz_torappu_char_word_table_unchecked;
+                use crate::generated_fbs::charword_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_char_word_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "skill_table" => {
-                use crate::generated_fbs::skill_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked;
+                use crate::generated_fbs::skill_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "enemy_database" => {
-                use crate::generated_fbs::enemy_database_generated::root_as_clz_torappu_enemy_database_unchecked;
+                use crate::generated_fbs::enemy_database_generated::*;
                 let root = unsafe { root_as_clz_torappu_enemy_database_unchecked(data) };
                 Ok(root.to_json())
             }
             "enemy_handbook_table" => {
-                use crate::generated_fbs::enemy_handbook_table_generated::root_as_clz_torappu_enemy_hand_book_data_group_unchecked;
+                use crate::generated_fbs::enemy_handbook_table_generated::*;
                 let root =
                     unsafe { root_as_clz_torappu_enemy_hand_book_data_group_unchecked(data) };
                 Ok(root.to_json())
             }
             "item_table" => {
-                use crate::generated_fbs::item_table_generated::root_as_clz_torappu_inventory_data_unchecked;
+                use crate::generated_fbs::item_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_inventory_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "skin_table" => {
-                use crate::generated_fbs::skin_table_generated::root_as_clz_torappu_skin_table_unchecked;
+                use crate::generated_fbs::skin_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_skin_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "uniequip_table" => {
-                use crate::generated_fbs::uniequip_table_generated::root_as_clz_torappu_uni_equip_table_unchecked;
+                use crate::generated_fbs::uniequip_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_uni_equip_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "battle_equip_table" => {
-                use crate::generated_fbs::battle_equip_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked;
+                use crate::generated_fbs::battle_equip_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "handbook_info_table" => {
-                use crate::generated_fbs::handbook_info_table_generated::root_as_clz_torappu_handbook_info_table_unchecked;
+                use crate::generated_fbs::handbook_info_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_handbook_info_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "handbook_team_table" => {
-                use crate::generated_fbs::handbook_team_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked;
+                use crate::generated_fbs::handbook_team_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
                         data,
@@ -381,208 +1392,208 @@ fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String>
                 Ok(root.to_json())
             }
             "gacha_table" => {
-                use crate::generated_fbs::gacha_table_generated::root_as_clz_torappu_gacha_data_unchecked;
+                use crate::generated_fbs::gacha_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_gacha_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "stage_table" => {
-                use crate::generated_fbs::stage_table_generated::root_as_clz_torappu_stage_table_unchecked;
+                use crate::generated_fbs::stage_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_stage_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "activity_table" => {
-                use crate::generated_fbs::activity_table_generated::root_as_clz_torappu_activity_table_unchecked;
+                use crate::generated_fbs::activity_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_activity_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "audio_data" => {
-                use crate::generated_fbs::audio_data_generated::root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked;
+                use crate::generated_fbs::audio_data_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "building_data" => {
-                use crate::generated_fbs::building_data_generated::root_as_clz_torappu_building_data_unchecked;
+                use crate::generated_fbs::building_data_generated::*;
                 let root = unsafe { root_as_clz_torappu_building_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "building_local_data" => {
-                use crate::generated_fbs::building_local_data_generated::root_as_clz_torappu_building_data_building_local_data_unchecked;
+                use crate::generated_fbs::building_local_data_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_building_data_building_local_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "campaign_table" => {
-                use crate::generated_fbs::campaign_table_generated::root_as_clz_torappu_campaign_table_unchecked;
+                use crate::generated_fbs::campaign_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_campaign_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "chapter_table" => {
-                use crate::generated_fbs::chapter_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked;
+                use crate::generated_fbs::chapter_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "charm_table" => {
-                use crate::generated_fbs::charm_table_generated::root_as_clz_torappu_charm_data_unchecked;
+                use crate::generated_fbs::charm_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_charm_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "checkin_table" => {
-                use crate::generated_fbs::checkin_table_generated::root_as_clz_torappu_check_in_table_unchecked;
+                use crate::generated_fbs::checkin_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_check_in_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "climb_tower_table" => {
-                use crate::generated_fbs::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_unchecked;
+                use crate::generated_fbs::climb_tower_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_climb_tower_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "clue_data" => {
-                use crate::generated_fbs::clue_data_generated::root_as_clz_torappu_meeting_clue_data_unchecked;
+                use crate::generated_fbs::clue_data_generated::*;
                 let root = unsafe { root_as_clz_torappu_meeting_clue_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "crisis_table" => {
-                use crate::generated_fbs::crisis_table_generated::root_as_clz_torappu_crisis_client_data_unchecked;
+                use crate::generated_fbs::crisis_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_crisis_client_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "crisis_v2_table" => {
-                use crate::generated_fbs::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_unchecked;
+                use crate::generated_fbs::crisis_v2_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_crisis_v2_shared_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "display_meta_table" => {
-                use crate::generated_fbs::display_meta_table_generated::root_as_clz_torappu_display_meta_data_unchecked;
+                use crate::generated_fbs::display_meta_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_display_meta_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "favor_table" => {
-                use crate::generated_fbs::favor_table_generated::root_as_clz_torappu_favor_table_unchecked;
+                use crate::generated_fbs::favor_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_favor_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "gamedata_const" => {
-                use crate::generated_fbs::gamedata_const_generated::root_as_clz_torappu_game_data_consts_unchecked;
+                use crate::generated_fbs::gamedata_const_generated::*;
                 let root = unsafe { root_as_clz_torappu_game_data_consts_unchecked(data) };
                 Ok(root.to_json())
             }
             "hotupdate_meta_table" => {
-                use crate::generated_fbs::hotupdate_meta_table_generated::root_as_clz_torappu_hot_update_meta_table_unchecked;
+                use crate::generated_fbs::hotupdate_meta_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_hot_update_meta_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "medal_table" => {
-                use crate::generated_fbs::medal_table_generated::root_as_clz_torappu_medal_data_unchecked;
+                use crate::generated_fbs::medal_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_medal_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "meta_ui_table" => {
-                use crate::generated_fbs::meta_ui_table_generated::root_as_clz_torappu_meta_uidisplay_table_unchecked;
+                use crate::generated_fbs::meta_ui_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_meta_uidisplay_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "mission_table" => {
-                use crate::generated_fbs::mission_table_generated::root_as_clz_torappu_mission_table_unchecked;
+                use crate::generated_fbs::mission_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_mission_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "open_server_table" => {
-                use crate::generated_fbs::open_server_table_generated::root_as_clz_torappu_open_server_schedule_unchecked;
+                use crate::generated_fbs::open_server_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_open_server_schedule_unchecked(data) };
                 Ok(root.to_json())
             }
             "retro_table" => {
-                use crate::generated_fbs::retro_table_generated::root_as_clz_torappu_retro_stage_table_unchecked;
+                use crate::generated_fbs::retro_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_retro_stage_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "roguelike_topic_table" => {
-                use crate::generated_fbs::roguelike_topic_table_generated::root_as_clz_torappu_roguelike_topic_table_unchecked;
+                use crate::generated_fbs::roguelike_topic_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_roguelike_topic_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "sandbox_perm_table" => {
-                use crate::generated_fbs::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_unchecked;
+                use crate::generated_fbs::sandbox_perm_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_sandbox_perm_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "sandbox_table" => {
-                use crate::generated_fbs::sandbox_table_generated::root_as_clz_torappu_sandbox_table_unchecked;
+                use crate::generated_fbs::sandbox_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_sandbox_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "shop_client_table" => {
-                use crate::generated_fbs::shop_client_table_generated::root_as_clz_torappu_shop_client_data_unchecked;
+                use crate::generated_fbs::shop_client_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_shop_client_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "special_operator_table" => {
-                use crate::generated_fbs::special_operator_table_generated::root_as_clz_torappu_special_operator_table_unchecked;
+                use crate::generated_fbs::special_operator_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_special_operator_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "story_review_meta_table" => {
-                use crate::generated_fbs::story_review_meta_table_generated::root_as_clz_torappu_story_review_meta_table_unchecked;
+                use crate::generated_fbs::story_review_meta_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_story_review_meta_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "story_review_table" => {
-                use crate::generated_fbs::story_review_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked;
+                use crate::generated_fbs::story_review_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "story_table" => {
-                use crate::generated_fbs::story_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked;
+                use crate::generated_fbs::story_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "tip_table" => {
-                use crate::generated_fbs::tip_table_generated::root_as_clz_torappu_tip_table_unchecked;
+                use crate::generated_fbs::tip_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_tip_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "zone_table" => {
-                use crate::generated_fbs::zone_table_generated::root_as_clz_torappu_zone_table_unchecked;
+                use crate::generated_fbs::zone_table_generated::*;
                 let root = unsafe { root_as_clz_torappu_zone_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "buff_table" => {
-                use crate::generated_fbs::buff_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked;
+                use crate::generated_fbs::buff_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "cooperate_battle_table" => {
-                use crate::generated_fbs::cooperate_battle_table_generated::root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked;
+                use crate::generated_fbs::cooperate_battle_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "language_data" => {
-                use crate::generated_fbs::init_text_generated::root_as_clz_torappu_language_data_unchecked;
+                use crate::generated_fbs::init_text_generated::*;
                 let root = unsafe { root_as_clz_torappu_language_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "ep_breakbuff_table" => {
-                use crate::generated_fbs::ep_breakbuff_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked;
+                use crate::generated_fbs::ep_breakbuff_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "extra_battlelog_table" => {
-                use crate::generated_fbs::extra_battlelog_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked;
+                use crate::generated_fbs::extra_battlelog_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked(
                         data,
@@ -591,87 +1602,47 @@ fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String>
                 Ok(root.to_json())
             }
             "replicate_table" => {
-                use crate::generated_fbs::replicate_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unchecked;
+                use crate::generated_fbs::replicate_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_replicate_table_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "legion_mode_buff_table" => {
-                use crate::generated_fbs::legion_mode_buff_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked;
+                use crate::generated_fbs::legion_mode_buff_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "token_table" => {
-                use crate::generated_fbs::token_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked;
+                use crate::generated_fbs::token_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
                 Ok(root.to_json())
             }
             "level_data" => {
-                use crate::generated_fbs::prts___levels_generated::root_as_clz_torappu_level_data_unchecked;
+                use crate::generated_fbs::prts___levels_generated::*;
                 let root = unsafe { root_as_clz_torappu_level_data_unchecked(data) };
                 Ok(root.to_json())
             }
-            _ => Err(format!("Unknown schema type: {schema_type}")),
+            "level_script_table" => {
+                use crate::generated_fbs::level_script_table_generated::*;
+                let root =
+                    unsafe { root_as_clz_torappu_battle_level_script_data_map_unchecked(data) };
+                Ok(root.to_json())
+            }
+            _ => Err(format!("Unknown schema type: {}", schema_type)),
         }
     }));
 
     match decode_result {
-        Ok(Ok(value)) => {
-            // A result is "useless" if either:
-            //   (a) the top-level object has no keys at all, or
-            //   (b) the root collection is present but empty because every
-            //       element was dropped by the filter_map safety net.
-            // Case (b) happens when the CN schema has fields the binary
-            // doesn't (e.g., validModeIndices in EquipTalentData for the
-            // Apr 2026 CN binary) and every element panics on decode.
-            // Without this check the Yostar fallback never fires.
-            let is_content_empty = match schema_type {
-                "battle_equip_table" => value
-                    .get("Equips")
-                    .and_then(|v| v.as_array())
-                    .is_some_and(std::vec::Vec::is_empty),
-                // The EN (Yostar) skin_table binary decodes "successfully" under the
-                // CN schema but every entry's DisplaySkin reads as null (vtable shift:
-                // CN has spAvatarId/spPortraitId, EN doesn't). The top object isn't
-                // empty (CharSkins is populated), so detect the partial decode
-                // directly: CharSkins non-empty yet not a single entry carries a
-                // populated DisplaySkin. A real CN binary has ~1300, so never fires.
-                "skin_table" => value
-                    .get("CharSkins")
-                    .and_then(|v| v.as_array())
-                    .is_some_and(|a| {
-                        !a.is_empty()
-                            && !a.iter().any(|e| {
-                                e.get("value")
-                                    .and_then(|v| v.get("DisplaySkin"))
-                                    .and_then(|d| d.as_object())
-                                    .is_some_and(|o| !o.is_empty())
-                            })
-                    }),
-                _ => false,
-            };
-            if value.as_object().is_some_and(serde_json::Map::is_empty) || is_content_empty {
-                if has_yostar_schema(schema_type)
-                    && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
-                {
-                    return Ok(v);
-                }
-                Err(format!("Schema mismatch for {schema_type} (empty result)"))
-            } else {
-                Ok(value)
-            }
-        }
+        Ok(Ok(value)) => Ok(value),
         Ok(Err(e)) => {
-            if has_yostar_schema(schema_type)
-                && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
-            {
-                return Ok(v);
-            }
+            // `guess_root_type` found no schema for this filename, so nothing
+            // was verified and nothing was decoded. The string scavenger is the
+            // only thing left, and it is bounds-checked and UTF-8-checked.
             if schema_type == "unknown" {
                 let strings = extract_strings(data);
                 if !strings.is_empty() {
@@ -680,19 +1651,14 @@ fn decode_flatbuffer_inner(data: &[u8], filename: &str) -> Result<Value, String>
             }
             Err(format!("Decode failed for {schema_type}: {e}"))
         }
-        Err(_) => {
-            if has_yostar_schema(schema_type)
-                && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
-            {
-                return Ok(v);
-            }
-            Err(format!("Decode panic for {schema_type}"))
-        }
+        // The buffer verified under this exact schema, so a panic here is a bug
+        // in the emitted `to_json`, not a schema mismatch: report it, do not
+        // silently retry under a schema that just failed verification.
+        Err(_) => Err(format!("Decode panic for {schema_type}")),
     }
 }
 
-/// Extract strings from `FlatBuffer` (fallback for unknown types)
-#[must_use]
+/// Extract strings from FlatBuffer (fallback for unknown types)
 pub fn extract_strings(data: &[u8]) -> Vec<String> {
     let mut strings = Vec::new();
     let mut i = 0;

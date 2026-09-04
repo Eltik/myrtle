@@ -60,6 +60,7 @@ fn main() {
     match cli.command {
         Command::Extract(args) => cmd_extract(&args),
         Command::List(args) => cmd_list(&args),
+        Command::Verify(args) => cmd_verify(&args),
     }
 }
 
@@ -238,6 +239,151 @@ fn cmd_extract(args: &cli::ExtractArgs) {
 }
 
 /// Search input dir and its parent for a .idx manifest file
+/// One schema type's aggregated verification verdict across every gamedata
+/// file that resolved to it.
+#[derive(Default)]
+struct VerifyRow {
+    files: usize,
+    cn_fail: usize,
+    cn_err: Option<String>,
+    /// `None` until a file with a Yostar variant is seen.
+    yostar: Option<(usize, Option<String>)>,
+    chosen: std::collections::BTreeMap<&'static str, usize>,
+}
+
+/// Report which schema every gamedata table in a bundle dir verifies against.
+///
+/// Verification only: nothing is decoded and nothing is written. The `chosen`
+/// column comes from `flatbuffers_decode::verify_table`, which asks
+/// `select_schema_by_verification` itself, so this cannot drift from what
+/// `extract` does. Rows are aggregated per schema type because `level_data`
+/// alone is ~2900 files. Always exits 0 — it is a report, not a gate.
+fn cmd_verify(args: &cli::VerifyArgs) {
+    let idx_path = match args.idx.clone().or_else(|| find_idx_file(&args.input)) {
+        Some(p) => p,
+        None => {
+            eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
+            return;
+        }
+    };
+    let manifest = match export::manifest::ResourceManifest::load(&idx_path) {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("error: cannot load {}: {e}", idx_path.display());
+            return;
+        }
+    };
+
+    let mut rows: std::collections::BTreeMap<&'static str, VerifyRow> =
+        std::collections::BTreeMap::new();
+    let mut skipped = 0usize;
+
+    for entry in WalkDir::new(&args.input)
+        .into_iter()
+        .filter_map(std::result::Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        let Ok(data) = std::fs::read(entry.path()) else {
+            continue;
+        };
+        let Ok(bundle) = BundleFile::parse(data) else {
+            continue;
+        };
+        if bundle.files.is_empty() {
+            continue;
+        }
+        let Ok(sf) = SerializedFile::parse(bundle.files[0].data.clone()) else {
+            continue;
+        };
+        for obj in &sf.objects {
+            if obj.class_id != 49 {
+                continue;
+            }
+            let Ok(val) = read_object(&sf, obj) else {
+                continue;
+            };
+            let Some(name) = val["m_Name"].as_str() else {
+                continue;
+            };
+            let Some(real) = manifest.get_output_path(name) else {
+                continue;
+            };
+            if !real.starts_with("gamedata/") {
+                continue;
+            }
+            let Some(fb) = export::text_asset::flatbuffer_payload(&val) else {
+                continue;
+            };
+            let file_name = Path::new(real)
+                .file_name()
+                .and_then(|f| f.to_str())
+                .unwrap_or(name);
+            let verdict = unpacker::flatbuffers_decode::verify_table(&fb, file_name);
+            if verdict.table == "unknown" {
+                skipped += 1;
+                continue;
+            }
+            let row = rows.entry(verdict.table).or_default();
+            row.files += 1;
+            if let Some(err) = verdict.cn {
+                row.cn_fail += 1;
+                row.cn_err.get_or_insert(err);
+            }
+            if let Some(yostar) = verdict.yostar {
+                let y = row.yostar.get_or_insert((0, None));
+                if let Some(err) = yostar {
+                    y.0 += 1;
+                    y.1.get_or_insert(err);
+                }
+            }
+            *row.chosen.entry(verdict.chosen).or_default() += 1;
+        }
+    }
+
+    for (table, r) in &rows {
+        let label = if r.files == 1 {
+            (*table).to_string()
+        } else {
+            format!("{table} x{}", r.files)
+        };
+        let cn = match (r.cn_fail, r.cn_err.as_deref()) {
+            (0, _) => "PASS".to_string(),
+            (n, err) if n == r.files => format!("FAIL {}", err.unwrap_or_default()),
+            (n, err) => format!("FAIL {n}/{} {}", r.files, err.unwrap_or_default()),
+        };
+        let yostar = match &r.yostar {
+            None => "n/a".to_string(),
+            Some((0, _)) => "PASS".to_string(),
+            Some((n, err)) if *n == r.files => {
+                format!("FAIL {}", err.as_deref().unwrap_or_default())
+            }
+            Some((n, err)) => format!(
+                "FAIL {n}/{} {}",
+                r.files,
+                err.as_deref().unwrap_or_default()
+            ),
+        };
+        let chosen = r
+            .chosen
+            .iter()
+            .map(|(k, v)| {
+                if *v == r.files {
+                    (*k).to_string()
+                } else {
+                    format!("{k} {v}")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        println!("{label:<30} | CN: {cn:<58} | Yostar: {yostar:<50} | chosen: {chosen}");
+    }
+    println!(
+        "{} schema types, {} gamedata buffers, {skipped} unrecognised",
+        rows.len(),
+        rows.values().map(|r| r.files).sum::<usize>()
+    );
+}
+
 fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
     // Search input dir first, then parent
     for dir in [Some(input_dir), input_dir.parent()] {

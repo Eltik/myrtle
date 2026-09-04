@@ -54,8 +54,7 @@ impl enum__Torappu_TipData_Category {
         Self::ALL,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::BATTLE => Some("BATTLE"),
@@ -84,7 +83,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_TipData_Category {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_TipData_Category::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -107,7 +106,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_TipData_Category {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_TipData_Category {
-    type Output = Self;
+    type Output = enum__Torappu_TipData_Category;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -140,14 +139,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_TipData_Category {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_TipData_Category {}
 pub enum clz_Torappu_TipDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_TipData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_TipData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_TipData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -162,8 +161,7 @@ impl<'a> clz_Torappu_TipData<'a> {
     pub const VT_CATEGORY: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_TipData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -185,7 +183,6 @@ impl<'a> clz_Torappu_TipData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_TipDataT {
         let tip = self.tip().map(|x| alloc::string::ToString::to_string(x));
         let weight = self.weight();
@@ -198,7 +195,6 @@ impl<'a> clz_Torappu_TipData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tip(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -209,7 +205,6 @@ impl<'a> clz_Torappu_TipData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn weight(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -221,7 +216,6 @@ impl<'a> clz_Torappu_TipData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn category(&self) -> enum__Torappu_TipData_Category {
         // Safety:
         // Created from valid Table for this object
@@ -256,7 +250,7 @@ pub struct clz_Torappu_TipDataArgs<'a> {
     pub weight: f32,
     pub category: enum__Torappu_TipData_Category,
 }
-impl Default for clz_Torappu_TipDataArgs<'_> {
+impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_TipDataArgs {
@@ -291,7 +285,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TipDataBuilder<'a
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_TipDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_TipDataBuilder {
             fbb_: _fbb,
@@ -299,7 +295,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TipDataBuilder<'a
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_TipData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -350,14 +345,14 @@ impl clz_Torappu_TipDataT {
     }
 }
 pub enum clz_Torappu_WorldViewTipOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_WorldViewTip<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_WorldViewTip<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_WorldViewTip<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -373,8 +368,7 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
     pub const VT_WEIGHT: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_WorldViewTip { _tab: table }
     }
     #[allow(unused_mut)]
@@ -401,7 +395,6 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_WorldViewTipT {
         let title = self.title().map(|x| alloc::string::ToString::to_string(x));
         let description = self
@@ -420,7 +413,6 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn title(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -433,7 +425,6 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -446,7 +437,6 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn backgroundPicId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -459,7 +449,6 @@ impl<'a> clz_Torappu_WorldViewTip<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn weight(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -501,7 +490,7 @@ pub struct clz_Torappu_WorldViewTipArgs<'a> {
     pub backgroundPicId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub weight: f32,
 }
-impl Default for clz_Torappu_WorldViewTipArgs<'_> {
+impl<'a> Default for clz_Torappu_WorldViewTipArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_WorldViewTipArgs {
@@ -545,7 +534,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_WorldViewTipBuild
             .push_slot::<f32>(clz_Torappu_WorldViewTip::VT_WEIGHT, weight, 0.0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_WorldViewTipBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_WorldViewTipBuilder {
             fbb_: _fbb,
@@ -553,7 +544,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_WorldViewTipBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_WorldViewTip<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -609,14 +599,14 @@ impl clz_Torappu_WorldViewTipT {
     }
 }
 pub enum clz_Torappu_TipTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_TipTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_TipTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_TipTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -630,8 +620,7 @@ impl<'a> clz_Torappu_TipTable<'a> {
     pub const VT_WORLDVIEWTIPS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_TipTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -654,7 +643,6 @@ impl<'a> clz_Torappu_TipTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_TipTableT {
         let tips = self.tips().map(|x| x.iter().map(|t| t.unpack()).collect());
         let worldViewTips = self
@@ -667,7 +655,6 @@ impl<'a> clz_Torappu_TipTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tips(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_TipData<'a>>>>
@@ -682,7 +669,6 @@ impl<'a> clz_Torappu_TipTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn worldViewTips(
         &self,
     ) -> Option<
@@ -728,7 +714,7 @@ pub struct clz_Torappu_TipTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_TipTableArgs<'_> {
+impl<'a> Default for clz_Torappu_TipTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_TipTableArgs {
@@ -766,7 +752,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TipTableBuilder<'
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_TipTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_TipTableBuilder {
             fbb_: _fbb,
@@ -774,7 +762,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TipTableBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_TipTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -876,18 +863,16 @@ pub fn size_prefixed_root_as_clz_torappu_tip_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_TipTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_TipTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_TipTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_TipTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_tip_table_unchecked(buf: &[u8]) -> clz_Torappu_TipTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_TipTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_TipTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_TipTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_TipTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_tip_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_TipTable<'_> {

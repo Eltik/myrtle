@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 44;
+pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 46;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 45] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 47] = [
     enum__Torappu_AbnormalFlag::STUNNED,
     enum__Torappu_AbnormalFlag::SP_RECOVER_STOPPED,
     enum__Torappu_AbnormalFlag::TARGET_FREE,
@@ -64,6 +64,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 
     enum__Torappu_AbnormalFlag::ATTRACTED,
     enum__Torappu_AbnormalFlag::FEARED_PRIVATE,
     enum__Torappu_AbnormalFlag::DOZE,
+    enum__Torappu_AbnormalFlag::TELEPORTED,
+    enum__Torappu_AbnormalFlag::GROUND_BOUND,
     enum__Torappu_AbnormalFlag::E_NUM,
 ];
 
@@ -116,10 +118,12 @@ impl enum__Torappu_AbnormalFlag {
     pub const ATTRACTED: Self = Self(41);
     pub const FEARED_PRIVATE: Self = Self(42);
     pub const DOZE: Self = Self(43);
-    pub const E_NUM: Self = Self(44);
+    pub const TELEPORTED: Self = Self(44);
+    pub const GROUND_BOUND: Self = Self(45);
+    pub const E_NUM: Self = Self(46);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 44;
+    pub const ENUM_MAX: i32 = 46;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::STUNNED,
         Self::SP_RECOVER_STOPPED,
@@ -165,11 +169,12 @@ impl enum__Torappu_AbnormalFlag {
         Self::ATTRACTED,
         Self::FEARED_PRIVATE,
         Self::DOZE,
+        Self::TELEPORTED,
+        Self::GROUND_BOUND,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::STUNNED => Some("STUNNED"),
             Self::SP_RECOVER_STOPPED => Some("SP_RECOVER_STOPPED"),
@@ -219,6 +224,8 @@ impl enum__Torappu_AbnormalFlag {
             Self::ATTRACTED => Some("ATTRACTED"),
             Self::FEARED_PRIVATE => Some("FEARED_PRIVATE"),
             Self::DOZE => Some("DOZE"),
+            Self::TELEPORTED => Some("TELEPORTED"),
+            Self::GROUND_BOUND => Some("GROUND_BOUND"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -240,7 +247,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_AbnormalFlag {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_AbnormalFlag::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -263,7 +270,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_AbnormalFlag {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_AbnormalFlag {
-    type Output = Self;
+    type Output = enum__Torappu_AbnormalFlag;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -329,8 +336,7 @@ impl enum__Torappu_AbnormalCombo {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::SLEEPING, Self::SHELTERING, Self::E_NUM];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::SLEEPING => Some("SLEEPING"),
             Self::SHELTERING => Some("SHELTERING"),
@@ -355,7 +361,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_AbnormalCombo {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_AbnormalCombo::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -378,7 +384,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_AbnormalCombo {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_AbnormalCombo {
-    type Output = Self;
+    type Output = enum__Torappu_AbnormalCombo;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -556,8 +562,7 @@ impl enum__Torappu_AttributeType {
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::MAX_HP => Some("MAX_HP"),
             Self::ATK => Some("ATK"),
@@ -620,7 +625,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_AttributeType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_AttributeType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -643,7 +648,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_AttributeType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_AttributeType {
-    type Output = Self;
+    type Output = enum__Torappu_AttributeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -719,8 +724,7 @@ impl enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
         Self::FINAL_SCALER,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::ADDITION => Some("ADDITION"),
             Self::MULTIPLIER => Some("MULTIPLIER"),
@@ -748,7 +752,9 @@ impl<'de> serde::Deserialize<'de>
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in
+            enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType::ENUM_VALUES
+        {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -773,7 +779,7 @@ impl<'a> ::flatbuffers::Follow<'a>
 }
 
 impl ::flatbuffers::Push for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
-    type Output = Self;
+    type Output = enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -847,8 +853,7 @@ impl enum__Torappu_BuffData_StatusResistable {
     pub const ENUM_MAX: u8 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NO, Self::YES, Self::AUTOMATIC];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NO => Some("NO"),
             Self::YES => Some("YES"),
@@ -873,7 +878,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_BuffData_StatusResistable {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_BuffData_StatusResistable::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -896,7 +901,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_BuffData_StatusResistable {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_BuffData_StatusResistable {
-    type Output = Self;
+    type Output = enum__Torappu_BuffData_StatusResistable;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<u8>(dst, self.0) };
@@ -973,8 +978,7 @@ impl enum__Torappu_BuffData_OverrideType {
         Self::EXTEND_TIME,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::DEFAULT => Some("DEFAULT"),
             Self::STACK => Some("STACK"),
@@ -1001,7 +1005,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_BuffData_OverrideType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_BuffData_OverrideType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -1024,7 +1028,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_BuffData_OverrideType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_BuffData_OverrideType {
-    type Output = Self;
+    type Output = enum__Torappu_BuffData_OverrideType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -1107,8 +1111,7 @@ impl enum__Torappu_BuffData_OnEventPriority {
         Self::HIGHER_PRIORITY,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::TITI_DOZE_PRIORITY => Some("TITI_DOZE_PRIORITY"),
             Self::LOWEST_PRIORITY => Some("LOWEST_PRIORITY"),
@@ -1137,7 +1140,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_BuffData_OnEventPriority {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_BuffData_OnEventPriority::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -1160,7 +1163,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_BuffData_OnEventPriority {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_BuffData_OnEventPriority {
-    type Output = Self;
+    type Output = enum__Torappu_BuffData_OnEventPriority;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -1233,8 +1236,7 @@ impl enum__Torappu_LifeType {
         Self::CUSTOM,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::IMMEDIATELY => Some("IMMEDIATELY"),
             Self::LIMITED => Some("LIMITED"),
@@ -1260,7 +1262,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_LifeType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_LifeType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -1283,7 +1285,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_LifeType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_LifeType {
-    type Output = Self;
+    type Output = enum__Torappu_LifeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<u8>(dst, self.0) };
@@ -1316,14 +1318,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_LifeType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_LifeType {}
 pub enum clz_Torappu_AttributeModifierData_AttributeModifierOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_AttributeModifierData_AttributeModifier<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1340,8 +1342,7 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
     pub const VT_FETCHBASEVALUEFROMSOURCEENTITY: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_AttributeModifierData_AttributeModifier { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1363,7 +1364,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_AttributeModifierData_AttributeModifierT {
         let attributeType = self.attributeType();
         let formulaItem = self.formulaItem();
@@ -1380,7 +1380,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn attributeType(&self) -> enum__Torappu_AttributeType {
         // Safety:
         // Created from valid Table for this object
@@ -1395,7 +1394,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn formulaItem(
         &self,
     ) -> enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
@@ -1407,7 +1405,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1422,7 +1419,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn loadFromBlackboard(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1437,7 +1433,6 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fetchBaseValueFromSourceEntity(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1486,7 +1481,7 @@ pub struct clz_Torappu_AttributeModifierData_AttributeModifierArgs {
 impl<'a> Default for clz_Torappu_AttributeModifierData_AttributeModifierArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_AttributeModifierData_AttributeModifierArgs {
             attributeType: enum__Torappu_AttributeType::MAX_HP,
             formulaItem:
                 enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType::ADDITION,
@@ -1553,7 +1548,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_AttributeModifierData_AttributeModifierBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_AttributeModifierData_AttributeModifierBuilder {
             fbb_: _fbb,
@@ -1561,7 +1558,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_AttributeModifierData_AttributeModifier<'a>> {
@@ -1628,14 +1624,14 @@ impl clz_Torappu_AttributeModifierData_AttributeModifierT {
     }
 }
 pub enum clz_Torappu_AttributeModifierDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_AttributeModifierData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_AttributeModifierData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_AttributeModifierData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1653,8 +1649,7 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
     pub const VT_ATTRIBUTEMODIFIERS: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_AttributeModifierData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1689,7 +1684,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_AttributeModifierDataT {
         let abnormalFlags = self.abnormalFlags().map(|x| x.into_iter().collect());
         let abnormalImmunes = self.abnormalImmunes().map(|x| x.into_iter().collect());
@@ -1710,7 +1704,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn abnormalFlags(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_AbnormalFlag>> {
         // Safety:
         // Created from valid Table for this object
@@ -1722,7 +1715,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abnormalImmunes(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_AbnormalFlag>> {
         // Safety:
         // Created from valid Table for this object
@@ -1734,7 +1726,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abnormalAntis(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_AbnormalFlag>> {
         // Safety:
         // Created from valid Table for this object
@@ -1746,7 +1737,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abnormalCombos(&self) -> Option<::flatbuffers::Vector<'a, enum__Torappu_AbnormalCombo>> {
         // Safety:
         // Created from valid Table for this object
@@ -1758,7 +1748,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abnormalComboImmunes(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, enum__Torappu_AbnormalCombo>> {
@@ -1775,7 +1764,6 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn attributeModifiers(
         &self,
     ) -> Option<
@@ -1842,7 +1830,7 @@ pub struct clz_Torappu_AttributeModifierDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_AttributeModifierDataArgs<'_> {
+impl<'a> Default for clz_Torappu_AttributeModifierDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_AttributeModifierDataArgs {
@@ -1941,7 +1929,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_AttributeModifierDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_AttributeModifierDataBuilder {
             fbb_: _fbb,
@@ -1949,7 +1939,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_AttributeModifierData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2022,14 +2011,14 @@ impl clz_Torappu_AttributeModifierDataT {
     }
 }
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Blackboard_DataPair<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Blackboard_DataPair<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2044,8 +2033,7 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     pub const VT_VALUESTR: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Blackboard_DataPair { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2069,7 +2057,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
         let key = self.key().map(|x| alloc::string::ToString::to_string(x));
         let value = self.value();
@@ -2084,7 +2071,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2097,7 +2083,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2109,7 +2094,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn valueStr(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2146,7 +2130,7 @@ pub struct clz_Torappu_Blackboard_DataPairArgs<'a> {
     pub value: f32,
     pub valueStr: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Blackboard_DataPairArgs<'_> {
+impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Blackboard_DataPairArgs {
@@ -2184,7 +2168,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Blackboard_DataPairBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Blackboard_DataPairBuilder {
             fbb_: _fbb,
@@ -2192,7 +2178,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2243,14 +2228,14 @@ impl clz_Torappu_Blackboard_DataPairT {
     }
 }
 pub enum clz_Torappu_BuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_BuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BuffData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_BuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2269,38 +2254,39 @@ impl<'a> clz_Torappu_BuffData<'a> {
     pub const VT_ISSTUNNABLE: ::flatbuffers::VOffsetT = 16;
     pub const VT_ISFREEZABLE: ::flatbuffers::VOffsetT = 18;
     pub const VT_ISLEVITATABLE: ::flatbuffers::VOffsetT = 20;
-    pub const VT_STATUSRESISTABLE: ::flatbuffers::VOffsetT = 22;
-    pub const VT_TEMPLATEKEY: ::flatbuffers::VOffsetT = 24;
-    pub const VT_DISABLEOVERRIDE: ::flatbuffers::VOffsetT = 26;
-    pub const VT_OVERRIDEKEY: ::flatbuffers::VOffsetT = 28;
-    pub const VT_OVERRIDETYPE: ::flatbuffers::VOffsetT = 30;
-    pub const VT_MAXSTACKCNT: ::flatbuffers::VOffsetT = 32;
-    pub const VT_REFRESHREMAININGTIMEWHENSTACKMAX: ::flatbuffers::VOffsetT = 34;
-    pub const VT_CLEARALLSTACKCNTWHENTIMEUP: ::flatbuffers::VOffsetT = 36;
-    pub const VT_MAXVALIDSTACKCNT: ::flatbuffers::VOffsetT = 38;
-    pub const VT_INDEPENDENTCHARACTERSOURCE: ::flatbuffers::VOffsetT = 40;
-    pub const VT_OVERRIDEEFFECTKEY: ::flatbuffers::VOffsetT = 42;
-    pub const VT_OVERRIDEONEVENTPRIORITY: ::flatbuffers::VOffsetT = 44;
-    pub const VT_ONEVENTPRIORITY: ::flatbuffers::VOffsetT = 46;
-    pub const VT_AUDIOSIGNAL: ::flatbuffers::VOffsetT = 48;
-    pub const VT_LIFETIMETYPE: ::flatbuffers::VOffsetT = 50;
-    pub const VT_TAKESNAPSHOTWHENEXTEND: ::flatbuffers::VOffsetT = 52;
-    pub const VT_DURATIONKEY: ::flatbuffers::VOffsetT = 54;
-    pub const VT_LIFETIME: ::flatbuffers::VOffsetT = 56;
-    pub const VT_TRIGGERLIFETYPE: ::flatbuffers::VOffsetT = 58;
-    pub const VT_TRIGGERCNT: ::flatbuffers::VOffsetT = 60;
-    pub const VT_TRIGGERINTERVAL: ::flatbuffers::VOffsetT = 62;
-    pub const VT_WAITFIRSTTRIGGERINTERVAL: ::flatbuffers::VOffsetT = 64;
-    pub const VT_FIRSTTRIGGERINTERVAL: ::flatbuffers::VOffsetT = 66;
-    pub const VT_PRIORITY: ::flatbuffers::VOffsetT = 68;
-    pub const VT_PRIORITYBBKEYS: ::flatbuffers::VOffsetT = 70;
-    pub const VT_STRIPBLACKBOARDPARAMSWITHBUFFKEY: ::flatbuffers::VOffsetT = 72;
-    pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 74;
-    pub const VT_ENABLEINITDIRECTIONFROMSOURCE: ::flatbuffers::VOffsetT = 76;
+    pub const VT_ISGROUNDBOUNDABLE: ::flatbuffers::VOffsetT = 22;
+    pub const VT_STATUSRESISTABLE: ::flatbuffers::VOffsetT = 24;
+    pub const VT_TEMPLATEKEY: ::flatbuffers::VOffsetT = 26;
+    pub const VT_DISABLEOVERRIDE: ::flatbuffers::VOffsetT = 28;
+    pub const VT_OVERRIDEKEY: ::flatbuffers::VOffsetT = 30;
+    pub const VT_OVERRIDETYPE: ::flatbuffers::VOffsetT = 32;
+    pub const VT_MAXSTACKCNT: ::flatbuffers::VOffsetT = 34;
+    pub const VT_REFRESHREMAININGTIMEWHENSTACKMAX: ::flatbuffers::VOffsetT = 36;
+    pub const VT_CLEARALLSTACKCNTWHENTIMEUP: ::flatbuffers::VOffsetT = 38;
+    pub const VT_MAXVALIDSTACKCNT: ::flatbuffers::VOffsetT = 40;
+    pub const VT_INDEPENDENTCHARACTERSOURCE: ::flatbuffers::VOffsetT = 42;
+    pub const VT_OVERRIDEEFFECTKEY: ::flatbuffers::VOffsetT = 44;
+    pub const VT_OVERRIDEONEVENTPRIORITY: ::flatbuffers::VOffsetT = 46;
+    pub const VT_ONEVENTPRIORITY: ::flatbuffers::VOffsetT = 48;
+    pub const VT_AUDIOSIGNAL: ::flatbuffers::VOffsetT = 50;
+    pub const VT_LIFETIMETYPE: ::flatbuffers::VOffsetT = 52;
+    pub const VT_TAKESNAPSHOTWHENEXTEND: ::flatbuffers::VOffsetT = 54;
+    pub const VT_DURATIONKEY: ::flatbuffers::VOffsetT = 56;
+    pub const VT_REMAININGTIMEKEY: ::flatbuffers::VOffsetT = 58;
+    pub const VT_LIFETIME: ::flatbuffers::VOffsetT = 60;
+    pub const VT_TRIGGERLIFETYPE: ::flatbuffers::VOffsetT = 62;
+    pub const VT_TRIGGERCNT: ::flatbuffers::VOffsetT = 64;
+    pub const VT_TRIGGERINTERVAL: ::flatbuffers::VOffsetT = 66;
+    pub const VT_WAITFIRSTTRIGGERINTERVAL: ::flatbuffers::VOffsetT = 68;
+    pub const VT_FIRSTTRIGGERINTERVAL: ::flatbuffers::VOffsetT = 70;
+    pub const VT_PRIORITY: ::flatbuffers::VOffsetT = 72;
+    pub const VT_PRIORITYBBKEYS: ::flatbuffers::VOffsetT = 74;
+    pub const VT_STRIPBLACKBOARDPARAMSWITHBUFFKEY: ::flatbuffers::VOffsetT = 76;
+    pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 78;
+    pub const VT_ENABLEINITDIRECTIONFROMSOURCE: ::flatbuffers::VOffsetT = 80;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_BuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2325,6 +2311,9 @@ impl<'a> clz_Torappu_BuffData<'a> {
         builder.add_triggerInterval(args.triggerInterval);
         builder.add_triggerCnt(args.triggerCnt);
         builder.add_lifeTime(args.lifeTime);
+        if let Some(x) = args.remainingTimeKey {
+            builder.add_remainingTimeKey(x);
+        }
         if let Some(x) = args.durationKey {
             builder.add_durationKey(x);
         }
@@ -2362,6 +2351,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         builder.add_refreshRemainingTimeWhenStackMax(args.refreshRemainingTimeWhenStackMax);
         builder.add_disableOverride(args.disableOverride);
         builder.add_statusResistable(args.statusResistable);
+        builder.add_isGroundBoundable(args.isGroundBoundable);
         builder.add_isLevitatable(args.isLevitatable);
         builder.add_isFreezable(args.isFreezable);
         builder.add_isStunnable(args.isStunnable);
@@ -2372,7 +2362,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_BuffDataT {
         let attributes = self
             .attributes()
@@ -2387,6 +2376,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         let isStunnable = self.isStunnable();
         let isFreezable = self.isFreezable();
         let isLevitatable = self.isLevitatable();
+        let isGroundBoundable = self.isGroundBoundable();
         let statusResistable = self.statusResistable();
         let templateKey = self
             .templateKey()
@@ -2413,6 +2403,9 @@ impl<'a> clz_Torappu_BuffData<'a> {
         let takeSnapshotWhenExtend = self.takeSnapshotWhenExtend();
         let durationKey = self
             .durationKey()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let remainingTimeKey = self
+            .remainingTimeKey()
             .map(|x| alloc::string::ToString::to_string(x));
         let lifeTime = self.lifeTime();
         let triggerLifeType = self.triggerLifeType();
@@ -2441,6 +2434,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
             isStunnable,
             isFreezable,
             isLevitatable,
+            isGroundBoundable,
             statusResistable,
             templateKey,
             disableOverride,
@@ -2458,6 +2452,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
             lifeTimeType,
             takeSnapshotWhenExtend,
             durationKey,
+            remainingTimeKey,
             lifeTime,
             triggerLifeType,
             triggerCnt,
@@ -2473,7 +2468,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn attributes(&self) -> Option<clz_Torappu_AttributeModifierData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2487,7 +2481,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn buffKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2498,7 +2491,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn loadFromDB(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2510,7 +2502,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isDurableBuff(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2522,7 +2513,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isDamageMissable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2534,7 +2524,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isSilenceable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2546,7 +2535,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isStunnable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2558,7 +2546,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isFreezable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2570,7 +2557,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isLevitatable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2582,7 +2568,17 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
+    pub fn isGroundBoundable(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_BuffData::VT_ISGROUNDBOUNDABLE, Some(false))
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn statusResistable(&self) -> enum__Torappu_BuffData_StatusResistable {
         // Safety:
         // Created from valid Table for this object
@@ -2597,7 +2593,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn templateKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2610,7 +2605,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn disableOverride(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2622,7 +2616,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overrideKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2635,7 +2628,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overrideType(&self) -> enum__Torappu_BuffData_OverrideType {
         // Safety:
         // Created from valid Table for this object
@@ -2650,7 +2642,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxStackCnt(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2662,7 +2653,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn refreshRemainingTimeWhenStackMax(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2677,7 +2667,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clearAllStackCntWhenTimeUp(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2692,7 +2681,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxValidStackCnt(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2704,7 +2692,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn independentCharacterSource(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2719,7 +2706,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overrideEffectKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2732,7 +2718,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overrideOnEventPriority(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2747,7 +2732,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn onEventPriority(&self) -> enum__Torappu_BuffData_OnEventPriority {
         // Safety:
         // Created from valid Table for this object
@@ -2762,7 +2746,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn audioSignal(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2775,7 +2758,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn lifeTimeType(&self) -> enum__Torappu_LifeType {
         // Safety:
         // Created from valid Table for this object
@@ -2790,7 +2772,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn takeSnapshotWhenExtend(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2802,7 +2783,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn durationKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2815,7 +2795,18 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
+    pub fn remainingTimeKey(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BuffData::VT_REMAININGTIMEKEY,
+                None,
+            )
+        }
+    }
+    #[inline]
     pub fn lifeTime(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2827,7 +2818,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn triggerLifeType(&self) -> enum__Torappu_LifeType {
         // Safety:
         // Created from valid Table for this object
@@ -2842,7 +2832,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn triggerCnt(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2854,7 +2843,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn triggerInterval(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2866,7 +2854,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn waitFirstTriggerInterval(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2881,7 +2868,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn firstTriggerInterval(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2893,7 +2879,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn priority(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2905,7 +2890,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn priorityBBKeys(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -2919,7 +2903,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn stripBlackboardParamsWithBuffKey(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2934,7 +2917,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn blackboard(
         &self,
     ) -> Option<
@@ -2956,7 +2938,6 @@ impl<'a> clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enableInitDirectionFromSource(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2996,6 +2977,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
             .visit_field::<bool>("isStunnable", Self::VT_ISSTUNNABLE, false)?
             .visit_field::<bool>("isFreezable", Self::VT_ISFREEZABLE, false)?
             .visit_field::<bool>("isLevitatable", Self::VT_ISLEVITATABLE, false)?
+            .visit_field::<bool>("isGroundBoundable", Self::VT_ISGROUNDBOUNDABLE, false)?
             .visit_field::<enum__Torappu_BuffData_StatusResistable>(
                 "statusResistable",
                 Self::VT_STATUSRESISTABLE,
@@ -3065,6 +3047,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
                 Self::VT_DURATIONKEY,
                 false,
             )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "remainingTimeKey",
+                Self::VT_REMAININGTIMEKEY,
+                false,
+            )?
             .visit_field::<f32>("lifeTime", Self::VT_LIFETIME, false)?
             .visit_field::<enum__Torappu_LifeType>(
                 "triggerLifeType",
@@ -3113,6 +3100,7 @@ pub struct clz_Torappu_BuffDataArgs<'a> {
     pub isStunnable: bool,
     pub isFreezable: bool,
     pub isLevitatable: bool,
+    pub isGroundBoundable: bool,
     pub statusResistable: enum__Torappu_BuffData_StatusResistable,
     pub templateKey: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub disableOverride: bool,
@@ -3130,6 +3118,7 @@ pub struct clz_Torappu_BuffDataArgs<'a> {
     pub lifeTimeType: enum__Torappu_LifeType,
     pub takeSnapshotWhenExtend: bool,
     pub durationKey: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub remainingTimeKey: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub lifeTime: f32,
     pub triggerLifeType: enum__Torappu_LifeType,
     pub triggerCnt: i32,
@@ -3153,7 +3142,7 @@ pub struct clz_Torappu_BuffDataArgs<'a> {
     >,
     pub enableInitDirectionFromSource: bool,
 }
-impl Default for clz_Torappu_BuffDataArgs<'_> {
+impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_BuffDataArgs {
@@ -3166,6 +3155,7 @@ impl Default for clz_Torappu_BuffDataArgs<'_> {
             isStunnable: false,
             isFreezable: false,
             isLevitatable: false,
+            isGroundBoundable: false,
             statusResistable: enum__Torappu_BuffData_StatusResistable::NO,
             templateKey: None,
             disableOverride: false,
@@ -3183,6 +3173,7 @@ impl Default for clz_Torappu_BuffDataArgs<'_> {
             lifeTimeType: enum__Torappu_LifeType::IMMEDIATELY,
             takeSnapshotWhenExtend: false,
             durationKey: None,
+            remainingTimeKey: None,
             lifeTime: 0.0,
             triggerLifeType: enum__Torappu_LifeType::IMMEDIATELY,
             triggerCnt: 0,
@@ -3258,6 +3249,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'
     pub fn add_isLevitatable(&mut self, isLevitatable: bool) {
         self.fbb_
             .push_slot::<bool>(clz_Torappu_BuffData::VT_ISLEVITATABLE, isLevitatable, false);
+    }
+    #[inline]
+    pub fn add_isGroundBoundable(&mut self, isGroundBoundable: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_BuffData::VT_ISGROUNDBOUNDABLE,
+            isGroundBoundable,
+            false,
+        );
     }
     #[inline]
     pub fn add_statusResistable(
@@ -3393,6 +3392,13 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'
         );
     }
     #[inline]
+    pub fn add_remainingTimeKey(&mut self, remainingTimeKey: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BuffData::VT_REMAININGTIMEKEY,
+            remainingTimeKey,
+        );
+    }
+    #[inline]
     pub fn add_lifeTime(&mut self, lifeTime: f32) {
         self.fbb_
             .push_slot::<f32>(clz_Torappu_BuffData::VT_LIFETIME, lifeTime, 0.0);
@@ -3483,7 +3489,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_BuffDataBuilder {
             fbb_: _fbb,
@@ -3491,7 +3499,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_BuffData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3510,6 +3517,7 @@ impl ::core::fmt::Debug for clz_Torappu_BuffData<'_> {
         ds.field("isStunnable", &self.isStunnable());
         ds.field("isFreezable", &self.isFreezable());
         ds.field("isLevitatable", &self.isLevitatable());
+        ds.field("isGroundBoundable", &self.isGroundBoundable());
         ds.field("statusResistable", &self.statusResistable());
         ds.field("templateKey", &self.templateKey());
         ds.field("disableOverride", &self.disableOverride());
@@ -3536,6 +3544,7 @@ impl ::core::fmt::Debug for clz_Torappu_BuffData<'_> {
         ds.field("lifeTimeType", &self.lifeTimeType());
         ds.field("takeSnapshotWhenExtend", &self.takeSnapshotWhenExtend());
         ds.field("durationKey", &self.durationKey());
+        ds.field("remainingTimeKey", &self.remainingTimeKey());
         ds.field("lifeTime", &self.lifeTime());
         ds.field("triggerLifeType", &self.triggerLifeType());
         ds.field("triggerCnt", &self.triggerCnt());
@@ -3568,6 +3577,7 @@ pub struct clz_Torappu_BuffDataT {
     pub isStunnable: bool,
     pub isFreezable: bool,
     pub isLevitatable: bool,
+    pub isGroundBoundable: bool,
     pub statusResistable: enum__Torappu_BuffData_StatusResistable,
     pub templateKey: Option<alloc::string::String>,
     pub disableOverride: bool,
@@ -3585,6 +3595,7 @@ pub struct clz_Torappu_BuffDataT {
     pub lifeTimeType: enum__Torappu_LifeType,
     pub takeSnapshotWhenExtend: bool,
     pub durationKey: Option<alloc::string::String>,
+    pub remainingTimeKey: Option<alloc::string::String>,
     pub lifeTime: f32,
     pub triggerLifeType: enum__Torappu_LifeType,
     pub triggerCnt: i32,
@@ -3609,6 +3620,7 @@ impl Default for clz_Torappu_BuffDataT {
             isStunnable: false,
             isFreezable: false,
             isLevitatable: false,
+            isGroundBoundable: false,
             statusResistable: enum__Torappu_BuffData_StatusResistable::NO,
             templateKey: None,
             disableOverride: false,
@@ -3626,6 +3638,7 @@ impl Default for clz_Torappu_BuffDataT {
             lifeTimeType: enum__Torappu_LifeType::IMMEDIATELY,
             takeSnapshotWhenExtend: false,
             durationKey: None,
+            remainingTimeKey: None,
             lifeTime: 0.0,
             triggerLifeType: enum__Torappu_LifeType::IMMEDIATELY,
             triggerCnt: 0,
@@ -3654,6 +3667,7 @@ impl clz_Torappu_BuffDataT {
         let isStunnable = self.isStunnable;
         let isFreezable = self.isFreezable;
         let isLevitatable = self.isLevitatable;
+        let isGroundBoundable = self.isGroundBoundable;
         let statusResistable = self.statusResistable;
         let templateKey = self.templateKey.as_ref().map(|x| _fbb.create_string(x));
         let disableOverride = self.disableOverride;
@@ -3674,6 +3688,10 @@ impl clz_Torappu_BuffDataT {
         let lifeTimeType = self.lifeTimeType;
         let takeSnapshotWhenExtend = self.takeSnapshotWhenExtend;
         let durationKey = self.durationKey.as_ref().map(|x| _fbb.create_string(x));
+        let remainingTimeKey = self
+            .remainingTimeKey
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
         let lifeTime = self.lifeTime;
         let triggerLifeType = self.triggerLifeType;
         let triggerCnt = self.triggerCnt;
@@ -3703,6 +3721,7 @@ impl clz_Torappu_BuffDataT {
                 isStunnable,
                 isFreezable,
                 isLevitatable,
+                isGroundBoundable,
                 statusResistable,
                 templateKey,
                 disableOverride,
@@ -3720,6 +3739,7 @@ impl clz_Torappu_BuffDataT {
                 lifeTimeType,
                 takeSnapshotWhenExtend,
                 durationKey,
+                remainingTimeKey,
                 lifeTime,
                 triggerLifeType,
                 triggerCnt,
@@ -3736,14 +3756,14 @@ impl clz_Torappu_BuffDataT {
     }
 }
 pub enum dict__string__clz_Torappu_BuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_BuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_BuffData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_BuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3757,8 +3777,7 @@ impl<'a> dict__string__clz_Torappu_BuffData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_BuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3781,7 +3800,6 @@ impl<'a> dict__string__clz_Torappu_BuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_BuffDataT {
         let key = {
             let x = self.key();
@@ -3792,7 +3810,6 @@ impl<'a> dict__string__clz_Torappu_BuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3807,19 +3824,16 @@ impl<'a> dict__string__clz_Torappu_BuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_BuffData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_BuffData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3855,7 +3869,7 @@ pub struct dict__string__clz_Torappu_BuffDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_BuffData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_BuffDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_BuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_BuffDataArgs {
@@ -3888,7 +3902,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_BuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_BuffDataBuilder {
             fbb_: _fbb,
@@ -3896,7 +3912,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_BuffData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -3944,14 +3959,14 @@ impl dict__string__clz_Torappu_BuffDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3964,8 +3979,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a> {
     pub const VT_BUFFS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_BuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3985,14 +3999,12 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT {
         let buffs = self.buffs().map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT { buffs }
     }
 
     #[inline]
-    #[must_use]
     pub fn buffs(
         &self,
     ) -> Option<
@@ -4045,7 +4057,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs { buffs: None }
@@ -4079,7 +4091,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataBuilder {
             fbb_: _fbb,
@@ -4087,7 +4101,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a>> {
@@ -4181,20 +4194,18 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_wi
     )
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_BuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_BuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_BuffData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_BuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_BuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_BuffData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'_> {

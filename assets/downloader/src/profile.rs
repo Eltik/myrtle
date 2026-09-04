@@ -34,6 +34,20 @@ pub fn keep_for_stages(name: &str) -> bool {
     is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
 }
 
+/// Everything `unpacker extract --gamedata` reads and nothing else: the `anon/`
+/// bundles, which hold every gamedata `TextAsset` (the FlatBuffer tables and the
+/// level data), plus the `.idx` manifests.
+///
+/// `anon/` is opaque — the bundle names are hashes — so the resource manifest
+/// `<md5>.idx` is what maps a `TextAsset` back to its `gamedata/...` path; the
+/// unpacker refuses to run `--gamedata` without it. Nothing outside `anon/`
+/// contributes to a gamedata extraction, so this is the whole set: ~150 files
+/// and ~330 MB on CN, against ~90 GB for `full`.
+#[must_use]
+pub fn keep_for_gamedata(name: &str) -> bool {
+    is_idx(name) || name.starts_with("anon/")
+}
+
 #[must_use]
 pub fn keep_for_operators(name: &str) -> bool {
     const PREFIXES: &[&str] = &[
@@ -99,6 +113,21 @@ mod tests {
         assert!(!keep_for_operators("arts/ui/[uc]loadingbg.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/music_0.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/enmy_snd_atk_0.ab"));
+    }
+
+    #[test]
+    fn keeps_gamedata_bundles_only() {
+        use super::keep_for_gamedata;
+        assert!(keep_for_gamedata(
+            "anon/24f2b0b8ce0f0dd85ce1d9e0e2b3ba0f.ab"
+        ));
+        assert!(keep_for_gamedata("hot_update_list.idx"));
+        assert!(keep_for_gamedata("4331c32f0651124e96793bfc33b79811.idx"));
+        assert!(!keep_for_gamedata("chararts/char_002_amiya.ab"));
+        assert!(!keep_for_gamedata("audio/sound_beta_2/music_0.ab"));
+        assert!(!keep_for_gamedata(
+            "scenes/obt/main/level_main_01-07/level_main_01-07.ab"
+        ));
     }
 
     #[test]

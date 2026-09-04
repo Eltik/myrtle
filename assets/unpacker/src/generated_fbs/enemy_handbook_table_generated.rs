@@ -40,8 +40,7 @@ impl enum__Torappu_EnemyLevelType {
     pub const ENUM_MAX: i32 = 3;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NORMAL, Self::ELITE, Self::BOSS, Self::E_NUM];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NORMAL => Some("NORMAL"),
             Self::ELITE => Some("ELITE"),
@@ -67,7 +66,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_EnemyLevelType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_EnemyLevelType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -90,7 +89,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_EnemyLevelType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_EnemyLevelType {
-    type Output = Self;
+    type Output = enum__Torappu_EnemyLevelType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -157,8 +156,7 @@ impl enum__Torappu_EnemyHandBookData_TextFormat {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NORMAL, Self::TITLE, Self::SILENCE];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NORMAL => Some("NORMAL"),
             Self::TITLE => Some("TITLE"),
@@ -183,7 +181,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_EnemyHandBookData_TextFormat
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_EnemyHandBookData_TextFormat::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -206,7 +204,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_EnemyHandBookData_TextForma
 }
 
 impl ::flatbuffers::Push for enum__Torappu_EnemyHandBookData_TextFormat {
-    type Output = Self;
+    type Output = enum__Torappu_EnemyHandBookData_TextFormat;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -276,8 +274,7 @@ impl enum__Torappu_EnemyHandBookDamageType {
     pub const ENUM_VALUES: &'static [Self] =
         &[Self::PHYSIC, Self::MAGIC, Self::HEAL, Self::NO_DAMAGE];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::PHYSIC => Some("PHYSIC"),
             Self::MAGIC => Some("MAGIC"),
@@ -303,7 +300,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_EnemyHandBookDamageType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_EnemyHandBookDamageType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -326,7 +323,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_EnemyHandBookDamageType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_EnemyHandBookDamageType {
-    type Output = Self;
+    type Output = enum__Torappu_EnemyHandBookDamageType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -359,14 +356,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_EnemyHandBookDamageType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_EnemyHandBookDamageType {}
 pub enum clz_Torappu_EnemyHandbookLevelInfoData_RangePairOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -380,8 +377,7 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
     pub const VT_MAX: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandbookLevelInfoData_RangePair { _tab: table }
     }
     #[allow(unused_mut)]
@@ -400,7 +396,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
         let min = self.min();
         let max = self.max();
@@ -408,7 +403,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn min(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -423,7 +417,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn max(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -459,7 +452,7 @@ pub struct clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs {
 impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs {
     #[inline]
     fn default() -> Self {
-        Self { min: 0.0, max: 0.0 }
+        clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs { min: 0.0, max: 0.0 }
     }
 }
 
@@ -491,7 +484,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandbookLevelInfoData_RangePairBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandbookLevelInfoData_RangePairBuilder {
             fbb_: _fbb,
@@ -499,7 +494,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
@@ -541,14 +535,14 @@ impl clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
     }
 }
 pub enum clz_Torappu_EnemyHandbookLevelInfoDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandbookLevelInfoData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookLevelInfoData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandbookLevelInfoData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -569,8 +563,7 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
     pub const VT_ENEMYRES: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandbookLevelInfoData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -614,7 +607,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandbookLevelInfoDataT {
         let classLevel = self
             .classLevel()
@@ -645,7 +637,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn classLevel(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -658,7 +649,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn attack(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -670,7 +660,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn def(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -682,7 +671,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn magicRes(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -694,7 +682,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxHP(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -706,7 +693,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn moveSpeed(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -718,7 +704,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn attackSpeed(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -730,7 +715,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyDamageRes(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -745,7 +729,6 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyRes(&self) -> Option<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -796,7 +779,7 @@ pub struct clz_Torappu_EnemyHandbookLevelInfoDataArgs<'a> {
     pub enemyRes:
         Option<::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a>>>,
 }
-impl Default for clz_Torappu_EnemyHandbookLevelInfoDataArgs<'_> {
+impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandbookLevelInfoDataArgs {
@@ -890,7 +873,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData_RangePair>>(clz_Torappu_EnemyHandbookLevelInfoData::VT_ENEMYRES, enemyRes);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandbookLevelInfoDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandbookLevelInfoDataBuilder {
             fbb_: _fbb,
@@ -898,7 +883,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -980,14 +964,14 @@ impl clz_Torappu_EnemyHandbookLevelInfoDataT {
     }
 }
 pub enum dict__string__intOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__int<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__int<'a> {
-    type Inner = Self;
+    type Inner = dict__string__int<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1001,8 +985,7 @@ impl<'a> dict__string__int<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__int { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1023,7 +1006,6 @@ impl<'a> dict__string__int<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__intT {
         let key = {
             let x = self.key();
@@ -1034,7 +1016,6 @@ impl<'a> dict__string__int<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1046,19 +1027,16 @@ impl<'a> dict__string__int<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__int) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1088,7 +1066,7 @@ pub struct dict__string__intArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: i32,
 }
-impl Default for dict__string__intArgs<'_> {
+impl<'a> Default for dict__string__intArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__intArgs {
@@ -1114,7 +1092,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__intBuilder<'a, 
             .push_slot::<i32>(dict__string__int::VT_VALUE, value, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__intBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__intBuilder {
             fbb_: _fbb,
@@ -1122,7 +1102,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__intBuilder<'a, 
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__int<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(o, dict__string__int::VT_KEY, "key");
@@ -1166,14 +1145,14 @@ impl dict__string__intT {
     }
 }
 pub enum clz_Torappu_EnemyHandBookData_AbiltyOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandBookData_Abilty<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookData_Abilty<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandBookData_Abilty<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1187,8 +1166,7 @@ impl<'a> clz_Torappu_EnemyHandBookData_Abilty<'a> {
     pub const VT_TEXTFORMAT: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandBookData_Abilty { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1209,7 +1187,6 @@ impl<'a> clz_Torappu_EnemyHandBookData_Abilty<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandBookData_AbiltyT {
         let text = self.text().map(|x| alloc::string::ToString::to_string(x));
         let textFormat = self.textFormat();
@@ -1217,7 +1194,6 @@ impl<'a> clz_Torappu_EnemyHandBookData_Abilty<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn text(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1230,7 +1206,6 @@ impl<'a> clz_Torappu_EnemyHandBookData_Abilty<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn textFormat(&self) -> enum__Torappu_EnemyHandBookData_TextFormat {
         // Safety:
         // Created from valid Table for this object
@@ -1267,7 +1242,7 @@ pub struct clz_Torappu_EnemyHandBookData_AbiltyArgs<'a> {
     pub text: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub textFormat: enum__Torappu_EnemyHandBookData_TextFormat,
 }
-impl Default for clz_Torappu_EnemyHandBookData_AbiltyArgs<'_> {
+impl<'a> Default for clz_Torappu_EnemyHandBookData_AbiltyArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandBookData_AbiltyArgs {
@@ -1302,7 +1277,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandBookData_AbiltyBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandBookData_AbiltyBuilder {
             fbb_: _fbb,
@@ -1310,7 +1287,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookData_Abilty<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1353,14 +1329,14 @@ impl clz_Torappu_EnemyHandBookData_AbiltyT {
     }
 }
 pub enum clz_Torappu_EnemyHandBookDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandBookData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandBookData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1389,8 +1365,7 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
     pub const VT_INVISIBLEDETAIL: ::flatbuffers::VOffsetT = 36;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandBookData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1446,7 +1421,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandBookDataT {
         let enemyId = self
             .enemyId()
@@ -1509,7 +1483,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn enemyId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1522,7 +1495,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyIndex(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1535,7 +1507,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyTags(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1549,7 +1520,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1561,7 +1531,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1574,7 +1543,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyLevel(&self) -> enum__Torappu_EnemyLevelType {
         // Safety:
         // Created from valid Table for this object
@@ -1589,7 +1557,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1602,7 +1569,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn attackType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1615,7 +1581,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn ability(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1628,7 +1593,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isInvalidKilled(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1643,7 +1607,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overrideKillCntInfos(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__int<'a>>>>
@@ -1658,7 +1621,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn hideInHandbook(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1673,7 +1635,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn hideInStage(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1685,7 +1646,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abilityList(
         &self,
     ) -> Option<
@@ -1707,7 +1667,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn linkEnemies(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1721,7 +1680,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn damageType(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, enum__Torappu_EnemyHandBookDamageType>> {
@@ -1735,7 +1693,6 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn invisibleDetail(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1852,7 +1809,7 @@ pub struct clz_Torappu_EnemyHandBookDataArgs<'a> {
     >,
     pub invisibleDetail: bool,
 }
-impl Default for clz_Torappu_EnemyHandBookDataArgs<'_> {
+impl<'a> Default for clz_Torappu_EnemyHandBookDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandBookDataArgs {
@@ -2033,7 +1990,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EnemyHandBookData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandBookDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandBookDataBuilder {
             fbb_: _fbb,
@@ -2041,7 +2000,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EnemyHandBookData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2174,14 +2132,14 @@ impl clz_Torappu_EnemyHandBookDataT {
     }
 }
 pub enum dict__string__clz_Torappu_EnemyHandBookDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_EnemyHandBookData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_EnemyHandBookData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_EnemyHandBookData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2195,8 +2153,7 @@ impl<'a> dict__string__clz_Torappu_EnemyHandBookData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_EnemyHandBookData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2219,7 +2176,6 @@ impl<'a> dict__string__clz_Torappu_EnemyHandBookData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_EnemyHandBookDataT {
         let key = {
             let x = self.key();
@@ -2230,7 +2186,6 @@ impl<'a> dict__string__clz_Torappu_EnemyHandBookData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2245,19 +2200,16 @@ impl<'a> dict__string__clz_Torappu_EnemyHandBookData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_EnemyHandBookData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_EnemyHandBookData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2293,7 +2245,7 @@ pub struct dict__string__clz_Torappu_EnemyHandBookDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_EnemyHandBookDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_EnemyHandBookDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_EnemyHandBookDataArgs {
@@ -2333,7 +2285,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_EnemyHandBookDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_EnemyHandBookDataBuilder {
             fbb_: _fbb,
@@ -2341,7 +2295,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_EnemyHandBookData<'a>> {
@@ -2394,14 +2347,14 @@ impl dict__string__clz_Torappu_EnemyHandBookDataT {
     }
 }
 pub enum clz_Torappu_EnemyHandbookRaceDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandbookRaceData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookRaceData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandbookRaceData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2416,8 +2369,7 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
     pub const VT_SORTID: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandbookRaceData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2441,7 +2393,6 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandbookRaceDataT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let raceName = self
@@ -2456,7 +2407,6 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2469,7 +2419,6 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn raceName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2482,7 +2431,6 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2518,7 +2466,7 @@ pub struct clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     pub raceName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub sortId: i32,
 }
-impl Default for clz_Torappu_EnemyHandbookRaceDataArgs<'_> {
+impl<'a> Default for clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandbookRaceDataArgs {
@@ -2556,7 +2504,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i32>(clz_Torappu_EnemyHandbookRaceData::VT_SORTID, sortId, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandbookRaceDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandbookRaceDataBuilder {
             fbb_: _fbb,
@@ -2564,7 +2514,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookRaceData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2615,14 +2564,14 @@ impl clz_Torappu_EnemyHandbookRaceDataT {
     }
 }
 pub enum dict__string__clz_Torappu_EnemyHandbookRaceDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_EnemyHandbookRaceData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2636,8 +2585,7 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_EnemyHandbookRaceData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2660,7 +2608,6 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_EnemyHandbookRaceDataT {
         let key = {
             let x = self.key();
@@ -2671,7 +2618,6 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2686,7 +2632,6 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_EnemyHandbookRaceData,
@@ -2695,13 +2640,11 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_EnemyHandbookRaceData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2737,7 +2680,7 @@ pub struct dict__string__clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookRaceData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_EnemyHandbookRaceDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_EnemyHandbookRaceDataArgs {
@@ -2777,7 +2720,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_EnemyHandbookRaceDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_EnemyHandbookRaceDataBuilder {
             fbb_: _fbb,
@@ -2785,7 +2730,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_EnemyHandbookRaceData<'a>> {
@@ -2838,14 +2782,14 @@ impl dict__string__clz_Torappu_EnemyHandbookRaceDataT {
     }
 }
 pub enum clz_Torappu_EnemyHandBookDataGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EnemyHandBookDataGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookDataGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EnemyHandBookDataGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2860,8 +2804,7 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
     pub const VT_RACEDATA: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EnemyHandBookDataGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2887,7 +2830,6 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EnemyHandBookDataGroupT {
         let levelInfoList = self
             .levelInfoList()
@@ -2906,7 +2848,6 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn levelInfoList(
         &self,
     ) -> Option<
@@ -2928,7 +2869,6 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyData(
         &self,
     ) -> Option<
@@ -2950,7 +2890,6 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn raceData(
         &self,
     ) -> Option<
@@ -3028,7 +2967,7 @@ pub struct clz_Torappu_EnemyHandBookDataGroupArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_EnemyHandBookDataGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_EnemyHandBookDataGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandBookDataGroupArgs {
@@ -3092,7 +3031,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EnemyHandBookDataGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EnemyHandBookDataGroupBuilder {
             fbb_: _fbb,
@@ -3100,7 +3041,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookDataGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3210,20 +3150,18 @@ pub fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_with_opts<'b
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_EnemyHandBookDataGroup<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_EnemyHandBookDataGroup` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_EnemyHandBookDataGroup and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_EnemyHandBookDataGroup`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyHandBookDataGroup<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_EnemyHandBookDataGroup` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_EnemyHandBookDataGroup and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_EnemyHandBookDataGroup`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyHandBookDataGroup<'_> {

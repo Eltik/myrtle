@@ -48,8 +48,7 @@ impl enum__Torappu_EvolvePhase {
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::PHASE_0 => Some("PHASE_0"),
             Self::PHASE_1 => Some("PHASE_1"),
@@ -76,7 +75,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_EvolvePhase {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_EvolvePhase::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -99,7 +98,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_EvolvePhase {
-    type Output = Self;
+    type Output = enum__Torappu_EvolvePhase;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -132,14 +131,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_EvolvePhase {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_EvolvePhase {}
 pub enum clz_Torappu_CharacterData_UnlockConditionOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharacterData_UnlockCondition<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharacterData_UnlockCondition<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharacterData_UnlockCondition<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -153,8 +152,7 @@ impl<'a> clz_Torappu_CharacterData_UnlockCondition<'a> {
     pub const VT_LEVEL: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharacterData_UnlockCondition { _tab: table }
     }
     #[allow(unused_mut)]
@@ -173,7 +171,6 @@ impl<'a> clz_Torappu_CharacterData_UnlockCondition<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharacterData_UnlockConditionT {
         let phase = self.phase();
         let level = self.level();
@@ -181,7 +178,6 @@ impl<'a> clz_Torappu_CharacterData_UnlockCondition<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn phase(&self) -> enum__Torappu_EvolvePhase {
         // Safety:
         // Created from valid Table for this object
@@ -196,7 +192,6 @@ impl<'a> clz_Torappu_CharacterData_UnlockCondition<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn level(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -229,7 +224,7 @@ pub struct clz_Torappu_CharacterData_UnlockConditionArgs {
 impl<'a> Default for clz_Torappu_CharacterData_UnlockConditionArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_CharacterData_UnlockConditionArgs {
             phase: enum__Torappu_EvolvePhase::PHASE_0,
             level: 0,
         }
@@ -264,7 +259,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharacterData_UnlockConditionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharacterData_UnlockConditionBuilder {
             fbb_: _fbb,
@@ -272,7 +269,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_UnlockCondition<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -315,14 +311,14 @@ impl clz_Torappu_CharacterData_UnlockConditionT {
     }
 }
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Blackboard_DataPair<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Blackboard_DataPair<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -337,8 +333,7 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     pub const VT_VALUESTR: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Blackboard_DataPair { _tab: table }
     }
     #[allow(unused_mut)]
@@ -362,7 +357,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
         let key = self.key().map(|x| alloc::string::ToString::to_string(x));
         let value = self.value();
@@ -377,7 +371,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -390,7 +383,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -402,7 +394,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn valueStr(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -439,7 +430,7 @@ pub struct clz_Torappu_Blackboard_DataPairArgs<'a> {
     pub value: f32,
     pub valueStr: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Blackboard_DataPairArgs<'_> {
+impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Blackboard_DataPairArgs {
@@ -477,7 +468,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Blackboard_DataPairBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Blackboard_DataPairBuilder {
             fbb_: _fbb,
@@ -485,7 +478,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -536,14 +528,14 @@ impl clz_Torappu_Blackboard_DataPairT {
     }
 }
 pub enum clz_Torappu_TalentDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_TalentData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_TalentData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_TalentData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -564,8 +556,7 @@ impl<'a> clz_Torappu_TalentData<'a> {
     pub const VT_ISHIDETALENT: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_TalentData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -605,7 +596,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_TalentDataT {
         let unlockCondition = self
             .unlockCondition()
@@ -642,7 +632,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn unlockCondition(&self) -> Option<clz_Torappu_CharacterData_UnlockCondition<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -656,7 +645,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn requiredPotentialRank(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -668,7 +656,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn prefabKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -681,7 +668,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -692,7 +678,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -705,7 +690,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rangeId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -718,7 +702,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn blackboard(
         &self,
     ) -> Option<
@@ -740,7 +723,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tokenKey(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -753,7 +735,6 @@ impl<'a> clz_Torappu_TalentData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isHideTalent(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -805,7 +786,7 @@ pub struct clz_Torappu_TalentDataArgs<'a> {
     pub tokenKey: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub isHideTalent: bool,
 }
-impl Default for clz_Torappu_TalentDataArgs<'_> {
+impl<'a> Default for clz_Torappu_TalentDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_TalentDataArgs {
@@ -896,7 +877,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TalentDataBuilder
             .push_slot::<bool>(clz_Torappu_TalentData::VT_ISHIDETALENT, isHideTalent, false);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_TalentDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_TalentDataBuilder {
             fbb_: _fbb,
@@ -904,7 +887,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_TalentDataBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_TalentData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -988,14 +970,14 @@ impl clz_Torappu_TalentDataT {
     }
 }
 pub enum clz_Torappu_CharacterData_MasterDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharacterData_MasterData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharacterData_MasterData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharacterData_MasterData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1010,8 +992,7 @@ impl<'a> clz_Torappu_CharacterData_MasterData<'a> {
     pub const VT_TALENTDATA: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharacterData_MasterData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1035,7 +1016,6 @@ impl<'a> clz_Torappu_CharacterData_MasterData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharacterData_MasterDataT {
         let level = self.level();
         let masterId = self
@@ -1052,7 +1032,6 @@ impl<'a> clz_Torappu_CharacterData_MasterData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn level(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1064,7 +1043,6 @@ impl<'a> clz_Torappu_CharacterData_MasterData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn masterId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1077,7 +1055,6 @@ impl<'a> clz_Torappu_CharacterData_MasterData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn talentData(&self) -> Option<clz_Torappu_TalentData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1119,7 +1096,7 @@ pub struct clz_Torappu_CharacterData_MasterDataArgs<'a> {
     pub masterId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub talentData: Option<::flatbuffers::WIPOffset<clz_Torappu_TalentData<'a>>>,
 }
-impl Default for clz_Torappu_CharacterData_MasterDataArgs<'_> {
+impl<'a> Default for clz_Torappu_CharacterData_MasterDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharacterData_MasterDataArgs {
@@ -1162,7 +1139,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharacterData_MasterDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharacterData_MasterDataBuilder {
             fbb_: _fbb,
@@ -1170,7 +1149,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1221,14 +1199,14 @@ impl clz_Torappu_CharacterData_MasterDataT {
     }
 }
 pub enum clz_Torappu_CharacterData_MasterDataBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharacterData_MasterDataBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharacterData_MasterDataBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharacterData_MasterDataBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1241,8 +1219,7 @@ impl<'a> clz_Torappu_CharacterData_MasterDataBundle<'a> {
     pub const VT_CANDIDATES: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharacterData_MasterDataBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1262,7 +1239,6 @@ impl<'a> clz_Torappu_CharacterData_MasterDataBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharacterData_MasterDataBundleT {
         let candidates = self
             .candidates()
@@ -1271,7 +1247,6 @@ impl<'a> clz_Torappu_CharacterData_MasterDataBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn candidates(
         &self,
     ) -> Option<
@@ -1324,7 +1299,7 @@ pub struct clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_CharacterData_MasterDataBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharacterData_MasterDataBundleArgs { candidates: None }
@@ -1358,7 +1333,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharacterData_MasterDataBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharacterData_MasterDataBundleBuilder {
             fbb_: _fbb,
@@ -1366,7 +1343,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterDataBundle<'a>> {
@@ -1408,7 +1384,7 @@ impl clz_Torappu_CharacterData_MasterDataBundleT {
     }
 }
 pub enum dict__string__clz_Torappu_CharacterData_MasterDataBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -1417,7 +1393,7 @@ pub struct dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a>
 {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1431,8 +1407,7 @@ impl<'a> dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CharacterData_MasterDataBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1457,7 +1432,6 @@ impl<'a> dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CharacterData_MasterDataBundleT {
         let key = {
             let x = self.key();
@@ -1468,7 +1442,6 @@ impl<'a> dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1483,7 +1456,6 @@ impl<'a> dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_CharacterData_MasterDataBundle,
@@ -1492,13 +1464,11 @@ impl<'a> dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CharacterData_MasterDataBundle<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1530,7 +1500,7 @@ pub struct dict__string__clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterDataBundle<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CharacterData_MasterDataBundleArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CharacterData_MasterDataBundleArgs {
@@ -1566,7 +1536,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_CharacterData_MasterDataBundle>>(dict__string__clz_Torappu_CharacterData_MasterDataBundle::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CharacterData_MasterDataBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CharacterData_MasterDataBundleBuilder {
             fbb_: _fbb,
@@ -1574,7 +1546,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharacterData_MasterDataBundle<'a>>
@@ -1629,7 +1600,7 @@ impl dict__string__clz_Torappu_CharacterData_MasterDataBundleT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -1638,7 +1609,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1651,8 +1622,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a
     pub const VT_MASTER_DATA_BUNDLES: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1677,7 +1647,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleT {
         let master_data_bundles = self
             .master_data_bundles()
@@ -1688,7 +1657,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'a
     }
 
     #[inline]
-    #[must_use]
     pub fn master_data_bundles(
         &self,
     ) -> Option<
@@ -1741,7 +1709,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleA
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleArgs {
@@ -1776,7 +1744,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle::VT_MASTER_DATA_BUNDLES, master_data_bundles);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleBuilder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleBuilder {
             fbb_: _fbb,
@@ -1784,7 +1755,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -1912,10 +1882,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_character_da
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_master_data_bundle_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'_> {
@@ -1926,10 +1895,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_mast
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_master_data_bundle_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'_> {

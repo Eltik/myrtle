@@ -37,8 +37,7 @@ impl enum__Torappu_HotUpdateMetaPicData_PicType {
     pub const ENUM_MAX: i32 = 1;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::SKIN];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::SKIN => Some("SKIN"),
@@ -62,7 +61,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_HotUpdateMetaPicData_PicType
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_HotUpdateMetaPicData_PicType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -85,7 +84,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_HotUpdateMetaPicData_PicTyp
 }
 
 impl ::flatbuffers::Push for enum__Torappu_HotUpdateMetaPicData_PicType {
-    type Output = Self;
+    type Output = enum__Torappu_HotUpdateMetaPicData_PicType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -118,14 +117,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_HotUpdateMetaPicData_PicTyp
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_HotUpdateMetaPicData_PicType {}
 pub enum clz_Torappu_HotUpdateMetaPicDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_HotUpdateMetaPicData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaPicData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_HotUpdateMetaPicData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -146,8 +145,7 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
     pub const VT_COLOR: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_HotUpdateMetaPicData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -181,7 +179,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaPicDataT {
         let picId = self.picId().map(|x| alloc::string::ToString::to_string(x));
         let groupId = self.groupId();
@@ -210,7 +207,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn picId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -223,7 +219,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -235,7 +230,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -247,7 +241,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -259,7 +252,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -271,7 +263,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn textList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -285,7 +276,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn picType(&self) -> enum__Torappu_HotUpdateMetaPicData_PicType {
         // Safety:
         // Created from valid Table for this object
@@ -300,7 +290,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn logoId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -313,7 +302,6 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn color(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -368,7 +356,7 @@ pub struct clz_Torappu_HotUpdateMetaPicDataArgs<'a> {
     pub logoId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub color: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_HotUpdateMetaPicDataArgs<'_> {
+impl<'a> Default for clz_Torappu_HotUpdateMetaPicDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_HotUpdateMetaPicDataArgs {
@@ -455,7 +443,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_HotUpdateMetaPicDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_HotUpdateMetaPicDataBuilder {
             fbb_: _fbb,
@@ -463,7 +453,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaPicData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -547,14 +536,14 @@ impl clz_Torappu_HotUpdateMetaPicDataT {
     }
 }
 pub enum clz_Torappu_HotUpdateMetaMovieDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_HotUpdateMetaMovieData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaMovieData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_HotUpdateMetaMovieData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -570,8 +559,7 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
     pub const VT_SORTID: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_HotUpdateMetaMovieData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -596,7 +584,6 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaMovieDataT {
         let videoId = self
             .videoId()
@@ -615,7 +602,6 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn videoId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -628,7 +614,6 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn videoPath(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -641,7 +626,6 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -653,7 +637,6 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -695,7 +678,7 @@ pub struct clz_Torappu_HotUpdateMetaMovieDataArgs<'a> {
     pub endTime: i64,
     pub sortId: i32,
 }
-impl Default for clz_Torappu_HotUpdateMetaMovieDataArgs<'_> {
+impl<'a> Default for clz_Torappu_HotUpdateMetaMovieDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_HotUpdateMetaMovieDataArgs {
@@ -739,7 +722,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i32>(clz_Torappu_HotUpdateMetaMovieData::VT_SORTID, sortId, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_HotUpdateMetaMovieDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_HotUpdateMetaMovieDataBuilder {
             fbb_: _fbb,
@@ -747,7 +732,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaMovieData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -803,14 +787,14 @@ impl clz_Torappu_HotUpdateMetaMovieDataT {
     }
 }
 pub enum clz_Torappu_HotUpdateMetaTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_HotUpdateMetaTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_HotUpdateMetaTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -824,8 +808,7 @@ impl<'a> clz_Torappu_HotUpdateMetaTable<'a> {
     pub const VT_MOVIEINFO: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_HotUpdateMetaTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -848,7 +831,6 @@ impl<'a> clz_Torappu_HotUpdateMetaTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaTableT {
         let picList = self
             .picList()
@@ -858,7 +840,6 @@ impl<'a> clz_Torappu_HotUpdateMetaTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn picList(
         &self,
     ) -> Option<
@@ -880,7 +861,6 @@ impl<'a> clz_Torappu_HotUpdateMetaTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn movieInfo(&self) -> Option<clz_Torappu_HotUpdateMetaMovieData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -928,7 +908,7 @@ pub struct clz_Torappu_HotUpdateMetaTableArgs<'a> {
     >,
     pub movieInfo: Option<::flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaMovieData<'a>>>,
 }
-impl Default for clz_Torappu_HotUpdateMetaTableArgs<'_> {
+impl<'a> Default for clz_Torappu_HotUpdateMetaTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_HotUpdateMetaTableArgs {
@@ -972,7 +952,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_HotUpdateMetaTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_HotUpdateMetaTableBuilder {
             fbb_: _fbb,
@@ -980,7 +962,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1076,20 +1057,18 @@ pub fn size_prefixed_root_as_clz_torappu_hot_update_meta_table_with_opts<'b, 'o>
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_HotUpdateMetaTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_HotUpdateMetaTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_HotUpdateMetaTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_HotUpdateMetaTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_hot_update_meta_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_HotUpdateMetaTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_HotUpdateMetaTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_HotUpdateMetaTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_HotUpdateMetaTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_HotUpdateMetaTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_hot_update_meta_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_HotUpdateMetaTable<'_> {

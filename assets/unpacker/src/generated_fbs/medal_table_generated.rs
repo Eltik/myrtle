@@ -51,8 +51,7 @@ impl enum__Torappu_MedalRarity {
         Self::T3D5,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::T1 => Some("T1"),
             Self::T1D5 => Some("T1D5"),
@@ -80,7 +79,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_MedalRarity {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_MedalRarity::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -103,7 +102,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_MedalRarity {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_MedalRarity {
-    type Output = Self;
+    type Output = enum__Torappu_MedalRarity;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -171,8 +170,7 @@ impl enum__Torappu_MedalExpireType {
     pub const ENUM_MAX: i32 = 3;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::INIT, Self::TEMP, Self::PERM];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::INIT => Some("INIT"),
@@ -198,7 +196,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_MedalExpireType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_MedalExpireType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -221,7 +219,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_MedalExpireType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_MedalExpireType {
-    type Output = Self;
+    type Output = enum__Torappu_MedalExpireType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -262,13 +260,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -362,6 +360,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -462,9 +462,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -559,10 +561,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -657,6 +660,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -677,7 +682,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -700,7 +705,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -733,14 +738,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 pub enum clz_Torappu_MedalExpireTimeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalExpireTime<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalExpireTime<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalExpireTime<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -755,8 +760,7 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalExpireTime { _tab: table }
     }
     #[allow(unused_mut)]
@@ -776,7 +780,6 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalExpireTimeT {
         let start = self.start();
         let end = self.end();
@@ -785,7 +788,6 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn start(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -797,7 +799,6 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn end(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -809,7 +810,6 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_MedalExpireType {
         // Safety:
         // Created from valid Table for this object
@@ -847,7 +847,7 @@ pub struct clz_Torappu_MedalExpireTimeArgs {
 impl<'a> Default for clz_Torappu_MedalExpireTimeArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_MedalExpireTimeArgs {
             start: 0,
             end: 0,
             type_: enum__Torappu_MedalExpireType::NONE,
@@ -879,7 +879,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalExpireTimeBu
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalExpireTimeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalExpireTimeBuilder {
             fbb_: _fbb,
@@ -887,7 +889,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalExpireTimeBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalExpireTime<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -934,14 +935,14 @@ impl clz_Torappu_MedalExpireTimeT {
     }
 }
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -956,8 +957,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -979,7 +979,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -988,7 +987,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -999,7 +997,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1011,7 +1008,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -1046,7 +1042,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -1081,7 +1077,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -1089,7 +1087,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1133,14 +1130,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_MedalRewardGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalRewardGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalRewardGroupData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalRewardGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1155,8 +1152,7 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
     pub const VT_ITEMLIST: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalRewardGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1180,7 +1176,6 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalRewardGroupDataT {
         let groupId = self
             .groupId()
@@ -1197,7 +1192,6 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1210,7 +1204,6 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn slotId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1222,7 +1215,6 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn itemList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
@@ -1267,7 +1259,7 @@ pub struct clz_Torappu_MedalRewardGroupDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MedalRewardGroupDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MedalRewardGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MedalRewardGroupDataArgs {
@@ -1310,7 +1302,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalRewardGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalRewardGroupDataBuilder {
             fbb_: _fbb,
@@ -1318,7 +1312,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalRewardGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1372,14 +1365,14 @@ impl clz_Torappu_MedalRewardGroupDataT {
     }
 }
 pub enum clz_Torappu_MedalPerDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalPerData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalPerData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalPerData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1407,8 +1400,7 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
     pub const VT_ISHIDDEN: ::flatbuffers::VOffsetT = 34;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalPerData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1465,7 +1457,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalPerDataT {
         let medalId = self
             .medalId()
@@ -1532,7 +1523,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn medalId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1545,7 +1535,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1558,7 +1547,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1571,7 +1559,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn slotId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1583,7 +1570,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn preMedalIdList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1597,7 +1583,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rarity(&self) -> enum__Torappu_MedalRarity {
         // Safety:
         // Created from valid Table for this object
@@ -1612,7 +1597,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn template(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1625,7 +1609,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockParam(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1639,7 +1622,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn getMethod(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1652,7 +1634,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1665,7 +1646,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn advancedMedal(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1678,7 +1658,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn originMedal(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1691,7 +1670,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1703,7 +1681,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn expireTimes(
         &self,
     ) -> Option<
@@ -1722,7 +1699,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalRewardGroup(
         &self,
     ) -> Option<
@@ -1744,7 +1720,6 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isHidden(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1870,7 +1845,7 @@ pub struct clz_Torappu_MedalPerDataArgs<'a> {
     >,
     pub isHidden: bool,
 }
-impl Default for clz_Torappu_MedalPerDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MedalPerDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MedalPerDataArgs {
@@ -2033,7 +2008,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalPerDataBuild
             .push_slot::<bool>(clz_Torappu_MedalPerData::VT_ISHIDDEN, isHidden, false);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalPerDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalPerDataBuilder {
             fbb_: _fbb,
@@ -2041,7 +2018,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalPerDataBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalPerData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2169,14 +2145,14 @@ impl clz_Torappu_MedalPerDataT {
     }
 }
 pub enum clz_Torappu_MedalGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalGroupData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2196,8 +2172,7 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
     pub const VT_SHAREDEXPIRETIMES: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2234,7 +2209,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalGroupDataT {
         let groupId = self
             .groupId()
@@ -2271,7 +2245,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2284,7 +2257,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2297,7 +2269,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupDesc(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2310,7 +2281,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalId(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -2324,7 +2294,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2336,7 +2305,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupBackColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2349,7 +2317,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupGetTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2361,7 +2328,6 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sharedExpireTimes(
         &self,
     ) -> Option<
@@ -2444,7 +2410,7 @@ pub struct clz_Torappu_MedalGroupDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MedalGroupDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MedalGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MedalGroupDataArgs {
@@ -2531,7 +2497,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalGroupDataBui
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalGroupDataBuilder {
             fbb_: _fbb,
@@ -2539,7 +2507,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalGroupDataBui
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2621,14 +2588,14 @@ impl clz_Torappu_MedalGroupDataT {
     }
 }
 pub enum clz_Torappu_MedalTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalTypeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalTypeData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalTypeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2644,8 +2611,7 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
     pub const VT_GROUPDATA: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalTypeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2672,7 +2638,6 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalTypeDataT {
         let medalGroupId = self
             .medalGroupId()
@@ -2693,7 +2658,6 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn medalGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2706,7 +2670,6 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2718,7 +2681,6 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2731,7 +2693,6 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupData(
         &self,
     ) -> Option<
@@ -2792,7 +2753,7 @@ pub struct clz_Torappu_MedalTypeDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MedalTypeDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MedalTypeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MedalTypeDataArgs {
@@ -2844,7 +2805,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalTypeDataBuil
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalTypeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalTypeDataBuilder {
             fbb_: _fbb,
@@ -2852,7 +2815,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalTypeDataBuil
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalTypeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2911,14 +2873,14 @@ impl clz_Torappu_MedalTypeDataT {
     }
 }
 pub enum dict__string__clz_Torappu_MedalTypeDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MedalTypeData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MedalTypeData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MedalTypeData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2932,8 +2894,7 @@ impl<'a> dict__string__clz_Torappu_MedalTypeData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MedalTypeData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2956,7 +2917,6 @@ impl<'a> dict__string__clz_Torappu_MedalTypeData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MedalTypeDataT {
         let key = {
             let x = self.key();
@@ -2967,7 +2927,6 @@ impl<'a> dict__string__clz_Torappu_MedalTypeData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2982,19 +2941,16 @@ impl<'a> dict__string__clz_Torappu_MedalTypeData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_MedalTypeData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MedalTypeData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3030,7 +2986,7 @@ pub struct dict__string__clz_Torappu_MedalTypeDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MedalTypeData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MedalTypeDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MedalTypeDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MedalTypeDataArgs {
@@ -3067,7 +3023,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MedalTypeDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MedalTypeDataBuilder {
             fbb_: _fbb,
@@ -3075,7 +3033,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MedalTypeData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -3123,14 +3080,14 @@ impl dict__string__clz_Torappu_MedalTypeDataT {
     }
 }
 pub enum clz_Torappu_MedalDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MedalData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MedalData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MedalData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3144,8 +3101,7 @@ impl<'a> clz_Torappu_MedalData<'a> {
     pub const VT_MEDALTYPEDATA: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MedalData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3168,7 +3124,6 @@ impl<'a> clz_Torappu_MedalData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MedalDataT {
         let medalList = self
             .medalList()
@@ -3183,7 +3138,6 @@ impl<'a> clz_Torappu_MedalData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn medalList(
         &self,
     ) -> Option<
@@ -3199,7 +3153,6 @@ impl<'a> clz_Torappu_MedalData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalTypeData(
         &self,
     ) -> Option<
@@ -3257,7 +3210,7 @@ pub struct clz_Torappu_MedalDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MedalDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MedalDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MedalDataArgs {
@@ -3300,7 +3253,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalDataBuilder<
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MedalDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MedalDataBuilder {
             fbb_: _fbb,
@@ -3308,7 +3263,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MedalDataBuilder<
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MedalData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3410,18 +3364,16 @@ pub fn size_prefixed_root_as_clz_torappu_medal_data_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_MedalData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_MedalData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_MedalData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_MedalData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torappu_MedalData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_MedalData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_MedalData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MedalData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_MedalData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_medal_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MedalData<'_> {

@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_ExtraBattleLogDataKeyOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ExtraBattleLogDataKey<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ExtraBattleLogDataKey<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ExtraBattleLogDataKey<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -34,8 +34,7 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
     pub const VT_LOGALIAS: ::flatbuffers::VOffsetT = 22;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ExtraBattleLogDataKey { _tab: table }
     }
     #[allow(unused_mut)]
@@ -82,7 +81,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ExtraBattleLogDataKeyT {
         let description = self
             .description()
@@ -131,7 +129,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -144,7 +141,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sourceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -157,7 +153,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sourceMode(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -170,7 +165,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -183,7 +177,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyApplyWay(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -196,7 +189,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn projectileName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -209,7 +201,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn abilityName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -222,7 +213,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyLevelType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -235,7 +225,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn enemyTag(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -249,7 +238,6 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn logAlias(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -338,7 +326,7 @@ pub struct clz_Torappu_ExtraBattleLogDataKeyArgs<'a> {
     >,
     pub logAlias: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ExtraBattleLogDataKeyArgs<'_> {
+impl<'a> Default for clz_Torappu_ExtraBattleLogDataKeyArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ExtraBattleLogDataKeyArgs {
@@ -439,7 +427,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ExtraBattleLogDataKeyBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ExtraBattleLogDataKeyBuilder {
             fbb_: _fbb,
@@ -447,7 +437,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ExtraBattleLogDataKey<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -536,14 +525,14 @@ impl clz_Torappu_ExtraBattleLogDataKeyT {
     }
 }
 pub enum clz_Torappu_ExtraBattleLogDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ExtraBattleLogData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ExtraBattleLogData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ExtraBattleLogData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -556,8 +545,7 @@ impl<'a> clz_Torappu_ExtraBattleLogData<'a> {
     pub const VT_DATA: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ExtraBattleLogData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -577,14 +565,12 @@ impl<'a> clz_Torappu_ExtraBattleLogData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ExtraBattleLogDataT {
         let data = self.data().map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_ExtraBattleLogDataT { data }
     }
 
     #[inline]
-    #[must_use]
     pub fn data(
         &self,
     ) -> Option<
@@ -634,7 +620,7 @@ pub struct clz_Torappu_ExtraBattleLogDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ExtraBattleLogDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ExtraBattleLogDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ExtraBattleLogDataArgs { data: None }
@@ -664,7 +650,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ExtraBattleLogDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ExtraBattleLogDataBuilder {
             fbb_: _fbb,
@@ -672,7 +660,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ExtraBattleLogData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -709,14 +696,14 @@ impl clz_Torappu_ExtraBattleLogDataT {
     }
 }
 pub enum dict__string__clz_Torappu_ExtraBattleLogDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ExtraBattleLogData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ExtraBattleLogData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ExtraBattleLogData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -730,8 +717,7 @@ impl<'a> dict__string__clz_Torappu_ExtraBattleLogData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ExtraBattleLogData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -754,7 +740,6 @@ impl<'a> dict__string__clz_Torappu_ExtraBattleLogData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ExtraBattleLogDataT {
         let key = {
             let x = self.key();
@@ -765,7 +750,6 @@ impl<'a> dict__string__clz_Torappu_ExtraBattleLogData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -780,19 +764,16 @@ impl<'a> dict__string__clz_Torappu_ExtraBattleLogData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ExtraBattleLogData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ExtraBattleLogData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -828,7 +809,7 @@ pub struct dict__string__clz_Torappu_ExtraBattleLogDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ExtraBattleLogData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ExtraBattleLogDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ExtraBattleLogDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ExtraBattleLogDataArgs {
@@ -868,7 +849,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ExtraBattleLogDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ExtraBattleLogDataBuilder {
             fbb_: _fbb,
@@ -876,7 +859,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ExtraBattleLogData<'a>> {
@@ -929,7 +911,7 @@ impl dict__string__clz_Torappu_ExtraBattleLogDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -938,7 +920,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -951,8 +933,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
     pub const VT_EXTRA_BATTLELOGS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -974,7 +955,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT {
         let extra_battlelogs = self
             .extra_battlelogs()
@@ -983,7 +963,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn extra_battlelogs(
         &self,
     ) -> Option<
@@ -1036,7 +1015,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs {
@@ -1072,7 +1051,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataBuilder {
             fbb_: _fbb,
@@ -1080,7 +1061,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a>>
@@ -1197,10 +1177,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'_> {
@@ -1211,10 +1190,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_da
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'_> {

@@ -26,3 +26,9 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 texture2ddecoder = "0.1.2"
 walkdir = "2.5.0"
+
+# Vendored flatbuffers: one added `VerifierOptions` field, `max_alignment`, so
+# the verifier can accept Hypergryph's 4-aligned 8-byte scalars. Inert at its
+# `usize::MAX` default. See vendor/flatbuffers/MYRTLE-PATCH.md.
+[patch.crates-io]
+flatbuffers = { path = "vendor/flatbuffers" }

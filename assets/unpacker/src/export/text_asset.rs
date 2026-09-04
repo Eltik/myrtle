@@ -61,6 +61,42 @@ fn try_structured_decode(raw: &[u8], decrypted: Option<&[u8]>, name: &str) -> Op
     None
 }
 
+/// The raw `FlatBuffer` bytes inside a `TextAsset` payload, if it holds any.
+///
+/// Same decode order as `try_structured_decode`: base64 → AES → the 128-byte
+/// RSA header offset, raw before decrypted. Callers that want the JSON should
+/// use `parse_text_asset_json`; this exists for `unpacker verify`, which needs
+/// the buffer itself so it can verify without decoding it.
+#[must_use]
+pub fn flatbuffer_payload(obj: &Value) -> Option<Vec<u8>> {
+    let script = obj.get("m_Script")?.as_str()?;
+    if script.is_empty() {
+        return None;
+    }
+    let raw = if let Some(b64) = script.strip_prefix("base64:") {
+        base64::engine::general_purpose::STANDARD.decode(b64).ok()?
+    } else {
+        script.as_bytes().to_vec()
+    };
+    if raw.is_empty() {
+        return None;
+    }
+    let decrypted = try_aes_decrypt(&raw);
+    for candidate in [Some(raw.as_slice()), decrypted.as_deref()]
+        .into_iter()
+        .flatten()
+    {
+        for &offset in &[128usize, 0] {
+            if candidate.len() > offset
+                && crate::flatbuffers_decode::is_flatbuffer(&candidate[offset..])
+            {
+                return Some(candidate[offset..].to_vec());
+            }
+        }
+    }
+    None
+}
+
 pub fn export_text_asset(
     obj: &Value,
     output_dir: &Path,

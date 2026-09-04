@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_EPBreakBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_EPBreakBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EPBreakBuffData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_EPBreakBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -23,11 +23,11 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_EPBreakBuffData<'a> {
 
 impl<'a> clz_Torappu_EPBreakBuffData<'a> {
     pub const VT_ELEMENTBREAKDURATION: ::flatbuffers::VOffsetT = 4;
-    pub const VT_ELEMENTBUFFS: ::flatbuffers::VOffsetT = 6;
+    pub const VT_ENEMYELEMENTBREAKDURATION: ::flatbuffers::VOffsetT = 6;
+    pub const VT_ELEMENTBUFFS: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_EPBreakBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -44,13 +44,14 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
         if let Some(x) = args.elementBuffs {
             builder.add_elementBuffs(x);
         }
+        builder.add_enemyElementBreakDuration(args.enemyElementBreakDuration);
         builder.add_elementBreakDuration(args.elementBreakDuration);
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_EPBreakBuffDataT {
         let elementBreakDuration = self.elementBreakDuration();
+        let enemyElementBreakDuration = self.enemyElementBreakDuration();
         let elementBuffs = self.elementBuffs().map(|x| {
             x.iter()
                 .map(|s| alloc::string::ToString::to_string(s))
@@ -58,12 +59,12 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
         });
         clz_Torappu_EPBreakBuffDataT {
             elementBreakDuration,
+            enemyElementBreakDuration,
             elementBuffs,
         }
     }
 
     #[inline]
-    #[must_use]
     pub fn elementBreakDuration(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -78,7 +79,20 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
+    pub fn enemyElementBreakDuration(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_EPBreakBuffData::VT_ENEMYELEMENTBREAKDURATION,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn elementBuffs(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -101,6 +115,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_EPBreakBuffData<'_> {
     ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
         v.visit_table(pos)?
             .visit_field::<f32>("elementBreakDuration", Self::VT_ELEMENTBREAKDURATION, false)?
+            .visit_field::<f32>(
+                "enemyElementBreakDuration",
+                Self::VT_ENEMYELEMENTBREAKDURATION,
+                false,
+            )?
             .visit_field::<::flatbuffers::ForwardsUOffset<
                 ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
             >>("elementBuffs", Self::VT_ELEMENTBUFFS, false)?
@@ -110,17 +129,19 @@ impl ::flatbuffers::Verifiable for clz_Torappu_EPBreakBuffData<'_> {
 }
 pub struct clz_Torappu_EPBreakBuffDataArgs<'a> {
     pub elementBreakDuration: f32,
+    pub enemyElementBreakDuration: f32,
     pub elementBuffs: Option<
         ::flatbuffers::WIPOffset<
             ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
         >,
     >,
 }
-impl Default for clz_Torappu_EPBreakBuffDataArgs<'_> {
+impl<'a> Default for clz_Torappu_EPBreakBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EPBreakBuffDataArgs {
             elementBreakDuration: 0.0,
+            enemyElementBreakDuration: 0.0,
             elementBuffs: None,
         }
     }
@@ -140,6 +161,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EPBreakBuffDataBu
         );
     }
     #[inline]
+    pub fn add_enemyElementBreakDuration(&mut self, enemyElementBreakDuration: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_EPBreakBuffData::VT_ENEMYELEMENTBREAKDURATION,
+            enemyElementBreakDuration,
+            0.0,
+        );
+    }
+    #[inline]
     pub fn add_elementBuffs(
         &mut self,
         elementBuffs: ::flatbuffers::WIPOffset<
@@ -152,7 +181,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EPBreakBuffDataBu
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_EPBreakBuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_EPBreakBuffDataBuilder {
             fbb_: _fbb,
@@ -160,7 +191,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_EPBreakBuffDataBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_EPBreakBuffData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -171,6 +201,10 @@ impl ::core::fmt::Debug for clz_Torappu_EPBreakBuffData<'_> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_EPBreakBuffData");
         ds.field("elementBreakDuration", &self.elementBreakDuration());
+        ds.field(
+            "enemyElementBreakDuration",
+            &self.enemyElementBreakDuration(),
+        );
         ds.field("elementBuffs", &self.elementBuffs());
         ds.finish()
     }
@@ -179,12 +213,14 @@ impl ::core::fmt::Debug for clz_Torappu_EPBreakBuffData<'_> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_EPBreakBuffDataT {
     pub elementBreakDuration: f32,
+    pub enemyElementBreakDuration: f32,
     pub elementBuffs: Option<alloc::vec::Vec<alloc::string::String>>,
 }
 impl Default for clz_Torappu_EPBreakBuffDataT {
     fn default() -> Self {
         Self {
             elementBreakDuration: 0.0,
+            enemyElementBreakDuration: 0.0,
             elementBuffs: None,
         }
     }
@@ -195,6 +231,7 @@ impl clz_Torappu_EPBreakBuffDataT {
         _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_EPBreakBuffData<'b>> {
         let elementBreakDuration = self.elementBreakDuration;
+        let enemyElementBreakDuration = self.enemyElementBreakDuration;
         let elementBuffs = self.elementBuffs.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
             _fbb.create_vector(&w)
@@ -203,20 +240,21 @@ impl clz_Torappu_EPBreakBuffDataT {
             _fbb,
             &clz_Torappu_EPBreakBuffDataArgs {
                 elementBreakDuration,
+                enemyElementBreakDuration,
                 elementBuffs,
             },
         )
     }
 }
 pub enum dict__string__clz_Torappu_EPBreakBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_EPBreakBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_EPBreakBuffData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_EPBreakBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -230,8 +268,7 @@ impl<'a> dict__string__clz_Torappu_EPBreakBuffData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_EPBreakBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -254,7 +291,6 @@ impl<'a> dict__string__clz_Torappu_EPBreakBuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_EPBreakBuffDataT {
         let key = {
             let x = self.key();
@@ -265,7 +301,6 @@ impl<'a> dict__string__clz_Torappu_EPBreakBuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -280,19 +315,16 @@ impl<'a> dict__string__clz_Torappu_EPBreakBuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_EPBreakBuffData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_EPBreakBuffData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -328,7 +360,7 @@ pub struct dict__string__clz_Torappu_EPBreakBuffDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_EPBreakBuffData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_EPBreakBuffDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_EPBreakBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_EPBreakBuffDataArgs {
@@ -365,7 +397,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_EPBreakBuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_EPBreakBuffDataBuilder {
             fbb_: _fbb,
@@ -373,7 +407,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_EPBreakBuffData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -421,14 +454,14 @@ impl dict__string__clz_Torappu_EPBreakBuffDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -441,8 +474,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
     pub const VT_EP_BREAKBUFFS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -463,7 +495,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
         let ep_breakbuffs = self
             .ep_breakbuffs()
@@ -472,7 +503,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn ep_breakbuffs(
         &self,
     ) -> Option<
@@ -525,7 +555,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs {
@@ -561,7 +591,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataBuilder {
             fbb_: _fbb,
@@ -569,7 +601,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a>> {
@@ -682,10 +713,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
@@ -694,10 +724,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_u
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {

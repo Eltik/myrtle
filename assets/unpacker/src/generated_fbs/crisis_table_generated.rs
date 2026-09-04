@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -113,6 +113,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -213,9 +215,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -310,10 +314,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -408,6 +413,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -428,7 +435,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -451,7 +458,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -484,14 +491,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -506,8 +513,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -529,7 +535,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -538,7 +543,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -549,7 +553,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -561,7 +564,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -596,7 +598,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -631,7 +633,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -639,7 +643,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -683,14 +686,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_CrisisClientData_SeasonInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CrisisClientData_SeasonInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CrisisClientData_SeasonInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CrisisClientData_SeasonInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -711,8 +714,7 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
     pub const VT_PERMBGMHARD: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CrisisClientData_SeasonInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -750,7 +752,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CrisisClientData_SeasonInfoT {
         let seasonId = self
             .seasonId()
@@ -785,7 +786,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn seasonId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -798,7 +798,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -810,7 +809,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -822,7 +820,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -835,7 +832,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crisisRuneCoinUnlockItem(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -849,7 +845,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn permBgm(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -862,7 +857,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn medalGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -875,7 +869,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bgmHardPoint(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -890,7 +883,6 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn permBgmHard(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -955,7 +947,7 @@ pub struct clz_Torappu_CrisisClientData_SeasonInfoArgs<'a> {
     pub bgmHardPoint: i32,
     pub permBgmHard: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CrisisClientData_SeasonInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_CrisisClientData_SeasonInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CrisisClientData_SeasonInfoArgs {
@@ -1051,7 +1043,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CrisisClientData_SeasonInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CrisisClientData_SeasonInfoBuilder {
             fbb_: _fbb,
@@ -1059,7 +1053,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CrisisClientData_SeasonInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1140,14 +1133,14 @@ impl clz_Torappu_CrisisClientData_SeasonInfoT {
     }
 }
 pub enum clz_Torappu_CrisisClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CrisisClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CrisisClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CrisisClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1167,8 +1160,7 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
     pub const VT_CRISISRUNECOINUNLOCKITEMDESC: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CrisisClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1201,7 +1193,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CrisisClientDataT {
         let seasonInfo = self
             .seasonInfo()
@@ -1230,7 +1221,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn seasonInfo(
         &self,
     ) -> Option<
@@ -1252,7 +1242,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn meta(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1265,7 +1254,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockCoinLv3(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1277,7 +1265,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn hardPointPerm(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1289,7 +1276,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn hardPointTemp(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1301,7 +1287,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceGrade(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1313,7 +1298,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crisisRuneCoinUnlockItemTitle(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1326,7 +1310,6 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crisisRuneCoinUnlockItemDesc(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1389,7 +1372,7 @@ pub struct clz_Torappu_CrisisClientDataArgs<'a> {
     pub crisisRuneCoinUnlockItemTitle: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub crisisRuneCoinUnlockItemDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CrisisClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_CrisisClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CrisisClientDataArgs {
@@ -1482,7 +1465,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CrisisClientDataB
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CrisisClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CrisisClientDataBuilder {
             fbb_: _fbb,
@@ -1490,7 +1475,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CrisisClientDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CrisisClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1631,20 +1615,18 @@ pub fn size_prefixed_root_as_clz_torappu_crisis_client_data_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_CrisisClientData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_CrisisClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_CrisisClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_CrisisClientData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_crisis_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CrisisClientData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_CrisisClientData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_CrisisClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CrisisClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_CrisisClientData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_crisis_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CrisisClientData<'_> {

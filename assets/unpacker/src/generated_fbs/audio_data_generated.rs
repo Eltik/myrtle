@@ -52,8 +52,7 @@ impl enum__Torappu_Audio_MixerDesc_Category {
         Self::MASTER,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::CUSTOM => Some("CUSTOM"),
             Self::FX_UI => Some("FX_UI"),
@@ -81,7 +80,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_Audio_MixerDesc_Category {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_Audio_MixerDesc_Category::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -104,7 +103,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_Audio_MixerDesc_Category {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_Audio_MixerDesc_Category {
-    type Output = Self;
+    type Output = enum__Torappu_Audio_MixerDesc_Category;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -193,8 +192,7 @@ impl enum__Torappu_BattleVoiceOption_BattleVoiceType {
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::BATTLE_START => Some("BATTLE_START"),
             Self::ENCOUNTER_ENEMY => Some("ENCOUNTER_ENEMY"),
@@ -225,7 +223,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_BattleVoiceOption_BattleVoic
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_BattleVoiceOption_BattleVoiceType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -248,7 +246,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_BattleVoiceOption_BattleVoi
 }
 
 impl ::flatbuffers::Push for enum__Torappu_BattleVoiceOption_BattleVoiceType {
-    type Output = Self;
+    type Output = enum__Torappu_BattleVoiceOption_BattleVoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -313,8 +311,7 @@ impl enum__Torappu_Audio_Middleware_Data_AudioFadeType {
     pub const ENUM_MAX: i32 = 1;
     pub const ENUM_VALUES: &'static [Self] = &[Self::LINEAR, Self::CONCAVE];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::LINEAR => Some("LINEAR"),
             Self::CONCAVE => Some("CONCAVE"),
@@ -338,7 +335,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_Audio_Middleware_Data_AudioF
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_Audio_Middleware_Data_AudioFadeType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -361,7 +358,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_Audio_Middleware_Data_Audio
 }
 
 impl ::flatbuffers::Push for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
-    type Output = Self;
+    type Output = enum__Torappu_Audio_Middleware_Data_AudioFadeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -458,8 +455,7 @@ impl enum__Torappu_VoiceLangType {
         Self::SPA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::JP => Some("JP"),
@@ -493,7 +489,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_VoiceLangType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_VoiceLangType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -516,7 +512,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_VoiceLangType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_VoiceLangType {
-    type Output = Self;
+    type Output = enum__Torappu_VoiceLangType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -549,14 +545,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_VoiceLangType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_VoiceLangType {}
 pub enum clz_Torappu_Audio_Middleware_Data_BGMBankOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_BGMBank<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -575,8 +571,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
     pub const VT_NAME: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_BGMBank { _tab: table }
     }
     #[allow(unused_mut)]
@@ -608,7 +603,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_BGMBankT {
         let intro = self.intro().map(|x| alloc::string::ToString::to_string(x));
         let loop_ = self.loop_().map(|x| alloc::string::ToString::to_string(x));
@@ -631,7 +625,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn intro(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -644,7 +637,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn loop_(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -657,7 +649,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn volume(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -672,7 +663,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crossfade(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -687,7 +677,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn delay(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -702,7 +691,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeStyleId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -715,7 +703,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -760,7 +747,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_BGMBankArgs<'a> {
     pub fadeStyleId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_BGMBankArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_BGMBankArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_BGMBankArgs {
@@ -839,7 +826,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_BGMBankBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_BGMBankBuilder {
             fbb_: _fbb,
@@ -847,7 +836,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_BGMBank<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -918,14 +906,14 @@ impl clz_Torappu_Audio_Middleware_Data_BGMBankT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -947,8 +935,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
     pub const VT_IGNORETIMESCALE: ::flatbuffers::VOffsetT = 22;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX { _tab: table }
     }
     #[allow(unused_mut)]
@@ -978,7 +965,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
         let asset = self.asset().map(|x| alloc::string::ToString::to_string(x));
         let weight = self.weight();
@@ -1005,7 +991,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn asset(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1018,7 +1003,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn weight(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1033,7 +1017,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn important(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1048,7 +1031,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn is2D(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1063,7 +1045,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn delay(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1078,7 +1059,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn minPitch(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1093,7 +1073,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxPitch(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1108,7 +1087,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn minVolume(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1123,7 +1101,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxVolume(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -1138,7 +1115,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn ignoreTimeScale(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1187,7 +1163,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs<'a> {
     pub maxVolume: f32,
     pub ignoreTimeScale: bool,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs {
@@ -1296,7 +1272,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXBuilder {
             fbb_: _fbb,
@@ -1304,7 +1282,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a>> {
@@ -1392,14 +1369,14 @@ impl clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
     }
 }
 pub enum clz_Torappu_Audio_MixerDescOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_MixerDesc<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_MixerDesc<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_MixerDesc<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1414,8 +1391,7 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
     pub const VT_IMPORTANT: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_MixerDesc { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1437,7 +1413,6 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_MixerDescT {
         let category = self.category();
         let customGroup = self
@@ -1452,7 +1427,6 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn category(&self) -> enum__Torappu_Audio_MixerDesc_Category {
         // Safety:
         // Created from valid Table for this object
@@ -1467,7 +1441,6 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn customGroup(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1480,7 +1453,6 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn important(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1520,7 +1492,7 @@ pub struct clz_Torappu_Audio_MixerDescArgs<'a> {
     pub customGroup: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub important: bool,
 }
-impl Default for clz_Torappu_Audio_MixerDescArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_MixerDescArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_MixerDescArgs {
@@ -1558,7 +1530,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Audio_MixerDescBu
             .push_slot::<bool>(clz_Torappu_Audio_MixerDesc::VT_IMPORTANT, important, false);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_MixerDescBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_MixerDescBuilder {
             fbb_: _fbb,
@@ -1566,7 +1540,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Audio_MixerDescBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_MixerDesc<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1617,14 +1590,14 @@ impl clz_Torappu_Audio_MixerDescT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXBankOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1643,8 +1616,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
     pub const VT_MIXERDESC: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXBank { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1676,7 +1648,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
         let sounds = self
             .sounds()
@@ -1701,7 +1672,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn sounds(
         &self,
     ) -> Option<
@@ -1730,7 +1700,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxSoundAllowed(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1745,7 +1714,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn popOldest(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1760,7 +1728,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn customMixerGroup(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1773,7 +1740,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn loop_(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1788,7 +1754,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1801,7 +1766,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn mixerDesc(&self) -> Option<clz_Torappu_Audio_MixerDesc<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1867,7 +1831,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs<'a> {
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub mixerDesc: Option<::flatbuffers::WIPOffset<clz_Torappu_Audio_MixerDesc<'a>>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs {
@@ -1960,7 +1924,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_SoundFXBankBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_SoundFXBankBuilder {
             fbb_: _fbb,
@@ -1968,7 +1934,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a>> {
@@ -2047,14 +2012,14 @@ impl clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2070,8 +2035,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
     pub const VT_NAME: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2096,7 +2060,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
         let targetBank = self
             .targetBank()
@@ -2113,7 +2076,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn targetBank(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2126,7 +2088,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn ctrlStop(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2141,7 +2102,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn ctrlStopFadetime(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2156,7 +2116,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2195,7 +2154,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs<'a> {
     pub ctrlStopFadetime: f32,
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs {
@@ -2249,7 +2208,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankBuilder {
             fbb_: _fbb,
@@ -2257,7 +2218,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a>> {
@@ -2315,14 +2275,14 @@ impl clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_SnapshotBankOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2339,8 +2299,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
     pub const VT_NAME: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_SnapshotBank { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2368,7 +2327,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
         let targetSnapshot = self
             .targetSnapshot()
@@ -2389,7 +2347,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn targetSnapshot(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2402,7 +2359,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn hookSoundFxBank(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2415,7 +2371,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn delay(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2430,7 +2385,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn duration(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2445,7 +2399,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2490,7 +2443,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs<'a> {
     pub duration: f32,
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs {
@@ -2552,7 +2505,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_SnapshotBankBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_SnapshotBankBuilder {
             fbb_: _fbb,
@@ -2560,7 +2515,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a>> {
@@ -2623,14 +2577,14 @@ impl clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
     }
 }
 pub enum clz_Torappu_BattleVoiceOptionOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_BattleVoiceOption<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BattleVoiceOption<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_BattleVoiceOption<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2647,8 +2601,7 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
     pub const VT_DELAY: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_BattleVoiceOption { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2670,7 +2623,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_BattleVoiceOptionT {
         let voiceType = self.voiceType();
         let priority = self.priority();
@@ -2687,7 +2639,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn voiceType(&self) -> enum__Torappu_BattleVoiceOption_BattleVoiceType {
         // Safety:
         // Created from valid Table for this object
@@ -2702,7 +2653,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn priority(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2714,7 +2664,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn overlapIfSamePriority(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2729,7 +2678,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn cooldown(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2741,7 +2689,6 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn delay(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2788,7 +2735,7 @@ pub struct clz_Torappu_BattleVoiceOptionArgs {
 impl<'a> Default for clz_Torappu_BattleVoiceOptionArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_BattleVoiceOptionArgs {
             voiceType: enum__Torappu_BattleVoiceOption_BattleVoiceType::BATTLE_START,
             priority: 0,
             overlapIfSamePriority: false,
@@ -2836,7 +2783,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BattleVoiceOption
             .push_slot::<f32>(clz_Torappu_BattleVoiceOption::VT_DELAY, delay, 0.0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BattleVoiceOptionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_BattleVoiceOptionBuilder {
             fbb_: _fbb,
@@ -2844,7 +2793,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BattleVoiceOption
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_BattleVoiceOption<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2905,14 +2853,14 @@ impl clz_Torappu_BattleVoiceOptionT {
     }
 }
 pub enum clz_Torappu_BattleVoiceDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_BattleVoiceData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BattleVoiceData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_BattleVoiceData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2928,8 +2876,7 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
     pub const VT_VOICETYPEOPTIONS: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_BattleVoiceData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2952,7 +2899,6 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_BattleVoiceDataT {
         let crossfade = self.crossfade();
         let minTimeDeltaForEnemyEncounter = self.minTimeDeltaForEnemyEncounter();
@@ -2969,7 +2915,6 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn crossfade(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2981,7 +2926,6 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn minTimeDeltaForEnemyEncounter(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -2996,7 +2940,6 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn minSpCostForImportantPassiveSkill(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3011,7 +2954,6 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceTypeOptions(
         &self,
     ) -> Option<
@@ -3075,7 +3017,7 @@ pub struct clz_Torappu_BattleVoiceDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_BattleVoiceDataArgs<'_> {
+impl<'a> Default for clz_Torappu_BattleVoiceDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_BattleVoiceDataArgs {
@@ -3132,7 +3074,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BattleVoiceDataBu
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BattleVoiceDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_BattleVoiceDataBuilder {
             fbb_: _fbb,
@@ -3140,7 +3084,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_BattleVoiceDataBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_BattleVoiceData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3205,14 +3148,14 @@ impl clz_Torappu_BattleVoiceDataT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_MusicDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_MusicData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3227,8 +3170,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
     pub const VT_BANK: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_MusicData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3254,7 +3196,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_MusicDataT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let name = self.name().map(|x| alloc::string::ToString::to_string(x));
@@ -3263,7 +3204,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3276,7 +3216,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn name(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3289,7 +3228,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bank(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3322,7 +3260,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_MusicDataArgs<'a> {
     pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub bank: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_MusicDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_MusicDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_MusicDataArgs {
@@ -3366,7 +3304,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_MusicDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_MusicDataBuilder {
             fbb_: _fbb,
@@ -3374,7 +3314,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_MusicData<'a>> {
@@ -3423,14 +3362,14 @@ impl clz_Torappu_Audio_Middleware_Data_MusicDataT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_DuckingDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_DuckingData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3447,8 +3386,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
     pub const VT_FADESTYLEID: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_DuckingData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3474,7 +3412,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_DuckingDataT {
         let bank = self.bank().map(|x| alloc::string::ToString::to_string(x));
         let volume = self.volume();
@@ -3493,7 +3430,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn bank(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3506,7 +3442,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn volume(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -3521,7 +3456,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeTime(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -3536,7 +3470,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn delay(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -3551,7 +3484,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeStyleId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3592,7 +3524,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_DuckingDataArgs<'a> {
     pub delay: f32,
     pub fadeStyleId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_DuckingDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_DuckingDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_DuckingDataArgs {
@@ -3655,7 +3587,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_DuckingDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_DuckingDataBuilder {
             fbb_: _fbb,
@@ -3663,7 +3597,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_DuckingData<'a>> {
@@ -3726,14 +3659,14 @@ impl clz_Torappu_Audio_Middleware_Data_DuckingDataT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_FadeStyleDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3750,8 +3683,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
     pub const VT_FADEOUTTYPE: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_FadeStyleData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3775,7 +3707,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
         let styleName = self
             .styleName()
@@ -3794,7 +3725,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn styleName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3807,7 +3737,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeinTime(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -3822,7 +3751,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeoutTime(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -3837,7 +3765,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeinType(&self) -> enum__Torappu_Audio_Middleware_Data_AudioFadeType {
         // Safety:
         // Created from valid Table for this object
@@ -3852,7 +3779,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeoutType(&self) -> enum__Torappu_Audio_Middleware_Data_AudioFadeType {
         // Safety:
         // Created from valid Table for this object
@@ -3903,7 +3829,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs<'a> {
     pub fadeinType: enum__Torappu_Audio_Middleware_Data_AudioFadeType,
     pub fadeoutType: enum__Torappu_Audio_Middleware_Data_AudioFadeType,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs {
@@ -3975,7 +3901,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_FadeStyleDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_FadeStyleDataBuilder {
             fbb_: _fbb,
@@ -3983,7 +3911,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a>> {
@@ -4046,14 +3973,14 @@ impl clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
     }
 }
 pub enum dict__enum__Torappu_VoiceLangType__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__enum__Torappu_VoiceLangType__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__enum__Torappu_VoiceLangType__string<'a> {
-    type Inner = Self;
+    type Inner = dict__enum__Torappu_VoiceLangType__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4067,8 +3994,7 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__enum__Torappu_VoiceLangType__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4089,7 +4015,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__stringT {
         let key = self.key();
         let value = self.value().map(|x| alloc::string::ToString::to_string(x));
@@ -4097,7 +4022,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> enum__Torappu_VoiceLangType {
         // Safety:
         // Created from valid Table for this object
@@ -4112,13 +4036,11 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__enum__Torappu_VoiceLangType__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(
         &self,
         val: enum__Torappu_VoiceLangType,
@@ -4127,7 +4049,6 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4158,7 +4079,7 @@ pub struct dict__enum__Torappu_VoiceLangType__stringArgs<'a> {
     pub key: enum__Torappu_VoiceLangType,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__enum__Torappu_VoiceLangType__stringArgs<'_> {
+impl<'a> Default for dict__enum__Torappu_VoiceLangType__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__enum__Torappu_VoiceLangType__stringArgs {
@@ -4195,7 +4116,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__enum__Torappu_VoiceLangType__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__enum__Torappu_VoiceLangType__stringBuilder {
             fbb_: _fbb,
@@ -4203,7 +4126,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__enum__Torappu_VoiceLangType__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4246,7 +4168,7 @@ impl dict__enum__Torappu_VoiceLangType__stringT {
     }
 }
 pub enum dict__string__list_dict__enum__Torappu_VoiceLangType__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -4255,7 +4177,7 @@ pub struct dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a>
 {
-    type Inner = Self;
+    type Inner = dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4269,8 +4191,7 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_dict__enum__Torappu_VoiceLangType__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4295,7 +4216,6 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
         let key = {
             let x = self.key();
@@ -4306,7 +4226,6 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4321,7 +4240,6 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__list_dict__enum__Torappu_VoiceLangType__string,
@@ -4330,13 +4248,11 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<
@@ -4393,7 +4309,7 @@ pub struct dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs<'a> 
         >,
     >,
 }
-impl Default for dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs<'_> {
+impl<'a> Default for dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs {
@@ -4437,7 +4353,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder {
             fbb_: _fbb,
@@ -4445,7 +4363,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a>>
@@ -4503,7 +4420,7 @@ impl dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
     }
 }
 pub enum dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -4512,7 +4429,8 @@ pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangTy
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a>
 {
-    type Inner = Self;
+    type Inner =
+        dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4526,8 +4444,7 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string {
             _tab: table,
         }
@@ -4554,7 +4471,6 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(
         &self,
     ) -> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
@@ -4570,7 +4486,6 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4580,7 +4495,6 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string,
@@ -4589,13 +4503,11 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<
@@ -4650,8 +4562,8 @@ pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangTy
         >,
     >,
 }
-impl Default
-    for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs<'_>
+impl<'a> Default
+    for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs<'a>
 {
     #[inline]
     fn default() -> Self {
@@ -4699,7 +4611,13 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder<
+        'a,
+        'b,
+        A,
+    > {
         let start = _fbb.start_table();
         dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder {
             fbb_: _fbb,
@@ -4707,7 +4625,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -4775,14 +4692,14 @@ impl dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__st
     }
 }
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4796,8 +4713,7 @@ impl<'a> dict__string__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4820,7 +4736,6 @@ impl<'a> dict__string__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__stringT {
         let key = {
             let x = self.key();
@@ -4831,7 +4746,6 @@ impl<'a> dict__string__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4843,19 +4757,16 @@ impl<'a> dict__string__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4884,7 +4795,7 @@ pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__string__stringArgs<'_> {
+impl<'a> Default for dict__string__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__stringArgs {
@@ -4910,7 +4821,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__stringBuilder {
             fbb_: _fbb,
@@ -4918,7 +4831,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(o, dict__string__string::VT_KEY, "key");
@@ -4962,14 +4874,14 @@ impl dict__string__stringT {
     }
 }
 pub enum clz_Torappu_Audio_Middleware_Data_TorappuAudioDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4991,8 +4903,7 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
     pub const VT_BANKALIAS: ::flatbuffers::VOffsetT = 22;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Audio_Middleware_Data_TorappuAudioData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5039,7 +4950,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
         let bgmBanks = self
             .bgmBanks()
@@ -5086,7 +4996,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn bgmBanks(
         &self,
     ) -> Option<
@@ -5111,7 +5020,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn soundFXBanks(
         &self,
     ) -> Option<
@@ -5136,7 +5044,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn soundFXCtrlBanks(
         &self,
     ) -> Option<
@@ -5163,7 +5070,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn snapshotBanks(
         &self,
     ) -> Option<
@@ -5188,7 +5094,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn battleVoice(&self) -> Option<clz_Torappu_BattleVoiceData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -5202,7 +5107,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn musics(
         &self,
     ) -> Option<
@@ -5227,7 +5131,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn duckings(
         &self,
     ) -> Option<
@@ -5252,7 +5155,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fadeStyles(
         &self,
     ) -> Option<
@@ -5277,7 +5179,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn soundFxVoiceLang(
         &self,
     ) -> Option<
@@ -5296,7 +5197,6 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bankAlias(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
@@ -5414,7 +5314,7 @@ pub struct clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs {
@@ -5593,7 +5493,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Audio_Middleware_Data_TorappuAudioDataBuilder {
             fbb_: _fbb,
@@ -5601,7 +5503,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a>> {
@@ -5782,10 +5683,9 @@ pub fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_dat
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_Audio_Middleware_Data_TorappuAudioData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_Audio_Middleware_Data_TorappuAudioData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Audio_Middleware_Data_TorappuAudioData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {
@@ -5794,10 +5694,9 @@ pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unche
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_Audio_Middleware_Data_TorappuAudioData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Audio_Middleware_Data_TorappuAudioData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Audio_Middleware_Data_TorappuAudioData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {

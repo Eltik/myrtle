@@ -69,8 +69,7 @@ impl enum__Torappu_GachaRuleType {
         Self::BACKFLOW,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NORMAL => Some("NORMAL"),
             Self::LIMITED => Some("LIMITED"),
@@ -104,7 +103,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_GachaRuleType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_GachaRuleType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -127,7 +126,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_GachaRuleType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_GachaRuleType {
-    type Output = Self;
+    type Output = enum__Torappu_GachaRuleType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -168,13 +167,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -268,6 +267,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -368,9 +369,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -465,10 +468,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -563,6 +567,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -583,7 +589,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -606,7 +612,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -639,14 +645,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 pub enum hg__internal__JObjectOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct hg__internal__JObject<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for hg__internal__JObject<'a> {
-    type Inner = Self;
+    type Inner = hg__internal__JObject<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -659,8 +665,7 @@ impl<'a> hg__internal__JObject<'a> {
     pub const VT_BASE64: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         hg__internal__JObject { _tab: table }
     }
     #[allow(unused_mut)]
@@ -680,14 +685,12 @@ impl<'a> hg__internal__JObject<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> hg__internal__JObjectT {
         let base64 = self.base64().map(|x| alloc::string::ToString::to_string(x));
         hg__internal__JObjectT { base64 }
     }
 
     #[inline]
-    #[must_use]
     pub fn base64(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -714,7 +717,7 @@ impl ::flatbuffers::Verifiable for hg__internal__JObject<'_> {
 pub struct hg__internal__JObjectArgs<'a> {
     pub base64: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for hg__internal__JObjectArgs<'_> {
+impl<'a> Default for hg__internal__JObjectArgs<'a> {
     #[inline]
     fn default() -> Self {
         hg__internal__JObjectArgs { base64: None }
@@ -734,7 +737,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> hg__internal__JObjectBuilder<
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> hg__internal__JObjectBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         hg__internal__JObjectBuilder {
             fbb_: _fbb,
@@ -742,7 +747,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> hg__internal__JObjectBuilder<
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<hg__internal__JObject<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -776,14 +780,14 @@ impl hg__internal__JObjectT {
     }
 }
 pub enum clz_Torappu_GachaPoolClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaPoolClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaPoolClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaPoolClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -814,8 +818,7 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
     pub const VT_LIMITPARAM: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaPoolClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -877,7 +880,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaPoolClientDataT {
         let gachaPoolId = self
             .gachaPoolId()
@@ -946,7 +948,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn gachaPoolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -959,7 +960,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -971,7 +971,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn openTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -983,7 +982,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -995,7 +993,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1008,7 +1005,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolSummary(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1021,7 +1017,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolDetail(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1034,7 +1029,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn guaranteeName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1047,7 +1041,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn guarantee5Avail(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1059,7 +1052,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn guarantee5Count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1071,7 +1063,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn LMTGSID(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1084,7 +1075,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn CDPrimColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1097,7 +1087,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn CDSecColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1110,7 +1099,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn freeBackColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1123,7 +1111,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaRuleType(&self) -> enum__Torappu_GachaRuleType {
         // Safety:
         // Created from valid Table for this object
@@ -1138,7 +1125,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dynMeta(&self) -> Option<hg__internal__JObject<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1152,7 +1138,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn linkageRuleId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1165,7 +1150,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn linkageParam(&self) -> Option<hg__internal__JObject<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1179,7 +1163,6 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn limitParam(&self) -> Option<hg__internal__JObject<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1301,7 +1284,7 @@ pub struct clz_Torappu_GachaPoolClientDataArgs<'a> {
     pub linkageParam: Option<::flatbuffers::WIPOffset<hg__internal__JObject<'a>>>,
     pub limitParam: Option<::flatbuffers::WIPOffset<hg__internal__JObject<'a>>>,
 }
-impl Default for clz_Torappu_GachaPoolClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaPoolClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaPoolClientDataArgs {
@@ -1478,7 +1461,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaPoolClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaPoolClientDataBuilder {
             fbb_: _fbb,
@@ -1486,7 +1471,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaPoolClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1620,14 +1604,14 @@ impl clz_Torappu_GachaPoolClientDataT {
     }
 }
 pub enum clz_Torappu_NewbeeGachaPoolClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_NewbeeGachaPoolClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_NewbeeGachaPoolClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_NewbeeGachaPoolClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1646,8 +1630,7 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
     pub const VT_GACHAOFFSET: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_NewbeeGachaPoolClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1679,7 +1662,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_NewbeeGachaPoolClientDataT {
         let gachaPoolId = self
             .gachaPoolId()
@@ -1708,7 +1690,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn gachaPoolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1721,7 +1702,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1736,7 +1716,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1749,7 +1728,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolDetail(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1762,7 +1740,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPrice(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1777,7 +1754,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaTimes(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1792,7 +1768,6 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaOffset(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1849,7 +1824,7 @@ pub struct clz_Torappu_NewbeeGachaPoolClientDataArgs<'a> {
     pub gachaTimes: i32,
     pub gachaOffset: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_NewbeeGachaPoolClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_NewbeeGachaPoolClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_NewbeeGachaPoolClientDataArgs {
@@ -1928,7 +1903,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_NewbeeGachaPoolClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_NewbeeGachaPoolClientDataBuilder {
             fbb_: _fbb,
@@ -1936,7 +1913,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_NewbeeGachaPoolClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2007,14 +1983,14 @@ impl clz_Torappu_NewbeeGachaPoolClientDataT {
     }
 }
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2029,8 +2005,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2052,7 +2027,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -2061,7 +2035,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2072,7 +2045,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2084,7 +2056,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -2119,7 +2090,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -2154,7 +2125,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -2162,7 +2135,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2206,14 +2178,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2228,8 +2200,7 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
     pub const VT_ITEMCOSTS: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2252,7 +2223,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
         let timeLength = self.timeLength();
         let recruitPrice = self.recruitPrice();
@@ -2267,7 +2237,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn timeLength(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2282,7 +2251,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitPrice(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2297,7 +2265,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn itemCosts(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
@@ -2341,7 +2308,7 @@ pub struct clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs<'_> {
+impl<'a> Default for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs {
@@ -2392,7 +2359,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataBuilder {
             fbb_: _fbb,
@@ -2400,7 +2369,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a>> {
@@ -2456,14 +2424,14 @@ impl clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
     }
 }
 pub enum dict__int__intOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__int<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__int<'a> {
-    type Inner = Self;
+    type Inner = dict__int__int<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2477,8 +2445,7 @@ impl<'a> dict__int__int<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__int { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2497,7 +2464,6 @@ impl<'a> dict__int__int<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__intT {
         let key = self.key();
         let value = self.value();
@@ -2505,7 +2471,6 @@ impl<'a> dict__int__int<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2517,19 +2482,16 @@ impl<'a> dict__int__int<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__int) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2562,7 +2524,7 @@ pub struct dict__int__intArgs {
 impl<'a> Default for dict__int__intArgs {
     #[inline]
     fn default() -> Self {
-        Self { key: 0, value: 0 }
+        dict__int__intArgs { key: 0, value: 0 }
     }
 }
 
@@ -2581,7 +2543,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__intBuilder<'a, 'b,
             .push_slot::<i32>(dict__int__int::VT_VALUE, value, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__intBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__intBuilder {
             fbb_: _fbb,
@@ -2589,7 +2553,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__intBuilder<'a, 'b,
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__int<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2626,14 +2589,14 @@ impl dict__int__intT {
     }
 }
 pub enum clz_Torappu_BasedRecruitPool_RecruitConstantsOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_BasedRecruitPool_RecruitConstants<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2647,8 +2610,7 @@ impl<'a> clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
     pub const VT_MAXRECRUITTIME: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_BasedRecruitPool_RecruitConstants { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2669,7 +2631,6 @@ impl<'a> clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_BasedRecruitPool_RecruitConstantsT {
         let tagPriceList = self
             .tagPriceList()
@@ -2682,7 +2643,6 @@ impl<'a> clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tagPriceList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__int<'a>>>> {
@@ -2699,7 +2659,6 @@ impl<'a> clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn maxRecruitTime(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2738,7 +2697,7 @@ pub struct clz_Torappu_BasedRecruitPool_RecruitConstantsArgs<'a> {
     >,
     pub maxRecruitTime: i32,
 }
-impl Default for clz_Torappu_BasedRecruitPool_RecruitConstantsArgs<'_> {
+impl<'a> Default for clz_Torappu_BasedRecruitPool_RecruitConstantsArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_BasedRecruitPool_RecruitConstantsArgs {
@@ -2780,7 +2739,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_BasedRecruitPool_RecruitConstantsBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_BasedRecruitPool_RecruitConstantsBuilder {
             fbb_: _fbb,
@@ -2788,7 +2749,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants<'a>> {
@@ -2839,14 +2799,14 @@ impl clz_Torappu_BasedRecruitPool_RecruitConstantsT {
     }
 }
 pub enum clz_Torappu_SpecialRecruitPoolOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SpecialRecruitPool<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpecialRecruitPool<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SpecialRecruitPool<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2866,8 +2826,7 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
     pub const VT_RECRUITCONSTANTS: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SpecialRecruitPool { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2900,7 +2859,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SpecialRecruitPoolT {
         let recruitId = self
             .recruitId()
@@ -2931,7 +2889,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn recruitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2944,7 +2901,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2957,7 +2913,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2969,7 +2924,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn order(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2981,7 +2935,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startDateTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2993,7 +2946,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endDateTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3005,7 +2957,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitTimeTable(
         &self,
     ) -> Option<
@@ -3031,7 +2982,6 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitConstants(&self) -> Option<clz_Torappu_BasedRecruitPool_RecruitConstants<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3081,7 +3031,7 @@ pub struct clz_Torappu_SpecialRecruitPoolArgs<'a> {
     pub recruitConstants:
         Option<::flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants<'a>>>,
 }
-impl Default for clz_Torappu_SpecialRecruitPoolArgs<'_> {
+impl<'a> Default for clz_Torappu_SpecialRecruitPoolArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialRecruitPoolArgs {
@@ -3171,7 +3121,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants>>(clz_Torappu_SpecialRecruitPool::VT_RECRUITCONSTANTS, recruitConstants);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SpecialRecruitPoolBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SpecialRecruitPoolBuilder {
             fbb_: _fbb,
@@ -3179,7 +3131,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialRecruitPool<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3259,14 +3210,14 @@ impl clz_Torappu_SpecialRecruitPoolT {
     }
 }
 pub enum clz_Torappu_GachaTagOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaTag<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaTag<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaTag<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3281,8 +3232,7 @@ impl<'a> clz_Torappu_GachaTag<'a> {
     pub const VT_TAGGROUP: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaTag { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3304,7 +3254,6 @@ impl<'a> clz_Torappu_GachaTag<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaTagT {
         let tagId = self.tagId();
         let tagName = self
@@ -3319,7 +3268,6 @@ impl<'a> clz_Torappu_GachaTag<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tagId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3331,7 +3279,6 @@ impl<'a> clz_Torappu_GachaTag<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3342,7 +3289,6 @@ impl<'a> clz_Torappu_GachaTag<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagGroup(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3378,7 +3324,7 @@ pub struct clz_Torappu_GachaTagArgs<'a> {
     pub tagName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tagGroup: i32,
 }
-impl Default for clz_Torappu_GachaTagArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaTagArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaTagArgs {
@@ -3412,7 +3358,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GachaTagBuilder<'
             .push_slot::<i32>(clz_Torappu_GachaTag::VT_TAGGROUP, tagGroup, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaTagBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaTagBuilder {
             fbb_: _fbb,
@@ -3420,7 +3368,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GachaTagBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaTag<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3471,14 +3418,14 @@ impl clz_Torappu_GachaTagT {
     }
 }
 pub enum clz_Torappu_RecruitPool_RecruitTimeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_RecruitPool_RecruitTime<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RecruitPool_RecruitTime<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_RecruitPool_RecruitTime<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3492,8 +3439,7 @@ impl<'a> clz_Torappu_RecruitPool_RecruitTime<'a> {
     pub const VT_RECRUITPRICE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_RecruitPool_RecruitTime { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3512,7 +3458,6 @@ impl<'a> clz_Torappu_RecruitPool_RecruitTime<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_RecruitPool_RecruitTimeT {
         let timeLength = self.timeLength();
         let recruitPrice = self.recruitPrice();
@@ -3523,7 +3468,6 @@ impl<'a> clz_Torappu_RecruitPool_RecruitTime<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn timeLength(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3535,7 +3479,6 @@ impl<'a> clz_Torappu_RecruitPool_RecruitTime<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitPrice(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3571,7 +3514,7 @@ pub struct clz_Torappu_RecruitPool_RecruitTimeArgs {
 impl<'a> Default for clz_Torappu_RecruitPool_RecruitTimeArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_RecruitPool_RecruitTimeArgs {
             timeLength: 0,
             recruitPrice: 0,
         }
@@ -3603,7 +3546,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_RecruitPool_RecruitTimeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_RecruitPool_RecruitTimeBuilder {
             fbb_: _fbb,
@@ -3611,7 +3556,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RecruitPool_RecruitTime<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3657,14 +3601,14 @@ impl clz_Torappu_RecruitPool_RecruitTimeT {
     }
 }
 pub enum clz_Torappu_RecruitPoolOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_RecruitPool<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_RecruitPool<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_RecruitPool<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3678,8 +3622,7 @@ impl<'a> clz_Torappu_RecruitPool<'a> {
     pub const VT_RECRUITCONSTANTS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_RecruitPool { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3702,7 +3645,6 @@ impl<'a> clz_Torappu_RecruitPool<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_RecruitPoolT {
         let recruitTimeTable = self
             .recruitTimeTable()
@@ -3717,7 +3659,6 @@ impl<'a> clz_Torappu_RecruitPool<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn recruitTimeTable(
         &self,
     ) -> Option<
@@ -3739,7 +3680,6 @@ impl<'a> clz_Torappu_RecruitPool<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitConstants(&self) -> Option<clz_Torappu_BasedRecruitPool_RecruitConstants<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3775,7 +3715,7 @@ pub struct clz_Torappu_RecruitPoolArgs<'a> {
     pub recruitConstants:
         Option<::flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants<'a>>>,
 }
-impl Default for clz_Torappu_RecruitPoolArgs<'_> {
+impl<'a> Default for clz_Torappu_RecruitPoolArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RecruitPoolArgs {
@@ -3815,7 +3755,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RecruitPoolBuilde
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants>>(clz_Torappu_RecruitPool::VT_RECRUITCONSTANTS, recruitConstants);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_RecruitPoolBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_RecruitPoolBuilder {
             fbb_: _fbb,
@@ -3823,7 +3765,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RecruitPoolBuilde
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_RecruitPool<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3872,14 +3813,14 @@ impl clz_Torappu_RecruitPoolT {
     }
 }
 pub enum dict__int__clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = dict__int__clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3893,8 +3834,7 @@ impl<'a> dict__int__clz_Torappu_ItemBundle<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3915,7 +3855,6 @@ impl<'a> dict__int__clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__clz_Torappu_ItemBundleT {
         let key = self.key();
         let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -3923,7 +3862,6 @@ impl<'a> dict__int__clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3935,19 +3873,16 @@ impl<'a> dict__int__clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__clz_Torappu_ItemBundle) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3983,7 +3918,7 @@ pub struct dict__int__clz_Torappu_ItemBundleArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
 }
-impl Default for dict__int__clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for dict__int__clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__int__clz_Torappu_ItemBundleArgs {
@@ -4014,7 +3949,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -4022,7 +3959,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4065,14 +4001,14 @@ impl dict__int__clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_PotentialMaterialConverterConfigOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_PotentialMaterialConverterConfig<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_PotentialMaterialConverterConfig<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_PotentialMaterialConverterConfig<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4085,8 +4021,7 @@ impl<'a> clz_Torappu_PotentialMaterialConverterConfig<'a> {
     pub const VT_ITEMS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_PotentialMaterialConverterConfig { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4106,14 +4041,12 @@ impl<'a> clz_Torappu_PotentialMaterialConverterConfig<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_PotentialMaterialConverterConfigT {
         let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_PotentialMaterialConverterConfigT { items }
     }
 
     #[inline]
-    #[must_use]
     pub fn items(
         &self,
     ) -> Option<
@@ -4163,7 +4096,7 @@ pub struct clz_Torappu_PotentialMaterialConverterConfigArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_PotentialMaterialConverterConfigArgs<'_> {
+impl<'a> Default for clz_Torappu_PotentialMaterialConverterConfigArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_PotentialMaterialConverterConfigArgs { items: None }
@@ -4197,7 +4130,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_PotentialMaterialConverterConfigBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_PotentialMaterialConverterConfigBuilder {
             fbb_: _fbb,
@@ -4205,7 +4140,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_PotentialMaterialConverterConfig<'a>> {
@@ -4247,14 +4181,14 @@ impl clz_Torappu_PotentialMaterialConverterConfigT {
     }
 }
 pub enum clz_Torappu_GachaData_RecruitRangeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_RecruitRange<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_RecruitRange<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_RecruitRange<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4268,8 +4202,7 @@ impl<'a> clz_Torappu_GachaData_RecruitRange<'a> {
     pub const VT_RARITYEND: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_RecruitRange { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4288,7 +4221,6 @@ impl<'a> clz_Torappu_GachaData_RecruitRange<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_RecruitRangeT {
         let rarityStart = self.rarityStart();
         let rarityEnd = self.rarityEnd();
@@ -4299,7 +4231,6 @@ impl<'a> clz_Torappu_GachaData_RecruitRange<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn rarityStart(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4311,7 +4242,6 @@ impl<'a> clz_Torappu_GachaData_RecruitRange<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rarityEnd(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4344,7 +4274,7 @@ pub struct clz_Torappu_GachaData_RecruitRangeArgs {
 impl<'a> Default for clz_Torappu_GachaData_RecruitRangeArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_GachaData_RecruitRangeArgs {
             rarityStart: 0,
             rarityEnd: 0,
         }
@@ -4375,7 +4305,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_RecruitRangeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_RecruitRangeBuilder {
             fbb_: _fbb,
@@ -4383,7 +4315,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_RecruitRange<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4429,14 +4360,14 @@ impl clz_Torappu_GachaData_RecruitRangeT {
     }
 }
 pub enum dict__int__clz_Torappu_GachaData_RecruitRangeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
-    type Inner = Self;
+    type Inner = dict__int__clz_Torappu_GachaData_RecruitRange<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4450,8 +4381,7 @@ impl<'a> dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__clz_Torappu_GachaData_RecruitRange { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4472,7 +4402,6 @@ impl<'a> dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__clz_Torappu_GachaData_RecruitRangeT {
         let key = self.key();
         let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -4480,7 +4409,6 @@ impl<'a> dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4495,19 +4423,16 @@ impl<'a> dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__clz_Torappu_GachaData_RecruitRange) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_GachaData_RecruitRange<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -4543,7 +4468,7 @@ pub struct dict__int__clz_Torappu_GachaData_RecruitRangeArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_GachaData_RecruitRange<'a>>>,
 }
-impl Default for dict__int__clz_Torappu_GachaData_RecruitRangeArgs<'_> {
+impl<'a> Default for dict__int__clz_Torappu_GachaData_RecruitRangeArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__int__clz_Torappu_GachaData_RecruitRangeArgs {
@@ -4584,7 +4509,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__clz_Torappu_GachaData_RecruitRangeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__clz_Torappu_GachaData_RecruitRangeBuilder {
             fbb_: _fbb,
@@ -4592,7 +4519,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__int__clz_Torappu_GachaData_RecruitRange<'a>> {
@@ -4637,14 +4563,14 @@ impl dict__int__clz_Torappu_GachaData_RecruitRangeT {
     }
 }
 pub enum dict__int__list_intOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__list_int<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__list_int<'a> {
-    type Inner = Self;
+    type Inner = dict__int__list_int<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4658,8 +4584,7 @@ impl<'a> dict__int__list_int<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__list_int { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4680,7 +4605,6 @@ impl<'a> dict__int__list_int<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__list_intT {
         let key = self.key();
         let value = self.value().map(|x| x.into_iter().collect());
@@ -4688,7 +4612,6 @@ impl<'a> dict__int__list_int<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4700,19 +4623,16 @@ impl<'a> dict__int__list_int<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__list_int) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
         // Safety:
         // Created from valid Table for this object
@@ -4748,7 +4668,7 @@ pub struct dict__int__list_intArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
 }
-impl Default for dict__int__list_intArgs<'_> {
+impl<'a> Default for dict__int__list_intArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__int__list_intArgs {
@@ -4774,7 +4694,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__list_intBuilder<'a
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__int__list_int::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__list_intBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__list_intBuilder {
             fbb_: _fbb,
@@ -4782,7 +4704,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__list_intBuilder<'a
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__list_int<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4822,14 +4743,14 @@ impl dict__int__list_intT {
     }
 }
 pub enum clz_Torappu_GachaData_CarouselDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_CarouselData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_CarouselData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_CarouselData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4846,8 +4767,7 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
     pub const VT_SPRITEID: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_CarouselData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4873,7 +4793,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_CarouselDataT {
         let poolId = self.poolId().map(|x| alloc::string::ToString::to_string(x));
         let index = self.index();
@@ -4892,7 +4811,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn poolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4905,7 +4823,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn index(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4917,7 +4834,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4929,7 +4845,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4941,7 +4856,6 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spriteId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4982,7 +4896,7 @@ pub struct clz_Torappu_GachaData_CarouselDataArgs<'a> {
     pub endTime: i64,
     pub spriteId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_GachaData_CarouselDataArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_CarouselDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaData_CarouselDataArgs {
@@ -5035,7 +4949,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_CarouselDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_CarouselDataBuilder {
             fbb_: _fbb,
@@ -5043,7 +4959,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_CarouselData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5104,14 +5019,14 @@ impl clz_Torappu_GachaData_CarouselDataT {
     }
 }
 pub enum clz_Torappu_GachaData_FreeLimitGachaDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_FreeLimitGachaData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_FreeLimitGachaData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_FreeLimitGachaData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5127,8 +5042,7 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
     pub const VT_FREECOUNT: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_FreeLimitGachaData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5151,7 +5065,6 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_FreeLimitGachaDataT {
         let poolId = self.poolId().map(|x| alloc::string::ToString::to_string(x));
         let openTime = self.openTime();
@@ -5166,7 +5079,6 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn poolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5179,7 +5091,6 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn openTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5194,7 +5105,6 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5209,7 +5119,6 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn freeCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -5246,7 +5155,7 @@ pub struct clz_Torappu_GachaData_FreeLimitGachaDataArgs<'a> {
     pub endTime: i64,
     pub freeCount: i32,
 }
-impl Default for clz_Torappu_GachaData_FreeLimitGachaDataArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_FreeLimitGachaDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaData_FreeLimitGachaDataArgs {
@@ -5301,7 +5210,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_FreeLimitGachaDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_FreeLimitGachaDataBuilder {
             fbb_: _fbb,
@@ -5309,7 +5220,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_FreeLimitGachaData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5365,14 +5275,14 @@ impl clz_Torappu_GachaData_FreeLimitGachaDataT {
     }
 }
 pub enum clz_Torappu_GachaData_LimitTenGachaTktOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_LimitTenGachaTkt<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5386,8 +5296,7 @@ impl<'a> clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
     pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_LimitTenGachaTkt { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5408,7 +5317,6 @@ impl<'a> clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_LimitTenGachaTktT {
         let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
         let endTime = self.endTime();
@@ -5416,7 +5324,6 @@ impl<'a> clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn itemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5429,7 +5336,6 @@ impl<'a> clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5459,7 +5365,7 @@ pub struct clz_Torappu_GachaData_LimitTenGachaTktArgs<'a> {
     pub itemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub endTime: i64,
 }
-impl Default for clz_Torappu_GachaData_LimitTenGachaTktArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_LimitTenGachaTktArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaData_LimitTenGachaTktArgs {
@@ -5496,7 +5402,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_LimitTenGachaTktBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_LimitTenGachaTktBuilder {
             fbb_: _fbb,
@@ -5504,7 +5412,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LimitTenGachaTkt<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5546,15 +5453,15 @@ impl clz_Torappu_GachaData_LimitTenGachaTktT {
         )
     }
 }
-pub enum clz_Torappu_GachaData_LinkageTenGachaTktOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum clz_Torappu_GachaData_LinkageGachaTktOffset {}
+#[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
+pub struct clz_Torappu_GachaData_LinkageGachaTkt<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
-impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
-    type Inner = Self;
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_LinkageGachaTkt<'a> {
+    type Inner = clz_Torappu_GachaData_LinkageGachaTkt<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5563,15 +5470,15 @@ impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_LinkageTenGachaTkt<
     }
 }
 
-impl<'a> clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
+impl<'a> clz_Torappu_GachaData_LinkageGachaTkt<'a> {
     pub const VT_ITEMID: ::flatbuffers::VOffsetT = 4;
     pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 6;
     pub const VT_GACHAPOOLID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_ISTEN: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_GachaData_LinkageTenGachaTkt { _tab: table }
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_GachaData_LinkageGachaTkt { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<
@@ -5581,9 +5488,9 @@ impl<'a> clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
         A: ::flatbuffers::Allocator + 'bldr,
     >(
         _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_GachaData_LinkageTenGachaTktArgs<'args>,
-    ) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'bldr>> {
-        let mut builder = clz_Torappu_GachaData_LinkageTenGachaTktBuilder::new(_fbb);
+        args: &'args clz_Torappu_GachaData_LinkageGachaTktArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageGachaTkt<'bldr>> {
+        let mut builder = clz_Torappu_GachaData_LinkageGachaTktBuilder::new(_fbb);
         builder.add_endTime(args.endTime);
         if let Some(x) = args.gachaPoolId {
             builder.add_gachaPoolId(x);
@@ -5591,67 +5498,74 @@ impl<'a> clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
         if let Some(x) = args.itemId {
             builder.add_itemId(x);
         }
+        builder.add_isTen(args.isTen);
         builder.finish()
     }
 
-    #[must_use]
-    pub fn unpack(&self) -> clz_Torappu_GachaData_LinkageTenGachaTktT {
+    pub fn unpack(&self) -> clz_Torappu_GachaData_LinkageGachaTktT {
         let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
         let endTime = self.endTime();
         let gachaPoolId = self
             .gachaPoolId()
             .map(|x| alloc::string::ToString::to_string(x));
-        clz_Torappu_GachaData_LinkageTenGachaTktT {
+        let isTen = self.isTen();
+        clz_Torappu_GachaData_LinkageGachaTktT {
             itemId,
             endTime,
             gachaPoolId,
+            isTen,
         }
     }
 
     #[inline]
-    #[must_use]
     pub fn itemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_GachaData_LinkageTenGachaTkt::VT_ITEMID,
+                clz_Torappu_GachaData_LinkageGachaTkt::VT_ITEMID,
                 None,
             )
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i64>(
-                    clz_Torappu_GachaData_LinkageTenGachaTkt::VT_ENDTIME,
-                    Some(0),
-                )
+                .get::<i64>(clz_Torappu_GachaData_LinkageGachaTkt::VT_ENDTIME, Some(0))
                 .unwrap()
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_GachaData_LinkageTenGachaTkt::VT_GACHAPOOLID,
+                clz_Torappu_GachaData_LinkageGachaTkt::VT_GACHAPOOLID,
                 None,
             )
         }
     }
+    #[inline]
+    pub fn isTen(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_GachaData_LinkageGachaTkt::VT_ISTEN, Some(false))
+                .unwrap()
+        }
+    }
 }
 
-impl ::flatbuffers::Verifiable for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> {
+impl ::flatbuffers::Verifiable for clz_Torappu_GachaData_LinkageGachaTkt<'_> {
     #[inline]
     fn run_verifier(
         v: &mut ::flatbuffers::Verifier,
@@ -5665,27 +5579,30 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> 
                 Self::VT_GACHAPOOLID,
                 false,
             )?
+            .visit_field::<bool>("isTen", Self::VT_ISTEN, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_GachaData_LinkageTenGachaTktArgs<'a> {
+pub struct clz_Torappu_GachaData_LinkageGachaTktArgs<'a> {
     pub itemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub endTime: i64,
     pub gachaPoolId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub isTen: bool,
 }
-impl Default for clz_Torappu_GachaData_LinkageTenGachaTktArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_LinkageGachaTktArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_GachaData_LinkageTenGachaTktArgs {
+        clz_Torappu_GachaData_LinkageGachaTktArgs {
             itemId: None,
             endTime: 0,
             gachaPoolId: None,
+            isTen: false,
         }
     }
 }
 
-pub struct clz_Torappu_GachaData_LinkageTenGachaTktBuilder<
+pub struct clz_Torappu_GachaData_LinkageGachaTktBuilder<
     'a: 'b,
     'b,
     A: ::flatbuffers::Allocator + 'a,
@@ -5694,19 +5611,19 @@ pub struct clz_Torappu_GachaData_LinkageTenGachaTktBuilder<
     start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
-    clz_Torappu_GachaData_LinkageTenGachaTktBuilder<'a, 'b, A>
+    clz_Torappu_GachaData_LinkageGachaTktBuilder<'a, 'b, A>
 {
     #[inline]
     pub fn add_itemId(&mut self, itemId: ::flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_GachaData_LinkageTenGachaTkt::VT_ITEMID,
+            clz_Torappu_GachaData_LinkageGachaTkt::VT_ITEMID,
             itemId,
         );
     }
     #[inline]
     pub fn add_endTime(&mut self, endTime: i64) {
         self.fbb_.push_slot::<i64>(
-            clz_Torappu_GachaData_LinkageTenGachaTkt::VT_ENDTIME,
+            clz_Torappu_GachaData_LinkageGachaTkt::VT_ENDTIME,
             endTime,
             0,
         );
@@ -5714,78 +5631,92 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
     #[inline]
     pub fn add_gachaPoolId(&mut self, gachaPoolId: ::flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_GachaData_LinkageTenGachaTkt::VT_GACHAPOOLID,
+            clz_Torappu_GachaData_LinkageGachaTkt::VT_GACHAPOOLID,
             gachaPoolId,
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn add_isTen(&mut self, isTen: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_GachaData_LinkageGachaTkt::VT_ISTEN,
+            isTen,
+            false,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_LinkageGachaTktBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_GachaData_LinkageTenGachaTktBuilder {
+        clz_Torappu_GachaData_LinkageGachaTktBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    #[must_use]
-    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'a>> {
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageGachaTkt<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl ::core::fmt::Debug for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> {
+impl ::core::fmt::Debug for clz_Torappu_GachaData_LinkageGachaTkt<'_> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_GachaData_LinkageTenGachaTkt");
+        let mut ds = f.debug_struct("clz_Torappu_GachaData_LinkageGachaTkt");
         ds.field("itemId", &self.itemId());
         ds.field("endTime", &self.endTime());
         ds.field("gachaPoolId", &self.gachaPoolId());
+        ds.field("isTen", &self.isTen());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_GachaData_LinkageTenGachaTktT {
+pub struct clz_Torappu_GachaData_LinkageGachaTktT {
     pub itemId: Option<alloc::string::String>,
     pub endTime: i64,
     pub gachaPoolId: Option<alloc::string::String>,
+    pub isTen: bool,
 }
-impl Default for clz_Torappu_GachaData_LinkageTenGachaTktT {
+impl Default for clz_Torappu_GachaData_LinkageGachaTktT {
     fn default() -> Self {
         Self {
             itemId: None,
             endTime: 0,
             gachaPoolId: None,
+            isTen: false,
         }
     }
 }
-impl clz_Torappu_GachaData_LinkageTenGachaTktT {
+impl clz_Torappu_GachaData_LinkageGachaTktT {
     pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'b>> {
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageGachaTkt<'b>> {
         let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
         let endTime = self.endTime;
         let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
-        clz_Torappu_GachaData_LinkageTenGachaTkt::create(
+        let isTen = self.isTen;
+        clz_Torappu_GachaData_LinkageGachaTkt::create(
             _fbb,
-            &clz_Torappu_GachaData_LinkageTenGachaTktArgs {
+            &clz_Torappu_GachaData_LinkageGachaTktArgs {
                 itemId,
                 endTime,
                 gachaPoolId,
+                isTen,
             },
         )
     }
 }
 pub enum clz_Torappu_GachaData_NormalGachaTktOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_NormalGachaTkt<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_NormalGachaTkt<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_NormalGachaTkt<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5801,8 +5732,7 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
     pub const VT_ISTEN: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_NormalGachaTkt { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5827,7 +5757,6 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_NormalGachaTktT {
         let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
         let endTime = self.endTime();
@@ -5844,7 +5773,6 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn itemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5857,7 +5785,6 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5869,7 +5796,6 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5882,7 +5808,6 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isTen(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -5920,7 +5845,7 @@ pub struct clz_Torappu_GachaData_NormalGachaTktArgs<'a> {
     pub gachaPoolId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub isTen: bool,
 }
-impl Default for clz_Torappu_GachaData_NormalGachaTktArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_NormalGachaTktArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaData_NormalGachaTktArgs {
@@ -5965,7 +5890,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<bool>(clz_Torappu_GachaData_NormalGachaTkt::VT_ISTEN, isTen, false);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_NormalGachaTktBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_NormalGachaTktBuilder {
             fbb_: _fbb,
@@ -5973,7 +5900,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_NormalGachaTkt<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6029,14 +5955,14 @@ impl clz_Torappu_GachaData_NormalGachaTktT {
     }
 }
 pub enum clz_Torappu_GachaData_FesGachaPoolRelateItemOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6050,8 +5976,7 @@ impl<'a> clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     pub const VT_RARITYRANK6ITEMID: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData_FesGachaPoolRelateItem { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6074,7 +5999,6 @@ impl<'a> clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaData_FesGachaPoolRelateItemT {
         let rarityRank5ItemId = self
             .rarityRank5ItemId()
@@ -6089,7 +6013,6 @@ impl<'a> clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn rarityRank5ItemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6102,7 +6025,6 @@ impl<'a> clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rarityRank6ItemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6141,7 +6063,7 @@ pub struct clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
     pub rarityRank5ItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub rarityRank6ItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaData_FesGachaPoolRelateItemArgs {
@@ -6177,7 +6099,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder {
             fbb_: _fbb,
@@ -6185,7 +6109,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>> {
@@ -6239,7 +6162,7 @@ impl clz_Torappu_GachaData_FesGachaPoolRelateItemT {
     }
 }
 pub enum dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -6248,7 +6171,7 @@ pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>
 {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6262,8 +6185,7 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6288,7 +6210,6 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
         let key = {
             let x = self.key();
@@ -6299,7 +6220,6 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6314,7 +6234,6 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem,
@@ -6323,13 +6242,11 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6357,7 +6274,7 @@ pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemArgs {
@@ -6393,7 +6310,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_GachaData_FesGachaPoolRelateItem>>(dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder {
             fbb_: _fbb,
@@ -6401,7 +6320,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a>>
@@ -6456,14 +6374,14 @@ impl dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
     }
 }
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6477,8 +6395,7 @@ impl<'a> dict__string__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6501,7 +6418,6 @@ impl<'a> dict__string__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__stringT {
         let key = {
             let x = self.key();
@@ -6512,7 +6428,6 @@ impl<'a> dict__string__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6524,19 +6439,16 @@ impl<'a> dict__string__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6565,7 +6477,7 @@ pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__string__stringArgs<'_> {
+impl<'a> Default for dict__string__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__stringArgs {
@@ -6591,7 +6503,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__stringBuilder {
             fbb_: _fbb,
@@ -6599,7 +6513,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(o, dict__string__string::VT_KEY, "key");
@@ -6643,14 +6556,14 @@ impl dict__string__stringT {
     }
 }
 pub enum dict__int__floatOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__float<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__float<'a> {
-    type Inner = Self;
+    type Inner = dict__int__float<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6664,8 +6577,7 @@ impl<'a> dict__int__float<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__float { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6684,7 +6596,6 @@ impl<'a> dict__int__float<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__floatT {
         let key = self.key();
         let value = self.value();
@@ -6692,7 +6603,6 @@ impl<'a> dict__int__float<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -6704,19 +6614,16 @@ impl<'a> dict__int__float<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__float) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -6749,7 +6656,7 @@ pub struct dict__int__floatArgs {
 impl<'a> Default for dict__int__floatArgs {
     #[inline]
     fn default() -> Self {
-        Self { key: 0, value: 0.0 }
+        dict__int__floatArgs { key: 0, value: 0.0 }
     }
 }
 
@@ -6768,7 +6675,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__floatBuilder<'a, '
             .push_slot::<f32>(dict__int__float::VT_VALUE, value, 0.0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__floatBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__floatBuilder {
             fbb_: _fbb,
@@ -6776,7 +6685,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__floatBuilder<'a, '
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__float<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6813,14 +6721,14 @@ impl dict__int__floatT {
     }
 }
 pub enum clz_Torappu_GachaDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GachaData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GachaData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GachaData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6844,15 +6752,14 @@ impl<'a> clz_Torappu_GachaData<'a> {
     pub const VT_CAROUSEL: ::flatbuffers::VOffsetT = 26;
     pub const VT_FREEGACHA: ::flatbuffers::VOffsetT = 28;
     pub const VT_LIMITTENGACHAITEM: ::flatbuffers::VOffsetT = 30;
-    pub const VT_LINKAGETENGACHAITEM: ::flatbuffers::VOffsetT = 32;
+    pub const VT_LINKAGEGACHAITEM: ::flatbuffers::VOffsetT = 32;
     pub const VT_NORMALGACHAITEM: ::flatbuffers::VOffsetT = 34;
     pub const VT_FESGACHAPOOLRELATEITEM: ::flatbuffers::VOffsetT = 36;
     pub const VT_DICRECRUIT6STARHINT: ::flatbuffers::VOffsetT = 38;
     pub const VT_SPECIALGACHAPERCENTDICT: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GachaData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6878,8 +6785,8 @@ impl<'a> clz_Torappu_GachaData<'a> {
         if let Some(x) = args.normalGachaItem {
             builder.add_normalGachaItem(x);
         }
-        if let Some(x) = args.linkageTenGachaItem {
-            builder.add_linkageTenGachaItem(x);
+        if let Some(x) = args.linkageGachaItem {
+            builder.add_linkageGachaItem(x);
         }
         if let Some(x) = args.limitTenGachaItem {
             builder.add_limitTenGachaItem(x);
@@ -6924,7 +6831,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GachaDataT {
         let gachaPoolClient = self
             .gachaPoolClient()
@@ -6966,8 +6872,8 @@ impl<'a> clz_Torappu_GachaData<'a> {
         let limitTenGachaItem = self
             .limitTenGachaItem()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let linkageTenGachaItem = self
-            .linkageTenGachaItem()
+        let linkageGachaItem = self
+            .linkageGachaItem()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
         let normalGachaItem = self
             .normalGachaItem()
@@ -6996,7 +6902,7 @@ impl<'a> clz_Torappu_GachaData<'a> {
             carousel,
             freeGacha,
             limitTenGachaItem,
-            linkageTenGachaItem,
+            linkageGachaItem,
             normalGachaItem,
             fesGachaPoolRelateItem,
             dicRecruit6StarHint,
@@ -7005,7 +6911,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn gachaPoolClient(
         &self,
     ) -> Option<
@@ -7027,7 +6932,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn newbeeGachaPoolClient(
         &self,
     ) -> Option<
@@ -7049,7 +6953,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn specialRecruitPool(
         &self,
     ) -> Option<
@@ -7071,7 +6974,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaTags(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaTag<'a>>>>
@@ -7086,7 +6988,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitPool(&self) -> Option<clz_Torappu_RecruitPool<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -7100,7 +7001,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn potentialMaterialConverter(
         &self,
     ) -> Option<clz_Torappu_PotentialMaterialConverterConfig<'a>> {
@@ -7112,7 +7012,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn classicPotentialMaterialConverter(
         &self,
     ) -> Option<clz_Torappu_PotentialMaterialConverterConfig<'a>> {
@@ -7124,7 +7023,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitRarityTable(
         &self,
     ) -> Option<
@@ -7146,7 +7044,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn specialTagRarityTable(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__list_int<'a>>>>
@@ -7161,7 +7058,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recruitDetail(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7174,7 +7070,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn showGachaLogEntry(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -7186,7 +7081,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn carousel(
         &self,
     ) -> Option<
@@ -7208,7 +7102,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn freeGacha(
         &self,
     ) -> Option<
@@ -7230,7 +7123,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn limitTenGachaItem(
         &self,
     ) -> Option<
@@ -7252,13 +7144,12 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
-    pub fn linkageTenGachaItem(
+    pub fn linkageGachaItem(
         &self,
     ) -> Option<
         ::flatbuffers::Vector<
             'a,
-            ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'a>>,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageGachaTkt<'a>>,
         >,
     > {
         // Safety:
@@ -7268,13 +7159,12 @@ impl<'a> clz_Torappu_GachaData<'a> {
             self._tab.get::<::flatbuffers::ForwardsUOffset<
                 ::flatbuffers::Vector<
                     'a,
-                    ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageTenGachaTkt>,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageGachaTkt>,
                 >,
-            >>(clz_Torappu_GachaData::VT_LINKAGETENGACHAITEM, None)
+            >>(clz_Torappu_GachaData::VT_LINKAGEGACHAITEM, None)
         }
     }
     #[inline]
-    #[must_use]
     pub fn normalGachaItem(
         &self,
     ) -> Option<
@@ -7296,7 +7186,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn fesGachaPoolRelateItem(
         &self,
     ) -> Option<
@@ -7322,7 +7211,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dicRecruit6StarHint(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
@@ -7337,7 +7225,6 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn specialGachaPercentDict(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__float<'a>>>>
@@ -7374,7 +7261,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_GachaData<'_> {
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_CarouselData>>>>("carousel", Self::VT_CAROUSEL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_FreeLimitGachaData>>>>("freeGacha", Self::VT_FREEGACHA, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LimitTenGachaTkt>>>>("limitTenGachaItem", Self::VT_LIMITTENGACHAITEM, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageTenGachaTkt>>>>("linkageTenGachaItem", Self::VT_LINKAGETENGACHAITEM, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageGachaTkt>>>>("linkageGachaItem", Self::VT_LINKAGEGACHAITEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_NormalGachaTkt>>>>("normalGachaItem", Self::VT_NORMALGACHAITEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem>>>>("fesGachaPoolRelateItem", Self::VT_FESGACHAPOOLRELATEITEM, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<dict__string__string>>>>("dicRecruit6StarHint", Self::VT_DICRECRUIT6STARHINT, false)?
@@ -7457,11 +7344,11 @@ pub struct clz_Torappu_GachaDataArgs<'a> {
             >,
         >,
     >,
-    pub linkageTenGachaItem: Option<
+    pub linkageGachaItem: Option<
         ::flatbuffers::WIPOffset<
             ::flatbuffers::Vector<
                 'a,
-                ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'a>>,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageGachaTkt<'a>>,
             >,
         >,
     >,
@@ -7494,7 +7381,7 @@ pub struct clz_Torappu_GachaDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_GachaDataArgs<'_> {
+impl<'a> Default for clz_Torappu_GachaDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GachaDataArgs {
@@ -7512,7 +7399,7 @@ impl Default for clz_Torappu_GachaDataArgs<'_> {
             carousel: None,
             freeGacha: None,
             limitTenGachaItem: None,
-            linkageTenGachaItem: None,
+            linkageGachaItem: None,
             normalGachaItem: None,
             fesGachaPoolRelateItem: None,
             dicRecruit6StarHint: None,
@@ -7700,18 +7587,18 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GachaDataBuilder<
         );
     }
     #[inline]
-    pub fn add_linkageTenGachaItem(
+    pub fn add_linkageGachaItem(
         &mut self,
-        linkageTenGachaItem: ::flatbuffers::WIPOffset<
+        linkageGachaItem: ::flatbuffers::WIPOffset<
             ::flatbuffers::Vector<
                 'b,
-                ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'b>>,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_GachaData_LinkageGachaTkt<'b>>,
             >,
         >,
     ) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
-            clz_Torappu_GachaData::VT_LINKAGETENGACHAITEM,
-            linkageTenGachaItem,
+            clz_Torappu_GachaData::VT_LINKAGEGACHAITEM,
+            linkageGachaItem,
         );
     }
     #[inline]
@@ -7771,7 +7658,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GachaDataBuilder<
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GachaDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GachaDataBuilder {
             fbb_: _fbb,
@@ -7779,7 +7668,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_GachaDataBuilder<
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GachaData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7809,7 +7697,7 @@ impl ::core::fmt::Debug for clz_Torappu_GachaData<'_> {
         ds.field("carousel", &self.carousel());
         ds.field("freeGacha", &self.freeGacha());
         ds.field("limitTenGachaItem", &self.limitTenGachaItem());
-        ds.field("linkageTenGachaItem", &self.linkageTenGachaItem());
+        ds.field("linkageGachaItem", &self.linkageGachaItem());
         ds.field("normalGachaItem", &self.normalGachaItem());
         ds.field("fesGachaPoolRelateItem", &self.fesGachaPoolRelateItem());
         ds.field("dicRecruit6StarHint", &self.dicRecruit6StarHint());
@@ -7836,7 +7724,7 @@ pub struct clz_Torappu_GachaDataT {
     pub carousel: Option<alloc::vec::Vec<clz_Torappu_GachaData_CarouselDataT>>,
     pub freeGacha: Option<alloc::vec::Vec<clz_Torappu_GachaData_FreeLimitGachaDataT>>,
     pub limitTenGachaItem: Option<alloc::vec::Vec<clz_Torappu_GachaData_LimitTenGachaTktT>>,
-    pub linkageTenGachaItem: Option<alloc::vec::Vec<clz_Torappu_GachaData_LinkageTenGachaTktT>>,
+    pub linkageGachaItem: Option<alloc::vec::Vec<clz_Torappu_GachaData_LinkageGachaTktT>>,
     pub normalGachaItem: Option<alloc::vec::Vec<clz_Torappu_GachaData_NormalGachaTktT>>,
     pub fesGachaPoolRelateItem:
         Option<alloc::vec::Vec<dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT>>,
@@ -7860,7 +7748,7 @@ impl Default for clz_Torappu_GachaDataT {
             carousel: None,
             freeGacha: None,
             limitTenGachaItem: None,
-            linkageTenGachaItem: None,
+            linkageGachaItem: None,
             normalGachaItem: None,
             fesGachaPoolRelateItem: None,
             dicRecruit6StarHint: None,
@@ -7920,7 +7808,7 @@ impl clz_Torappu_GachaDataT {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
-        let linkageTenGachaItem = self.linkageTenGachaItem.as_ref().map(|x| {
+        let linkageGachaItem = self.linkageGachaItem.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
@@ -7957,7 +7845,7 @@ impl clz_Torappu_GachaDataT {
                 carousel,
                 freeGacha,
                 limitTenGachaItem,
-                linkageTenGachaItem,
+                linkageGachaItem,
                 normalGachaItem,
                 fesGachaPoolRelateItem,
                 dicRecruit6StarHint,
@@ -8017,18 +7905,16 @@ pub fn size_prefixed_root_as_clz_torappu_gacha_data_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_GachaData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_GachaData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_GachaData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_GachaData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_gacha_data_unchecked(buf: &[u8]) -> clz_Torappu_GachaData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_GachaData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_GachaData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_GachaData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_GachaData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_gacha_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_GachaData<'_> {

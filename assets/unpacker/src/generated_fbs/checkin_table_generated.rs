@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -113,6 +113,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -213,9 +215,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -310,10 +314,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -408,6 +413,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -428,7 +435,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -451,7 +458,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -484,14 +491,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ItemType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ItemType {}
 pub enum clz_Torappu_MonthlySignInDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MonthlySignInData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MonthlySignInData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MonthlySignInData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -506,8 +513,7 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
     pub const VT_COUNT: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MonthlySignInData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -529,7 +535,6 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MonthlySignInDataT {
         let itemId = self.itemId().map(|x| alloc::string::ToString::to_string(x));
         let itemType = self.itemType();
@@ -542,7 +547,6 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn itemId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -555,7 +559,6 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn itemType(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -570,7 +573,6 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -602,7 +604,7 @@ pub struct clz_Torappu_MonthlySignInDataArgs<'a> {
     pub itemType: enum__Torappu_ItemType,
     pub count: i32,
 }
-impl Default for clz_Torappu_MonthlySignInDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MonthlySignInDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MonthlySignInDataArgs {
@@ -639,7 +641,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MonthlySignInData
             .push_slot::<i32>(clz_Torappu_MonthlySignInData::VT_COUNT, count, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MonthlySignInDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MonthlySignInDataBuilder {
             fbb_: _fbb,
@@ -647,7 +651,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MonthlySignInData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MonthlySignInData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -698,14 +701,14 @@ impl clz_Torappu_MonthlySignInDataT {
     }
 }
 pub enum clz_Torappu_MonthlySignInGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MonthlySignInGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MonthlySignInGroupData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MonthlySignInGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -723,8 +726,7 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
     pub const VT_ITEMS: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MonthlySignInGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -755,7 +757,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MonthlySignInGroupDataT {
         let groupId = self
             .groupId()
@@ -778,7 +779,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -791,7 +791,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn title(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -804,7 +803,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -817,7 +815,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn signStartTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -832,7 +829,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn signEndTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -844,7 +840,6 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn items(
         &self,
     ) -> Option<
@@ -912,7 +907,7 @@ pub struct clz_Torappu_MonthlySignInGroupDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MonthlySignInGroupDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MonthlySignInGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MonthlySignInGroupDataArgs {
@@ -986,7 +981,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MonthlySignInGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MonthlySignInGroupDataBuilder {
             fbb_: _fbb,
@@ -994,7 +991,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MonthlySignInGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1063,14 +1059,14 @@ impl clz_Torappu_MonthlySignInGroupDataT {
     }
 }
 pub enum dict__string__clz_Torappu_MonthlySignInGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MonthlySignInGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1084,8 +1080,7 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MonthlySignInGroupData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1108,7 +1103,6 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MonthlySignInGroupDataT {
         let key = {
             let x = self.key();
@@ -1119,7 +1113,6 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1134,7 +1127,6 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_MonthlySignInGroupData,
@@ -1143,13 +1135,11 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MonthlySignInGroupData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1185,7 +1175,7 @@ pub struct dict__string__clz_Torappu_MonthlySignInGroupDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MonthlySignInGroupData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MonthlySignInGroupDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MonthlySignInGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MonthlySignInGroupDataArgs {
@@ -1225,7 +1215,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MonthlySignInGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MonthlySignInGroupDataBuilder {
             fbb_: _fbb,
@@ -1233,7 +1225,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MonthlySignInGroupData<'a>> {
@@ -1286,14 +1277,14 @@ impl dict__string__clz_Torappu_MonthlySignInGroupDataT {
     }
 }
 pub enum clz_Torappu_ItemBundleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ItemBundle<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ItemBundle<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1308,8 +1299,7 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     pub const VT_TYPE_: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ItemBundle { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1331,7 +1321,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let count = self.count();
@@ -1340,7 +1329,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1351,7 +1339,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1363,7 +1350,6 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -1398,7 +1384,7 @@ pub struct clz_Torappu_ItemBundleArgs<'a> {
     pub count: i32,
     pub type_: enum__Torappu_ItemType,
 }
-impl Default for clz_Torappu_ItemBundleArgs<'_> {
+impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ItemBundleArgs {
@@ -1433,7 +1419,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ItemBundleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ItemBundleBuilder {
             fbb_: _fbb,
@@ -1441,7 +1429,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ItemBundleBuilder
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1485,14 +1472,14 @@ impl clz_Torappu_ItemBundleT {
     }
 }
 pub enum clz_Torappu_MonthlyDailyBonusGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MonthlyDailyBonusGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MonthlyDailyBonusGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MonthlyDailyBonusGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1510,8 +1497,7 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
     pub const VT_BACKID: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MonthlyDailyBonusGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1542,7 +1528,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MonthlyDailyBonusGroupT {
         let groupId = self
             .groupId()
@@ -1563,7 +1548,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1576,7 +1560,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1588,7 +1571,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1600,7 +1582,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn items(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
@@ -1615,7 +1596,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn imgId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1628,7 +1608,6 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn backId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1677,7 +1656,7 @@ pub struct clz_Torappu_MonthlyDailyBonusGroupArgs<'a> {
     pub imgId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub backId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_MonthlyDailyBonusGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_MonthlyDailyBonusGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MonthlyDailyBonusGroupArgs {
@@ -1745,7 +1724,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MonthlyDailyBonusGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MonthlyDailyBonusGroupBuilder {
             fbb_: _fbb,
@@ -1753,7 +1734,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MonthlyDailyBonusGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1822,14 +1802,14 @@ impl clz_Torappu_MonthlyDailyBonusGroupT {
     }
 }
 pub enum dict__string__list_clz_Torappu_MonthlyDailyBonusGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
-    type Inner = Self;
+    type Inner = dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1843,8 +1823,7 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_clz_Torappu_MonthlyDailyBonusGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1868,7 +1847,6 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
         let key = {
             let x = self.key();
@@ -1879,7 +1857,6 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1894,7 +1871,6 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__list_clz_Torappu_MonthlyDailyBonusGroup,
@@ -1903,13 +1879,11 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<
@@ -1964,7 +1938,7 @@ pub struct dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs<'a> {
         >,
     >,
 }
-impl Default for dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs<'_> {
+impl<'a> Default for dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs {
@@ -2008,7 +1982,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_clz_Torappu_MonthlyDailyBonusGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__list_clz_Torappu_MonthlyDailyBonusGroupBuilder {
             fbb_: _fbb,
@@ -2016,7 +1992,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a>> {
@@ -2072,14 +2047,14 @@ impl dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
     }
 }
 pub enum clz_Torappu_CheckInTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CheckInTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CheckInTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CheckInTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2094,8 +2069,7 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
     pub const VT_CURRENTMONTHLYSUBID: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CheckInTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2121,7 +2095,6 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CheckInTableT {
         let groups = self
             .groups()
@@ -2140,7 +2113,6 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groups(
         &self,
     ) -> Option<
@@ -2164,7 +2136,6 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn monthlySubItem(
         &self,
     ) -> Option<
@@ -2190,7 +2161,6 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn currentMonthlySubId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2259,7 +2229,7 @@ pub struct clz_Torappu_CheckInTableArgs<'a> {
     >,
     pub currentMonthlySubId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CheckInTableArgs<'_> {
+impl<'a> Default for clz_Torappu_CheckInTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CheckInTableArgs {
@@ -2320,7 +2290,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CheckInTableBuild
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CheckInTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CheckInTableBuilder {
             fbb_: _fbb,
@@ -2328,7 +2300,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CheckInTableBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CheckInTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2439,20 +2410,18 @@ pub fn size_prefixed_root_as_clz_torappu_check_in_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_CheckInTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_CheckInTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_CheckInTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_CheckInTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CheckInTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_CheckInTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_CheckInTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CheckInTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_CheckInTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_check_in_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CheckInTable<'_> {

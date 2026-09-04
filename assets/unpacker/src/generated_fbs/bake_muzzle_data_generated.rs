@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_Battle_BakedMountPointDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_BakedMountPointData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_BakedMountPointData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_BakedMountPointData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -27,8 +27,7 @@ impl<'a> clz_Torappu_Battle_BakedMountPointData<'a> {
     pub const VT_TRSDATA: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_BakedMountPointData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -50,7 +49,6 @@ impl<'a> clz_Torappu_Battle_BakedMountPointData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_BakedMountPointDataT {
         let bakedStepInterval = self.bakedStepInterval();
         let frameCount = self.frameCount();
@@ -63,7 +61,6 @@ impl<'a> clz_Torappu_Battle_BakedMountPointData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn bakedStepInterval(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -78,7 +75,6 @@ impl<'a> clz_Torappu_Battle_BakedMountPointData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn frameCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -93,7 +89,6 @@ impl<'a> clz_Torappu_Battle_BakedMountPointData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn trsData(&self) -> Option<::flatbuffers::Vector<'a, f32>> {
         // Safety:
         // Created from valid Table for this object
@@ -131,7 +126,7 @@ pub struct clz_Torappu_Battle_BakedMountPointDataArgs<'a> {
     pub frameCount: i32,
     pub trsData: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, f32>>>,
 }
-impl Default for clz_Torappu_Battle_BakedMountPointDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_BakedMountPointDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_BakedMountPointDataArgs {
@@ -180,7 +175,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_BakedMountPointDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_BakedMountPointDataBuilder {
             fbb_: _fbb,
@@ -188,7 +185,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedMountPointData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -239,14 +235,14 @@ impl clz_Torappu_Battle_BakedMountPointDataT {
     }
 }
 pub enum dict__int__clz_Torappu_Battle_BakedMountPointDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
-    type Inner = Self;
+    type Inner = dict__int__clz_Torappu_Battle_BakedMountPointData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -260,8 +256,7 @@ impl<'a> dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__clz_Torappu_Battle_BakedMountPointData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -282,7 +277,6 @@ impl<'a> dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__clz_Torappu_Battle_BakedMountPointDataT {
         let key = self.key();
         let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -290,7 +284,6 @@ impl<'a> dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -305,7 +298,6 @@ impl<'a> dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__int__clz_Torappu_Battle_BakedMountPointData,
@@ -314,13 +306,11 @@ impl<'a> dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_Battle_BakedMountPointData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -356,7 +346,7 @@ pub struct dict__int__clz_Torappu_Battle_BakedMountPointDataArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedMountPointData<'a>>>,
 }
-impl Default for dict__int__clz_Torappu_Battle_BakedMountPointDataArgs<'_> {
+impl<'a> Default for dict__int__clz_Torappu_Battle_BakedMountPointDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__int__clz_Torappu_Battle_BakedMountPointDataArgs {
@@ -397,7 +387,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__clz_Torappu_Battle_BakedMountPointDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__clz_Torappu_Battle_BakedMountPointDataBuilder {
             fbb_: _fbb,
@@ -405,7 +397,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__int__clz_Torappu_Battle_BakedMountPointData<'a>> {
@@ -450,7 +441,7 @@ impl dict__int__clz_Torappu_Battle_BakedMountPointDataT {
     }
 }
 pub enum dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -459,7 +450,7 @@ pub struct dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -473,8 +464,7 @@ impl<'a> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -502,7 +492,6 @@ impl<'a> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataT {
         let key = {
             let x = self.key();
@@ -513,7 +502,6 @@ impl<'a> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -528,7 +516,6 @@ impl<'a> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData,
@@ -537,13 +524,11 @@ impl<'a> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'a
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<
@@ -606,7 +591,7 @@ pub struct dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataA
         >,
     >,
 }
-impl Default for dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataArgs<'_> {
+impl<'a> Default for dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataArgs {
@@ -652,7 +637,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataBuilder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataBuilder {
             fbb_: _fbb,
@@ -660,7 +648,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -726,14 +713,14 @@ impl dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointDataT {
     }
 }
 pub enum clz_Torappu_Battle_BakedEventTimelineOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_BakedEventTimeline<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_BakedEventTimeline<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_BakedEventTimeline<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -747,8 +734,7 @@ impl<'a> clz_Torappu_Battle_BakedEventTimeline<'a> {
     pub const VT_EVENTS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_BakedEventTimeline { _tab: table }
     }
     #[allow(unused_mut)]
@@ -771,7 +757,6 @@ impl<'a> clz_Torappu_Battle_BakedEventTimeline<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_BakedEventTimelineT {
         let eventTime = self.eventTime().map(|x| x.into_iter().collect());
         let events = self.events().map(|x| {
@@ -783,7 +768,6 @@ impl<'a> clz_Torappu_Battle_BakedEventTimeline<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn eventTime(&self) -> Option<::flatbuffers::Vector<'a, f32>> {
         // Safety:
         // Created from valid Table for this object
@@ -797,7 +781,6 @@ impl<'a> clz_Torappu_Battle_BakedEventTimeline<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn events(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -839,7 +822,7 @@ pub struct clz_Torappu_Battle_BakedEventTimelineArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_BakedEventTimelineArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_BakedEventTimelineArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_BakedEventTimelineArgs {
@@ -883,7 +866,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_BakedEventTimelineBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_BakedEventTimelineBuilder {
             fbb_: _fbb,
@@ -891,7 +876,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedEventTimeline<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -937,14 +921,14 @@ impl clz_Torappu_Battle_BakedEventTimelineT {
     }
 }
 pub enum dict__string__clz_Torappu_Battle_BakedEventTimelineOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_Battle_BakedEventTimeline<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -958,8 +942,7 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_Battle_BakedEventTimeline { _tab: table }
     }
     #[allow(unused_mut)]
@@ -982,7 +965,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_Battle_BakedEventTimelineT {
         let key = {
             let x = self.key();
@@ -993,7 +975,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1008,7 +989,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_Battle_BakedEventTimeline,
@@ -1017,13 +997,11 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedEventTimeline<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_Battle_BakedEventTimeline<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1059,7 +1037,7 @@ pub struct dict__string__clz_Torappu_Battle_BakedEventTimelineArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedEventTimeline<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_Battle_BakedEventTimelineArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_Battle_BakedEventTimelineArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_Battle_BakedEventTimelineArgs {
@@ -1099,7 +1077,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_Battle_BakedEventTimelineBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_Battle_BakedEventTimelineBuilder {
             fbb_: _fbb,
@@ -1107,7 +1087,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Battle_BakedEventTimeline<'a>> {
@@ -1160,14 +1139,14 @@ impl dict__string__clz_Torappu_Battle_BakedEventTimelineT {
     }
 }
 pub enum clz_Torappu_Battle_BakedAnimDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_BakedAnimData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_BakedAnimData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_BakedAnimData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1183,8 +1162,7 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
     pub const VT_BAKEDEVENTS: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_BakedAnimData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1211,7 +1189,6 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_BakedAnimDataT {
         let md5 = self.md5().map(|x| alloc::string::ToString::to_string(x));
         let skipZeroFrameUpdate = self.skipZeroFrameUpdate();
@@ -1230,7 +1207,6 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn md5(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1243,7 +1219,6 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skipZeroFrameUpdate(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1258,7 +1233,6 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bakedMPDatas(
         &self,
     ) -> Option<
@@ -1284,7 +1258,6 @@ impl<'a> clz_Torappu_Battle_BakedAnimData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn bakedEvents(
         &self,
     ) -> Option<
@@ -1362,7 +1335,7 @@ pub struct clz_Torappu_Battle_BakedAnimDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_BakedAnimDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_BakedAnimDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_BakedAnimDataArgs {
@@ -1431,7 +1404,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_BakedAnimDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_BakedAnimDataBuilder {
             fbb_: _fbb,
@@ -1439,7 +1414,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedAnimData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1503,14 +1477,14 @@ impl clz_Torappu_Battle_BakedAnimDataT {
     }
 }
 pub enum dict__string__clz_Torappu_Battle_BakedAnimDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_Battle_BakedAnimData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1524,8 +1498,7 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_Battle_BakedAnimData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1548,7 +1521,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_Battle_BakedAnimDataT {
         let key = {
             let x = self.key();
@@ -1559,7 +1531,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -1574,7 +1545,6 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_Battle_BakedAnimData,
@@ -1583,13 +1553,11 @@ impl<'a> dict__string__clz_Torappu_Battle_BakedAnimData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_Battle_BakedAnimData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1625,7 +1593,7 @@ pub struct dict__string__clz_Torappu_Battle_BakedAnimDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedAnimData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_Battle_BakedAnimDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_Battle_BakedAnimDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_Battle_BakedAnimDataArgs {
@@ -1665,7 +1633,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_Battle_BakedAnimDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_Battle_BakedAnimDataBuilder {
             fbb_: _fbb,
@@ -1673,7 +1643,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Battle_BakedAnimData<'a>> {
@@ -1726,14 +1695,14 @@ impl dict__string__clz_Torappu_Battle_BakedAnimDataT {
     }
 }
 pub enum clz_Torappu_Battle_BakedSpineDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_BakedSpineData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_BakedSpineData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_BakedSpineData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1746,8 +1715,7 @@ impl<'a> clz_Torappu_Battle_BakedSpineData<'a> {
     pub const VT_BAKEDANIMDATAS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_BakedSpineData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1767,7 +1735,6 @@ impl<'a> clz_Torappu_Battle_BakedSpineData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_BakedSpineDataT {
         let bakedAnimDatas = self
             .bakedAnimDatas()
@@ -1776,7 +1743,6 @@ impl<'a> clz_Torappu_Battle_BakedSpineData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn bakedAnimDatas(
         &self,
     ) -> Option<
@@ -1826,7 +1792,7 @@ pub struct clz_Torappu_Battle_BakedSpineDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_BakedSpineDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_BakedSpineDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_BakedSpineDataArgs {
@@ -1858,7 +1824,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_BakedSpineDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_BakedSpineDataBuilder {
             fbb_: _fbb,
@@ -1866,7 +1834,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_BakedSpineData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1958,20 +1925,18 @@ pub fn size_prefixed_root_as_clz_torappu_battle_baked_spine_data_with_opts<'b, '
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_Battle_BakedSpineData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_Battle_BakedSpineData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_Battle_BakedSpineData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Battle_BakedSpineData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_battle_baked_spine_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_BakedSpineData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_Battle_BakedSpineData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_Battle_BakedSpineData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Battle_BakedSpineData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Battle_BakedSpineData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_baked_spine_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_BakedSpineData<'_> {

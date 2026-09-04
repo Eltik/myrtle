@@ -78,6 +78,25 @@ pub fn export_gamedata(
                 .file_name()
                 .and_then(|f| f.to_str())
                 .unwrap_or(name);
+
+            // A FlatBuffer that verifies under no schema is SKIPPED, not
+            // decoded — see `decode_flatbuffer` for why an unchecked decode of
+            // a mismatched schema can run forever. The check has to happen
+            // HERE rather than inside `export_text_asset`, because that
+            // function's last resort is to dump the raw payload as `.txt` or
+            // `.bytes`, which would replace the previous extraction's good
+            // `.json` with rubbish. Writing nothing leaves that file in place,
+            // which is the graceful degrade the VPS watcher wants: a stale
+            // table beats a missing one, and both beat a garbage one.
+            if let Some(fb) = crate::export::text_asset::flatbuffer_payload(&val)
+                && let Some(table) = crate::flatbuffers_decode::unverified_table(&fb, file_stem)
+            {
+                eprintln!(
+                    "schema: {table} verifies under no schema, skipped (previous output kept)"
+                );
+                continue;
+            }
+
             match export_text_asset(&val, out_parent, Some(file_stem)) {
                 Ok(()) => exported += 1,
                 Err(e) => {

@@ -14,6 +14,8 @@ pub enum Command {
     Extract(ExtractArgs),
     /// List objects in a bundle file
     List(ListArgs),
+    /// Report which FlatBuffer schema each gamedata table verifies against
+    Verify(VerifyArgs),
 }
 
 #[derive(Parser)]
@@ -75,4 +77,17 @@ pub struct ListArgs {
     /// Input bundle file
     #[arg(short, long)]
     pub input: PathBuf,
+}
+
+/// `unpacker verify` — verification only. No decode, no output files, always
+/// exits 0: it is a report, not a gate.
+#[derive(Parser)]
+pub struct VerifyArgs {
+    /// Input directory containing bundle files
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Path to resource manifest .idx file (auto-detected in the input dir)
+    #[arg(long)]
+    pub idx: Option<PathBuf>,
 }

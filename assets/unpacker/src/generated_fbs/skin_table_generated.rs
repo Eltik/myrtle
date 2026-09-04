@@ -38,8 +38,7 @@ impl enum__Torappu_SkinVoiceType {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::ILLUST, Self::ALL];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::ILLUST => Some("ILLUST"),
@@ -64,7 +63,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_SkinVoiceType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_SkinVoiceType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -87,7 +86,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_SkinVoiceType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_SkinVoiceType {
-    type Output = Self;
+    type Output = enum__Torappu_SkinVoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -120,14 +119,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_SkinVoiceType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_SkinVoiceType {}
 pub enum clz_Torappu_CharSkinData_TokenSkinInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinData_TokenSkinInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -141,8 +140,7 @@ impl<'a> clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
     pub const VT_TOKENSKINID: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinData_TokenSkinInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -165,7 +163,6 @@ impl<'a> clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinData_TokenSkinInfoT {
         let tokenId = self
             .tokenId()
@@ -180,7 +177,6 @@ impl<'a> clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tokenId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -193,7 +189,6 @@ impl<'a> clz_Torappu_CharSkinData_TokenSkinInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tokenSkinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -232,7 +227,7 @@ pub struct clz_Torappu_CharSkinData_TokenSkinInfoArgs<'a> {
     pub tokenId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub tokenSkinId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CharSkinData_TokenSkinInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinData_TokenSkinInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinData_TokenSkinInfoArgs {
@@ -268,7 +263,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinData_TokenSkinInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinData_TokenSkinInfoBuilder {
             fbb_: _fbb,
@@ -276,7 +273,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_TokenSkinInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -322,14 +318,14 @@ impl clz_Torappu_CharSkinData_TokenSkinInfoT {
     }
 }
 pub enum clz_Torappu_CharSkinData_BattleSkinOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinData_BattleSkin<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_BattleSkin<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinData_BattleSkin<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -343,8 +339,7 @@ impl<'a> clz_Torappu_CharSkinData_BattleSkin<'a> {
     pub const VT_SKINORPREFABID: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinData_BattleSkin { _tab: table }
     }
     #[allow(unused_mut)]
@@ -365,7 +360,6 @@ impl<'a> clz_Torappu_CharSkinData_BattleSkin<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinData_BattleSkinT {
         let overwritePrefab = self.overwritePrefab();
         let skinOrPrefabId = self
@@ -378,7 +372,6 @@ impl<'a> clz_Torappu_CharSkinData_BattleSkin<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn overwritePrefab(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -393,7 +386,6 @@ impl<'a> clz_Torappu_CharSkinData_BattleSkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinOrPrefabId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -428,7 +420,7 @@ pub struct clz_Torappu_CharSkinData_BattleSkinArgs<'a> {
     pub overwritePrefab: bool,
     pub skinOrPrefabId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CharSkinData_BattleSkinArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinData_BattleSkinArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinData_BattleSkinArgs {
@@ -462,7 +454,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinData_BattleSkinBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinData_BattleSkinBuilder {
             fbb_: _fbb,
@@ -470,7 +464,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_BattleSkin<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -516,14 +509,14 @@ impl clz_Torappu_CharSkinData_BattleSkinT {
     }
 }
 pub enum clz_Torappu_CharSkinData_DisplaySkinOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinData_DisplaySkin<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData_DisplaySkin<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinData_DisplaySkin<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -554,8 +547,7 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
     pub const VT_ONPERIOD: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinData_DisplaySkin { _tab: table }
     }
     #[allow(unused_mut)]
@@ -619,7 +611,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinData_DisplaySkinT {
         let skinName = self
             .skinName()
@@ -696,7 +687,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn skinName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -709,7 +699,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn colorList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -723,7 +712,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn titleList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -737,7 +725,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn modelName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -750,7 +737,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn drawerList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -764,7 +750,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn designerList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -778,7 +763,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -791,7 +775,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinGroupName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -804,7 +787,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinGroupSortIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -819,7 +801,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn content(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -832,7 +813,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dialog(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -845,7 +825,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn usage(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -858,7 +837,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -871,7 +849,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn obtainApproach(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -884,7 +861,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -896,7 +872,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayTagId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -909,7 +884,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn getTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -921,7 +895,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn onYear(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -933,7 +906,6 @@ impl<'a> clz_Torappu_CharSkinData_DisplaySkin<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn onPeriod(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1053,7 +1025,7 @@ pub struct clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
     pub onYear: i32,
     pub onPeriod: i32,
 }
-impl Default for clz_Torappu_CharSkinData_DisplaySkinArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinData_DisplaySkinArgs {
@@ -1238,7 +1210,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinData_DisplaySkinBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinData_DisplaySkinBuilder {
             fbb_: _fbb,
@@ -1246,7 +1220,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1389,14 +1362,14 @@ impl clz_Torappu_CharSkinData_DisplaySkinT {
     }
 }
 pub enum clz_Torappu_CharSkinDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1428,8 +1401,7 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
     pub const VT_DISPLAYSKIN: ::flatbuffers::VOffsetT = 42;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1502,7 +1474,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinDataT {
         let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
         let charId = self.charId().map(|x| alloc::string::ToString::to_string(x));
@@ -1579,7 +1550,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn skinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1592,7 +1562,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1605,7 +1574,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tokenSkinMap(
         &self,
     ) -> Option<
@@ -1627,7 +1595,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn illustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1640,7 +1607,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spIllustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1653,7 +1619,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dynIllustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1666,7 +1631,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spDynIllustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1679,7 +1643,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn avatarId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1692,7 +1655,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spAvatarId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1705,7 +1667,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn portraitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1718,7 +1679,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spPortraitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1731,7 +1691,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dynPortraitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1744,7 +1703,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dynEntranceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1757,7 +1715,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn buildingId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1770,7 +1727,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn battleSkin(&self) -> Option<clz_Torappu_CharSkinData_BattleSkin<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1784,7 +1740,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isBuySkin(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1796,7 +1751,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tmplId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1809,7 +1763,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1822,7 +1775,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn voiceType(&self) -> enum__Torappu_SkinVoiceType {
         // Safety:
         // Created from valid Table for this object
@@ -1837,7 +1789,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displaySkin(&self) -> Option<clz_Torappu_CharSkinData_DisplaySkin<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1973,7 +1924,7 @@ pub struct clz_Torappu_CharSkinDataArgs<'a> {
     pub voiceType: enum__Torappu_SkinVoiceType,
     pub displaySkin: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData_DisplaySkin<'a>>>,
 }
-impl Default for clz_Torappu_CharSkinDataArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinDataArgs {
@@ -2162,7 +2113,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinDataBuild
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinDataBuilder {
             fbb_: _fbb,
@@ -2170,7 +2123,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinDataBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2309,14 +2261,14 @@ impl clz_Torappu_CharSkinDataT {
     }
 }
 pub enum dict__string__clz_Torappu_CharSkinDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CharSkinData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharSkinData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CharSkinData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2330,8 +2282,7 @@ impl<'a> dict__string__clz_Torappu_CharSkinData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CharSkinData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2354,7 +2305,6 @@ impl<'a> dict__string__clz_Torappu_CharSkinData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinDataT {
         let key = {
             let x = self.key();
@@ -2365,7 +2315,6 @@ impl<'a> dict__string__clz_Torappu_CharSkinData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2380,19 +2329,16 @@ impl<'a> dict__string__clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CharSkinData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2428,7 +2374,7 @@ pub struct dict__string__clz_Torappu_CharSkinDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CharSkinDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CharSkinDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CharSkinDataArgs {
@@ -2465,7 +2411,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CharSkinDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CharSkinDataBuilder {
             fbb_: _fbb,
@@ -2473,7 +2421,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -2521,14 +2468,14 @@ impl dict__string__clz_Torappu_CharSkinDataT {
     }
 }
 pub enum dict__int__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__int__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__int__string<'a> {
-    type Inner = Self;
+    type Inner = dict__int__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2542,8 +2489,7 @@ impl<'a> dict__int__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__int__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2564,7 +2510,6 @@ impl<'a> dict__int__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__int__stringT {
         let key = self.key();
         let value = self.value().map(|x| alloc::string::ToString::to_string(x));
@@ -2572,7 +2517,6 @@ impl<'a> dict__int__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2584,19 +2528,16 @@ impl<'a> dict__int__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__int__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(&val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2625,7 +2566,7 @@ pub struct dict__int__stringArgs<'a> {
     pub key: i32,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__int__stringArgs<'_> {
+impl<'a> Default for dict__int__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__int__stringArgs {
@@ -2651,7 +2592,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__stringBuilder<'a, 
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__int__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__int__stringBuilder {
             fbb_: _fbb,
@@ -2659,7 +2602,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__int__stringBuilder<'a, 
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__int__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2699,14 +2641,14 @@ impl dict__int__stringT {
     }
 }
 pub enum dict__string__list_dict__int__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_dict__int__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_dict__int__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__list_dict__int__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2720,8 +2662,7 @@ impl<'a> dict__string__list_dict__int__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_dict__int__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2744,7 +2685,6 @@ impl<'a> dict__string__list_dict__int__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_dict__int__stringT {
         let key = {
             let x = self.key();
@@ -2755,7 +2695,6 @@ impl<'a> dict__string__list_dict__int__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2770,19 +2709,16 @@ impl<'a> dict__string__list_dict__int__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__list_dict__int__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__int__string<'a>>>>
@@ -2821,7 +2757,7 @@ pub struct dict__string__list_dict__int__stringArgs<'a> {
         >,
     >,
 }
-impl Default for dict__string__list_dict__int__stringArgs<'_> {
+impl<'a> Default for dict__string__list_dict__int__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_dict__int__stringArgs {
@@ -2859,7 +2795,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__int__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__list_dict__int__stringBuilder {
             fbb_: _fbb,
@@ -2867,7 +2805,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__int__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -2918,14 +2855,14 @@ impl dict__string__list_dict__int__stringT {
     }
 }
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2939,8 +2876,7 @@ impl<'a> dict__string__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2963,7 +2899,6 @@ impl<'a> dict__string__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__stringT {
         let key = {
             let x = self.key();
@@ -2974,7 +2909,6 @@ impl<'a> dict__string__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2986,19 +2920,16 @@ impl<'a> dict__string__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3027,7 +2958,7 @@ pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__string__stringArgs<'_> {
+impl<'a> Default for dict__string__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__stringArgs {
@@ -3053,7 +2984,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__stringBuilder {
             fbb_: _fbb,
@@ -3061,7 +2994,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(o, dict__string__string::VT_KEY, "key");
@@ -3105,14 +3037,14 @@ impl dict__string__stringT {
     }
 }
 pub enum dict__string__list_dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__list_dict__string__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__list_dict__string__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__list_dict__string__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3126,8 +3058,7 @@ impl<'a> dict__string__list_dict__string__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__list_dict__string__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3150,7 +3081,6 @@ impl<'a> dict__string__list_dict__string__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__list_dict__string__stringT {
         let key = {
             let x = self.key();
@@ -3161,7 +3091,6 @@ impl<'a> dict__string__list_dict__string__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3176,19 +3105,16 @@ impl<'a> dict__string__list_dict__string__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__list_dict__string__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
@@ -3227,7 +3153,7 @@ pub struct dict__string__list_dict__string__stringArgs<'a> {
         >,
     >,
 }
-impl Default for dict__string__list_dict__string__stringArgs<'_> {
+impl<'a> Default for dict__string__list_dict__string__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__list_dict__string__stringArgs {
@@ -3268,7 +3194,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__string__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__list_dict__string__stringBuilder {
             fbb_: _fbb,
@@ -3276,7 +3204,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__list_dict__string__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -3327,14 +3254,14 @@ impl dict__string__list_dict__string__stringT {
     }
 }
 pub enum clz_Torappu_CharSkinGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinGroupInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinGroupInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinGroupInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3348,8 +3275,7 @@ impl<'a> clz_Torappu_CharSkinGroupInfo<'a> {
     pub const VT_PUBLISHTIME: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinGroupInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3370,7 +3296,6 @@ impl<'a> clz_Torappu_CharSkinGroupInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinGroupInfoT {
         let skinGroupId = self
             .skinGroupId()
@@ -3383,7 +3308,6 @@ impl<'a> clz_Torappu_CharSkinGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn skinGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3396,7 +3320,6 @@ impl<'a> clz_Torappu_CharSkinGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn publishTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3430,7 +3353,7 @@ pub struct clz_Torappu_CharSkinGroupInfoArgs<'a> {
     pub skinGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub publishTime: i64,
 }
-impl Default for clz_Torappu_CharSkinGroupInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinGroupInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinGroupInfoArgs {
@@ -3461,7 +3384,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinGroupInfo
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinGroupInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinGroupInfoBuilder {
             fbb_: _fbb,
@@ -3469,7 +3394,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinGroupInfo
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinGroupInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3515,14 +3439,14 @@ impl clz_Torappu_CharSkinGroupInfoT {
     }
 }
 pub enum clz_Torappu_CharSkinKvImgInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinKvImgInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinKvImgInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinKvImgInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3536,8 +3460,7 @@ impl<'a> clz_Torappu_CharSkinKvImgInfo<'a> {
     pub const VT_LINKEDSKINGROUPID: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinKvImgInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3560,7 +3483,6 @@ impl<'a> clz_Torappu_CharSkinKvImgInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinKvImgInfoT {
         let kvImgId = self
             .kvImgId()
@@ -3575,7 +3497,6 @@ impl<'a> clz_Torappu_CharSkinKvImgInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn kvImgId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3588,7 +3509,6 @@ impl<'a> clz_Torappu_CharSkinKvImgInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn linkedSkinGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3627,7 +3547,7 @@ pub struct clz_Torappu_CharSkinKvImgInfoArgs<'a> {
     pub kvImgId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub linkedSkinGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CharSkinKvImgInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinKvImgInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinKvImgInfoArgs {
@@ -3657,7 +3577,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinKvImgInfo
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinKvImgInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinKvImgInfoBuilder {
             fbb_: _fbb,
@@ -3665,7 +3587,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinKvImgInfo
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinKvImgInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3714,14 +3635,14 @@ impl clz_Torappu_CharSkinKvImgInfoT {
     }
 }
 pub enum clz_Torappu_CharSkinBrandInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CharSkinBrandInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CharSkinBrandInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CharSkinBrandInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3741,8 +3662,7 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
     pub const VT_SORTID: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CharSkinBrandInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3779,7 +3699,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CharSkinBrandInfoT {
         let brandId = self
             .brandId()
@@ -3814,7 +3733,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn brandId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3827,7 +3745,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupList(
         &self,
     ) -> Option<
@@ -3849,7 +3766,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn kvImgIdList(
         &self,
     ) -> Option<
@@ -3871,7 +3787,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn brandName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3884,7 +3799,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn brandCapitalName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3897,7 +3811,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3910,7 +3823,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn publishTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3922,7 +3834,6 @@ impl<'a> clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -4004,7 +3915,7 @@ pub struct clz_Torappu_CharSkinBrandInfoArgs<'a> {
     pub publishTime: i64,
     pub sortId: i32,
 }
-impl Default for clz_Torappu_CharSkinBrandInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_CharSkinBrandInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharSkinBrandInfoArgs {
@@ -4097,7 +4008,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinBrandInfo
             .push_slot::<i32>(clz_Torappu_CharSkinBrandInfo::VT_SORTID, sortId, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CharSkinBrandInfoBuilder {
             fbb_: _fbb,
@@ -4105,7 +4018,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_CharSkinBrandInfo
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4190,14 +4102,14 @@ impl clz_Torappu_CharSkinBrandInfoT {
     }
 }
 pub enum dict__string__clz_Torappu_CharSkinBrandInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CharSkinBrandInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4211,8 +4123,7 @@ impl<'a> dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CharSkinBrandInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4235,7 +4146,6 @@ impl<'a> dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CharSkinBrandInfoT {
         let key = {
             let x = self.key();
@@ -4246,7 +4156,6 @@ impl<'a> dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4261,19 +4170,16 @@ impl<'a> dict__string__clz_Torappu_CharSkinBrandInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CharSkinBrandInfo) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CharSkinBrandInfo<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -4309,7 +4215,7 @@ pub struct dict__string__clz_Torappu_CharSkinBrandInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CharSkinBrandInfo<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CharSkinBrandInfoArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CharSkinBrandInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CharSkinBrandInfoArgs {
@@ -4349,7 +4255,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CharSkinBrandInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CharSkinBrandInfoBuilder {
             fbb_: _fbb,
@@ -4357,7 +4265,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CharSkinBrandInfo<'a>> {
@@ -4410,14 +4317,14 @@ impl dict__string__clz_Torappu_CharSkinBrandInfoT {
     }
 }
 pub enum clz_Torappu_SpecialSkinInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SpecialSkinInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpecialSkinInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SpecialSkinInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4432,8 +4339,7 @@ impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
     pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SpecialSkinInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4455,7 +4361,6 @@ impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SpecialSkinInfoT {
         let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
         let startTime = self.startTime();
@@ -4468,7 +4373,6 @@ impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn skinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4481,7 +4385,6 @@ impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4493,7 +4396,6 @@ impl<'a> clz_Torappu_SpecialSkinInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4525,7 +4427,7 @@ pub struct clz_Torappu_SpecialSkinInfoArgs<'a> {
     pub startTime: i64,
     pub endTime: i64,
 }
-impl Default for clz_Torappu_SpecialSkinInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_SpecialSkinInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialSkinInfoArgs {
@@ -4559,7 +4461,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpecialSkinInfoBu
             .push_slot::<i64>(clz_Torappu_SpecialSkinInfo::VT_ENDTIME, endTime, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SpecialSkinInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SpecialSkinInfoBuilder {
             fbb_: _fbb,
@@ -4567,7 +4471,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpecialSkinInfoBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpecialSkinInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4618,14 +4521,14 @@ impl clz_Torappu_SpecialSkinInfoT {
     }
 }
 pub enum clz_Torappu_SpDynIllustInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SpDynIllustInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SpDynIllustInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SpDynIllustInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4643,8 +4546,7 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     pub const VT_SPAVATARID: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SpDynIllustInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4679,7 +4581,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SpDynIllustInfoT {
         let skinId = self.skinId().map(|x| alloc::string::ToString::to_string(x));
         let spDynIllustId = self
@@ -4708,7 +4609,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn skinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4721,7 +4621,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spDynIllustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4734,7 +4633,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spDynIllustSkinTag(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4747,7 +4645,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spIllustId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4760,7 +4657,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spPortraitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4773,7 +4669,6 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spAvatarId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4832,7 +4727,7 @@ pub struct clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub spPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_SpDynIllustInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpDynIllustInfoArgs {
@@ -4897,7 +4792,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBu
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SpDynIllustInfoBuilder {
             fbb_: _fbb,
@@ -4905,7 +4802,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBu
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4974,14 +4870,14 @@ impl clz_Torappu_SpDynIllustInfoT {
     }
 }
 pub enum dict__string__clz_Torappu_SpDynIllustInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_SpDynIllustInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpDynIllustInfo<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_SpDynIllustInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4995,8 +4891,7 @@ impl<'a> dict__string__clz_Torappu_SpDynIllustInfo<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_SpDynIllustInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5019,7 +4914,6 @@ impl<'a> dict__string__clz_Torappu_SpDynIllustInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_SpDynIllustInfoT {
         let key = {
             let x = self.key();
@@ -5030,7 +4924,6 @@ impl<'a> dict__string__clz_Torappu_SpDynIllustInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5045,19 +4938,16 @@ impl<'a> dict__string__clz_Torappu_SpDynIllustInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_SpDynIllustInfo) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_SpDynIllustInfo<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -5093,7 +4983,7 @@ pub struct dict__string__clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_SpDynIllustInfoArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_SpDynIllustInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_SpDynIllustInfoArgs {
@@ -5130,7 +5020,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_SpDynIllustInfoBuilder {
             fbb_: _fbb,
@@ -5138,7 +5030,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SpDynIllustInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -5186,14 +5077,14 @@ impl dict__string__clz_Torappu_SpDynIllustInfoT {
     }
 }
 pub enum clz_Torappu_SkinTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SkinTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SkinTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SkinTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5212,8 +5103,7 @@ impl<'a> clz_Torappu_SkinTable<'a> {
     pub const VT_SPDYNILLUSTSKINTAGSMAP: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SkinTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5251,7 +5141,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SkinTableT {
         let charSkins = self
             .charSkins()
@@ -5286,7 +5175,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn charSkins(
         &self,
     ) -> Option<
@@ -5308,7 +5196,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn buildinEvolveMap(
         &self,
     ) -> Option<
@@ -5330,7 +5217,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn buildinPatchMap(
         &self,
     ) -> Option<
@@ -5352,7 +5238,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn brandList(
         &self,
     ) -> Option<
@@ -5374,7 +5259,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn specialSkinInfoList(
         &self,
     ) -> Option<
@@ -5393,7 +5277,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spDynSkins(
         &self,
     ) -> Option<
@@ -5415,7 +5298,6 @@ impl<'a> clz_Torappu_SkinTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn spDynIllustSkinTagsMap(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
@@ -5540,7 +5422,7 @@ pub struct clz_Torappu_SkinTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_SkinTableArgs<'_> {
+impl<'a> Default for clz_Torappu_SkinTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SkinTableArgs {
@@ -5663,7 +5545,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SkinTableBuilder<
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SkinTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SkinTableBuilder {
             fbb_: _fbb,
@@ -5671,7 +5555,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SkinTableBuilder<
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SkinTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5813,18 +5696,16 @@ pub fn size_prefixed_root_as_clz_torappu_skin_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_SkinTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SkinTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SkinTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SkinTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_skin_table_unchecked(buf: &[u8]) -> clz_Torappu_SkinTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_SkinTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SkinTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SkinTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SkinTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_skin_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SkinTable<'_> {

@@ -5,14 +5,14 @@ extern crate alloc;
 extern crate serde;
 
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Blackboard_DataPair<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Blackboard_DataPair<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -27,8 +27,7 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     pub const VT_VALUESTR: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Blackboard_DataPair { _tab: table }
     }
     #[allow(unused_mut)]
@@ -52,7 +51,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
         let key = self.key().map(|x| alloc::string::ToString::to_string(x));
         let value = self.value();
@@ -67,7 +65,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -80,7 +77,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> f32 {
         // Safety:
         // Created from valid Table for this object
@@ -92,7 +88,6 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn valueStr(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -129,7 +124,7 @@ pub struct clz_Torappu_Blackboard_DataPairArgs<'a> {
     pub value: f32,
     pub valueStr: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_Blackboard_DataPairArgs<'_> {
+impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Blackboard_DataPairArgs {
@@ -167,7 +162,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Blackboard_DataPairBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Blackboard_DataPairBuilder {
             fbb_: _fbb,
@@ -175,7 +172,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -227,7 +223,7 @@ impl clz_Torappu_Blackboard_DataPairT {
 }
 pub enum clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseOffset
 {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<
     'a,
@@ -240,7 +236,7 @@ impl<'a> ::flatbuffers::Follow<'a>
         'a,
     >
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -255,8 +251,7 @@ impl<'a>
     pub const VT_BLACKBOARD: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase { _tab: table }
     }
     #[allow(unused_mut)]
@@ -271,7 +266,6 @@ impl<'a>
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(
         &self,
     ) -> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseT
@@ -285,7 +279,6 @@ impl<'a>
     }
 
     #[inline]
-    #[must_use]
     pub fn blackboard(
         &self,
     ) -> Option<
@@ -336,7 +329,7 @@ pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_L
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseArgs<'a> {
   #[inline]
   fn default() -> Self {
     clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseArgs {
@@ -359,7 +352,7 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Battle_Legion_Leg
     self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase::VT_BLACKBOARD, blackboard);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseBuilder {
       fbb_: _fbb,
@@ -367,7 +360,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_Battle_Legion_Leg
     }
   }
   #[inline]
-  #[must_use]
   pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<'a>> {
     let o = self.fbb_.end_table(self.start_);
     ::flatbuffers::WIPOffset::new(o.value())
@@ -413,7 +405,7 @@ impl clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionM
     }
 }
 pub enum clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -422,7 +414,7 @@ pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -439,8 +431,7 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
     pub const VT_LEVELPHASES: ::flatbuffers::VOffsetT = 12;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart { _tab: table }
     }
     #[allow(unused_mut)]
@@ -471,7 +462,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartT {
         let isInheritable = self.isInheritable();
         let isRedrawWhenReplace = self.isRedrawWhenReplace();
@@ -494,7 +484,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
     }
 
     #[inline]
-    #[must_use]
     pub fn isInheritable(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -504,7 +493,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn isRedrawWhenReplace(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -514,7 +502,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -527,7 +514,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn descriptionHead(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -537,7 +523,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn levelPhases(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<'a>>>>{
         // Safety:
         // Created from valid Table for this object
@@ -573,7 +558,7 @@ pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartAr
     pub descriptionHead: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub levelPhases: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<'a>>>>>,
 }
-impl Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartArgs {
@@ -634,7 +619,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartBuilder {
             fbb_: _fbb,
@@ -642,7 +629,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -715,14 +701,14 @@ impl clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPartT {
     }
 }
 pub enum clz_Torappu_Battle_Legion_LegionModeBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_Battle_Legion_LegionModeBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -735,8 +721,7 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     pub const VT_DATAPARTS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_Battle_Legion_LegionModeBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -756,7 +741,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_Battle_Legion_LegionModeBuffDataT {
         let dataParts = self
             .dataParts()
@@ -765,7 +749,6 @@ impl<'a> clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn dataParts(
         &self,
     ) -> Option<
@@ -826,7 +809,7 @@ pub struct clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'_> {
+impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_Legion_LegionModeBuffDataArgs { dataParts: None }
@@ -862,7 +845,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder {
             fbb_: _fbb,
@@ -870,7 +855,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_Battle_Legion_LegionModeBuffData<'a>> {
@@ -914,7 +898,7 @@ impl clz_Torappu_Battle_Legion_LegionModeBuffDataT {
     }
 }
 pub enum dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -923,7 +907,7 @@ pub struct dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
 impl<'a> ::flatbuffers::Follow<'a>
     for dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a>
 {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -937,8 +921,7 @@ impl<'a> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -963,7 +946,6 @@ impl<'a> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataT {
         let key = {
             let x = self.key();
@@ -974,7 +956,6 @@ impl<'a> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -989,7 +970,6 @@ impl<'a> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData,
@@ -998,13 +978,11 @@ impl<'a> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_Battle_Legion_LegionModeBuffData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1032,7 +1010,7 @@ pub struct dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_Battle_Legion_LegionModeBuffData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataArgs {
@@ -1068,7 +1046,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Battle_Legion_LegionModeBuffData>>(dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder {
             fbb_: _fbb,
@@ -1076,7 +1056,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'a>>
@@ -1131,7 +1110,7 @@ impl dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataT {
     }
 }
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
@@ -1140,7 +1119,7 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDat
 impl<'a> ::flatbuffers::Follow<'a>
     for clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'a>
 {
-    type Inner = Self;
+    type Inner = clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1153,8 +1132,7 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<
     pub const VT_LEGION_MODE_BUFFS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1181,7 +1159,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(
         &self,
     ) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataT {
@@ -1194,7 +1171,6 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<
     }
 
     #[inline]
-    #[must_use]
     pub fn legion_mode_buffs(
         &self,
     ) -> Option<
@@ -1247,7 +1223,9 @@ pub struct clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDat
         >,
     >,
 }
-impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'_> {
+impl<'a> Default
+    for clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a>
+{
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataArgs {
@@ -1282,7 +1260,10 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData::VT_LEGION_MODE_BUFFS, legion_mode_buffs);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder<'a, 'b, A>
+    {
         let start = _fbb.start_table();
         clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder {
             fbb_: _fbb,
@@ -1290,7 +1271,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<
@@ -1420,10 +1400,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legio
     >(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
@@ -1434,10 +1413,9 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legio
     }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {

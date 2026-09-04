@@ -39,8 +39,7 @@ impl enum__Torappu_RecommendItemTagTips {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::ONSALE, Self::DEADLINE, Self::NONE];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::ONSALE => Some("ONSALE"),
             Self::DEADLINE => Some("DEADLINE"),
@@ -65,7 +64,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_RecommendItemTagTips {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_RecommendItemTagTips::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -88,7 +87,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_RecommendItemTagTips {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_RecommendItemTagTips {
-    type Output = Self;
+    type Output = enum__Torappu_RecommendItemTagTips;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -191,8 +190,7 @@ impl enum__Torappu_ShopRouteTarget {
         Self::NONE,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::RECOMMENDSHOP => Some("RECOMMENDSHOP"),
             Self::CASHSHOP => Some("CASHSHOP"),
@@ -228,7 +226,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ShopRouteTarget {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ShopRouteTarget::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -251,7 +249,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ShopRouteTarget {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ShopRouteTarget {
-    type Output = Self;
+    type Output = enum__Torappu_ShopRouteTarget;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -328,8 +326,7 @@ impl enum__Torappu_ShopRecommendTemplateType {
         Self::NORGIFT,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::DEFAULT => Some("DEFAULT"),
             Self::NORSKIN => Some("NORSKIN"),
@@ -356,7 +353,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ShopRecommendTemplateType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ShopRecommendTemplateType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -379,7 +376,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ShopRecommendTemplateType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ShopRecommendTemplateType {
-    type Output = Self;
+    type Output = enum__Torappu_ShopRecommendTemplateType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -452,8 +449,7 @@ impl enum__Torappu_ShopUnlockType {
         Self::BOTH_SKIN_FURN,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::ALWAYS_UNLOCK => Some("ALWAYS_UNLOCK"),
             Self::SKIN_UNLOCK => Some("SKIN_UNLOCK"),
@@ -479,7 +475,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ShopUnlockType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ShopUnlockType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -502,7 +498,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ShopUnlockType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ShopUnlockType {
-    type Output = Self;
+    type Output = enum__Torappu_ShopUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -582,8 +578,7 @@ impl enum__Torappu_ShopCondTrigPackageType {
         Self::CHOOSE_NEWBIE,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::RETURN_PROGRESS => Some("RETURN_PROGRESS"),
@@ -611,7 +606,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ShopCondTrigPackageType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ShopCondTrigPackageType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -634,7 +629,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ShopCondTrigPackageType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ShopCondTrigPackageType {
-    type Output = Self;
+    type Output = enum__Torappu_ShopCondTrigPackageType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -716,8 +711,7 @@ impl enum__Torappu_ShopGPTabType {
         Self::TIMELY,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::DEFAULT_ALL => Some("DEFAULT_ALL"),
             Self::MONTH_CARD => Some("MONTH_CARD"),
@@ -746,7 +740,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ShopGPTabType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ShopGPTabType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -769,7 +763,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ShopGPTabType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ShopGPTabType {
-    type Output = Self;
+    type Output = enum__Torappu_ShopGPTabType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -802,14 +796,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ShopGPTabType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ShopGPTabType {}
 pub enum clz_Torappu_ShopRecommendDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -827,8 +821,7 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
     pub const VT_SKINID: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -859,7 +852,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendDataT {
         let imgId = self.imgId().map(|x| alloc::string::ToString::to_string(x));
         let slotIndex = self.slotIndex();
@@ -878,7 +870,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn imgId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -891,7 +882,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn slotIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -903,7 +893,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn cmd(&self) -> enum__Torappu_ShopRouteTarget {
         // Safety:
         // Created from valid Table for this object
@@ -918,7 +907,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn param1(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -931,7 +919,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn param2(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -944,7 +931,6 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -983,7 +969,7 @@ pub struct clz_Torappu_ShopRecommendDataArgs<'a> {
     pub param2: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopRecommendDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendDataArgs {
@@ -1044,7 +1030,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopRecommendData
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendDataBuilder {
             fbb_: _fbb,
@@ -1052,7 +1040,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopRecommendData
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1118,14 +1105,14 @@ impl clz_Torappu_ShopRecommendDataT {
     }
 }
 pub enum clz_Torappu_ShopRecommendGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1139,8 +1126,7 @@ impl<'a> clz_Torappu_ShopRecommendGroup<'a> {
     pub const VT_DATALIST: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1163,7 +1149,6 @@ impl<'a> clz_Torappu_ShopRecommendGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendGroupT {
         let recommendGroup = self.recommendGroup().map(|x| x.into_iter().collect());
         let dataList = self
@@ -1176,7 +1161,6 @@ impl<'a> clz_Torappu_ShopRecommendGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn recommendGroup(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
         // Safety:
         // Created from valid Table for this object
@@ -1190,7 +1174,6 @@ impl<'a> clz_Torappu_ShopRecommendGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dataList(
         &self,
     ) -> Option<
@@ -1246,7 +1229,7 @@ pub struct clz_Torappu_ShopRecommendGroupArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ShopRecommendGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendGroupArgs {
@@ -1289,7 +1272,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendGroupBuilder {
             fbb_: _fbb,
@@ -1297,7 +1282,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1346,14 +1330,14 @@ impl clz_Torappu_ShopRecommendGroupT {
     }
 }
 pub enum clz_Torappu_ShopKeeperWordOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopKeeperWord<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopKeeperWord<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopKeeperWord<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1367,8 +1351,7 @@ impl<'a> clz_Torappu_ShopKeeperWord<'a> {
     pub const VT_TEXT: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopKeeperWord { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1391,7 +1374,6 @@ impl<'a> clz_Torappu_ShopKeeperWord<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopKeeperWordT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let text = self.text().map(|x| alloc::string::ToString::to_string(x));
@@ -1399,7 +1381,6 @@ impl<'a> clz_Torappu_ShopKeeperWord<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1412,7 +1393,6 @@ impl<'a> clz_Torappu_ShopKeeperWord<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn text(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1443,7 +1423,7 @@ pub struct clz_Torappu_ShopKeeperWordArgs<'a> {
     pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub text: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopKeeperWordArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopKeeperWordArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopKeeperWordArgs {
@@ -1471,7 +1451,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopKeeperWordBui
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopKeeperWordBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopKeeperWordBuilder {
             fbb_: _fbb,
@@ -1479,7 +1461,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopKeeperWordBui
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopKeeperWord<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1519,14 +1500,14 @@ impl clz_Torappu_ShopKeeperWordT {
     }
 }
 pub enum clz_Torappu_ShopRecommendTemplateNormalGiftParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1547,8 +1528,7 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
     pub const VT_AVAILCOUNT: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendTemplateNormalGiftParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1582,7 +1562,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
         let showStartTs = self.showStartTs();
         let showEndTs = self.showEndTs();
@@ -1609,7 +1588,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showStartTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1624,7 +1602,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn showEndTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1639,7 +1616,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn goodId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1652,7 +1628,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn giftPackageName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1665,7 +1640,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn price(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1680,7 +1654,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn logoId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1693,7 +1666,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn color(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1706,7 +1678,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn haveMark(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1721,7 +1692,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn availCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1772,7 +1742,7 @@ pub struct clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs<'a> {
     pub haveMark: bool,
     pub availCount: i32,
 }
-impl Default for clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs {
@@ -1869,7 +1839,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendTemplateNormalGiftParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendTemplateNormalGiftParamBuilder {
             fbb_: _fbb,
@@ -1877,7 +1849,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a>> {
@@ -1960,14 +1931,14 @@ impl clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
     }
 }
 pub enum clz_Torappu_ShopRecommendTemplateNormalSkinParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1987,8 +1958,7 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
     pub const VT_TEXT: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendTemplateNormalSkinParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2025,7 +1995,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
         let showStartTs = self.showStartTs();
         let showEndTs = self.showEndTs();
@@ -2060,7 +2029,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showStartTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2075,7 +2043,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn showEndTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2090,7 +2057,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinIds(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -2107,7 +2073,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinGroupName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2120,7 +2085,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn brandIconId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2133,7 +2097,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn colorBack(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2146,7 +2109,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn colorText(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2159,7 +2121,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn text(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2224,7 +2185,7 @@ pub struct clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs<'a> {
     pub colorText: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub text: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs {
@@ -2315,7 +2276,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendTemplateNormalSkinParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendTemplateNormalSkinParamBuilder {
             fbb_: _fbb,
@@ -2323,7 +2286,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a>> {
@@ -2404,14 +2366,14 @@ impl clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
     }
 }
 pub enum clz_Torappu_ShopRecommendTemplateNormalFurnParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2432,8 +2394,7 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
     pub const VT_ACTID: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendTemplateNormalFurnParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2467,7 +2428,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
         let showStartTs = self.showStartTs();
         let showEndTs = self.showEndTs();
@@ -2498,7 +2458,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showStartTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2513,7 +2472,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn showEndTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2528,7 +2486,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn furnPackId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2541,7 +2498,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isNew(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2556,7 +2512,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn isPackSell(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -2571,7 +2526,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2586,7 +2540,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn colorBack(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2599,7 +2552,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn colorText(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2612,7 +2564,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn actId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2669,7 +2620,7 @@ pub struct clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs<'a> {
     pub colorText: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub actId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs {
@@ -2766,7 +2717,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendTemplateNormalFurnParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendTemplateNormalFurnParamBuilder {
             fbb_: _fbb,
@@ -2774,7 +2727,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a>> {
@@ -2857,14 +2809,14 @@ impl clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
     }
 }
 pub enum clz_Torappu_ShopRecommendTemplateReturnSkinParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2878,8 +2830,7 @@ impl<'a> clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
     pub const VT_SHOWENDTS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendTemplateReturnSkinParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2898,7 +2849,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
         let showStartTs = self.showStartTs();
         let showEndTs = self.showEndTs();
@@ -2909,7 +2859,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn showStartTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2924,7 +2873,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn showEndTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2960,7 +2908,7 @@ pub struct clz_Torappu_ShopRecommendTemplateReturnSkinParamArgs {
 impl<'a> Default for clz_Torappu_ShopRecommendTemplateReturnSkinParamArgs {
     #[inline]
     fn default() -> Self {
-        Self {
+        clz_Torappu_ShopRecommendTemplateReturnSkinParamArgs {
             showStartTs: 0,
             showEndTs: 0,
         }
@@ -2995,7 +2943,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendTemplateReturnSkinParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendTemplateReturnSkinParamBuilder {
             fbb_: _fbb,
@@ -3003,7 +2953,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a>> {
@@ -3051,14 +3000,14 @@ impl clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
     }
 }
 pub enum clz_Torappu_ShopRecommendTemplateParamOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendTemplateParam<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateParam<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendTemplateParam<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3074,8 +3023,7 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
     pub const VT_RETURNSKINPARAM: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendTemplateParam { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3104,7 +3052,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateParamT {
         let normalGiftParam = self
             .normalGiftParam()
@@ -3127,7 +3074,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn normalGiftParam(&self) -> Option<clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3142,7 +3088,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn normalSkinParam(&self) -> Option<clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3157,7 +3102,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn normalFurnParam(&self) -> Option<clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3172,7 +3116,6 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn returnSkinParam(&self) -> Option<clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3213,7 +3156,7 @@ pub struct clz_Torappu_ShopRecommendTemplateParamArgs<'a> {
     pub returnSkinParam:
         Option<::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a>>>,
 }
-impl Default for clz_Torappu_ShopRecommendTemplateParamArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendTemplateParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendTemplateParamArgs {
@@ -3273,7 +3216,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateReturnSkinParam>>(clz_Torappu_ShopRecommendTemplateParam::VT_RETURNSKINPARAM, returnSkinParam);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendTemplateParamBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendTemplateParamBuilder {
             fbb_: _fbb,
@@ -3281,7 +3226,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateParam<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3341,14 +3285,14 @@ impl clz_Torappu_ShopRecommendTemplateParamT {
     }
 }
 pub enum clz_Torappu_ShopRecommendItemOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopRecommendItem<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendItem<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopRecommendItem<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3371,8 +3315,7 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
     pub const VT_TEMPLATEPARAM: ::flatbuffers::VOffsetT = 24;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopRecommendItem { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3412,7 +3355,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopRecommendItemT {
         let tagId = self.tagId().map(|x| alloc::string::ToString::to_string(x));
         let displayType = self
@@ -3449,7 +3391,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tagId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3462,7 +3403,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3475,7 +3415,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3488,7 +3427,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn itemTag(&self) -> enum__Torappu_RecommendItemTagTips {
         // Safety:
         // Created from valid Table for this object
@@ -3503,7 +3441,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn orderNum(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3515,7 +3452,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startDatetime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3527,7 +3463,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endDatetime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3539,7 +3474,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupList(
         &self,
     ) -> Option<
@@ -3561,7 +3495,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagWord(&self) -> Option<clz_Torappu_ShopKeeperWord<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3575,7 +3508,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn templateType(&self) -> enum__Torappu_ShopRecommendTemplateType {
         // Safety:
         // Created from valid Table for this object
@@ -3590,7 +3522,6 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn templateParam(&self) -> Option<clz_Torappu_ShopRecommendTemplateParam<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3672,7 +3603,7 @@ pub struct clz_Torappu_ShopRecommendItemArgs<'a> {
     pub templateType: enum__Torappu_ShopRecommendTemplateType,
     pub templateParam: Option<::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateParam<'a>>>,
 }
-impl Default for clz_Torappu_ShopRecommendItemArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopRecommendItemArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopRecommendItemArgs {
@@ -3793,7 +3724,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopRecommendItem
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopRecommendItemBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopRecommendItemBuilder {
             fbb_: _fbb,
@@ -3801,7 +3734,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopRecommendItem
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopRecommendItem<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3895,14 +3827,14 @@ impl clz_Torappu_ShopRecommendItemT {
     }
 }
 pub enum clz_Torappu_ShopCreditUnlockItemOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopCreditUnlockItem<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopCreditUnlockItem<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopCreditUnlockItem<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3917,8 +3849,7 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
     pub const VT_CHARID: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopCreditUnlockItem { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3940,7 +3871,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopCreditUnlockItemT {
         let sortId = self.sortId();
         let unlockNum = self.unlockNum();
@@ -3953,7 +3883,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3965,7 +3894,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockNum(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3977,7 +3905,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4010,7 +3937,7 @@ pub struct clz_Torappu_ShopCreditUnlockItemArgs<'a> {
     pub unlockNum: i32,
     pub charId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopCreditUnlockItemArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopCreditUnlockItemArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopCreditUnlockItemArgs {
@@ -4046,7 +3973,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopCreditUnlockItemBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopCreditUnlockItemBuilder {
             fbb_: _fbb,
@@ -4054,7 +3983,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopCreditUnlockItem<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4105,14 +4033,14 @@ impl clz_Torappu_ShopCreditUnlockItemT {
     }
 }
 pub enum clz_Torappu_ShopCreditUnlockGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopCreditUnlockGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopCreditUnlockGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopCreditUnlockGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4128,8 +4056,7 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
     pub const VT_CHARDICT: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopCreditUnlockGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4156,7 +4083,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopCreditUnlockGroupT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let index = self.index().map(|x| alloc::string::ToString::to_string(x));
@@ -4173,7 +4099,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4186,7 +4111,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn index(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4199,7 +4123,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startDateTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4211,7 +4134,6 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn charDict(
         &self,
     ) -> Option<
@@ -4267,7 +4189,7 @@ pub struct clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ShopCreditUnlockGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopCreditUnlockGroupArgs {
@@ -4324,7 +4246,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopCreditUnlockGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopCreditUnlockGroupBuilder {
             fbb_: _fbb,
@@ -4332,7 +4256,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopCreditUnlockGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4391,14 +4314,14 @@ impl clz_Torappu_ShopCreditUnlockGroupT {
     }
 }
 pub enum dict__string__clz_Torappu_ShopCreditUnlockGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ShopCreditUnlockGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4412,8 +4335,7 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ShopCreditUnlockGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4436,7 +4358,6 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ShopCreditUnlockGroupT {
         let key = {
             let x = self.key();
@@ -4447,7 +4368,6 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4462,7 +4382,6 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_ShopCreditUnlockGroup,
@@ -4471,13 +4390,11 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ShopCreditUnlockGroup<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -4513,7 +4430,7 @@ pub struct dict__string__clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ShopCreditUnlockGroup<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ShopCreditUnlockGroupArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ShopCreditUnlockGroupArgs {
@@ -4553,7 +4470,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ShopCreditUnlockGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ShopCreditUnlockGroupBuilder {
             fbb_: _fbb,
@@ -4561,7 +4480,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopCreditUnlockGroup<'a>> {
@@ -4614,14 +4532,14 @@ impl dict__string__clz_Torappu_ShopCreditUnlockGroupT {
     }
 }
 pub enum clz_Torappu_ShopClientData_ShopKeeperDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopClientData_ShopKeeperData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopClientData_ShopKeeperData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopClientData_ShopKeeperData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4635,8 +4553,7 @@ impl<'a> clz_Torappu_ShopClientData_ShopKeeperData<'a> {
     pub const VT_CLICKWORDS: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopClientData_ShopKeeperData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4659,7 +4576,6 @@ impl<'a> clz_Torappu_ShopClientData_ShopKeeperData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopClientData_ShopKeeperDataT {
         let welcomeWords = self
             .welcomeWords()
@@ -4674,7 +4590,6 @@ impl<'a> clz_Torappu_ShopClientData_ShopKeeperData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn welcomeWords(
         &self,
     ) -> Option<
@@ -4696,7 +4611,6 @@ impl<'a> clz_Torappu_ShopClientData_ShopKeeperData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn clickWords(
         &self,
     ) -> Option<
@@ -4760,7 +4674,7 @@ pub struct clz_Torappu_ShopClientData_ShopKeeperDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ShopClientData_ShopKeeperDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopClientData_ShopKeeperDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopClientData_ShopKeeperDataArgs {
@@ -4812,7 +4726,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopClientData_ShopKeeperDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopClientData_ShopKeeperDataBuilder {
             fbb_: _fbb,
@@ -4820,7 +4736,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopClientData_ShopKeeperData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4872,14 +4787,14 @@ impl clz_Torappu_ShopClientData_ShopKeeperDataT {
     }
 }
 pub enum clz_Torappu_ShopCarouselData_ItemOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopCarouselData_Item<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopCarouselData_Item<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopCarouselData_Item<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4898,8 +4813,7 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
     pub const VT_FURNIID: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopCarouselData_Item { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4931,7 +4845,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopCarouselData_ItemT {
         let spriteId = self
             .spriteId()
@@ -4956,7 +4869,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn spriteId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4969,7 +4881,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4981,7 +4892,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4993,7 +4903,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn cmd(&self) -> enum__Torappu_ShopRouteTarget {
         // Safety:
         // Created from valid Table for this object
@@ -5008,7 +4917,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn param1(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5021,7 +4929,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn skinId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5034,7 +4941,6 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn furniId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5083,7 +4989,7 @@ pub struct clz_Torappu_ShopCarouselData_ItemArgs<'a> {
     pub skinId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub furniId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopCarouselData_ItemArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopCarouselData_ItemArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopCarouselData_ItemArgs {
@@ -5155,7 +5061,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopCarouselData_ItemBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopCarouselData_ItemBuilder {
             fbb_: _fbb,
@@ -5163,7 +5071,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopCarouselData_Item<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5234,14 +5141,14 @@ impl clz_Torappu_ShopCarouselData_ItemT {
     }
 }
 pub enum clz_Torappu_ShopCarouselDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopCarouselData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopCarouselData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopCarouselData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5254,8 +5161,7 @@ impl<'a> clz_Torappu_ShopCarouselData<'a> {
     pub const VT_ITEMS: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopCarouselData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5275,14 +5181,12 @@ impl<'a> clz_Torappu_ShopCarouselData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopCarouselDataT {
         let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_ShopCarouselDataT { items }
     }
 
     #[inline]
-    #[must_use]
     pub fn items(
         &self,
     ) -> Option<
@@ -5332,7 +5236,7 @@ pub struct clz_Torappu_ShopCarouselDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ShopCarouselDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopCarouselDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopCarouselDataArgs { items: None }
@@ -5360,7 +5264,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopCarouselDataB
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopCarouselDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopCarouselDataBuilder {
             fbb_: _fbb,
@@ -5368,7 +5274,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopCarouselDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopCarouselData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5405,14 +5310,14 @@ impl clz_Torappu_ShopCarouselDataT {
     }
 }
 pub enum clz_Torappu_ChooseShopRelationOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ChooseShopRelation<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ChooseShopRelation<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ChooseShopRelation<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5426,8 +5331,7 @@ impl<'a> clz_Torappu_ChooseShopRelation<'a> {
     pub const VT_OPTIONLIST: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ChooseShopRelation { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5450,7 +5354,6 @@ impl<'a> clz_Torappu_ChooseShopRelation<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ChooseShopRelationT {
         let goodId = self.goodId().map(|x| alloc::string::ToString::to_string(x));
         let optionList = self.optionList().map(|x| {
@@ -5462,7 +5365,6 @@ impl<'a> clz_Torappu_ChooseShopRelation<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn goodId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5475,7 +5377,6 @@ impl<'a> clz_Torappu_ChooseShopRelation<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn optionList(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -5513,7 +5414,7 @@ pub struct clz_Torappu_ChooseShopRelationArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ChooseShopRelationArgs<'_> {
+impl<'a> Default for clz_Torappu_ChooseShopRelationArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ChooseShopRelationArgs {
@@ -5550,7 +5451,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ChooseShopRelationBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ChooseShopRelationBuilder {
             fbb_: _fbb,
@@ -5558,7 +5461,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ChooseShopRelation<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5604,14 +5506,14 @@ impl clz_Torappu_ChooseShopRelationT {
     }
 }
 pub enum dict__string__stringOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__string<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__string<'a> {
-    type Inner = Self;
+    type Inner = dict__string__string<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5625,8 +5527,7 @@ impl<'a> dict__string__string<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__string { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5649,7 +5550,6 @@ impl<'a> dict__string__string<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__stringT {
         let key = {
             let x = self.key();
@@ -5660,7 +5560,6 @@ impl<'a> dict__string__string<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5672,19 +5571,16 @@ impl<'a> dict__string__string<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__string) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5713,7 +5609,7 @@ pub struct dict__string__stringArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for dict__string__stringArgs<'_> {
+impl<'a> Default for dict__string__stringArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__stringArgs {
@@ -5739,7 +5635,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(dict__string__string::VT_VALUE, value);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__stringBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__stringBuilder {
             fbb_: _fbb,
@@ -5747,7 +5645,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> dict__string__stringBuilder<'
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__string<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(o, dict__string__string::VT_KEY, "key");
@@ -5791,14 +5688,14 @@ impl dict__string__stringT {
     }
 }
 pub enum dict__string__enum__Torappu_ShopUnlockTypeOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__enum__Torappu_ShopUnlockType<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__enum__Torappu_ShopUnlockType<'a> {
-    type Inner = Self;
+    type Inner = dict__string__enum__Torappu_ShopUnlockType<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5812,8 +5709,7 @@ impl<'a> dict__string__enum__Torappu_ShopUnlockType<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__enum__Torappu_ShopUnlockType { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5834,7 +5730,6 @@ impl<'a> dict__string__enum__Torappu_ShopUnlockType<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__enum__Torappu_ShopUnlockTypeT {
         let key = {
             let x = self.key();
@@ -5845,7 +5740,6 @@ impl<'a> dict__string__enum__Torappu_ShopUnlockType<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5860,19 +5754,16 @@ impl<'a> dict__string__enum__Torappu_ShopUnlockType<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__enum__Torappu_ShopUnlockType) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> enum__Torappu_ShopUnlockType {
         // Safety:
         // Created from valid Table for this object
@@ -5905,7 +5796,7 @@ pub struct dict__string__enum__Torappu_ShopUnlockTypeArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: enum__Torappu_ShopUnlockType,
 }
-impl Default for dict__string__enum__Torappu_ShopUnlockTypeArgs<'_> {
+impl<'a> Default for dict__string__enum__Torappu_ShopUnlockTypeArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__enum__Torappu_ShopUnlockTypeArgs {
@@ -5942,7 +5833,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__enum__Torappu_ShopUnlockTypeBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__enum__Torappu_ShopUnlockTypeBuilder {
             fbb_: _fbb,
@@ -5950,7 +5843,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__enum__Torappu_ShopUnlockType<'a>> {
@@ -6000,14 +5892,14 @@ impl dict__string__enum__Torappu_ShopUnlockTypeT {
     }
 }
 pub enum clz_Torappu_ShopClientGPDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopClientGPData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopClientGPData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopClientGPData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6023,8 +5915,7 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
     pub const VT_CONDTRIGPACKAGETYPE: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopClientGPData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6051,7 +5942,6 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopClientGPDataT {
         let goodId = self.goodId().map(|x| alloc::string::ToString::to_string(x));
         let giftPackageId = self
@@ -6070,7 +5960,6 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn goodId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6083,7 +5972,6 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn giftPackageId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6096,7 +5984,6 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn displayName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6109,7 +5996,6 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn condTrigPackageType(&self) -> enum__Torappu_ShopCondTrigPackageType {
         // Safety:
         // Created from valid Table for this object
@@ -6158,7 +6044,7 @@ pub struct clz_Torappu_ShopClientGPDataArgs<'a> {
     pub displayName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub condTrigPackageType: enum__Torappu_ShopCondTrigPackageType,
 }
-impl Default for clz_Torappu_ShopClientGPDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopClientGPDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopClientGPDataArgs {
@@ -6209,7 +6095,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopClientGPDataB
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopClientGPDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopClientGPDataBuilder {
             fbb_: _fbb,
@@ -6217,7 +6105,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopClientGPDataB
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopClientGPData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6273,14 +6160,14 @@ impl clz_Torappu_ShopClientGPDataT {
     }
 }
 pub enum dict__string__clz_Torappu_ShopClientGPDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ShopClientGPData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopClientGPData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ShopClientGPData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6294,8 +6181,7 @@ impl<'a> dict__string__clz_Torappu_ShopClientGPData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ShopClientGPData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6318,7 +6204,6 @@ impl<'a> dict__string__clz_Torappu_ShopClientGPData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ShopClientGPDataT {
         let key = {
             let x = self.key();
@@ -6329,7 +6214,6 @@ impl<'a> dict__string__clz_Torappu_ShopClientGPData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6344,19 +6228,16 @@ impl<'a> dict__string__clz_Torappu_ShopClientGPData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ShopClientGPData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ShopClientGPData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6392,7 +6273,7 @@ pub struct dict__string__clz_Torappu_ShopClientGPDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ShopClientGPData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ShopClientGPDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ShopClientGPDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ShopClientGPDataArgs {
@@ -6429,7 +6310,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ShopClientGPDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ShopClientGPDataBuilder {
             fbb_: _fbb,
@@ -6437,7 +6320,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopClientGPData<'a>> {
@@ -6487,14 +6369,14 @@ impl dict__string__clz_Torappu_ShopClientGPDataT {
     }
 }
 pub enum clz_Torappu_ShopGPTabDisplayDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopGPTabDisplayData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopGPTabDisplayData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopGPTabDisplayData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6517,8 +6399,7 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
     pub const VT_MARKERPICID: ::flatbuffers::VOffsetT = 24;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopGPTabDisplayData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6558,7 +6439,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopGPTabDisplayDataT {
         let tabId = self.tabId().map(|x| alloc::string::ToString::to_string(x));
         let tabName = self
@@ -6597,7 +6477,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn tabId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6610,7 +6489,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6623,7 +6501,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabType(&self) -> enum__Torappu_ShopGPTabType {
         // Safety:
         // Created from valid Table for this object
@@ -6638,7 +6515,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn recomDisplayNum(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -6653,7 +6529,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabPicId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6666,7 +6541,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabPicOnColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6679,7 +6553,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabPicOffColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6692,7 +6565,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -6704,7 +6576,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabStartTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -6716,7 +6587,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabEndTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -6728,7 +6598,6 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn markerPicId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6797,7 +6666,7 @@ pub struct clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     pub tabEndTime: i64,
     pub markerPicId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_ShopGPTabDisplayDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopGPTabDisplayDataArgs {
@@ -6903,7 +6772,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopGPTabDisplayDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopGPTabDisplayDataBuilder {
             fbb_: _fbb,
@@ -6911,7 +6782,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopGPTabDisplayData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7002,14 +6872,14 @@ impl clz_Torappu_ShopGPTabDisplayDataT {
     }
 }
 pub enum dict__string__clz_Torappu_ShopGPTabDisplayDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_ShopGPTabDisplayData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -7023,8 +6893,7 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_ShopGPTabDisplayData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -7047,7 +6916,6 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_ShopGPTabDisplayDataT {
         let key = {
             let x = self.key();
@@ -7058,7 +6926,6 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -7073,7 +6940,6 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_ShopGPTabDisplayData,
@@ -7082,13 +6948,11 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_ShopGPTabDisplayData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -7124,7 +6988,7 @@ pub struct dict__string__clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_ShopGPTabDisplayData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_ShopGPTabDisplayDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_ShopGPTabDisplayDataArgs {
@@ -7164,7 +7028,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ShopGPTabDisplayDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_ShopGPTabDisplayDataBuilder {
             fbb_: _fbb,
@@ -7172,7 +7038,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopGPTabDisplayData<'a>> {
@@ -7225,14 +7090,14 @@ impl dict__string__clz_Torappu_ShopGPTabDisplayDataT {
     }
 }
 pub enum clz_Torappu_LMTGSShopScheduleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_LMTGSShopSchedule<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_LMTGSShopSchedule<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_LMTGSShopSchedule<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -7251,8 +7116,7 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
     pub const VT_ENDTIME: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_LMTGSShopSchedule { _tab: table }
     }
     #[allow(unused_mut)]
@@ -7286,7 +7150,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_LMTGSShopScheduleT {
         let gachaPoolId = self
             .gachaPoolId()
@@ -7317,7 +7180,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn gachaPoolId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7330,7 +7192,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn LMTGSId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7343,7 +7204,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn iconColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7356,7 +7216,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn iconBackColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7369,7 +7228,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn storeTextColor(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7382,7 +7240,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -7394,7 +7251,6 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -7454,7 +7310,7 @@ pub struct clz_Torappu_LMTGSShopScheduleArgs<'a> {
     pub startTime: i64,
     pub endTime: i64,
 }
-impl Default for clz_Torappu_LMTGSShopScheduleArgs<'_> {
+impl<'a> Default for clz_Torappu_LMTGSShopScheduleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_LMTGSShopScheduleArgs {
@@ -7520,7 +7376,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LMTGSShopSchedule
             .push_slot::<i64>(clz_Torappu_LMTGSShopSchedule::VT_ENDTIME, endTime, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_LMTGSShopScheduleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_LMTGSShopScheduleBuilder {
             fbb_: _fbb,
@@ -7528,7 +7386,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_LMTGSShopSchedule
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_LMTGSShopSchedule<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7599,14 +7456,14 @@ impl clz_Torappu_LMTGSShopScheduleT {
     }
 }
 pub enum clz_Torappu_LMTGSShopOverlayScheduleOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_LMTGSShopOverlaySchedule<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_LMTGSShopOverlaySchedule<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_LMTGSShopOverlaySchedule<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -7621,8 +7478,7 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
     pub const VT_PICID: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_LMTGSShopOverlaySchedule { _tab: table }
     }
     #[allow(unused_mut)]
@@ -7648,7 +7504,6 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_LMTGSShopOverlayScheduleT {
         let gachaPoolId1 = self
             .gachaPoolId1()
@@ -7665,7 +7520,6 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn gachaPoolId1(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7678,7 +7532,6 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn gachaPoolId2(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7691,7 +7544,6 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn picId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -7732,7 +7584,7 @@ pub struct clz_Torappu_LMTGSShopOverlayScheduleArgs<'a> {
     pub gachaPoolId2: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub picId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_LMTGSShopOverlayScheduleArgs<'_> {
+impl<'a> Default for clz_Torappu_LMTGSShopOverlayScheduleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_LMTGSShopOverlayScheduleArgs {
@@ -7773,7 +7625,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_LMTGSShopOverlayScheduleBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_LMTGSShopOverlayScheduleBuilder {
             fbb_: _fbb,
@@ -7781,7 +7635,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_LMTGSShopOverlaySchedule<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7832,14 +7685,14 @@ impl clz_Torappu_LMTGSShopOverlayScheduleT {
     }
 }
 pub enum clz_Torappu_ShopClientDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_ShopClientData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_ShopClientData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_ShopClientData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -7865,8 +7718,7 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
     pub const VT_OS: ::flatbuffers::VOffsetT = 30;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_ShopClientData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -7925,7 +7777,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_ShopClientDataT {
         let recommendList = self
             .recommendList()
@@ -7988,7 +7839,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn recommendList(
         &self,
     ) -> Option<
@@ -8010,7 +7860,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn creditUnlockGroup(
         &self,
     ) -> Option<
@@ -8032,7 +7881,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn shopKeeperData(&self) -> Option<clz_Torappu_ShopClientData_ShopKeeperData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -8046,7 +7894,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn carousels(
         &self,
     ) -> Option<
@@ -8065,7 +7912,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn chooseShopRelations(
         &self,
     ) -> Option<
@@ -8087,7 +7933,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn chooseOptionToGoodDict(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<dict__string__string<'a>>>>
@@ -8102,7 +7947,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn shopUnlockDict(
         &self,
     ) -> Option<
@@ -8124,7 +7968,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn extraQCShopRule(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -8138,7 +7981,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn repQCShopRule(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -8152,7 +7994,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn shopGPDataDict(
         &self,
     ) -> Option<
@@ -8174,7 +8015,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tabDisplayData(
         &self,
     ) -> Option<
@@ -8196,7 +8036,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn shopMonthlySubGoodId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -8209,7 +8048,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn ls(
         &self,
     ) -> Option<
@@ -8231,7 +8069,6 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn os(
         &self,
     ) -> Option<
@@ -8371,7 +8208,7 @@ pub struct clz_Torappu_ShopClientDataArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_ShopClientDataArgs<'_> {
+impl<'a> Default for clz_Torappu_ShopClientDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ShopClientDataArgs {
@@ -8583,7 +8420,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopClientDataBui
             .push_slot_always::<::flatbuffers::WIPOffset<_>>(clz_Torappu_ShopClientData::VT_OS, os);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ShopClientDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_ShopClientDataBuilder {
             fbb_: _fbb,
@@ -8591,7 +8430,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_ShopClientDataBui
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_ShopClientData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -8787,20 +8625,18 @@ pub fn size_prefixed_root_as_clz_torappu_shop_client_data_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_ShopClientData<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_ShopClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_ShopClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_ShopClientData`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_shop_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_ShopClientData<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_ShopClientData>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_ShopClientData` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_ShopClientData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_ShopClientData`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_shop_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_ShopClientData<'_> {

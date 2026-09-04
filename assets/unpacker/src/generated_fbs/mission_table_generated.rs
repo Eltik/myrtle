@@ -69,8 +69,7 @@ impl enum__Torappu_MissionType {
         Self::SPECIAL_OPERATOR_WEEKLY,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::UNKNOWN => Some("UNKNOWN"),
             Self::MAIN => Some("MAIN"),
@@ -104,7 +103,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_MissionType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_MissionType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -127,7 +126,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_MissionType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_MissionType {
-    type Output = Self;
+    type Output = enum__Torappu_MissionType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -193,8 +192,7 @@ impl enum__Torappu_MissionItemBgType {
     pub const ENUM_MAX: i32 = 2;
     pub const ENUM_VALUES: &'static [Self] = &[Self::COMMON, Self::Equipment, Self::Char];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::COMMON => Some("COMMON"),
             Self::Equipment => Some("Equipment"),
@@ -219,7 +217,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_MissionItemBgType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_MissionItemBgType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -242,7 +240,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_MissionItemBgType {
-    type Output = Self;
+    type Output = enum__Torappu_MissionItemBgType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -283,13 +281,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -383,6 +381,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::PLOT_ITEM,
     enum__Torappu_ItemType::MAGAZINE_LEAF,
     enum__Torappu_ItemType::STICKER,
+    enum__Torappu_ItemType::ARKHUB,
+    enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -483,9 +483,11 @@ impl enum__Torappu_ItemType {
     pub const PLOT_ITEM: Self = Self(90);
     pub const MAGAZINE_LEAF: Self = Self(91);
     pub const STICKER: Self = Self(92);
+    pub const ARKHUB: Self = Self(93);
+    pub const LINKAGE_TKT_GACHA: Self = Self(94);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 92;
+    pub const ENUM_MAX: i32 = 94;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -580,10 +582,11 @@ impl enum__Torappu_ItemType {
         Self::PLOT_ITEM,
         Self::MAGAZINE_LEAF,
         Self::STICKER,
+        Self::ARKHUB,
+        Self::LINKAGE_TKT_GACHA,
     ];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NONE => Some("NONE"),
             Self::CHAR => Some("CHAR"),
@@ -678,6 +681,8 @@ impl enum__Torappu_ItemType {
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
             Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
             Self::STICKER => Some("STICKER"),
+            Self::ARKHUB => Some("ARKHUB"),
+            Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
             _ => None,
         }
     }
@@ -698,7 +703,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_ItemType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_ItemType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -721,7 +726,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_ItemType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_ItemType {
-    type Output = Self;
+    type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -786,8 +791,7 @@ impl enum__Torappu_CrossAppShareMissionType {
     pub const ENUM_MAX: i32 = 1;
     pub const ENUM_VALUES: &'static [Self] = &[Self::NORMAL, Self::ACTIVITY];
     /// Returns the variant's name or "" if unknown.
-    #[must_use]
-    pub const fn variant_name(self) -> Option<&'static str> {
+    pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::NORMAL => Some("NORMAL"),
             Self::ACTIVITY => Some("ACTIVITY"),
@@ -811,7 +815,7 @@ impl<'de> serde::Deserialize<'de> for enum__Torappu_CrossAppShareMissionType {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        for item in Self::ENUM_VALUES {
+        for item in enum__Torappu_CrossAppShareMissionType::ENUM_VALUES {
             if let Some(item_name) = item.variant_name() {
                 if item_name == s {
                     return Ok(item.clone());
@@ -834,7 +838,7 @@ impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_CrossAppShareMissionType {
 }
 
 impl ::flatbuffers::Push for enum__Torappu_CrossAppShareMissionType {
-    type Output = Self;
+    type Output = enum__Torappu_CrossAppShareMissionType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
@@ -867,14 +871,14 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_CrossAppShareMissionType {
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_CrossAppShareMissionType {}
 pub enum clz_Torappu_MissionDisplayRewardsOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionDisplayRewards<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionDisplayRewards<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionDisplayRewards<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -889,8 +893,7 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
     pub const VT_COUNT: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionDisplayRewards { _tab: table }
     }
     #[allow(unused_mut)]
@@ -912,7 +915,6 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionDisplayRewardsT {
         let type_ = self.type_();
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
@@ -921,7 +923,6 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_ItemType {
         // Safety:
         // Created from valid Table for this object
@@ -936,7 +937,6 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -949,7 +949,6 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn count(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -981,7 +980,7 @@ pub struct clz_Torappu_MissionDisplayRewardsArgs<'a> {
     pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub count: i32,
 }
-impl Default for clz_Torappu_MissionDisplayRewardsArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionDisplayRewardsArgs {
@@ -1020,7 +1019,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i32>(clz_Torappu_MissionDisplayRewards::VT_COUNT, count, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionDisplayRewardsBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionDisplayRewardsBuilder {
             fbb_: _fbb,
@@ -1028,7 +1029,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionDisplayRewards<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1075,14 +1075,14 @@ impl clz_Torappu_MissionDisplayRewardsT {
     }
 }
 pub enum clz_Torappu_MissionDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1113,8 +1113,7 @@ impl<'a> clz_Torappu_MissionData<'a> {
     pub const VT_COUNTENDTS: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -1176,7 +1175,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionDataT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let sortId = self.sortId();
@@ -1247,7 +1245,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1258,7 +1255,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1270,7 +1266,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn description(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1283,7 +1278,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_MissionType {
         // Safety:
         // Created from valid Table for this object
@@ -1298,7 +1292,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn itemBgType(&self) -> enum__Torappu_MissionItemBgType {
         // Safety:
         // Created from valid Table for this object
@@ -1313,7 +1306,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn preMissionIds(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1327,7 +1319,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn template(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1340,7 +1331,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn templateType(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1353,7 +1343,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn param(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1367,7 +1356,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockCondition(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1380,7 +1368,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockParam(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -1394,7 +1381,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn missionGroup(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1407,7 +1393,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn toPage(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1420,7 +1405,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn periodicalPoint(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -1432,7 +1416,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewards(
         &self,
     ) -> Option<
@@ -1454,7 +1437,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn backImagePath(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1467,7 +1449,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn foldId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1480,7 +1461,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn haveSubMissionToUnlock(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -1495,7 +1475,6 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn countEndTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -1621,7 +1600,7 @@ pub struct clz_Torappu_MissionDataArgs<'a> {
     pub haveSubMissionToUnlock: bool,
     pub countEndTs: i64,
 }
-impl Default for clz_Torappu_MissionDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionDataArgs {
@@ -1808,7 +1787,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionDataBuilde
             .push_slot::<i64>(clz_Torappu_MissionData::VT_COUNTENDTS, countEndTs, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionDataBuilder {
             fbb_: _fbb,
@@ -1816,7 +1797,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionDataBuilde
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -1959,14 +1939,14 @@ impl clz_Torappu_MissionDataT {
     }
 }
 pub enum dict__string__clz_Torappu_MissionDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MissionData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionData<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MissionData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1980,8 +1960,7 @@ impl<'a> dict__string__clz_Torappu_MissionData<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MissionData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2004,7 +1983,6 @@ impl<'a> dict__string__clz_Torappu_MissionData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MissionDataT {
         let key = {
             let x = self.key();
@@ -2015,7 +1993,6 @@ impl<'a> dict__string__clz_Torappu_MissionData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2030,19 +2007,16 @@ impl<'a> dict__string__clz_Torappu_MissionData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_MissionData) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MissionData<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2078,7 +2052,7 @@ pub struct dict__string__clz_Torappu_MissionDataArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MissionData<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MissionDataArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MissionDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MissionDataArgs {
@@ -2115,7 +2089,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MissionDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MissionDataBuilder {
             fbb_: _fbb,
@@ -2123,7 +2099,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -2171,14 +2146,14 @@ impl dict__string__clz_Torappu_MissionDataT {
     }
 }
 pub enum clz_Torappu_MissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2199,8 +2174,7 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
     pub const VT_ENDTS: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2238,7 +2212,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionGroupT {
         let id = self.id().map(|x| alloc::string::ToString::to_string(x));
         let title = self.title().map(|x| alloc::string::ToString::to_string(x));
@@ -2271,7 +2244,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2282,7 +2254,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn title(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2295,7 +2266,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_MissionType {
         // Safety:
         // Created from valid Table for this object
@@ -2310,7 +2280,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn preMissionGroup(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2323,7 +2292,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn period(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
         // Safety:
         // Created from valid Table for this object
@@ -2337,7 +2305,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewards(
         &self,
     ) -> Option<
@@ -2359,7 +2326,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn missionIds(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -2373,7 +2339,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2385,7 +2350,6 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -2455,7 +2419,7 @@ pub struct clz_Torappu_MissionGroupArgs<'a> {
     pub startTs: i64,
     pub endTs: i64,
 }
-impl Default for clz_Torappu_MissionGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionGroupArgs {
@@ -2549,7 +2513,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionGroupBuild
             .push_slot::<i64>(clz_Torappu_MissionGroup::VT_ENDTS, endTs, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionGroupBuilder {
             fbb_: _fbb,
@@ -2557,7 +2523,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionGroupBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -2644,14 +2609,14 @@ impl clz_Torappu_MissionGroupT {
     }
 }
 pub enum dict__string__clz_Torappu_MissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MissionGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionGroup<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MissionGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2665,8 +2630,7 @@ impl<'a> dict__string__clz_Torappu_MissionGroup<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MissionGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2689,7 +2653,6 @@ impl<'a> dict__string__clz_Torappu_MissionGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MissionGroupT {
         let key = {
             let x = self.key();
@@ -2700,7 +2663,6 @@ impl<'a> dict__string__clz_Torappu_MissionGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -2715,19 +2677,16 @@ impl<'a> dict__string__clz_Torappu_MissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_MissionGroup) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MissionGroup<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -2763,7 +2722,7 @@ pub struct dict__string__clz_Torappu_MissionGroupArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MissionGroup<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MissionGroupArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MissionGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MissionGroupArgs {
@@ -2800,7 +2759,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MissionGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MissionGroupBuilder {
             fbb_: _fbb,
@@ -2808,7 +2769,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_
@@ -2856,14 +2816,14 @@ impl dict__string__clz_Torappu_MissionGroupT {
     }
 }
 pub enum clz_Torappu_MissionDailyRewardConfOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionDailyRewardConf<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionDailyRewardConf<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionDailyRewardConf<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -2881,8 +2841,7 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
     pub const VT_REWARDS: ::flatbuffers::VOffsetT = 14;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionDailyRewardConf { _tab: table }
     }
     #[allow(unused_mut)]
@@ -2911,7 +2870,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionDailyRewardConfT {
         let groupId = self
             .groupId()
@@ -2934,7 +2892,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2947,7 +2904,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -2960,7 +2916,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn periodicalPointCost(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -2975,7 +2930,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_MissionType {
         // Safety:
         // Created from valid Table for this object
@@ -2990,7 +2944,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3002,7 +2955,6 @@ impl<'a> clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewards(
         &self,
     ) -> Option<
@@ -3066,7 +3018,7 @@ pub struct clz_Torappu_MissionDailyRewardConfArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MissionDailyRewardConfArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionDailyRewardConfArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionDailyRewardConfArgs {
@@ -3141,7 +3093,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionDailyRewardConfBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionDailyRewardConfBuilder {
             fbb_: _fbb,
@@ -3149,7 +3103,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionDailyRewardConf<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3218,14 +3171,14 @@ impl clz_Torappu_MissionDailyRewardConfT {
     }
 }
 pub enum dict__string__clz_Torappu_MissionDailyRewardConfOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MissionDailyRewardConf<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3239,8 +3192,7 @@ impl<'a> dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MissionDailyRewardConf { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3263,7 +3215,6 @@ impl<'a> dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MissionDailyRewardConfT {
         let key = {
             let x = self.key();
@@ -3274,7 +3225,6 @@ impl<'a> dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3289,7 +3239,6 @@ impl<'a> dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_MissionDailyRewardConf,
@@ -3298,13 +3247,11 @@ impl<'a> dict__string__clz_Torappu_MissionDailyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MissionDailyRewardConf<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3340,7 +3287,7 @@ pub struct dict__string__clz_Torappu_MissionDailyRewardConfArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MissionDailyRewardConf<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MissionDailyRewardConfArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MissionDailyRewardConfArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MissionDailyRewardConfArgs {
@@ -3380,7 +3327,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MissionDailyRewardConfBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MissionDailyRewardConfBuilder {
             fbb_: _fbb,
@@ -3388,7 +3337,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionDailyRewardConf<'a>> {
@@ -3441,14 +3389,14 @@ impl dict__string__clz_Torappu_MissionDailyRewardConfT {
     }
 }
 pub enum clz_Torappu_MissionWeeklyRewardConfOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionWeeklyRewardConf<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionWeeklyRewardConf<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionWeeklyRewardConf<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3468,8 +3416,7 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
     pub const VT_REWARDS: ::flatbuffers::VOffsetT = 18;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionWeeklyRewardConf { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3500,7 +3447,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionWeeklyRewardConfT {
         let beginTime = self.beginTime();
         let endTime = self.endTime();
@@ -3527,7 +3473,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn beginTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3539,7 +3484,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -3551,7 +3495,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3564,7 +3507,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -3577,7 +3519,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn periodicalPointCost(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3592,7 +3533,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn type_(&self) -> enum__Torappu_MissionType {
         // Safety:
         // Created from valid Table for this object
@@ -3607,7 +3547,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortIndex(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -3619,7 +3558,6 @@ impl<'a> clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewards(
         &self,
     ) -> Option<
@@ -3687,7 +3625,7 @@ pub struct clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MissionWeeklyRewardConfArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionWeeklyRewardConfArgs {
@@ -3778,7 +3716,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionWeeklyRewardConfBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionWeeklyRewardConfBuilder {
             fbb_: _fbb,
@@ -3786,7 +3726,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionWeeklyRewardConf<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -3865,14 +3804,14 @@ impl clz_Torappu_MissionWeeklyRewardConfT {
     }
 }
 pub enum dict__string__clz_Torappu_MissionWeeklyRewardConfOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_MissionWeeklyRewardConf<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -3886,8 +3825,7 @@ impl<'a> dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_MissionWeeklyRewardConf { _tab: table }
     }
     #[allow(unused_mut)]
@@ -3910,7 +3848,6 @@ impl<'a> dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_MissionWeeklyRewardConfT {
         let key = {
             let x = self.key();
@@ -3921,7 +3858,6 @@ impl<'a> dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -3936,7 +3872,6 @@ impl<'a> dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_MissionWeeklyRewardConf,
@@ -3945,13 +3880,11 @@ impl<'a> dict__string__clz_Torappu_MissionWeeklyRewardConf<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_MissionWeeklyRewardConf<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -3987,7 +3920,7 @@ pub struct dict__string__clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_MissionWeeklyRewardConf<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_MissionWeeklyRewardConfArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_MissionWeeklyRewardConfArgs {
@@ -4027,7 +3960,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_MissionWeeklyRewardConfBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_MissionWeeklyRewardConfBuilder {
             fbb_: _fbb,
@@ -4035,7 +3970,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionWeeklyRewardConf<'a>> {
@@ -4088,14 +4022,14 @@ impl dict__string__clz_Torappu_MissionWeeklyRewardConfT {
     }
 }
 pub enum clz_Torappu_SOCharMissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_SOCharMissionGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_SOCharMissionGroup<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_SOCharMissionGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4111,8 +4045,7 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
     pub const VT_ENDTS: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_SOCharMissionGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4137,7 +4070,6 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_SOCharMissionGroupT {
         let groupId = self
             .groupId()
@@ -4158,7 +4090,6 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4171,7 +4102,6 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn missionIds(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -4185,7 +4115,6 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4197,7 +4126,6 @@ impl<'a> clz_Torappu_SOCharMissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTs(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4241,7 +4169,7 @@ pub struct clz_Torappu_SOCharMissionGroupArgs<'a> {
     pub startTs: i64,
     pub endTs: i64,
 }
-impl Default for clz_Torappu_SOCharMissionGroupArgs<'_> {
+impl<'a> Default for clz_Torappu_SOCharMissionGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SOCharMissionGroupArgs {
@@ -4290,7 +4218,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             .push_slot::<i64>(clz_Torappu_SOCharMissionGroup::VT_ENDTS, endTs, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_SOCharMissionGroupBuilder {
             fbb_: _fbb,
@@ -4298,7 +4228,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -4357,14 +4286,14 @@ impl clz_Torappu_SOCharMissionGroupT {
     }
 }
 pub enum dict__string__clz_Torappu_SOCharMissionGroupOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_SOCharMissionGroup<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_SOCharMissionGroup<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_SOCharMissionGroup<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4378,8 +4307,7 @@ impl<'a> dict__string__clz_Torappu_SOCharMissionGroup<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_SOCharMissionGroup { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4402,7 +4330,6 @@ impl<'a> dict__string__clz_Torappu_SOCharMissionGroup<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_SOCharMissionGroupT {
         let key = {
             let x = self.key();
@@ -4413,7 +4340,6 @@ impl<'a> dict__string__clz_Torappu_SOCharMissionGroup<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -4428,19 +4354,16 @@ impl<'a> dict__string__clz_Torappu_SOCharMissionGroup<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_SOCharMissionGroup) -> bool {
         self.key() < o.key()
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_SOCharMissionGroup<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -4476,7 +4399,7 @@ pub struct dict__string__clz_Torappu_SOCharMissionGroupArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_SOCharMissionGroup<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_SOCharMissionGroupArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_SOCharMissionGroupArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_SOCharMissionGroupArgs {
@@ -4516,7 +4439,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_SOCharMissionGroupBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_SOCharMissionGroupBuilder {
             fbb_: _fbb,
@@ -4524,7 +4449,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_SOCharMissionGroup<'a>> {
@@ -4577,14 +4501,14 @@ impl dict__string__clz_Torappu_SOCharMissionGroupT {
     }
 }
 pub enum clz_Torappu_DailyMissionGroupInfo_periodInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_DailyMissionGroupInfo_periodInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4599,8 +4523,7 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
     pub const VT_PERIOD: ::flatbuffers::VOffsetT = 8;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_DailyMissionGroupInfo_periodInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4626,7 +4549,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_DailyMissionGroupInfo_periodInfoT {
         let missionGroupId = self
             .missionGroupId()
@@ -4643,7 +4565,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn missionGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4656,7 +4577,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewardGroupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4669,7 +4589,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo_periodInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn period(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
         // Safety:
         // Created from valid Table for this object
@@ -4715,7 +4634,7 @@ pub struct clz_Torappu_DailyMissionGroupInfo_periodInfoArgs<'a> {
     pub rewardGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub period: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
 }
-impl Default for clz_Torappu_DailyMissionGroupInfo_periodInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_DailyMissionGroupInfo_periodInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_DailyMissionGroupInfo_periodInfoArgs {
@@ -4759,7 +4678,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_DailyMissionGroupInfo_periodInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_DailyMissionGroupInfo_periodInfoBuilder {
             fbb_: _fbb,
@@ -4767,7 +4688,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_DailyMissionGroupInfo_periodInfo<'a>> {
@@ -4820,14 +4740,14 @@ impl clz_Torappu_DailyMissionGroupInfo_periodInfoT {
     }
 }
 pub enum clz_Torappu_DailyMissionGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_DailyMissionGroupInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_DailyMissionGroupInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_DailyMissionGroupInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4843,8 +4763,7 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
     pub const VT_PERIODLIST: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_DailyMissionGroupInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -4869,7 +4788,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_DailyMissionGroupInfoT {
         let startTime = self.startTime();
         let endTime = self.endTime();
@@ -4888,7 +4806,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4900,7 +4817,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -4912,7 +4828,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn tagState(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -4925,7 +4840,6 @@ impl<'a> clz_Torappu_DailyMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn periodList(
         &self,
     ) -> Option<
@@ -4985,7 +4899,7 @@ pub struct clz_Torappu_DailyMissionGroupInfoArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_DailyMissionGroupInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_DailyMissionGroupInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_DailyMissionGroupInfoArgs {
@@ -5040,7 +4954,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_DailyMissionGroupInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_DailyMissionGroupInfoBuilder {
             fbb_: _fbb,
@@ -5048,7 +4964,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_DailyMissionGroupInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5107,14 +5022,14 @@ impl clz_Torappu_DailyMissionGroupInfoT {
     }
 }
 pub enum dict__string__clz_Torappu_DailyMissionGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_DailyMissionGroupInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5128,8 +5043,7 @@ impl<'a> dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_DailyMissionGroupInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5152,7 +5066,6 @@ impl<'a> dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_DailyMissionGroupInfoT {
         let key = {
             let x = self.key();
@@ -5163,7 +5076,6 @@ impl<'a> dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -5178,7 +5090,6 @@ impl<'a> dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_DailyMissionGroupInfo,
@@ -5187,13 +5098,11 @@ impl<'a> dict__string__clz_Torappu_DailyMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_DailyMissionGroupInfo<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -5229,7 +5138,7 @@ pub struct dict__string__clz_Torappu_DailyMissionGroupInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_DailyMissionGroupInfo<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_DailyMissionGroupInfoArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_DailyMissionGroupInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_DailyMissionGroupInfoArgs {
@@ -5269,7 +5178,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_DailyMissionGroupInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_DailyMissionGroupInfoBuilder {
             fbb_: _fbb,
@@ -5277,7 +5188,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_DailyMissionGroupInfo<'a>> {
@@ -5330,14 +5240,14 @@ impl dict__string__clz_Torappu_DailyMissionGroupInfoT {
     }
 }
 pub enum clz_Torappu_MainlineMissionEndImageDataOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MainlineMissionEndImageData<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MainlineMissionEndImageData<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MainlineMissionEndImageData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5351,8 +5261,7 @@ impl<'a> clz_Torappu_MainlineMissionEndImageData<'a> {
     pub const VT_PRIORITY: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MainlineMissionEndImageData { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5373,7 +5282,6 @@ impl<'a> clz_Torappu_MainlineMissionEndImageData<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MainlineMissionEndImageDataT {
         let imageId = self
             .imageId()
@@ -5383,7 +5291,6 @@ impl<'a> clz_Torappu_MainlineMissionEndImageData<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn imageId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5396,7 +5303,6 @@ impl<'a> clz_Torappu_MainlineMissionEndImageData<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn priority(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -5433,7 +5339,7 @@ pub struct clz_Torappu_MainlineMissionEndImageDataArgs<'a> {
     pub imageId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub priority: i32,
 }
-impl Default for clz_Torappu_MainlineMissionEndImageDataArgs<'_> {
+impl<'a> Default for clz_Torappu_MainlineMissionEndImageDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MainlineMissionEndImageDataArgs {
@@ -5470,7 +5376,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MainlineMissionEndImageDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MainlineMissionEndImageDataBuilder {
             fbb_: _fbb,
@@ -5478,7 +5386,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MainlineMissionEndImageData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -5521,14 +5428,14 @@ impl clz_Torappu_MainlineMissionEndImageDataT {
     }
 }
 pub enum clz_Torappu_CrossAppShareMissionOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CrossAppShareMission<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CrossAppShareMission<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CrossAppShareMission<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5549,8 +5456,7 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
     pub const VT_REWARDSLIST: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CrossAppShareMission { _tab: table }
     }
     #[allow(unused_mut)]
@@ -5586,7 +5492,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CrossAppShareMissionT {
         let shareMissionId = self
             .shareMissionId()
@@ -5623,7 +5528,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn shareMissionId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5636,7 +5540,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn missionType(&self) -> enum__Torappu_CrossAppShareMissionType {
         // Safety:
         // Created from valid Table for this object
@@ -5651,7 +5554,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn relateActivityId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5664,7 +5566,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn startTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5676,7 +5577,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn endTime(&self) -> i64 {
         // Safety:
         // Created from valid Table for this object
@@ -5688,7 +5588,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn limitCount(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -5700,7 +5599,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn condTemplate(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -5713,7 +5611,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn condParam(
         &self,
     ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
@@ -5727,7 +5624,6 @@ impl<'a> clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn rewardsList(
         &self,
     ) -> Option<
@@ -5815,7 +5711,7 @@ pub struct clz_Torappu_CrossAppShareMissionArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_CrossAppShareMissionArgs<'_> {
+impl<'a> Default for clz_Torappu_CrossAppShareMissionArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CrossAppShareMissionArgs {
@@ -5915,7 +5811,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CrossAppShareMissionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CrossAppShareMissionBuilder {
             fbb_: _fbb,
@@ -5923,7 +5821,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CrossAppShareMission<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6013,14 +5910,14 @@ impl clz_Torappu_CrossAppShareMissionT {
     }
 }
 pub enum dict__string__clz_Torappu_CrossAppShareMissionOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_CrossAppShareMission<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_CrossAppShareMission<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_CrossAppShareMission<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6034,8 +5931,7 @@ impl<'a> dict__string__clz_Torappu_CrossAppShareMission<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_CrossAppShareMission { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6058,7 +5954,6 @@ impl<'a> dict__string__clz_Torappu_CrossAppShareMission<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_CrossAppShareMissionT {
         let key = {
             let x = self.key();
@@ -6069,7 +5964,6 @@ impl<'a> dict__string__clz_Torappu_CrossAppShareMission<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6084,7 +5978,6 @@ impl<'a> dict__string__clz_Torappu_CrossAppShareMission<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_CrossAppShareMission,
@@ -6093,13 +5986,11 @@ impl<'a> dict__string__clz_Torappu_CrossAppShareMission<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_CrossAppShareMission<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6135,7 +6026,7 @@ pub struct dict__string__clz_Torappu_CrossAppShareMissionArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_CrossAppShareMission<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_CrossAppShareMissionArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_CrossAppShareMissionArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_CrossAppShareMissionArgs {
@@ -6175,7 +6066,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CrossAppShareMissionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_CrossAppShareMissionBuilder {
             fbb_: _fbb,
@@ -6183,7 +6076,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_CrossAppShareMission<'a>> {
@@ -6236,14 +6128,14 @@ impl dict__string__clz_Torappu_CrossAppShareMissionT {
     }
 }
 pub enum clz_Torappu_CrossAppShareMissionConstOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_CrossAppShareMissionConst<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_CrossAppShareMissionConst<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_CrossAppShareMissionConst<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6256,8 +6148,7 @@ impl<'a> clz_Torappu_CrossAppShareMissionConst<'a> {
     pub const VT_NAMECARDSHAREMISSIONID: ::flatbuffers::VOffsetT = 4;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_CrossAppShareMissionConst { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6277,7 +6168,6 @@ impl<'a> clz_Torappu_CrossAppShareMissionConst<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_CrossAppShareMissionConstT {
         let nameCardShareMissionId = self
             .nameCardShareMissionId()
@@ -6288,7 +6178,6 @@ impl<'a> clz_Torappu_CrossAppShareMissionConst<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn nameCardShareMissionId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6321,7 +6210,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_CrossAppShareMissionConst<'_> {
 pub struct clz_Torappu_CrossAppShareMissionConstArgs<'a> {
     pub nameCardShareMissionId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_CrossAppShareMissionConstArgs<'_> {
+impl<'a> Default for clz_Torappu_CrossAppShareMissionConstArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CrossAppShareMissionConstArgs {
@@ -6352,7 +6241,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CrossAppShareMissionConstBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_CrossAppShareMissionConstBuilder {
             fbb_: _fbb,
@@ -6360,7 +6251,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_CrossAppShareMissionConst<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6404,14 +6294,14 @@ impl clz_Torappu_CrossAppShareMissionConstT {
     }
 }
 pub enum clz_Torappu_GuideMissionGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_GuideMissionGroupInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_GuideMissionGroupInfo<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_GuideMissionGroupInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6427,8 +6317,7 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
     pub const VT_UNLOCKDESC: ::flatbuffers::VOffsetT = 10;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_GuideMissionGroupInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6455,7 +6344,6 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_GuideMissionGroupInfoT {
         let groupId = self
             .groupId()
@@ -6476,7 +6364,6 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn groupId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6489,7 +6376,6 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn sortId(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -6501,7 +6387,6 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn shortName(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6514,7 +6399,6 @@ impl<'a> clz_Torappu_GuideMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn unlockDesc(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -6561,7 +6445,7 @@ pub struct clz_Torappu_GuideMissionGroupInfoArgs<'a> {
     pub shortName: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub unlockDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
-impl Default for clz_Torappu_GuideMissionGroupInfoArgs<'_> {
+impl<'a> Default for clz_Torappu_GuideMissionGroupInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GuideMissionGroupInfoArgs {
@@ -6607,7 +6491,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GuideMissionGroupInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_GuideMissionGroupInfoBuilder {
             fbb_: _fbb,
@@ -6615,7 +6501,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_GuideMissionGroupInfo<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -6671,14 +6556,14 @@ impl clz_Torappu_GuideMissionGroupInfoT {
     }
 }
 pub enum dict__string__clz_Torappu_GuideMissionGroupInfoOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
-    type Inner = Self;
+    type Inner = dict__string__clz_Torappu_GuideMissionGroupInfo<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6692,8 +6577,7 @@ impl<'a> dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
     pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         dict__string__clz_Torappu_GuideMissionGroupInfo { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6716,7 +6600,6 @@ impl<'a> dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> dict__string__clz_Torappu_GuideMissionGroupInfoT {
         let key = {
             let x = self.key();
@@ -6727,7 +6610,6 @@ impl<'a> dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
@@ -6742,7 +6624,6 @@ impl<'a> dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn key_compare_less_than(
         &self,
         o: &dict__string__clz_Torappu_GuideMissionGroupInfo,
@@ -6751,13 +6632,11 @@ impl<'a> dict__string__clz_Torappu_GuideMissionGroupInfo<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
         let key = self.key();
         key.cmp(val)
     }
     #[inline]
-    #[must_use]
     pub fn value(&self) -> Option<clz_Torappu_GuideMissionGroupInfo<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -6793,7 +6672,7 @@ pub struct dict__string__clz_Torappu_GuideMissionGroupInfoArgs<'a> {
     pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_GuideMissionGroupInfo<'a>>>,
 }
-impl Default for dict__string__clz_Torappu_GuideMissionGroupInfoArgs<'_> {
+impl<'a> Default for dict__string__clz_Torappu_GuideMissionGroupInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         dict__string__clz_Torappu_GuideMissionGroupInfoArgs {
@@ -6833,7 +6712,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_GuideMissionGroupInfoBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         dict__string__clz_Torappu_GuideMissionGroupInfoBuilder {
             fbb_: _fbb,
@@ -6841,7 +6722,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(
         self,
     ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_GuideMissionGroupInfo<'a>> {
@@ -6894,14 +6774,14 @@ impl dict__string__clz_Torappu_GuideMissionGroupInfoT {
     }
 }
 pub enum clz_Torappu_MissionTableOffset {}
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq)]
 
 pub struct clz_Torappu_MissionTable<'a> {
     pub _tab: ::flatbuffers::Table<'a>,
 }
 
 impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_MissionTable<'a> {
-    type Inner = Self;
+    type Inner = clz_Torappu_MissionTable<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6924,8 +6804,7 @@ impl<'a> clz_Torappu_MissionTable<'a> {
     pub const VT_GUIDEMISSIONGROUPINFO: ::flatbuffers::VOffsetT = 24;
 
     #[inline]
-    #[must_use]
-    pub const unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
         clz_Torappu_MissionTable { _tab: table }
     }
     #[allow(unused_mut)]
@@ -6975,7 +6854,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         builder.finish()
     }
 
-    #[must_use]
     pub fn unpack(&self) -> clz_Torappu_MissionTableT {
         let missions = self
             .missions()
@@ -7026,7 +6904,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
     }
 
     #[inline]
-    #[must_use]
     pub fn missions(
         &self,
     ) -> Option<
@@ -7048,7 +6925,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn missionGroups(
         &self,
     ) -> Option<
@@ -7070,7 +6946,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn periodicalRewards(
         &self,
     ) -> Option<
@@ -7094,7 +6969,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn weeklyRewards(
         &self,
     ) -> Option<
@@ -7118,7 +6992,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn soCharMissionGroupInfo(
         &self,
     ) -> Option<
@@ -7140,7 +7013,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dailyMissionGroupInfo(
         &self,
     ) -> Option<
@@ -7162,7 +7034,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn dailyMissionPeriodInfo(
         &self,
     ) -> Option<
@@ -7184,7 +7055,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn mainlineMissionEndImageDataList(
         &self,
     ) -> Option<
@@ -7209,7 +7079,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crossAppShareMissions(
         &self,
     ) -> Option<
@@ -7231,7 +7100,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn crossAppShareMissionConst(&self) -> Option<clz_Torappu_CrossAppShareMissionConst<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -7245,7 +7113,6 @@ impl<'a> clz_Torappu_MissionTable<'a> {
         }
     }
     #[inline]
-    #[must_use]
     pub fn guideMissionGroupInfo(
         &self,
     ) -> Option<
@@ -7460,7 +7327,7 @@ pub struct clz_Torappu_MissionTableArgs<'a> {
         >,
     >,
 }
-impl Default for clz_Torappu_MissionTableArgs<'_> {
+impl<'a> Default for clz_Torappu_MissionTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_MissionTableArgs {
@@ -7652,7 +7519,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionTableBuild
         );
     }
     #[inline]
-    pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> Self {
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_MissionTableBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         clz_Torappu_MissionTableBuilder {
             fbb_: _fbb,
@@ -7660,7 +7529,6 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_MissionTableBuild
         }
     }
     #[inline]
-    #[must_use]
     pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_MissionTable<'a>> {
         let o = self.fbb_.end_table(self.start_);
         ::flatbuffers::WIPOffset::new(o.value())
@@ -7848,20 +7716,18 @@ pub fn size_prefixed_root_as_clz_torappu_mission_table_with_opts<'b, 'o>(
     ::flatbuffers::size_prefixed_root_with_opts::<clz_Torappu_MissionTable<'b>>(opts, buf)
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a `clz_Torappu_MissionTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_MissionTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_MissionTable`.
-#[must_use]
 pub unsafe fn root_as_clz_torappu_mission_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MissionTable<'_> {
     unsafe { ::flatbuffers::root_unchecked::<clz_Torappu_MissionTable>(buf) }
 }
 #[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed `clz_Torappu_MissionTable` and returns it.
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MissionTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_MissionTable`.
-#[must_use]
 pub unsafe fn size_prefixed_root_as_clz_torappu_mission_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MissionTable<'_> {
