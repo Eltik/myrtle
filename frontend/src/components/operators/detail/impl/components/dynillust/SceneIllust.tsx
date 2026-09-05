@@ -2991,6 +2991,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // carries a per-mesh `m_IsActive` window from the `_Start` clips, applied every
                 // frame by the tick (see entranceFollowRef), so layers show exactly when the
                 // game toggles them.
+                // Haze the game draws behind the scene's own background (see `hazeBehind`).
+                if (particles) sceneContainer.addChild(particles.hazeBehind);
                 if (scene && !useStatic) sceneContainer.addChild(scene.background);
                 // Fallback position when the skin has no separator (or the seat is off): the
                 // gap containers are empty then, so this is a no-op.
@@ -3087,6 +3089,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // t=5 26.082 against 14.757 / 13.880 for the partial ablation).
                         if (particles && off.has("partbg")) {
                             for (const w of particles.backdropWashes) w.renderable = false;
+                            particles.hazeBehind.renderable = false;
                         }
                         if (off.has("spine")) spine.renderable = false;
                         // `bg:<i>` drops one background layer, `bgonly:<i>` keeps only that one;

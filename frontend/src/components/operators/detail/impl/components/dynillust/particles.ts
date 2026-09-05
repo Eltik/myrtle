@@ -1071,6 +1071,14 @@ function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
  *  when the exporter captured one (sampled at the emitter clock - rate-curve systems
  *  carry no start delay, so the clock IS cinematic time), else the serialized constant. */
 /** `?bdp=0` disables the {@link isBackdropParticle} demotion (diagnostic). */
+/** `?hazeback=0`: keep a haze panel on a skeleton without separators in the wash between the
+ *  scene background and the spine (the previous placement) instead of behind the scene
+ *  background. See the placement note at `sheetTarget`. Read as the string "0". */
+function hazeBehindOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("hazeback") !== "0";
+}
+
 function backdropDemoteEnabled(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("bdp") !== "0";
@@ -3889,6 +3897,9 @@ export interface ILoadedParticles {
      *  drawn as a plain sibling) when the skin has no separator.
      *  See {@link ISceneData.separatorSlots}. */
     backdropWashes: PIXI.Container[];
+    /** Haze sheets the game draws BEHIND the scene's own background layers, on a skeleton with
+     *  no separators (see `hazeBehindOn`). The host adds it before the scene background. */
+    hazeBehind: PIXI.Container;
     /** Emitters whose sort is in front of the character. */
     foreground: PIXI.Container;
     /** `findBone` (pixi-spine `skeleton.findBone`) lets bone-parented emitters
@@ -4496,6 +4507,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
     // container cannot express it. With no separator this is one container drawn exactly where
     // the sheets used to be, i.e. byte-identical to the previous behaviour.
     const backdropWashes: PIXI.Container[] = Array.from({ length: Math.max(1, (data.separatorPartSorts?.length ?? 0) - 1) }, () => new PIXI.Container());
+    const hazeBehind = new PIXI.Container();
     const emitters: Array<Emitter | RamEmitter> = [];
     /** `emitters[i]` came from `data.systems[emitterSys[i]]` - skipped systems leave no entry. */
     const emitterSys: number[] = [];
@@ -4755,6 +4767,17 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 if (j >= partSorts.length - 1) return foreground; // at/above the last part
                 return backdropWashes[j] ?? background;
             }
+            // HAZE BEHIND THE SCENE (2026-09-05, Pozemka "Snowy Plains in Words", `?hazeback=0`
+            // reverts). Her `yan1 (1)` is a 7438 px white smoke sheet (tex 13: coverage 0.72,
+            // luma 252, saturation 0, a haze panel) at sort 2 on a skeleton with no separators,
+            // demoted here to the wash between the scene background and the spine, where it
+            // lifted her whole night sky and mountain by 35..61 luma. Ian's clip of the game's
+            // card, measured on the OPAQUE mountain body (texture alpha 1.00): game 84/107/174
+            // against our no-smoke 75/106/214 and our default 124/147/230, so the game draws
+            // this haze where the opaque sky covers it: behind the scene's own background. A
+            // haze panel that is not `bg_`-named on a skeleton without parts goes behind the
+            // scene background; the bg-named sheets (Civilight Eterna's seven) keep the wash.
+            if (isBackdropParticle && !bgNamed && tex.hazePanel && !hasParts && hazeBehindOn()) return hazeBehind;
             return isBackdropParticle ? backdropWashes[0] : sys.sort < data.characterSort ? background : foreground;
         };
         // ...but a BACKDROP sheet is not a prop. `bg_ref` (Virtuosa, sort 3, 773 px, one burst,
@@ -4990,6 +5013,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         data,
         background,
         backdropWashes,
+        hazeBehind,
         foreground,
         update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment) {
             // Recompute the shared live count once per frame for the budget.
