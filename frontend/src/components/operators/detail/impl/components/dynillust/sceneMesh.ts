@@ -2097,6 +2097,13 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // Across the keys with separators this admits exactly Degenbrecher's two gaps: shu's is
     // BG-seated already, wang, pepe, ling and Dusk hold no such layer. `?gapocc=0` reverts.
     const occRuleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapocc") !== "0";
+    /** Which gap does this sort fall in? -1 = behind every part, gaps.length = in front of all.
+     *  Declared before the admissions below, which call it while the gap set is decided. */
+    const gapOf = (sort: number): number => {
+        let j = -1;
+        for (let i = 0; i < partSorts.length; i++) if (partSorts[i] <= sort) j = i;
+        return j;
+    };
     const centre = data.cameraOffsetPx ?? null;
     const gapOccludes = (gj: number): boolean => {
         if (!occRuleOn || !centre) return false;
@@ -2121,12 +2128,6 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     const anyGapOccludes = partSorts.length >= 2 && Array.from({ length: partSorts.length - 1 }, (_, j) => partSorts[j] >= data.characterSort && gapOccludes(j)).some(Boolean);
     const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && (slotNames.some((s) => typeof s === "string" && s.startsWith("BG_")) || anyGapOccludes)));
     const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
-    /** Which gap does this sort fall in? -1 = behind every part, gaps.length = in front of all. */
-    const gapOf = (sort: number): number => {
-        let j = -1;
-        for (let i = 0; i < partSorts.length; i++) if (partSorts[i] <= sort) j = i;
-        return j;
-    };
     const backdropMeshes: { mesh: PIXI.Mesh; sort: number }[] = [];
     const otherBg: { mesh: PIXI.Mesh; sort: number }[] = [];
     /** Foreground candidates, bucketed only once the demoted set is known. */
