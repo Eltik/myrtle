@@ -5621,6 +5621,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
     return (
         <div className="absolute inset-0">
+            {/* biome-ignore lint/a11y/useSemanticElements: the element hosts the PIXI canvas; a button cannot */}
             <div
                 className={cn("h-full w-full transition-opacity duration-500", isLoading || error || unsupported ? "opacity-0" : "opacity-100")}
                 ref={containerRef}
