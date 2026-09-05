@@ -2123,8 +2123,14 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // correct geometry (chyue's BG_A_Back gap bounds -25..-10 and seating it cost her
         // entrance 15.253 -> 18.307). Both bounds are authored values, nothing chosen.
         if (!(partSorts[gj] >= data.characterSort)) return false;
-        return (typeof slot === "string" && slot.startsWith("BG_")) || gapOccludes(gj);
+        return typeof slot === "string" && slot.startsWith("BG_");
     };
+    /** The FOREGROUND seat: the name rule, or the occlusion admission. A background or veil
+     *  layer is already placed behind the character by the demotion pass, so the admission has
+     *  no business there: on cello_sale#12 it seated three veils into her wing gap and moved
+     *  her entrance away from the game (luma mean -0.98 / -0.72 / -2.42 at t=2, 5, 17); with
+     *  the admission confined to foreground layers her render is unchanged. */
+    const gapSeatsFront = (gj: number): boolean => gapSeats(gj) || (bgRuleOn && partSorts[gj] >= data.characterSort && gapOccludes(gj));
     const anyGapOccludes = partSorts.length >= 2 && Array.from({ length: partSorts.length - 1 }, (_, j) => partSorts[j] >= data.characterSort && gapOccludes(j)).some(Boolean);
     const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && (slotNames.some((s) => typeof s === "string" && s.startsWith("BG_")) || anyGapOccludes)));
     const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
@@ -2370,7 +2376,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     for (const p of fgPending) {
         if (otherBg.includes(p)) continue;
         const gj = gapsOn ? gapOf(p.sort) : -1;
-        if (gj >= 0 && gj < gapMeshes.length && gapSeats(gj)) gapMeshes[gj].push(p);
+        if (gj >= 0 && gj < gapMeshes.length && gapSeatsFront(gj)) gapMeshes[gj].push(p);
         else foreground.addChild(p.mesh);
     }
     for (const g of gapMeshes) g.sort((a, b) => a.sort - b.sort);
