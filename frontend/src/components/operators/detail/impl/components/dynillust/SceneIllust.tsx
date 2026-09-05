@@ -315,6 +315,23 @@ function panelArtOn(): boolean {
     return new URLSearchParams(window.location.search).get("panelart") !== "0";
 }
 
+/** THE CARD AT REST IS THE ANIMATED ART ALONE (2026-09-05, Ian's two game clips). The panel
+ *  rule above kept the painting sharp under the idle, and the animated art is not the painting:
+ *  Nearl Relight's idle composes her cloud ring smaller and higher, so the painted ring showed
+ *  below it as a second ring; SilverAsh Alter's E2 idle poses the blade away from the painted
+ *  sword, so painted flames stood beside it. The game's archive card at rest shows neither: one
+ *  ring, one blade, and the card framed on the animated art's own bounds, which is our
+ *  `?abl=backdrop` arm to the pixel class (placement was not the defect: the animated pedestal
+ *  matches the placed painting at 2 px). So the IDLE composite of a scene skin on the panel now
+ *  builds its painting non-renderable BEFORE the bounds are measured, exactly as the ablation
+ *  does, and the framing follows the animation; the entrance composite keeps the painting under
+ *  its authored camera, and a spine-only skin's painting IS its artwork and is untouched.
+ *  `?panelartrest=1` restores the sharp painting under the idle. Read as the string "1". */
+function panelArtAtRestOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("panelartrest") === "1";
+}
+
 /** PANEL-ONLY (2026-09-01): place the static backdrop by the EXPORT-DERIVED art-to-scene
  *  transform (`backdropScale`/`backdropOffsetPx`, computed by the exporter from the scene
  *  meshes' own texture-to-position mapping) instead of the camera-extent heuristic, which
@@ -3720,7 +3737,11 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     const bdDerived = panelArt && bdxfOn() && typeof bdd?.backdropScale === "number" && bdd.backdropOffsetPx ? { scale: bdd.backdropScale, offset: bdd.backdropOffsetPx } : null;
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
-                    if (bdAblated) bd.renderable = false;
+                    // The card's idle draws no painting and frames on the animation (see
+                    // `panelArtAtRestOn`): non-renderable here, before `contentBounds` is measured,
+                    // so the bounds exclude it the way the ablation's do.
+                    const panelIdle = panelArt && !useStatic && opts.mode !== "entrance" && !panelArtAtRestOn();
+                    if (bdAblated || panelIdle) bd.renderable = false;
                     // Silhouette clip (see silMaskParam): the illustration's COVERAGE, placed like
                     // `bd`, as the composite's alpha mask. NOT the illustration itself: a Pixi
                     // sprite mask MULTIPLIES by the mask sample (red x alpha), so masking with the
