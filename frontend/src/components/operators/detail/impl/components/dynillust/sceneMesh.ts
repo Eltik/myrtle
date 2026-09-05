@@ -2085,6 +2085,27 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // ska/cel/exc/wis byte-stable, and the only mover left is whitw2 +0.020 with r
     // unchanged. `?gapbg=0` restores the unseated behaviour exactly.
     const bgRuleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapbg") !== "0";
+    // OCCLUSION ADMISSION (2026-09-05, Degenbrecher "The Shadow of the Dark Moon"). Her two
+    // separators are `Blkkgt_Cance_Sa` and `Blkkgt_L_Hand_Bb`, no BG_ prefix, so the name rule
+    // left her gaps unseated and the five white flame planes authored at sort 1 drew above the
+    // whole skeleton, hiding her legs and lower body behind a cloud. Ian's clip of the game's
+    // card shows the planes behind her at rest; `?gaplayers=1` (seat every gap) reproduces it.
+    // The class the seating exists for is character occlusion, so the second admission is the
+    // occlusion itself, read from the data: a gap seats when it holds a NORMAL-blend layer
+    // whose authored bounds contain the authored camera centre (`cameraOffsetPx`, the same
+    // frame the layer positions use). Additive layers only add light and cannot occlude.
+    // Across the keys with separators this admits exactly Degenbrecher's two gaps: shu's is
+    // BG-seated already, wang, pepe, ling and Dusk hold no such layer. `?gapocc=0` reverts.
+    const occRuleOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("gapocc") !== "0";
+    const centre = data.cameraOffsetPx ?? null;
+    const gapOccludes = (gj: number): boolean => {
+        if (!occRuleOn || !centre) return false;
+        return data.layers.some((l) => {
+            if (l.additive || gapOf(l.sort) !== gj) return false;
+            const b = boundsOf(l.pos);
+            return b[0] <= centre[0] && centre[0] <= b[2] && b[1] <= centre[1] && centre[1] <= b[3];
+        });
+    };
     const gapSeats = (gj: number): boolean => {
         if (gapLayersEnabled()) return true;
         if (!bgRuleOn) return false;
@@ -2095,9 +2116,10 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         // correct geometry (chyue's BG_A_Back gap bounds -25..-10 and seating it cost her
         // entrance 15.253 -> 18.307). Both bounds are authored values, nothing chosen.
         if (!(partSorts[gj] >= data.characterSort)) return false;
-        return typeof slot === "string" && slot.startsWith("BG_");
+        return (typeof slot === "string" && slot.startsWith("BG_")) || gapOccludes(gj);
     };
-    const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && slotNames.some((s) => typeof s === "string" && s.startsWith("BG_"))));
+    const anyGapOccludes = partSorts.length >= 2 && Array.from({ length: partSorts.length - 1 }, (_, j) => partSorts[j] >= data.characterSort && gapOccludes(j)).some(Boolean);
+    const gapsOn = partSorts.length >= 2 && (gapLayersEnabled() || (bgRuleOn && (slotNames.some((s) => typeof s === "string" && s.startsWith("BG_")) || anyGapOccludes)));
     const gapMeshes: { mesh: PIXI.Mesh; sort: number }[][] = Array.from({ length: Math.max(0, partSorts.length - 1) }, () => []);
     /** Which gap does this sort fall in? -1 = behind every part, gaps.length = in front of all. */
     const gapOf = (sort: number): number => {
