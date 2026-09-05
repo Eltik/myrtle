@@ -968,6 +968,16 @@ pub(crate) fn collect_dynchar_particles(
         // Resolve the first material's _MainTex (+ optional _AlphaTex), blend, tiling.
         let (tex_val, alpha_val, tex_pid, blend, main_st, tint, ab_tint) =
             resolve_renderer_texture(all_objects, renderer);
+        // DIAGNOSTIC (`DYNCHAR_PSMAT`): the system's side of the material join, by the main
+        // texture's path id (the material line prints the same id as `mainpid=`).
+        if std::env::var("DYNCHAR_PSMAT").is_ok() {
+            eprintln!(
+                "PSSYS '{}' mainpid={:?} additive={blend} mode={render_mode} looping={:?}",
+                host.go_name(all_objects, go_pid),
+                tex_pid,
+                ps.get("looping").and_then(Value::as_bool)
+            );
+        }
 
         // Ram shader family (`Ram/Disturb` / `Ram/VertexDisturb`): a ramp-tint +
         // dissolve + UV-disturb compositor sampling 4–6 textures. Its params +
@@ -1554,11 +1564,73 @@ pub(crate) fn collect_dynchar_particles(
         // EXTERNAL (`m_StreamData`) resolves here too; a compressed mesh still
         // yields None → the system stays skipped by the frontend, exactly as
         // before. Bounded to guard against a pathological mesh.
-        if render_mode == "mesh"
-            && let Some(mesh_pid) = renderer.and_then(|r| r.get("m_Mesh")).and_then(get_path_id)
+        // DIAGNOSTIC (`DYNCHAR_PSMAT`): why a mesh-mode system carries no geometry. Prints the
+        // mesh reference, whether the object is in this bundle, its class, whether it is
+        // compressed, its vertex count and its stream-data path, and what the parser returned.
+        if render_mode == "mesh" && std::env::var("DYNCHAR_PSMAT").is_ok() {
+            let mref = renderer.and_then(|r| r.get("m_Mesh"));
+            let pid = mref.and_then(get_path_id);
+            let file_id = mref.and_then(|m| m.get("m_FileID")).and_then(Value::as_i64);
+            let obj = pid.and_then(|p| all_objects.get(&p));
+            let (cls, val) = obj
+                .map(|(c, v)| (Some(*c), Some(v)))
+                .unwrap_or((None, None));
+            let compressed = val
+                .and_then(|v| v.get("m_CompressedMesh"))
+                .and_then(|c| c.get("m_Vertices"))
+                .and_then(|x| x.get("m_NumItems"))
+                .and_then(Value::as_i64)
+                .unwrap_or(0);
+            let vcount = val
+                .and_then(|v| v.get("m_VertexData"))
+                .and_then(|d| d.get("m_VertexCount"))
+                .and_then(Value::as_i64)
+                .unwrap_or(-1);
+            let stream = val
+                .and_then(|v| v.get("m_StreamData"))
+                .and_then(|s| s.get("path"))
+                .and_then(Value::as_str)
+                .unwrap_or("");
+            let parsed = val.and_then(|v| super::mesh::parse_mesh(v, resources));
+            eprintln!(
+                "PSMESH '{}' pid={pid:?} fileId={file_id:?} class={cls:?} compressedVerts={compressed} vertexCount={vcount} stream='{stream}' parsed={}",
+                host.go_name(all_objects, go_pid),
+                parsed
+                    .as_ref()
+                    .map(|m| format!("{}v/{}i", m.positions.len(), m.indices.len()))
+                    .unwrap_or_else(|| "NONE".into())
+            );
+        }
+        // UNITY'S BUILT-IN QUAD (2026-09-05). A mesh-render system whose `m_Mesh` points OUT of
+        // the bundle (`m_FileID` != 0) at path id 10210 references Unity's built-in `Quad`
+        // primitive from `unity default resources`, the 1x1 square the engine ships. Nothing in
+        // the bundle answers that id, so the geometry came back `None` and the viewer dropped
+        // the system: 37 of Kal'tsit sale#14's 40 mesh-mode systems (stones, birds, glass, light
+        // flows, background rings), 4 more across chen2_2 / svash2_2 / bgsnow, per the
+        // `DYNCHAR_PSMAT` mesh census. The quad IS the geometry, so emit it.
+        // `DYNCHAR_BUILTIN_QUAD=0` restores the old export (those systems carry no `mesh`).
+        const UNITY_BUILTIN_QUAD_PATH_ID: i64 = 10210;
+        let builtin_quad_on = std::env::var("DYNCHAR_BUILTIN_QUAD").map_or(true, |v| v != "0");
+        let mesh_ref = renderer.and_then(|r| r.get("m_Mesh"));
+        let mesh_is_builtin_quad = builtin_quad_on
+            && mesh_ref
+                .and_then(|m| m.get("m_FileID"))
+                .and_then(Value::as_i64)
+                .is_some_and(|f| f != 0)
+            && mesh_ref.and_then(get_path_id) == Some(UNITY_BUILTIN_QUAD_PATH_ID);
+        let mesh_data: Option<super::mesh::MeshData> = if render_mode != "mesh" {
+            None
+        } else if mesh_is_builtin_quad {
+            Some(super::mesh::unit_quad())
+        } else if let Some(mesh_pid) = mesh_ref.and_then(get_path_id)
             && mesh_pid != 0
             && let Some((43, mesh_val)) = all_objects.get(&mesh_pid).map(|(c, v)| (*c, v))
-            && let Some(m) = super::mesh::parse_mesh(mesh_val, resources)
+        {
+            super::mesh::parse_mesh(mesh_val, resources)
+        } else {
+            None
+        };
+        if let Some(m) = mesh_data
             && !m.indices.is_empty()
             && m.positions.len() <= 8192
         {
@@ -2662,6 +2734,41 @@ fn resolve_material(
     // atlas as one sprite (Hoshiguma the Breacher's wave systems → giant multi-wave
     // "plumes"). Reuse mat_texenv purely for its ST tuple.
     let (_, _, main_st) = mat_texenv(all_objects, mat, "_MainTex");
+    // DIAGNOSTIC (`DYNCHAR_PSMAT`, presence-checked): print every particle material the
+    // export resolves, with the shader the blend was read from, the raw blend floats and the
+    // colour properties, so a system's exported `blend` and tint can be checked against the
+    // bundle without re-deriving them (Pozemka's `cloud_01`, SilverAsh Alter's `slash fire`).
+    if std::env::var("DYNCHAR_PSMAT").is_ok() {
+        let shader = mat
+            .get("_shaderName")
+            .and_then(Value::as_str)
+            .unwrap_or("?");
+        let colors = mat
+            .get("m_SavedProperties")
+            .and_then(|sp| sp.get("m_Colors"))
+            .and_then(Value::as_object)
+            .map(|m| {
+                m.iter()
+                    .map(|(k, c)| {
+                        format!(
+                            "{k}=({:.3},{:.3},{:.3},{:.3})",
+                            fd(c, "r", 0.0),
+                            fd(c, "g", 0.0),
+                            fd(c, "b", 0.0),
+                            fd(c, "a", 0.0)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .unwrap_or_default();
+        eprintln!(
+            "PSMAT '{mat_name}' mainpid={main_pid} shader='{shader}' additive={} src={} dst={} {colors}",
+            is_additive(mat),
+            mat_float(mat, "_SrcBlend", -1.0),
+            mat_float(mat, "_DstBlend", -1.0)
+        );
+    }
     Some((
         tex_val.clone(),
         alpha_val,
