@@ -769,6 +769,42 @@ function applySlotDiagnostic(spine: import("pixi-spine").Spine): void {
     }
 }
 
+/** STALE CLIP RELEASE (2026-09-05, Dusk "Hazy Jade"). pixi-spine creates a slot's clip graphics
+ *  and clipping container the first time the slot carries a ClippingAttachment and never clears
+ *  them when the attachment changes back to a mesh or region (its Region and Mesh branches clear
+ *  `currentMesh` / `currentSprite`, nothing clears `currentGraphics`). Its draw-order pass then
+ *  tests `slot.currentGraphics && slot.getAttachment()`, so the slot opens a clip whose
+ *  "attachment" is the mesh, whose `endSlot` is undefined and therefore never met, and every
+ *  slot drawn after it is re-parented into that container and masked away. Dusk's right eye
+ *  white is such a slot: 452 of her 677 slots hung under it at rest, her whole face from the
+ *  eyeball on, the nose, the mouth and the front hair, while the game shows them. Release the
+ *  graphics and container of any slot whose live attachment is not a clip, before `update`,
+ *  so the pass sees no stale clip and re-parents the swallowed containers back onto the spine.
+ *  A clip that returns is rebuilt by pixi-spine as on first sight. `?staleclip=0` reverts. */
+function staleClipOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("staleclip") !== "0";
+}
+function releaseStaleClipGraphics(spine: import("pixi-spine").Spine): void {
+    if (!staleClipOn()) return;
+    for (const slotU of spine.skeleton.slots) {
+        const slot = slotU as unknown as { currentGraphics?: PIXI.Graphics | null; clippingContainer?: PIXI.Container | null; getAttachment(): unknown };
+        if (!slot.currentGraphics) continue;
+        const att = slot.getAttachment();
+        // A live ClippingAttachment is the only attachment that declares `endSlot`.
+        if (att && typeof att === "object" && "endSlot" in att) continue;
+        slot.currentGraphics.parent?.removeChild(slot.currentGraphics);
+        slot.currentGraphics.destroy();
+        slot.currentGraphics = null;
+        if (slot.clippingContainer) {
+            // Detach only: the containers it swallowed are still its children until the pass
+            // re-parents them onto the spine, which it does once no clip is open.
+            slot.clippingContainer.parent?.removeChild(slot.clippingContainer);
+            slot.clippingContainer = null;
+        }
+    }
+}
+
 /** Make the matched slots' per-slot display objects non-renderable. pixi-spine
  *  rebuilds the geometry from the (re-attached) attachments on every `update`, so
  *  this must run each frame AFTER `update`; flipping the already-built mesh's
@@ -1983,6 +2019,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 for (const m of comp.ramLayers) applySceneLayerRamScroll(m, sceneClock);
             }
             if (spineRef.current) {
+                releaseStaleClipGraphics(spineRef.current);
                 spineRef.current.update(dt);
                 // Re-seat the backdrop wash BETWEEN the spine's parts. `spine.update()` rebuilds
                 // `children` from `skeleton.drawOrder` every frame, so a one-time `addChildAt`
@@ -2007,6 +2044,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // a main slot renders only while the rig's same-name slot is at alpha 0. The
                     // symmetric idle-under-entrance arm cost -9.53, so nothing the rig draws itself
                     // is admitted, and a slot with no rig counterpart is excluded and counted.
+                    releaseStaleClipGraphics(mu.main.spine);
                     mu.main.spine.update(dt);
                     // The rig's framing lives on a nested scene root, not on `ent.root` (copying
                     // that root's transform put the main skeleton unframed at the canvas origin), so
@@ -4678,6 +4716,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                 vis: cont?.visible ?? null,
                                 rend: cont?.renderable ?? null,
                                 box,
+                                // Where the slot's container sits among the spine's children right
+                                // now (the draw z after every reseat), and how many meshes it holds.
+                                z: cont ? (sp?.children.indexOf(cont) ?? -1) : null,
+                                kids: cont?.children.length ?? null,
                             });
                         });
                         return out;
@@ -4731,6 +4773,22 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                 sy: Math.hypot(b.b, b.d),
                             })),
                             slots: (sk.slots ?? []).map((s: { data: { name: string }; bone: { data: { name: string } } }) => ({ slot: s.data.name, bone: s.bone?.data?.name })),
+                            drawOrder: (sk.drawOrder ?? []).map((s: { data: { name: string } }) => s.data.name),
+                            // The spine container's live children, named by the slot whose container
+                            // each is (or by the object's own name for anything spliced in), and where
+                            // every slot container currently hangs: the spine, a clip, or nowhere.
+                            children: (sp.children ?? []).map((c: PIXI.Container) => {
+                                const k = (sp.slotContainers ?? []).indexOf(c);
+                                return k >= 0 ? sk.slots[k]?.data?.name : `__extra:${c.name ?? c.constructor.name}`;
+                            }),
+                            slotParents: (sk.slots ?? []).map((s: { data: { name: string } }, i: number) => {
+                                const cont = sp.slotContainers?.[i];
+                                const par = cont?.parent;
+                                if (!par) return [s.data.name, null];
+                                if (par === sp) return [s.data.name, "spine"];
+                                const owner = (sk.slots as { clippingContainer?: unknown; data: { name: string } }[]).find((o) => o.clippingContainer === par);
+                                return [s.data.name, owner ? `clip:${owner.data.name}` : `other:${par.name ?? par.constructor.name}`];
+                            }),
                         };
                     };
                     const w2 = window as unknown as { __dynClip?: () => unknown };
