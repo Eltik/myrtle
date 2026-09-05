@@ -3760,7 +3760,12 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // clears the composite's alpha in the same render pass with no intermediate
                     // target and leaves every interior pixel byte-untouched.
                     const silOn = silMaskParam() === "1" || (silMaskParam() !== "0" && bdDerived != null);
-                    if (panelArt && silOn) {
+                    // The idle draws no painting, so its silhouette clips nothing either (see
+                    // `panelArtAtRestOn`): the painting is holey where its ink is, and the erase
+                    // punched the animated art out in that pattern (Nearl Relight's black scraps,
+                    // 10.28 -> 6.72 pct near-black in her art box, the rest her own ink) and cut
+                    // Ch'en's sky plane into the painting's brush-stroke outline (32.85 -> 0.14).
+                    if (panelArt && silOn && !panelIdle) {
                         let silhouette: PIXI.Sprite | null = null;
                         try {
                             const src = backdropData.texture.baseTexture.resource as unknown as { source?: CanvasImageSource & { width: number; height: number } };
