@@ -1609,10 +1609,45 @@ pub(crate) fn collect_dynchar_particles(
         // flows, background rings), 4 more across chen2_2 / svash2_2 / bgsnow, per the
         // `DYNCHAR_PSMAT` mesh census. The quad IS the geometry, so emit it.
         // `DYNCHAR_BUILTIN_QUAD=0` restores the old export (those systems carry no `mesh`).
+        //
+        // ONLY FOR A MATERIAL THE EXPORT CAN CARRY (2026-09-06). The quad turned 176 systems
+        // from "not drawn" into "drawn", and for 53 of them the plain sprite path draws the
+        // WRONG thing: Kal'tsit's 17 `stone_flow` / `glass01` and Vina Victoria's 24 are
+        // `Particles-L2D/Dissolve/Dissolve Add UVTween`, whose caustic `_MainTex` is shaped by a
+        // dissolve mask the plain export has no field for, so the card showed the raw 128 px
+        // caustic as a white blob at 300..1300 px over her lower body (the register, "the
+        // particles feel a bit oppressive"). The same holds for `RGBsplit` (Nian's 10), the
+        // single-map `Dissolve(CustomData)` (1) and a material with no main texture (1). So the
+        // quad is emitted only when the material is one the export represents: the plain
+        // `Additive` / `AlphaBlend` programs, or a compositor that resolved to a `ram` block
+        // (`Ram/`, plain `Disturb/`, the live two-map `Dissolve/`). The rest stay as they were,
+        // undrawn, until their program is ported. Derived from the material's shader name in
+        // the bundle; `DYNCHAR_BUILTIN_QUAD=all` emits the quad for every material.
         const UNITY_BUILTIN_QUAD_PATH_ID: i64 = 10210;
-        let builtin_quad_on = std::env::var("DYNCHAR_BUILTIN_QUAD").map_or(true, |v| v != "0");
+        let builtin_quad_env = std::env::var("DYNCHAR_BUILTIN_QUAD").unwrap_or_default();
+        let builtin_quad_on = builtin_quad_env != "0";
+        let plain_program = renderer
+            .and_then(|r| r.get("m_Materials"))
+            .and_then(Value::as_array)
+            .and_then(|mats| {
+                mats.iter().find_map(|mat_ref| {
+                    let pid = get_path_id(mat_ref).filter(|&p| p != 0)?;
+                    let (21, m) = all_objects.get(&pid)? else {
+                        return None;
+                    };
+                    m.get("_shaderName").and_then(Value::as_str)
+                })
+            })
+            .is_some_and(|s| {
+                s.ends_with("/Particles-L2D/Additive")
+                    || s.ends_with("/Particles-L2D/AlphaBlend")
+                    || s.ends_with("/Particles/Additive")
+                    || s.ends_with("/Particles/AlphaBlend")
+            });
+        let quad_material_ok = builtin_quad_env == "all" || plain_program || ram.is_some();
         let mesh_ref = renderer.and_then(|r| r.get("m_Mesh"));
         let mesh_is_builtin_quad = builtin_quad_on
+            && quad_material_ok
             && mesh_ref
                 .and_then(|m| m.get("m_FileID"))
                 .and_then(Value::as_i64)
