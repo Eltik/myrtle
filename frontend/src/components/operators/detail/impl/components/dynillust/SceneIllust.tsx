@@ -2821,6 +2821,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 const authored = (scene?.data as { settleAnimation?: string | null } | undefined)?.settleAnimation;
                 const on = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settleclip") === "1";
                 if (on && authored && animations.includes(authored)) settleClip = authored;
+                // DIAGNOSTIC (`?clip=<name>`): play a named animation as the settle clip, to see
+                // what a clip the scheduler never reaches at a given beat looks like.
+                const forced = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("clip") : null;
+                if (forced && animations.includes(forced)) settleClip = forced;
             }
 
             // Static-art backdrop: some dynamic assets omit the full painted vista
@@ -4660,7 +4664,17 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         if (!sk) return "NO SKELETON";
                         const name = (b: { data?: { name?: string } } | null | undefined) => b?.data?.name ?? null;
                         return {
-                            animations: (sk.data.animations ?? []).map((a: { name: string; duration: number }) => ({ name: a.name, duration: a.duration })),
+                            // Per animation: which slots its colour and attachment timelines key, and
+                            // which bones its transform timelines key (names, by index into the data).
+                            animations: (sk.data.animations ?? []).map((a: { name: string; duration: number; timelines?: { slotIndex?: number; boneIndex?: number }[] }) => {
+                                const slotSet = new Set<string>();
+                                const boneSet = new Set<string>();
+                                for (const tl of a.timelines ?? []) {
+                                    if (typeof tl.slotIndex === "number") slotSet.add(sk.data.slots?.[tl.slotIndex]?.name ?? String(tl.slotIndex));
+                                    if (typeof tl.boneIndex === "number") boneSet.add(sk.data.bones?.[tl.boneIndex]?.name ?? String(tl.boneIndex));
+                                }
+                                return { name: a.name, duration: a.duration, slots: [...slotSet], bones: [...boneSet] };
+                            }),
                             tracks: (sp.state?.tracks ?? []).map((t: { animation?: { name: string }; loop?: boolean; alpha?: number; trackTime?: number } | null) => (t ? { anim: t.animation?.name, loop: t.loop, alpha: t.alpha, time: t.trackTime } : null)),
                             ik: (sk.ikConstraints ?? []).map((k: { data: { name: string }; bones: unknown[]; target: unknown; mix: number; bendDirection: number }) => ({ name: k.data.name, bones: k.bones.map((b) => name(b as never)), target: name(k.target as never), mix: k.mix, bend: k.bendDirection })),
                             transform: (sk.transformConstraints ?? []).map((k: { data: { name: string }; bones: unknown[]; target: unknown; rotateMix: number; translateMix: number }) => ({
