@@ -931,6 +931,9 @@ interface IComposite {
     /** Start this composite's playback: the idle+specials cycle for the main L2D, or
      *  the one-shot entrance for a "_Start" composite. */
     play: (opts?: { skipStart?: boolean }) => void;
+    /** Play the one-shot "Interact" clip once and return to the settle clip (see
+     *  `tapInteractOn`). False when this composite has no such clip or is the entrance. */
+    interact: () => boolean;
     /** Free the composite's own GPU resources (particles + container/ spine). */
     destroy: () => void;
 }
@@ -1423,6 +1426,17 @@ function pageBgOn(): boolean {
     // authored clear colour. `?pagebg=0` restores the fill at settle.
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("pagebg") !== "0";
+}
+
+/** TAP PLAYS "INTERACT" (2026-09-05). The game's archive card plays the character's one-shot
+ *  "Interact" clip when touched and returns to the idle; the card here never did, which is the
+ *  raised-sword slash Ian's SilverAsh Alter clip shows at 26..29 s and ours never reached (the
+ *  Special interleave is a different clip and already fires when the game's does). A click or
+ *  tap on the viewer now plays it on the settled main composite. `?tapinteract=0` reverts to
+ *  an inert surface. Read as the string "0". */
+function tapInteractOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("tapinteract") !== "0";
 }
 
 function camClearOn(): boolean {
@@ -2793,6 +2807,20 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         state.addAnimation(0, settleClip, true, 0);
                     },
                 });
+            };
+
+            // TAP (see `tapInteractOn`): the game's archive card plays the one-shot "Interact"
+            // clip when the character is touched, then returns to the idle. Ian's SilverAsh Alter
+            // clip showed it at 26..29 s, the raised-sword slash our card never reached. Plays on
+            // the settled main composite only; the entrance and a rig without the clip ignore it.
+            const interact = (): boolean => {
+                if (opts.mode === "entrance" || !animations.includes("Interact")) return false;
+                const state = spine.state;
+                const cur = (state.tracks?.[0] as unknown as { animation?: { name?: string } } | undefined)?.animation?.name;
+                if (cur === "Interact") return true;
+                state.setAnimation(0, "Interact", false);
+                state.addAnimation(0, settleClip, true, 0);
+                return true;
             };
 
             // Some skins keep their painted backdrop in separate mesh layers (not the
@@ -4469,6 +4497,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     boneRest,
                     hasShadow,
                     play,
+                    interact,
                     destroy: () => {
                         particles?.destroy();
                         sceneContainer.destroy({ children: true });
@@ -4518,6 +4547,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 boneRest: null,
                 hasShadow: false,
                 play,
+                interact,
                 destroy: () => {
                     spine.destroy();
                 },
@@ -5591,7 +5621,24 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
     return (
         <div className="absolute inset-0">
-            <div className={cn("h-full w-full transition-opacity duration-500", isLoading || error || unsupported ? "opacity-0" : "opacity-100")} ref={containerRef} />
+            <div
+                className={cn("h-full w-full transition-opacity duration-500", isLoading || error || unsupported ? "opacity-0" : "opacity-100")}
+                ref={containerRef}
+                role="button"
+                tabIndex={0}
+                aria-label="Play the interact animation"
+                onClick={() => {
+                    if (!tapInteractOn()) return;
+                    const c = compositesRef.current.find((x) => x.spine === spineRef.current) ?? null;
+                    c?.interact();
+                }}
+                onKeyDown={(e) => {
+                    if (!tapInteractOn() || (e.key !== "Enter" && e.key !== " ")) return;
+                    e.preventDefault();
+                    const c = compositesRef.current.find((x) => x.spine === spineRef.current) ?? null;
+                    c?.interact();
+                }}
+            />
             {isLoading && (
                 <div className="absolute right-3 bottom-3 flex items-center gap-2 rounded-md border border-white/20 bg-black/40 px-2.5 py-1.5 text-white/80 text-xs backdrop-blur-md">
                     <Spinner className="h-3.5 w-3.5" />
