@@ -4648,6 +4648,47 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         });
                         return out;
                     };
+                    // `__dynSkel()`: the live skeleton's animations, playing tracks, constraints and
+                    // bones (world position and rotation), for a pose question the slot dump cannot
+                    // answer: which bone a slot rides, what constrains it, and what the state plays.
+                    const w4 = window as unknown as { __dynSkel?: () => unknown };
+                    w4.__dynSkel = () => {
+                        const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;
+                        // biome-ignore lint/suspicious/noExplicitAny: ad hoc introspection of pixi-spine internals
+                        const sp: any = c?.spine;
+                        const sk = sp?.skeleton;
+                        if (!sk) return "NO SKELETON";
+                        const name = (b: { data?: { name?: string } } | null | undefined) => b?.data?.name ?? null;
+                        return {
+                            animations: (sk.data.animations ?? []).map((a: { name: string; duration: number }) => ({ name: a.name, duration: a.duration })),
+                            tracks: (sp.state?.tracks ?? []).map((t: { animation?: { name: string }; loop?: boolean; alpha?: number; trackTime?: number } | null) => (t ? { anim: t.animation?.name, loop: t.loop, alpha: t.alpha, time: t.trackTime } : null)),
+                            ik: (sk.ikConstraints ?? []).map((k: { data: { name: string }; bones: unknown[]; target: unknown; mix: number; bendDirection: number }) => ({ name: k.data.name, bones: k.bones.map((b) => name(b as never)), target: name(k.target as never), mix: k.mix, bend: k.bendDirection })),
+                            transform: (sk.transformConstraints ?? []).map((k: { data: { name: string }; bones: unknown[]; target: unknown; rotateMix: number; translateMix: number }) => ({
+                                name: k.data.name,
+                                bones: k.bones.map((b) => name(b as never)),
+                                target: name(k.target as never),
+                                rotateMix: k.rotateMix,
+                                translateMix: k.translateMix,
+                            })),
+                            path: (sk.pathConstraints ?? []).map((k: { data: { name: string }; bones: unknown[]; target: { data: { name: string } }; rotateMix: number; translateMix: number }) => ({
+                                name: k.data.name,
+                                bones: k.bones.map((b) => name(b as never)),
+                                target: k.target?.data?.name,
+                                rotateMix: k.rotateMix,
+                                translateMix: k.translateMix,
+                            })),
+                            bones: (sk.bones ?? []).map((b: { data: { name: string }; parent?: { data: { name: string } } | null; worldX: number; worldY: number; getWorldRotationX?: () => number; a: number; b: number; c: number; d: number }) => ({
+                                name: b.data.name,
+                                parent: b.parent?.data?.name ?? null,
+                                x: b.worldX,
+                                y: b.worldY,
+                                rot: b.getWorldRotationX ? b.getWorldRotationX() : null,
+                                sx: Math.hypot(b.a, b.c),
+                                sy: Math.hypot(b.b, b.d),
+                            })),
+                            slots: (sk.slots ?? []).map((s: { data: { name: string }; bone: { data: { name: string } } }) => ({ slot: s.data.name, bone: s.bone?.data?.name })),
+                        };
+                    };
                     const w2 = window as unknown as { __dynClip?: () => unknown };
                     w2.__dynClip = () => {
                         const c = compositesRef.current?.find((x) => x.spine === spineRef.current) ?? compositesRef.current?.[0] ?? null;

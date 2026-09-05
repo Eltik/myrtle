@@ -4597,8 +4597,14 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // A `plainDisturb` block is INERT unless the gate is on: without it these systems keep
         // taking the plain sprite path they have always taken.
         const plainBlocked = sys.ram?.kind === "plainDisturb" && !plainDisturbOn();
-        if (sys.ram && !plainBlocked && (!ramSheet || spriteWouldDrop)) {
-            if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3)) continue;
+        // `?ramsheet=1`: every sheeted Ram system takes the Ram path (the flipbook tile through
+        // the vertex UVs, the dissolve and disturb terms applied), not only the ones the sprite
+        // path would drop. Measurement arm for SilverAsh Alter's sword flame against Ian's clip.
+        const ramSheetArm = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramsheet") === "1";
+        if (sys.ram && !plainBlocked && (!ramSheet || spriteWouldDrop || ramSheetArm)) {
+            // Under the arm a sheeted mesh-mode system whose geometry was not exported takes the
+            // Ram billboard quad instead of being dropped (SilverAsh Alter's slash fire).
+            if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3) && !(ramSheetArm && ramSheet)) continue;
             const main = ramMainTex(sys.ram.mainTex);
             if (!main) continue;
             const emitter = new RamEmitter(
