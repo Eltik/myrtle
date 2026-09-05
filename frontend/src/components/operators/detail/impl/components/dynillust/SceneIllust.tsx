@@ -332,6 +332,20 @@ function panelArtAtRestOn(): boolean {
     return new URLSearchParams(window.location.search).get("panelartrest") === "1";
 }
 
+/** SCENE-LESS PARTICLES (2026-09-05). The particle set loaded only inside `if (scene)`, so a
+ *  skin whose scene loader returns null (a bare `[scene].json` with no layers, Vina Victoria's
+ *  `epoque#50`; or a foreground-only overlay the loader declines as "not a backdrop", Skadi
+ *  the Corrupting Heart's `_2`, Nian's `nian#4`, Lee's `witch#3`, Entelechia's `winter#5`,
+ *  Lin's `summer#19`, Ascalon's `iteration#4`) rendered with NO particles at all: 7 keys, 303
+ *  authored systems, 222 of them looping at rest (Entelechia's 67, Lin's 50), never built. The
+ *  particle set is its own file with its own sort scale and needs nothing from the scene but the
+ *  dark-backdrop hint, so it now loads whenever the composite reaches the scene branch. Every
+ *  key with a scene is untouched by construction. `?sceneless=0` restores the old gate. */
+function scenelessParticlesOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("sceneless") !== "0";
+}
+
 /** PANEL-ONLY (2026-09-01): place the static backdrop by the EXPORT-DERIVED art-to-scene
  *  transform (`backdropScale`/`backdropOffsetPx`, computed by the exporter from the scene
  *  meshes' own texture-to-position mapping) instead of the camera-extent heuristic, which
@@ -2926,7 +2940,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // them: behind-character emitters just in front of the backdrop, in-front
                 // emitters above the foreground layers.
                 let particles: ILoadedParticles | null = null;
-                if (scene) {
+                // Scene-less skins load their particles too (see `scenelessParticlesOn`).
+                if (scene || scenelessParticlesOn()) {
                     const particlesURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles].json"), server, assetRoot());
                     const particlesTexBase = chibiAssetURL(cSkel.replace(/\.skel$/, "[particles]/"), server, assetRoot());
                     // Union of the character's own geometry bounds across its FULL played
@@ -2937,7 +2952,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // because the character's OWN pose/position moves substantially during the
                     // "Start" reform - a single frame would miss most of the overlap.
                     const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
-                    particles = await loadParticles(particlesURL + bust, particlesTexBase, bust, characterBounds, scene.hasDarkBackdrop);
+                    particles = await loadParticles(particlesURL + bust, particlesTexBase, bust, characterBounds, scene?.hasDarkBackdrop ?? false);
                     if (aborted()) {
                         spine.destroy();
                         particles?.destroy();
@@ -4626,6 +4641,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 if (import.meta.env.DEV && typeof window !== "undefined") {
                     const w = window as unknown as { __dynProbe?: () => unknown; __dynXform?: () => unknown };
                     w.__dynProbe = () => particlesRef.current?.probe(app.screen.width, app.screen.height) ?? null;
+                    (w as { __dynDrops?: () => unknown }).__dynDrops = () => particlesRef.current?.drops() ?? null;
                     // Resolved world transforms, for locating a placement divergence. The SCENE
                     // layers align to the capture within 0.10 px at every beat, so `root` is the
                     // known-good reference: any beat where the particle containers' matrix departs
@@ -5425,6 +5441,12 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // Page background at settle (see `pageBgOn`): no cinematic, so from the start.
                     if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
                 }
+                // DIAGNOSTIC readiness signal for the harness: the `_Start` probe above runs on the
+                // REAL clock (a 404 from the asset server), and the environment fill is hidden only
+                // once it has answered. A harness that advances scene time before this point samples
+                // the fill or the page depending on the server's latency (found 2026-09-06: two
+                // settled arms differed on 67 of 73 rows by the fill alone). `rec.js` waits on it.
+                if (typeof window !== "undefined") (window as { __dynEntranceDecided?: boolean }).__dynEntranceDecided = true;
                 if (built) {
                     // Repaint the environment fill with the entrance camera's authored clear colour
                     // (see `camClearOn`). The fill sprite is created with the main composite, before

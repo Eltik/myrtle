@@ -3909,7 +3909,20 @@ export interface ILoadedParticles {
      *  side-effect free; call it after `update` from a harness, never from the render path.
      *  Pass the viewport size so `onScreen` can be counted. */
     probe(viewW?: number, viewH?: number): IEmitterProbe[];
+    /** Every authored system the loader did NOT build, with the rule that dropped it. Read-only
+     *  diagnostic for the particle census: a system absent from {@link probe} is here, so a
+     *  missing effect can be attributed to its rule instead of inferred from the data. */
+    drops(): IParticleDrop[];
     destroy(): void;
+}
+
+/** One system the loader skipped - see {@link IParticles.drops}. */
+export interface IParticleDrop {
+    /** Index into {@link IParticlesData.systems}. */
+    sys: number;
+    name: string;
+    /** The skip rule, one token per `continue` in the loader. */
+    reason: string;
 }
 
 interface ILoadedTex {
@@ -4577,6 +4590,11 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         return new PIXI.Texture(raw ? b.rawBase : b.darkDropBase);
     };
 
+    // Drop record for the census (see `IParticles.drops`): one entry per skipped system.
+    const dropped: IParticleDrop[] = [];
+    const drop = (sysIndex: number, sys: IParticleSystemData, reason: string) => {
+        dropped.push({ sys: sysIndex, name: sys.name ?? "", reason });
+    };
     for (const [sysIndex, sys] of data.systems.entries()) {
         // Ram-shader emitters render via the ported ramp/dissolve/disturb shader
         // (RamEmitter), using RAW textures. Needs a main tex. Mesh-render-mode Ram
@@ -4616,9 +4634,15 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         if (sys.ram && !plainBlocked && (!ramSheet || spriteWouldDrop || ramSheetArm)) {
             // Under the arm a sheeted mesh-mode system whose geometry was not exported takes the
             // Ram billboard quad instead of being dropped (SilverAsh Alter's slash fire).
-            if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3) && !(ramSheetArm && ramSheet)) continue;
+            if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3) && !(ramSheetArm && ramSheet)) {
+                drop(sysIndex, sys, "ram-mesh-no-geometry");
+                continue;
+            }
             const main = ramMainTex(sys.ram.mainTex);
-            if (!main) continue;
+            if (!main) {
+                drop(sysIndex, sys, "ram-main-tex-missing");
+                continue;
+            }
             const emitter = new RamEmitter(
                 sys,
                 sys.ram,
@@ -4677,11 +4701,16 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
                 applyPsDiag(data, sys, emitter.container);
                 (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+            } else {
+                drop(sysIndex, sys, sys.renderMode === "mesh" ? "untextured-mesh-no-geometry" : "untextured-billboard");
             }
             continue;
         }
         const tex = bases[sys.tex];
-        if (!tex) continue;
+        if (!tex) {
+            drop(sysIndex, sys, "tex-not-loaded");
+            continue;
+        }
         // A flow/distortion/cloud map (opaque dark-grey field) is a shader input, not
         // a drawable sprite; billboarding/mesh-stamping it leaves flickering grey
         // rectangles (Hoshiguma Alter's top "wave artifacts"). Skip it here - the
@@ -4698,7 +4727,10 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // artifacts, Civilight Eterna's own full-frame background planes) are normal-blend
         // and still skipped.
         // `?addskip=1` restores the old behaviour (skip regardless of blend) for A/B.
-        if (tex.skip && (sys.blend !== "additive" || addSkipAll())) continue;
+        if (tex.skip && (sys.blend !== "additive" || addSkipAll())) {
+            drop(sysIndex, sys, "flow-map-skip");
+            continue;
+        }
         // Scene-DEPTH atmospherics exported at a particle sort ABOVE the character -
         // Unity "bg_*" GameObjects (tint/rain/reflection washes: Virtuosa "Diversity
         // Oneness"'s bg_tint_01 / bg_rain_01) and large soft haze clouds (its air_01,
@@ -4918,6 +4950,8 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 emitter.container.alpha = (meshBlend === "additive" ? additivePileGain(sys) : 1) * (bigGlow ? 0.4 : 1);
                 applyPsDiag(data, sys, emitter.container);
                 sheetTarget().addChild(emitter.container);
+            } else {
+                drop(sysIndex, sys, !(sys.mesh && sys.mesh.idx.length >= 3) ? "mesh-no-geometry" : isStaticMeshProp ? "mesh-static-prop" : "mesh-desat-panel");
             }
             continue;
         }
@@ -4927,7 +4961,10 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // behind the spine it POKES OUT around her body (it's wider than she is), which the
         // game never shows. Skip it outright, matching the mesh path's desatPanel skip - the
         // real backdrop/stage is drawn by the scene-mesh layer, not this prop billboard.
-        if (isStaticProp) continue;
+        if (isStaticProp) {
+            drop(sysIndex, sys, "static-prop");
+            continue;
+        }
         // A fully-opaque glow/starfield texture (luminance baked into alpha above)
         // must render additive so its dark field drops out rather than stamping a
         // square - regardless of the authored blend.
@@ -4968,7 +5005,12 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         applyPsDiag(data, sys, emitter.container);
         (unoccludeOverlap ? foreground : isBackdropParticle || (sortRoute && hasParts && (effBlend === "normal" || (addRoute && effBlend === "additive"))) ? sheetTarget() : wouldBeBackground ? background : foreground).addChild(emitter.container);
     }
-    if (emitters.length === 0) return null;
+    if (emitters.length === 0) {
+        // DEV diagnostic: a skin whose EVERY system was dropped renders with no particles at all
+        // and nothing else says why (the census hook has no composite to read). Name the rules.
+        if (import.meta.env.DEV) console.info(`[dyn] particles: 0 of ${data.systems.length} systems built`, dropped.map((d) => `${d.name}:${d.reason}`).join(" "));
+        return null;
+    }
 
     if (typeof window !== "undefined") {
         const want = new URLSearchParams(window.location.search).get("psdbg");
@@ -5049,6 +5091,9 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 const dbg = "dbg" in e && typeof (e as { dbg?: unknown }).dbg === "function" ? (e as unknown as { dbg(): unknown }).dbg() : null;
                 return { sys: emitterSys[i] ?? -1, dbg, everLive: (e as unknown as { everLive?: boolean }).everLive ?? null, live: e.liveCount(), x: pos.x, y: pos.y, sx: g?.x ?? null, sy: g?.y ?? null, box, onScreen, paintedPx, rope: "pool" in e ? ropeStats(e.pool) : null };
             });
+        },
+        drops() {
+            return dropped;
         },
         destroy() {
             for (const e of emitters) e.destroy();
