@@ -346,6 +346,23 @@ function scenelessParticlesOn(): boolean {
     return new URLSearchParams(window.location.search).get("sceneless") !== "0";
 }
 
+/** THE IDLE CARD KEEPS THE ILLUSTRATION'S OUTER EDGE (2026-09-06). When the card's idle stopped
+ *  drawing the painting (`panelArtAtRestOn`) it also dropped the silhouette cutout, because the
+ *  painting's coverage is holey where its ink is and the erase punched the animated art out in
+ *  that pattern. Without any cutout, everything the effects draw beyond the illustration lands on
+ *  the page: Pozemka's five overlapping haze sheets (white, alpha 0.07..0.12, 7438 px) lit 294 020
+ *  of the card's 374 400 px over the dark page, a grey cloud the game never shows. The game draws
+ *  its card over a light page, where a translucent white sheet is invisible, and Ian read ours as
+ *  "oppressive". The cutout at idle is therefore the painting's OUTER silhouette: its coverage with
+ *  the interior holes filled, found by flooding the transparent region from the canvas border, so
+ *  the ink gaps inside the art stay untouched and only what lies outside the illustration's
+ *  boundary is erased. Derived from the art's own alpha, no per-skin term. `?silfill=0` restores
+ *  the uncut idle. Read as the string "0". */
+function silFillOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("silfill") !== "0";
+}
+
 /** PANEL-ONLY (2026-09-01): place the static backdrop by the EXPORT-DERIVED art-to-scene
  *  transform (`backdropScale`/`backdropOffsetPx`, computed by the exporter from the scene
  *  meshes' own texture-to-position mapping) instead of the camera-extent heuristic, which
@@ -3853,7 +3870,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // punched the animated art out in that pattern (Nearl Relight's black scraps,
                     // 10.28 -> 6.72 pct near-black in her art box, the rest her own ink) and cut
                     // Ch'en's sky plane into the painting's brush-stroke outline (32.85 -> 0.14).
-                    if (panelArt && silOn && !panelIdle) {
+                    // At idle the cutout is the OUTER silhouette (holes filled), see `silFillOn`.
+                    const silFill = panelIdle && silFillOn();
+                    if (panelArt && silOn && (!panelIdle || silFill)) {
                         let silhouette: PIXI.Sprite | null = null;
                         try {
                             const src = backdropData.texture.baseTexture.resource as unknown as { source?: CanvasImageSource & { width: number; height: number } };
@@ -3881,12 +3900,68 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                     cx.drawImage(im, padArt, padArt);
                                     const id = cx.getImageData(0, 0, cv.width, cv.height);
                                     const px = id.data;
-                                    for (let p = 0; p < px.length; p += 4) {
-                                        const a = px[p + 3];
-                                        px[p] = 255;
-                                        px[p + 1] = 255;
-                                        px[p + 2] = 255;
-                                        px[p + 3] = a > 0 ? 0 : 255;
+                                    if (silFill) {
+                                        // OUTER silhouette: coverage on a coarse grid (the longer
+                                        // side at most 512 cells, so the flood is bounded whatever
+                                        // the art's resolution), flooded from the border across
+                                        // uncovered cells. A cell the flood reaches is outside the
+                                        // illustration; every other cell, covered or an interior
+                                        // hole, keeps its pixels.
+                                        const f = Math.max(1, Math.ceil(Math.max(cv.width, cv.height) / 512));
+                                        const gw = Math.ceil(cv.width / f);
+                                        const gh = Math.ceil(cv.height / f);
+                                        const covered = new Uint8Array(gw * gh);
+                                        for (let y = 0; y < cv.height; y++) {
+                                            const gy = Math.floor(y / f) * gw;
+                                            const row = y * cv.width * 4;
+                                            for (let x = 0; x < cv.width; x++) {
+                                                if (px[row + x * 4 + 3] > 0) covered[gy + Math.floor(x / f)] = 1;
+                                            }
+                                        }
+                                        const outside = new Uint8Array(gw * gh);
+                                        const stack: number[] = [];
+                                        const push = (i: number) => {
+                                            if (!covered[i] && !outside[i]) {
+                                                outside[i] = 1;
+                                                stack.push(i);
+                                            }
+                                        };
+                                        for (let x = 0; x < gw; x++) {
+                                            push(x);
+                                            push((gh - 1) * gw + x);
+                                        }
+                                        for (let y = 0; y < gh; y++) {
+                                            push(y * gw);
+                                            push(y * gw + gw - 1);
+                                        }
+                                        while (stack.length) {
+                                            const i = stack.pop() as number;
+                                            const x = i % gw;
+                                            const y = (i - x) / gw;
+                                            if (x > 0) push(i - 1);
+                                            if (x < gw - 1) push(i + 1);
+                                            if (y > 0) push(i - gw);
+                                            if (y < gh - 1) push(i + gw);
+                                        }
+                                        for (let y = 0; y < cv.height; y++) {
+                                            const gy = Math.floor(y / f) * gw;
+                                            const row = y * cv.width * 4;
+                                            for (let x = 0; x < cv.width; x++) {
+                                                const p = row + x * 4;
+                                                px[p] = 255;
+                                                px[p + 1] = 255;
+                                                px[p + 2] = 255;
+                                                px[p + 3] = outside[gy + Math.floor(x / f)] ? 255 : 0;
+                                            }
+                                        }
+                                    } else {
+                                        for (let p = 0; p < px.length; p += 4) {
+                                            const a = px[p + 3];
+                                            px[p] = 255;
+                                            px[p + 1] = 255;
+                                            px[p + 2] = 255;
+                                            px[p + 3] = a > 0 ? 0 : 255;
+                                        }
                                     }
                                     cx.putImageData(id, 0, 0);
                                     silhouette = new PIXI.Sprite(PIXI.Texture.from(cv));
