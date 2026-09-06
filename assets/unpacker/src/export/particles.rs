@@ -1317,6 +1317,18 @@ pub(crate) fn collect_dynchar_particles(
             "renderMode": render_mode,
             "pos": pos,
             "rot": rot,
+            // DEPTH RELATIVE TO THE SKELETON ROOT (2026-09-06), in Unity units, positive
+            // when the emitter sits FARTHER from the camera than the character (the L2D
+            // camera looks down +z, so a larger z is farther). Unity orders transparent
+            // renderers that share a sorting order back to front by that distance, and 271
+            // systems in the corpus share the character's sorting order exactly (Pozemka 71,
+            // Surtr summer#9 34, Texas epoque 28, Ch'en 22, Chongyue cfa#1's `vein` grain over
+            // his face); the viewer had put every tie in front. Null when the system has no
+            // root scope to measure against.
+            "zRel": scope.own.map_or(Value::Null, |own| {
+                let own_z = host.world_of_go(all_objects, own).point([0.0, 0.0, 0.0])[2];
+                json!(f64::from(origin[2]) - f64::from(own_z))
+            }),
             "duration": fd(ps, "lengthInSec", 1.0),
             "looping": b(ps, "looping", false),
             // `moveWithTransform` stores the `ParticleSystemSimulationSpace` enum, whose
@@ -1643,8 +1655,30 @@ pub(crate) fn collect_dynchar_particles(
                     || s.ends_with("/Particles-L2D/AlphaBlend")
                     || s.ends_with("/Particles/Additive")
                     || s.ends_with("/Particles/AlphaBlend")
+                    // `Particles/RGBsplit`, from its decompiled program (pathID
+                    // -5816859062873505013): `_MainTex` sampled three times at per-channel UV
+                    // offsets (`_OffsetR/G/B` scaled by a time-jittered `_SplitIntensity`),
+                    // `rgb = main * 2 * (vertexColour * _TintColor)`, alpha the tint's. With the
+                    // split at zero it IS the plain sprite, and the split is a few px of
+                    // chromatic jitter on a poster, so the plain path carries the image and
+                    // omits the jitter. Nian cfa#1's twelve `02` stage screens (269..845 px)
+                    // are this program and were her whole painted backdrop.
+                    || s.ends_with("/Particles/RGBsplit")
             });
         let quad_material_ok = builtin_quad_env == "all" || plain_program || ram.is_some();
+        // DISPLAYED TEXTURE (2026-09-06). On a plain program (`Additive`, `AlphaBlend`,
+        // `RGBsplit`) `_MainTex` is the image the system shows; it is never a flow or
+        // distortion input, which only the compositor families (`Ram/`, `Disturb/`,
+        // `Dissolve/`) consume in that role. The viewer's flow-map and desaturated-panel
+        // rules exist to keep such inputs from being stamped as sprites, and on a plain
+        // program they can only ever discard a picture: Nian cfa#1's ten `02` stage screens
+        // (posters, low saturation by nature), Wang's `Left BG 01`, Vina Victoria's
+        // `bg_building`, Rosmon's `baoqi`. The flag lets the viewer scope those rules to the
+        // compositor programs. Emitted only when true, so every other system's JSON is
+        // byte-identical.
+        if plain_program {
+            sys["displayTex"] = json!(true);
+        }
         let mesh_ref = renderer.and_then(|r| r.get("m_Mesh"));
         let mesh_is_builtin_quad = builtin_quad_on
             && quad_material_ok
