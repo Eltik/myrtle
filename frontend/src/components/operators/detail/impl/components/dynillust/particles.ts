@@ -1121,8 +1121,22 @@ function sortZOn(): boolean {
  *  and farther from the camera (see `sortZOn`). */
 function behindCharacter(sys: IParticleSystemData, data: IParticlesData): boolean {
     if (sys.sort < data.characterSort) return true;
-    if (sys.sort === data.characterSort && sortZOn() && typeof sys.zRel === "number" && sys.zRel > 1e-6) return true;
+    if (sys.sort === data.characterSort && sortZOn() && typeof sys.zRel === "number") {
+        if (sys.zRel > 1e-6) return true;
+        // AN EXACT TIE (same sort, same depth, no sorting fudge) is undefined in the data:
+        // Unity's own order for it is renderer registration, which the export cannot read.
+        // Ian's ruling (2026-09-06, Chongyue All-Round Actor's `vein` grain over his face
+        // during Interact): a NORMAL-blend system at an exact tie goes BEHIND the character,
+        // because in front it can only occlude him, while an additive one stays in front,
+        // because it only adds light. `?tiebehind=0` keeps every exact tie in front.
+        if (Math.abs(sys.zRel) <= 1e-6 && sys.blend !== "additive" && tieBehindOn()) return true;
+    }
     return false;
+}
+
+function tieBehindOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("tiebehind") !== "0";
 }
 
 function backdropDemoteEnabled(): boolean {
