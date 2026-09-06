@@ -5167,10 +5167,22 @@ pub fn export_spine_assets(
         }
         // Apply the page rename to the decoded textures so the PNG lands under the namespaced
         // filename the rewritten atlas now points at.
+        //
+        // The page's `[alpha]` companion MUST follow it. `merge_and_export` pairs `foo` with
+        // `foo[alpha]` by name, so a renamed page whose companion kept the old name is written
+        // fully opaque and the companion lands as an orphan: five split-alpha pages in the
+        // corpus (Nian E2, Ch'en boc#6, Dusk nian#7, Ling E2, Phantom sale#4) rendered with
+        // hard black region borders, opaque shadow rectangles and black eye glows for that
+        // reason (the atlas' own `[alpha]` page is the only alpha those regions have).
         for (from, to) in &page_renames {
             if let Some(mut tex) = decoded.remove(from) {
                 tex.name.clone_from(to);
                 decoded.insert(to.clone(), tex);
+            }
+            let (from_alpha, to_alpha) = (format!("{from}[alpha]"), format!("{to}[alpha]"));
+            if let Some(mut tex) = decoded.remove(&from_alpha) {
+                tex.name.clone_from(&to_alpha);
+                decoded.insert(to_alpha, tex);
             }
         }
         // ASSERT the invariant the frontend depends on: every page the atlas declares must be
