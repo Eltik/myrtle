@@ -228,8 +228,16 @@ const BLOOM_BLUR = 10;
  *
  *  Raising the knee does NOT weaken the >1 protection this pass exists for: anything above 1 is
  *  still scaled by `t/m`, so coloured additive stacks keep their hue instead of clipping to white.
- *  Only the LDR shoulder moves. `?knee=<f>` overrides. */
-const DEFAULT_KNEE = 0.99;
+ *  Only the LDR shoulder moves. `?knee=<f>` overrides.
+ *
+ *  2 since 2026-09-06, by Ian's ruling on Nian E2's flames: the Additive program's own x2
+ *  (`col = 2 * tint * tex`) stacked under the hue-preserving roll-off read as a saturated
+ *  cartoon orange (left flame 249.5/183.9/135.8 against the static art's 208.9/207.4/181.2 in
+ *  its most saturated tenth); with the knee at 2 the stack clips per channel toward pale
+ *  (249.6/213.4/170.4), the way the game's LDR target does. Every stack up to 2x passes
+ *  untouched, and only a pixel above 2 is still rolled off. `?knee=0.99` restores the previous
+ *  default exactly. */
+const DEFAULT_KNEE = 2;
 
 /** DIAGNOSTIC (`?knee=<f>`): override {@link DEFAULT_KNEE}. Raising it above 1 disables the
  *  hue-preserving compression entirely, so over-bright pixels clip PER CHANNEL the way Unity's
