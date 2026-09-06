@@ -3922,6 +3922,92 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                                 if (px[row + x * 4 + 3] > 0) covered[gy + Math.floor(x / f)] = 1;
                                             }
                                         }
+                                        // THE L2D'S OWN CONTENT JOINS THE SILHOUETTE (2026-09-06). The
+                                        // painting alone is not the card's outline: Nearl Relight's L2D
+                                        // composes its picture frames wider than her painting, and the
+                                        // painting-only cutout erased the outer frames and the horse's
+                                        // body (17.71 pct of her card against the uncut render), which
+                                        // Ian's clip of the game shows. So the scene layers and the
+                                        // spine are rendered once into a target on the same grid, with
+                                        // every particle container hidden, and their coverage is
+                                        // unioned in before the flood. Effects still stop at the union's
+                                        // edge (Pozemka's haze is particles, hidden here); art the L2D
+                                        // draws beyond the painting is kept. `?silunion=0` restores the
+                                        // painting-only silhouette.
+                                        const renderer = appRef.current?.renderer;
+                                        const unionOn = typeof window === "undefined" || new URLSearchParams(window.location.search).get("silunion") !== "0";
+                                        if (renderer && unionOn) {
+                                            const hidden: PIXI.Container[] = [];
+                                            if (particles) {
+                                                for (const c of [particles.hazeBehind, particles.background, particles.foreground, ...particles.backdropWashes]) {
+                                                    if (c.renderable) {
+                                                        c.renderable = false;
+                                                        hidden.push(c);
+                                                    }
+                                                }
+                                            }
+                                            const savedT = sceneContainer.transform.localTransform.clone();
+                                            const savedX = sceneContainer.x;
+                                            const savedY = sceneContainer.y;
+                                            const savedSX = sceneContainer.scale.x;
+                                            const savedSY = sceneContainer.scale.y;
+                                            let rt: PIXI.RenderTexture | null = null;
+                                            try {
+                                                rt = PIXI.RenderTexture.create({ width: gw, height: gh, resolution: 1 });
+                                                // Canvas pixel (X, Y) sits at scene (originX + X * s, originY + Y * s).
+                                                const s = bdDerived.scale;
+                                                const originX = cxs - (cv.width / 2) * s;
+                                                const originY = cys - (cv.height / 2) * s;
+                                                const k = 1 / (s * f);
+                                                sceneContainer.position.set(0, 0);
+                                                sceneContainer.scale.set(1, 1);
+                                                const m = new PIXI.Matrix().translate(-originX, -originY).scale(k, k);
+                                                renderer.render(sceneContainer, { renderTexture: rt, clear: true, transform: m });
+                                                const rp = renderer.extract.pixels(rt);
+                                                const aMin = paintedAlphaMin();
+                                                let before = 0;
+                                                let added = 0;
+                                                for (let i = 0; i < gw * gh; i++) {
+                                                    if (covered[i]) before++;
+                                                    else if (rp[i * 4 + 3] > aMin) {
+                                                        covered[i] = 1;
+                                                        added++;
+                                                    }
+                                                }
+                                                if (import.meta.env.DEV) {
+                                                    const lb2 = sceneContainer.getLocalBounds();
+                                                    const bbox = (test: (i: number) => boolean) => {
+                                                        let x0 = gw;
+                                                        let y0 = gh;
+                                                        let x1 = -1;
+                                                        let y1 = -1;
+                                                        for (let i = 0; i < gw * gh; i++) {
+                                                            if (!test(i)) continue;
+                                                            const x = i % gw;
+                                                            const y = (i - x) / gw;
+                                                            if (x < x0) x0 = x;
+                                                            if (x > x1) x1 = x;
+                                                            if (y < y0) y0 = y;
+                                                            if (y > y1) y1 = y;
+                                                        }
+                                                        return `${x0}..${x1} x ${y0}..${y1}`;
+                                                    };
+                                                    const paintBox = bbox((i) => px[(Math.floor(i / gw) * f * cv.width + (i % gw) * f) * 4 + 3] > 0);
+                                                    const rtBox = bbox((i) => rp[i * 4 + 3] > aMin);
+                                                    console.info(
+                                                        `[dyn] silhouette union: grid ${gw}x${gh} f=${f} painting ${before} cells, L2D adds ${added} | painting box ${paintBox} | target box ${rtBox} | canvas ${cv.width}x${cv.height} padArt ${padArt} scale ${s.toFixed(4)} centre ${cxs.toFixed(1)},${cys.toFixed(1)} origin ${originX.toFixed(1)},${originY.toFixed(1)} localBounds ${lb2.x.toFixed(0)},${lb2.y.toFixed(0)} ${lb2.width.toFixed(0)}x${lb2.height.toFixed(0)}`,
+                                                    );
+                                                }
+                                            } catch {
+                                                // A failed pass leaves the painting-only silhouette.
+                                            } finally {
+                                                rt?.destroy(true);
+                                                sceneContainer.position.set(savedX, savedY);
+                                                sceneContainer.scale.set(savedSX, savedSY);
+                                                sceneContainer.transform.setFromMatrix(savedT);
+                                                for (const c of hidden) c.renderable = true;
+                                            }
+                                        }
                                         const outside = new Uint8Array(gw * gh);
                                         const stack: number[] = [];
                                         const push = (i: number) => {
@@ -3979,7 +4065,31 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         }
                         if (silhouette) {
                             silhouette.blendMode = PIXI.BLEND_MODES.ERASE;
+                            // Tagged so `paintedLocalBounds` can measure the card's framing with the
+                            // cutout hidden: the frame follows the animated art, the cutout only
+                            // erases (2026-09-06: the framing moved with every silhouette change,
+                            // Pozemka zooming out and Rosmon zooming in for the same erase).
+                            (silhouette as unknown as { __cutout?: boolean }).__cutout = true;
                             sceneContainer.addChild(silhouette);
+                            // Everything beyond the erase canvas is erased too. The canvas is sized
+                            // to the painting plus the scene's geometric overhang, and particles have
+                            // no geometry at build time, so a haze sheet reaching past the painting's
+                            // rect survived at the card's edges (Pozemka, both arms).
+                            const w = silhouette.texture.width * silhouette.scale.x;
+                            const h = silhouette.texture.height * silhouette.scale.y;
+                            const x0 = silhouette.x - w / 2;
+                            const y0 = silhouette.y - h / 2;
+                            const big = 1e5;
+                            const bands = new PIXI.Graphics();
+                            bands.beginFill(0xffffff, 1);
+                            bands.drawRect(-big, -big, big + x0, 2 * big);
+                            bands.drawRect(x0 + w, -big, big, 2 * big);
+                            bands.drawRect(x0, -big, w, big + y0);
+                            bands.drawRect(x0, y0 + h, w, big);
+                            bands.endFill();
+                            bands.blendMode = PIXI.BLEND_MODES.ERASE;
+                            (bands as unknown as { __cutout?: boolean }).__cutout = true;
+                            sceneContainer.addChild(bands);
                         }
                     }
                     if (gapFill && !panelArt) {
@@ -4601,7 +4711,19 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     separatorWash,
                     isScene: true,
                     cameraSizePx: scene?.data.cameraSizePx ?? null,
-                    contentBounds: appRef.current?.renderer ? paintedLocalBounds(appRef.current.renderer, sceneContainer) : null,
+                    // Measured with the silhouette cutout hidden: the card frames on the animated
+                    // art (Ian's 09-05 ruling), and the cutout only erases what lies outside it.
+                    contentBounds: appRef.current?.renderer
+                        ? (() => {
+                              const cut = sceneContainer.children.filter((c) => (c as unknown as { __cutout?: boolean }).__cutout === true && c.renderable);
+                              for (const c of cut) c.renderable = false;
+                              try {
+                                  return paintedLocalBounds(appRef.current.renderer, sceneContainer);
+                              } finally {
+                                  for (const c of cut) c.renderable = true;
+                              }
+                          })()
+                        : null,
                     hasDarkBackdrop: scene?.hasDarkBackdrop ?? false,
                     bounds,
                     authoredDisplayBounds,
