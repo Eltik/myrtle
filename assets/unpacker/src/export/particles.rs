@@ -2797,8 +2797,41 @@ fn resolve_material(
                     .join(" ")
             })
             .unwrap_or_default();
+        let floats = mat
+            .get("m_SavedProperties")
+            .and_then(|sp| sp.get("m_Floats"))
+            .and_then(Value::as_object)
+            .map(|m| {
+                m.iter()
+                    .map(|(k, v)| format!("{k}={}", v.as_f64().unwrap_or(f64::NAN)))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .unwrap_or_default();
+        let texenvs = mat
+            .get("m_SavedProperties")
+            .and_then(|sp| sp.get("m_TexEnvs"))
+            .and_then(Value::as_object)
+            .map(|m| {
+                m.iter()
+                    .map(|(k, v)| {
+                        let pid = v.get("m_Texture").and_then(get_path_id).unwrap_or(0);
+                        let sc = v.get("m_Scale");
+                        let of = v.get("m_Offset");
+                        format!(
+                            "{k}:pid={pid} scale=({},{}) offset=({},{})",
+                            fd(sc.unwrap_or(&Value::Null), "x", 1.0),
+                            fd(sc.unwrap_or(&Value::Null), "y", 1.0),
+                            fd(of.unwrap_or(&Value::Null), "x", 0.0),
+                            fd(of.unwrap_or(&Value::Null), "y", 0.0)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .unwrap_or_default();
         eprintln!(
-            "PSMAT '{mat_name}' mainpid={main_pid} shader='{shader}' additive={} src={} dst={} {colors}",
+            "PSMAT '{mat_name}' mainpid={main_pid} shader='{shader}' additive={} src={} dst={} {colors} | floats {floats} | texenvs {texenvs}",
             is_additive(mat),
             mat_float(mat, "_SrcBlend", -1.0),
             mat_float(mat, "_DstBlend", -1.0)
@@ -3081,7 +3114,19 @@ fn resolve_ram(
         // both are DIFFERENT programs and stay out.
         let plain_disturb = shader.contains("/Disturb/")
             && (shader.ends_with("/Disturb") || shader.ends_with("/Disturb(CustomData)"));
-        (shader.contains("Ram/") || dissolve_live || plain_disturb).then_some((mat, shader))
+        // Admit `Dissolve/Dissolve Add UVTween` (2026-09-06), from its DECOMPILED program
+        // (`probe_shadersrc`, pathID 2170655151988677161 in `[uc]shaders.ab`), which is a strict
+        // subset of the Ram fragment: `mask = clamp((bw * (1 - roundEven(_Amount + 0.5)) +
+        // (dissolve - _Amount)) / bw)`, `colour = main * 2 * (vertexColour * _TintColor)`,
+        // alpha = mask * colour.a, and both lookups scrolled by `_Time.y * _UVTween` (main by
+        // .xy, dissolve by .zw) under `fract`. No CustomData, no ram, no disturb, no opacity.
+        // The single-map caveat above does not apply: its colour path IS the Ram colour path.
+        // It was the largest class the built-in quad could not draw (58 systems, 41 on the quad:
+        // Kal'tsit sale#14's stone flows and glass, Vina Victoria epoque#50's). The `AB` spelling
+        // is a different pass state and its program is not read, so it stays out.
+        let uv_tween = shader.ends_with("/Dissolve/Dissolve Add UVTween");
+        (shader.contains("Ram/") || dissolve_live || plain_disturb || uv_tween)
+            .then_some((mat, shader))
     })?;
     // DIAGNOSTIC (`DYNCHAR_PPCENSUS`, presence-checked): the port spelling behind every emitter
     // this path admits, joined to its GameObject name. The exported `kind` collapses the two
@@ -3100,6 +3145,14 @@ fn resolve_ram(
 
     let is_vertex = shader.contains("VertexDisturb");
     let is_dissolve = !shader.contains("Ram/") && shader.contains("Dissolve/");
+    // `Dissolve Add UVTween` scrolls both lookups by `_Time.y * _UVTween` (a colour property:
+    // main by xy, dissolve by zw) where the other families spell speeds as `_MainUSpeed` etc.
+    let is_uv_tween = shader.ends_with("/Dissolve/Dissolve Add UVTween");
+    let uv_tween = if is_uv_tween {
+        mat_color(mat, "_UVTween", [0.0, 0.0, 0.0, 0.0])
+    } else {
+        [0.0, 0.0, 0.0, 0.0]
+    };
     // Recomputed here because the closure above owns its own binding.
     let is_plain_disturb = shader.contains("/Disturb/")
         && (shader.ends_with("/Disturb") || shader.ends_with("/Disturb(CustomData)"));
@@ -3198,7 +3251,7 @@ fn resolve_ram(
     });
 
     let json = json!({
-        "kind": if is_dissolve { "dissolve" } else if is_vertex { "vertexDisturb" } else if is_plain_disturb { "plainDisturb" } else { "disturb" },
+        "kind": if is_uv_tween { "uvTween" } else if is_dissolve { "dissolve" } else if is_vertex { "vertexDisturb" } else if is_plain_disturb { "plainDisturb" } else { "disturb" },
         "mainTex": Value::Null,     "mainST": main_st,
         "ramTex": Value::Null,      "ramST": ram_st,
         "disturbTex": Value::Null,  "disturbST": dist_st,
@@ -3228,7 +3281,7 @@ fn resolve_ram(
         } else {
             mat_float(mat, "_DisturbInfluenceMainUV", 1.0)
         },
-        "mainSpeed": [mat_float(mat, "_MainUSpeed", 0.0), mat_float(mat, "_MainVSpeed", 0.0)],
+        "mainSpeed": if is_uv_tween { [uv_tween[0], uv_tween[1]] } else { [mat_float(mat, "_MainUSpeed", 0.0), mat_float(mat, "_MainVSpeed", 0.0)] },
         // Per-lookup UV ROTATION, `[main, dissolve, ram, disturb]` in DEGREES.
         //
         // The SCENE path has carried this since `SceneRam::uv_rot`; the particle path did not,
@@ -3241,7 +3294,7 @@ fn resolve_ram(
         // Same source as the scene side: the material never serializes `_Rotation0..3`, a
         // MonoBehaviour writes them at runtime, so this reads the component off the GameObject.
         "uvRot": super::spine::uv_rotation_of_go(all_objects, go_pid),
-        "dissolveSpeed": [mat_float(mat, "_DissolveUSpeed", 0.0), mat_float(mat, "_DissolveVSpeed", 0.0)],
+        "dissolveSpeed": if is_uv_tween { [uv_tween[2], uv_tween[3]] } else { [mat_float(mat, "_DissolveUSpeed", 0.0), mat_float(mat, "_DissolveVSpeed", 0.0)] },
         "disturbSpeed": [mat_float(mat, "_DisturbUSpeed", 0.0), mat_float(mat, "_DisturbVSpeed", 0.0)],
         "vertexDisturbTex": Value::Null,
         "vertexDisturbWeightTex": Value::Null,

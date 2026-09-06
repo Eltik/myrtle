@@ -236,7 +236,10 @@ export interface IRamData {
      *  this port only when `?plaindisturb=1` is set. Its fragment is the Ram one with the ramp
      *  multiply absent and the offset masked by `_WeightTex`, so the port reproduces it once
      *  `uHasRam` is 0. See the exporter's `plain_disturb` gate. */
-    kind: "disturb" | "vertexDisturb" | "dissolve" | "plainDisturb";
+    /** `uvTween` is `Dissolve/Dissolve Add UVTween` (2026-09-06): one mask, colour x2, both
+     *  lookups scrolled by `mainSpeed` / `dissolveSpeed` under the program's own `fract`, so
+     *  its textures always wrap whatever their serialized wrap mode says. */
+    kind: "disturb" | "vertexDisturb" | "dissolve" | "plainDisturb" | "uvTween";
     mainTex: number | null;
     mainST: RamST;
     ramTex: number | null;
@@ -4643,15 +4646,18 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 drop(sysIndex, sys, "ram-main-tex-missing");
                 continue;
             }
+            // `Dissolve Add UVTween` takes `fract()` of both scrolled UVs in its fragment, so its
+            // lookups wrap however the texture was serialized (Unity WrapMode 0 = Repeat).
+            const tweenWrap = sys.ram.kind === "uvTween" ? 0 : undefined;
             const emitter = new RamEmitter(
                 sys,
                 sys.ram,
                 {
-                    main: applyWrap(main, wrapOf(sys.ram.mainTex)),
+                    main: applyWrap(main, tweenWrap ?? wrapOf(sys.ram.mainTex)),
                     ram: applyWrap(rawTex(sys.ram.ramTex), wrapOf(sys.ram.ramTex)),
                     disturb: applyWrap(rawTex(sys.ram.disturbTex), wrapOf(sys.ram.disturbTex)),
                     weight: applyWrap(rawTex(sys.ram.weightTex ?? null), wrapOf(sys.ram.weightTex ?? null)),
-                    dissolve: applyWrap(rawTex(sys.ram.dissolveTex), wrapOf(sys.ram.dissolveTex)),
+                    dissolve: applyWrap(rawTex(sys.ram.dissolveTex), tweenWrap ?? wrapOf(sys.ram.dissolveTex)),
                     dissolve2: applyWrap(rawTex(sys.ram.dissolveTex2 ?? null), wrapOf(sys.ram.dissolveTex2 ?? null)),
                 },
                 sys.blend,
