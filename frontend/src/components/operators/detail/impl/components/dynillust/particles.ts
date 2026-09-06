@@ -45,6 +45,15 @@ interface IColorStop {
 export interface IParticleSystemData {
     name?: string;
     sort: number;
+    /** True when the material is a plain display program (`Additive`, `AlphaBlend`,
+     *  `RGBsplit`), whose `_MainTex` is the picture the system shows and never a flow or
+     *  distortion input. The flow-map and desaturated-panel rules are scoped away from such
+     *  systems (see `displayTexOn`). Absent in older exports, which keeps them as they were. */
+    displayTex?: boolean;
+    /** Depth relative to the skeleton root in Unity units, positive when the emitter is
+     *  FARTHER from the camera than the character. Decides the seat of a system whose `sort`
+     *  ties `characterSort` (see `behindCharacter`). Absent in older exports. */
+    zRel?: number | null;
     /** `[particles]` texture index, or null when the material carries no `_MainTex` -
      *  an UNTEXTURED material, which Unity draws in its own colour (see the mesh-render
      *  handling in {@link loadParticles}). */
@@ -1080,6 +1089,40 @@ function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
 function hazeBehindOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("hazeback") !== "0";
+}
+
+/** A DISPLAYED TEXTURE IS NOT A FLOW MAP (2026-09-06). The flow-map skip and the desaturated
+ *  panel rule keep shader INPUTS (a distortion field, a soft mask) from being stamped as
+ *  sprites, and they classify by pixels alone, so a picture that happens to be grey fails
+ *  them: Nian cfa#1's ten `02` stage screens (posters on `RGBsplit`, 269..845 px, her whole
+ *  painted backdrop), Wang's `Left BG 01`, Vina Victoria's `bg_building`, Rosmon's `baoqi`.
+ *  The exporter now marks a system whose material is a plain display program
+ *  (`displayTex`), where `_MainTex` can only be the shown image, and both rules stand down
+ *  for it; the compositor families keep them. `?disptex=0` restores the pixel-only rules. */
+function displayTexOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("disptex") !== "0";
+}
+
+/** A SORT TIE IS BROKEN BY DEPTH (2026-09-06). Unity orders transparent renderers that share
+ *  a sorting order back to front by their distance from the camera, and 271 systems in the
+ *  corpus share the character's sorting order exactly; the viewer had seated every one of
+ *  them in front. The exporter now carries each emitter's depth relative to the skeleton root
+ *  (`zRel`, positive = farther), so a tied system that sits behind the character by its own
+ *  transform goes behind: Pozemka's birds and `xing_dm` stars (17), Ch'en's petals (12), Yu's
+ *  and Surtr's lights. A tie at equal depth stays in front, as before, because the data cannot
+ *  say more. `?sortz=0` restores the sort-only seat. */
+function sortZOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("sortz") !== "0";
+}
+
+/** Whether a system draws BEHIND the character: below its sorting order, or at the same order
+ *  and farther from the camera (see `sortZOn`). */
+function behindCharacter(sys: IParticleSystemData, data: IParticlesData): boolean {
+    if (sys.sort < data.characterSort) return true;
+    if (sys.sort === data.characterSort && sortZOn() && typeof sys.zRel === "number" && sys.zRel > 1e-6) return true;
+    return false;
 }
 
 function backdropDemoteEnabled(): boolean {
@@ -4668,7 +4711,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
             emitters.push(emitter);
             emitterSys.push(sysIndex);
             applyPsDiag(data, sys, emitter.container);
-            (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+            (behindCharacter(sys, data) ? background : foreground).addChild(emitter.container);
             continue;
         }
         // UNTEXTURED MESH: a `renderMode:"mesh"` system whose material has no `_MainTex`
@@ -4706,7 +4749,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 emitterSys.push(sysIndex);
                 emitter.container.alpha = sys.blend === "additive" ? additivePileGain(sys) : 1;
                 applyPsDiag(data, sys, emitter.container);
-                (sys.sort < data.characterSort ? background : foreground).addChild(emitter.container);
+                (behindCharacter(sys, data) ? background : foreground).addChild(emitter.container);
             } else {
                 drop(sysIndex, sys, sys.renderMode === "mesh" ? "untextured-mesh-no-geometry" : "untextured-billboard");
             }
@@ -4733,7 +4776,9 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // artifacts, Civilight Eterna's own full-frame background planes) are normal-blend
         // and still skipped.
         // `?addskip=1` restores the old behaviour (skip regardless of blend) for A/B.
-        if (tex.skip && (sys.blend !== "additive" || addSkipAll())) {
+        // A plain display program shows its texture; the flow-map rules do not apply (see `displayTexOn`).
+        const displayed = sys.displayTex === true && displayTexOn();
+        if (tex.skip && !displayed && (sys.blend !== "additive" || addSkipAll())) {
             drop(sysIndex, sys, "flow-map-skip");
             continue;
         }
@@ -4816,7 +4861,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
             // haze panel that is not `bg_`-named on a skeleton without parts goes behind the
             // scene background; the bg-named sheets (Civilight Eterna's seven) keep the wash.
             if (isBackdropParticle && !bgNamed && tex.hazePanel && !hasParts && hazeBehindOn()) return hazeBehind;
-            return isBackdropParticle ? backdropWashes[0] : sys.sort < data.characterSort ? background : foreground;
+            return isBackdropParticle ? backdropWashes[0] : behindCharacter(sys, data) ? background : foreground;
         };
         // ...but a BACKDROP sheet is not a prop. `bg_ref` (Virtuosa, sort 3, 773 px, one burst,
         // 17 s life) matches the static-prop signature exactly and was being dropped by it - yet
@@ -4933,7 +4978,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
             // Measure the footprint against the game instead.
             const bdPanelExempt = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("bdpanel") === "1";
             const isBackdropPanel = bdPanelExempt && !sys.looping && emRate < 1 && burstTotal >= 1 && burstTotal <= 2 && scalarMax(sys.lifetime) >= 10 && sys.sort < data.characterSort;
-            const meshOK = (meshBlend === "additive" || !tex.desatPanel || isBackdropPanel) && !isStaticMeshProp;
+            const meshOK = (meshBlend === "additive" || !tex.desatPanel || displayed || isBackdropPanel) && !isStaticMeshProp;
             if (sys.mesh && sys.mesh.idx.length >= 3 && meshOK) {
                 const emitter = new MeshEmitter(sys, new PIXI.Texture(tex.base), meshBlend, budget);
                 (emitter as { sysIndex?: number }).sysIndex = sysIndex;
@@ -5001,7 +5046,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // e.g. Mlynar's dominant `rain_left_short_01` disc sits on his torso. Promote only that
         // narrow, geometrically-overlapping case to foreground; everything else keeps the
         // original sort-driven bucketing untouched.
-        const wouldBeBackground = sys.sort < data.characterSort || isBackdropParticle;
+        const wouldBeBackground = behindCharacter(sys, data) || isBackdropParticle;
         const unoccludeOverlap = wouldBeBackground && !isBackdropParticle && sys.simulationSpace === "world" && overlapsCharacter(sys);
         // M-c: the un-occlude promotion draws this ambient system (Mlynar's torso rain) IN
         // FRONT of the character. At full strength its streaks read as prominent/"weird" over

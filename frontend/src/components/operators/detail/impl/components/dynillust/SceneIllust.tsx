@@ -3907,7 +3907,11 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                         // uncovered cells. A cell the flood reaches is outside the
                                         // illustration; every other cell, covered or an interior
                                         // hole, keeps its pixels.
-                                        const f = Math.max(1, Math.ceil(Math.max(cv.width, cv.height) / 512));
+                                        // FULL resolution up to 2048 cells a side (Ian, 2026-09-06: a
+                                        // 512-cell grid quantised the erase boundary to 4..5 art px and
+                                        // Nian's flames came out as staircases). A 2048 grid is 4 M
+                                        // cells, one byte each, flooded once at load.
+                                        const f = Math.max(1, Math.ceil(Math.max(cv.width, cv.height) / 2048));
                                         const gw = Math.ceil(cv.width / f);
                                         const gh = Math.ceil(cv.height / f);
                                         const covered = new Uint8Array(gw * gh);
