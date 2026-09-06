@@ -2027,10 +2027,17 @@ fn collect_dynchar_bg_quads(
             // scenery, not pollution. `DYNCHAR_MESHEXT_ENT=1` keeps them for entrances only.
             let meshext_keep_entrance =
                 is_entrance && std::env::var("DYNCHAR_MESHEXT_ENT").as_deref() != Ok("0");
+            // MEASUREMENT ARM (2026-09-06): `DYNCHAR_MESHEXT_IDLE=1` keeps windowless meshExt
+            // quads in the IDLE scene too. Nearl Relight's `1a..8a` (the pictures inside her
+            // 13 frames, which the game's card shows) and Thorn marthe#9's stage floor fall
+            // to this rule; 370 quads across the corpus do. Off by default until gated.
+            let meshext_keep_idle =
+                !is_entrance && std::env::var("DYNCHAR_MESHEXT_IDLE").as_deref() == Ok("1");
             if mat.get("_meshExtResolved").is_some()
                 && window.is_empty()
                 && !has_color_reveal
                 && !meshext_keep_entrance
+                && !meshext_keep_idle
             {
                 if attrib_dbg {
                     eprintln!(
