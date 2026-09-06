@@ -1486,6 +1486,22 @@ const VIEWER_BACKDROP = "#4d4d4e";
  *  showing through art whose margins are alpha 0.2, where the viewer paints its fill (her
  *  authored entrance clear colour, black). Derived from the art's own alpha by construction,
  *  no per-skin term. Read as the string "1", never as truthiness. */
+/** THE CARD TAKES THE ARCHIVE PAGE (Ian's ruling, 2026-09-06, superseding "transparent at
+ *  settle" for the panel). The game composites its card over the archive page, which measures
+ *  235..238 grey beside the card in Ian's five clips (238, 235, 209..221, 226..229, 237; the two
+ *  neutral clips 237..238), and every translucent L2D layer was authored against that ground:
+ *  Nian E2's clouds (alpha 85..91 of 255) dim over the site's dark page while her additive
+ *  flames dominate them. So at settle the panel's environment fill becomes that grey instead of
+ *  hiding, over the whole card, and the silhouette cutout stands down there: over the game's
+ *  grey the effect spill IS what the game shows (a white haze on a light page). The viewer
+ *  surface keeps the transparent settle. `?cardground=0` restores the transparent panel. */
+const ARCHIVE_PAGE_FILL = "#ededed";
+function cardGroundOn(surface: "panel" | "viewer" | undefined): boolean {
+    if (surface !== "panel") return false;
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("cardground") !== "0";
+}
+
 function pageBgOn(): boolean {
     // DEFAULT ON since Ian's ruling of 2026-09-04 (register, "THE PAGE BACKGROUND AT SETTLE,
     // RULED THE OTHER WAY"): the page shows through the illustration's transparent margins once
@@ -3871,7 +3887,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // 10.28 -> 6.72 pct near-black in her art box, the rest her own ink) and cut
                     // Ch'en's sky plane into the painting's brush-stroke outline (32.85 -> 0.14).
                     // At idle the cutout is the OUTER silhouette (holes filled), see `silFillOn`.
-                    const silFill = panelIdle && silFillOn();
+                    // Over the archive page (`cardGroundOn`) nothing is cut: the spill is what the
+                    // game shows on that ground.
+                    const silFill = panelIdle && silFillOn() && !cardGroundOn(surface);
                     if (panelArt && silOn && (!panelIdle || silFill)) {
                         let silhouette: PIXI.Sprite | null = null;
                         try {
@@ -5600,7 +5618,13 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 const suffixed = skelPath.match(/#\d+\.skel$/) ? [skelPath.replace(/(#\d+)\.skel$/, "_Start$1.skel"), atlasPath.replace(/(#\d+)\.atlas$/, "_Start$1.atlas")] : null;
                 const swapToMainIdle = () => {
                     // Page background at settle (see `pageBgOn`): the fill served the cinematic.
-                    if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
+                    // On the panel the fill becomes the archive page instead (see `cardGroundOn`).
+                    if (envBgRef.current) {
+                        if (cardGroundOn(surface)) {
+                            envBgRef.current.texture = createEnvironmentBgTexture(false, ARCHIVE_PAGE_FILL);
+                            envBgRef.current.visible = true;
+                        } else if (pageBgOn()) envBgRef.current.visible = false;
+                    }
                     if (aborted()) return;
                     const mu = mainUnderRef.current;
                     if (mu) {
@@ -5686,7 +5710,13 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 if (!built) {
                     raiseToIdleResolution();
                     // Page background at settle (see `pageBgOn`): no cinematic, so from the start.
-                    if (pageBgOn() && envBgRef.current) envBgRef.current.visible = false;
+                    // On the panel the fill becomes the archive page instead (see `cardGroundOn`).
+                    if (envBgRef.current) {
+                        if (cardGroundOn(surface)) {
+                            envBgRef.current.texture = createEnvironmentBgTexture(false, ARCHIVE_PAGE_FILL);
+                            envBgRef.current.visible = true;
+                        } else if (pageBgOn()) envBgRef.current.visible = false;
+                    }
                 }
                 // DIAGNOSTIC readiness signal for the harness: the `_Start` probe above runs on the
                 // REAL clock (a 404 from the asset server), and the environment fill is hidden only
