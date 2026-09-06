@@ -1073,6 +1073,17 @@ function shapeScale(shape: NonNullable<IParticleSystemData["shape"]>): [number, 
  *  interior instead of ringing the rim). Returns the sampled radius as a fraction of
  *  `radius`, uniform in AREA over the annulus, consuming exactly one `Math.random()` so a
  *  full-volume (thickness 1) shape draws the identical value it always did. */
+/** THE CONE'S BASE DISC TAKES THE SHAPE SCALE (2026-09-06). Unity's shape transform scale
+ *  stretches every shape's emission volume, cone included; the spawn had left the cone alone
+ *  on one measurement (Virtuosa 33.626 -> 33.640, a 0.014 move) and Chongyue All-Round
+ *  Actor's `spark gold 03` then emitted its 30 live sparks from an 11 px spot on his face:
+ *  a radius-18 cone scaled 18 x 15. The direction cone keeps its authored angle; only the
+ *  base disc is stretched. `?conescale=0` restores the unscaled disc. */
+function coneScaleOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("conescale") !== "0";
+}
+
 function radialFrac(shape: NonNullable<IParticleSystemData["shape"]>): number {
     const inner = 1 - Math.min(Math.max(shape.radiusThickness ?? 1, 0), 1);
     const i2 = inner * inner;
@@ -1830,17 +1841,14 @@ class Emitter {
                     dirAng = 90 * DEG;
                     break;
                 default: {
-                    // cone / none: spread around up by angleDeg. A cone/edge takes NO shape
-                    // scale: Unity skews the cone's base ellipse AND the emission cone with
-                    // it in the emitter's 3-axis frame, which our flat 2D spawn can't
-                    // reproduce - applying it to the spawn offset alone measures WORSE
-                    // (Virtuosa 33.626 -> 33.640). Only the flat AREA shapes above, where
-                    // our disc IS the authored emission area, take it.
+                    // cone / none: spread around up by angleDeg. The cone's BASE DISC takes
+                    // the shape scale (see `coneScaleOn`); the emission direction does not.
                     const spread = (shape.angleDeg ?? 0) * DEG;
                     dirAng = 90 * DEG + (Math.random() - 0.5) * 2 * spread;
                     const rr = (shape.radius ?? 0) * radialFrac(shape);
-                    ox = Math.cos(a) * rr;
-                    oy = Math.sin(a) * rr;
+                    const [cx, cy] = coneScaleOn() ? [sx, sy] : [1, 1];
+                    ox = Math.cos(a) * rr * cx;
+                    oy = Math.sin(a) * rr * cy;
                 }
             }
         }
@@ -3415,12 +3423,13 @@ class RamEmitter {
                     ox = (Math.random() - 0.5) * (shape.radius ?? 0) * 2;
                     break;
                 default: {
-                    // cone / edge take no shape scale - see the billboard spawn above.
+                    // cone: the base disc takes the shape scale (see `coneScaleOn`).
                     const spread = (shape.angleDeg ?? 0) * DEG;
                     dirAng = 90 * DEG + (Math.random() - 0.5) * 2 * spread;
                     const rr = (shape.radius ?? 0) * radialFrac(shape);
-                    ox = Math.cos(a) * rr;
-                    oy = Math.sin(a) * rr;
+                    const [cx, cy] = coneScaleOn() ? [sx, sy] : [1, 1];
+                    ox = Math.cos(a) * rr * cx;
+                    oy = Math.sin(a) * rr * cy;
                 }
             }
         }

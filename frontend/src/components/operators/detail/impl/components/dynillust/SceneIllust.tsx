@@ -4058,6 +4058,52 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                                     silhouette.anchor.set(0.5, 0.5);
                                     silhouette.scale.set(bdDerived.scale);
                                     silhouette.position.set(cxs, cys);
+                                    // MEASUREMENT ARM (`?silground=1`, 2026-09-06): the game's
+                                    // archive page is a light grey (235..238 beside the card in
+                                    // Ian's five clips), and every translucent layer of an L2D
+                                    // composites over it there; over the site's dark page a
+                                    // translucent white cloud dims and an additive orange flame
+                                    // dominates it (Nian E2 against her static art). The arm paints
+                                    // that grey INSIDE the silhouette, under everything, so the
+                                    // card's own translucency meets the ground it was authored on
+                                    // while the margins stay transparent. Colour from the clips,
+                                    // `?silground=<hex>` overrides it. Off by default until gated.
+                                    // OFF BY DEFAULT after its card gate (2026-09-06): wherever the
+                                    // painting covers ground the L2D never draws (Thorn marthe#9's
+                                    // stage, Ling nian#9's pavilion surround, Nearl's frame gaps) the
+                                    // grey shows as a SLAB against the site's dark page, which the
+                                    // game never shows because its page IS that grey all around. The
+                                    // ground under a card is a page-colour decision, not a per-card
+                                    // rule. `?silground=1` or `?silground=<hex>` runs the arm.
+                                    const groundParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("silground") : null;
+                                    if (silFill && groundParam && groundParam !== "0") {
+                                        const gcv = document.createElement("canvas");
+                                        gcv.width = cv.width;
+                                        gcv.height = cv.height;
+                                        const gx = gcv.getContext("2d");
+                                        if (gx) {
+                                            const gid = gx.createImageData(cv.width, cv.height);
+                                            const gp = gid.data;
+                                            for (let p = 0; p < px.length; p += 4) {
+                                                gp[p] = 255;
+                                                gp[p + 1] = 255;
+                                                gp[p + 2] = 255;
+                                                gp[p + 3] = px[p + 3] === 0 ? 255 : 0;
+                                            }
+                                            gx.putImageData(gid, 0, 0);
+                                            const ground = new PIXI.Sprite(PIXI.Texture.from(gcv));
+                                            ground.anchor.set(0.5, 0.5);
+                                            ground.scale.set(bdDerived.scale);
+                                            ground.position.set(cxs, cys);
+                                            // 237/237/237: the archive page beside the card in Ian's five clips
+                                            // (238/238/238, 235, 209..221, 226..229, 237; the two neutral clips
+                                            // read 237..238).
+                                            const hex = groundParam && /^[0-9a-fA-F]{6}$/.test(groundParam) ? Number.parseInt(groundParam, 16) : 0xededed;
+                                            ground.tint = hex;
+                                            (ground as unknown as { __cutout?: boolean }).__cutout = true;
+                                            sceneContainer.addChildAt(ground, 0);
+                                        }
+                                    }
                                 }
                             }
                         } catch {
