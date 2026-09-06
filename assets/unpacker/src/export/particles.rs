@@ -425,7 +425,14 @@ const fn shape_type_name(t: i64) -> &'static str {
         5 | 15 | 16 => "box",
         10 | 11 => "circle",
         12 => "edge",
-        _ => "none", // mesh / donut / rectangle / sprite → approximated as none
+        // RECTANGLE (18) is the flat box: Unity emits across `m_Scale` in the XY plane, which
+        // is exactly the `box` spawn (2026-09-06: Chongyue All-Round Actor's `spark gold`
+        // systems are 14x18 and 20x16 unit rectangles that emitted from a POINT on his face
+        // as "none"; the game spreads them over the whole card). DONUT (17) emits on a ring
+        // of `radius`, which the circle spawn is at its own radius.
+        18 => "box",
+        17 => "circle",
+        _ => "none", // mesh / sprite → approximated as none
     }
 }
 
@@ -2056,7 +2063,51 @@ pub(crate) fn collect_dynchar_particles(
         if let Some(shape) = ps.get("ShapeModule")
             && b(shape, "enabled", false)
         {
-            let stype = shape_type_name(i(shape, "type").unwrap_or(0));
+            let raw_type = i(shape, "type").unwrap_or(0);
+            // MESH (6) emits over a mesh's surface scaled by `m_Scale`. The corpus census
+            // (2026-09-06: 113 systems on 24 keys, every former "none") shows the mesh is
+            // Unity's built-in Quad (external path id 10210) throughout: a flat 1x1 square,
+            // whose surface under `m_Scale` is exactly the `box` spawn. Chongyue All-Round
+            // Actor's `spark gold` systems (14x18 and 20x16 units) emitted from a POINT on
+            // his face as "none"; the game spreads them over the whole card. A mesh that is
+            // not the quad stays "none".
+            let mesh_ref = shape.get("m_Mesh");
+            let mesh_is_quad = mesh_ref
+                .and_then(|m| m.get("m_FileID"))
+                .and_then(Value::as_i64)
+                .is_some_and(|f| f != 0)
+                && mesh_ref.and_then(get_path_id) == Some(10210);
+            // An in-bundle mesh (the corpus's 113: 38 vertex, 28 edge, 47 surface placement,
+            // none the built-in quad): its XY bounds under `m_Scale` are the emission area,
+            // exported as a box centred on the bounds' centre. Every one in the corpus is a
+            // flat plane, so the bounds ARE the surface.
+            let mesh_bounds = if raw_type == 6 && !mesh_is_quad {
+                mesh_ref
+                    .and_then(get_path_id)
+                    .filter(|&p| p != 0)
+                    .and_then(|p| all_objects.get(&p))
+                    .filter(|(c, _)| *c == 43)
+                    .and_then(|(_, v)| super::mesh::parse_mesh(v, resources))
+                    .filter(|m| !m.positions.is_empty())
+                    .map(|m| {
+                        let (mut x0, mut y0, mut x1, mut y1) =
+                            (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+                        for p in &m.positions {
+                            x0 = x0.min(p[0]);
+                            y0 = y0.min(p[1]);
+                            x1 = x1.max(p[0]);
+                            y1 = y1.max(p[1]);
+                        }
+                        [f64::from(x0), f64::from(y0), f64::from(x1), f64::from(y1)]
+                    })
+            } else {
+                None
+            };
+            let stype = if raw_type == 6 && (mesh_is_quad || mesh_bounds.is_some()) {
+                "box"
+            } else {
+                shape_type_name(raw_type)
+            };
             let radius = shape
                 .get("radius")
                 .and_then(|r| f(r, "value"))
@@ -2080,18 +2131,30 @@ pub(crate) fn collect_dynchar_particles(
                 scale.and_then(|s| f(s, "x")).unwrap_or(1.0),
                 scale.and_then(|s| f(s, "y")).unwrap_or(1.0),
             ];
-            let box_wh = [scale_xy[0] * em_inv, scale_xy[1] * em_inv];
+            let mut box_wh = [scale_xy[0] * em_inv, scale_xy[1] * em_inv];
             let posv = shape.get("m_Position");
-            let pos_off = [
+            let mut pos_off = [
                 posv.and_then(|p| f(p, "x")).unwrap_or(0.0) * em_inv,
                 posv.and_then(|p| f(p, "y")).unwrap_or(0.0) * em_inv,
             ];
+            if let Some([x0, y0, x1, y1]) = mesh_bounds {
+                box_wh = [
+                    (x1 - x0) * scale_xy[0] * em_inv,
+                    (y1 - y0) * scale_xy[1] * em_inv,
+                ];
+                pos_off[0] += (x0 + x1) / 2.0 * scale_xy[0] * em_inv;
+                pos_off[1] += (y0 + y1) / 2.0 * scale_xy[1] * em_inv;
+            }
             let rot_deg = shape
                 .get("m_Rotation")
                 .and_then(|r| f(r, "z"))
                 .unwrap_or(0.0);
             sys["shape"] = json!({
                 "type": stype,
+                // The raw Unity `ShapeModule.type`, for the census of what each family maps.
+                "unityType": raw_type,
+                "meshQuad": mesh_is_quad,
+                "meshShapeType": i(shape, "placementMode").or_else(|| i(shape, "m_MeshShapeType")),
                 "radius": radius,
                 "angleDeg": fd(shape, "angle", 25.0),
                 "arcDeg": arc,
