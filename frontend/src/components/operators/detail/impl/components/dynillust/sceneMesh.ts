@@ -2391,7 +2391,16 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // render as garbage over the character (e.g. Nian "Unfettered Freedom"'s ink
     // smears), while the spine already carries the full illustration. Skip it and
     // let the self-contained spine render on its own.
-    if (background.children.length === 0) {
+    //
+    // MEASUREMENT ARM (`?fgscene=1`, 2026-09-07): keep a foreground-only scene. The "static
+    // snapshots of animated effects" justification predates the mask and pan ports: Nian
+    // nian#4's 36 layers are all Dissolve Add UVTween, masked and panned by the exporter since
+    // c094b74c, and this rule skips every one of them. Nine idle scenes in the corpus are
+    // foreground-only (kalts sale#14, skadi2 E2, nearl2 E2, nian nian#4, lmlee witch#3, etlchi
+    // winter#5, lin summer#19, blkkgt witch#5, ascln iteration#4). Absent parameter = the
+    // shipped skip; checked against the explicit string, never a falsy coercion.
+    const keepFgOnly = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fgscene") === "1";
+    if (background.children.length === 0 && !keepFgOnly) {
         background.destroy({ children: true });
         foreground.destroy({ children: true });
         return null;

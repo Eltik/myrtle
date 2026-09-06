@@ -2914,6 +2914,17 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server, assetRoot());
             const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server, assetRoot());
             const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust);
+            // DEV log: which build loaded a scene and whether it survived. Nian nian#4 loaded her
+            // scene JSON and every texture in the harness yet no scene hook was ever installed;
+            // this is the line that says whether the build was aborted underneath the load.
+            if (import.meta.env.DEV && typeof window !== "undefined") {
+                const msg = `[dyn] scene ${opts.mode} ${cSkel.split("/").pop()}: ${scene ? `${scene.background.children.length}+${scene.foreground.children.length} layers` : "none"}${aborted() ? ", build aborted" : ""}`;
+                console.log(msg);
+                // Also kept on `window` (`__dynSceneLog`) because the dev console pipe reshapes
+                // log text and a headless harness cannot read it back reliably.
+                const w = window as unknown as { __dynSceneLog?: string[] };
+                w.__dynSceneLog = [...(w.__dynSceneLog ?? []), msg];
+            }
             if (aborted()) {
                 spine.destroy();
                 return null;
