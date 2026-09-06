@@ -494,6 +494,26 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
         // ships the full idle/interact state machine, whose `m_IsActive` toggles are
         // NOT the cinematic sequence — merging them corrupts the windows.
         if !is_entrance_clip(v) && !cam_clips.contains(clip_pid) {
+            // DIAGNOSTIC (`DYNCHAR_CLIPS`): what the NON-entrance clips (Idle, Interact,
+            // Special) toggle, with their stop times, so a one-shot effect that the game
+            // re-fires on every idle loop can be told from one it fires once at the open.
+            if std::env::var("DYNCHAR_CLIPS").is_ok() {
+                let stop = clip_stop_time(v);
+                for (go, ivs) in active_timeline(
+                    v,
+                    &hash_to_gos,
+                    &is_ancestor,
+                    clip_animators.get(clip_pid).map(Vec::as_slice),
+                    &go_parent,
+                    &go_name,
+                ) {
+                    eprintln!(
+                        "CLIPACT clip={:?} stop={stop:?} go={:?} windows={ivs:?}",
+                        v.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
+                        go_name.get(&go).map(String::as_str).unwrap_or("?")
+                    );
+                }
+            }
             continue;
         }
         let stop = clip_stop_time(v);

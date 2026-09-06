@@ -1325,9 +1325,16 @@ pub(crate) fn collect_dynchar_particles(
             // Surtr summer#9 34, Texas epoque 28, Ch'en 22, Chongyue cfa#1's `vein` grain over
             // his face); the viewer had put every tie in front. Null when the system has no
             // root scope to measure against.
+            // Plus the renderer's `m_SortingFudge`: Unity adds it to the sorting distance
+            // (a larger fudge sorts FARTHER, a negative one nearer), which is the field an
+            // author sets to place a system behind or in front of a tied character.
             "zRel": scope.own.map_or(Value::Null, |own| {
                 let own_z = host.world_of_go(all_objects, own).point([0.0, 0.0, 0.0])[2];
-                json!(f64::from(origin[2]) - f64::from(own_z))
+                let fudge = renderer
+                    .and_then(|r| r.get("m_SortingFudge"))
+                    .and_then(Value::as_f64)
+                    .unwrap_or(0.0);
+                json!(f64::from(origin[2]) - f64::from(own_z) + fudge)
             }),
             "duration": fd(ps, "lengthInSec", 1.0),
             "looping": b(ps, "looping", false),
