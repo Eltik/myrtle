@@ -1810,6 +1810,15 @@ fn collect_dynchar_bg_quads(
     // qualifying layer, `=0` restores the pre-ship numbers exactly, and a
     // comma-separated GameObject-name list still restricts it for ablation.
     // Checked against the explicit string, never a falsy coercion.
+    // SCENE-SIDE `Dissolve/Dissolve Add UVTween` (2026-09-07). The particle side ports this
+    // program (`kind: "uvTween"`, see `particles::resolve_ram`); on the scene side the same
+    // materials were vetoed by the `_ToggleUseDissolve` default and drew as plain quads, seven
+    // of Ch'en the Holungday E2's layers among them (BirdScarf's HUD counts them as "Dissolve
+    // masked 7"). The decompiled program masks UNCONDITIONALLY and pans both lookups by
+    // `_Time.y * _UVTween` (main by .xy, dissolve by .zw), so for this family the veto is
+    // skipped and both pans come from `_UVTween`. `DYNCHAR_UVTWEEN_SCENE=0` restores the
+    // previous export exactly; checked against the explicit string, never a falsy coercion.
+    let scene_uvtween_on = std::env::var("DYNCHAR_UVTWEEN_SCENE").as_deref() != Ok("0");
     let main_color_decl: Option<Vec<String>> = match std::env::var("DYNCHAR_MAINCOLOR_DECL") {
         Err(_) => Some(Vec::new()),
         Ok(v) => match v.as_str() {
@@ -2371,7 +2380,19 @@ fn collect_dynchar_bg_quads(
                 // Turn it on only together with a corpus render of the affected skins.
                 let wide =
                     std::env::var("DYNCHAR_UVSCROLL_ALL").is_ok() && is_l2d_compositor(shader);
-                if shader.contains("Ram/") || wide {
+                // `Dissolve Add UVTween` pans `_MainTex` by `_UVTween.xy` (its `_Main*Speed`
+                // floats are undeclared residue); see `scene_uvtween_on`.
+                let uvtween_scene =
+                    scene_uvtween_on && shader.ends_with("/Dissolve/Dissolve Add UVTween");
+                if uvtween_scene {
+                    let c = super::particles::mat_color(mat, "_UVTween", [0.0; 4]);
+                    let (us, vs) = (c[0] as f32, c[1] as f32);
+                    if us != 0.0 || vs != 0.0 {
+                        Some([us, vs])
+                    } else {
+                        None
+                    }
+                } else if shader.contains("Ram/") || wide {
                     let us = blend("_MainUSpeed", 0.0) as f32;
                     let vs = blend("_MainVSpeed", 0.0) as f32;
                     if us != 0.0 || vs != 0.0 {
@@ -2414,8 +2435,13 @@ fn collect_dynchar_bg_quads(
                 // lists, so the shader name selects which property is live and which is
                 // serialized residue.
                 // Gated for measurement (`DYNCHAR_UVTWEEN=1`, default OFF).
-                let uvtween_family = std::env::var("DYNCHAR_UVTWEEN").is_ok()
-                    && (shader.contains("UVTween") || shader.contains("Disturb Anchor"));
+                // `Dissolve Add UVTween` joins by default (see `scene_uvtween_on`); the
+                // measurement arm above it stays as it was.
+                let uvtween_scene =
+                    scene_uvtween_on && shader.ends_with("/Dissolve/Dissolve Add UVTween");
+                let uvtween_family = uvtween_scene
+                    || (std::env::var("DYNCHAR_UVTWEEN").is_ok()
+                        && (shader.contains("UVTween") || shader.contains("Disturb Anchor")));
                 let uvtween = {
                     let c = super::particles::mat_color(mat, "_UVTween", [0.0; 4]);
                     [c[0] as f32, c[1] as f32, c[2] as f32, c[3] as f32]
@@ -2569,7 +2595,11 @@ fn collect_dynchar_bg_quads(
                     } else {
                         ("_ToggleUseDissolve", "_Amount")
                     };
-                    let vetoed = if std::env::var("DYNCHAR_DISSOLVE_GATE").is_ok() {
+                    let vetoed = if uvtween_scene {
+                        // The program has no switch: `roundEven(_Amount + 0.5)` and the
+                        // `_DissolveTex` lookup run on every fragment.
+                        false
+                    } else if std::env::var("DYNCHAR_DISSOLVE_GATE").is_ok() {
                         shader.contains("Disturb Anchor") && blend("_ToggleUseDissolve", 0.0) < 0.5
                     } else {
                         blend(switch_prop, toggle_default) < 0.5
