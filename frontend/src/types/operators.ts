@@ -432,6 +432,9 @@ export interface IOperatorBaseSkill {
     skillIcon: string;
     unlockElite: number;
     unlockLevel: number;
+    /** Slot index in the operator's kit. Tiers of one slot replace each other on
+     *  promotion - only the highest unlocked tier is live. */
+    slot: number;
 }
 
 export interface IOperatorSkillRef {

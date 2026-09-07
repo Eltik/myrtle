@@ -71,6 +71,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const lineFor = (opId: string, buffId: string) => ledger.find((l) => l.operator_id === opId && l.buff_id === buffId && !l.from_control_center);
     const ccLines = ledger.filter((l) => l.from_control_center);
 
+    // The header's efficiency must describe the SAME crew the ledger does: the
+    // shift cell's own figure when a shift tab is active, else the evaluated
+    // draft's. (Mixing them showed the draft's 45% over a shift crew's +95%.)
+    const efficiency = api.viewShift == null ? scored?.total_efficiency : shiftRoom?.efficiency;
+
     const producesOwnOutput = scored !== undefined;
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
 
@@ -92,7 +97,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 {tile.seats > 0 && <Stat label="Staffed" value={`${tile.operators.length}/${tile.seats}`} />}
                 {power !== 0 && <Stat label={power > 0 ? "Generates" : "Draws"} value={`${Math.abs(power)} kW`} />}
                 {formula && <Stat label="Producing" value={formula.label} />}
-                {scored && <Stat label="Efficiency" value={`${Math.round(scored.total_efficiency)}%`} />}
+                {efficiency != null && <Stat label="Efficiency" value={`${Math.round(efficiency)}%`} />}
                 {scored && isProduction(tile.facility ?? "") && scored.yield_lmd_per_day > 0 && <Stat label="LMD / day" value={Math.round(scored.yield_lmd_per_day).toLocaleString()} />}
             </dl>
 
@@ -115,10 +120,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 <div className={`ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5 ${benched.has(op.id) ? "opacity-60" : ""}`}>
                                     {op.skills.map((skill) => {
                                         const line = lineFor(op.id, skill.buffId);
-                                        // A row with no ledger line, for an operator the ledger DOES
-                                        // know, is a superseded lower tier: the buff isn't in the
-                                        // operator's live kit (a higher-tier skill replaced it).
-                                        const replaced = !line && ledger.some((l) => l.operator_id === op.id && !l.from_control_center);
+                                        // A superseded lower tier: unlocked, but a promotion replaced
+                                        // it with a higher tier of the same slot. Read from the kit
+                                        // itself, so rooms without a ledger (Reception, dorms) label
+                                        // it too.
+                                        const replaced = skill.unlocked && !skill.live;
                                         return (
                                             <div className={cn("flex items-start justify-between gap-2", replaced && "opacity-40")} key={skill.buffId}>
                                                 <BaseSkill skill={skill} />

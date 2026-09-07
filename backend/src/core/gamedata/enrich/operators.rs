@@ -386,7 +386,7 @@ fn get_operator_base_skills(
         let Some(building_char) = building.chars.get(*char_id) else {
             continue;
         };
-        for slot in &building_char.buff_char {
+        for (slot_index, slot) in building_char.buff_char.iter().enumerate() {
             for entry in &slot.buff_data {
                 if !seen.insert(entry.buff_id.clone()) {
                     continue;
@@ -402,6 +402,7 @@ fn get_operator_base_skills(
                         skill_icon: buff.skill_icon.clone(),
                         unlock_elite: entry.cond.elite(),
                         unlock_level: entry.cond.level,
+                        slot: slot_index,
                     });
                 }
             }
