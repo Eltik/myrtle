@@ -60,6 +60,9 @@ pub struct SpineAsset {
     pub bg_camera_size: Option<f64>,
     /// Render-target aspect (`maxSize.x / maxSize.y`) for the camera frame.
     pub bg_max_aspect: Option<f64>,
+    /// The display controller's `_maxSize` itself, in pixels, so the viewer's idle
+    /// render-target size is data rather than a constant asserted from a client dump.
+    pub bg_max_size: Option<(f64, f64)>,
     /// Authored display-frame CENTRE in spine-authored px, from the display
     /// controller's `_adjustes[0].offset` (the full-illustration adjust). The
     /// camera isn't centred on the skeleton root, so this is needed to frame the
@@ -440,6 +443,7 @@ struct BgScene {
     quads: Vec<BgQuad>,
     camera_size: Option<f64>,
     max_aspect: Option<f64>,
+    max_size: Option<(f64, f64)>,
     camera_offset: Option<(f64, f64)>,
     camera_view: Option<f64>,
     camera_offset2: Option<(f64, f64)>,
@@ -1155,6 +1159,7 @@ pub fn collect_spine_assets(
                 .then(|| anim_name.to_string()),
             bg_camera_size: scene.camera_size,
             bg_max_aspect: scene.max_aspect,
+            bg_max_size: scene.max_size,
             bg_camera_offset: scene.camera_offset,
             bg_camera_view: scene.camera_view,
             bg_camera_offset2: scene.camera_offset2,
@@ -1533,6 +1538,13 @@ fn collect_dynchar_bg_quads(
         let x = ms.get("x").and_then(serde_json::Value::as_f64)?;
         let y = ms.get("y").and_then(serde_json::Value::as_f64)?;
         (y > 0.0).then_some(x / y)
+    });
+    // The same `_maxSize`, absolute, for the viewer's render-target size.
+    let max_size = controller_mbs.iter().find_map(|(_, v)| {
+        let ms = v.get("_maxSize")?;
+        let x = ms.get("x").and_then(serde_json::Value::as_f64)?;
+        let y = ms.get("y").and_then(serde_json::Value::as_f64)?;
+        (x > 0.0 && y > 0.0).then_some((x, y))
     });
     // Authored full-illustration display frame from the display controller's
     // `_adjustes[0]` (offset = frame CENTRE, size.x = square full EXTENT, both in
@@ -3358,6 +3370,7 @@ fn collect_dynchar_bg_quads(
     let mut scene = BgScene {
         camera_size,
         max_aspect,
+        max_size,
         camera_offset,
         camera_view,
         camera_offset2,
@@ -4974,6 +4987,7 @@ pub fn collect_enemy_spine_assets(
             bg_camera_size: None,
             bg_max_aspect: None,
             bg_camera_offset: None,
+            bg_max_size: None,
             bg_camera_view: None,
             bg_camera_offset2: None,
             bg_camera_view2: None,
@@ -6367,6 +6381,13 @@ fn export_scene(
             layer["col"] = serde_json::json!(col);
         }
         // ERASE MASK: the material's `_Strength` (see `BgQuad::erase`); the frontend draws the
+        // LAYER META (2026-09-07): the quad's GameObject name, so a viewer dump or a register
+        // row can name a layer by what the artist called it instead of by a texture index that
+        // renumbers on every export. `DYNCHAR_LAYER_META=0` omits it (and `maxSize` below), which
+        // keeps the JSON byte-identical to the export before this field.
+        if std::env::var("DYNCHAR_LAYER_META").as_deref() != Ok("0") {
+            layer["name"] = serde_json::json!(quad.go_name);
+        }
         // polygon black at this alpha, skipping every classification rule.
         if let Some(strength) = quad.erase {
             layer["erase"] = serde_json::json!(strength);
@@ -6772,6 +6793,15 @@ fn export_scene(
             map.insert("backdropOffsetPx".into(), serde_json::json!([o[0], o[1]]));
         }
         meta
+        // The controller's `_maxSize`, absolute (see `Asset::bg_max_size`); appended the same
+        // way, and only under `DYNCHAR_LAYER_META` (the layer names' flag), so `=0` leaves the
+        // JSON byte-identical to the export before both fields.
+        if std::env::var("DYNCHAR_LAYER_META").as_deref() != Ok("0")
+            && let Some((x, y)) = asset.bg_max_size
+            && let Some(map) = meta.as_object_mut()
+        {
+            map.insert("maxSize".into(), serde_json::json!([x as f32, y as f32]));
+        }
     };
     if let Ok(text) = serde_json::to_string(&meta)
         && std::fs::write(spine_dir.join(format!("{}[scene].json", asset.name)), text).is_ok()
