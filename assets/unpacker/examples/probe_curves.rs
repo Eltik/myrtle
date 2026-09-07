@@ -326,10 +326,14 @@ fn main() {
                 if !pathwant.is_empty() && !pname.to_ascii_lowercase().contains(&pathwant) {
                     continue;
                 }
-                if *dim != 3 {
+                // Position/scale by default; `PROBE_ALLDIMS=1` prints every binding (a material
+                // float, a rotation, an enabled flag), one column per component, NaN past its
+                // width. Added 2026-09-07 for Virtuosa's apple clip, whose 18 curves carry no
+                // position or scale track at all.
+                if *dim != 3 && std::env::var("PROBE_ALLDIMS").as_deref() != Ok("1") {
                     continue; // only position/scale are interesting here
                 }
-                println!("\n   -- {pname}  {aname}  (curves {}..{})", o, o + dim - 1);
+                println!("\n   -- {pname}  {aname}  (curves {}..{}, dim {dim})", o, o + dim - 1);
                 println!("      {:>6} {:>12} {:>12} {:>12}", "t", "x", "y", "z");
                 let mut t = 0.0f32;
                 let t_end = std::env::var("PROBE_END")
@@ -338,8 +342,8 @@ fn main() {
                     .unwrap_or(6.6);
                 while t <= t_end {
                     let x = val(*o, t).unwrap_or(f32::NAN);
-                    let y = val(o + 1, t).unwrap_or(f32::NAN);
-                    let z = val(o + 2, t).unwrap_or(f32::NAN);
+                    let y = if *dim >= 2 { val(o + 1, t).unwrap_or(f32::NAN) } else { f32::NAN };
+                    let z = if *dim >= 3 { val(o + 2, t).unwrap_or(f32::NAN) } else { f32::NAN };
                     println!("      {t:>6.2} {x:>12.4} {y:>12.4} {z:>12.4}");
                     t += std::env::var("PROBE_STEP")
                         .ok()
