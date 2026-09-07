@@ -259,12 +259,11 @@ struct VerifyRow {
 /// `extract` does. Rows are aggregated per schema type because `level_data`
 /// alone is ~2900 files. Always exits 0 — it is a report, not a gate.
 fn cmd_verify(args: &cli::VerifyArgs) {
-    let idx_path = match args.idx.clone().or_else(|| find_idx_file(&args.input)) {
-        Some(p) => p,
-        None => {
-            eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
-            return;
-        }
+    let idx_path = if let Some(p) = args.idx.clone().or_else(|| find_idx_file(&args.input)) {
+        p
+    } else {
+        eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
+        return;
     };
     let manifest = match export::manifest::ResourceManifest::load(&idx_path) {
         Ok(m) => m,
@@ -329,9 +328,13 @@ fn cmd_verify(args: &cli::VerifyArgs) {
                 row.cn_fail += 1;
                 row.cn_err.get_or_insert(err);
             }
-            if let Some(yostar) = verdict.yostar {
-                let y = row.yostar.get_or_insert((0, None));
-                if let Some(err) = yostar {
+            match verdict.yostar {
+                unpacker::flatbuffers_decode::YostarVerdict::NotRun => {}
+                unpacker::flatbuffers_decode::YostarVerdict::Verified => {
+                    row.yostar.get_or_insert((0, None));
+                }
+                unpacker::flatbuffers_decode::YostarVerdict::Failed(err) => {
+                    let y = row.yostar.get_or_insert((0, None));
                     y.0 += 1;
                     y.1.get_or_insert(err);
                 }

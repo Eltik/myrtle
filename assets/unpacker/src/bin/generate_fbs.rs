@@ -100,7 +100,7 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
 /// (rather than appended) breaks all subsequent offsets.
 ///
 /// AS OF CN 2.7.71 (upstream `b24069f`) THE ARRAY IS EMPTY: every patch this
-/// function ever carried was REFUTED by running the FlatBuffers verifier over
+/// function ever carried was REFUTED by running the `FlatBuffers` verifier over
 /// the live binary. In each case pristine upstream verifies and the patched
 /// schema does not — the patches were written against older binaries and each
 /// one outlived the mismatch it was correcting, then started corrupting the
@@ -115,7 +115,7 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
 ///
 /// Note that a verifier failure alone does not prove the schema is wrong: the
 /// verifier is stricter about alignment than the game's writer, and CN
-/// activity_table and roguelike_topic_table both fail "unaligned" on schemas
+/// `activity_table` and `roguelike_topic_table` both fail "unaligned" on schemas
 /// whose decode is known-good.
 fn patch_schemas(fbs_dir: &Path) {
     // roguelike_topic_table.fbs: NO patch as of CN 2.7.71 (upstream commit
@@ -251,7 +251,7 @@ fn normalize_fbs(src: &str) -> String {
 /// after normalisation. Two identical schemas produce identical flatc output
 /// and therefore cannot decode a buffer differently: a variant for such a table
 /// is dead weight in the binary and a second, pointless verifier pass at
-/// runtime. Measured on OpenArknightsFBS b24069f vs ArknightsFlatbuffers
+/// runtime. Measured on `OpenArknightsFBS` b24069f vs `ArknightsFlatbuffers`
 /// 2026-09-04: 31 of 57 differ, and every one of the 26 identical ones produced
 /// a flatc-generated `.rs` byte-identical to its CN counterpart.
 ///

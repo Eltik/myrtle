@@ -510,7 +510,7 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
                     eprintln!(
                         "CLIPACT clip={:?} stop={stop:?} go={:?} windows={ivs:?}",
                         v.get("m_Name").and_then(Value::as_str).unwrap_or("?"),
-                        go_name.get(&go).map(String::as_str).unwrap_or("?")
+                        go_name.get(&go).map_or("?", String::as_str)
                     );
                 }
             }

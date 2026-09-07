@@ -14,7 +14,7 @@ pub enum Command {
     Extract(ExtractArgs),
     /// List objects in a bundle file
     List(ListArgs),
-    /// Report which FlatBuffer schema each gamedata table verifies against
+    /// Report which `FlatBuffer` schema each gamedata table verifies against
     Verify(VerifyArgs),
 }
 

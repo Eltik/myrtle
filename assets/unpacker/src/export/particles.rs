@@ -1598,9 +1598,7 @@ pub(crate) fn collect_dynchar_particles(
             let pid = mref.and_then(get_path_id);
             let file_id = mref.and_then(|m| m.get("m_FileID")).and_then(Value::as_i64);
             let obj = pid.and_then(|p| all_objects.get(&p));
-            let (cls, val) = obj
-                .map(|(c, v)| (Some(*c), Some(v)))
-                .unwrap_or((None, None));
+            let (cls, val) = obj.map_or((None, None), |(c, v)| (Some(*c), Some(v)));
             let compressed = val
                 .and_then(|v| v.get("m_CompressedMesh"))
                 .and_then(|c| c.get("m_Vertices"))
@@ -1621,10 +1619,10 @@ pub(crate) fn collect_dynchar_particles(
             eprintln!(
                 "PSMESH '{}' pid={pid:?} fileId={file_id:?} class={cls:?} compressedVerts={compressed} vertexCount={vcount} stream='{stream}' parsed={}",
                 host.go_name(all_objects, go_pid),
-                parsed
-                    .as_ref()
-                    .map(|m| format!("{}v/{}i", m.positions.len(), m.indices.len()))
-                    .unwrap_or_else(|| "NONE".into())
+                parsed.as_ref().map_or_else(
+                    || "NONE".into(),
+                    |m| format!("{}v/{}i", m.positions.len(), m.indices.len())
+                )
             );
         }
         // UNITY'S BUILT-IN QUAD (2026-09-05). A mesh-render system whose `m_Mesh` points OUT of
@@ -2142,8 +2140,8 @@ pub(crate) fn collect_dynchar_particles(
                     (x1 - x0) * scale_xy[0] * em_inv,
                     (y1 - y0) * scale_xy[1] * em_inv,
                 ];
-                pos_off[0] += (x0 + x1) / 2.0 * scale_xy[0] * em_inv;
-                pos_off[1] += (y0 + y1) / 2.0 * scale_xy[1] * em_inv;
+                pos_off[0] += f64::midpoint(x0, x1) * scale_xy[0] * em_inv;
+                pos_off[1] += f64::midpoint(y0, y1) * scale_xy[1] * em_inv;
             }
             let rot_deg = shape
                 .get("m_Rotation")
