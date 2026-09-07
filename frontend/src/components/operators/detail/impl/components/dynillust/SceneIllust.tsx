@@ -1496,8 +1496,19 @@ const VIEWER_BACKDROP = "#4d4d4e";
  *  grey the effect spill IS what the game shows (a white haze on a light page). The viewer
  *  surface keeps the transparent settle. `?cardground=0` restores the transparent panel. */
 const ARCHIVE_PAGE_FILL = "#ededed";
+/** TRANSPARENT GROUND EVERYWHERE (Ian's ruling, 2026-09-07, superseding the archive-grey card
+ *  and the cinematic's authored clear colour): no environment fill, no settled ground, no card
+ *  ground, on every surface and through the entrance; the page shows wherever the illustration
+ *  is transparent. The canvas already clears to alpha 0, so this only stops the three ground
+ *  sprites from drawing (at creation, so the HDR fill pass skips them too). `?ground=1` restores
+ *  every previous ground exactly: the entrance fill, the settled ground at #fcfcfc, the
+ *  archive-grey card. Read as the string "1", never as truthiness. */
+function groundOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("ground") === "1";
+}
 function cardGroundOn(surface: "panel" | "viewer" | undefined): boolean {
-    if (surface !== "panel") return false;
+    if (surface !== "panel" || !groundOn()) return false;
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("cardground") !== "0";
 }
@@ -5148,6 +5159,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     if (f) envBg.tint = parseInt(f, 16);
                 }
                 resizeEnvironmentBg(envBg, width, height);
+                // Transparent ground (see `groundOn`): the fill never draws, through the cinematic
+                // included. Suppressed at creation so the HDR fill pass skips it as well.
+                if (!groundOn()) envBg.renderable = false;
                 envBgRef.current = envBg;
                 app.stage.addChildAt(envBg, 0);
                 // 🚨 `?abl=` WALKS SCENE CONTAINERS ONLY, and this sprite lives on the STAGE.
@@ -5191,6 +5205,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // held, which is 1. A tick-side suppression would therefore stop reaching the
                     // exact region under investigation.
                     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("settledbg") === "0") sb.renderable = false;
+                    // Transparent ground (see `groundOn`): the settled ground never draws either;
+                    // the gap-fill retirement it is coupled to is left exactly as shipped.
+                    if (!groundOn()) sb.renderable = false;
                     settledBgRef.current = sb;
                     app.stage.addChildAt(sb, 1);
                 }
