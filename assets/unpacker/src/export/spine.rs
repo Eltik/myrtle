@@ -2444,12 +2444,14 @@ fn collect_dynchar_bg_quads(
                 // below: the two families are mutually exclusive in the decompiled uniform
                 // lists, so the shader name selects which property is live and which is
                 // serialized residue.
-                // Gated for measurement (`DYNCHAR_UVTWEEN=1`, default OFF).
-                // `Dissolve Add UVTween` joins by default (see `scene_uvtween_on`); the
-                // measurement arm above it stays as it was.
+                // SHIPPED 2026-09-07 (`DYNCHAR_UVTWEEN=0` restores the Speed-pair read exactly):
+                // gated on the entrance beats of the four skins it touches (kalts boc#6,
+                // Executor sale#12, Muelsyse boc#8, Skadi iteration#2), 26 beats, 12
+                // bit-identical, no key moving more than 0.16 luma, and neutral on its nine
+                // settled rows (5 bit-identical). Ships on the decompiled uniform lists above.
                 let uvtween_scene = scene_uvtween_on && is_uvtween_program(shader);
                 let uvtween_family = uvtween_scene
-                    || (std::env::var("DYNCHAR_UVTWEEN").is_ok()
+                    || (std::env::var("DYNCHAR_UVTWEEN").as_deref() != Ok("0")
                         && (shader.contains("UVTween") || shader.contains("Disturb Anchor")));
                 let uvtween = {
                     let c = super::particles::mat_color(mat, "_UVTween", [0.0; 4]);
@@ -2494,7 +2496,11 @@ fn collect_dynchar_bg_quads(
                     // A two-map material states its intent by BINDING the maps; it carries no
                     // `_ToggleUseDissolve` at all, so the switch must not veto it.
                     //
-                    // A FOURTH SPELLING (`DYNCHAR_DISSOLVE_NOSWITCH=1`, default OFF): a family
+                    // SHIPPED 2026-09-07 (`DYNCHAR_DISSOLVE_NOSWITCH=0` restores the veto exactly):
+                    // gated alone on its eight settled rows (luma sum -1.52 with 4 closer, chroma
+                    // -1.25 with 5 closer, coverage 6 closer; Gavial E2 +13.62 -> +12.28) and
+                    // bit-identical on all 23 entrance beats of Fugue, kalts and Skadi.
+                    // A FOURTH SPELLING (was `DYNCHAR_DISSOLVE_NOSWITCH=1`, default OFF): a family
                     // with NO SWITCH AT ALL states its intent the same way the two-map materials
                     // do. `Torappu/Particles-L2D/Dissolve/Dissolve AB` declares exactly
                     // `_TintColor, _MainTex, _DissolveTex, _Amount, _BorderWidth, _ZTest`, and its
@@ -2542,7 +2548,8 @@ fn collect_dynchar_bg_quads(
                     // measured as regressions. Scoped to the family the evidence actually covers,
                     // the same way this file already scopes `Ram/` and `Disturb Anchor`. Widening
                     // beyond it is a separate question that needs its own measurement.
-                    let no_switch = std::env::var("DYNCHAR_DISSOLVE_NOSWITCH").is_ok()
+                    let no_switch = std::env::var("DYNCHAR_DISSOLVE_NOSWITCH").as_deref()
+                        != Ok("0")
                         && super::shader_map::shader_declares(shader, "_ToggleUseDissolve")
                             == Some(false)
                         && super::shader_map::shader_declares(shader, "_Amount") == Some(true)
@@ -3777,16 +3784,17 @@ pub(super) fn uv_rotation_of_go(all_objects: &HashMap<i64, (i32, Value)>, go_pid
 /// spelling (Virtuosa sale#12 13, Kal'tsit sale#14 5, Rosmontis epoque#17 4 and sale#16 2,
 /// Siege epoque#50 4) and draw as plain quads with no mask and no pan.
 ///
-/// OPT-IN (`DYNCHAR_UVTWEEN_AB=1`), measured 2026-09-07 and NOT shipped: on the scene side
-/// the admission is near neutral against the static art (chen2 0.031 mean levels, texas2
-/// 0.000, phatom sale#4 luma -2.11 -> -1.86, dusk E2 +4.30 -> +5.74), but on the PARTICLE
-/// side the same admission releases systems the built-in quad had left undrawn, and Skadi
-/// boc#4's ten draw as a grey fog over her left third (22.06 pct of settled pixels, luma
-/// -7.35 -> +12.98). Until that fog is understood the family stays out; absent parameter =
-/// the previous export exactly, checked against the explicit string.
+/// SHIPPED 2026-09-07 (`DYNCHAR_UVTWEEN_AB=0` narrows the family back to the `Add` spelling
+/// exactly). The particle side first released Skadi boc#4's ten rain systems as a grey fog,
+/// which was the render-mode-none routing fault (fixed in the viewer, e7cfe63d), not this
+/// admission: with that fixed she reads -7.30 against -7.35 off. Scene side over 13 settled
+/// rows against the static art: null to closer (luma sum -0.41 with 8 closer, Phantom sale#4
+/// -2.11 -> -1.86, Blacknight wild#7 +3.08 -> +2.69, Dusk E2 +4.30 -> +5.74 the one loss);
+/// entrance 15 beats, 7 bit-identical, kalts +0.48 summed over 8. Same program as the Add
+/// spelling; checked against the explicit string.
 pub fn is_uvtween_program(shader: &str) -> bool {
     shader.ends_with("/Dissolve/Dissolve Add UVTween")
-        || (std::env::var("DYNCHAR_UVTWEEN_AB").as_deref() == Ok("1")
+        || (std::env::var("DYNCHAR_UVTWEEN_AB").as_deref() != Ok("0")
             && shader.ends_with("/Dissolve/Dissolve AB UVTween"))
 }
 
