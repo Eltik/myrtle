@@ -1239,6 +1239,16 @@ function sampleCurveAt(curve: [number, number][], t: number): number {
  *  follows; `?rt2048=1` restores the fixed 2048 / 1080 targets (the parity harness has always
  *  rendered with `rt2048=0`, so its tables are the density path). */
 const DYN_RT_SIZE = 2048;
+/** The idle render-target size READ FROM THE SKIN (`ISceneData.maxSize[1]`, the display
+ *  controller's `_maxSize`), set when the main composite builds; null until then or when the
+ *  export predates the field. Under `?rt2048=1` it replaces the constant above, so the 2048 is
+ *  data where the export carries it. `?rtauth=0` ignores it. Every skin read so far carries
+ *  2048 x 2048, so the default render is bit-identical either way. */
+let authoredRtSize: number | null = null;
+function rtSizeAuthored(): number {
+    if (authoredRtSize == null || typeof window === "undefined") return DYN_RT_SIZE;
+    return new URLSearchParams(window.location.search).get("rtauth") === "0" ? DYN_RT_SIZE : authoredRtSize;
+}
 /** The client's ENTRANCE does not go through the square RT - it renders through `ui_camera`
  *  straight onto the screen surface, measured at **2340x1080**. So its faithful target is that
  *  screen HEIGHT, not the RT's 2048. Lower than the idle's target, and correspondingly cheaper. */
@@ -1249,7 +1259,7 @@ function dynRenderResolution(cssHeight: number, path: "entrance" | "idle"): numb
     const dpr = window.devicePixelRatio || 1;
     if (new URLSearchParams(window.location.search).get("rt2048") !== "1") return dpr;
     if (!(cssHeight > 0)) return dpr;
-    const want = path === "idle" ? DYN_RT_SIZE : DYN_SCREEN_H;
+    const want = path === "idle" ? rtSizeAuthored() : DYN_SCREEN_H;
     return Math.min(RES_CAP, Math.max(dpr, want / cssHeight));
 }
 
@@ -2925,6 +2935,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server, assetRoot());
             const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server, assetRoot());
             const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust);
+            // The idle render target's size as the skin authored it (see `rtSizeAuthored`).
+            if (opts.mode === "main") authoredRtSize = scene?.data.maxSize?.[1] ?? null;
             // DEV log: which build loaded a scene and whether it survived. Nian nian#4 loaded her
             // scene JSON and every texture in the harness yet no scene hook was ever installed;
             // this is the line that says whether the build was aborted underneath the load.

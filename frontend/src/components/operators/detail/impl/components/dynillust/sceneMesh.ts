@@ -80,6 +80,10 @@ export interface ISceneRam {
 }
 
 export interface ISceneLayer {
+    /** The quad's GameObject name as authored (exports since 2026-09-07, `DYNCHAR_LAYER_META`).
+     *  Diagnostic only: nothing renders from it; texture indices renumber on every export and
+     *  this does not. */
+    name?: string;
     /** Is this quad a CHILD OF THE ENTRANCE CAMERA? Then it rides the camera and holds a
      *  constant position and size on screen however far the shot dollies or pans - a film-strip
      *  border, a lens overlay, a full-frame haze sheet. Its baked world pose is only correct at
@@ -185,6 +189,10 @@ export interface ISceneData {
     aspect: number;
     /** Camera half-height in spine-authored pixels; the authored viewport. */
     cameraSizePx: number;
+    /** The display controller's `_maxSize` in pixels, the client's idle render target (exports
+     *  since 2026-09-07). The viewer's fixed 2048 was asserted from a client dump; this is the
+     *  same number read from the bundle, so the assertion is checkable per skin. */
+    maxSize?: [number, number] | null;
     /** Authored display-frame centre in spine-authored px (`_adjustes[0].offset`). */
     cameraOffsetPx?: [number, number] | null;
     /** Authored display-frame square full extent in spine-authored px (`_adjustes[0].size`). */
