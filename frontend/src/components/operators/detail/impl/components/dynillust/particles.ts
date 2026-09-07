@@ -4700,7 +4700,17 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // the vertex UVs, the dissolve and disturb terms applied), not only the ones the sprite
         // path would drop. Measurement arm for SilverAsh Alter's sword flame against Ian's clip.
         const ramSheetArm = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramsheet") === "1";
-        if (sys.ram && !plainBlocked && (!ramSheet || spriteWouldDrop || ramSheetArm)) {
+        // Unity render mode "None" draws NO head, only the trail ribbon (see the sprite path's
+        // `renderable = false`). `RamEmitter` has no trail support and never read the mode, so a
+        // "none" system carrying a ram block drew head quads and lost its ribbon: 30 systems on
+        // the deployed corpus (Whitewing E2's fifteen `trail`s, Kal'tsit boc#6's three `niao`,
+        // SilverAsh Alter's six, Wis'adel's and Mlynar's `caidai`, Skadi E2's `lanxian`, Reed
+        // summer#17's `fengxian`), and under `DYNCHAR_UVTWEEN_AB=1` Skadi boc#4's two
+        // `sixian_back_02` (475 and 200 px, 50 a second) as a grey fog. Such a system takes the
+        // sprite-and-trail path whatever its material. `?ramnone=1` restores the old routing.
+        const ramNoneOld = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ramnone") === "1";
+        const headless = sys.renderMode === "none" && !ramNoneOld;
+        if (sys.ram && !plainBlocked && !headless && (!ramSheet || spriteWouldDrop || ramSheetArm)) {
             // Under the arm a sheeted mesh-mode system whose geometry was not exported takes the
             // Ram billboard quad instead of being dropped (SilverAsh Alter's slash fire).
             if (sys.renderMode === "mesh" && !(ramMeshOn && sys.mesh && sys.mesh.idx.length >= 3) && !(ramSheetArm && ramSheet)) {
