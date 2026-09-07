@@ -146,8 +146,8 @@ export function PrivacyPage() {
                 <Eye strokeWidth={2} />
                 <AlertTitle className="text-[15px] text-foreground">TL;DR - Quick Summary</AlertTitle>
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">
-                    We use Yostar OAuth to sync your game data - we never see your password and don't store your email address. We collect only what's needed to provide our tools. We never sell your information. You control your profile visibility and leaderboard participation. You can delete your account and all data
-                    anytime.
+                    We use Yostar OAuth to sync your game data - we never see your password and don't store your email address. We do keep your Yostar token, encrypted, so re-syncing doesn't need a new email code every time; you can delete it yourself any time from Settings. We collect only what's needed to provide our
+                    tools. We never sell your information. You control your profile visibility and leaderboard participation. You can delete your account and all data anytime.
                 </AlertDescription>
             </Alert>
 
@@ -182,11 +182,15 @@ export function PrivacyPage() {
                         <CalloutBody>
                             Upon successful authentication, Yostar provides us with a session token that allows us to fetch your public game data: operator roster, levels, promotions, skill masteries, modules, stage progress, base layout, inventory, and account statistics. This is the same data visible in your in-game
                             profile.
+                            <br />
+                            <br />
+                            We keep that token so re-syncing works without emailing you a new code every time. It is stored encrypted, never leaves our server, and is never shown to you or to anyone else. It stays until you disconnect your game account or delete your Myrtle account.
                         </CalloutBody>
                     </Callout>
 
                     <p className="m-0 mt-4 font-sans text-[14px] text-muted-foreground leading-[1.6]">
-                        We are not affiliated with Hypergryph or Yostar. We access your data through the same APIs the official game client uses. You can revoke our access at any time by requesting deletion of your Myrtle account - email <A href={CONTACT_MAILTO}>{CONTACT_EMAIL}</A>.
+                        We are not affiliated with Hypergryph or Yostar. We access your data through the same APIs the official game client uses. You can revoke that access yourself at any time: <strong className="text-foreground">Settings → Account &amp; data → Disconnect game account</strong> deletes the stored
+                        token, and your synced data stays on your profile. To remove the data too, request account deletion by emailing <A href={CONTACT_MAILTO}>{CONTACT_EMAIL}</A>.
                     </p>
                 </div>
             </Section>
@@ -326,7 +330,7 @@ export function PrivacyPage() {
                         </Callout>
                         <Callout tone="primary">
                             <CalloutTitle>Redis Caching</CalloutTitle>
-                            <CalloutBody>Static data cached with 1-hour TTL for performance</CalloutBody>
+                            <CalloutBody>Game data cached with a 1-hour TTL for performance. Your Yostar token is not kept here - it is stored encrypted in the database.</CalloutBody>
                         </Callout>
                     </div>
                     <Callout>

@@ -180,6 +180,24 @@ pub async fn update_settings(
     Ok(ok_status())
 }
 
+/// Forget the stored game credentials for the caller's own account.
+///
+/// The site session stays valid and the already-synced data stays put; what is
+/// revoked is our ability to reach Yostar on their behalf. Re-syncing then
+/// needs a fresh email code, which is the point — before this, the only way to
+/// withdraw that access was to email us and have the whole account deleted.
+///
+/// Idempotent: disconnecting twice is not an error. `removed` reports whether
+/// there was anything stored to remove.
+pub async fn disconnect(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    let removed = services::game_session::disconnect(&state, &auth.uid, user_id).await?;
+    Ok(Json(serde_json::json!({ "status": "ok", "removed": removed })))
+}
+
 pub async fn refresh(
     State(state): State<AppState>,
     auth: AuthUser,

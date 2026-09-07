@@ -10,6 +10,7 @@ use reqwest::Client;
 use sqlx::PgPool;
 
 use crate::app::cache::store::CacheStore;
+use crate::core::auth::credentials::CredentialKey;
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
 use crate::core::hypergryph::constants::Server;
 use crate::core::service_account::ServiceAccounts;
@@ -128,6 +129,10 @@ impl AppState {
 
 pub struct AppConfig {
     pub jwt_secret: String,
+    /// Seals the durable Yostar credentials in `user_game_credentials`. Held
+    /// separately from `jwt_secret` on purpose: a signing key and an encryption
+    /// key should not be the same bytes.
+    pub game_credential_key: CredentialKey,
     pub rate_limit_rpm: u32,
     pub service_key: String,
     /// Base output directory; per-server dirs derive as `{base}/{server}`.
@@ -152,6 +157,14 @@ impl AppConfig {
 
         Self {
             jwt_secret: std::env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
+            // Fails the boot rather than degrading: without this key the
+            // durable credential store silently stops persisting, and resync
+            // goes back to breaking an hour after login with nothing in the
+            // logs to say why. Generate with `openssl rand -hex 32`.
+            game_credential_key: CredentialKey::parse(
+                &std::env::var("GAME_CREDENTIAL_KEY").expect("GAME_CREDENTIAL_KEY must be set"),
+            )
+            .expect("GAME_CREDENTIAL_KEY must be 32 bytes, as hex or base64"),
             rate_limit_rpm: std::env::var("RATE_LIMIT_RPM")
                 .ok()
                 .and_then(|v| v.parse().ok())

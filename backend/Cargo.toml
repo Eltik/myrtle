@@ -57,6 +57,7 @@ arc-swap = "1"
 base64 = "0.22"
 bson = "3.1.0"
 axum = { version = "0.8.8", features = ["macros"] }
+chacha20poly1305 = "0.10"
 chrono = { version = "0.4.44", features = ["serde"] }
 dashmap = "6"
 dotenv = "0.15.0"

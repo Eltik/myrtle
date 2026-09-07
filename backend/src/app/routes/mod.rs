@@ -103,6 +103,7 @@ pub fn router() -> Router<AppState> {
         .route("/login/cn", post(auth::login_cn))
         .route("/auth/verify", get(auth::verify))
         .route("/auth/update-settings", post(auth::update_settings))
+        .route("/auth/disconnect", post(auth::disconnect))
         .route("/gacha/history", get(gacha::history))
         .route("/gacha/history/{char_id}", get(gacha::history_by_char))
         .route("/gacha/stored-records", get(gacha::stored_records))

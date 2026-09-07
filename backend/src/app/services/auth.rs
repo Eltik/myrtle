@@ -2,9 +2,10 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::jwt::create_token;
-use crate::core::hypergryph::constants::Server;
+use crate::core::hypergryph::constants::{AuthSession, Server};
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
+use crate::database::queries::game_credentials;
 use crate::database::queries::users;
 use crate::database::queries::users::create_user;
 use crate::database::queries::users::find_raw_by_uid;
@@ -41,6 +42,29 @@ pub struct LoginResponse {
     pub token: String,
     pub uid: String,
     pub server: String,
+}
+
+/// Persist the durable half of a fresh login, so re-syncing survives the cache.
+///
+/// Every login route ends here. The cached session expires in an hour and dies
+/// on any backend restart; the site token lasts seven days. Without this the
+/// gap between the two is a forced re-login, which is what users hit when they
+/// pressed "Re-sync" the next day.
+///
+/// Best-effort on purpose: a database that will not take the credential costs
+/// the user a re-login later, and failing the login in front of them now would
+/// be the worse trade. It is logged either way.
+async fn persist_credentials(state: &AppState, user_id: Uuid, uid: &str, session: &AuthSession) {
+    if let Err(e) =
+        game_credentials::store(&state.db, &state.config.game_credential_key, user_id, session)
+            .await
+    {
+        tracing::warn!(
+            uid = %uid,
+            error = ?e,
+            "failed to persist durable game credentials; resync will need a re-login"
+        );
+    }
 }
 
 pub async fn login(
@@ -83,6 +107,8 @@ pub async fn login(
         Some(u) => u,
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
+
+    persist_credentials(state, user.id, uid, &result.session).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -128,6 +154,8 @@ pub async fn login_bilibili(
         Some(u) => u,
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
+
+    persist_credentials(state, user.id, uid, &auth_session).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -182,6 +210,8 @@ pub async fn login_bilibili_sms(
         Some(u) => u,
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
+
+    persist_credentials(state, user.id, uid, &auth_session).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -254,6 +284,8 @@ pub async fn login_cn(
         Some(u) => u,
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
+
+    persist_credentials(state, user.id, uid, &auth_session).await;
 
     let token = create_token(
         &state.config.jwt_secret,

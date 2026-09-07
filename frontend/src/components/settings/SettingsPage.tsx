@@ -4,7 +4,7 @@ import { DatabaseIcon, PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon
 import { useEffect, useState } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { type IUpdateUserSettingsInput, refreshRosterFn, updateUserSettingsFn } from "#/lib/api/auth";
+import { disconnectGameAccountFn, type IUpdateUserSettingsInput, refreshRosterFn, updateUserSettingsFn } from "#/lib/api/auth";
 import type { IUserProfile } from "#/types/user";
 import { AppearancePanel } from "./AppearancePanel";
 import { DangerPanel } from "./DangerPanel";
@@ -88,6 +88,25 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
             }),
     });
 
+    const disconnectMutation = useMutation({
+        mutationFn: () => disconnectGameAccountFn(),
+        onSuccess: ({ removed }) => {
+            toastManager.add({
+                id: `disconnect-${Date.now()}`,
+                title: removed ? "Game account disconnected" : "Nothing stored to disconnect",
+                description: removed ? "We deleted the stored Yostar token. Your synced data is untouched; re-syncing will ask for a new email code." : "We were not holding a Yostar token for your account.",
+                type: "success",
+            });
+        },
+        onError: (err: unknown) =>
+            toastManager.add({
+                id: `disconnect-err-${Date.now()}`,
+                title: "Couldn't disconnect",
+                description: err instanceof Error ? err.message : String(err),
+                type: "error",
+            }),
+    });
+
     const handleSettingsChange = (next: IUpdateUserSettingsInput) => {
         setSettings(next);
         settingsMutation.mutate(next);
@@ -114,7 +133,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
             {user && active === "profile" && <ProfilePanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} />}
             {active === "appearance" && <AppearancePanel />}
             {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
-            {user && active === "data" && <DataPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} />}
+            {user && active === "data" && <DataPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} onDisconnect={() => disconnectMutation.mutate()} disconnecting={disconnectMutation.isPending} />}
             {user && active === "danger" && <DangerPanel />}
         </SettingsShell>
     );

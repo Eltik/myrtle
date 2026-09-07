@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CheckIcon, KeyRoundIcon, LogOutIcon, MailIcon, RefreshCwIcon } from "lucide-react";
+import { CheckIcon, KeyRoundIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwIcon } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -12,9 +12,11 @@ interface IDataPanelProps {
     syncing: boolean;
     onSignOut: () => void;
     signingOut: boolean;
+    onDisconnect: () => void;
+    disconnecting: boolean;
 }
 
-export function DataPanel({ user, onResync, syncing, onSignOut, signingOut }: IDataPanelProps) {
+export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDisconnect, disconnecting }: IDataPanelProps) {
     return (
         <div className="flex flex-col gap-4">
             <Card>
@@ -68,7 +70,7 @@ export function DataPanel({ user, onResync, syncing, onSignOut, signingOut }: ID
             <Card>
                 <CardHeader>
                     <CardTitle>Linked Yostar account</CardTitle>
-                    <CardDescription>OAuth session. We never store your password - only a short-lived session token.</CardDescription>
+                    <CardDescription>We never see your password. We do keep the token that lets us re-sync on your behalf - disconnect below to delete it.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow
@@ -92,6 +94,16 @@ export function DataPanel({ user, onResync, syncing, onSignOut, signingOut }: ID
                             <Button variant="outline" size="sm" onClick={onSignOut} disabled={signingOut} loading={signingOut}>
                                 <LogOutIcon className="size-3.5" />
                                 Sign out
+                            </Button>
+                        }
+                    />
+                    <SettingRow
+                        title="Disconnect game account"
+                        description="Deletes the stored Yostar token, so we can no longer reach your account. Your synced data stays on your profile; the next re-sync will ask for a new email code."
+                        control={
+                            <Button variant="destructive-outline" size="sm" onClick={onDisconnect} disabled={disconnecting} loading={disconnecting}>
+                                <Link2OffIcon className="size-3.5" />
+                                Disconnect
                             </Button>
                         }
                     />
