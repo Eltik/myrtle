@@ -2382,8 +2382,7 @@ fn collect_dynchar_bg_quads(
                     std::env::var("DYNCHAR_UVSCROLL_ALL").is_ok() && is_l2d_compositor(shader);
                 // `Dissolve Add UVTween` pans `_MainTex` by `_UVTween.xy` (its `_Main*Speed`
                 // floats are undeclared residue); see `scene_uvtween_on`.
-                let uvtween_scene =
-                    scene_uvtween_on && shader.ends_with("/Dissolve/Dissolve Add UVTween");
+                let uvtween_scene = scene_uvtween_on && is_uvtween_program(shader);
                 if uvtween_scene {
                     let c = super::particles::mat_color(mat, "_UVTween", [0.0; 4]);
                     let (us, vs) = (c[0] as f32, c[1] as f32);
@@ -2437,8 +2436,7 @@ fn collect_dynchar_bg_quads(
                 // Gated for measurement (`DYNCHAR_UVTWEEN=1`, default OFF).
                 // `Dissolve Add UVTween` joins by default (see `scene_uvtween_on`); the
                 // measurement arm above it stays as it was.
-                let uvtween_scene =
-                    scene_uvtween_on && shader.ends_with("/Dissolve/Dissolve Add UVTween");
+                let uvtween_scene = scene_uvtween_on && is_uvtween_program(shader);
                 let uvtween_family = uvtween_scene
                     || (std::env::var("DYNCHAR_UVTWEEN").is_ok()
                         && (shader.contains("UVTween") || shader.contains("Disturb Anchor")));
@@ -3751,6 +3749,28 @@ pub(super) fn uv_rotation_of_go(all_objects: &HashMap<i64, (i32, Value)>, go_pid
 }
 
 #[must_use]
+/// The `Dissolve Add UVTween` program, under either of its two pass spellings.
+///
+/// `Torappu/Particles-L2D/Dissolve/Dissolve AB UVTween` is BYTE-IDENTICAL to the `Add`
+/// spelling (blob 3209 bytes, decompiled GLSL differing only in the name line); only the pass
+/// blend differs, `SrcAlpha One` against `SrcAlpha OneMinusSrcAlpha` in `rtBlend0`, which
+/// `is_additive` already reads per material. Twenty-eight scene materials sit on the AB
+/// spelling (Virtuosa sale#12 13, Kal'tsit sale#14 5, Rosmontis epoque#17 4 and sale#16 2,
+/// Siege epoque#50 4) and draw as plain quads with no mask and no pan.
+///
+/// OPT-IN (`DYNCHAR_UVTWEEN_AB=1`), measured 2026-09-07 and NOT shipped: on the scene side
+/// the admission is near neutral against the static art (chen2 0.031 mean levels, texas2
+/// 0.000, phatom sale#4 luma -2.11 -> -1.86, dusk E2 +4.30 -> +5.74), but on the PARTICLE
+/// side the same admission releases systems the built-in quad had left undrawn, and Skadi
+/// boc#4's ten draw as a grey fog over her left third (22.06 pct of settled pixels, luma
+/// -7.35 -> +12.98). Until that fog is understood the family stays out; absent parameter =
+/// the previous export exactly, checked against the explicit string.
+pub fn is_uvtween_program(shader: &str) -> bool {
+    shader.ends_with("/Dissolve/Dissolve Add UVTween")
+        || (std::env::var("DYNCHAR_UVTWEEN_AB").as_deref() == Ok("1")
+            && shader.ends_with("/Dissolve/Dissolve AB UVTween"))
+}
+
 pub fn is_l2d_compositor(shader: &str) -> bool {
     // `Torappu/Particles/<sub>/…` is the SAME compositor family as
     // `Torappu/Particles-L2D/<sub>/…` — the namespace is a packaging split, not a shader

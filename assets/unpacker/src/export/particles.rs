@@ -3226,7 +3226,8 @@ fn resolve_ram(
         // It was the largest class the built-in quad could not draw (58 systems, 41 on the quad:
         // Kal'tsit sale#14's stone flows and glass, Vina Victoria epoque#50's). The `AB` spelling
         // is a different pass state and its program is not read, so it stays out.
-        let uv_tween = shader.ends_with("/Dissolve/Dissolve Add UVTween");
+        // Both pass spellings of the program; see `spine::is_uvtween_program`.
+        let uv_tween = super::spine::is_uvtween_program(shader);
         (shader.contains("Ram/") || dissolve_live || plain_disturb || uv_tween)
             .then_some((mat, shader))
     })?;
@@ -3249,7 +3250,7 @@ fn resolve_ram(
     let is_dissolve = !shader.contains("Ram/") && shader.contains("Dissolve/");
     // `Dissolve Add UVTween` scrolls both lookups by `_Time.y * _UVTween` (a colour property:
     // main by xy, dissolve by zw) where the other families spell speeds as `_MainUSpeed` etc.
-    let is_uv_tween = shader.ends_with("/Dissolve/Dissolve Add UVTween");
+    let is_uv_tween = super::spine::is_uvtween_program(shader);
     let uv_tween = if is_uv_tween {
         mat_color(mat, "_UVTween", [0.0, 0.0, 0.0, 0.0])
     } else {
