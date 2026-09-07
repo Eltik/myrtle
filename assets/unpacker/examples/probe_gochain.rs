@@ -1,69 +1,48 @@
-//! THROWAWAY: the full transform chain (pos/rot/SCALE) of every GameObject whose name contains
-//! $GOCHAIN, so an authored extent can be derived instead of fitted.
-//! be recomputed independently of the exporter.
-//! MeshFilter resolves a mesh, and whether that mesh is in-bundle. Answers "this skin
-//! exported zero scene layers, but the bundle HAS renderers — where did they go?"
-//! composite materials) in a dynchar bundle. Motivation: our renderer is measured to be
-//! systematically too bright vs the in-game capture, and the per-pixel error fits a pure
-//! sRGB gamma whose magnitude differs per skin — which smells like a per-scene colour
-//! transform (post-process volume / LUT / camera property) our exporter isn't reading.
+//! Diagnostic: the Transform chain of every GameObject whose name contains a substring, composed
+//! root to leaf: local position, rotation (as a z angle when it is a pure z rotation) and scale
+//! per node, and the composed world position and scale, in Unity units. For placing an emitter
+//! or a quad whose export sits somewhere the clip does not show it.
 //!
-//! Usage: cargo run --release --example `probe_grade` -- <bundle.ab> [`shaders_dir`]
-//! `shaders_dir` defaults to assets/ArkAssets/en (where `[uc]shaders.ab` lives), used only
-//! to resolve external material shader names.
-#![allow(
-    clippy::case_sensitive_file_extension_comparisons,
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    clippy::too_many_lines
-)]
-
+//! Usage: cargo run --release --example `probe_gochain` -- <bundle.ab> <go-substr>
+#![allow(clippy::case_sensitive_file_extension_comparisons)]
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use unpacker::export::shader_map::build_shader_map;
+use std::collections::HashMap;
 use unpacker::unity::{
     bundle::BundleFile, object_reader::read_object, serialized_file::SerializedFile,
 };
 
-fn pid(v: &Value) -> Option<i64> {
-    v.get("m_PathID").and_then(Value::as_i64)
+fn pid(v: &Value) -> i64 {
+    v.get("m_PathID").and_then(Value::as_i64).unwrap_or(0)
 }
 
-fn walkdir(root: &std::path::Path) -> Vec<PathBuf> {
-    let mut out = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
-    while let Some(d) = stack.pop() {
-        if d.is_file() {
-            out.push(d);
-            continue;
-        }
-        let Ok(rd) = std::fs::read_dir(&d) else {
-            continue;
-        };
-        for e in rd.flatten() {
-            stack.push(e.path());
-        }
-    }
-    out
+fn xyz(v: Option<&Value>) -> [f64; 3] {
+    let g = |k: &str| v.and_then(|o| o.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+    [g("x"), g("y"), g("z")]
+}
+
+fn quat(v: Option<&Value>) -> [f64; 4] {
+    let g = |k: &str| v.and_then(|o| o.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+    [g("x"), g("y"), g("z"), g("w")]
+}
+
+/// z angle in degrees of a quaternion, plus whether it is a pure z rotation.
+fn z_angle(q: [f64; 4]) -> (f64, bool) {
+    let pure = q[0].abs() < 1e-4 && q[1].abs() < 1e-4;
+    (2.0 * q[2].atan2(q[3]).to_degrees(), pure)
 }
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let path = args.next().expect("bundle path");
-    let shader_dir = args
-        .next()
-        .unwrap_or_else(|| "/Users/eltik/Documents/Coding/myrtle/assets/ArkAssets/en".to_string());
-
-    let shader_files = walkdir(&PathBuf::from(&shader_dir));
-    let shader_map = build_shader_map(&shader_files);
-    eprintln!("shader map entries: {}", shader_map.len());
-
-    println!("\n================================================================");
-    println!("BUNDLE {path}");
-    let data = std::fs::read(&path).expect("read");
-    let bundle = BundleFile::parse(data).expect("bundle");
-
+    let (Some(path), Some(want)) = (args.next(), args.next()) else {
+        eprintln!("usage: probe_gochain <bundle.ab> <go-substr>");
+        return;
+    };
+    let Ok(data) = std::fs::read(&path) else {
+        return;
+    };
+    let Ok(bundle) = BundleFile::parse(data) else {
+        return;
+    };
     for entry in &bundle.files {
         let lower = entry.path.to_ascii_lowercase();
         if lower.ends_with(".ress") || lower.ends_with(".resource") {
@@ -72,114 +51,82 @@ fn main() {
         let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
             continue;
         };
-        println!("-- entry {} : {} objects", entry.path, sf.objects.len());
-        println!(
-            "   externals: {:?}",
-            sf.externals
-                .iter()
-                .map(unpacker::unity::serialized_file::FileIdentifier::cab_name)
-                .collect::<Vec<_>>()
-        );
-
-        // Skip only heavy binary-blob classes we don't need (keep Texture2D=28 for
-        // name/dims, and everything else, since these bundles are small dynchar scenes).
-        let skip: HashSet<i32> = [43, 48, 49, 83, 128, 213].into_iter().collect();
-        let mut all: HashMap<i64, (i32, Value)> = HashMap::new();
+        let mut gos: HashMap<i64, String> = HashMap::new();
+        let mut xforms: HashMap<i64, Value> = HashMap::new();
+        let mut xform_of_go: HashMap<i64, i64> = HashMap::new();
         for obj in &sf.objects {
-            if skip.contains(&obj.class_id) {
+            if obj.class_id != 1 && obj.class_id != 4 {
                 continue;
             }
-            if let Ok(v) = read_object(&sf, obj) {
-                all.insert(obj.path_id, (obj.class_id, v));
-            }
-        }
-
-        // ---- hierarchy (GameObject names + paths) ----
-        let mut go_name: HashMap<i64, String> = HashMap::new();
-        let mut tf_go: HashMap<i64, i64> = HashMap::new();
-        let mut go_tf: HashMap<i64, i64> = HashMap::new();
-        let mut tf_father: HashMap<i64, i64> = HashMap::new();
-        for (p, (cid, v)) in &all {
-            match cid {
-                1 => {
-                    go_name.insert(
-                        *p,
-                        v.get("m_Name")
-                            .and_then(Value::as_str)
-                            .unwrap_or("")
-                            .to_string(),
-                    );
-                }
-                4 | 224 => {
-                    if let Some(g) = v.get("m_GameObject").and_then(pid) {
-                        tf_go.insert(*p, g);
-                        go_tf.insert(g, *p);
-                    }
-                    if let Some(f) = v.get("m_Father").and_then(pid) {
-                        tf_father.insert(*p, f);
-                    }
-                }
-                _ => {}
-            }
-        }
-        let _go_path = |go: i64| -> String {
-            let mut parts: Vec<String> = Vec::new();
-            let mut cur = go_tf.get(&go).copied();
-            for _ in 0..128 {
-                let Some(tf) = cur else { break };
-                if let Some(g) = tf_go.get(&tf) {
-                    parts.push(go_name.get(g).cloned().unwrap_or_else(|| format!("?{g}")));
-                }
-                cur = tf_father.get(&tf).copied().filter(|&f| f != 0);
-            }
-            parts.reverse();
-            parts.join("/")
-        };
-
-        // ---- the chain of every GO whose name matches $GOCHAIN, camera-relative ----
-        let want = std::env::var("GOCHAIN").unwrap_or_default();
-        if want.is_empty() {
-            continue;
-        }
-        let mut seen: std::collections::HashSet<i64> = std::collections::HashSet::new();
-        for (go, nm) in &go_name {
-            if !nm.contains(&want) || !seen.insert(*go) {
+            let Ok(v) = read_object(&sf, obj) else {
                 continue;
-            }
-            println!("GO {nm:?} pid={go}");
-            let mut cur = go_tf.get(go).copied();
-            let mut depth = 0;
-            while let Some(tf) = cur {
-                if depth > 24 {
-                    break;
-                }
-                let Some((_, v)) = all.get(&tf) else { break };
-                let g = tf_go.get(&tf).copied().unwrap_or(0);
-                let n2 = go_name.get(&g).cloned().unwrap_or_default();
-                let f = |fl: &str, k: &str| {
-                    v.get(fl)
-                        .and_then(|x| x.get(k))
-                        .and_then(Value::as_f64)
-                        .unwrap_or(0.0)
-                };
-                println!(
-                    "   {depth:>2} {n2:<28} pos=({:.6},{:.6},{:.6}) rot=({:.6},{:.6},{:.6},{:.6}) scale=({:.6},{:.6},{:.6})",
-                    f("m_LocalPosition", "x"),
-                    f("m_LocalPosition", "y"),
-                    f("m_LocalPosition", "z"),
-                    f("m_LocalRotation", "x"),
-                    f("m_LocalRotation", "y"),
-                    f("m_LocalRotation", "z"),
-                    f("m_LocalRotation", "w"),
-                    f("m_LocalScale", "x"),
-                    f("m_LocalScale", "y"),
-                    f("m_LocalScale", "z")
+            };
+            if obj.class_id == 1 {
+                gos.insert(
+                    obj.path_id,
+                    v.get("m_Name")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .to_string(),
                 );
-                cur = tf_father
-                    .get(&tf)
-                    .copied()
-                    .filter(|&x| x != 0 && all.contains_key(&x));
-                depth += 1;
+            } else {
+                let go = v.get("m_GameObject").map(pid).unwrap_or(0);
+                xform_of_go.insert(go, obj.path_id);
+                xforms.insert(obj.path_id, v);
+            }
+        }
+        let mut targets: Vec<(&i64, &String)> = gos.iter().filter(|(_, n)| n.contains(&want)).collect();
+        targets.sort_by(|a, b| a.1.cmp(b.1));
+        for (go, name) in targets {
+            let Some(&tid) = xform_of_go.get(go) else {
+                continue;
+            };
+            let mut chain: Vec<i64> = Vec::new();
+            let mut cur = tid;
+            while cur != 0 && chain.len() < 64 {
+                chain.push(cur);
+                cur = xforms
+                    .get(&cur)
+                    .and_then(|t| t.get("m_Father"))
+                    .map(pid)
+                    .unwrap_or(0);
+            }
+            // Compose root -> leaf with a pure z rotation per node (the general case is
+            // printed as a quaternion and NOT composed, so it cannot pass silently).
+            let mut wx = 0.0f64;
+            let mut wy = 0.0f64;
+            let mut wsx = 1.0f64;
+            let mut wsy = 1.0f64;
+            let mut wrot = 0.0f64;
+            let mut lines: Vec<String> = Vec::new();
+            for &t in chain.iter().rev() {
+                let tv = &xforms[&t];
+                let lp = xyz(tv.get("m_LocalPosition"));
+                let ls = xyz(tv.get("m_LocalScale"));
+                let q = quat(tv.get("m_LocalRotation"));
+                let (ang, pure) = z_angle(q);
+                let nm = gos
+                    .get(&tv.get("m_GameObject").map(pid).unwrap_or(0))
+                    .cloned()
+                    .unwrap_or_default();
+                // world = parent_world + R(parent_rot) * (parent_scale * local)
+                let (px, py) = (wsx * lp[0], wsy * lp[1]);
+                let (c, s) = (wrot.to_radians().cos(), wrot.to_radians().sin());
+                wx += c * px - s * py;
+                wy += s * px + c * py;
+                wsx *= ls[0];
+                wsy *= ls[1];
+                wrot += ang;
+                lines.push(format!(
+                    "    {nm:<40} local ({:+9.3}, {:+9.3}) scale ({:.4}, {:.4}) rotZ {:+8.2}{}   -> world ({:+9.3}, {:+9.3}) scale ({:.4}, {:.4}) rot {:+8.2}",
+                    lp[0], lp[1], ls[0], ls[1], ang,
+                    if pure { "" } else { " (NOT pure z, quaternion ignored)" },
+                    wx, wy, wsx, wsy, wrot
+                ));
+            }
+            println!("== '{name}'");
+            for l in lines {
+                println!("{l}");
             }
         }
     }
