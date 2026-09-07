@@ -314,6 +314,12 @@ pub struct BgQuad {
     /// (distortion-drop / glass-additive) in `export_scene`.
     pub src_blend: f64,
     pub dst_blend: f64,
+    /// `Particles-L2D/Mask/Erase` only: the material's `_Strength`. The program writes
+    /// `rgb 0, alpha (1 - tex.x) * _Strength` under an ordinary SrcAlpha/OneMinusSrcAlpha
+    /// pass, so at rest the quad is an authored black polygon carving the composition's
+    /// edge (Ch'en the Holungday E2's five, 17 to 350 vertices, statically active, no clip on
+    /// them). Emitted as `erase` instead of being dropped as a grab-pass map.
+    pub erase: Option<f32>,
     /// ENTRANCE uniform-scale MULTIPLIER keyframes for this layer's own transform, relative
     /// to the prefab pose the static `mesh` was baked at (so 1.0 = unchanged). `None` when the
     /// `_Start` clips do not animate this transform's scale.
@@ -1819,6 +1825,10 @@ fn collect_dynchar_bg_quads(
     // skipped and both pans come from `_UVTween`. `DYNCHAR_UVTWEEN_SCENE=0` restores the
     // previous export exactly; checked against the explicit string, never a falsy coercion.
     let scene_uvtween_on = std::env::var("DYNCHAR_UVTWEEN_SCENE").as_deref() != Ok("0");
+    // ERASE MASKS (2026-09-07): keep `Mask/Erase` quads as `erase` layers (see
+    // `BgQuad::erase`). `DYNCHAR_ERASE_MASKS=0` restores the grab-pass drop exactly; checked
+    // against the explicit string, never a falsy coercion.
+    let erase_masks_on = std::env::var("DYNCHAR_ERASE_MASKS").as_deref() != Ok("0");
     let main_color_decl: Option<Vec<String>> = match std::env::var("DYNCHAR_MAINCOLOR_DECL") {
         Err(_) => Some(Vec::new()),
         Ok(v) => match v.as_str() {
@@ -2007,6 +2017,7 @@ fn collect_dynchar_bg_quads(
             bool,
             Option<[f32; 2]>,
             Option<SceneRam>,
+            Option<f32>,
         );
         let mut resolved: Option<ResolvedQuadMaterial> = None;
         // Whether the chosen material's `_MainTex` came from the ungated external
@@ -2827,6 +2838,12 @@ fn collect_dynchar_bg_quads(
                 hdr_color,
                 uv_scroll,
                 ram,
+                (erase_masks_on
+                    && mat
+                        .get("_shaderName")
+                        .and_then(Value::as_str)
+                        .is_some_and(|sh| sh.ends_with("/Mask/Erase")))
+                .then(|| blend("_Strength", 1.0) as f32),
             ));
             break;
         }
@@ -2844,6 +2861,7 @@ fn collect_dynchar_bg_quads(
             hdr_color,
             uv_scroll,
             ram,
+            erase,
         )) = resolved
         else {
             continue;
@@ -3241,6 +3259,7 @@ fn collect_dynchar_bg_quads(
             st,
             src_blend,
             dst_blend,
+            erase,
             scale_curve,
             scale_pivot,
             pos_curve,
@@ -6230,7 +6249,8 @@ fn export_scene(
         // the corpus peak at 0.000-0.133 and are 100% pure black); a compact light streak
         // on a black field is dark on average but keeps a bright top few percent
         // (Mlynar's sword glow: mean 0.041, p90 0.059, p98 0.420 over 8.9% lit texels).
-        if is_opaque && lum_mean < 0.06 && lum_p90 < 0.12 && lum_p98 < 0.25 {
+        if quad.erase.is_none() && is_opaque && lum_mean < 0.06 && lum_p90 < 0.12 && lum_p98 < 0.25
+        {
             if dbg {
                 eprintln!(
                     "  DROP[grabpass] '{name_l}' sort={} lum_mean={lum_mean:.3} p90={lum_p90:.3} p98={lum_p98:.3} dark={dark_frac:.3}",
@@ -6258,11 +6278,12 @@ fn export_scene(
         // is a black CURTAIN whose whole job is to paint black (Skadi the Corrupting
         // Heart's fade-to-black plane, pure black at dark_frac 1.000). Forcing that
         // additive composites it to nothing and silently deletes the fade.
-        let is_black_field_glow = (is_premul_alpha && lum_mean < 0.25 && lum_p90 > 0.75)
-            || ((is_premul_alpha || is_opaque)
-                && lum_mean < 0.25
-                && lum_p98 > 0.25
-                && dark_frac > 0.6);
+        let is_black_field_glow = quad.erase.is_none()
+            && ((is_premul_alpha && lum_mean < 0.25 && lum_p90 > 0.75)
+                || ((is_premul_alpha || is_opaque)
+                    && lum_mean < 0.25
+                    && lum_p98 > 0.25
+                    && dark_frac > 0.6));
         let additive = quad.additive || is_black_field_glow;
 
         let mut layer = serde_json::json!({
@@ -6276,6 +6297,11 @@ fn export_scene(
         });
         if has_vcol {
             layer["col"] = serde_json::json!(col);
+        }
+        // ERASE MASK: the material's `_Strength` (see `BgQuad::erase`); the frontend draws the
+        // polygon black at this alpha, skipping every classification rule.
+        if let Some(strength) = quad.erase {
+            layer["erase"] = serde_json::json!(strength);
         }
         // Camera-riding overlay (see `BgQuad::cam_locked`). Emitted only when true, so every
         // skin without one stays byte-identical.

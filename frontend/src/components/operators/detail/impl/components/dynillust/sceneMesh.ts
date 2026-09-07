@@ -102,6 +102,12 @@ export interface ISceneLayer {
     col?: number[];
     /** Additive blend (else normal alpha). */
     additive: boolean;
+    /** `Particles-L2D/Mask/Erase` only: the material's `_Strength`. The program writes
+     *  `rgb 0, alpha (1 - tex.x) * _Strength` under an ordinary alpha blend, so at rest such a
+     *  layer is an authored black polygon carving the composition's edge (Ch'en the
+     *  Holungday E2's five, Eyjafjalla E2's one; all on a 2x2 black texture). Drawn as its
+     *  texture at this alpha, seated by its authored sort, exempt from every rule below. */
+    erase?: number;
     /** Draw order; layers below `characterSort` render behind the spine. */
     sort: number;
     /** ENTRANCE reveal time (s): the layer is HIDDEN until the entrance clip's track time
@@ -389,6 +395,13 @@ interface IRamSceneTex {
  *  stubbed out is a THIRD configuration that exists in neither build, and it is badly wrong:
  *  Civilight Eterna scores 48.646 that way against 17.921 shipped and 17.908 before. To compare
  *  against the old renderer, check out the old renderer. */
+/** `?erase=0` restores the previous behaviour for `ISceneLayer.erase` layers, which was not
+ *  to receive them at all (the exporter dropped them as grab-pass maps). Read by checking
+ *  for the explicit string, never a falsy coercion. */
+function eraseMasksOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("erase") !== "0";
+}
 function ramTexOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("ramtex") !== "0";
@@ -2167,6 +2180,29 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         const base = bases[layer.tex];
         if (!base) {
             counts.skipNoBase++;
+            continue;
+        }
+        // AUTHORED ERASE MASK (see `ISceneLayer.erase`): a black polygon at `_Strength` alpha,
+        // seated by its own sort, exempt from the effect gain and every classification below.
+        if (typeof layer.erase === "number") {
+            if (!eraseMasksOn()) continue;
+            const mesh = buildLayerMesh(layer, base, null);
+            if (!mesh) {
+                counts.skipNoMesh++;
+                continue;
+            }
+            counts.built++;
+            // Destination-out, not black paint. The game's target alpha is INVERTED (its
+            // entrance cameras clear to alpha 0 and their clear colour shows on screen; every
+            // Skeleton-AlphaSplit pass multiplies destination alpha by 1 - coverage), so the
+            // alpha this program writes is transparency, and the polygon is a hole to the page:
+            // it zeroes whatever the scene and the character drew into the HDR target beneath
+            // it, and the in-canvas ground (outside that target) shows through.
+            mesh.alpha = layer.erase;
+            mesh.blendMode = PIXI.BLEND_MODES.DST_OUT;
+            (mesh as unknown as ISceneLayerRuntime).__srcIndex = srcIndexOf.get(layer);
+            if (layer.sort >= data.characterSort) fgPending.push({ mesh, sort: layer.sort, box: boundsOf(layer.pos) });
+            else otherBg.push({ mesh, sort: layer.sort });
             continue;
         }
         const geomKey = `${layer.tex}|${layer.pos.join(",")}|${layer.uv.join(",")}|${layer.idx.join(",")}`;
