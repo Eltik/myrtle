@@ -216,7 +216,7 @@ pub fn init_game_data(
     let audio_file: RawAudioData = load_table_or_warn(data_dir, "audio_data", &mut warnings);
     let enemy_file: EnemyHandbookTableFile =
         load_table_or_warn(data_dir, "enemy_handbook_table", &mut warnings);
-    let building_file: BuildingDataFile =
+    let mut building_file: BuildingDataFile =
         load_table_or_warn(data_dir, "building_data", &mut warnings);
     let roguelike_file: RoguelikeTopicTableFile =
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
@@ -224,6 +224,10 @@ pub fn init_game_data(
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
     let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
+    // Layout-counted base resources (Wang's Influence/Territory) are defined
+    // only in the term glossary; the base scorer reads them off building data.
+    building_file.layout_terms =
+        crate::core::grade::base::buff_registry::layout_term_rooms(&consts);
 
     startup::step("derive tables");
     let materials = item_file.into_materials();

@@ -41,20 +41,18 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     if op.tag_list.iter().any(|s| s == "Robot") {
         push("robot");
     }
-    // The multi-power system: RIIC faction tags count SECONDARY affiliations
-    // too (Texas: nation lungmen, SubPower siracusa - and the game's "all
-    // Siracusa Operators" buffs reach her). MainPower mirrors the top-level
-    // ids; the dedup guard makes pushing it a harmless no-op.
+    // The multi-power system: RIIC faction tags count a SECONDARY NATION
+    // (Texas: nation lungmen, SubPower siracusa - the game's "all Siracusa
+    // Operators" buffs reach her, community-verified). A secondary GROUP does
+    // NOT count: Vina Victoria carries SubPower {glasgow} but the game's
+    // "Glasgow Gang Operator" checks (Delphine) don't count her (verified
+    // in-game 2026-09-07) - group membership is the top-level GroupId only.
+    // MainPower mirrors the top-level ids; the dedup guard makes it a no-op.
     let powers = op.main_power.iter().chain(op.sub_power.iter().flatten());
-    for power in powers {
-        for id in [&power.nation_id, &power.group_id, &power.team_id]
-            .into_iter()
-            .flatten()
-        {
-            let lower = id.to_lowercase();
-            if !lower.is_empty() && !tags.contains(&lower) {
-                tags.push(lower);
-            }
+    for nation in powers.filter_map(|p| p.nation_id.as_ref()) {
+        let lower = nation.to_lowercase();
+        if !lower.is_empty() && !tags.contains(&lower) {
+            tags.push(lower);
         }
     }
     tags
@@ -327,7 +325,7 @@ static RE_POOL_CONSUME_ORDER: LazyLock<Regex> = LazyLock::new(|| {
 /// morale-cost rider is captured separately by the drains side-map.
 static RE_SPEED_CAPACITY_TRADE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"productivity <@cc\.(vup|vdown)>([+-]?[\d.]+)%</>,\s*capacity limit <@cc\.vup>\+([\d.]+)</>",
+        r"[Pp]roductivity <@cc\.(vup|vdown)>([+-]?[\d.]+)%</>(?:,| and)\s*capacity limit <@cc\.(vup|vdown)>([+-]?[\d.]+)</>",
     )
     .unwrap()
 });
@@ -345,11 +343,17 @@ static RE_PER_HOUR_PCT: LazyLock<Regex> =
 
 // Factories phrase the queue cap as "capacity limit", trading posts as "order limit" - the
 // same mechanic, so accept either so a factory capacity skill (Vermeil's "+8") is counted.
-static RE_ORDER_LIMIT_POS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:order|capacity) limit\s*<@cc\.vup>\+?(\d+)</>").unwrap());
+// Both the terse "capacity limit +8" and the spelled-out "capacity limit is
+// increased by +12 when producing Battle Records" (Scene's Editing; its
+// `Targets` scope it to that formula through the configuration factor).
+static RE_ORDER_LIMIT_POS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:order|capacity) limit(?: is increased by)?\s*<@cc\.vup>\+?(\d+)</>").unwrap()
+});
 
-static RE_ORDER_LIMIT_NEG: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:order|capacity) limit\s*<@cc\.vdown>-?(\d+)</>").unwrap());
+static RE_ORDER_LIMIT_NEG: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:order|capacity) limit(?: is (?:reduced|decreased) by)?\s*<@cc\.vdown>-?(\d+)</>")
+        .unwrap()
+});
 
 static RE_NTH_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
@@ -638,6 +642,38 @@ pub enum BuffResolutionStrategy {
         faction_token: String,
         required_count: usize,
         per_operator: bool,
+        bonus_pct: f64,
+    },
+
+    /// A Control-Center global that branches on two LAYOUT-COUNTED resources
+    /// (Wang's Expedience: "if Influence >= Territory, all Trading Posts +7%;
+    /// if Territory > Influence, all Factories +2%", where the glossary
+    /// defines Influence = Trading Posts + Power Plants and Territory =
+    /// Factories). Resolved into a plain `GlobalEffect` by
+    /// `resolve_layout_branches` once the building is known; unresolved it
+    /// contributes 0.
+    LayoutCountBranch {
+        a_term: String,
+        b_term: String,
+        /// Payload when `a >= b`: (target room, %).
+        ge_room: String,
+        ge_pct: f64,
+        /// Payload when `b > a`.
+        gt_room: String,
+        gt_pct: f64,
+    },
+
+    /// A Control-Center global gated on the DEPLOYMENT of another room type
+    /// (Pudding's Overclock: "if there are 2 or more Operation Platforms
+    /// assigned to Power Plants, all Factories' productivity +2%"). Resolved
+    /// by `resolve_room_presence` into a `GlobalEffect` when the deployment
+    /// meets the gate; unresolved it contributes 0.
+    RoomPresenceGatedGlobal {
+        required_faction: String,
+        required_count: usize,
+        /// The room type whose crews are counted.
+        room_type: String,
+        target_room: String,
         bonus_pct: f64,
     },
 
@@ -1029,11 +1065,21 @@ pub fn build_registry(
                 } else {
                     magnitude
                 };
+                // The capacity side is signed too: Wulfenite's Go-Getter is
+                // "+20% and capacity limit -8", and that -8 nets against her
+                // Storage Guru +16 in a Vermeil basis (the game's 93% for
+                // Vermeil/Pallas/Wulfenite only adds up with the -8 in).
+                let cap_magnitude: i32 = c[4].trim_start_matches('+').parse().unwrap_or(0);
+                let cap_signed = if &c[3] == "vdown" {
+                    -cap_magnitude.abs()
+                } else {
+                    cap_magnitude
+                };
                 registry.insert(
                     buff_id.clone(),
                     BuffResolutionStrategy::EfficiencyWithOrderLimit {
                         efficiency: signed,
-                        order_limit: c[3].parse().unwrap_or(0),
+                        order_limit: cap_signed,
                     },
                 );
                 continue;
@@ -1083,11 +1129,19 @@ pub fn build_registry(
             }
             "CONTROL" => {
                 let desc_lower = buff.description.to_lowercase();
-                // Pool-scaled globals FIRST, so the plain-global branches below
+                // Layout-counted branches and deployment-gated globals FIRST:
+                // their texts also contain the plain "all Factories' +X%"
+                // phrase the global branches below would claim at face value.
+                if let Some(branch) = parse_layout_count_branch(&buff.description) {
+                    branch
+                } else if let Some(gated) = parse_room_presence_gated_global(&buff.description) {
+                    gated
+                }
+                // Pool-scaled globals next, so the plain-global branches below
                 // don't claim them at their flat base value. Audited 2026-08-13:
                 // shape A captures exactly control_mp_bd&trade[000], shape B
                 // exactly control_prod_bd_spd[000]/[010].
-                if let Some(c) = RE_GLOBAL_POOL_A.captures(&buff.description) {
+                else if let Some(c) = RE_GLOBAL_POOL_A.captures(&buff.description) {
                     BuffResolutionStrategy::GlobalPoolScaling {
                         target_room: room_type_from_global_label(&c[3]).to_string(),
                         base_pct: 0.0,
@@ -1971,6 +2025,87 @@ fn parse_named_char_room_grants(
         })
         .collect();
     (!grants.is_empty()).then_some(grants)
+}
+
+/// Layout-counted pool resources from the term glossary: "For every Trading
+/// Post and Power Plant, Influence +1" -> `bd_wang_1: [TRADING, POWER]`.
+/// Keyed by the resource id as it appears inside buff markup (`bd_*`).
+pub fn layout_term_rooms(
+    consts: &crate::core::gamedata::types::consts::GameDataConst,
+) -> HashMap<String, Vec<String>> {
+    static RE_FOR_EVERY: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"For every ([A-Za-z ,]+?), [A-Za-z ]+ \+1").unwrap());
+    consts
+        .term_description_dict
+        .iter()
+        .filter_map(|e| {
+            let id = e.value.term_id.strip_prefix("cc.")?.to_string();
+            let c = RE_FOR_EVERY.captures(&e.value.description)?;
+            let rooms: Vec<String> = c[1]
+                .split(" and ")
+                .flat_map(|part| part.split(", "))
+                .filter_map(|label| room_type_from_label(label.trim()))
+                .map(str::to_string)
+                .collect();
+            (!rooms.is_empty()).then_some((id, rooms))
+        })
+        .collect()
+}
+
+/// Wang's Expedience shape: "if <A> is greater than or equal to <B>, all
+/// <room> +X%; if <B> is greater than <A>, all <room> +Y%", with A and B
+/// glossary pool resources (`$cc.bd_*`). The names map to resource ids by
+/// their order of appearance in the markup.
+fn parse_layout_count_branch(desc: &str) -> Option<BuffResolutionStrategy> {
+    static RE_BRANCH: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"if ([A-Za-z]+) is greater than or equal to ([A-Za-z]+), all (Trading Posts|Factories)' (?:order efficiency|productivity) \+([\d.]+)%; if ([A-Za-z]+) is greater than ([A-Za-z]+), all (Trading Posts|Factories)' (?:order efficiency|productivity) \+([\d.]+)%",
+        )
+        .unwrap()
+    });
+    static RE_TERM_NAME: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"<\$cc\.(bd_[a-z0-9_]+)><@cc\.kw>([^<]+)</>").unwrap());
+    let text = plain_text(desc);
+    let c = RE_BRANCH.captures(&text)?;
+    if c[1] != c[6] || c[2] != c[5] {
+        return None;
+    }
+    let ids: HashMap<String, String> = RE_TERM_NAME
+        .captures_iter(desc)
+        .map(|m| (m[2].to_string(), m[1].to_string()))
+        .collect();
+    let a_term = ids.get(&c[1])?.clone();
+    let b_term = ids.get(&c[2])?.clone();
+    let room_of = |label: &str| room_type_from_global_label(label).to_string();
+    Some(BuffResolutionStrategy::LayoutCountBranch {
+        a_term,
+        b_term,
+        ge_room: room_of(&c[3]),
+        ge_pct: c[4].parse().ok()?,
+        gt_room: room_of(&c[7]),
+        gt_pct: c[8].parse().ok()?,
+    })
+}
+
+/// Pudding's Overclock shape: "if there are N or more Operation Platforms
+/// assigned to <room>s, all <room> +X%". Operation Platforms are the
+/// Robot-tagged operators (`robot` match tag).
+fn parse_room_presence_gated_global(desc: &str) -> Option<BuffResolutionStrategy> {
+    static RE_GATE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"if there are (\d+) or more Operation Platforms assigned to ([A-Za-z ]+?)s?, all (Trading Posts|Factories)' (?:order efficiency|productivity) \+([\d.]+)%",
+        )
+        .unwrap()
+    });
+    let text = plain_text(desc);
+    let c = RE_GATE.captures(&text)?;
+    Some(BuffResolutionStrategy::RoomPresenceGatedGlobal {
+        required_faction: "robot".to_string(),
+        required_count: c[1].parse().ok()?,
+        room_type: room_type_from_label(&c[2])?.to_string(),
+        target_room: room_type_from_global_label(&c[3]).to_string(),
+        bonus_pct: c[4].parse().ok()?,
+    })
 }
 
 fn parse_room_presence_gate(

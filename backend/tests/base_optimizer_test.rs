@@ -7457,6 +7457,195 @@ fn order_value_follows_the_posts_level() {
     );
 }
 
+/// Wang's Expedience branches on LAYOUT counts the glossary defines
+/// (Influence = Trading Posts + Power Plants, Territory = Factories): a
+/// 2/5/3 base ties 5 >= 5 and takes the trading branch (+7% posts); a 2/5/2
+/// base has Territory ahead and takes the factory branch (+2%). Either way
+/// he is "strongest effect of the same type" with Amiya's post global and
+/// Kal'tsit's factory global - so beside both he is dead weight.
+#[test]
+fn wang_branches_on_layout_counts_and_is_covered_by_amiya_and_kaltsit() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    const WANG: &str = "char_2027_wang";
+    const WANG_BUFF: &str = "control_prod_tra_spd[000]";
+    assert_eq!(
+        gd.building.layout_terms.get("bd_wang_1").map(Vec::as_slice),
+        Some(&["TRADING".to_string(), "POWER".to_string()][..]),
+        "Influence counts posts and plants"
+    );
+    assert_eq!(
+        gd.building.layout_terms.get("bd_wang_2").map(Vec::as_slice),
+        Some(&["MANUFACTURE".to_string()][..]),
+        "Territory counts factories"
+    );
+    assert!(
+        matches!(
+            registry.get(WANG_BUFF),
+            Some(BuffResolutionStrategy::LayoutCountBranch { ge_room, ge_pct, gt_room, gt_pct, .. })
+                if ge_room == "TRADING" && (*ge_pct - 7.0).abs() < 1e-9
+                    && gt_room == "MANUFACTURE" && (*gt_pct - 2.0).abs() < 1e-9
+        ),
+        "Wang parses as a layout branch: {:?}",
+        registry.get(WANG_BUFF)
+    );
+
+    let build = |posts: usize, factories: usize, plants: usize, cc: &[&str]| {
+        let mut rooms = vec![room("cc", "CONTROL", 5)];
+        rooms.extend((0..posts).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+        rooms.extend((0..factories).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+        rooms.extend((0..plants).map(|i| room(&format!("p{i}"), "POWER", 3)));
+        let mut building = UserBuilding { rooms };
+        building.rooms[0].current_operators = cc.iter().map(|s| (*s).to_string()).collect();
+        // One body in the first post and factory so both rooms score.
+        building.rooms[1].current_operators = vec!["char_103_angel".into()];
+        building.rooms[1 + posts].current_operators = vec!["char_285_medic2".into()];
+        building.rooms[1 + posts].current_formula = Some("F_EXP".into());
+        let mut ids: Vec<&str> = vec!["char_103_angel", "char_285_medic2"];
+        ids.extend(cc);
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+    };
+    let cc_line = |asn: &backend::core::grade::base::types::BaseAssignment, slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .and_then(|r| r.ledger.iter().find(|l| l.buff_id == WANG_BUFF && l.from_control_center))
+            .map(|l| (l.speed_pct, l.disposition))
+    };
+
+    // 2/5/3: Influence 5 >= Territory 5 -> the posts get +7, factories nothing.
+    let a = build(2, 5, 3, &[WANG]);
+    assert!(matches!(cc_line(&a, "tp0"), Some((v, _)) if (v - 7.0).abs() < 1e-9), "2/5/3 posts: {:?}", cc_line(&a, "tp0"));
+    assert!(cc_line(&a, "mf0").is_none_or(|(v, _)| v.abs() < 1e-9), "2/5/3 factories: {:?}", cc_line(&a, "mf0"));
+    // 2/5/2: Territory 5 > Influence 4 -> the factories get +2, posts nothing.
+    let b = build(2, 5, 2, &[WANG]);
+    assert!(matches!(cc_line(&b, "mf0"), Some((v, _)) if (v - 2.0).abs() < 1e-9), "2/5/2 factories: {:?}", cc_line(&b, "mf0"));
+    assert!(cc_line(&b, "tp0").is_none_or(|(v, _)| v.abs() < 1e-9), "2/5/2 posts: {:?}", cc_line(&b, "tp0"));
+    // Beside Amiya (+7% posts) the trading branch is a covered duplicate.
+    let c = build(2, 5, 3, &["char_002_amiya", WANG]);
+    let cc_row = c.rooms.iter().find(|r| r.room_type == "CONTROL").expect("cc row");
+    let wang_row = cc_row.ledger.iter().find(|l| l.buff_id == WANG_BUFF).expect("wang line");
+    assert!(
+        wang_row.speed_pct.abs() < 1e-9 && wang_row.disposition == LineDisposition::Covered,
+        "Wang beside Amiya is covered: {:?}",
+        (wang_row.speed_pct, &wang_row.disposition)
+    );
+}
+
+/// Pudding's Overclock is gated on the DEPLOYMENT: "2 or more Operation
+/// Platforms assigned to Power Plants" - with two Robot-tagged operators in
+/// the plants the factories get +2% (Kal'tsit's family, non-stacking); with
+/// one robot the skill is inactive, not a flat +2.
+#[test]
+fn pudding_overclock_needs_two_robots_in_power_plants() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    const PUDDING: &str = "char_4004_pudd";
+    const PUDDING_BUFF: &str = "control_token_prod_spd[000]";
+    assert!(
+        matches!(
+            registry.get(PUDDING_BUFF),
+            Some(BuffResolutionStrategy::RoomPresenceGatedGlobal { required_faction, required_count: 2, room_type, target_room, bonus_pct })
+                if required_faction == "robot" && room_type == "POWER" && target_room == "MANUFACTURE" && (*bonus_pct - 2.0).abs() < 1e-9
+        ),
+        "Overclock parses as a deployment-gated global: {:?}",
+        registry.get(PUDDING_BUFF)
+    );
+    let build = |plants: &[&str]| {
+        let mut building = UserBuilding {
+            rooms: vec![room("cc", "CONTROL", 5), room("mf", "MANUFACTURE", 3), room("p0", "POWER", 3), room("p1", "POWER", 3)],
+        };
+        building.rooms[0].current_operators = vec![PUDDING.into()];
+        building.rooms[1].current_operators = vec!["char_103_angel".into()];
+        building.rooms[1].current_formula = Some("F_EXP".into());
+        for (i, id) in plants.iter().enumerate() {
+            building.rooms[2 + i].current_operators = vec![(*id).to_string()];
+        }
+        let mut ids: Vec<&str> = vec![PUDDING, "char_103_angel"];
+        ids.extend(plants);
+        let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .and_then(|r| r.ledger.iter().find(|l| l.buff_id == PUDDING_BUFF && l.from_control_center).map(|l| l.speed_pct))
+            .unwrap_or(0.0)
+    };
+    // Lancet-2 and Castle-3 are Robot-tagged Operation Platforms.
+    assert!((build(&["char_285_medic2", "char_286_cast3"]) - 2.0).abs() < 1e-9, "two robots fire the gate");
+    assert!(build(&["char_285_medic2"]).abs() < 1e-9, "one robot does not");
+}
+
+/// Secondary affiliations: a SubPower NATION counts (Texas is Siracusa for
+/// Umiri, community-verified) but a SubPower GROUP does not (Vina Victoria
+/// carries {glasgow} there, and the game's "Glasgow Gang Operator" checks
+/// don't count her - verified in-game 2026-09-07).
+#[test]
+fn subpower_counts_nations_but_not_groups() {
+    let gd = load_game_data();
+    let texas = profile(gd, "char_102_texas");
+    assert!(texas.faction_tags.iter().any(|t| t == "siracusa"), "Texas: {:?}", texas.faction_tags);
+    let vina = profile(gd, "char_1019_siege2");
+    assert!(!vina.match_tags.iter().any(|t| t == "glasgow"), "Vina Victoria is not Glasgow: {:?}", vina.match_tags);
+    let siege = profile(gd, "char_112_siege");
+    assert!(siege.match_tags.iter().any(|t| t == "glasgow"), "Siege is: {:?}", siege.match_tags);
+}
+
+/// Capacity trades are signed: Wulfenite's Go-Getter ("+20% and capacity
+/// limit -8") nets against her Storage Guru +16 in Vermeil's Recycling basis.
+/// The game's own numbers: Vermeil/Pallas/Wulfenite = 93%, Vermeil/Scene/
+/// Pallas = 96% ramping to 106% (Scene averages ~105% over a shift).
+#[test]
+fn signed_capacity_reproduces_the_games_vermeil_teams() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    assert!(
+        matches!(
+            registry.get("manu_prod_spd&limit&cost[300]"),
+            Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, order_limit: -8 }) if (*efficiency - 20.0).abs() < 1e-9
+        ),
+        "Go-Getter is +20% with capacity -8: {:?}",
+        registry.get("manu_prod_spd&limit&cost[300]")
+    );
+    let team = |crew: &[&str]| -> f64 {
+        let mut building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3)] };
+        building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        building.rooms[0].current_formula = Some("F_EXP".into());
+        let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
+        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms.iter().find(|r| r.slot_id == "mf").expect("factory").total_efficiency
+    };
+    let vpw = team(&["char_190_clour", "char_485_pallas", "char_4171_wulfen"]);
+    assert!((vpw - 93.0).abs() < 1e-6, "Vermeil/Pallas/Wulfenite = 93 in-game, got {vpw}");
+    let vsp = team(&["char_190_clour", "char_336_folivo", "char_485_pallas"]);
+    assert!(vsp > vpw && (vsp - (56.0 + 25.0 + 23.958_333_333_333_332)).abs() < 1e-6, "Vermeil/Scene/Pallas ~105 (ramp averaged), got {vsp}");
+}
+
+/// Rosmontis' dorm-occupancy pool must rank her ABOVE zero before the scorer
+/// ever sees a team: the optimistic bound assumes full dormitories and
+/// follows her Perception -> Chain of Thought conversion.
+#[test]
+fn rosmontis_ranks_on_full_dormitories() {
+    use backend::core::grade::base::ledger::op_optimistic_bound;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let rosmontis = profile(gd, "char_391_rosmon");
+    let mut counts = std::collections::HashMap::new();
+    counts.insert("DORMITORY".to_string(), 4usize);
+    let bound = op_optimistic_bound(&rosmontis, "MANUFACTURE", Some("F_EXP"), &registry, &gd.building, &counts, 20, 3);
+    // Four top-level dorms = 20 seats -> 20 Perception -> 20 Chain -> +20%.
+    assert!((bound - 20.0).abs() < 1e-6, "Rosmontis' bound at four full dorms, got {bound}");
+}
+
 /// Durin-class compound texts ("self Morale recovered per hour -0.1, but
 /// restores +0.2 Morale per hour to all Operators assigned to that Dormitory")
 /// are whole-dorm AURAS, not self-only skills. Community-confirmed 2026-08-24:

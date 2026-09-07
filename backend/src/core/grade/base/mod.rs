@@ -4,7 +4,7 @@ pub mod clause;
 pub mod context;
 pub mod dorms;
 pub mod order_mix;
-pub(crate) mod ledger;
+pub mod ledger;
 pub mod pools;
 pub mod score;
 pub mod shift_rotation;

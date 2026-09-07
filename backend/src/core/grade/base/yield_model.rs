@@ -58,6 +58,12 @@ pub struct BaseFlows {
     pub gold_produced: f64,
     /// Gold bars/day the Trading Posts can sell.
     pub gold_sell_capacity: f64,
+    /// `gold_sell_capacity` weighted by each post's order-VALUE multiplier:
+    /// the LMD-per-bar uplift of value skills. Proviso's bonus gold is paid
+    /// out, not consumed - the game's own report shows 44 bars produced and
+    /// 44,500 LMD sold - so value raises LMD per bar SOLD, not the bars a
+    /// post can move.
+    pub gold_sell_lmd_weight: f64,
     /// EXP/day produced by `F_EXP` factories.
     pub exp: f64,
     /// Summed drone-recovery bonus % from Power Plant operators. The plants'
@@ -80,9 +86,11 @@ impl BaseFlows {
         let mult = productivity_mult(speed_pct);
         match (room_type, formula) {
             ("TRADING", _) => {
-                // More speed → more orders; more value → more gold per order.
-                self.gold_sell_capacity +=
-                    TRADING_GOLD_SOLD_PER_DAY_BASE * mult * productivity_mult(value_pct);
+                // More speed -> more bars moved; more value -> more LMD per
+                // bar moved (the bonus gold is free, never drawn from stock).
+                let bars = TRADING_GOLD_SOLD_PER_DAY_BASE * mult;
+                self.gold_sell_capacity += bars;
+                self.gold_sell_lmd_weight += bars * productivity_mult(value_pct);
             }
             ("MANUFACTURE", Some("F_GOLD")) => {
                 self.gold_produced += FACTORY_GOLD_PER_DAY_BASE * mult;
@@ -97,9 +105,15 @@ impl BaseFlows {
         }
     }
 
-    /// Realized LMD/day from the gold→trade loop: the slower side bottlenecks.
+    /// Realized LMD/day from the gold->trade loop: the slower side bottlenecks
+    /// the bars moved; each bar sold pays the posts' capacity-weighted
+    /// LMD-per-bar (value skills included).
     pub fn realized_lmd(&self) -> f64 {
-        self.gold_produced.min(self.gold_sell_capacity) * GOLD_BAR_LMD
+        if self.gold_sell_capacity <= 0.0 {
+            return 0.0;
+        }
+        let lmd_per_bar = GOLD_BAR_LMD * self.gold_sell_lmd_weight / self.gold_sell_capacity;
+        self.gold_produced.min(self.gold_sell_capacity) * lmd_per_bar
     }
 
     /// Total daily output as a single LMD-equivalent value.
@@ -238,5 +252,33 @@ pub fn room_yield(
             ..Default::default()
         },
         _ => RoomYield::default(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn order_value_raises_lmd_per_bar_sold_not_bars_moved() {
+        // One post at +200% speed (60 bars/day capacity) with Proviso-class
+        // +55% value; 44 bars produced. The 44 bars sell (capacity is not the
+        // bottleneck) and each pays 1.55x - the bonus gold is free.
+        let mut flows = BaseFlows { gold_produced: 44.0, ..Default::default() };
+        flows.add_room("TRADING", None, 3, 200.0, 55.0);
+        assert!((flows.realized_lmd() - 44.0 * GOLD_BAR_LMD * 1.55).abs() < 1e-6);
+
+        // Gold-limited: 10 bars into the same post still pay 1.55x each.
+        let mut starved = BaseFlows { gold_produced: 10.0, ..Default::default() };
+        starved.add_room("TRADING", None, 3, 200.0, 55.0);
+        assert!((starved.realized_lmd() - 10.0 * GOLD_BAR_LMD * 1.55).abs() < 1e-6);
+
+        // Two equal posts, one with value: the per-bar rate is the
+        // capacity-weighted average (1.275x).
+        let mut mixed = BaseFlows { gold_produced: 1000.0, ..Default::default() };
+        mixed.add_room("TRADING", None, 3, 0.0, 55.0);
+        mixed.add_room("TRADING", None, 3, 0.0, 0.0);
+        let bars = 2.0 * TRADING_GOLD_SOLD_PER_DAY_BASE;
+        assert!((mixed.realized_lmd() - bars * GOLD_BAR_LMD * 1.275).abs() < 1e-6);
     }
 }

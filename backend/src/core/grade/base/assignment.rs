@@ -138,6 +138,20 @@ pub(crate) fn room_presence_relevant(
     let roster: HashSet<&str> = operators.iter().map(|o| o.char_id.as_str()).collect();
     operators.iter().any(|op| {
         op.available_buffs.iter().any(|b| match registry.get(b) {
+            // A deployment-gated global is worth a second pass when the roster
+            // can seat the gate at all (Pudding: two Robot-tagged operators).
+            Some(BuffResolutionStrategy::RoomPresenceGatedGlobal {
+                required_faction,
+                required_count,
+                bonus_pct,
+                ..
+            }) if *bonus_pct != 0.0 => {
+                operators
+                    .iter()
+                    .filter(|o| o.faction_tags.iter().any(|t| t == required_faction))
+                    .count()
+                    >= *required_count
+            }
             Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
                 required_char_ids,
                 required_faction,
@@ -211,6 +225,91 @@ pub fn resolve_room_presence(
                         value: base_efficiency + bonus,
                     }
                 }
+                // A Control-Center global gated on another room type's crews
+                // (Pudding: "2 or more Operation Platforms assigned to Power
+                // Plants" -> all Factories +2%). Met: a plain global, in the
+                // same non-stacking family as Kal'tsit's; unmet: left as is,
+                // which the bonus collector and the ledger read as inactive.
+                BuffResolutionStrategy::RoomPresenceGatedGlobal {
+                    required_faction,
+                    required_count,
+                    room_type,
+                    target_room,
+                    bonus_pct,
+                } => {
+                    let seated = deployed_rooms
+                        .iter()
+                        .filter(|(char_id, rt)| {
+                            *rt == room_type
+                                && faction_tags
+                                    .get(char_id.as_str())
+                                    .is_some_and(|tags| tags.iter().any(|t| t == required_faction))
+                        })
+                        .count();
+                    if seated >= *required_count {
+                        BuffResolutionStrategy::GlobalEffect {
+                            target_room: target_room.clone(),
+                            bonus_pct: *bonus_pct,
+                        }
+                    } else {
+                        strategy.clone()
+                    }
+                }
+                other => other.clone(),
+            };
+            (id.clone(), resolved)
+        })
+        .collect()
+}
+
+/// A copy of `registry` with every layout-counted branch (Wang's Expedience)
+/// collapsed to the plain `GlobalEffect` the building's room counts select:
+/// Influence (Trading Posts + Power Plants) versus Territory (Factories), per
+/// the term glossary. Layout is always known, so this runs on every path.
+pub fn resolve_layout_branches(
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+) -> HashMap<String, BuffResolutionStrategy> {
+    let count_of = |term: &str| -> usize {
+        building_data
+            .layout_terms
+            .get(term)
+            .map_or(0, |rooms| {
+                building
+                    .rooms
+                    .iter()
+                    .filter(|r| rooms.iter().any(|t| t == &r.room_type))
+                    .count()
+            })
+    };
+    registry
+        .iter()
+        .map(|(id, strategy)| {
+            let resolved = match strategy {
+                BuffResolutionStrategy::LayoutCountBranch {
+                    a_term,
+                    b_term,
+                    ge_room,
+                    ge_pct,
+                    gt_room,
+                    gt_pct,
+                } if building_data.layout_terms.contains_key(a_term)
+                    && building_data.layout_terms.contains_key(b_term) =>
+                {
+                    let (a, b) = (count_of(a_term), count_of(b_term));
+                    if a >= b {
+                        BuffResolutionStrategy::GlobalEffect {
+                            target_room: ge_room.clone(),
+                            bonus_pct: *ge_pct,
+                        }
+                    } else {
+                        BuffResolutionStrategy::GlobalEffect {
+                            target_room: gt_room.clone(),
+                            bonus_pct: *gt_pct,
+                        }
+                    }
+                }
                 other => other.clone(),
             };
             (id.clone(), resolved)
@@ -278,6 +377,10 @@ fn optimal_inner(
             cap_aware,
         );
     }
+    // Layout-counted branches (Wang) depend only on the building - resolve
+    // them once, ahead of both passes.
+    let layout_registry = resolve_layout_branches(registry, building, building_data);
+    let registry = &layout_registry;
     // Pass 1: bonuses off, to learn who actually ends up deployed where.
     let empty_rooms = HashMap::new();
     let pass1_registry = resolve_room_presence(
@@ -1663,6 +1766,10 @@ pub fn compute_current_assignment(
     // scores the current base on the same "partner in a Work Area, not resting" rule as the
     // recommendation. The current deployment is fixed, so no second pass is needed. Pool-scaled
     // Control-Center globals (Sakiko) resolve against the same settled pools the scorer reads.
+    // Layout-counted branches (Wang) resolve on every path - the layout is
+    // always known.
+    let layout_registry = resolve_layout_branches(registry, building, building_data);
+    let registry = &layout_registry;
     let needs_presence =
         base_wide_relevant(operators, registry) || room_presence_relevant(operators, registry);
     let needs_global_pool = registry
@@ -2252,7 +2359,7 @@ pub(crate) struct CcBonus {
 /// A Control Center bonus that is gated on a production room's team composition.
 /// Resolved per-room in `compute_team_efficiency` rather than added flat.
 #[derive(Clone)]
-pub(crate) struct CcCondition {
+pub struct CcCondition {
     pub(crate) target_room: String,
     /// Occupancy gate token: a faction tag ("siracusa") OR a char id
     /// (Wiš'adel's "if Hoederer is assigned to a Trading Post"). See
@@ -2609,6 +2716,7 @@ fn cc_buff_stacks(buff: &Buff) -> bool {
     let d = buff.description.to_lowercase();
     !(d.contains("only the most effective")
         || d.contains("strongest effect of this type")
+        || d.contains("strongest effect of the same type")
         || d.contains("only the strongest"))
 }
 

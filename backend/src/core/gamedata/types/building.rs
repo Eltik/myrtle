@@ -23,6 +23,13 @@ pub struct BuildingDataFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub buffs: HashMap<String, Buff>,
 
+    /// Layout-counted pool resources from the term glossary: resource id
+    /// (`bd_wang_1`) -> the room types it counts ("For every Trading Post
+    /// and Power Plant, Influence +1" -> `[TRADING, POWER]`). Filled from
+    /// `gamedata_const` at load, not from this file.
+    #[serde(skip)]
+    pub layout_terms: HashMap<String, Vec<String>>,
+
     /// Operator -> base-skill mappings (386+).
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub chars: HashMap<String, BuildingChar>,

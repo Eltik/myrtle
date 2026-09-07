@@ -825,6 +825,10 @@ pub fn clauses_from_strategy(
             out.push(c);
         }
 
+        // Resolved by registry rewrite before scoring (`resolve_layout_branches`,
+        // `resolve_room_presence`); context-free they contribute exactly 0.
+        S::LayoutCountBranch { .. } | S::RoomPresenceGatedGlobal { .. } => {}
+
         S::NamedCharRoomGrants { grants } => {
             // Each grant lands on the room seating the named operator, gated
             // on that operator (the char id doubles as the gate token - the

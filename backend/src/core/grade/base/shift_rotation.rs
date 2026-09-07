@@ -330,6 +330,9 @@ pub fn recommend_shift_rotation(
             pins,
         );
     }
+    let layout_registry =
+        super::assignment::resolve_layout_branches(registry, building, building_data);
+    let registry = &layout_registry;
     let pass1_registry = resolve_room_presence(
         &resolve_base_wide(registry, &HashSet::new()),
         &HashMap::new(),

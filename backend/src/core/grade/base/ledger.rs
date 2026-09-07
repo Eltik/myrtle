@@ -691,7 +691,20 @@ pub fn op_optimistic_bound(
         .get(super::assignment::FUNCTIONAL_LEVEL_SUM)
         .copied()
         .unwrap_or(0) as f64;
-    let own_pools: HashMap<String, f64> =
+    // Dorm-occupancy generators (Rosmontis' Extrasensory) are optimistic at
+    // FULL dormitories: the count of dorms times a top-level dorm's seats.
+    let full_dorms = {
+        let dorms = facility_counts.get("DORMITORY").copied().unwrap_or(0) as f64;
+        let top_level = building_data
+            .rooms
+            .get("DORMITORY")
+            .map_or(1, |def| i32::try_from(def.phases.len()).unwrap_or(1));
+        dorms
+            * f64::from(
+                super::util::max_stationed_at_level(building_data, "DORMITORY", top_level).max(0),
+            )
+    };
+    let mut own_pools: HashMap<String, f64> =
         applicable_clauses(op, room_type, formula_type, registry, building_data)
             .filter_map(|(c, _)| match &c.kind {
                 ClauseKind::ResourceConvert(super::clause::ResourceOp::Generate {
@@ -703,9 +716,29 @@ pub fn op_optimistic_bound(
                     });
                     Some((resource.clone(), points))
                 }
+                ClauseKind::ResourceConvert(super::clause::ResourceOp::Generate {
+                    resource,
+                    basis: super::clause::PoolBasis::DormOccupants,
+                }) => {
+                    let points = c
+                        .cap
+                        .map_or(c.value * full_dorms, |cap| (c.value * full_dorms).min(cap));
+                    Some((resource.clone(), points))
+                }
                 _ => None,
             })
             .collect();
+    // The op's own converters move its generated points onward (Perception
+    // Information -> Chain of Thought) so its consumer reads the right pool.
+    for (c, _) in applicable_clauses(op, room_type, formula_type, registry, building_data) {
+        if let ClauseKind::ResourceConvert(super::clause::ResourceOp::Convert { from, to, ratio }) =
+            &c.kind
+            && *ratio > 0.0
+            && let Some(points) = own_pools.get(from).copied()
+        {
+            *own_pools.entry(to.clone()).or_insert(0.0) += points / ratio;
+        }
+    }
     let mut total = 0.0;
     for (c, factor) in applicable_clauses(op, room_type, formula_type, registry, building_data) {
         if !counts_toward_bound(&c.metric) {
