@@ -32,3 +32,6 @@ walkdir = "2.5.0"
 # `usize::MAX` default. See vendor/flatbuffers/MYRTLE-PATCH.md.
 [patch.crates-io]
 flatbuffers = { path = "vendor/flatbuffers" }
+
+[profile.release]
+codegen-units = 256
