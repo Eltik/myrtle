@@ -240,6 +240,10 @@ pub struct SceneRam {
     /// `_DissolveUSpeed`/`_DissolveVSpeed` and the disturb pair, in UV/second.
     pub dissolve_speed: [f32; 2],
     pub disturb_speed: [f32; 2],
+    /// `Particles-L2D/Disturb/Disturb2` only: the SECOND noise lookup of `_DisturTex`, channel y,
+    /// as `[scale, uSpeed, intensityU, intensityV]` derived from `_Noise2Param` exactly as the
+    /// first lookup's fields are derived from `_Noise1Param`. See `disturb2_family`.
+    pub disturb2: Option<[f32; 4]>,
     /// `_AnchorU`/`_AnchorV` — the ZERO POINT the disturb sample is measured against.
     ///
     /// The `Particles-L2D/Disturb/Disturb Anchor` family computes its displacement as
@@ -1829,6 +1833,16 @@ fn collect_dynchar_bg_quads(
     // `BgQuad::erase`). `DYNCHAR_ERASE_MASKS=0` restores the grab-pass drop exactly; checked
     // against the explicit string, never a falsy coercion.
     let erase_masks_on = std::env::var("DYNCHAR_ERASE_MASKS").as_deref() != Ok("0");
+    // DISTURB2 (2026-09-07): `Particles-L2D/Disturb/Disturb2 (Add|AlphaBlend)` decompiled
+    // (pathIDs -1925973235195993132 and 4827025966035922101): the vertex stage builds two
+    // noise UVs from the `_MainTex_ST`-baked UV, `uv * _NoiseN.x + (fract(_Time.x * _NoiseN.y),
+    // 0)`, and the fragment offsets the main lookup by `distur(uv1).x * _Noise1.zw * 0.1 +
+    // distur(uv2).y * _Noise2.zw * 0.1`, multiplies by `_MainColor` (x1) and, on the Add pass,
+    // premultiplies by the texture's alpha. No anchor, no dissolve, no ramp, and
+    // `_DisturTex_ST` is never read. `_Time.x` is seconds / 20. The `_DISTURBMODE_DEFAULT`
+    // keyword variant only; the other packs a glow channel through `_GlowColor` and stays
+    // out. `DYNCHAR_DISTURB2=0` restores the plain-quad export exactly.
+    let disturb2_on = std::env::var("DYNCHAR_DISTURB2").as_deref() != Ok("0");
     let main_color_decl: Option<Vec<String>> = match std::env::var("DYNCHAR_MAINCOLOR_DECL") {
         Err(_) => Some(Vec::new()),
         Ok(v) => match v.as_str() {
@@ -2675,10 +2689,34 @@ fn collect_dynchar_bg_quads(
                     // 1.0 throughout), and admitting them cost her 35.322 → 37.770 MADC
                     // while changing no coverage anywhere. `Ram/` keeps the either-map
                     // admission it shipped and was measured with.
+                    // Disturb2, see `disturb2_on`: admitted on its disturb map alone, with both
+                    // noise lookups derived from `_Noise1Param` / `_Noise2Param`.
+                    let mat_keywords: String = mat
+                        .get("m_ShaderKeywords")
+                        .and_then(Value::as_str)
+                        .map(str::to_string)
+                        .or_else(|| {
+                            mat.get("m_ValidKeywords")
+                                .and_then(Value::as_array)
+                                .map(|a| {
+                                    a.iter()
+                                        .filter_map(Value::as_str)
+                                        .collect::<Vec<_>>()
+                                        .join(" ")
+                                })
+                        })
+                        .unwrap_or_default();
+                    let disturb2_family = disturb2_on
+                        && shader.contains("/Disturb/Disturb2")
+                        && !mat_keywords
+                            .split_whitespace()
+                            .any(|k| k.starts_with("_DISTURBMODE_") && k != "_DISTURBMODE_DEFAULT");
+                    let noise1 = super::particles::mat_color(mat, "_Noise1Param", [0.0; 4]);
+                    let noise2 = super::particles::mat_color(mat, "_Noise2Param", [0.0; 4]);
                     let admit = if shader.contains("Ram/") {
                         has(diss_pid, &diss_val) || has(dist_pid, &dist_val)
                     } else {
-                        has(diss_pid, &diss_val)
+                        has(diss_pid, &diss_val) || (disturb2_family && has(dist_pid, &dist_val))
                     };
                     // DIAGNOSTIC (SCENE_DEBUG=1): a `Dissolve/` material's mask lives under the
                     // TWO-MAP names (`_DissolveTex_01/_02`, `_Amount_01/_02`,
@@ -2732,7 +2770,11 @@ fn collect_dynchar_bg_quads(
                             dissolve_st: diss_st,
                             disturb_pid: dist_pid,
                             disturb_val: dist_val,
-                            disturb_st: dist_st,
+                            disturb_st: if disturb2_family {
+                                [noise1[0], noise1[0], 0.0, 0.0]
+                            } else {
+                                dist_st
+                            },
                             ram_pid,
                             ram_val,
                             ram_st,
@@ -2774,8 +2816,16 @@ fn collect_dynchar_bg_quads(
                             uv_rot: uv_rotation_of_go(all_objects, go_pid),
                             anchor_u: blend("_AnchorU", 0.0) as f32,
                             anchor_v: blend("_AnchorV", 0.0) as f32,
-                            intensity_u: blend("_IntensityU", 0.0) as f32,
-                            intensity_v: blend("_IntensityV", 0.0) as f32,
+                            intensity_u: if disturb2_family {
+                                (noise1[2] * 0.1) as f32
+                            } else {
+                                blend("_IntensityU", 0.0) as f32
+                            },
+                            intensity_v: if disturb2_family {
+                                (noise1[3] * 0.1) as f32
+                            } else {
+                                blend("_IntensityV", 0.0) as f32
+                            },
                             disturb_influence_dissolve_uv: blend("_DisturbInfluenceDissolveUV", 0.0)
                                 as f32,
                             disturb_influence_main_uv: blend("_DisturbInfluenceMainUV", 1.0) as f32,
@@ -2815,13 +2865,23 @@ fn collect_dynchar_bg_quads(
                                 let c = uv_scroll_component(all_objects, go_pid);
                                 [base[0] + c.dissolve[0], base[1] + c.dissolve[1]]
                             },
-                            disturb_speed: {
+                            disturb_speed: if disturb2_family {
+                                [(noise1[1] / 20.0) as f32, 0.0]
+                            } else {
                                 let c = uv_scroll_component(all_objects, go_pid);
                                 [
                                     blend("_DisturbUSpeed", 0.0) as f32 + c.disturb[0],
                                     blend("_DisturbVSpeed", 0.0) as f32 + c.disturb[1],
                                 ]
                             },
+                            disturb2: disturb2_family.then(|| {
+                                [
+                                    noise2[0] as f32,
+                                    (noise2[1] / 20.0) as f32,
+                                    (noise2[2] * 0.1) as f32,
+                                    (noise2[3] * 0.1) as f32,
+                                ]
+                            }),
                         })
                     } else {
                         None
@@ -6453,6 +6513,11 @@ fn export_scene(
                     "disturbSpeed": r.disturb_speed,
                 });
             }
+                // Disturb2's second noise, present only on that family so every other ram block
+                // serialises exactly as before.
+                if let Some(d2) = r.disturb2 {
+                    layer["ram"]["disturb2"] = serde_json::json!(d2);
+                }
         }
         // ENTRANCE Transform POSITION curve: `[t, dx, dy]` authored-px offsets the frontend
         // adds to this layer's rest pose (Executor's scope rim pans while ours is pinned).
