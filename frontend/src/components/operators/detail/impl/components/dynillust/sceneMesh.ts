@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import { type DecodedImage, decodedSize, loadDecoded } from "#/lib/utils";
-import { baseTextureOf } from "../chibi/helpers";
+import { baseTextureOf, maskTextureOf } from "../chibi/helpers";
 
 /**
  * Live renderer for a dynamic illustration's BACKGROUND mesh layers.
@@ -71,6 +71,12 @@ export interface ISceneRam {
     /** UV/second scroll of each mask (Unity UV space). */
     dissolveSpeed: [number, number];
     disturbSpeed: [number, number];
+    /** `Particles-L2D/Disturb/Disturb2` only: the program's SECOND noise lookup of
+     *  `_DisturTex`, channel y, as `[scale, uSpeedPerSecond, intensityU, intensityV]`
+     *  (the first lookup rides the ordinary `disturbST` / `disturbSpeed` / `intensity*`
+     *  fields, channel x). Its offset ADDS to the first one's before the main lookup, with
+     *  no anchor and no weight, exactly as the decompiled fragment sums them. */
+    disturb2?: [number, number, number, number] | null;
 }
 
 export interface ISceneLayer {
@@ -348,6 +354,10 @@ export interface ILoadedScene {
 
 interface ISceneTex {
     raw: PIXI.BaseTexture;
+    /** The same source uploaded with STRAIGHT alpha, for the Ram compositor's lookup maps
+     *  (dissolve, disturb, weight), which it reads by channel. `raw` is premultiplied on
+     *  upload, so a map authored with alpha 0 samples as zero there. See maskTextureOf. */
+    mask: PIXI.BaseTexture;
     /** For ADDITIVE layers: an opaque glow/caustic texture (no alpha channel,
      *  dark field authored to add nothing) rebuilt with alpha = luminance so its
      *  grey field drops out instead of stamping a grey rectangle. Equals `raw`
@@ -398,6 +408,20 @@ interface IRamSceneTex {
 /** `?erase=0` restores the previous behaviour for `ISceneLayer.erase` layers, which was not
  *  to receive them at all (the exporter dropped them as grab-pass maps). Read by checking
  *  for the explicit string, never a falsy coercion. */
+/** `?disturb2=0` drops the second noise lookup of {@link ISceneRam.disturb2}, which leaves a
+ *  Disturb2 layer warped by its first noise alone (the export before 2026-09-07 drew it as a
+ *  plain quad, which `DYNCHAR_DISTURB2=0` restores on the exporter). Explicit string. */
+function disturb2On(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("disturb2") !== "0";
+}
+/** `?masknpm=0` samples the Ram compositor's lookup maps from the premultiplied artwork upload
+ *  again (the render before 2026-09-07), under which a map authored with alpha 0 reads as zero.
+ *  Explicit string. */
+function maskNpmOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("masknpm") !== "0";
+}
 function eraseMasksOn(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("erase") !== "0";
@@ -553,10 +577,14 @@ function loadTexture(url: string): Promise<ISceneTex> {
         // (negative scale) and so reference UVs OUTSIDE [0,1] - REPEAT wrap makes those
         // sample correctly instead of edge-smearing under Pixi's default CLAMP.
         raw.wrapMode = PIXI.WRAP_MODES.REPEAT;
+        // Not uploaded until a mask slot binds it, so a texture only ever drawn as artwork
+        // costs the object and nothing on the GPU.
+        const mask = maskTextureOf(src);
+        mask.wrapMode = PIXI.WRAP_MODES.REPEAT;
         const glow = darkDropGlow(src);
         if (glow) glow.wrapMode = PIXI.WRAP_MODES.REPEAT;
         const { whiteness, opaqueFrac, sat } = analyzeTexture(src);
-        return { raw, glow: glow ?? raw, whiteness, opaqueFrac, sat, annulusInner: annulusInner(src) };
+        return { raw, mask, glow: glow ?? raw, whiteness, opaqueFrac, sat, annulusInner: annulusInner(src) };
     });
 }
 
@@ -1002,7 +1030,7 @@ export interface ISceneLayerRuntime {
     __stBaseUnity?: Float32Array | null;
     /** Ram masking: each mask's UV/second scroll, re-applied to the shader every frame
      *  by {@link applySceneLayerRamScroll}. Absent unless the layer carries {@link ISceneRam}. */
-    __ramSpeed?: { dissolve: [number, number]; disturb: [number, number] } | null;
+    __ramSpeed?: { dissolve: [number, number]; disturb: [number, number]; disturb2?: [number, number] | null } | null;
     /** Bone attachment (see {@link ISceneLayer.followBone}): the followed bone name, its
      *  `followBoneRotation` flag, and the follower's BAKED world pose (origin + rotation
      *  angle) in the mesh's own Y-DOWN space - the reference {@link applySceneLayerFollow}
@@ -1147,6 +1175,7 @@ export function applySceneLayerRamScroll(mesh: PIXI.DisplayObject, t: number): v
     if (!sp || !rt.shader) return;
     rt.shader.uniforms.uDissolveScroll = [sp.dissolve[0] * t, sp.dissolve[1] * t];
     rt.shader.uniforms.uDisturbScroll = [sp.disturb[0] * t, sp.disturb[1] * t];
+    if (sp.disturb2) rt.shader.uniforms.uDisturb2Scroll = [sp.disturb2[0] * t, sp.disturb2[1] * t];
 }
 
 /** Linear-sample an ST curve `[t, sx, sy, ox, oy]` at time `t` (clamped to endpoints). */
@@ -1251,8 +1280,10 @@ uniform mat3 projectionMatrix;
 uniform vec4 uDissolveST;
 uniform vec4 uDissolveST2;
 uniform vec4 uDisturbST;
+uniform vec4 uDisturb2ST;
 uniform vec2 uDissolveScroll;
 uniform vec2 uDisturbScroll;
+uniform vec2 uDisturb2Scroll;
 uniform vec4 uRamST;
 uniform vec4 uDissolveRot;
 uniform vec4 uRamRot;
@@ -1262,6 +1293,7 @@ varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vDisturbUV2;
 varying vec2 vRamUV;
 varying vec2 vWeightUV;
 varying vec4 vColor;
@@ -1288,6 +1320,10 @@ void main() {
     vDissolveUV = vec2(ds.x, 1.0 - ds.y);
     vDissolveUV2 = vec2(ds2.x, 1.0 - ds2.y);
     vDisturbUV = vec2(dt.x, 1.0 - dt.y);
+    // Disturb2's second noise: the same map, scaled and U-scrolled by its own params (the
+    // decompiled vertex forms it from the main-ST-baked UV with no rotation and no offset).
+    vec2 dt2 = unity * uDisturb2ST.xy + uDisturb2ST.zw + uDisturb2Scroll;
+    vDisturbUV2 = vec2(dt2.x, 1.0 - dt2.y);
     vRamUV = vec2(rm.x, 1.0 - rm.y);
     vec2 wt = unity * uWeightST.xy + uWeightST.zw;
     vWeightUV = vec2(wt.x, 1.0 - wt.y);
@@ -1345,6 +1381,7 @@ varying vec2 vUV;
 varying vec2 vDissolveUV;
 varying vec2 vDissolveUV2;
 varying vec2 vDisturbUV;
+varying vec2 vDisturbUV2;
 varying vec2 vWeightUV;
 varying vec2 vRamUV;
 varying vec4 vColor;
@@ -1375,6 +1412,9 @@ uniform vec4 uEdgeColor;
 uniform float uEdgePow;
 uniform float uHasEdge;
 uniform float uHasDisturb;
+uniform float uHasDisturb2;
+uniform float uIntensity2U;
+uniform float uIntensity2V;
 void main() {
     float disturbSample = uHasDisturb > 0.5 ? texture2D(uDisturbTex, vDisturbUV).x : 0.0;
     // Game shader: (sample - anchor) * intensity. With the anchor at 0 this is exactly the
@@ -1385,6 +1425,10 @@ void main() {
     // Absent map => weight 1, i.e. bit-identical to the previous unweighted behaviour.
     vec2 wgt = uHasWeight > 0.5 ? mix(vec2(1.0, 1.0), texture2D(uWeightTex, vWeightUV).xy, uWeightMix) : vec2(1.0, 1.0);
     vec2 dOff = ((vec2(disturbSample) - vec2(uAnchorU, uAnchorV)) * wgt) * vec2(uIntensityU, uIntensityV);
+    // Disturb2's second noise, channel y of the same map at its own scale and scroll, added to
+    // the first offset with no anchor and no weight (see ISceneRam.disturb2).
+    // NOTE: no backticks in here - this is inside a template literal.
+    if (uHasDisturb2 > 0.5) dOff += vec2(texture2D(uDisturbTex, vDisturbUV2).y) * vec2(uIntensity2U, uIntensity2V);
     vec4 tex = texture2D(uSampler, dOff * uDisturbInfluenceMainUV + vUV); // premultiplied
     float dissolveTex = uHasDissolve > 0.5 ? texture2D(uDissolveTex, dOff * uDisturbInfluenceDissolveUV + vDissolveUV).x : 1.0;
     // Game shader: sw = 1 - roundEven(_Amount + 0.5), i.e. floor(_Amount + 1.0). Porting
@@ -1517,6 +1561,11 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
             uDisturbST: r.disturbST,
             uDissolveScroll: [0, 0],
             uDisturbScroll: [0, 0],
+            uDisturb2ST: r.disturb2 ? [r.disturb2[0], r.disturb2[0], 0, 0] : [1, 1, 0, 0],
+            uDisturb2Scroll: [0, 0],
+            uHasDisturb2: r.disturb2 && ramTex.disturb && disturb2On() ? 1 : 0,
+            uIntensity2U: r.disturb2?.[2] ?? 0,
+            uIntensity2V: r.disturb2?.[3] ?? 0,
         });
         return new VColorMesh(geometry, shader);
     }
@@ -1737,7 +1786,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         // Bone attachment: reduce the follower's baked world frame to a Y-DOWN origin and
         // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
         // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
-        if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed };
+        if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed, disturb2: layer.ram.disturb2 ? [layer.ram.disturb2[1], 0] : null };
         if (layer.followBone && layer.followOrigin && layer.followBasis) {
             const [m00, , m10] = layer.followBasis;
             const [ox, oy] = layer.followOrigin;
@@ -2017,11 +2066,15 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     const ramTexOf = (layer: ISceneLayer): IRamSceneTex | null => {
         const r = layer.ram;
         if (!r) return null;
-        const slot = (i: number | null | undefined) => (i != null && bases[i] ? new PIXI.Texture(bases[i].raw) : null);
-        const dissolve = slot(r.dissolveTex);
-        const dissolve2 = slot(r.dissolveTex2);
-        const weight = slot(r.weightTex);
-        const disturb = slot(r.disturbTex);
+        // Lookup maps sample the straight-alpha upload (see ISceneTex.mask); the ramp stays
+        // premultiplied, since the fragment multiplies it into an already premultiplied colour
+        // and a premultiplied ramp is exactly rgb*a, a*1 of the game's straight multiply.
+        const straight = maskNpmOn();
+        const slot = (i: number | null | undefined, lookup = false) => (i != null && bases[i] ? new PIXI.Texture(lookup && straight ? bases[i].mask : bases[i].raw) : null);
+        const dissolve = slot(r.dissolveTex, true);
+        const dissolve2 = slot(r.dissolveTex2, true);
+        const weight = slot(r.weightTex, true);
+        const disturb = slot(r.disturbTex, true);
         // NB: loaded regardless of the diagnostic flag, so ?ramtex=0 gates only the MULTIPLY and
         // leaves the compositor selection identical. Dropping the texture here instead moves
         // ramp-only layers off the Ram shader entirely, which is a different render, not an A/B

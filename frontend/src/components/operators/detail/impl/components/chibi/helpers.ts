@@ -88,6 +88,20 @@ export function baseTextureOf(img: DecodedImage, options?: PIXI.IBaseTextureOpti
     return new PIXI.BaseTexture(new PIXI.ImageBitmapResource(src, { ownsImageBitmap: true }), options);
 }
 
+/** A base texture over a decoded source with its alpha left STRAIGHT (non-premultiplied),
+ *  for lookup maps a shader reads by channel rather than draws: a dissolve, disturb or
+ *  weight map keeps its colour channels regardless of its alpha. The premultiplied upload
+ *  `baseTextureOf` makes is right for artwork but multiplies those channels by the map's
+ *  alpha on upload, and 87 of the corpus's 514 mask maps carry an alpha below opaque (Ch'en
+ *  E2's `_DisturTex` is an RG noise at alpha 0), which reads as a zero map and a silent
+ *  no-op. The bitmap path uploads the loader's straight-alpha bitmap itself, which the
+ *  premultiplied twin's owner does not close; the element path relies on the unpack flag. */
+export function maskTextureOf(img: DecodedImage, options?: PIXI.IBaseTextureOptions): PIXI.BaseTexture {
+    const opts = { ...options, alphaMode: PIXI.ALPHA_MODES.NPM };
+    if (img instanceof HTMLImageElement) return new PIXI.BaseTexture(img, opts);
+    return new PIXI.BaseTexture(new PIXI.ImageBitmapResource(img, { ownsImageBitmap: false }), opts);
+}
+
 /**
  * Build a BaseTexture from an image. If the actual PNG is smaller than the
  * atlas-declared size, the image is upscaled onto a canvas so atlas UV
