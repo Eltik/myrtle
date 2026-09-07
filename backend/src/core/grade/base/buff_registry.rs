@@ -274,6 +274,12 @@ static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
         .unwrap()
 });
 
+/// A count-scaler whose subject is a SKILL ("for each Rhine Tech-type skill",
+/// "per Standardization Skill"), as opposed to an operator ("per Glasgow Gang
+/// Operator").
+static RE_COUNT_SKILLS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?:for each|per) [A-Za-z' -]+?[Ss]kills?\b").unwrap());
+
 /// A dormitory single-target healer: "restores +X to an(other) Operator in
 /// that Dormitory (whose Morale is not full)".
 static RE_DORM_SINGLE_TARGET: LazyLock<Regex> = LazyLock::new(|| {
@@ -562,6 +568,12 @@ pub enum BuffResolutionStrategy {
         cap_pct: Option<f64>,
         bonus_char_id: Option<String>,
         bonus_pct: f64,
+        /// True for "each <X>-type skill in this Factory" phrasings: the count
+        /// is of SKILLS by name (the holder's own included - Dorothy's own
+        /// Rhine Tech β counts toward her "+5% per Rhine Tech-type skill"),
+        /// never of operators by faction (Rosmontis is Rhine Lab but carries
+        /// no Rhine Tech skill). False for "per <faction> Operator" counts.
+        count_skills: bool,
     },
 
     /// A base efficiency that's always applied, plus a bonus that applies when ANY
@@ -1464,12 +1476,16 @@ pub fn build_registry(
                                 parse_first_pct_from(&buff.description, name_end).unwrap_or(0.0),
                             )
                         });
+                    // "each <X>-type skill" / "per <X> Skill" counts skills by
+                    // name; "per <faction> Operator" counts operators by tag.
+                    let count_skills = RE_COUNT_SKILLS.is_match(&plain_text(&buff.description));
                     BuffResolutionStrategy::MatchCountScaling {
                         token,
                         per_match_pct,
                         cap_pct,
                         bonus_char_id,
                         bonus_pct,
+                        count_skills,
                     }
                 }
                 // Order-VALUE trading skills: raise LMD *per order* rather than

@@ -172,6 +172,27 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             _ => None,
         })
         .collect();
+    // Skill-name tokens per member (the leading word of each live skill's
+    // name), the basis for skill counts - the P0 converters apply here too.
+    let skill_tags: Vec<Vec<String>> = members
+        .iter()
+        .map(|op| {
+            let mut t: Vec<String> = op
+                .available_buffs
+                .iter()
+                .filter_map(|b| ev.building_data.buffs.get(b))
+                .filter_map(|buff| buff.buff_name.split([' ', '-']).next())
+                .map(str::to_lowercase)
+                .filter(|w| !w.is_empty())
+                .collect();
+            for (from, to) in &grants {
+                if t.iter().any(|tag| from.contains(tag)) && !t.iter().any(|tag| tag == *to) {
+                    t.push((*to).clone());
+                }
+            }
+            t
+        })
+        .collect();
     let tags: Vec<Vec<String>> = members
         .iter()
         .map(|op| {
@@ -279,8 +300,15 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     subject,
                     include_self,
                 } => {
-                    let count =
-                        count_matches(subject, i, &members, &tags, &own_capacity, *include_self);
+                    let count = count_matches(
+                        subject,
+                        i,
+                        &members,
+                        &tags,
+                        &skill_tags,
+                        &own_capacity,
+                        *include_self,
+                    );
                     let scaled = clause.value * count;
                     let amount = clause.cap.map_or(scaled, |cap| scaled.min(cap));
                     entries.push(Entry {
@@ -771,6 +799,7 @@ pub fn op_optimistic_bound(
                     Subject::PeerMetricAbove { .. }
                     | Subject::AnyOtherOccupant
                     | Subject::Tag(_)
+                    | Subject::SkillTag(_)
                     | Subject::SkillIdPrefix(_)
                     | Subject::Chars(_) => teammates_assumed + f64::from(u8::from(*include_self)),
                 };
@@ -990,6 +1019,7 @@ fn count_matches(
     owner: usize,
     members: &[&OperatorBaseProfile],
     tags: &[Vec<String>],
+    skill_tags: &[Vec<String>],
     own_capacity: &[f64],
     include_self: bool,
 ) -> f64 {
@@ -998,6 +1028,12 @@ fn count_matches(
         Subject::Tag(token) => (0..members.len())
             .filter(|&j| j != owner || include_self)
             .filter(|&j| tags[j].iter().any(|t| t == token))
+            .count(),
+        // Skills by name: one count per member carrying such a skill (an
+        // operator's kit never holds two skills of one type).
+        Subject::SkillTag(token) => (0..members.len())
+            .filter(|&j| j != owner || include_self)
+            .filter(|&j| skill_tags[j].iter().any(|t| t == token))
             .count(),
         Subject::SkillIdPrefix(prefix) => (0..members.len())
             .filter(|&j| j != owner)

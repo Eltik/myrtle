@@ -95,7 +95,7 @@ export function StatsForNerds() {
                         <Row label="Stationed">{sustain.length}</Row>
                         <Row label="Never deplete">{tireless}</Row>
                         {shortest !== null && <Row label="Shortest morale">{Math.round(shortest)}h</Row>}
-                        {rotation?.sustained && rotation.sustained.length > 0 && <Row label="Run 24/7">{rotation.sustained.length}</Row>}
+                        {rotation?.sustained && rotation.sustained.length > 0 && <Row label="Run 24/7 (Fiammetta)">{rotation.sustained.map((o) => o.name).join(", ")}</Row>}
                     </Section>
 
                     {baseline && planned && (

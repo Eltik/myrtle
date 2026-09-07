@@ -64,6 +64,9 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const shiftRoom = api.viewShift != null ? api.shiftRoom(tile.slotId) : undefined;
     const proposalRoom = api.proposal?.proposal.rooms.find((r) => r.slot_id === tile.slotId);
     const benched = new Set((shiftRoom ? shiftRoom.recommended : (proposalRoom?.operators ?? [])).filter((o) => o.bench).map((o) => o.operator_id));
+    // The rotation's 24/7 pick: held at full morale by a morale-swap manager
+    // (Fiammetta), so never rotated out. A plan fact, shown on every view.
+    const sustained = new Set((api.rotation?.rotation.sustained ?? []).map((o) => o.operator_id));
 
     // The per-skill breakdown for whatever crew is displayed: the shift cell's
     // own ledger when a shift tab is active, else the evaluated draft's.
@@ -110,6 +113,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                     <OperatorAvatar charId={op.id} name={op.name} />
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
+                                {sustained.has(op.id) && (
+                                    <TileTooltip label={<span className="block max-w-56">Runs around the clock: Fiammetta's morale swap keeps this operator at full morale, so the plan never rotates them out.</span>}>
+                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-emerald-500 uppercase tracking-wider">24/7</span>
+                                    </TileTooltip>
+                                )}
                                 {benched.has(op.id) && (
                                     <TileTooltip label={<span className="block max-w-56">Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.</span>}>
                                         <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">Bench</span>

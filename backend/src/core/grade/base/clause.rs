@@ -110,6 +110,10 @@ pub enum Subject {
     /// A faction / skill-type token matched against an operator's `match_tags`
     /// ("glasgow", "standardization", "rhine").
     Tag(String),
+    /// A skill-type token matched against the leading word of an operator's
+    /// SKILL names only ("rhine" = a Rhine Tech skill), never its faction -
+    /// "for each Rhine Tech-type skill in this Factory" counts skills.
+    SkillTag(String),
     /// A buff-id prefix matched against teammates' skills ("+5% per
     /// Standardization skill" via id patterns).
     SkillIdPrefix(String),
@@ -643,14 +647,23 @@ pub fn clauses_from_strategy(
             cap_pct,
             bonus_char_id,
             bonus_pct,
+            count_skills,
         } => {
+            // Skill counts include the holder's own skill (Dorothy's Rhine
+            // Tech β counts toward her per-Rhine-Tech-skill bonus); operator
+            // counts are of teammates.
+            let (subject, include_self) = if *count_skills {
+                (Subject::SkillTag(token.clone()), true)
+            } else {
+                (Subject::Tag(token.clone()), false)
+            };
             let mut c = Clause::base(
                 buff_id,
                 buff,
                 speed(),
                 ClauseKind::ScalingCount {
-                    subject: Subject::Tag(token.clone()),
-                    include_self: false,
+                    subject,
+                    include_self,
                 },
                 *per_match_pct,
             );

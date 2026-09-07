@@ -7646,6 +7646,34 @@ fn rosmontis_ranks_on_full_dormitories() {
     assert!((bound - 20.0).abs() < 1e-6, "Rosmontis' bound at four full dorms, got {bound}");
 }
 
+/// "+5% for each Rhine Tech-type skill in this Factory" counts SKILLS by
+/// name, the holder's own included: Silence's Rhine Tech γ and Dorothy's own
+/// Rhine Tech β make +10 (as in-game). Rosmontis is Rhine Lab by faction but
+/// carries no Rhine Tech skill, so she adds nothing to the count.
+#[test]
+fn dorothy_counts_rhine_tech_skills_including_her_own() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let line = |crew: &[&str]| -> f64 {
+        let mut building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3)] };
+        building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        building.rooms[0].current_formula = Some("F_EXP".into());
+        let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
+        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms[0]
+            .ledger
+            .iter()
+            .find(|l| l.buff_id == "manu_skill_spd1[010]")
+            .map_or(0.0, |l| l.speed_pct)
+    };
+    let with_silence = line(&["char_391_rosmon", "char_1031_slent2", "char_4048_doroth"]);
+    assert!((with_silence - 10.0).abs() < 1e-6, "Silence's + her own Rhine Tech = +10, got {with_silence}");
+    let alone = line(&["char_4048_doroth"]);
+    assert!((alone - 5.0).abs() < 1e-6, "her own Rhine Tech β alone = +5, got {alone}");
+}
+
 /// Durin-class compound texts ("self Morale recovered per hour -0.1, but
 /// restores +0.2 Morale per hour to all Operators assigned to that Dormitory")
 /// are whole-dorm AURAS, not self-only skills. Community-confirmed 2026-08-24:
