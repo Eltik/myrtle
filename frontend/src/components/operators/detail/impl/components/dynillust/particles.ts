@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { type DecodedImage, decodedSize, loadDecoded } from "#/lib/utils";
 import type { IAnimationBounds } from "../chibi/helpers";
-import { baseTextureOf } from "../chibi/helpers";
+import { baseTextureOf, maskTextureOf } from "../chibi/helpers";
 import { sampleColorCurve } from "./sceneMesh";
 
 /**
@@ -4004,6 +4004,11 @@ interface ILoadedTex {
      *  need the raw pixels - their shader does its own ramp/dissolve/disturb, so
      *  the opaque-glow heuristic would destroy the flow/ramp/mask inputs. */
     rawBase: PIXI.BaseTexture;
+    /** The same source uploaded with STRAIGHT alpha, for the Ram shader's lookup maps
+     *  (dissolve, disturb, weight), which it reads by channel. `rawBase` is premultiplied
+     *  on upload (the loader's twin), so a map authored with alpha under 1 samples as
+     *  `x*a` there; 19 of the corpus's 156 particle lookup maps do. See maskTextureOf. */
+    maskBase: PIXI.BaseTexture;
     /** Ram MAIN-slot texture: for opaque glow textures, alpha = luminance (dark
      *  field → 0) but with NO border vignette / radial falloff, so a bright fill
      *  (SilverAsh's reticle stripes, shaped by a dissolve mask) is preserved while
@@ -4139,7 +4144,7 @@ function processGlowTexture(img: DecodedImage): ILoadedTex {
     };
     const plain = (skip = false, desatPanel = false, hazePanel = false): ILoadedTex => {
         const base = baseTextureOf(img);
-        return { base, glow: false, rawBase: base, darkDropBase: base, noOrbBase: base, skip, desatPanel, hazePanel };
+        return { base, glow: false, rawBase: base, maskBase: maskTextureOf(img), darkDropBase: base, noOrbBase: base, skip, desatPanel, hazePanel };
     };
     try {
         const [w, h] = decodedSize(img);
@@ -4412,7 +4417,7 @@ function processGlowTexture(img: DecodedImage): ILoadedTex {
         // Opaque glow textures render additive, so desatPanel (a normal-blend mesh
         // gate) never applies - but keep the field consistent.
         const base = PIXI.BaseTexture.from(canvas);
-        return { base, glow: true, rawBase: baseTextureOf(img), darkDropBase, noOrbBase: noOrbBase ?? base, skip, desatPanel: false, hazePanel: false };
+        return { base, glow: true, rawBase: baseTextureOf(img), maskBase: maskTextureOf(img), darkDropBase, noOrbBase: noOrbBase ?? base, skip, desatPanel: false, hazePanel: false };
     } catch {
         return plain();
     }
@@ -4627,9 +4632,14 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
     /** Raw (unprocessed) texture for a Ram shader slot, by [particles] index.
      *  Ram, disturb and dissolve inputs are DATA textures (ramp / flow / mask)
      *  that must stay pixel-exact. */
-    const rawTex = (i: number | null): PIXI.Texture | null => {
+    // `?pmasknpm=0` samples the lookup maps from the premultiplied upload again (the render
+    // before 2026-09-07). Explicit string, never a falsy coercion. The ramp is never a lookup:
+    // the fragment multiplies it into a premultiplied colour, and a premultiplied ramp is
+    // exactly rgb*a, a of the game's straight multiply (same derivation as sceneMesh.ts).
+    const pmaskStraight = typeof window === "undefined" || new URLSearchParams(window.location.search).get("pmasknpm") !== "0";
+    const rawTex = (i: number | null, lookup = false): PIXI.Texture | null => {
         const b = i != null ? bases[i] : null;
-        return b ? new PIXI.Texture(b.rawBase) : null;
+        return b ? new PIXI.Texture(lookup && pmaskStraight ? b.maskBase : b.rawBase) : null;
     };
 
     /** Main texture for a Ram slot: the dark-field-dropped base (see
@@ -4731,10 +4741,10 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 {
                     main: applyWrap(main, tweenWrap ?? wrapOf(sys.ram.mainTex)),
                     ram: applyWrap(rawTex(sys.ram.ramTex), wrapOf(sys.ram.ramTex)),
-                    disturb: applyWrap(rawTex(sys.ram.disturbTex), wrapOf(sys.ram.disturbTex)),
-                    weight: applyWrap(rawTex(sys.ram.weightTex ?? null), wrapOf(sys.ram.weightTex ?? null)),
-                    dissolve: applyWrap(rawTex(sys.ram.dissolveTex), tweenWrap ?? wrapOf(sys.ram.dissolveTex)),
-                    dissolve2: applyWrap(rawTex(sys.ram.dissolveTex2 ?? null), wrapOf(sys.ram.dissolveTex2 ?? null)),
+                    disturb: applyWrap(rawTex(sys.ram.disturbTex, true), wrapOf(sys.ram.disturbTex)),
+                    weight: applyWrap(rawTex(sys.ram.weightTex ?? null, true), wrapOf(sys.ram.weightTex ?? null)),
+                    dissolve: applyWrap(rawTex(sys.ram.dissolveTex, true), tweenWrap ?? wrapOf(sys.ram.dissolveTex)),
+                    dissolve2: applyWrap(rawTex(sys.ram.dissolveTex2 ?? null, true), wrapOf(sys.ram.dissolveTex2 ?? null)),
                 },
                 sys.blend,
                 budget,
