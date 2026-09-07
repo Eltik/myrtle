@@ -434,16 +434,34 @@ fn projected_dorm_occupancy(
     occ
 }
 
-/// Solve the roster's clean pool economies for the optimal view.
-pub fn plan_optimal_economies(
+/// One dorm-fed or room-level pool economy of the roster: its generators
+/// (with the room their owner must occupy), converters and consumers, and
+/// the projected dorm occupancy they settle against.
+struct DormEconomy {
+    gens: Vec<Gen>,
+    /// (converter owner, from, to, ratio)
+    converts: Vec<(String, String, String, f64)>,
+    /// (owner, buff id, resource, step, pct)
+    consumers: Vec<(String, String, String, f64, f64)>,
+}
+
+struct Gen {
+    owner: String,
+    /// The room type the generating skill needs its owner in.
+    owner_room: String,
+    resource: String,
+    points: f64,
+    /// A pin this generator needs to produce (own-room-level seats).
+    pin: Option<String>,
+}
+
+fn collect_dorm_economy(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
-) -> EconomyPlan {
-    let mut plan = EconomyPlan::default();
+) -> DormEconomy {
     let projected_occupancy = projected_dorm_occupancy(profiles, building, building_data);
-
     let best_room_level = |room_type: &str| -> f64 {
         f64::from(
             building
@@ -455,19 +473,11 @@ pub fn plan_optimal_economies(
                 .unwrap_or(0),
         )
     };
-
-    // Gather every owned pool piece with its owner.
-    struct Gen {
-        owner: String,
-        resource: String,
-        points: f64,
-        /// A pin this generator needs to produce (own-room-level seats).
-        pin: Option<String>,
-    }
-    let mut gens: Vec<Gen> = Vec::new();
-    let mut converts: Vec<(String, String, String, f64)> = Vec::new(); // owner, from, to, ratio
-    let mut consumers: Vec<(String, String, String, f64, f64)> = Vec::new(); // owner, buff_id, resource, step, pct
-
+    let mut econ = DormEconomy {
+        gens: Vec::new(),
+        converts: Vec::new(),
+        consumers: Vec::new(),
+    };
     for op in profiles {
         for buff_id in &op.available_buffs {
             let (Some(buff), Some(strategy)) =
@@ -488,18 +498,20 @@ pub fn plan_optimal_economies(
                             // other bases have no search story yet.
                             _ => continue,
                         };
-                        gens.push(Gen {
+                        econ.gens.push(Gen {
                             owner: op.char_id.clone(),
+                            owner_room: clause.owner_room_type.clone(),
                             resource: resource.clone(),
                             points: clause.cap.map_or(points, |cap| points.min(cap)),
                             pin,
                         });
                     }
                     ClauseKind::ResourceConvert(ResourceOp::Convert { from, to, ratio }) => {
-                        converts.push((op.char_id.clone(), from.clone(), to.clone(), *ratio));
+                        econ.converts
+                            .push((op.char_id.clone(), from.clone(), to.clone(), *ratio));
                     }
                     ClauseKind::ScalingPoolPoints { resource, step } => {
-                        consumers.push((
+                        econ.consumers.push((
                             op.char_id.clone(),
                             buff_id.clone(),
                             resource.clone(),
@@ -512,62 +524,158 @@ pub fn plan_optimal_economies(
             }
         }
     }
+    econ
+}
 
-    // Settle each pool with its SOURCE SET (which operators must be seated for
-    // the points to exist). Converters extend both points and sources.
-    let mut pool_points: HashMap<String, f64> = HashMap::new();
-    let mut pool_sources: HashMap<String, Vec<String>> = HashMap::new();
-    let mut pinned: Vec<String> = Vec::new();
-    for g in &gens {
-        *pool_points.entry(g.resource.clone()).or_insert(0.0) += g.points;
-        pool_sources
+/// Settle an economy's pools per ORIGIN operator: `resource -> origin ->
+/// points`. Converters COPY points onward (the game credits every converter
+/// the whole pool - the live settlement shows Rosmontis and Ebenholz each
+/// reading the full Perception Information), and a converted point keeps
+/// the origin that generated it, so a consumer can be priced on exactly the
+/// origins the plan can vouch for.
+fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>> {
+    let mut pools: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for g in &econ.gens {
+        *pools
             .entry(g.resource.clone())
             .or_default()
-            .push(g.owner.clone());
-        if let Some(room) = &g.pin {
-            plan.pins.push((g.owner.clone(), room.clone()));
-            pinned.push(g.owner.clone());
-        }
+            .entry(g.owner.clone())
+            .or_insert(0.0) += g.points;
     }
+    let mut done: HashSet<(usize, String)> = HashSet::new();
     for _ in 0..MAX_POOL_ROUNDS {
-        let snapshot = pool_points.clone();
+        let snapshot = pools.clone();
         let mut moved = 0.0f64;
-        for (owner, from, to, ratio) in &converts {
-            let available = snapshot.get(from).copied().unwrap_or(0.0);
+        for (ci, (_, from, to, ratio)) in econ.converts.iter().enumerate() {
             if *ratio <= 0.0 {
                 continue;
             }
-            let converted = (available / ratio).floor();
-            if converted > 0.0 {
-                *pool_points.entry(from.clone()).or_insert(0.0) -= converted * ratio;
-                *pool_points.entry(to.clone()).or_insert(0.0) += converted;
-                let mut srcs = pool_sources.get(from).cloned().unwrap_or_default();
-                srcs.push(owner.clone());
-                pool_sources.entry(to.clone()).or_default().extend(srcs);
-                moved += converted;
+            let Some(origins) = snapshot.get(from) else { continue };
+            for (origin, available) in origins {
+                if !done.insert((ci, origin.clone())) {
+                    continue;
+                }
+                let converted = (available / ratio).floor();
+                if converted > 0.0 {
+                    *pools
+                        .entry(to.clone())
+                        .or_default()
+                        .entry(origin.clone())
+                        .or_insert(0.0) += converted;
+                    moved += converted;
+                }
             }
         }
         if moved < POOL_EPS {
             break;
         }
     }
+    pools
+}
 
-    // Price each consumer under the honesty rule.
-    for (owner, buff_id, resource, step, pct) in consumers {
-        let Some(points) = pool_points.get(&resource).copied() else {
+/// Solve the roster's clean pool economies for the optimal view.
+pub fn plan_optimal_economies(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> EconomyPlan {
+    let mut plan = EconomyPlan::default();
+    let econ = collect_dorm_economy(profiles, building, building_data, registry);
+    let mut pinned: Vec<String> = Vec::new();
+    for g in &econ.gens {
+        if let Some(room) = &g.pin {
+            plan.pins.push((g.owner.clone(), room.clone()));
+            pinned.push(g.owner.clone());
+        }
+    }
+    let pools = settle_by_origin(&econ);
+
+    // Price each consumer under the honesty rule, per ORIGIN: only the points
+    // the consumer themself or a pinned generator produced count. A co-feeder
+    // the search might not seat (Ebenholz beside Rosmontis) adds nothing here
+    // - the shared-pool bundle below offers that seating to the oracle.
+    for (owner, buff_id, resource, step, pct) in &econ.consumers {
+        let Some(origins) = pools.get(resource) else {
             continue;
         };
-        let sources = pool_sources.get(&resource).cloned().unwrap_or_default();
-        let eligible = sources.iter().all(|s| *s == owner || pinned.contains(s));
-        if !eligible || points <= 0.0 || step <= 0.0 {
+        let points: f64 = origins
+            .iter()
+            .filter(|(origin, _)| *origin == owner || pinned.contains(origin))
+            .map(|(_, p)| p)
+            .sum();
+        if points <= 0.0 || *step <= 0.0 {
             continue;
         }
         let solved = (points / step).floor() * pct;
         if solved > 0.0 {
-            plan.overrides.push((buff_id, solved));
+            plan.overrides.push((buff_id.clone(), solved));
         }
     }
     plan
+}
+
+/// Joint-seating bundles for SHARED dorm-fed pools: a consumer whose pool is
+/// also fed by other operators (Rosmontis' Chain of Thought draws on
+/// Ebenholz's Musicianship) gets one bundle that pins those co-feeders into
+/// the rooms their generators need and prices every consumer of the pool at
+/// the full total. The oracle keeps it only if the seats pay for themselves.
+fn shared_pool_bundles(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> Vec<EconomyPlan> {
+    let econ = collect_dorm_economy(profiles, building, building_data, registry);
+    let pools = settle_by_origin(&econ);
+    let mut bundles = Vec::new();
+    let mut seen: HashSet<Vec<String>> = HashSet::new();
+    for (owner, _, resource, _, _) in &econ.consumers {
+        let Some(origins) = pools.get(resource) else {
+            continue;
+        };
+        let mut others: Vec<String> = origins
+            .keys()
+            .filter(|origin| *origin != owner)
+            .cloned()
+            .collect();
+        others.sort();
+        if others.is_empty() || !seen.insert(others.clone()) {
+            continue;
+        }
+        let pins: Vec<(String, String)> = others
+            .iter()
+            .filter_map(|id| {
+                econ.gens
+                    .iter()
+                    .find(|g| &g.owner == id)
+                    .map(|g| (id.clone(), g.owner_room.clone()))
+            })
+            .collect();
+        // Every consumer fed by this pool set is priced at the full total.
+        let overrides: Vec<(String, f64)> = econ
+            .consumers
+            .iter()
+            .filter_map(|(c_owner, buff_id, c_res, step, pct)| {
+                let pts: f64 = pools.get(c_res)?.values().sum();
+                let touched = pools
+                    .get(c_res)?
+                    .keys()
+                    .any(|origin| origin == c_owner || others.contains(origin));
+                (touched && *step > 0.0 && pts > 0.0)
+                    .then(|| (buff_id.clone(), (pts / step).floor() * pct))
+                    .filter(|(_, v)| *v > 0.0)
+            })
+            .collect();
+        if !overrides.is_empty() {
+            bundles.push(EconomyPlan {
+                globals: Vec::new(),
+                overrides,
+                pins,
+            });
+        }
+    }
+    bundles
 }
 
 // ── Joint-seating bundles (stage 3b) ─────────────────────────────────────────
@@ -591,7 +699,7 @@ pub fn candidate_bundles(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> Vec<EconomyPlan> {
-    let mut bundles = Vec::new();
+    let mut bundles = shared_pool_bundles(profiles, building, building_data, registry);
 
     // Robot displacement (Alanna's Operation Platforms): a consumer whose buff
     // scales with Robot-tagged operators seated in Power Plants. Pin the

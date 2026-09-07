@@ -7674,6 +7674,41 @@ fn dorothy_counts_rhine_tech_skills_including_her_own() {
     assert!((alone - 5.0).abs() < 1e-6, "her own Rhine Tech β alone = +5, got {alone}");
 }
 
+/// A dorm-fed pool with a co-feeder: Rosmontis' Chain of Thought draws on
+/// her own Perception generation AND Ebenholz's Musicianship. The native
+/// plan prices her on HER origin points (the search may not seat Ebenholz),
+/// and a shared-pool bundle offers the oracle the alternative: pin Ebenholz
+/// into a post and price every consumer of the pool at the full total.
+#[test]
+fn shared_dorm_pool_prices_own_origins_and_bundles_the_cofeeder() {
+    use backend::core::grade::base::pools::{candidate_bundles, plan_optimal_economies};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const EBENHOLZ: &str = "char_4046_ebnhlz";
+    const MANIFEST: &str = "manu_prod_spd_bd[010]";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("tp", "TRADING", 3)];
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    // Deep roster: the projected dorm occupancy fills all 20 beds.
+    let mut ids: Vec<&str> = vec![ROSMONTIS, EBENHOLZ];
+    ids.extend(gd.building.chars.keys().filter(|id| id.starts_with("char_") && *id != ROSMONTIS && *id != EBENHOLZ).take(40).map(String::as_str));
+    let profiles: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+
+    let native = plan_optimal_economies(&profiles, &building, &gd.building, &registry);
+    let own = native.overrides.iter().find(|(b, _)| b == MANIFEST).map(|(_, v)| *v);
+    assert_eq!(own, Some(20.0), "Rosmontis priced on her own 20 dorm points: {:?}", native.overrides);
+
+    let bundles = candidate_bundles(&profiles, &building, &gd.building, &registry);
+    let shared = bundles
+        .iter()
+        .find(|b| b.pins.iter().any(|(id, room)| id == EBENHOLZ && room == "TRADING"))
+        .expect("a bundle pinning Ebenholz into a Trading Post");
+    let full = shared.overrides.iter().find(|(b, _)| b == MANIFEST).map(|(_, v)| *v);
+    assert_eq!(full, Some(40.0), "with Ebenholz seated the pool is 40: {:?}", shared.overrides);
+}
+
 /// Durin-class compound texts ("self Morale recovered per hour -0.1, but
 /// restores +0.2 Morale per hour to all Operators assigned to that Dormitory")
 /// are whole-dorm AURAS, not self-only skills. Community-confirmed 2026-08-24:

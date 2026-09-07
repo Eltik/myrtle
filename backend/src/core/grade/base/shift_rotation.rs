@@ -562,12 +562,25 @@ fn rotation_core(
     let mut sustained_label: Vec<String> = kept_by_room.values().flatten().cloned().collect();
     sustained_label.sort();
     sustained_label.dedup();
-    if !sustained_label.is_empty() {
+    // Every production team works a 24h block ([A,A,B] / [B,C,C] tiling), so a
+    // member whose drain outruns a full bar (Aroma's "+0.25 Morale per hour"
+    // rider) runs dry mid-block. Such operators leave the team pool unless the
+    // morale-swap manager sustains them (the 24/7 pick above) or a plan pins
+    // them; the morale simulation then reports honestly on what remains.
+    let heavy: Vec<String> = operators
+        .iter()
+        .filter(|op| !super::sustain_sim::sustains_24h_block(op, morale_drains))
+        .filter(|op| !sustained_label.contains(&op.char_id) && !pinned_ids.contains(&op.char_id))
+        .map(|op| op.char_id.clone())
+        .collect();
+    if !sustained_label.is_empty() || !heavy.is_empty() {
         let mut exclude: HashSet<String> = cc_plan.squad1.iter().cloned().collect();
         exclude.extend(sustained_label.iter().cloned());
         exclude.extend(pinned_ids.iter().cloned());
-        // Teams re-planned around the pin: the pinned operator is out of the pool and
-        // their permanent slot shrinks the teams that only ever work their room.
+        exclude.extend(heavy);
+        // Teams re-planned around the pin and without the heavy drainers: the
+        // pinned operator is out of the pool and their permanent slot shrinks
+        // the teams that only ever work their room.
         let reserved: HashMap<String, usize> = kept_by_room
             .iter()
             .map(|(slot, ops)| (slot.clone(), ops.len()))
