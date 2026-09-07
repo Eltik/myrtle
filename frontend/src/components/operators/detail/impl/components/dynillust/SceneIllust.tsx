@@ -3338,6 +3338,26 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 {
                     const raw = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("layalpha") : null;
                     for (const tok of raw ? raw.split(",") : []) {
+                        // `src:<i>[-<j>]:<a>` scales the layer whose SCENE-JSON index is `i`, matched
+                        // on `__srcIndex` like the `abl=src:` tokens, wherever its container put it
+                        // (hoisted overlay included). The positional `bg:`/`fg:` forms below index the
+                        // container, whose order is not the JSON's, so a layer named in the export
+                        // could not be scaled without first mapping it by hand.
+                        const ms = /^src:(\d+)(?:-(\d+))?:([0-9.]+)$/.exec(tok);
+                        if (ms && scene) {
+                            const lo = Number(ms[1]);
+                            const hi = ms[2] ? Number(ms[2]) : lo;
+                            const a = Number(ms[3]);
+                            if (!Number.isFinite(a)) continue;
+                            for (const side of [scene.background, scene.foreground, sceneOverlay]) {
+                                if (!side) continue;
+                                for (const c of side.children) {
+                                    const si = (c as unknown as ISceneLayerRuntime).__srcIndex;
+                                    if (si != null && si >= lo && si <= hi) c.alpha = a;
+                                }
+                            }
+                            continue;
+                        }
                         const m = /^(bg|fg):(\d+)(?:-(\d+))?:([0-9.]+)$/.exec(tok);
                         if (!m || !scene) continue;
                         const side = m[1] === "bg" ? scene.background : scene.foreground;
