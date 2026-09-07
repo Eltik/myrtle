@@ -141,10 +141,6 @@ pub struct RoomFill {
     pub fill_hours: f64,
 }
 
-/// Nominal gold moved per LMD-strategy order. `TRADING_GOLD_SOLD_PER_DAY_BASE`
-/// = 20 bars/day is 10 such orders/day - the same 2-gold/1000-LMD order the
-/// yield model's base rate already assumes.
-const GOLD_PER_ORDER: f64 = 2.0;
 
 /// Seconds of production points a room accrues per day at 100%.
 const POINTS_PER_DAY: f64 = 86400.0;
@@ -167,7 +163,11 @@ pub fn room_fill(
                 .get(phase.min(phases.len().checked_sub(1)?))?
                 .order_limit;
             let capacity = (base + capacity_bonus).max(1);
-            let orders_per_day = TRADING_GOLD_SOLD_PER_DAY_BASE * mult / GOLD_PER_ORDER;
+            // Orders per day follow the post's order mix: a level-1 post fills
+            // its buffer with more, smaller orders than a level-3 post.
+            let rarity = super::order_mix::rarity_for_level(building_data, level);
+            let orders_per_day = TRADING_GOLD_SOLD_PER_DAY_BASE * mult
+                / super::order_mix::avg_gold_per_order(rarity);
             Some(RoomFill {
                 capacity,
                 fill_hours: f64::from(capacity) / orders_per_day * 24.0,

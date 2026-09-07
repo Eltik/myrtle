@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 use crate::core::gamedata::types::building::Buff;
 
-use super::buff_registry::BuffResolutionStrategy;
+use super::buff_registry::{BuffResolutionStrategy, OrderEffect};
 
 /// What a clause's contribution is denominated in.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -26,8 +26,9 @@ pub enum Metric {
     ManufactureSpeed,
     /// Trading Post order-acquisition %.
     TradingSpeed,
-    /// % LMD-per-order (calibrated at parse time, as today). `pure_gold` marks a
-    /// value tied to Pure-Gold orders specifically (Proviso), which a
+    /// % LMD-per-order, resolved at scoring time from the room's order
+    /// shapes and the post's level (`order_mix`). `pure_gold` marks a value
+    /// tied to Pure-Gold orders specifically (Proviso), which a
     /// Precious-Metal-shifting suppressor (Shamare) kills.
     OrderValue { pure_gold: bool },
     /// Order/capacity-limit points (sign carries polarity - Degenbrecher's -6).
@@ -74,9 +75,10 @@ pub enum NonProdKind {
 pub enum CombineRule {
     /// Ordinary additive stacking.
     Sum,
-    /// Only the strongest entity's contribution applies (order VALUE: Proviso's
-    /// and Tequila's bonuses target disjoint order subsets, the weaker adds ~0).
-    MaxPerEntity,
+    /// Resolved jointly through the order-mix model (order VALUE): the room's
+    /// whole set of order shapes is priced together against the post's level,
+    /// so disjoint-order effects compose and same-kind ones take the strongest.
+    OrderMix,
 }
 
 impl Metric {
@@ -96,7 +98,7 @@ impl Metric {
 
     pub const fn combine(&self) -> CombineRule {
         match self {
-            Self::OrderValue { .. } => CombineRule::MaxPerEntity,
+            Self::OrderValue { .. } => CombineRule::OrderMix,
             _ => CombineRule::Sum,
         }
     }
@@ -265,6 +267,11 @@ pub enum ClauseKind {
     /// The parse failed. Contributes exactly zero and is surfaced in the
     /// diagnostics list so coverage gaps get real parsers, not guesses.
     Unresolved,
+    /// An order-VALUE shape (Proviso, Tequila, Tailoring), resolved at
+    /// scoring time against the post's order rarity together with every
+    /// other order shape in the room - `order_mix::value_pct`. The clause's
+    /// own `value` is unused.
+    OrderMix(OrderEffect),
 }
 
 /// One resolved bonus clause.
@@ -739,18 +746,15 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        S::OrderValue {
-            estimated_pct,
-            pure_gold,
-        } => {
+        S::OrderValue { effect, pure_gold } => {
             out.push(Clause::base(
                 buff_id,
                 buff,
                 Metric::OrderValue {
                     pure_gold: *pure_gold,
                 },
-                ClauseKind::SelfValue,
-                *estimated_pct,
+                ClauseKind::OrderMix(effect.clone()),
+                0.0,
             ));
         }
 
@@ -1488,10 +1492,10 @@ mod tests {
     }
 
     #[test]
-    fn order_value_metric_combines_max_per_entity() {
+    fn order_value_metric_combines_through_the_order_mix() {
         assert_eq!(
             Metric::OrderValue { pure_gold: false }.combine(),
-            CombineRule::MaxPerEntity
+            CombineRule::OrderMix
         );
         assert_eq!(Metric::TradingSpeed.combine(), CombineRule::Sum);
     }

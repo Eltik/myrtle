@@ -12,9 +12,9 @@ use std::collections::{HashMap, HashSet};
 use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::assignment::CcCondition;
-use super::buff_registry::BuffResolutionStrategy;
+use super::buff_registry::{BuffResolutionStrategy, OrderEffect};
 use super::clause::{
-    Clause, ClauseKind, CombineRule, CondScope, Metric, Subject, SuppressExempt,
+    Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt,
     clauses_from_strategy,
 };
 use super::types::OperatorBaseProfile;
@@ -76,6 +76,14 @@ struct PeerItem {
 struct SuppressItem {
     entity: usize,
     metrics: Vec<Metric>,
+}
+
+/// A deferred order-VALUE shape: priced in P5 together with every other
+/// shape in the room, against the post's order rarity.
+struct OrderItem {
+    entity: usize,
+    metric: Metric,
+    effect: OrderEffect,
 }
 
 /// The room being scored plus the shared base context.
@@ -237,6 +245,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     let mut entries: Vec<Entry> = Vec::new();
     let mut peers: Vec<PeerItem> = Vec::new();
     let mut suppressors: Vec<SuppressItem> = Vec::new();
+    let mut order_items: Vec<OrderItem> = Vec::new();
 
     for (i, _op) in members.iter().enumerate() {
         for (clause, from_facility) in &member_clauses[i] {
@@ -249,6 +258,17 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                 Source::Direct
             };
             match &clause.kind {
+                // Order shapes are priced jointly in P5; a configuration
+                // discount of zero drops the shape like any other clause.
+                ClauseKind::OrderMix(effect) => {
+                    if factor > 0.0 {
+                        order_items.push(OrderItem {
+                            entity: i,
+                            metric: clause.metric.clone(),
+                            effect: effect.clone(),
+                        });
+                    }
+                }
                 ClauseKind::SelfValue => entries.push(Entry {
                     entity: i,
                     metric: clause.metric.clone(),
@@ -536,6 +556,15 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
+    // Suppression reaches the deferred order shapes too: a nullifier kills
+    // other entities' shapes on the metrics it targets (Shamare's Precious-
+    // Metal shift kills Proviso's Pure-Gold value, spares flat value).
+    order_items.retain(|item| {
+        !suppressors
+            .iter()
+            .any(|s| s.entity != item.entity && s.metrics.contains(&item.metric))
+    });
+
     // ── P5: finalization ─────────────────────────────────────────────────────
     let mut speed: f64 = entries
         .iter()
@@ -543,22 +572,21 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .map(|e| e.amount)
         .sum();
 
-    // Order VALUE combines max-per-entity: value operators target the same
-    // orders by disjoint rules, so only the strongest applies.
-    let mut order_value = 0.0f64;
-    if matches!(
-        Metric::OrderValue { pure_gold: true }.combine(),
-        CombineRule::MaxPerEntity
-    ) {
-        for i in 0..members.len() {
-            let entity_value: f64 = entries
-                .iter()
-                .filter(|e| e.entity == i && matches!(e.metric, Metric::OrderValue { .. }))
-                .map(|e| e.amount)
-                .sum();
-            order_value = order_value.max(entity_value);
-        }
-    }
+    // Order VALUE resolves through the order-mix model: the room's shapes are
+    // priced together against the post's order rarity, so Proviso is worth
+    // more in a level-2 post than a level-3 one, and Tequila composes with
+    // her on the 4-gold orders she leaves alone.
+    let order_value = if order_items.is_empty() {
+        0.0
+    } else {
+        let level = ev
+            .facility_counts
+            .get(super::assignment::TRADING_MIN_LEVEL)
+            .map_or(i32::MAX, |lv| i32::try_from(*lv).unwrap_or(i32::MAX));
+        let rarity = super::order_mix::rarity_for_level(ev.building_data, level);
+        let effects: Vec<OrderEffect> = order_items.iter().map(|o| o.effect.clone()).collect();
+        super::order_mix::value_pct(&effects, rarity)
+    };
 
     // Threshold-gated Control-Center bonuses buff the POST itself, so they
     // are added here, past suppression - CC-sourced like the unconditional
@@ -649,6 +677,14 @@ pub fn op_optimistic_bound(
     let speed_metric = Metric::speed_for_room(room_type);
     let counts_toward_bound =
         |m: &Metric| *m == speed_metric || matches!(m, Metric::OrderValue { .. });
+    // Order shapes are priced against the post's level (the base-wide
+    // TRADING_MIN_LEVEL synthetic; the top tier when no post is known).
+    let order_rarity = super::order_mix::rarity_for_level(
+        building_data,
+        facility_counts
+            .get(super::assignment::TRADING_MIN_LEVEL)
+            .map_or(i32::MAX, |lv| i32::try_from(*lv).unwrap_or(i32::MAX)),
+    );
     // The op's own layout-derived pools (generator + consumer travel together,
     // e.g. Minimalist), so their consumer value is exact, not optimistic.
     let functional_levels = facility_counts
@@ -678,6 +714,11 @@ pub fn op_optimistic_bound(
         let v = c.value * factor;
         total += match &c.kind {
             ClauseKind::SelfValue => v,
+            // An order shape's optimistic worth: solo, or its marginal beside
+            // the mix-shifting partner that makes it pay (Tequila + Tailoring).
+            ClauseKind::OrderMix(effect) => {
+                super::order_mix::optimistic_value_pct(effect, order_rarity) * factor
+            }
             // A solved pool payoff counts at face value - the consumer must
             // rank high enough to be SEATED for the pool to pay out at all.
             ClauseKind::ResourceConvert(super::clause::ResourceOp::Consume { .. }) => v,
@@ -820,9 +861,17 @@ pub fn op_surviving_order_value(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> f64 {
+    // Ranking helper without a room level: price each surviving shape at the
+    // top order rarity (the level a value operator is normally seated at).
+    let top = super::order_mix::rarity_for_level(building_data, i32::MAX);
     applicable_clauses(op, room_type, formula_type, registry, building_data)
         .filter(|(c, _)| c.metric == (Metric::OrderValue { pure_gold: false }))
-        .map(|(c, factor)| c.value * factor)
+        .filter_map(|(c, factor)| match &c.kind {
+            ClauseKind::OrderMix(effect) => {
+                Some(super::order_mix::value_pct(std::slice::from_ref(effect), top) * factor)
+            }
+            _ => None,
+        })
         .sum()
 }
 

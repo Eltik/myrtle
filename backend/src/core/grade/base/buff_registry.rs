@@ -393,6 +393,25 @@ static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vup>-?([\d.]+)</>").unwrap()
 });
 
+/// The SHAPE of an order-value trading skill. The registry keeps the shape,
+/// not a percentage: the worth of "+2 gold on orders below 4" depends on
+/// which orders the post draws, which is the post's level - resolved at
+/// scoring time by `order_mix::value_pct` against gamedata's `OrderRarity`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OrderEffect {
+    /// Proviso's Damages for Breach: orders trading fewer than `below` Pure
+    /// Gold ("Defaulted", from Contract Law's text) trade `bonus` more.
+    DefaultedGoldBonus { below: u32, bonus: u32 },
+    /// Tequila's Investment: orders trading more than `above` Pure Gold pay
+    /// `lmd` more LMD (defaulted trades excluded - they are below anyway).
+    HighOrderLmdBonus { above: u32, lmd: u32 },
+    /// The Tailoring family: the chance of higher-yield orders is
+    /// "increased slightly" (`strong: false`) or "increased" (`strong: true`).
+    HigherYieldChance { strong: bool },
+    /// A rule with no payoff of its own (Contract Law defines "Defaulted").
+    Enabler,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum BuffResolutionStrategy {
     /// Efficiency field is the bonus %. Value = efficiency as f64.
@@ -579,7 +598,7 @@ pub enum BuffResolutionStrategy {
     /// shifts the post toward higher-yield Precious-Metal orders, so a Pure-Gold
     /// value no longer applies in a Shamare team - which is why Proviso, unlike
     /// Tequila, does NOT benefit from Shamare.
-    OrderValue { estimated_pct: f64, pure_gold: bool },
+    OrderValue { effect: OrderEffect, pure_gold: bool },
 
     /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
@@ -798,6 +817,10 @@ pub fn build_registry(
 ) {
     let mut registry: HashMap<String, BuffResolutionStrategy> = HashMap::new();
     let mut morale_drains = HashMap::new();
+    // The game's "Defaulted trade" threshold, read from the one buff that
+    // defines it (Contract Law: "less than 4"). Payoff skills that reference
+    // defaulted trades price against it; with no definer they stay enablers.
+    let defaulted_below = defaulted_trade_threshold(buffs);
 
     for (buff_id, buff) in buffs {
         // Strip the tier suffix: "manu_prod_spd&power[000]" → "manu_prod_spd&power".
@@ -1396,28 +1419,17 @@ pub fn build_registry(
                     }
                 }
                 // Order-VALUE trading skills: raise LMD *per order* rather than
-                // order speed. Calibrated against the trading-post economy (Pure
-                // Gold = 500 LMD/bar, L3 order mix 30/50/20 low/med/high). NOTE these
-                // do NOT stack across operators (the team scorer keeps only the
-                // strongest); their payoff is realised by pairing the value operator
-                // with order-acquisition SPEED, not with a second value operator:
-                //   - Proviso "Damages for Breach" (+2 Pure Gold to defaulted
-                //     low/med orders, same completion time): avg order 1450→2250
-                //     LMD ⇒ ×1.55, i.e. +55% LMD/hour.
-                //   - Tequila "+N LMD on non-defaulted high orders": ~+10% in
-                //     isolation, but its bonus EXCLUDES the defaulted orders Proviso
-                //     boosts, so it adds nothing alongside Proviso.
-                //   - Precious-Metal "higher-yield chance" (Tailoring): shifts the
-                //     order mix up; gold/hour ≈ flat, value realised via the order
-                //     cap ⇒ ~+10%.
-                //   - A bare enabler with no payoff (Proviso "Contract Law") ⇒ 0.
+                // order speed. Stored as their SHAPE and resolved per post level
+                // by `order_mix` (Proviso: +100% in a level-1 post, +83% in a
+                // level-2, +55% in a level-3 - her "+2 gold on orders below 4"
+                // fires on every order a low post can draw). Same-kind effects
+                // take the strongest; different kinds compose on the disjoint
+                // orders they target (Proviso below 4, Tequila above 3).
                 else if buff.room_type == "TRADING"
-                    && let Some((est, pure_gold)) = order_value_estimate(&buff.description)
+                    && let Some((effect, pure_gold)) =
+                        order_value_shape(&buff.description, defaulted_below)
                 {
-                    BuffResolutionStrategy::OrderValue {
-                        estimated_pct: est,
-                        pure_gold,
-                    }
+                    BuffResolutionStrategy::OrderValue { effect, pure_gold }
                 }
                 // Jaye-style: efficiency scales with the order-limit difference
                 // that teammates' efficiency creates ("increases order acquisition
@@ -1777,26 +1789,57 @@ fn parse_scaling_cap(desc: &str) -> Option<f64> {
         .and_then(|c| c[1].parse().ok())
 }
 
-/// LMD-equivalent value of an order-VALUE trading skill, or `None` if the buff
-/// isn't one. Calibrated from the trading-post economy (500 LMD per Pure Gold
-/// bar; L3 order mix 30/50/20). See the call site for the derivations.
-/// `(estimated LMD-equivalent %, pure_gold)`. `pure_gold` is true for values that
-/// only apply to Pure-Gold orders (Proviso), which a Shamare-type Precious-Metal
-/// shift nullifies; false for flat-LMD (Tequila) and Precious-Metal values.
-fn order_value_estimate(desc: &str) -> Option<(f64, bool)> {
-    if desc.contains("increase the LMD") {
-        Some((10.0, false)) // Tequila-type: flat +N LMD on non-defaulted high orders
-    } else if desc.contains("Pure Gold") && desc.contains("traded <@cc.vup>") {
-        Some((55.0, true)) // Proviso payoff: +2 Pure Gold per defaulted order
-    } else if desc.contains("Precious Metal") || desc.contains("higher-yield") {
-        // Higher-yield order chance (Tailoring etc.). The E0/E1 tier reads "increased
-        // slightly"; the promoted (E2) tier drops "slightly" for a stronger shift. Value them
-        // apart so an E2 trader (e.g. Bibeak's [010]) outranks the un-promoted "slightly" tier
-        // of the same kind of trader (e.g. an E1 Kafka's [001]), while two E2 traders tie.
-        let pct = if desc.contains("slightly") { 5.0 } else { 10.0 };
-        Some((pct, false))
-    } else if desc.contains("Pure Gold") || desc.contains("Defaulted trade") {
-        Some((0.0, true)) // enabler with no direct payoff (Proviso "Contract Law")
+/// A description with its `<@cc.kw>…</>` / `<@cc.vup>…</>` markup removed,
+/// for shapes whose numbers sit inside keyword spans.
+fn plain_text(desc: &str) -> String {
+    static RE_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
+    RE_TAG.replace_all(desc, "").into_owned()
+}
+
+/// "Defaulted trade" threshold: the Pure-Gold count below which a trade is
+/// defaulted, from the buff that defines the rule ("if the amount of Pure
+/// Gold traded is less than 4, it will be considered a Defaulted trade").
+fn defaulted_trade_threshold(buffs: &HashMap<String, Buff>) -> Option<u32> {
+    static RE_DEFAULTED_RULE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"Pure Gold traded is less than (\d+), it will be considered a Defaulted trade")
+            .unwrap()
+    });
+    buffs
+        .values()
+        .filter(|b| b.room_type == "TRADING")
+        .find_map(|b| {
+            RE_DEFAULTED_RULE
+                .captures(&plain_text(&b.description))
+                .and_then(|c| c[1].parse().ok())
+        })
+}
+
+/// `(shape, pure_gold)` of an order-value trading skill. `pure_gold` is true
+/// for values that only apply to Pure-Gold orders (Proviso), which a
+/// Shamare-type Precious-Metal shift kills. `defaulted_below` is the game's
+/// defaulted-trade threshold; without a definer the Proviso payoff cannot be
+/// priced and stays an enabler (never guess).
+fn order_value_shape(desc: &str, defaulted_below: Option<u32>) -> Option<(OrderEffect, bool)> {
+    static RE_HIGH_LMD: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"traded is higher than (\d+)[^.]*?increase the LMD gained by \+(\d+)").unwrap()
+    });
+    static RE_DEFAULTED_GOLD: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"Defaulted trade, Pure Gold traded \+(\d+)").unwrap());
+    let text = plain_text(desc);
+    if let Some(c) = RE_HIGH_LMD.captures(&text) {
+        let above = c[1].parse().ok()?;
+        let lmd = c[2].parse().ok()?;
+        Some((OrderEffect::HighOrderLmdBonus { above, lmd }, false))
+    } else if let Some(c) = RE_DEFAULTED_GOLD.captures(&text) {
+        let bonus = c[1].parse().ok()?;
+        let effect = defaulted_below
+            .map_or(OrderEffect::Enabler, |below| OrderEffect::DefaultedGoldBonus { below, bonus });
+        Some((effect, true))
+    } else if text.contains("higher-yield") {
+        // "increased slightly" (α tiers) vs "increased" (β tiers).
+        Some((OrderEffect::HigherYieldChance { strong: !text.contains("slightly") }, false))
+    } else if text.contains("Pure Gold") || text.contains("Defaulted trade") {
+        Some((OrderEffect::Enabler, true)) // Contract Law and kin: rules, no payoff
     } else {
         None
     }

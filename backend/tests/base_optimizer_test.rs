@@ -20,7 +20,7 @@ use backend::core::grade::base::assignment::{
     team_value,
 };
 use backend::core::grade::base::buff_registry::{
-    BuffResolutionStrategy, build_name_to_char, build_registry,
+    BuffResolutionStrategy, OrderEffect, build_name_to_char, build_registry,
 };
 use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding, UserRoom};
@@ -2283,11 +2283,11 @@ fn locked_synergy_teams_get_no_individual_backup() {
 }
 
 #[test]
-fn proviso_and_tequila_order_value_does_not_stack() {
-    // Proviso's Pure-Gold value (+gold on low/"defaulted" orders) and Tequila's bonus
-    // (+LMD on high orders, which EXCLUDES defaulted orders) target the same orders by
-    // disjoint rules, so they do NOT combine. A post with both reads only the stronger
-    // operator's value, not the sum.
+fn proviso_and_tequila_in_a_level_two_post_read_proviso_alone() {
+    // Order value follows the post's order mix. A level-2 post draws only 2- and
+    // 3-gold orders: every one is "defaulted", so Proviso's +2 gold fires on all
+    // of them (+83%), while Tequila's "+500 LMD above 3 gold" has no 4-gold order
+    // to land on and adds exactly 0. The post reads Proviso alone, not a sum.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -2303,18 +2303,20 @@ fn proviso_and_tequila_order_value_does_not_stack() {
         &drains,
     );
     let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    let expected = (2200.0 / 1200.0 - 1.0) * 100.0;
     assert!(
-        (50.0..60.0).contains(&tp.order_value),
-        "Proviso + Tequila value must be the stronger one (~55%), not the sum (~65%), got {:.1}",
+        (tp.order_value - expected).abs() < 1e-6,
+        "a level-2 post reads Proviso's +83% with nothing from Tequila, got {:.1}",
         tp.order_value
     );
 }
 
 #[test]
 fn proviso_pairs_with_speed_not_another_value_operator() {
-    // Because a second value operator is wasted, Proviso's best partners are the
-    // fastest order-acquisition operators. The optimizer must staff Proviso with the
-    // two fastest speed traders and leave Tequila out.
+    // Tequila only adds value on the 4-gold fifth of a level-3 post's orders that
+    // Proviso leaves alone (~+7 points of value), which loses to any +30% speed
+    // partner. The optimizer must staff Proviso with the two fastest speed traders
+    // and leave Tequila out.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -2335,7 +2337,7 @@ fn proviso_pairs_with_speed_not_another_value_operator() {
     );
     assert!(
         !tp.operators.iter().any(|o| o == "char_486_takila"),
-        "Tequila adds nothing alongside Proviso and must be left out. Got: {:?}",
+        "Tequila's sliver of value loses to a speed partner and must be left out. Got: {:?}",
         tp.operators
     );
 }
@@ -2467,25 +2469,29 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         .iter()
         .map(|slot| (0..3).map(|k| team_id(k, slot)).collect())
         .collect();
+    // The two posts are interchangeable: whichever holds the [A, A, B] block is
+    // "early", the other runs [B, C, C]. (A 24/7-pinned trader can flip which
+    // slot the tiler hands the early block to.)
+    let (early, late) = if tp_ids[0][0] == tp_ids[0][1] { (0, 1) } else { (1, 0) };
     assert_eq!(
-        tp_ids[0][0], tp_ids[0][1],
-        "room0 runs one team for shifts 1+2"
+        tp_ids[early][0], tp_ids[early][1],
+        "the early post runs one team for shifts 1+2: {tp_ids:?}"
     );
     assert_ne!(
-        tp_ids[0][1], tp_ids[0][2],
-        "room0 swaps its team for shift 3"
+        tp_ids[early][1], tp_ids[early][2],
+        "the early post swaps its team for shift 3: {tp_ids:?}"
     );
     assert_eq!(
-        tp_ids[1][1], tp_ids[1][2],
-        "room1 runs one team for shifts 2+3"
+        tp_ids[late][1], tp_ids[late][2],
+        "the late post runs one team for shifts 2+3: {tp_ids:?}"
     );
     assert_ne!(
-        tp_ids[1][0], tp_ids[1][1],
-        "room1 swaps its team after shift 1"
+        tp_ids[late][0], tp_ids[late][1],
+        "the late post swaps its team after shift 1: {tp_ids:?}"
     );
     assert_eq!(
-        tp_ids[0][2], tp_ids[1][0],
-        "the wrap team's block spans room0 shift 3 and room1 shift 1"
+        tp_ids[early][2], tp_ids[late][0],
+        "the wrap team's block spans the early post's shift 3 and the late post's shift 1: {tp_ids:?}"
     );
     let distinct_teams: std::collections::HashSet<&String> = tp_ids.iter().flatten().collect();
     assert_eq!(
@@ -3823,13 +3829,14 @@ fn clause_registry_goldens_on_real_gamedata() {
         "Hoederer's rider requires Ines/W in any Work Area: {hoederer:?}"
     );
 
-    // Proviso "Damages for Breach": Pure-Gold order VALUE, not speed.
+    // Proviso "Damages for Breach": Pure-Gold order VALUE, not speed - kept as
+    // its SHAPE (+2 gold on orders below the game's defaulted threshold of 4)
+    // and priced per post level at scoring time.
     let proviso = &clauses["trade_ord_against[010]"];
     assert!(
-        proviso
-            .iter()
-            .any(|c| c.metric == Metric::OrderValue { pure_gold: true } && c.value > 40.0),
-        "Proviso is Pure-Gold order value: {proviso:?}"
+        proviso.iter().any(|c| c.metric == Metric::OrderValue { pure_gold: true }
+            && c.kind == ClauseKind::OrderMix(OrderEffect::DefaultedGoldBonus { below: 4, bonus: 2 })),
+        "Proviso is a Pure-Gold defaulted-order shape: {proviso:?}"
     );
 
     // Greyy the Lightningbearer: drone skill scales on the base's drone capacity
@@ -4631,30 +4638,38 @@ fn dorm_levels_and_staffed_boosters_shape_recovery() {
     // A real whole-dorm aura holder ("+X/hr to all Operators in that
     // Dormitory"), discovered from the parsed registry.
     use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
+    // The STRONGEST aura owner, so the pick is deterministic (a HashMap walk
+    // could land on a +0.1 "all other Operators" tier, which defers the leak
+    // by less than the hour this test demands).
     let aura_owner = gd
         .building
         .chars
         .iter()
-        .find(|(_, c)| {
-            c.buff_char.iter().any(|bc| {
-                bc.buff_data.iter().any(|bd| {
-                    matches!(
-                        registry.get(&bd.buff_id),
-                        Some(BuffResolutionStrategy::MoraleModifier {
-                            recovery_per_hour,
-                            is_self_only: false,
-                            single_target: false,
-                            base_wide: false,
-                        }) if *recovery_per_hour > 0.0
-                    ) && gd
-                        .building
+        .filter_map(|(id, c)| {
+            let best = c
+                .buff_char
+                .iter()
+                .flat_map(|bc| bc.buff_data.iter())
+                .filter(|bd| {
+                    gd.building
                         .buffs
                         .get(&bd.buff_id)
                         .is_some_and(|b| b.room_type == "DORMITORY")
                 })
-            })
+                .filter_map(|bd| match registry.get(&bd.buff_id) {
+                    Some(BuffResolutionStrategy::MoraleModifier {
+                        recovery_per_hour,
+                        is_self_only: false,
+                        single_target: false,
+                        base_wide: false,
+                    }) if *recovery_per_hour > 0.0 => Some(*recovery_per_hour),
+                    _ => None,
+                })
+                .fold(0.0_f64, f64::max);
+            (best > 0.0).then_some((id.clone(), best))
         })
-        .map(|(id, _)| id.clone())
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap().then_with(|| b.0.cmp(&a.0)))
+        .map(|(id, _)| id)
         .expect("some operator owns a whole-dorm recovery aura");
 
     // Trading duty with a drain rider so the cycle leaks: Texas (+0.25/hr =
@@ -5705,13 +5720,11 @@ fn shift_rotation_supports_252_layout() {
             .clone()
             .expect("production cells carry a team id")
     };
-    assert_eq!(team_id(0, "tp0"), team_id(1, "tp0"), "tp0 works shifts 1+2");
-    assert_ne!(
-        team_id(1, "tp0"),
-        team_id(2, "tp0"),
-        "tp0 swaps for shift 3"
-    );
-    assert_eq!(team_id(1, "tp1"), team_id(2, "tp1"), "tp1 works shifts 2+3");
+    // Whichever post holds the shifts-1+2 block is "early"; the other runs 2+3.
+    let (early, late) = if team_id(0, "tp0") == team_id(1, "tp0") { ("tp0", "tp1") } else { ("tp1", "tp0") };
+    assert_eq!(team_id(0, early), team_id(1, early), "{early} works shifts 1+2");
+    assert_ne!(team_id(1, early), team_id(2, early), "{early} swaps for shift 3");
+    assert_eq!(team_id(1, late), team_id(2, late), "{late} works shifts 2+3");
 
     // Both plants and the CC stay staffed every shift, cycling two squads.
     for slot in ["p0", "p1", "cc"] {
@@ -5802,8 +5815,12 @@ fn recommended_rotation_survives_its_own_morale_sim() {
         // that the rotation genuinely parks her in a dormitory. The invariant
         // that matters is the verdict above (nobody actually runs dry over the
         // week); overflow is a pressure gauge, so hold it to a small bound.
+        // A third bed since the order-mix model: Shamare's printer now out-values
+        // Proviso's team, so Fiammetta pins HER 24/7 - and her post cycles two
+        // fresh bodies every shift instead of one three-op team per block, so
+        // more distinct operators need a bed at peak.
         assert!(
-            report.dorm_overflow <= 2,
+            report.dorm_overflow <= 3,
             "{factories}-factory dorms are {} beds short at peak",
             report.dorm_overflow
         );
@@ -7394,6 +7411,49 @@ fn waai_fu_ignores_factory_drain_auras() {
     assert!(
         !has_drain_aura_immunity(&waaifu, "TRADING", &registry, &gd.building),
         "her skill is factory-scoped"
+    );
+}
+
+/// Order VALUE follows the post's level. Proviso's "+2 gold on orders below
+/// 4" fires on every order a level-1 post draws (2-gold only: +100%), on
+/// every order a level-2 post draws (2- and 3-gold: +83%), but leaves the
+/// 4-gold orders only a level-3 post draws untouched (+55%) - which is why
+/// she shines in a 2/5/2 base's level-2 posts. Tequila's "+500 LMD above 3
+/// gold" needs the 4-gold orders, so it is worth 0 below level 3 and
+/// composes with Proviso at level 3 on the orders she leaves alone.
+#[test]
+fn order_value_follows_the_posts_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    const PROVISO: &str = "char_4032_provs";
+    const TEQUILA: &str = "char_486_takila";
+    let order_value = |crew: &[&str], level: i32| -> f64 {
+        let mut building = UserBuilding {
+            rooms: vec![room("tp", "TRADING", level)],
+        };
+        building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
+        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms.iter().find(|r| r.slot_id == "tp").expect("post").order_value
+    };
+    let close = |a: f64, b: f64| (a - b).abs() < 1e-6;
+    assert!(close(order_value(&[PROVISO], 1), 100.0), "L1: {}", order_value(&[PROVISO], 1));
+    assert!(
+        close(order_value(&[PROVISO], 2), (2200.0 / 1200.0 - 1.0) * 100.0),
+        "L2: {}",
+        order_value(&[PROVISO], 2)
+    );
+    assert!(
+        close(order_value(&[PROVISO], 3), (2250.0 / 1450.0 - 1.0) * 100.0),
+        "L3: {}",
+        order_value(&[PROVISO], 3)
+    );
+    assert!(close(order_value(&[TEQUILA], 2), 0.0), "Tequila needs 4-gold orders");
+    assert!(
+        order_value(&[PROVISO, TEQUILA], 3) > order_value(&[PROVISO], 3),
+        "Tequila composes with Proviso on the 4-gold orders"
     );
 }
 
