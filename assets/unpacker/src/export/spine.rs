@@ -3956,7 +3956,6 @@ pub fn is_l2d_compositor(shader: &str) -> bool {
     })
 }
 
-/// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,
 /// The `_MainColorACtrl` a material's shader actually READS, or 0.0 (the identity) when it
 /// does not, or when the gate is off.
 ///
@@ -4007,6 +4006,7 @@ pub(crate) fn anchor_k(ctrl: f32, alpha: f32) -> f32 {
 }
 
 /// read out of the shader's own GLSL rather than inferred from how the authored value
+/// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,
 /// looks. `Torappu/Particles-L2D/Disturb/Disturb(CustomData)`:
 ///
 /// ```glsl
