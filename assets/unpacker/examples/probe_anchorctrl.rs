@@ -104,7 +104,9 @@ fn main() {
             }
         }
     }
-    println!("materials on '{want}': {total}   ctrl != 0: {ctrl_on}   live (ctrl != 0 and alpha != 1): {live}");
+    println!(
+        "materials on '{want}': {total}   ctrl != 0: {ctrl_on}   live (ctrl != 0 and alpha != 1): {live}"
+    );
     for (s, (n, l)) in &per_shader {
         println!("  {s:<58} {n:>5} materials, {l:>4} live");
     }

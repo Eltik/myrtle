@@ -16,12 +16,20 @@ fn pid(v: &Value) -> i64 {
 }
 
 fn xyz(v: Option<&Value>) -> [f64; 3] {
-    let g = |k: &str| v.and_then(|o| o.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+    let g = |k: &str| {
+        v.and_then(|o| o.get(k))
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+    };
     [g("x"), g("y"), g("z")]
 }
 
 fn quat(v: Option<&Value>) -> [f64; 4] {
-    let g = |k: &str| v.and_then(|o| o.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+    let g = |k: &str| {
+        v.and_then(|o| o.get(k))
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+    };
     [g("x"), g("y"), g("z"), g("w")]
 }
 
@@ -75,7 +83,8 @@ fn main() {
                 xforms.insert(obj.path_id, v);
             }
         }
-        let mut targets: Vec<(&i64, &String)> = gos.iter().filter(|(_, n)| n.contains(&want)).collect();
+        let mut targets: Vec<(&i64, &String)> =
+            gos.iter().filter(|(_, n)| n.contains(&want)).collect();
         targets.sort_by(|a, b| a.1.cmp(b.1));
         for (go, name) in targets {
             let Some(&tid) = xform_of_go.get(go) else {

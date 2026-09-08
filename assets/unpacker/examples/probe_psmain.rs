@@ -64,7 +64,10 @@ fn main() {
             if !go.contains(&want) {
                 continue;
             }
-            let f = |k: &str| v.get(k).map_or_else(|| "absent".to_string(), Value::to_string);
+            let f = |k: &str| {
+                v.get(k)
+                    .map_or_else(|| "absent".to_string(), Value::to_string)
+            };
             println!("=== GO '{go}'");
             for k in [
                 "lengthInSec",
@@ -80,30 +83,62 @@ fn main() {
                 "moveWithCustomTransform",
             ] {
                 let s = f(k);
-                println!("  {k:18} {}", if s.len() > 400 { format!("{}..", &s[..400]) } else { s });
+                println!(
+                    "  {k:18} {}",
+                    if s.len() > 400 {
+                        format!("{}..", &s[..400])
+                    } else {
+                        s
+                    }
+                );
             }
             // The per-particle CustomData module (the vertex-stream payload a Ram material reads
             // its dissolve amount from) and the force module, whole, so a clock or a motion
             // that the export summarises can be checked against its source.
             for k in ["ForceModule", "VelocityModule"] {
                 let s = f(k);
-                println!("  {k:18} {}", if s.len() > 600 { format!("{}..", &s[..600]) } else { s });
+                println!(
+                    "  {k:18} {}",
+                    if s.len() > 600 {
+                        format!("{}..", &s[..600])
+                    } else {
+                        s
+                    }
+                );
             }
             // CustomData: the vector components only (mode, count, each component's MinMaxCurve
             // with its scalar and key list); the colour gradients are omitted.
             if let Some(cd) = v.get("CustomDataModule").and_then(Value::as_object) {
-                let mut keys: Vec<&String> = cd.keys().filter(|k| !k.starts_with("color")).collect();
+                let mut keys: Vec<&String> =
+                    cd.keys().filter(|k| !k.starts_with("color")).collect();
                 keys.sort();
                 for k in keys {
                     let s = cd[k].to_string();
-                    println!("  CustomData.{k:22} {}", if s.len() > 1500 { format!("{}..", &s[..1500]) } else { s });
+                    println!(
+                        "  CustomData.{k:22} {}",
+                        if s.len() > 1500 {
+                            format!("{}..", &s[..1500])
+                        } else {
+                            s
+                        }
+                    );
                 }
             }
             if let Some(im) = v.get("InitialModule") {
-                let g = |k: &str| im.get(k).map_or_else(|| "absent".to_string(), Value::to_string);
+                let g = |k: &str| {
+                    im.get(k)
+                        .map_or_else(|| "absent".to_string(), Value::to_string)
+                };
                 for k in ["startLifetime", "startSize", "startSpeed"] {
                     let s = g(k);
-                    println!("  Initial.{k:10} {}", if s.len() > 300 { format!("{}..", &s[..300]) } else { s });
+                    println!(
+                        "  Initial.{k:10} {}",
+                        if s.len() > 300 {
+                            format!("{}..", &s[..300])
+                        } else {
+                            s
+                        }
+                    );
                 }
             }
         }

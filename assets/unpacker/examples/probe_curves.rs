@@ -333,7 +333,11 @@ fn main() {
                 if *dim != 3 && std::env::var("PROBE_ALLDIMS").as_deref() != Ok("1") {
                     continue; // only position/scale are interesting here
                 }
-                println!("\n   -- {pname}  {aname}  (curves {}..{}, dim {dim})", o, o + dim - 1);
+                println!(
+                    "\n   -- {pname}  {aname}  (curves {}..{}, dim {dim})",
+                    o,
+                    o + dim - 1
+                );
                 println!("      {:>6} {:>12} {:>12} {:>12}", "t", "x", "y", "z");
                 let mut t = 0.0f32;
                 let t_end = std::env::var("PROBE_END")
@@ -342,8 +346,16 @@ fn main() {
                     .unwrap_or(6.6);
                 while t <= t_end {
                     let x = val(*o, t).unwrap_or(f32::NAN);
-                    let y = if *dim >= 2 { val(o + 1, t).unwrap_or(f32::NAN) } else { f32::NAN };
-                    let z = if *dim >= 3 { val(o + 2, t).unwrap_or(f32::NAN) } else { f32::NAN };
+                    let y = if *dim >= 2 {
+                        val(o + 1, t).unwrap_or(f32::NAN)
+                    } else {
+                        f32::NAN
+                    };
+                    let z = if *dim >= 3 {
+                        val(o + 2, t).unwrap_or(f32::NAN)
+                    } else {
+                        f32::NAN
+                    };
                     println!("      {t:>6.2} {x:>12.4} {y:>12.4} {z:>12.4}");
                     t += std::env::var("PROBE_STEP")
                         .ok()

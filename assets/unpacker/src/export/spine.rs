@@ -4006,8 +4006,8 @@ pub(crate) fn anchor_k(ctrl: f32, alpha: f32) -> f32 {
 }
 
 /// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,
-/// looks. `Torappu/Particles-L2D/Disturb/Disturb(CustomData)`:
 /// read out of the shader's own GLSL rather than inferred from how the authored value
+/// looks. `Torappu/Particles-L2D/Disturb/Disturb(CustomData)`:
 ///
 /// ```glsl
 /// u_xlat16_1 = texture(_MainTex, uv) * _MainColor * vs_COLOR0;
