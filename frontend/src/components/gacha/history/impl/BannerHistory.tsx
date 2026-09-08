@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
@@ -27,6 +28,10 @@ const RARITY_FILTERS = [6, 5, 4, 3] as const;
 
 const PAGE_SIZE = 50;
 
+// Stable empty identities, so the memos below do not see a new value each render.
+const EMPTY_RECORDS: IGachaItem[] = [];
+const EMPTY_COUNTS = new Map<number, number>();
+
 function fmtDateTime(ts: number): string {
     if (!ts) return "-";
     return new Date(ts).toLocaleString("en-US", {
@@ -38,14 +43,31 @@ function fmtDateTime(ts: number): string {
     });
 }
 
-function PullTable({ items, operatorsById, bannersById, total, emptyMessage }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number; emptyMessage?: string }) {
+function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onClearFilter }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number; emptyMessage?: string; onClearFilter?: () => void }) {
     const [page, setPage] = useState(0);
     const sorted = useMemo(() => [...items].sort((a, b) => b.at - a.at), [items]);
     const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
     const pageItems = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     if (sorted.length === 0) {
-        return <div className="py-10 text-center font-sans text-muted-foreground text-sm">{emptyMessage ?? "No pulls recorded for this banner type."}</div>;
+        // `onClearFilter` is only passed when a filter is what emptied the table, so
+        // the way out is reachable from inside the empty state - including the case
+        // where the chip that would undo it has a 0 count on this tab.
+        return (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <p className="m-0 font-sans text-muted-foreground text-sm">{emptyMessage ?? "No pulls recorded for this banner type."}</p>
+                {/*
+                 * `min-h-10` gives a mouse a 40px target, and `Button`'s own
+                 * pointer-coarse rule takes the hit area to 44px on touch. Neither is
+                 * keyed to a width breakpoint, so both hold at any size and any zoom.
+                 */}
+                {onClearFilter ? (
+                    <Button className="min-h-10" variant="outline" onClick={onClearFilter}>
+                        Show all rarities
+                    </Button>
+                ) : null}
+            </div>
+        );
     }
 
     return (
@@ -135,18 +157,72 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     const [activeTab, setActiveTab] = useState<ClientGachaGroup>("limited");
     const [activeRarities, setActiveRarities] = useState<Set<number>>(() => new Set(RARITY_FILTERS));
 
-    const activeRecords = records ? records[activeTab].records : [];
+    const activeRecords = useMemo(() => (records ? records[activeTab].records : EMPTY_RECORDS), [records, activeTab]);
 
-    const rarityCounts = useMemo(() => {
-        const counts = new Map<number, number>();
-        for (const item of activeRecords) {
-            const star = Number(item.star);
-            counts.set(star, (counts.get(star) ?? 0) + 1);
+    /**
+     * Every tab's pull count broken down by rarity, in one pass over the whole
+     * history. The page holds all records (`/gacha/stored-records` is unpaginated),
+     * so this is the only place that has to walk them - it is keyed on `records`
+     * alone, so toggling a rarity or switching tabs does not re-walk anything.
+     */
+    const countsByTabRarity = useMemo(() => {
+        const byTab = new Map<ClientGachaGroup, Map<number, number>>();
+        for (const tab of TABS) {
+            const counts = new Map<number, number>();
+            for (const item of records?.[tab.key].records ?? EMPTY_RECORDS) {
+                const star = Number(item.star);
+                counts.set(star, (counts.get(star) ?? 0) + 1);
+            }
+            byTab.set(tab.key, counts);
         }
-        return counts;
-    }, [activeRecords]);
+        return byTab;
+    }, [records]);
+
+    /**
+     * What each tab's badge shows: pulls in that tab that survive the rarity
+     * filter, so the badge always matches the rows the tab would render. Summing
+     * the table above is 4 tabs x 4 rarities regardless of history size.
+     */
+    const filteredTabCounts = useMemo(() => {
+        const totals = new Map<ClientGachaGroup, number>();
+        for (const tab of TABS) {
+            const counts = countsByTabRarity.get(tab.key);
+            let total = 0;
+            for (const rarity of activeRarities) total += counts?.get(rarity) ?? 0;
+            totals.set(tab.key, total);
+        }
+        return totals;
+    }, [countsByTabRarity, activeRarities]);
+
+    // Deliberately NOT filtered by rarity: a chip has to keep showing what
+    // selecting it would bring back, or a deselected chip would read 0 forever.
+    const rarityCounts = countsByTabRarity.get(activeTab) ?? EMPTY_COUNTS;
 
     const filteredRecords = useMemo(() => activeRecords.filter((item) => activeRarities.has(Number(item.star))), [activeRecords, activeRarities]);
+
+    const isFiltered = activeRarities.size !== RARITY_FILTERS.length;
+    const activeTabLabel = TABS.find((t) => t.key === activeTab)?.label ?? "";
+    // Both sides of "x of y" come off work already done: the filtered figure from
+    // the counts table, the unfiltered one straight off the bucket. No new walk.
+    const visibleCount = filteredTabCounts.get(activeTab) ?? 0;
+    const activeTabTotal = records?.[activeTab].total ?? 0;
+
+    const rarityFilterLabel = useMemo(() => {
+        const picked = RARITY_FILTERS.filter((r) => activeRarities.has(r));
+        if (picked.length === 0) return "No rarities selected";
+        if (picked.length === 1) return `${picked[0]}\u2605 only`;
+        return picked.map((r) => `${r}\u2605`).join(" ");
+    }, [activeRarities]);
+
+    const rarityGroupRef = useRef<HTMLDivElement>(null);
+
+    const clearRarityFilter = () => {
+        setActiveRarities(new Set(RARITY_FILTERS));
+        // Both controls that call this unmount as a result of it. Without moving
+        // focus first, a keyboard user is dropped onto <body> and loses their
+        // place; the rarity group is what they were operating, so land there.
+        rarityGroupRef.current?.querySelector<HTMLButtonElement>("button:not([disabled])")?.focus();
+    };
 
     const toggleRarity = (rarity: number) => {
         setActiveRarities((prev) => {
@@ -193,9 +269,18 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Every pull, sorted newest first.</h2>
             </header>
 
+            {/*
+             * No visible summary: the rarity chips already show which rarities are
+             * on and what each holds. This is the same state for screen readers,
+             * which cannot see the chips' pressed styling at a glance - it is
+             * always mounted so the region exists before its text changes, and
+             * sr-only keeps it out of flex flow entirely, costing no space.
+             */}
+            <output className="sr-only">{isFiltered ? `Filtered to ${rarityFilterLabel}. Showing ${formatNumber(visibleCount)} of ${formatNumber(activeTabTotal)} ${activeTabLabel} pulls.` : "Showing all rarities."}</output>
+
             <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
                 {TABS.map((tab) => {
-                    const count = records[tab.key].total;
+                    const count = filteredTabCounts.get(tab.key) ?? 0;
                     const isActive = activeTab === tab.key;
                     return (
                         <button
@@ -214,11 +299,21 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">Rarity</span>
-                <div className="inline-flex gap-0.75 rounded-[9px] border border-border bg-muted p-0.75">
+                {/*
+                 * `flex-wrap` is inert while the four chips fit on one line, which
+                 * is every width above roughly 320px. Below that the group would
+                 * otherwise be an unbreakable inline-flex row and the last chip
+                 * would be clipped out of reach - the chips are the only filter
+                 * control, so one has to be able to reach all of them.
+                 */}
+                <div ref={rarityGroupRef} className="inline-flex flex-wrap gap-0.75 rounded-[9px] border border-border bg-muted p-0.75">
                     {RARITY_FILTERS.map((rarity) => {
                         const isActive = activeRarities.has(rarity);
                         const count = rarityCounts.get(rarity) ?? 0;
-                        const isDisabled = count === 0;
+                        // A selected chip stays clickable even at 0 on this tab: otherwise
+                        // filtering to 6* and switching to a tab without any greys out the
+                        // one control that would undo it.
+                        const isDisabled = count === 0 && !isActive;
                         return (
                             <button
                                 key={rarity}
@@ -245,7 +340,8 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 operatorsById={operatorsById}
                 bannersById={bannersById}
                 total={filteredRecords.length}
-                emptyMessage={activeRarities.size === 0 ? "Select at least one rarity to display pulls." : activeRarities.size === RARITY_FILTERS.length ? "No pulls recorded for this banner type." : "No pulls match the selected rarity filter."}
+                emptyMessage={activeRarities.size === 0 ? "Select at least one rarity to display pulls." : isFiltered ? `No ${rarityFilterLabel.replace(" only", "")} pulls in ${activeTabLabel}. Other rarities are hidden by the filter.` : "No pulls recorded for this banner type."}
+                onClearFilter={isFiltered ? clearRarityFilter : undefined}
             />
         </section>
     );
