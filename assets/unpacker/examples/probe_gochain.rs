@@ -126,11 +126,33 @@ fn main() {
                 wsx *= ls[0];
                 wsy *= ls[1];
                 wrot += ang;
+                // A rotation that is not a pure z turn is printed as its quaternion and as
+                // the tilt it carries: the angle between the node's local z axis and the
+                // world z axis (the camera axis), plus the intrinsic x/y/z Euler angles, so
+                // a tilted emitter's plane can be read instead of only flagged.
+                let tilt = if pure {
+                    String::new()
+                } else {
+                    let [x, y, z, w] = q;
+                    // Local z axis rotated by q, third column of the rotation matrix.
+                    let zx = 2.0 * (x * z + w * y);
+                    let zy = 2.0 * (y * z - w * x);
+                    let zz = 1.0 - 2.0 * (x * x + y * y);
+                    let tilt_deg = zz.clamp(-1.0, 1.0).acos().to_degrees();
+                    let ex = (2.0 * (w * x + y * z))
+                        .atan2(1.0 - 2.0 * (x * x + y * y))
+                        .to_degrees();
+                    let ey = (2.0 * (w * y - z * x)).clamp(-1.0, 1.0).asin().to_degrees();
+                    let ez = (2.0 * (w * z + x * y))
+                        .atan2(1.0 - 2.0 * (y * y + z * z))
+                        .to_degrees();
+                    format!(
+                        " (NOT pure z: q ({x:+.4}, {y:+.4}, {z:+.4}, {w:+.4}) local z -> ({zx:+.3}, {zy:+.3}, {zz:+.3}), tilt {tilt_deg:.2} deg, euler xyz ({ex:+.2}, {ey:+.2}, {ez:+.2}))"
+                    )
+                };
                 lines.push(format!(
                     "    {nm:<40} local ({:+9.3}, {:+9.3}) scale ({:.4}, {:.4}) rotZ {:+8.2}{}   -> world ({:+9.3}, {:+9.3}) scale ({:.4}, {:.4}) rot {:+8.2}",
-                    lp[0], lp[1], ls[0], ls[1], ang,
-                    if pure { "" } else { " (NOT pure z, quaternion ignored)" },
-                    wx, wy, wsx, wsy, wrot
+                    lp[0], lp[1], ls[0], ls[1], ang, tilt, wx, wy, wsx, wsy, wrot
                 ));
             }
             println!("== '{name}'");
