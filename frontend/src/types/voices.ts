@@ -41,7 +41,7 @@ export interface IUnlockParam {
 }
 
 export interface IVoiceData {
-    voiceURL: string | null;
+    voiceUrl: string | null;
     language: LangType | null;
     cvName: string[] | null;
 }
