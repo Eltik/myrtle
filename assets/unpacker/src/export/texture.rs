@@ -117,17 +117,47 @@ pub fn decode_texture_object(
     }))
 }
 
+/// THE PNG DEFLATE LEVEL (`DYNCHAR_PNG_LEVEL`, missing = the crate's `Fast`, today's bytes).
+///
+/// Every page the exporter writes goes through `image::save_buffer`, whose PNG default is
+/// `CompressionType::Fast`: zlib header 78 01, FLEVEL 0, on every file in the tree. The
+/// same decoded RGBA re-deflated at a higher level is pixel-identical by construction and
+/// measurably smaller: on the ten largest dynchar pages (102.7 MB) the crate's `Default`
+/// (balanced) level writes 89.3 MB, 13.0 percent less, at 0.8 s a page against 0.05, and
+/// `Best` (high) 89.0 MB at 2.3 s a page; on ten random pages 20.0 and 20.4 percent
+/// (2026-09-08, `probe_pngbest`). `default` and `best` select those; anything else, or the
+/// variable missing, keeps `Fast` so the export stays byte-identical.
+pub fn png_compression() -> image::codecs::png::CompressionType {
+    use image::codecs::png::CompressionType;
+    match std::env::var("DYNCHAR_PNG_LEVEL").as_deref() {
+        Ok("default") => CompressionType::Default,
+        Ok("best") => CompressionType::Best,
+        _ => CompressionType::Fast,
+    }
+}
+
+/// Write one RGBA8 image as PNG at the configured level. At `Fast` this is exactly
+/// `image::save_buffer`, byte for byte; otherwise the crate's encoder at that level with
+/// adaptive filters.
+pub fn write_png(path: &Path, rgba: &[u8], w: u32, h: u32) -> Result<(), io::Error> {
+    use image::ImageEncoder;
+    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+    let level = png_compression();
+    if matches!(level, CompressionType::Fast) {
+        return image::save_buffer(path, rgba, w, h, image::ColorType::Rgba8)
+            .map_err(io::Error::other);
+    }
+    let file = std::fs::File::create(path)?;
+    let mut out = std::io::BufWriter::new(file);
+    PngEncoder::new_with_quality(&mut out, level, FilterType::Adaptive)
+        .write_image(rgba, w, h, image::ExtendedColorType::Rgba8)
+        .map_err(io::Error::other)
+}
+
 /// Save a decoded texture to disk as PNG.
 pub fn save_decoded_texture(tex: &DecodedTexture, output_dir: &Path) -> Result<(), io::Error> {
     let path = output_dir.join(format!("{}.png", tex.name));
-    image::save_buffer(
-        &path,
-        &tex.rgba,
-        tex.width,
-        tex.height,
-        image::ColorType::Rgba8,
-    )
-    .map_err(io::Error::other)
+    write_png(&path, &tex.rgba, tex.width, tex.height)
 }
 
 /// Decode and save a `Texture2D` object as PNG (convenience wrapper).

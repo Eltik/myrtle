@@ -5604,10 +5604,17 @@ fn fnv1a64(bytes: &[u8]) -> u64 {
 /// adaptive filters), so a pooled file is byte-identical to the file it replaces.
 pub(crate) fn encode_png(rgba: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
     use image::ImageEncoder;
+    use image::codecs::png::{FilterType, PngEncoder};
     let mut out = Vec::with_capacity(rgba.len() / 4);
-    image::codecs::png::PngEncoder::new(&mut out)
-        .write_image(rgba, w, h, image::ExtendedColorType::Rgba8)
-        .ok()?;
+    // The same level every other page takes (`texture::png_compression`); at `Fast` this is
+    // `PngEncoder::new`, the encoder `save_buffer` uses, byte for byte.
+    PngEncoder::new_with_quality(
+        &mut out,
+        super::texture::png_compression(),
+        FilterType::Adaptive,
+    )
+    .write_image(rgba, w, h, image::ExtendedColorType::Rgba8)
+    .ok()?;
     Some(out)
 }
 
@@ -5646,14 +5653,7 @@ pub(crate) fn save_tex(
     {
         return (rel, true);
     }
-    let ok = image::save_buffer(
-        tex_dir.join(format!("{idx}.png")),
-        rgba,
-        w,
-        h,
-        image::ColorType::Rgba8,
-    )
-    .is_ok();
+    let ok = super::texture::write_png(&tex_dir.join(format!("{idx}.png")), rgba, w, h).is_ok();
     (legacy_tex_rel(tex_dir, spine_dir, idx), ok)
 }
 
@@ -5662,6 +5662,9 @@ pub(crate) fn save_tex(
 /// a mask that IS the layer's own `_MainTex` costs no extra slot. Unlike the artwork it
 /// is never alpha-merged and never enters `tex_px`: the luminance classifier reads that
 /// map to judge what a layer LOOKS like, and a noise mask is shader input, not paint.
+// Nine arguments: the pool added the skin directory and the index -> path table beside
+// the per-call index map they extend; bundling them would be a struct for one caller.
+#[allow(clippy::too_many_arguments)]
 fn resolve_scene_mask(
     pid: Option<i64>,
     val: Option<&Value>,
@@ -5882,7 +5885,10 @@ fn derive_backdrop_transform(
         let page = usize::try_from(c.idx)
             .ok()
             .and_then(|i| tex_names.get(i))
-            .map_or_else(|| tex_dir.join(format!("{}.png", c.idx)), |rel| spine_dir.join(rel));
+            .map_or_else(
+                || tex_dir.join(format!("{}.png", c.idx)),
+                |rel| spine_dir.join(rel),
+            );
         let Ok(tex) = image::open(page) else {
             continue;
         };

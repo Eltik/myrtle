@@ -137,7 +137,7 @@ pub fn extract_portraits(
                 };
 
                 let path = output_dir.join(format!("{}.png", sprite.name));
-                match image::save_buffer(&path, &data, out_w, out_h, image::ColorType::Rgba8) {
+                match super::texture::write_png(&path, &data, out_w, out_h) {
                     Ok(()) => count += 1,
                     Err(e) => eprintln!("  error saving portrait {}: {e}", sprite.name),
                 }
