@@ -14,8 +14,7 @@ use crate::core::gamedata::types::building::BuildingDataFile;
 use super::assignment::CcCondition;
 use super::buff_registry::{BuffResolutionStrategy, OrderEffect};
 use super::clause::{
-    Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt,
-    clauses_from_strategy,
+    Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt, clauses_from_strategy,
 };
 use super::types::OperatorBaseProfile;
 
@@ -105,7 +104,11 @@ pub struct RoomEval<'a> {
 
 pub struct RoomTotals {
     pub speed_pct: f64,
+    /// Order VALUE: LMD per hour over a bare post's, minus one (percent).
     pub order_value_pct: f64,
+    /// Order gold THROUGHPUT: Pure Gold per hour over a bare post's, minus
+    /// one (percent) - the part of the value that draws bars from stock.
+    pub order_gold_pct: f64,
 }
 
 /// Score one room's team: the clause walk (P0-P1), pool settlement (P2), peer
@@ -604,8 +607,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     // priced together against the post's order rarity, so Proviso is worth
     // more in a level-2 post than a level-3 one, and Tequila composes with
     // her on the 4-gold orders she leaves alone.
-    let order_value = if order_items.is_empty() {
-        0.0
+    let (order_value, order_gold) = if order_items.is_empty() {
+        (0.0, 0.0)
     } else {
         let level = ev
             .facility_counts
@@ -613,7 +616,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             .map_or(i32::MAX, |lv| i32::try_from(*lv).unwrap_or(i32::MAX));
         let rarity = super::order_mix::rarity_for_level(ev.building_data, level);
         let effects: Vec<OrderEffect> = order_items.iter().map(|o| o.effect.clone()).collect();
-        super::order_mix::value_pct(&effects, rarity)
+        (
+            super::order_mix::value_pct(&effects, rarity),
+            super::order_mix::gold_pct(&effects, rarity),
+        )
     };
 
     // Threshold-gated Control-Center bonuses buff the POST itself, so they
@@ -657,6 +663,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     RoomTotals {
         speed_pct: speed,
         order_value_pct: order_value,
+        order_gold_pct: order_gold,
     }
 }
 

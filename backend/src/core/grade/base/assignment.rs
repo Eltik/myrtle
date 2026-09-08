@@ -272,16 +272,13 @@ pub fn resolve_layout_branches(
     building_data: &BuildingDataFile,
 ) -> HashMap<String, BuffResolutionStrategy> {
     let count_of = |term: &str| -> usize {
-        building_data
-            .layout_terms
-            .get(term)
-            .map_or(0, |rooms| {
-                building
-                    .rooms
-                    .iter()
-                    .filter(|r| rooms.iter().any(|t| t == &r.room_type))
-                    .count()
-            })
+        building_data.layout_terms.get(term).map_or(0, |rooms| {
+            building
+                .rooms
+                .iter()
+                .filter(|r| rooms.iter().any(|t| t == &r.room_type))
+                .count()
+        })
     };
     registry
         .iter()
@@ -923,6 +920,7 @@ pub(crate) fn assign_auxiliary_rooms(
                 operators: crew,
                 total_efficiency: eff,
                 order_value: 0.0,
+                order_gold: 0.0,
                 locked: false,
                 ledger: Vec::new(),
                 fill: None,
@@ -966,6 +964,7 @@ fn append_support_rooms(
                 operators: members,
                 total_efficiency: 0.0,
                 order_value: 0.0,
+                order_gold: 0.0,
                 locked: false,
                 ledger: Vec::new(),
                 fill: None,
@@ -1746,11 +1745,35 @@ pub fn compute_current_assignment(
     morale_drains: &HashMap<String, f64>,
     shift: Option<usize>,
 ) -> BaseAssignment {
+    compute_live_assignment(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        shift,
+        &HashMap::new(),
+    )
+}
+
+/// [`compute_current_assignment`] with each seated operator's REAL morale
+/// (the bars as the game last wrote them, `sustain_sim::synced_live_morale`),
+/// so morale-conditional pool grants settle as the synced base showed them.
+/// An empty map keeps the steady-state weights.
+pub fn compute_live_assignment(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    shift: Option<usize>,
+    live_morale: &HashMap<String, f64>,
+) -> BaseAssignment {
     let mut facility_counts =
         effective_facility_counts(building, operators, registry, building_data);
     // The live base has REAL seats, so assignment-fed pools (Senshi's Monster
     // Meals) settle exactly and ride the synthetic channel into the scorer.
-    let settled = settle_current_pools(building, operators, registry, building_data);
+    let settled = settle_current_pools(building, operators, registry, building_data, live_morale);
     for (resource, points) in &settled {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         facility_counts.insert(
@@ -1858,7 +1881,7 @@ pub fn compute_current_assignment(
             None
         };
         let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
-        let (speed, value) = compute_team_efficiency(
+        let totals = compute_team_totals(
             &ops,
             &room.room_type,
             formula.as_deref(),
@@ -1869,6 +1892,11 @@ pub fn compute_current_assignment(
             total_dorm_levels,
             morale_drains,
             &cc_conditions,
+        );
+        let (speed, value, gold) = (
+            totals.speed_pct,
+            totals.order_value_pct,
+            totals.order_gold_pct,
         );
         let eff = speed + global;
         total += eff;
@@ -1934,6 +1962,7 @@ pub fn compute_current_assignment(
             operators: ops,
             total_efficiency: eff,
             order_value: value,
+            order_gold: gold,
             locked,
             ledger,
             fill,
@@ -3161,7 +3190,7 @@ fn reallocate_across_formulas(
     let op_index = build_op_index(operators);
     // Recompute a room as if staffed by `ops` (efficiency incl. global, order value).
     let scored = |tpl: &RoomAssignment, ops: Vec<String>| -> RoomAssignment {
-        let (speed, value) = compute_team_efficiency(
+        let totals = compute_team_totals(
             &ops,
             &tpl.room_type,
             tpl.formula_type.as_deref(),
@@ -3176,8 +3205,9 @@ fn reallocate_across_formulas(
         let global = *global_bonuses.get(&tpl.room_type).unwrap_or(&0.0);
         RoomAssignment {
             operators: ops,
-            total_efficiency: speed + global,
-            order_value: value,
+            total_efficiency: totals.speed_pct + global,
+            order_value: totals.order_value_pct,
+            order_gold: totals.order_gold_pct,
             ..tpl.clone()
         }
     };
@@ -3409,7 +3439,7 @@ fn assign_single_room(
     let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
 
     // Mode 1: best normal team (exhaustive search over top candidate combinations)
-    let (normal_ops, normal_speed, normal_value) = best_team_for_room(
+    let (normal_ops, normal_speed, normal_value, normal_gold) = best_team_for_room(
         room,
         formula_type,
         operators,
@@ -3445,10 +3475,10 @@ fn assign_single_room(
     // Pick the mode by realized value (order value multiplies trading LMD).
     let normal_score = room_search_score(&room.room_type, normal_speed, normal_value);
     let auto_score = room_search_score(&room.room_type, auto_speed, 0.0);
-    let (room_ops, speed, value) = if auto_score > normal_score && !auto_ops.is_empty() {
-        (auto_ops, auto_speed, 0.0)
+    let (room_ops, speed, value, gold) = if auto_score > normal_score && !auto_ops.is_empty() {
+        (auto_ops, auto_speed, 0.0, 0.0)
     } else {
-        (normal_ops, normal_speed, normal_value)
+        (normal_ops, normal_speed, normal_value, normal_gold)
     };
 
     for id in &room_ops {
@@ -3470,6 +3500,7 @@ fn assign_single_room(
         operators: room_ops,
         total_efficiency: speed + global,
         order_value: value,
+        order_gold: gold,
         locked,
         ledger: Vec::new(),
         fill: None,
@@ -3640,6 +3671,8 @@ pub(crate) struct CandidateTeam {
     pub(crate) ops: Vec<String>,
     pub(crate) speed: f64,
     pub(crate) value: f64,
+    /// The gold-throughput part of `value` (see `RoomAssignment::order_gold`).
+    pub(crate) gold: f64,
     pub(crate) score: f64,
 }
 
@@ -3664,7 +3697,7 @@ fn best_team_for_room(
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
-) -> (Vec<String>, f64, f64) {
+) -> (Vec<String>, f64, f64, f64) {
     // The best team is the head of the full enumeration; a top score of 0 means
     // no combination beats an empty room (the old `score > 0` replacement rule).
     enumerate_candidate_teams(
@@ -3687,7 +3720,9 @@ fn best_team_for_room(
     )
     .into_iter()
     .find(|c| c.score > 0.0)
-    .map_or((Vec::new(), 0.0, 0.0), |c| (c.ops, c.speed, c.value))
+    .map_or((Vec::new(), 0.0, 0.0, 0.0), |c| {
+        (c.ops, c.speed, c.value, c.gold)
+    })
 }
 
 /// Enumerate EVERY scored team combination for a room type/formula, best first - the
@@ -3852,7 +3887,7 @@ pub(crate) fn enumerate_candidate_teams(
             if !seen.insert(key) {
                 continue;
             }
-            let (mut speed, value) = compute_team_efficiency(
+            let totals = compute_team_totals(
                 &combo,
                 room_type,
                 formula_type,
@@ -3863,6 +3898,11 @@ pub(crate) fn enumerate_candidate_teams(
                 total_dorm_levels,
                 morale_drains,
                 cc_conditions,
+            );
+            let (mut speed, value, gold) = (
+                totals.speed_pct,
+                totals.order_value_pct,
+                totals.order_gold_pct,
             );
             // A nullifier's strength comes from the BODIES that fill its remaining
             // seats (+45% per teammate), which padding adds after selection - score
@@ -3912,6 +3952,7 @@ pub(crate) fn enumerate_candidate_teams(
                 ops: combo,
                 speed,
                 value,
+                gold,
                 score,
             });
         }
@@ -4123,10 +4164,42 @@ pub(crate) fn compute_team_efficiency(
     morale_drains: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
 ) -> (f64, f64) {
+    let totals = compute_team_totals(
+        member_ids,
+        room_type,
+        formula_type,
+        op_index,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        morale_drains,
+        cc_conditions,
+    );
+    (totals.speed_pct, totals.order_value_pct)
+}
+
+/// The full ledger totals of a team: speed, order value and the order value's
+/// gold-throughput part (what the yield coupling needs beyond the search's
+/// speed/value pair).
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn compute_team_totals(
+    member_ids: &[String],
+    room_type: &str,
+    formula_type: Option<&str>,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    morale_drains: &HashMap<String, f64>,
+    cc_conditions: &[CcCondition],
+) -> super::ledger::RoomTotals {
     // CP2 flip: the clause LEDGER is the scoring engine (see ledger.rs). The
     // strategy-walking body it replaced was first proven bit-identical by a
     // shadow assert across the whole suite and a captured real base.
-    let totals = super::ledger::score_room(&super::ledger::RoomEval {
+    let _ = morale_drains;
+    super::ledger::score_room(&super::ledger::RoomEval {
         member_ids,
         room_type,
         formula_type,
@@ -4137,9 +4210,7 @@ pub(crate) fn compute_team_efficiency(
         total_dorm_levels,
         cc_conditions,
         deployed_work_area: None,
-    });
-    let _ = morale_drains;
-    (totals.speed_pct, totals.order_value_pct)
+    })
 }
 
 /// Score an arbitrary team stationed in a production room with the same speed/value objective
@@ -4287,6 +4358,7 @@ pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
             r.formula_type.as_deref(),
             r.level,
             speed,
+            r.order_gold,
             r.order_value,
         );
     }

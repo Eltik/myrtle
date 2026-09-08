@@ -64,7 +64,7 @@ interface IKpiRowProps {
 function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, sameOpCount }: IKpiRowProps): React.ReactElement {
     const data = snap?.data;
     const dim = !inst.visible;
-    const detail = useOperatorDetail(inst.op.id);
+    const detail = useOperatorDetail(inst.op);
     const skillSummary = detail.skillName(inst.config.skillIndex);
     const moduleSummary = inst.config.moduleIndex > 0 ? detail.moduleName(inst.config.moduleIndex) : "no module";
     const value = data?.[leaderKey];

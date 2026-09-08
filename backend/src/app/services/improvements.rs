@@ -13,7 +13,7 @@ use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainabil
 use crate::core::gamedata::types::operator::OperatorProfession;
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
-    cc_non_production_effects, compute_current_assignment, compute_optimal_assignment_with_pins,
+    cc_non_production_effects, compute_live_assignment, compute_optimal_assignment_with_pins,
     compute_sustained_assignment,
 };
 use crate::core::grade::base::buff_registry::{
@@ -1415,13 +1415,15 @@ async fn build_base_improvements(
     }
     optimal_pins.extend(native_economies.pins.iter().cloned());
 
-    let current = compute_current_assignment(
+    let live_morale = crate::core::grade::base::sustain_sim::synced_live_morale(&building_json);
+    let current = compute_live_assignment(
         &profiles,
         &user_building,
         &game_data.building,
         &registry,
         &morale_drains,
         None,
+        &live_morale,
     );
     let mut optimal = compute_optimal_assignment_with_pins(
         &profiles,
@@ -2244,6 +2246,7 @@ pub(crate) fn base_assignment_to_dto(
             r.formula_type.as_deref(),
             r.level,
             r.total_efficiency,
+            r.order_gold,
             r.order_value,
         );
     }

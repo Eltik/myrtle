@@ -121,14 +121,20 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     </DrawerMenuItem>
                                 </>
                             ) : (
-                                <AuthDialog
-                                    trigger={
-                                        <DrawerMenuItem>
-                                            <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                            Login
-                                        </DrawerMenuItem>
-                                    }
-                                />
+                                <>
+                                    <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/settings" />} />}>
+                                        <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        Settings
+                                    </DrawerMenuItem>
+                                    <AuthDialog
+                                        trigger={
+                                            <DrawerMenuItem>
+                                                <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                Login
+                                            </DrawerMenuItem>
+                                        }
+                                    />
+                                </>
                             )}
                         </DrawerMenuGroup>
                     </DrawerMenu>

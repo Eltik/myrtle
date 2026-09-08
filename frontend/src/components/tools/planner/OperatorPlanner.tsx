@@ -42,8 +42,14 @@ function getSkillLevelLabel(level: number): string {
     return `M${level - 7}`;
 }
 
+/**
+ * Stage 0 means "not unlocked / not planned". It used to render as "X", which
+ * sat next to the module's designator - and X is itself a designator letter
+ * (typeName2 is one of A, B, D, X, Y), so "SUM-X  X ➔ 3" read as though the
+ * stage column were naming the module. An em dash cannot be mistaken for one.
+ */
 function getModuleStageLabel(stage: number): string {
-    return stage === 0 ? "X" : String(stage);
+    return stage === 0 ? "\u2014" : String(stage);
 }
 
 function currentSkillValue(rosterEntry: IRosterEntry | undefined, skillIndex: number): number {

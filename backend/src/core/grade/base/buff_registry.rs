@@ -357,8 +357,10 @@ static RE_ORDER_LIMIT_POS: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 static RE_ORDER_LIMIT_NEG: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?:order|capacity) limit(?: is (?:reduced|decreased) by)?\s*<@cc\.vdown>-?(\d+)</>")
-        .unwrap()
+    Regex::new(
+        r"(?:order|capacity) limit(?: is (?:reduced|decreased) by)?\s*<@cc\.vdown>-?(\d+)</>",
+    )
+    .unwrap()
 });
 
 static RE_NTH_PCT: LazyLock<Regex> =
@@ -614,7 +616,10 @@ pub enum BuffResolutionStrategy {
     /// shifts the post toward higher-yield Precious-Metal orders, so a Pure-Gold
     /// value no longer applies in a Shamare team - which is why Proviso, unlike
     /// Tequila, does NOT benefit from Shamare.
-    OrderValue { effect: OrderEffect, pure_gold: bool },
+    OrderValue {
+        effect: OrderEffect,
+        pure_gold: bool,
+    },
 
     /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
@@ -1902,12 +1907,18 @@ fn order_value_shape(desc: &str, defaulted_below: Option<u32>) -> Option<(OrderE
         Some((OrderEffect::HighOrderLmdBonus { above, lmd }, false))
     } else if let Some(c) = RE_DEFAULTED_GOLD.captures(&text) {
         let bonus = c[1].parse().ok()?;
-        let effect = defaulted_below
-            .map_or(OrderEffect::Enabler, |below| OrderEffect::DefaultedGoldBonus { below, bonus });
+        let effect = defaulted_below.map_or(OrderEffect::Enabler, |below| {
+            OrderEffect::DefaultedGoldBonus { below, bonus }
+        });
         Some((effect, true))
     } else if text.contains("higher-yield") {
         // "increased slightly" (α tiers) vs "increased" (β tiers).
-        Some((OrderEffect::HigherYieldChance { strong: !text.contains("slightly") }, false))
+        Some((
+            OrderEffect::HigherYieldChance {
+                strong: !text.contains("slightly"),
+            },
+            false,
+        ))
     } else if text.contains("Pure Gold") || text.contains("Defaulted trade") {
         Some((OrderEffect::Enabler, true)) // Contract Law and kin: rules, no payoff
     } else {

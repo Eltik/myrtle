@@ -19,6 +19,10 @@ export interface IOperatorListEntry {
     name: string;
     availableSkills: number[];
     availableModules: number[];
+    /** `uniEquipId` for each entry of `availableModules`, same index. Lets a
+     *  module number be resolved to the module the engine actually simulates
+     *  instead of being counted off against a separately-fetched list. */
+    availableModuleIds?: string[];
     defaultSkill: number;
     defaultModule: number;
     conditionals: IConditionalInfo[];

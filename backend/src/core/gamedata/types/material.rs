@@ -31,10 +31,17 @@ pub enum ItemClass {
     #[serde(rename = "CONSUME")]
     Consumable,
     #[serde(rename = "NORMAL")]
-    #[default]
     Normal,
     #[serde(rename = "NONE")]
     None,
+    /// Catch-all for classify types this enum does not name yet. CN ships
+    /// `MEMENTO` on six story souvenir items; without a fallback those six
+    /// values fail their `Item`, which fails the whole `item_table`, which
+    /// `load_table_or_warn` swallows into an empty `Materials` - every item
+    /// then loses its name and icon id. `ItemType` already does this.
+    #[serde(rename = "UNKNOWN", other)]
+    #[default]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

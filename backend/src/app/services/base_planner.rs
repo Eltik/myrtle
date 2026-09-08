@@ -22,7 +22,8 @@ use crate::app::services::improvements::{
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::grade::base::assignment::{
-    compute_current_assignment, compute_optimal_assignment_with_pins, morale_recovery,
+    compute_current_assignment, compute_live_assignment, compute_optimal_assignment_with_pins,
+    morale_recovery,
 };
 use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::dorms::morale_manager_pin;
@@ -731,34 +732,38 @@ pub async fn evaluate(
     // timestamp and a seat, so drain/recovery since the last sync is applied
     // before anything reads it. "Lasts X h" genuinely means from now.
     let mut drones_json: Option<serde_json::Value> = None;
-    let (live_morale, morale_synced_hours_ago) = match find_by_uid(&state.db, uid).await {
-        Ok(Some(user)) => match get_building(&state.db, user.id).await.ok().flatten() {
-            Some(json) => {
-                drones_json = json.get("status").and_then(|v| v.get("labor")).cloned();
-                let snapshots = crate::core::grade::base::types::live_morale_snapshot(&json);
-                let now_unix = chrono::Utc::now().timestamp();
-                let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
-                let age = if latest > 0 {
-                    Some(((now_unix - latest).max(0) as f64) / 3600.0)
-                } else {
-                    None
-                };
-                // The projection reads seats from the REAL base, not the draft.
-                let real_building = UserBuilding::from_json(&json);
-                let projected = crate::core::grade::base::sustain_sim::project_morale(
-                    &snapshots,
-                    now_unix,
-                    &real_building,
-                    &ctx.profiles,
-                    &game_data.building,
-                    &ctx.morale_drains,
-                );
-                (projected, age)
-            }
-            None => (HashMap::new(), None),
-        },
-        _ => (HashMap::new(), None),
-    };
+    let (live_morale, morale_synced_hours_ago, synced_bars) =
+        match find_by_uid(&state.db, uid).await {
+            Ok(Some(user)) => match get_building(&state.db, user.id).await.ok().flatten() {
+                Some(json) => {
+                    drones_json = json.get("status").and_then(|v| v.get("labor")).cloned();
+                    let snapshots = crate::core::grade::base::types::live_morale_snapshot(&json);
+                    let now_unix = chrono::Utc::now().timestamp();
+                    let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
+                    let age = if latest > 0 {
+                        Some(((now_unix - latest).max(0) as f64) / 3600.0)
+                    } else {
+                        None
+                    };
+                    // The projection reads seats from the REAL base, not the draft.
+                    let real_building = UserBuilding::from_json(&json);
+                    let projected = crate::core::grade::base::sustain_sim::project_morale(
+                        &snapshots,
+                        now_unix,
+                        &real_building,
+                        &ctx.profiles,
+                        &game_data.building,
+                        &ctx.morale_drains,
+                    );
+                    // Pool counters read the bars as the game last wrote them,
+                    // the state the synced base displayed.
+                    let synced = crate::core::grade::base::sustain_sim::synced_live_morale(&json);
+                    (projected, age, synced)
+                }
+                None => (HashMap::new(), None, HashMap::new()),
+            },
+            _ => (HashMap::new(), None, HashMap::new()),
+        };
     let building = UserBuilding {
         rooms: req
             .layout
@@ -769,13 +774,14 @@ pub async fn evaluate(
 
     // `compute_current_assignment` scores rooms exactly as stationed - which is
     // precisely what "score this draft" means.
-    let assignment = compute_current_assignment(
+    let assignment = compute_live_assignment(
         &ctx.profiles,
         &building,
         &game_data.building,
         &ctx.registry,
         &ctx.morale_drains,
         None,
+        &synced_bars,
     );
 
     let assignment_dto =

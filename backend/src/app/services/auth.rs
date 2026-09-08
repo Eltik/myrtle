@@ -55,9 +55,13 @@ pub struct LoginResponse {
 /// the user a re-login later, and failing the login in front of them now would
 /// be the worse trade. It is logged either way.
 async fn persist_credentials(state: &AppState, user_id: Uuid, uid: &str, session: &AuthSession) {
-    if let Err(e) =
-        game_credentials::store(&state.db, &state.config.game_credential_key, user_id, session)
-            .await
+    if let Err(e) = game_credentials::store(
+        &state.db,
+        &state.config.game_credential_key,
+        user_id,
+        session,
+    )
+    .await
     {
         tracing::warn!(
             uid = %uid,

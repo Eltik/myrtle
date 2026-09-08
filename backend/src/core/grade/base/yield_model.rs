@@ -56,13 +56,17 @@ fn productivity_mult(efficiency_pct: f64) -> f64 {
 pub struct BaseFlows {
     /// Gold bars/day produced by `F_GOLD` factories.
     pub gold_produced: f64,
+    /// Number of `F_GOLD` factories seen. A base with NONE feeds its posts
+    /// from stock (gold the game hands out outside the base), so the
+    /// gold->trade coupling can only bind when the base itself makes gold;
+    /// a base WITH gold factories that make nothing (unstaffed) sells nothing.
+    pub gold_factories: usize,
     /// Gold bars/day the Trading Posts can sell.
     pub gold_sell_capacity: f64,
-    /// `gold_sell_capacity` weighted by each post's order-VALUE multiplier:
-    /// the LMD-per-bar uplift of value skills. Proviso's bonus gold is paid
-    /// out, not consumed - the game's own report shows 44 bars produced and
-    /// 44,500 LMD sold - so value raises LMD per bar SOLD, not the bars a
-    /// post can move.
+    /// `gold_sell_capacity` weighted by each post's LMD-per-bar multiplier:
+    /// the part of order value that pays more per bar WITHOUT drawing more
+    /// gold (Tequila's "+500 LMD above 3 gold"). Proviso's bonus is bars from
+    /// stock and lives in the capacity instead (base expert, 2026-09-08).
     pub gold_sell_lmd_weight: f64,
     /// EXP/day produced by `F_EXP` factories.
     pub exp: f64,
@@ -73,26 +77,34 @@ pub struct BaseFlows {
 }
 
 impl BaseFlows {
-    /// `speed_pct` is order/production speed; `value_pct` is order VALUE (Proviso
-    /// etc.) which multiplies how much gold each trading-post order moves.
+    /// `speed_pct` is order/production speed; `value_pct` is order VALUE (LMD
+    /// per hour over a bare post's) and `gold_pct` its gold-throughput part
+    /// (Pure Gold per hour over a bare post's) - see `order_mix`.
     pub fn add_room(
         &mut self,
         room_type: &str,
         formula: Option<&str>,
         level: i32,
         speed_pct: f64,
+        gold_pct: f64,
         value_pct: f64,
     ) {
         let mult = productivity_mult(speed_pct);
         match (room_type, formula) {
             ("TRADING", _) => {
-                // More speed -> more bars moved; more value -> more LMD per
-                // bar moved (the bonus gold is free, never drawn from stock).
-                let bars = TRADING_GOLD_SOLD_PER_DAY_BASE * mult;
+                // More speed -> more orders. Order value splits: the gold
+                // part is more bars per order in the same time, drawn from
+                // stock (Proviso: a defaulted 2-gold order trades 4 bars) -
+                // it widens the sell capacity and is bounded by the gold the
+                // factories make; the rest is more LMD per bar (Tequila's
+                // rider) and pays even when the base is gold-starved.
+                let bars = TRADING_GOLD_SOLD_PER_DAY_BASE * mult * productivity_mult(gold_pct);
                 self.gold_sell_capacity += bars;
-                self.gold_sell_lmd_weight += bars * productivity_mult(value_pct);
+                self.gold_sell_lmd_weight +=
+                    bars * productivity_mult(value_pct) / productivity_mult(gold_pct);
             }
             ("MANUFACTURE", Some("F_GOLD")) => {
+                self.gold_factories += 1;
                 self.gold_produced += FACTORY_GOLD_PER_DAY_BASE * mult;
             }
             ("MANUFACTURE", Some("F_EXP")) => {
@@ -106,14 +118,19 @@ impl BaseFlows {
     }
 
     /// Realized LMD/day from the gold->trade loop: the slower side bottlenecks
-    /// the bars moved; each bar sold pays the posts' capacity-weighted
-    /// LMD-per-bar (value skills included).
+    /// the bars moved; each bar sold pays the posts' capacity-weighted LMD
+    /// per bar.
     pub fn realized_lmd(&self) -> f64 {
         if self.gold_sell_capacity <= 0.0 {
             return 0.0;
         }
         let lmd_per_bar = GOLD_BAR_LMD * self.gold_sell_lmd_weight / self.gold_sell_capacity;
-        self.gold_produced.min(self.gold_sell_capacity) * lmd_per_bar
+        let supply = if self.gold_factories == 0 {
+            f64::INFINITY
+        } else {
+            self.gold_produced
+        };
+        supply.min(self.gold_sell_capacity) * lmd_per_bar
     }
 
     /// Total daily output as a single LMD-equivalent value.
@@ -154,7 +171,6 @@ pub struct RoomFill {
     pub capacity: i32,
     pub fill_hours: f64,
 }
-
 
 /// Seconds of production points a room accrues per day at 100%.
 const POINTS_PER_DAY: f64 = 86400.0;
@@ -260,25 +276,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn order_value_raises_lmd_per_bar_sold_not_bars_moved() {
-        // One post at +200% speed (60 bars/day capacity) with Proviso-class
-        // +55% value; 44 bars produced. The 44 bars sell (capacity is not the
-        // bottleneck) and each pays 1.55x - the bonus gold is free.
-        let mut flows = BaseFlows { gold_produced: 44.0, ..Default::default() };
-        flows.add_room("TRADING", None, 3, 200.0, 55.0);
-        assert!((flows.realized_lmd() - 44.0 * GOLD_BAR_LMD * 1.55).abs() < 1e-6);
+    fn posts_without_any_gold_factory_sell_from_stock() {
+        // No gold factory at all: the coupling can't bind, the post sells at
+        // capacity. One gold factory making nothing: the post sells nothing.
+        let mut stock = BaseFlows::default();
+        stock.add_room("TRADING", None, 3, 100.0, 0.0, 0.0);
+        assert!((stock.realized_lmd() - 40.0 * GOLD_BAR_LMD).abs() < 1e-6);
+        let mut idle = BaseFlows::default();
+        idle.add_room("TRADING", None, 3, 100.0, 0.0, 0.0);
+        idle.add_room("MANUFACTURE", Some("F_GOLD"), 3, -100.0, 0.0, 0.0);
+        assert!(idle.realized_lmd().abs() < 1e-6);
+    }
 
-        // Gold-limited: 10 bars into the same post still pay 1.55x each.
-        let mut starved = BaseFlows { gold_produced: 10.0, ..Default::default() };
-        starved.add_room("TRADING", None, 3, 200.0, 55.0);
-        assert!((starved.realized_lmd() - 10.0 * GOLD_BAR_LMD * 1.55).abs() < 1e-6);
+    #[test]
+    fn proviso_moves_bars_from_stock_and_tequila_pays_more_per_bar() {
+        // Proviso-class value (+55% LMD, +55% gold): one post at +200% speed
+        // can move 93 bars/day, but a base producing 44 sells 44 at 500 LMD
+        // each - her bonus bars come from stock (base expert, 2026-09-08).
+        // One gold factory at +120% makes 44 bars/day.
+        let mut starved = BaseFlows::default();
+        starved.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0);
+        starved.add_room("TRADING", None, 3, 200.0, 55.0, 55.0);
+        assert!((starved.realized_lmd() - 44.0 * GOLD_BAR_LMD).abs() < 1e-6);
+        let mut rich = BaseFlows::default();
+        rich.add_room("MANUFACTURE", Some("F_GOLD"), 3, 4900.0, 0.0, 0.0);
+        rich.add_room("TRADING", None, 3, 200.0, 55.0, 55.0);
+        assert!((rich.realized_lmd() - 60.0 * 1.55 * GOLD_BAR_LMD).abs() < 1e-6);
 
-        // Two equal posts, one with value: the per-bar rate is the
-        // capacity-weighted average (1.275x).
-        let mut mixed = BaseFlows { gold_produced: 1000.0, ..Default::default() };
-        mixed.add_room("TRADING", None, 3, 0.0, 55.0);
-        mixed.add_room("TRADING", None, 3, 0.0, 0.0);
-        let bars = 2.0 * TRADING_GOLD_SOLD_PER_DAY_BASE;
-        assert!((mixed.realized_lmd() - bars * GOLD_BAR_LMD * 1.275).abs() < 1e-6);
+        // Tequila-class value (+24% LMD, +0% gold): the same 44 bars pay 24%
+        // more - the rider is LMD, not gold, so starvation doesn't touch it.
+        let mut tequila = BaseFlows::default();
+        tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0);
+        tequila.add_room("TRADING", None, 3, 200.0, 0.0, 24.0);
+        assert!((tequila.realized_lmd() - 44.0 * 1.24 * GOLD_BAR_LMD).abs() < 1e-6);
     }
 }

@@ -1565,6 +1565,7 @@ fn current_assignment_reflects_live_base() {
                 r.formula_type.as_deref(),
                 r.level,
                 r.total_efficiency,
+                r.order_gold,
                 r.order_value,
             );
         }
@@ -2472,7 +2473,11 @@ fn shift_rotation_forms_three_overlapping_shifts() {
     // The two posts are interchangeable: whichever holds the [A, A, B] block is
     // "early", the other runs [B, C, C]. (A 24/7-pinned trader can flip which
     // slot the tiler hands the early block to.)
-    let (early, late) = if tp_ids[0][0] == tp_ids[0][1] { (0, 1) } else { (1, 0) };
+    let (early, late) = if tp_ids[0][0] == tp_ids[0][1] {
+        (0, 1)
+    } else {
+        (1, 0)
+    };
     assert_eq!(
         tp_ids[early][0], tp_ids[early][1],
         "the early post runs one team for shifts 1+2: {tp_ids:?}"
@@ -3574,6 +3579,81 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
     }
 }
 
+/// The community's "perma Tequila combo" (base expert, 2026-09-08): Fiammetta
+/// refreshes TEQUILA around the clock in a level-3 post while Shamare, Bibeak
+/// and Kafka cycle beside him. The model derives it from the gold coupling:
+/// with one gold factory feeding the post, more speed moves no extra bars,
+/// so Tequila's per-bar LMD rider (fired by the Tailoring mix) is the seat
+/// worth holding 24/7, and the speed anchor rotates.
+#[test]
+fn gold_starved_post_sustains_tequila_and_rotates_shamare_and_bibeak() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let building = UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", 5),
+        ],
+    };
+    let roster: Vec<_> = [
+        SHAMARE,
+        TEQUILA,
+        BIBEAK,
+        "char_214_kafka",
+        "char_300_phenxi",
+        EXUSIAI,
+        "char_502_nblade",
+        "char_185_frncat",
+        "char_123_fang",
+        "char_124_kroos",
+        "char_278_orchid",
+        "char_190_clour",
+        "char_237_gravel",
+        "char_381_bubble",
+        "char_328_cammou",
+        "char_282_catap",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    assert_eq!(
+        rot.sustained,
+        vec![TEQUILA.to_string()],
+        "the gold-bound post holds Tequila 24/7"
+    );
+    let posts: Vec<Vec<String>> = rot
+        .shifts
+        .iter()
+        .map(|s| {
+            s.rooms
+                .iter()
+                .find(|r| r.slot_id == "tp")
+                .map(|r| r.recommended.clone())
+                .unwrap_or_default()
+        })
+        .collect();
+    assert!(
+        posts.iter().all(|crew| crew.iter().any(|o| o == TEQUILA)),
+        "Tequila every shift: {posts:?}"
+    );
+    assert!(
+        posts
+            .iter()
+            .any(|crew| crew.iter().any(|o| o == SHAMARE) && crew.iter().any(|o| o == BIBEAK)),
+        "Shamare and Bibeak combo with him on a block: {posts:?}"
+    );
+    assert!(
+        !posts.iter().all(|crew| crew.iter().any(|o| o == SHAMARE)),
+        "the speed anchor rotates, she is not the 24/7 seat: {posts:?}"
+    );
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
@@ -3834,8 +3914,14 @@ fn clause_registry_goldens_on_real_gamedata() {
     // and priced per post level at scoring time.
     let proviso = &clauses["trade_ord_against[010]"];
     assert!(
-        proviso.iter().any(|c| c.metric == Metric::OrderValue { pure_gold: true }
-            && c.kind == ClauseKind::OrderMix(OrderEffect::DefaultedGoldBonus { below: 4, bonus: 2 })),
+        proviso
+            .iter()
+            .any(|c| c.metric == Metric::OrderValue { pure_gold: true }
+                && c.kind
+                    == ClauseKind::OrderMix(OrderEffect::DefaultedGoldBonus {
+                        below: 4,
+                        bonus: 2
+                    })),
         "Proviso is a Pure-Gold defaulted-order shape: {proviso:?}"
     );
 
@@ -5721,10 +5807,26 @@ fn shift_rotation_supports_252_layout() {
             .expect("production cells carry a team id")
     };
     // Whichever post holds the shifts-1+2 block is "early"; the other runs 2+3.
-    let (early, late) = if team_id(0, "tp0") == team_id(1, "tp0") { ("tp0", "tp1") } else { ("tp1", "tp0") };
-    assert_eq!(team_id(0, early), team_id(1, early), "{early} works shifts 1+2");
-    assert_ne!(team_id(1, early), team_id(2, early), "{early} swaps for shift 3");
-    assert_eq!(team_id(1, late), team_id(2, late), "{late} works shifts 2+3");
+    let (early, late) = if team_id(0, "tp0") == team_id(1, "tp0") {
+        ("tp0", "tp1")
+    } else {
+        ("tp1", "tp0")
+    };
+    assert_eq!(
+        team_id(0, early),
+        team_id(1, early),
+        "{early} works shifts 1+2"
+    );
+    assert_ne!(
+        team_id(1, early),
+        team_id(2, early),
+        "{early} swaps for shift 3"
+    );
+    assert_eq!(
+        team_id(1, late),
+        team_id(2, late),
+        "{late} works shifts 2+3"
+    );
 
     // Both plants and the CC stay staffed every shift, cycling two squads.
     for slot in ["p0", "p1", "cc"] {
@@ -7435,11 +7537,20 @@ fn order_value_follows_the_posts_level() {
         };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
         let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
-        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
-        asn.rooms.iter().find(|r| r.slot_id == "tp").expect("post").order_value
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .expect("post")
+            .order_value
     };
     let close = |a: f64, b: f64| (a - b).abs() < 1e-6;
-    assert!(close(order_value(&[PROVISO], 1), 100.0), "L1: {}", order_value(&[PROVISO], 1));
+    assert!(
+        close(order_value(&[PROVISO], 1), 100.0),
+        "L1: {}",
+        order_value(&[PROVISO], 1)
+    );
     assert!(
         close(order_value(&[PROVISO], 2), (2200.0 / 1200.0 - 1.0) * 100.0),
         "L2: {}",
@@ -7450,7 +7561,10 @@ fn order_value_follows_the_posts_level() {
         "L3: {}",
         order_value(&[PROVISO], 3)
     );
-    assert!(close(order_value(&[TEQUILA], 2), 0.0), "Tequila needs 4-gold orders");
+    assert!(
+        close(order_value(&[TEQUILA], 2), 0.0),
+        "Tequila needs 4-gold orders"
+    );
     assert!(
         order_value(&[PROVISO, TEQUILA], 3) > order_value(&[PROVISO], 3),
         "Tequila composes with Proviso on the 4-gold orders"
@@ -7513,22 +7627,50 @@ fn wang_branches_on_layout_counts_and_is_covered_by_amiya_and_kaltsit() {
         asn.rooms
             .iter()
             .find(|r| r.slot_id == slot)
-            .and_then(|r| r.ledger.iter().find(|l| l.buff_id == WANG_BUFF && l.from_control_center))
+            .and_then(|r| {
+                r.ledger
+                    .iter()
+                    .find(|l| l.buff_id == WANG_BUFF && l.from_control_center)
+            })
             .map(|l| (l.speed_pct, l.disposition))
     };
 
     // 2/5/3: Influence 5 >= Territory 5 -> the posts get +7, factories nothing.
     let a = build(2, 5, 3, &[WANG]);
-    assert!(matches!(cc_line(&a, "tp0"), Some((v, _)) if (v - 7.0).abs() < 1e-9), "2/5/3 posts: {:?}", cc_line(&a, "tp0"));
-    assert!(cc_line(&a, "mf0").is_none_or(|(v, _)| v.abs() < 1e-9), "2/5/3 factories: {:?}", cc_line(&a, "mf0"));
+    assert!(
+        matches!(cc_line(&a, "tp0"), Some((v, _)) if (v - 7.0).abs() < 1e-9),
+        "2/5/3 posts: {:?}",
+        cc_line(&a, "tp0")
+    );
+    assert!(
+        cc_line(&a, "mf0").is_none_or(|(v, _)| v.abs() < 1e-9),
+        "2/5/3 factories: {:?}",
+        cc_line(&a, "mf0")
+    );
     // 2/5/2: Territory 5 > Influence 4 -> the factories get +2, posts nothing.
     let b = build(2, 5, 2, &[WANG]);
-    assert!(matches!(cc_line(&b, "mf0"), Some((v, _)) if (v - 2.0).abs() < 1e-9), "2/5/2 factories: {:?}", cc_line(&b, "mf0"));
-    assert!(cc_line(&b, "tp0").is_none_or(|(v, _)| v.abs() < 1e-9), "2/5/2 posts: {:?}", cc_line(&b, "tp0"));
+    assert!(
+        matches!(cc_line(&b, "mf0"), Some((v, _)) if (v - 2.0).abs() < 1e-9),
+        "2/5/2 factories: {:?}",
+        cc_line(&b, "mf0")
+    );
+    assert!(
+        cc_line(&b, "tp0").is_none_or(|(v, _)| v.abs() < 1e-9),
+        "2/5/2 posts: {:?}",
+        cc_line(&b, "tp0")
+    );
     // Beside Amiya (+7% posts) the trading branch is a covered duplicate.
     let c = build(2, 5, 3, &["char_002_amiya", WANG]);
-    let cc_row = c.rooms.iter().find(|r| r.room_type == "CONTROL").expect("cc row");
-    let wang_row = cc_row.ledger.iter().find(|l| l.buff_id == WANG_BUFF).expect("wang line");
+    let cc_row = c
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("cc row");
+    let wang_row = cc_row
+        .ledger
+        .iter()
+        .find(|l| l.buff_id == WANG_BUFF)
+        .expect("wang line");
     assert!(
         wang_row.speed_pct.abs() < 1e-9 && wang_row.disposition == LineDisposition::Covered,
         "Wang beside Amiya is covered: {:?}",
@@ -7559,7 +7701,12 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
     );
     let build = |plants: &[&str]| {
         let mut building = UserBuilding {
-            rooms: vec![room("cc", "CONTROL", 5), room("mf", "MANUFACTURE", 3), room("p0", "POWER", 3), room("p1", "POWER", 3)],
+            rooms: vec![
+                room("cc", "CONTROL", 5),
+                room("mf", "MANUFACTURE", 3),
+                room("p0", "POWER", 3),
+                room("p1", "POWER", 3),
+            ],
         };
         building.rooms[0].current_operators = vec![PUDDING.into()];
         building.rooms[1].current_operators = vec!["char_103_angel".into()];
@@ -7570,16 +7717,28 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
         let mut ids: Vec<&str> = vec![PUDDING, "char_103_angel"];
         ids.extend(plants);
         let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
-        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms
             .iter()
             .find(|r| r.slot_id == "mf")
-            .and_then(|r| r.ledger.iter().find(|l| l.buff_id == PUDDING_BUFF && l.from_control_center).map(|l| l.speed_pct))
+            .and_then(|r| {
+                r.ledger
+                    .iter()
+                    .find(|l| l.buff_id == PUDDING_BUFF && l.from_control_center)
+                    .map(|l| l.speed_pct)
+            })
             .unwrap_or(0.0)
     };
     // Lancet-2 and Castle-3 are Robot-tagged Operation Platforms.
-    assert!((build(&["char_285_medic2", "char_286_cast3"]) - 2.0).abs() < 1e-9, "two robots fire the gate");
-    assert!(build(&["char_285_medic2"]).abs() < 1e-9, "one robot does not");
+    assert!(
+        (build(&["char_285_medic2", "char_286_cast3"]) - 2.0).abs() < 1e-9,
+        "two robots fire the gate"
+    );
+    assert!(
+        build(&["char_285_medic2"]).abs() < 1e-9,
+        "one robot does not"
+    );
 }
 
 /// Secondary affiliations: a SubPower NATION counts (Texas is Siracusa for
@@ -7590,11 +7749,23 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
 fn subpower_counts_nations_but_not_groups() {
     let gd = load_game_data();
     let texas = profile(gd, "char_102_texas");
-    assert!(texas.faction_tags.iter().any(|t| t == "siracusa"), "Texas: {:?}", texas.faction_tags);
+    assert!(
+        texas.faction_tags.iter().any(|t| t == "siracusa"),
+        "Texas: {:?}",
+        texas.faction_tags
+    );
     let vina = profile(gd, "char_1019_siege2");
-    assert!(!vina.match_tags.iter().any(|t| t == "glasgow"), "Vina Victoria is not Glasgow: {:?}", vina.match_tags);
+    assert!(
+        !vina.match_tags.iter().any(|t| t == "glasgow"),
+        "Vina Victoria is not Glasgow: {:?}",
+        vina.match_tags
+    );
     let siege = profile(gd, "char_112_siege");
-    assert!(siege.match_tags.iter().any(|t| t == "glasgow"), "Siege is: {:?}", siege.match_tags);
+    assert!(
+        siege.match_tags.iter().any(|t| t == "glasgow"),
+        "Siege is: {:?}",
+        siege.match_tags
+    );
 }
 
 /// Capacity trades are signed: Wulfenite's Go-Getter ("+20% and capacity
@@ -7616,17 +7787,30 @@ fn signed_capacity_reproduces_the_games_vermeil_teams() {
         registry.get("manu_prod_spd&limit&cost[300]")
     );
     let team = |crew: &[&str]| -> f64 {
-        let mut building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3)] };
+        let mut building = UserBuilding {
+            rooms: vec![room("mf", "MANUFACTURE", 3)],
+        };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
         building.rooms[0].current_formula = Some("F_EXP".into());
         let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
-        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
-        asn.rooms.iter().find(|r| r.slot_id == "mf").expect("factory").total_efficiency
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .expect("factory")
+            .total_efficiency
     };
     let vpw = team(&["char_190_clour", "char_485_pallas", "char_4171_wulfen"]);
-    assert!((vpw - 93.0).abs() < 1e-6, "Vermeil/Pallas/Wulfenite = 93 in-game, got {vpw}");
+    assert!(
+        (vpw - 93.0).abs() < 1e-6,
+        "Vermeil/Pallas/Wulfenite = 93 in-game, got {vpw}"
+    );
     let vsp = team(&["char_190_clour", "char_336_folivo", "char_485_pallas"]);
-    assert!(vsp > vpw && (vsp - (56.0 + 25.0 + 23.958_333_333_333_332)).abs() < 1e-6, "Vermeil/Scene/Pallas ~105 (ramp averaged), got {vsp}");
+    assert!(
+        vsp > vpw && (vsp - (56.0 + 25.0 + 23.958_333_333_333_332)).abs() < 1e-6,
+        "Vermeil/Scene/Pallas ~105 (ramp averaged), got {vsp}"
+    );
 }
 
 /// Rosmontis' dorm-occupancy pool must rank her ABOVE zero before the scorer
@@ -7641,9 +7825,21 @@ fn rosmontis_ranks_on_full_dormitories() {
     let rosmontis = profile(gd, "char_391_rosmon");
     let mut counts = std::collections::HashMap::new();
     counts.insert("DORMITORY".to_string(), 4usize);
-    let bound = op_optimistic_bound(&rosmontis, "MANUFACTURE", Some("F_EXP"), &registry, &gd.building, &counts, 20, 3);
+    let bound = op_optimistic_bound(
+        &rosmontis,
+        "MANUFACTURE",
+        Some("F_EXP"),
+        &registry,
+        &gd.building,
+        &counts,
+        20,
+        3,
+    );
     // Four top-level dorms = 20 seats -> 20 Perception -> 20 Chain -> +20%.
-    assert!((bound - 20.0).abs() < 1e-6, "Rosmontis' bound at four full dorms, got {bound}");
+    assert!(
+        (bound - 20.0).abs() < 1e-6,
+        "Rosmontis' bound at four full dorms, got {bound}"
+    );
 }
 
 /// "+5% for each Rhine Tech-type skill in this Factory" counts SKILLS by
@@ -7657,11 +7853,14 @@ fn dorothy_counts_rhine_tech_skills_including_her_own() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let line = |crew: &[&str]| -> f64 {
-        let mut building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3)] };
+        let mut building = UserBuilding {
+            rooms: vec![room("mf", "MANUFACTURE", 3)],
+        };
         building.rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
         building.rooms[0].current_formula = Some("F_EXP".into());
         let roster: Vec<OperatorBaseProfile> = crew.iter().map(|id| profile(gd, id)).collect();
-        let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
         asn.rooms[0]
             .ledger
             .iter()
@@ -7669,9 +7868,15 @@ fn dorothy_counts_rhine_tech_skills_including_her_own() {
             .map_or(0.0, |l| l.speed_pct)
     };
     let with_silence = line(&["char_391_rosmon", "char_1031_slent2", "char_4048_doroth"]);
-    assert!((with_silence - 10.0).abs() < 1e-6, "Silence's + her own Rhine Tech = +10, got {with_silence}");
+    assert!(
+        (with_silence - 10.0).abs() < 1e-6,
+        "Silence's + her own Rhine Tech = +10, got {with_silence}"
+    );
     let alone = line(&["char_4048_doroth"]);
-    assert!((alone - 5.0).abs() < 1e-6, "her own Rhine Tech β alone = +5, got {alone}");
+    assert!(
+        (alone - 5.0).abs() < 1e-6,
+        "her own Rhine Tech β alone = +5, got {alone}"
+    );
 }
 
 /// A dorm-fed pool with a co-feeder: Rosmontis' Chain of Thought draws on
@@ -7693,20 +7898,172 @@ fn shared_dorm_pool_prices_own_origins_and_bundles_the_cofeeder() {
     let building = UserBuilding { rooms };
     // Deep roster: the projected dorm occupancy fills all 20 beds.
     let mut ids: Vec<&str> = vec![ROSMONTIS, EBENHOLZ];
-    ids.extend(gd.building.chars.keys().filter(|id| id.starts_with("char_") && *id != ROSMONTIS && *id != EBENHOLZ).take(40).map(String::as_str));
+    ids.extend(
+        gd.building
+            .chars
+            .keys()
+            .filter(|id| id.starts_with("char_") && *id != ROSMONTIS && *id != EBENHOLZ)
+            .take(40)
+            .map(String::as_str),
+    );
     let profiles: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
 
     let native = plan_optimal_economies(&profiles, &building, &gd.building, &registry);
-    let own = native.overrides.iter().find(|(b, _)| b == MANIFEST).map(|(_, v)| *v);
-    assert_eq!(own, Some(20.0), "Rosmontis priced on her own 20 dorm points: {:?}", native.overrides);
+    let own = native
+        .overrides
+        .iter()
+        .find(|(b, _)| b == MANIFEST)
+        .map(|(_, v)| *v);
+    assert_eq!(
+        own,
+        Some(20.0),
+        "Rosmontis priced on her own 20 dorm points: {:?}",
+        native.overrides
+    );
+
+    let bundles = candidate_bundles(&profiles, &building, &gd.building, &registry);
+    // Exactly Ebenholz's seat: the filler roster may carry other co-feeders
+    // (Dusk), whose larger subsets are bundles of their own.
+    let shared = bundles
+        .iter()
+        .find(|b| b.pins == vec![(EBENHOLZ.to_string(), "TRADING".to_string())])
+        .expect("a bundle pinning Ebenholz alone into a Trading Post");
+    let full = shared
+        .overrides
+        .iter()
+        .find(|(b, _)| b == MANIFEST)
+        .map(|(_, v)| *v);
+    assert_eq!(
+        full,
+        Some(40.0),
+        "with Ebenholz seated the pool is 40: {:?}",
+        shared.overrides
+    );
+}
+
+/// Dusk's Control-Center rider ("when self morale is above 12, Perception
+/// Information +10") feeds the SAME pool Rosmontis' dorm count fills - the
+/// base expert (2026-09-08): Dusk, Iris, Czerny and Whisperain all stack into
+/// it from their own resources, no split, no cap; the community's high-end
+/// sheet reads Perception Info 34 = 20 dorm + Dusk 10 + Iris 2 + Czerny 2.
+/// The optimizer offers that seating as a shared-pool bundle pinning Dusk
+/// into the Control Center, priced at her steady-state grant (10 x the half
+/// of her bar spent above 12) on top of Rosmontis' own 20.
+#[test]
+fn dusk_feeds_rosmontis_pool_through_a_control_center_pin() {
+    use backend::core::grade::base::pools::{candidate_bundles, plan_optimal_economies};
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const DUSK: &str = "char_2015_dusk";
+    const MANIFEST: &str = "manu_prod_spd_bd[010]";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("cc", "CONTROL", 5)];
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let mut ids: Vec<&str> = vec![ROSMONTIS, DUSK];
+    ids.extend(
+        gd.building
+            .chars
+            .keys()
+            .filter(|id| id.starts_with("char_") && *id != ROSMONTIS && *id != DUSK)
+            .take(40)
+            .map(String::as_str),
+    );
+    let profiles: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+
+    // The native plan never forces Dusk's seat: Rosmontis alone is her 20.
+    let native = plan_optimal_economies(&profiles, &building, &gd.building, &registry);
+    let own = native
+        .overrides
+        .iter()
+        .find(|(b, _)| b == MANIFEST)
+        .map(|(_, v)| *v);
+    assert_eq!(own, Some(20.0), "own origins only: {:?}", native.overrides);
+    assert!(
+        !native.pins.iter().any(|(id, _)| id == DUSK),
+        "Dusk is a bundle, not a forced pin"
+    );
 
     let bundles = candidate_bundles(&profiles, &building, &gd.building, &registry);
     let shared = bundles
         .iter()
-        .find(|b| b.pins.iter().any(|(id, room)| id == EBENHOLZ && room == "TRADING"))
-        .expect("a bundle pinning Ebenholz into a Trading Post");
-    let full = shared.overrides.iter().find(|(b, _)| b == MANIFEST).map(|(_, v)| *v);
-    assert_eq!(full, Some(40.0), "with Ebenholz seated the pool is 40: {:?}", shared.overrides);
+        .find(|b| {
+            b.pins.iter().any(|(id, r)| id == DUSK && r == "CONTROL")
+                && b.overrides
+                    .iter()
+                    .any(|(b, v)| b == MANIFEST && (*v - 25.0).abs() < 1e-9)
+        })
+        .unwrap_or_else(|| {
+            panic!(
+                "a bundle pinning Dusk into the Control Center at 20 + 5: {:?}",
+                bundles
+                    .iter()
+                    .map(|b| (&b.pins, &b.overrides))
+                    .collect::<Vec<_>>()
+            )
+        });
+    assert_eq!(shared.pins.len(), 1, "Dusk alone: {:?}", shared.pins);
+}
+
+/// The live settlement reads a morale-conditional grant off the seated
+/// operator's REAL bar when the sync carries it: Dusk's "when self morale is
+/// above 12, Perception Information +10" is the full 10 while she is above
+/// 12 (what the game's counter shows), nothing once below, and only the
+/// steady-state half when her bar is unknown.
+#[test]
+fn live_settlement_reads_dusks_grant_off_her_real_morale() {
+    use backend::core::grade::base::assignment::compute_live_assignment;
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const DUSK: &str = "char_2015_dusk";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("cc", "CONTROL", 5)];
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let mut ids: Vec<&str> = vec![ROSMONTIS, DUSK];
+    ids.extend(
+        gd.building
+            .chars
+            .keys()
+            .filter(|id| id.starts_with("char_") && *id != ROSMONTIS && *id != DUSK)
+            .take(20)
+            .map(String::as_str),
+    );
+    let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+    rooms[0].current_operators = vec![ROSMONTIS.to_string()];
+    rooms[0].current_formula = Some("F_EXP".to_string());
+    rooms[1].current_operators = vec![DUSK.to_string()];
+    for (i, id) in ids[2..].iter().enumerate() {
+        rooms[2 + i / 5].current_operators.push((*id).to_string());
+    }
+    let building = UserBuilding { rooms };
+    let factory = |live: HashMap<String, f64>| {
+        compute_live_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+            &live,
+        )
+        .rooms
+        .into_iter()
+        .find(|r| r.slot_id == "mf")
+        .map_or(0.0, |r| r.total_efficiency)
+    };
+    let unknown = factory(HashMap::new());
+    let above = factory(HashMap::from([(DUSK.to_string(), 20.0)]));
+    let below = factory(HashMap::from([(DUSK.to_string(), 8.0)]));
+    assert!(
+        (above - below - 10.0).abs() < 1e-9,
+        "above {above} vs below {below}: her 10 is all or nothing"
+    );
+    assert!(
+        (unknown - below - 5.0).abs() < 1e-9,
+        "unknown {unknown} vs below {below}: the steady-state half"
+    );
 }
 
 /// Durin-class compound texts ("self Morale recovered per hour -0.1, but

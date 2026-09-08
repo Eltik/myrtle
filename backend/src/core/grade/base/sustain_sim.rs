@@ -134,6 +134,20 @@ struct OpSchedule {
 /// game only moves morale inside rooms. Room auras and single-target healers
 /// are deliberately ignored here: this is a now-cast, not the block sim, and
 /// staying slightly conservative beats over-promising.
+/// Every operator's morale AS THE GAME LAST WROTE IT, straight from the
+/// synced building JSON - the state the synced base displayed. The live
+/// views describe that base, so pool counters read these bars unprojected:
+/// a stale sync projected weeks forward would report a state the game never
+/// showed (Dusk drained below 12 while her counter read the full grant).
+/// Empty when the sync carries no bars - callers then fall back to
+/// steady-state models.
+pub fn synced_live_morale(building_json: &serde_json::Value) -> HashMap<String, f64> {
+    super::types::live_morale_snapshot(building_json)
+        .into_iter()
+        .map(|(id, s)| (id, s.morale))
+        .collect()
+}
+
 pub fn project_morale(
     snapshots: &HashMap<String, super::types::MoraleSnapshot>,
     now_unix: i64,

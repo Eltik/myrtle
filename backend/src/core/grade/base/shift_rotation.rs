@@ -39,12 +39,12 @@ use super::types::UserRoom;
 use super::{
     assignment::{
         assign_auxiliary_rooms, base_wide_relevant, build_op_index, compute_team_efficiency,
-        effective_facility_counts, fill_remaining_slots, morale_recovery, num_morale_swap_managers,
-        op_uptime, resolve_base_wide, resolve_room_presence, room_presence_relevant,
-        room_search_score, rotation_cc_plan,
+        compute_team_totals, effective_facility_counts, fill_remaining_slots, morale_recovery,
+        num_morale_swap_managers, op_uptime, resolve_base_wide, resolve_room_presence,
+        room_presence_relevant, room_search_score, rotation_cc_plan,
     },
     buff_registry::BuffResolutionStrategy,
-    team_select::plan_production_groups,
+    team_select::{PlannedGroup, plan_production_groups, tiled_objective},
     types::{OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
 };
@@ -113,6 +113,61 @@ impl SquadPattern {
         match self {
             Self::Alternating => k % 2,
             Self::Block => usize::from(k >= 2),
+        }
+    }
+}
+
+/// Seat a 24/7-pinned operator into every shift cell of `slot` in a plan that
+/// reserved their seat: each cell's team becomes `team + pinned`, re-scored by
+/// the ledger (a Shamare pin zeroes the bodies beside her; a Tequila pin adds
+/// his rider to whatever Tailoring the cell fields), so the tiled objective
+/// prices the pin as the rotation will actually run it.
+#[allow(clippy::too_many_arguments)]
+fn seat_pinned_operator(
+    groups: &mut [PlannedGroup],
+    slot: &str,
+    pinned: &str,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    morale_drains: &HashMap<String, f64>,
+    cc_conditions: &[super::assignment::CcCondition],
+) {
+    for g in groups.iter_mut() {
+        let Some(ri) = g.rooms.iter().position(|(s, _)| s == slot) else {
+            continue;
+        };
+        for shift in 0..SHIFT_COUNT {
+            let Some(team) = g.teams.get(g.cells[ri][shift]) else {
+                continue;
+            };
+            let mut ops = team.ops.clone();
+            if !ops.iter().any(|o| o == pinned) {
+                ops.push(pinned.to_string());
+            }
+            let totals = compute_team_totals(
+                &ops,
+                &g.room_type,
+                g.formula_type.as_deref(),
+                op_index,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                morale_drains,
+                cc_conditions,
+            );
+            let score = room_search_score(&g.room_type, totals.speed_pct, totals.order_value_pct);
+            g.teams.push(super::assignment::CandidateTeam {
+                ops,
+                speed: totals.speed_pct,
+                value: totals.order_value_pct,
+                gold: totals.order_gold_pct,
+                score,
+            });
+            g.cells[ri][shift] = g.teams.len() - 1;
         }
     }
 }
@@ -463,11 +518,15 @@ fn rotation_core(
 
     // ── Fiammetta 24/7 sustain ────────────────────────────────────────────────────
     // Preset evidence first (the player's explicit choice), then a proactive top-up:
-    // owning a manager recommends sustaining the trading operator whose 24/7 presence
-    // preserves the most output. That's the operator with the largest DROP-ONE delta
-    // (a Shamare-type nullifier whose team collapses without her, or a Proviso-type
-    // whose order-value multiplier vanishes), scaled by the extra uptime the pin buys
-    // (a fast-draining operator gains more from never resting).
+    // owning a manager recommends sustaining the trading operator whose 24/7 seat
+    // adds the most REALIZED yield. Each candidate is priced by a with/without
+    // oracle on the rotation objective: the teams are re-planned around the
+    // candidate's permanent seat and every shift is scored with them seated
+    // against the same teams unseated - only the candidate's presence differs,
+    // never the planner's own noise. That couples the pick to the base's gold supply
+    // (base expert, 2026-09-08): a gold-starved post gains nothing from more
+    // speed, so Tequila's per-bar LMD rider outranks Shamare's speed there,
+    // while a gold-rich post keeps its speed anchor around the clock.
     let mut sustained =
         preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
@@ -482,12 +541,14 @@ fn rotation_core(
             .map_or(0.0, |m| {
                 super::dorms::manager_swap_rate(m, registry, building_data)
             });
+        let mut exclude_base: HashSet<String> = cc_plan.squad1.iter().cloned().collect();
+        exclude_base.extend(pinned_ids.iter().cloned());
         let mut cands: Vec<(String, f64)> = Vec::new();
         for g in groups.iter().filter(|g| g.room_type == "TRADING") {
+            let group_rooms: Vec<String> = g.rooms.iter().map(|(s, _)| s.clone()).collect();
             for team in g.teams.iter().filter(|t| !t.ops.is_empty()) {
-                let team_score = room_search_score(&g.room_type, team.speed, team.value);
                 for id in &team.ops {
-                    if sustained.contains(id) {
+                    if sustained.contains(id) || cands.iter().any(|(c, _)| c == id) {
                         continue;
                     }
                     let feasible = op_index.get(id.as_str()).is_none_or(|o| {
@@ -499,12 +560,33 @@ fn rotation_core(
                     if !feasible {
                         continue;
                     }
-                    let without: Vec<String> =
-                        team.ops.iter().filter(|o| o != &id).cloned().collect();
-                    let (speed, value) = compute_team_efficiency(
-                        &without,
-                        &g.room_type,
-                        g.formula_type.as_deref(),
+                    let Some(slot) = preset_room_of(building, id)
+                        .filter(|slot| group_rooms.contains(slot))
+                        .or_else(|| group_rooms.first().cloned())
+                    else {
+                        continue;
+                    };
+                    let mut exclude = exclude_base.clone();
+                    exclude.insert(id.clone());
+                    let reserved: HashMap<String, usize> = HashMap::from([(slot.clone(), 1)]);
+                    let mut pinned_plan = plan_production_groups(
+                        &production_rooms,
+                        operators,
+                        &exclude,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        &cc_plan.global_bonuses,
+                        &cc_plan.conditions,
+                        morale_drains,
+                        &reserved,
+                    );
+                    let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
+                    seat_pinned_operator(
+                        &mut pinned_plan,
+                        &slot,
+                        id,
                         &op_index,
                         registry,
                         building_data,
@@ -513,14 +595,20 @@ fn rotation_core(
                         morale_drains,
                         &cc_plan.conditions,
                     );
-                    let delta =
-                        (team_score - room_search_score(&g.room_type, speed, value)).max(0.0);
+                    let seated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
+                    let delta = (seated - unseated).max(0.0);
                     let uptime = op_index
                         .get(id.as_str())
                         .map_or(1.0, |op| op_uptime(op, morale_drains, recovery));
                     // Without the manager the operator works ~2 of 3 shifts at their
                     // morale-limited uptime; with it, all three at full.
                     let extra_uptime = 1.0 - uptime * (2.0 / 3.0);
+                    if std::env::var_os("BASE_PIN_TRACE").is_some() {
+                        eprintln!(
+                            "[pin] {id} @ {slot}: unseated {unseated:.1} seated {seated:.1} uptime {uptime:.2} -> gain {:.1}",
+                            delta * extra_uptime
+                        );
+                    }
                     cands.push((id.clone(), delta * extra_uptime));
                 }
             }

@@ -851,6 +851,11 @@ const MESH_BASIS_ON = typeof window !== "undefined" && ["1", "alt"].includes(new
  *  on every pure rotation, which is why the in-plane null cannot tell them apart, and differ
  *  on a mirror or a foreshortening. One bit, pinned by the clip, never by preference. */
 const MESH_BASIS_ALT = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("meshbasis") === "alt";
+/** The ram emitter's own mesh draw takes the same basis under the same `?meshbasis` opt-in;
+ *  `?rambasis=0` withholds it from that path alone, for attribution between the two halves.
+ *  Read as a MISSING parameter. 294 of the 427 exported bases sit on this path, every
+ *  edge-on ray and foreshortened sheet on the tail keys among them. */
+const RAM_BASIS_ON = typeof window === "undefined" || new URLSearchParams(window.location.search).get("rambasis") !== "0";
 function prewarmOf(d: IParticleSystemData): boolean {
     if (!PREWARM_ON) return false;
     return !!d.prewarm && d.looping && d.duration > 0;
@@ -3227,6 +3232,10 @@ class RamEmitter {
     private readonly data: IParticleSystemData;
     private readonly ram: IRamData;
     private readonly particles: IRamParticle[] = [];
+    /** The emitter's exported screen basis for an out-of-plane LOCAL-aligned mesh emitter,
+     *  or null: the mesh vertices then take only the particle's own spin, as they always
+     *  did. Same matrix as `MeshEmitter.applyDisp`, `M = B R(-rot)`, same handedness switch. */
+    private readonly basis: [number, number, number, number] | null;
     private readonly cap: number;
     private time = 0;
     /** Absolute seconds since the `_Start` began, on the REAL timeline - never scaled by
@@ -3316,6 +3325,7 @@ class RamEmitter {
         // `vpp`, so the quad case is byte-identical.
         const mg = data.renderMode === "mesh" && data.mesh && data.mesh.idx.length >= 3 ? data.mesh : null;
         this.meshGeo = mg;
+        this.basis = mg && MESH_BASIS_ON && RAM_BASIS_ON && Array.isArray(data.meshBasis) && data.meshBasis.length === 4 ? data.meshBasis : null;
         const vpp = mg ? Math.floor(mg.pos.length / 2) : 4;
         const ipp = mg ? mg.idx.length : 6;
         this.vpp = vpp;
@@ -3794,11 +3804,30 @@ class RamEmitter {
                 // geometry landed inverted and dragged its UVs with it, sampling every one of its
                 // textures upside down. `?meshyflip=0` restores the old behaviour.
                 const my = meshYFlip() ? -1 : 1;
-                for (let k = 0; k < vpp; k++) {
-                    const lxk = mp[k * 2] * szm;
-                    const lyk = mp[k * 2 + 1] * szy * my;
-                    pos[vp + k * 2] = cx + lxk * c - lyk * s;
-                    pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+                if (this.basis) {
+                    // The emitter's screen basis in place of the plain spin: M = B R(-rot),
+                    // the matrix `MeshEmitter.applyDisp` builds, with `?meshbasis=alt`
+                    // negating the off-diagonal terms for the other handedness.
+                    const [bxx, bxy0, byx0, byy] = this.basis;
+                    const bxy = MESH_BASIS_ALT ? -bxy0 : bxy0;
+                    const byx = MESH_BASIS_ALT ? -byx0 : byx0;
+                    const ma = bxx * c + byx * s;
+                    const mb = bxy * c + byy * s;
+                    const mc = -bxx * s + byx * c;
+                    const md = -bxy * s + byy * c;
+                    for (let k = 0; k < vpp; k++) {
+                        const lxk = mp[k * 2] * szm;
+                        const lyk = mp[k * 2 + 1] * szy * my;
+                        pos[vp + k * 2] = cx + ma * lxk + mc * lyk;
+                        pos[vp + k * 2 + 1] = cy + mb * lxk + md * lyk;
+                    }
+                } else {
+                    for (let k = 0; k < vpp; k++) {
+                        const lxk = mp[k * 2] * szm;
+                        const lyk = mp[k * 2 + 1] * szy * my;
+                        pos[vp + k * 2] = cx + lxk * c - lyk * s;
+                        pos[vp + k * 2 + 1] = cy + lxk * s + lyk * c;
+                    }
                 }
             } else {
                 const pv = d.pivot;

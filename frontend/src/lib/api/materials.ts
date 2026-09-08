@@ -4,7 +4,7 @@ import { backendFetch } from "#/lib/fetch";
 
 export type IItemRarity = "TIER_1" | "TIER_2" | "TIER_3" | "TIER_4" | "TIER_5" | "TIER_6";
 
-export type IItemClass = "MATERIAL" | "CONSUME" | "NORMAL" | "NONE";
+export type IItemClass = "MATERIAL" | "CONSUME" | "NORMAL" | "NONE" | "UNKNOWN";
 
 export type IItemOccPer = "USUAL" | "ALMOST" | "ALWAYS" | "SOMETIMES" | "OFTEN";
 

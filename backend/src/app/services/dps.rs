@@ -31,6 +31,11 @@ pub struct OperatorListEntry {
     pub name: String,
     pub available_skills: Vec<i32>,
     pub available_modules: Vec<i32>,
+    /// `uniEquipId` for each entry of `available_modules`, same index, resolved
+    /// through the same path the simulator uses. Without this the client has
+    /// only a bare integer and has to guess which module it names by counting
+    /// down a list it fetched from a different endpoint.
+    pub available_module_ids: Vec<String>,
     pub default_skill: i32,
     pub default_module: i32,
     pub conditionals: Vec<ConditionalInfo>,
@@ -57,13 +62,21 @@ fn advanced_modules_sorted(operator: &Operator) -> Vec<OperatorModuleRef<'_>> {
     mods
 }
 
-/// Whether a formula module at `pos` resolves to a physical module present in
-/// the current game data. Mirrors the resolution in `OperatorUnit::new`.
-fn module_resolvable(sorted: &[OperatorModuleRef<'_>], pos: usize, module_value: i32) -> bool {
-    sorted.get(pos).is_some()
-        || sorted
+/// The physical module a formula module at `pos` resolves to, or `None` when the
+/// current game data has no such module. Mirrors the resolution in
+/// `OperatorUnit::new` exactly, so what the API advertises, what it names, and
+/// what the engine simulates cannot drift apart.
+fn resolve_module<'a>(
+    sorted: &[OperatorModuleRef<'a>],
+    pos: usize,
+    module_value: i32,
+) -> Option<OperatorModuleRef<'a>> {
+    sorted.get(pos).copied().or_else(|| {
+        sorted
             .iter()
-            .any(|m| m.module.char_equip_order == module_value)
+            .find(|m| m.module.char_equip_order == module_value)
+            .copied()
+    })
 }
 
 fn build_list_entries(
@@ -75,21 +88,24 @@ fn build_list_entries(
         .iter()
         .map(|(id, formula)| {
             // Only advertise modules the current game data can actually resolve.
-            let available_modules: Vec<i32> = match gd.operators.get(id) {
-                Some(operator) => {
-                    let sorted = advanced_modules_sorted(operator);
-                    formula
-                        .available_modules
-                        .iter()
-                        .copied()
-                        .enumerate()
-                        .filter(|&(pos, m)| module_resolvable(&sorted, pos, m))
-                        .map(|(_, m)| m)
-                        .collect()
-                }
-                // Operator absent from game data entirely - advertise nothing.
-                None => Vec::new(),
-            };
+            let (available_modules, available_module_ids): (Vec<i32>, Vec<String>) =
+                match gd.operators.get(id) {
+                    Some(operator) => {
+                        let sorted = advanced_modules_sorted(operator);
+                        formula
+                            .available_modules
+                            .iter()
+                            .copied()
+                            .enumerate()
+                            .filter_map(|(pos, m)| {
+                                resolve_module(&sorted, pos, m)
+                                    .map(|module| (m, module.module.uni_equip_id.clone()))
+                            })
+                            .unzip()
+                    }
+                    // Operator absent from game data entirely - advertise nothing.
+                    None => (Vec::new(), Vec::new()),
+                };
             // Keep default_module consistent: if it's been filtered out, drop it.
             let default_module = if available_modules.contains(&formula.default_module) {
                 formula.default_module
@@ -101,6 +117,7 @@ fn build_list_entries(
                 name: formula.name.clone(),
                 available_skills: formula.available_skills.clone(),
                 available_modules,
+                available_module_ids,
                 default_skill: formula.default_skill,
                 default_module,
                 conditionals: formula

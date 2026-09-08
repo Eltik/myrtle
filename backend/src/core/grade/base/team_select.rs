@@ -251,7 +251,10 @@ pub fn plan_production_groups(
 /// shifts, staffing each room with the team its tiling cell names. This couples the
 /// gold factories to the trading posts per shift (LMD = min(made, sold) × 500), the
 /// same yield model the peak optimizer scores splits with.
-fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String, f64>) -> f64 {
+pub fn tiled_objective(
+    groups: &[PlannedGroup],
+    global_bonuses: &HashMap<String, f64>,
+) -> f64 {
     (0..SHIFT_COUNT)
         .map(|shift| {
             let rooms: Vec<RoomAssignment> = groups
@@ -271,6 +274,7 @@ fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String, f64
                                 operators: team.ops.clone(),
                                 total_efficiency: team.speed + global,
                                 order_value: team.value,
+                                order_gold: team.gold,
                                 ..Default::default()
                             })
                         })
@@ -552,6 +556,7 @@ fn select_balanced_teams(
                     ops: Vec::new(),
                     speed: 0.0,
                     value: 0.0,
+                    gold: 0.0,
                     score: 0.0,
                 })
                 .collect();

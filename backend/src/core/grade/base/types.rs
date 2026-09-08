@@ -331,6 +331,10 @@ pub struct RoomAssignment {
     /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield, kept
     /// separate from speed so it doesn't inflate the displayed efficiency.
     pub order_value: f64,
+    /// The gold-THROUGHPUT part of that value (Pure Gold per hour over a bare
+    /// post's): Proviso's bonus bars come from stock, Tequila's LMD rider
+    /// moves none. The yield model bounds the former by the factories' gold.
+    pub order_gold: f64,
     /// True when this is a FIXED synergy squad - its operators depend on each
     /// other (e.g. Shamare + Tequila + Bibeak, or Texas + Lappland) and can't be
     /// swapped without breaking the combo. False = a flexible team of independent

@@ -54,10 +54,9 @@ async fn restore(state: &AppState, uid: &str, server: Server) -> Result<AuthSess
         .await?
         .ok_or_else(|| ApiError::BadRequest(NEEDS_LOGIN.into()))?;
 
-    let credential =
-        game_credentials::load(&state.db, &state.config.game_credential_key, user.id)
-            .await?
-            .ok_or_else(|| ApiError::BadRequest(NEEDS_LOGIN.into()))?;
+    let credential = game_credentials::load(&state.db, &state.config.game_credential_key, user.id)
+        .await?
+        .ok_or_else(|| ApiError::BadRequest(NEEDS_LOGIN.into()))?;
 
     Ok(AuthSession {
         uid: uid.into(),

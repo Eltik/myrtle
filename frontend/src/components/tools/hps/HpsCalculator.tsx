@@ -8,12 +8,14 @@ import { exportSvgAsPng } from "#/components/tools/shared/exportChart";
 import { InstanceCard } from "#/components/tools/shared/InstanceCard";
 import { KpiPanel } from "#/components/tools/shared/KpiPanel";
 import { OperatorPicker } from "#/components/tools/shared/OperatorPicker";
+import { moduleShortLabel } from "#/components/tools/shared/useOperatorDetail";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { hpsOperatorsQueryOptions, type IHpsOperatorListEntry } from "#/lib/api/hps";
+import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { BuffsPanel } from "./impl/components/BuffsPanel";
 import { X_AXIS_INPUT, X_AXIS_LABELS, X_AXIS_SHORT, Y_METRIC_HINTS, Y_METRIC_LABELS } from "./impl/constants";
 import type { HpsXAxis, HpsYMetric } from "./impl/types";
@@ -46,6 +48,7 @@ export function HpsCalculator(): React.ReactElement {
     const onResetAll = React.useCallback(() => dispatch({ type: "RESET_INSTANCES" }), [dispatch]);
     const onToggleCollapseAll = React.useCallback(() => dispatch({ type: "SET_ALL_COLLAPSED", collapsed: !allCollapsed }), [allCollapsed, dispatch]);
 
+    const { data: staticOps } = useQuery(operatorsListQueryOptions());
     const chartContainerRef = React.useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = React.useState(false);
     const onExportChart = React.useCallback(async () => {
@@ -60,7 +63,14 @@ export function HpsCalculator(): React.ReactElement {
         const visibleInstances = state.instances.filter((i) => i.visible);
         const legend = visibleInstances.map((inst, idx) => {
             const dupSuffix = (sameOpCounts.get(inst.op.id) ?? 1) > 1 ? ` #${idx + 1}` : "";
-            const moduleSummary = inst.config.moduleIndex > 0 ? `Mod${inst.config.moduleIndex} L${inst.config.moduleLevel}` : "no module";
+            const moduleSummary =
+                inst.config.moduleIndex > 0
+                    ? `${moduleShortLabel(
+                          staticOps?.find((o) => o.id === inst.op.id),
+                          inst.op,
+                          inst.config.moduleIndex,
+                      )} L${inst.config.moduleLevel}`
+                    : "no module";
             return { color: inst.color, label: `${inst.op.name}${dupSuffix}`, sublabel: `S${inst.config.skillIndex} · ${moduleSummary}` };
         });
 
@@ -88,7 +98,7 @@ export function HpsCalculator(): React.ReactElement {
         } finally {
             setIsExporting(false);
         }
-    }, [state.xAxis, state.yMetric, state.instances, state.buffs, atkPct, snapshots]);
+    }, [state.xAxis, state.yMetric, state.instances, state.buffs, atkPct, snapshots, staticOps]);
 
     const { data: latestOps } = useQuery(hpsOperatorsQueryOptions());
     React.useEffect(() => {

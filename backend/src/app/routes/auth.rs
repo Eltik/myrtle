@@ -195,7 +195,9 @@ pub async fn disconnect(
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id = auth.user_uuid()?;
     let removed = services::game_session::disconnect(&state, &auth.uid, user_id).await?;
-    Ok(Json(serde_json::json!({ "status": "ok", "removed": removed })))
+    Ok(Json(
+        serde_json::json!({ "status": "ok", "removed": removed }),
+    ))
 }
 
 pub async fn refresh(

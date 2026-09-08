@@ -813,7 +813,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                         )}
                                                                                         title={val === 0 ? "Not planned" : `Stage ${val}`}
                                                                                     >
-                                                                                        <span className="font-semibold text-xs sm:text-[13px]">{val === 0 ? "X" : val}</span>
+                                                                                        <span className="font-semibold text-xs sm:text-[13px]">{val === 0 ? "\u2014" : val}</span>
                                                                                     </button>
                                                                                 );
                                                                             })}

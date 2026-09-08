@@ -113,13 +113,16 @@ fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
     while from > 0 && !desc.is_char_boundary(from) {
         from -= 1;
     }
-    let window = &desc[from..start];
+    // Case-insensitive: Dusk's rider reads "when self morale is above 12,
+    // Perception Information +10" - a morale-conditional grant the flat
+    // channel must not count a second time.
+    let window = desc[from..start].to_lowercase();
     ![
         "for each",
         "for every",
-        "Operator in",
-        "Operators in",
-        "Morale is",
+        "operator in",
+        "operators in",
+        "morale is",
         "slot",
     ]
     .iter()
@@ -128,6 +131,52 @@ fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
 
 /// A simple deployed-tag counter: "for each <tag.X> ... Operator, <Resource>
 /// +P" (the Felvine generator; no cap, unlike the Sui faction counter).
+/// The deployment-independent pool grants a buff's TEXT carries beside the
+/// effect the parser owns: unconditional flat grants (Dusk's "Perception
+/// Information +10" rider, guarded so a parsed generator is never counted
+/// twice), morale-conditional grants at their steady-state weight, and
+/// dorm-occupancy counters settled against `dorm_occupants`. Faction and
+/// deployed-tag counters need the deployment and stay with their callers.
+/// One extractor for the live settlement, the dorm economies and the
+/// Control-Center grant bundles, so every path reads the same points.
+/// `current_morale` is the owner's REAL bar when the caller knows it (the live
+/// settlement, from the sync's last write): a morale-conditional grant
+/// then reads as the game shows it - all or nothing by the condition -
+/// instead of its steady-state time-share.
+fn text_grants(
+    buff_id: &str,
+    buff: &Buff,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    dorm_occupants: f64,
+    current_morale: Option<f64>,
+) -> Vec<(String, f64)> {
+    let mut grants: Vec<(String, f64)> = Vec::new();
+    for c in RE_MORALE_COND_GRANT.captures_iter(&buff.description) {
+        let above = &c[1] == "above";
+        let threshold: f64 = c[2].parse().unwrap_or(0.0);
+        let amount: f64 = c[4].parse().unwrap_or(0.0);
+        let weight = match current_morale {
+            Some(m) => f64::from(u8::from(if above { m > threshold } else { m < threshold })),
+            None => morale_condition_weight(above, threshold),
+        };
+        grants.push((c[3].to_string(), amount * weight));
+    }
+    for c in RE_FLAT_GRANT.captures_iter(&buff.description) {
+        if flat_grant_unconditional(&buff.description, c.get(0).map_or(0, |m| m.start()))
+            && !strategy_generates(registry, buff_id, buff, &c[1])
+        {
+            grants.push((c[1].to_string(), c[2].parse().unwrap_or(0.0)));
+        }
+    }
+    if let Some(c) = RE_DORM_OCC_GRANT.captures(&buff.description)
+        && !strategy_generates(registry, buff_id, buff, &c[1])
+    {
+        let per: f64 = c[2].parse().unwrap_or(0.0);
+        grants.push((c[1].to_string(), per * dorm_occupants));
+    }
+    grants
+}
+
 static RE_TAG_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"for each <\$cc\.tag\.([a-z0-9_]+)>.{0,80}?Operator,\s*<\$cc\.(bd_[A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",
@@ -173,11 +222,16 @@ static RE_FACTION_GRANT: LazyLock<Regex> = LazyLock::new(|| {
 /// Layout-derived generators (`PoolBasis::FunctionalLevels`) are deliberately
 /// skipped - the ledger settles those room-locally wherever the generator's
 /// clause is live, and settling them here too would double-count.
+/// `live_morale` is each seated operator's bar as the game last wrote it
+/// (empty when the sync carries none): Dusk's "when self morale is above 12,
+/// Perception Information +10" counts the full 10 while she IS above 12, as
+/// the game showed it, and nothing once she has dropped below.
 pub(crate) fn settle_current_pools(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
+    live_morale: &HashMap<String, f64>,
 ) -> HashMap<String, f64> {
     let by_id: HashMap<&str, &OperatorBaseProfile> =
         operators.iter().map(|o| (o.char_id.as_str(), o)).collect();
@@ -279,12 +333,11 @@ pub(crate) fn settle_current_pools(
                 if buff.room_type != room.room_type {
                     continue;
                 }
-                for c in RE_MORALE_COND_GRANT.captures_iter(&buff.description) {
-                    let above = &c[1] == "above";
-                    let threshold: f64 = c[2].parse().unwrap_or(0.0);
-                    let amount: f64 = c[4].parse().unwrap_or(0.0);
-                    *points.entry(c[3].to_string()).or_insert(0.0) +=
-                        amount * morale_condition_weight(above, threshold);
+                let current_morale = live_morale.get(id.as_str()).copied();
+                for (resource, amount) in
+                    text_grants(buff_id, buff, registry, dorm_occupants, current_morale)
+                {
+                    *points.entry(resource).or_insert(0.0) += amount;
                 }
                 if let Some(c) = RE_FACTION_GRANT.captures(&buff.description) {
                     let per: f64 = c[3].parse().unwrap_or(0.0);
@@ -292,28 +345,12 @@ pub(crate) fn settle_current_pools(
                     let units = deployed_with_tag(&c[1]).min(unit_cap);
                     *points.entry(c[2].to_string()).or_insert(0.0) += per * units;
                 }
-                for c in RE_FLAT_GRANT.captures_iter(&buff.description) {
-                    if flat_grant_unconditional(
-                        &buff.description,
-                        c.get(0).map_or(0, |m| m.start()),
-                    ) && !strategy_generates(registry, buff_id, buff, &c[1])
-                    {
-                        let amount: f64 = c[2].parse().unwrap_or(0.0);
-                        *points.entry(c[1].to_string()).or_insert(0.0) += amount;
-                    }
-                }
                 if let Some(c) = RE_TAG_GRANT.captures(&buff.description)
                     && !strategy_generates(registry, buff_id, buff, &c[2])
                 {
                     let per: f64 = c[3].parse().unwrap_or(0.0);
                     *points.entry(c[2].to_string()).or_insert(0.0) +=
                         per * deployed_with_tag(&c[1]);
-                }
-                if let Some(c) = RE_DORM_OCC_GRANT.captures(&buff.description)
-                    && !strategy_generates(registry, buff_id, buff, &c[1])
-                {
-                    let per: f64 = c[2].parse().unwrap_or(0.0);
-                    *points.entry(c[1].to_string()).or_insert(0.0) += per * dorm_occupants;
                 }
             }
         }
@@ -453,6 +490,10 @@ struct Gen {
     points: f64,
     /// A pin this generator needs to produce (own-room-level seats).
     pin: Option<String>,
+    /// A parsed generator clause (the dorm economies proper) rather than a
+    /// text side-channel grant riding along: only native origins anchor a
+    /// shared-pool bundle, side-channel origins join one as co-feeders.
+    native: bool,
 }
 
 fn collect_dorm_economy(
@@ -480,9 +521,29 @@ fn collect_dorm_economy(
     };
     for op in profiles {
         for buff_id in &op.available_buffs {
-            let (Some(buff), Some(strategy)) =
-                (building_data.buffs.get(buff_id), registry.get(buff_id))
-            else {
+            let Some(buff) = building_data.buffs.get(buff_id) else {
+                continue;
+            };
+            // Text side-channel grants (Dusk's Control-Center "Perception
+            // Information +10" rider) feed the SAME pool the dorm generators
+            // fill - the base expert confirmed 2026-09-08 that Dusk, Iris,
+            // Czerny and Whisperain all stack into Rosmontis' count from
+            // their own resources. They are origins the shared-pool bundles
+            // may pin (into the room the grant's buff requires), never a
+            // pin the native plan forces.
+            for (resource, points) in
+                text_grants(buff_id, buff, registry, projected_occupancy, None)
+            {
+                econ.gens.push(Gen {
+                    owner: op.char_id.clone(),
+                    owner_room: buff.room_type.clone(),
+                    resource,
+                    points,
+                    pin: None,
+                    native: false,
+                });
+            }
+            let Some(strategy) = registry.get(buff_id) else {
                 continue;
             };
             for clause in clauses_from_strategy(buff_id, buff, strategy) {
@@ -504,6 +565,7 @@ fn collect_dorm_economy(
                             resource: resource.clone(),
                             points: clause.cap.map_or(points, |cap| points.min(cap)),
                             pin,
+                            native: true,
                         });
                     }
                     ClauseKind::ResourceConvert(ResourceOp::Convert { from, to, ratio }) => {
@@ -550,7 +612,9 @@ fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>>
             if *ratio <= 0.0 {
                 continue;
             }
-            let Some(origins) = snapshot.get(from) else { continue };
+            let Some(origins) = snapshot.get(from) else {
+                continue;
+            };
             for (origin, available) in origins {
                 if !done.insert((ci, origin.clone())) {
                     continue;
@@ -630,52 +694,101 @@ fn shared_pool_bundles(
     let pools = settle_by_origin(&econ);
     let mut bundles = Vec::new();
     let mut seen: HashSet<Vec<String>> = HashSet::new();
+    let native_owners: HashSet<&str> = econ
+        .gens
+        .iter()
+        .filter(|g| g.native)
+        .map(|g| g.owner.as_str())
+        .collect();
     for (owner, _, resource, _, _) in &econ.consumers {
         let Some(origins) = pools.get(resource) else {
             continue;
         };
+        // A pool fed only by side-channel grants (the Sui Control-Center
+        // economy) is the grant-carrier bundles' business, not a dorm pool.
+        if !origins.keys().any(|o| native_owners.contains(o.as_str())) {
+            continue;
+        }
         let mut others: Vec<String> = origins
             .keys()
             .filter(|origin| *origin != owner)
             .cloned()
             .collect();
         others.sort();
-        if others.is_empty() || !seen.insert(others.clone()) {
+        if others.is_empty() {
             continue;
         }
-        let pins: Vec<(String, String)> = others
-            .iter()
-            .filter_map(|id| {
-                econ.gens
-                    .iter()
-                    .find(|g| &g.owner == id)
-                    .map(|g| (id.clone(), g.owner_room.clone()))
-            })
-            .collect();
-        // Every consumer fed by this pool set is priced at the full total.
-        let overrides: Vec<(String, f64)> = econ
-            .consumers
-            .iter()
-            .filter_map(|(c_owner, buff_id, c_res, step, pct)| {
-                let pts: f64 = pools.get(c_res)?.values().sum();
-                let touched = pools
-                    .get(c_res)?
-                    .keys()
-                    .any(|origin| origin == c_owner || others.contains(origin));
-                (touched && *step > 0.0 && pts > 0.0)
-                    .then(|| (buff_id.clone(), (pts / step).floor() * pct))
-                    .filter(|(_, v)| *v > 0.0)
-            })
-            .collect();
-        if !overrides.is_empty() {
-            bundles.push(EconomyPlan {
-                globals: Vec::new(),
-                overrides,
-                pins,
-            });
+        // Every co-feeder SUBSET is its own bundle: a seat the oracle rejects
+        // (Ebenholz's Trading-Post pin) must not sink the co-feeders that pay
+        // for themselves (Dusk's Control-Center seat).
+        for subset in cofeeder_subsets(&others) {
+            if !seen.insert(subset.clone()) {
+                continue;
+            }
+            let pins: Vec<(String, String)> = subset
+                .iter()
+                .filter_map(|id| {
+                    econ.gens
+                        .iter()
+                        .find(|g| &g.owner == id)
+                        .map(|g| (id.clone(), g.owner_room.clone()))
+                })
+                .collect();
+            // Every consumer fed by this pool set is priced on its own origin
+            // plus the pinned ones - the points this bundle can vouch for.
+            let overrides: Vec<(String, f64)> = econ
+                .consumers
+                .iter()
+                .filter_map(|(c_owner, buff_id, c_res, step, pct)| {
+                    let pts: f64 = pools
+                        .get(c_res)?
+                        .iter()
+                        .filter(|(origin, _)| *origin == c_owner || subset.contains(origin))
+                        .map(|(_, p)| p)
+                        .sum();
+                    (*step > 0.0 && pts > 0.0)
+                        .then(|| (buff_id.clone(), (pts / step).floor() * pct))
+                        .filter(|(_, v)| *v > 0.0)
+                })
+                .collect();
+            if !overrides.is_empty() {
+                bundles.push(EconomyPlan {
+                    globals: Vec::new(),
+                    overrides,
+                    pins,
+                });
+            }
         }
     }
     bundles
+}
+
+/// The co-feeder sets a shared pool offers the oracle: every non-empty
+/// subset while there are at most three co-feeders, else the full set and
+/// each singleton (bounded, and the two shapes that matter: everyone, or
+/// one seat that pays for itself).
+fn cofeeder_subsets(others: &[String]) -> Vec<Vec<String>> {
+    const FULL_ENUMERATION_MAX: usize = 3;
+    let mut subsets: Vec<Vec<String>> = Vec::new();
+    if others.len() <= FULL_ENUMERATION_MAX {
+        for mask in 1u32..(1u32 << others.len()) {
+            subsets.push(
+                others
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| mask & (1 << i) != 0)
+                    .map(|(_, id)| id.clone())
+                    .collect(),
+            );
+        }
+    } else {
+        subsets.push(others.to_vec());
+        subsets.extend(others.iter().map(|id| vec![id.clone()]));
+    }
+    // Largest first: the full seating is the bundle the oracle should try
+    // before its parts.
+    subsets.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
+    subsets
 }
 
 // ── Joint-seating bundles (stage 3b) ─────────────────────────────────────────
@@ -776,13 +889,13 @@ pub fn candidate_bundles(
         /// The room type the grant buffs require their owner to occupy - the
         /// pin target (Control Center for the Sui skills, by their own text).
         pin_room: String,
-        flat: Vec<(String, f64)>, // resource, steady-state-weighted amount
+        /// resource, steady-state-weighted amount; dorm-occupancy counters
+        /// (Dolris' "Passion +1 per dorm Operator") are settled against the
+        /// PROJECTED occupancy, the same figure the dorm economies plan with.
+        flat: Vec<(String, f64)>,
         faction: Option<(String, String, f64, f64)>, // tag, resource, per, unit_cap
-        /// Dorm-occupancy counters (Dolris' "Passion +1 per dorm Operator"):
-        /// resource, per-occupant amount - settled against the PROJECTED
-        /// occupancy, the same figure the native dorm economies plan with.
-        dorm_occ: Vec<(String, f64)>,
     }
+    let projected_occupancy = projected_dorm_occupancy(profiles, building, building_data);
     let mut cc_gens: Vec<GrantCarrier> = Vec::new();
     for op in profiles {
         let mut carrier: Option<GrantCarrier> = None;
@@ -790,17 +903,9 @@ pub fn candidate_bundles(
             let Some(buff) = building_data.buffs.get(buff_id) else {
                 continue;
             };
-            let mut flat: Vec<(String, f64)> = Vec::new();
+            let flat: Vec<(String, f64)> =
+                text_grants(buff_id, buff, registry, projected_occupancy, None);
             let mut faction = None;
-            for c in RE_MORALE_COND_GRANT.captures_iter(&buff.description) {
-                let above = &c[1] == "above";
-                let threshold: f64 = c[2].parse().unwrap_or(0.0);
-                let amount: f64 = c[4].parse().unwrap_or(0.0);
-                flat.push((
-                    c[3].to_string(),
-                    amount * morale_condition_weight(above, threshold),
-                ));
-            }
             if let Some(c) = RE_FACTION_GRANT.captures(&buff.description) {
                 faction = Some((
                     c[1].to_string(),
@@ -808,13 +913,6 @@ pub fn candidate_bundles(
                     c[3].parse().unwrap_or(0.0),
                     c[4].parse().unwrap_or(f64::INFINITY),
                 ));
-            }
-            for c in RE_FLAT_GRANT.captures_iter(&buff.description) {
-                if flat_grant_unconditional(&buff.description, c.get(0).map_or(0, |m| m.start()))
-                    && !strategy_generates(registry, buff_id, buff, &c[1])
-                {
-                    flat.push((c[1].to_string(), c[2].parse().unwrap_or(0.0)));
-                }
             }
             // The simple deployed-tag counter (Felvine per Soubo Adventurer)
             // rides the faction channel: same shape, uncapped.
@@ -829,13 +927,7 @@ pub fn candidate_bundles(
                     f64::INFINITY,
                 ));
             }
-            let mut dorm_occ: Vec<(String, f64)> = Vec::new();
-            if let Some(c) = RE_DORM_OCC_GRANT.captures(&buff.description)
-                && !strategy_generates(registry, buff_id, buff, &c[1])
-            {
-                dorm_occ.push((c[1].to_string(), c[2].parse().unwrap_or(0.0)));
-            }
-            if flat.is_empty() && faction.is_none() && dorm_occ.is_empty() {
+            if flat.is_empty() && faction.is_none() {
                 continue;
             }
             let entry = carrier.get_or_insert_with(|| GrantCarrier {
@@ -843,10 +935,8 @@ pub fn candidate_bundles(
                 pin_room: buff.room_type.clone(),
                 flat: Vec::new(),
                 faction: None,
-                dorm_occ: Vec::new(),
             });
             entry.flat.extend(flat);
-            entry.dorm_occ.extend(dorm_occ);
             if faction.is_some() {
                 entry.faction = faction;
             }
@@ -868,7 +958,6 @@ pub fn candidate_bundles(
     let mut groups: Vec<(HashSet<String>, Vec<usize>)> = Vec::new();
     for (i, g) in cc_gens.iter().enumerate() {
         let mut res: HashSet<String> = g.flat.iter().map(|(r, _)| r.clone()).collect();
-        res.extend(g.dorm_occ.iter().map(|(r, _)| r.clone()));
         if let Some((_, r, _, _)) = &g.faction {
             res.insert(r.clone());
         }
@@ -885,7 +974,6 @@ pub fn candidate_bundles(
         groups.push((merged_res, merged_idx));
     }
 
-    let projected_occupancy = projected_dorm_occupancy(profiles, building, building_data);
     for (group_resources, carrier_idx) in groups {
         let group: Vec<&GrantCarrier> = carrier_idx.iter().map(|&i| &cc_gens[i]).collect();
         // Settle the group's pools with its grant-carriers pinned into the CC.
@@ -920,9 +1008,6 @@ pub fn candidate_bundles(
         for g in &group {
             for (resource, amount) in &g.flat {
                 *points.entry(resource.clone()).or_insert(0.0) += amount;
-            }
-            for (resource, per) in &g.dorm_occ {
-                *points.entry(resource.clone()).or_insert(0.0) += per * projected_occupancy;
             }
             if let Some((tag, resource, per, unit_cap)) = &g.faction {
                 #[allow(clippy::cast_precision_loss)]

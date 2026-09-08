@@ -2999,7 +2999,9 @@ fn collect_dynchar_bg_quads(
         // `_MainColor.a`: the material's value, or the clip's own alpha track sampled at the
         // key's time when the clip animates it. Never the resolved tint's alpha, which the
         // x2 path has already scaled and clamped.
-        let (tint, color_curve) = if anchor_ctrl_v != 0.0 {
+        let (tint, color_curve) = if anchor_ctrl_v == 0.0 {
+            (tint, color_curve)
+        } else {
             let alpha_track = color_channels
                 .get(&go_pid)
                 .and_then(|chs| super::anim::prop_channel(chs, "_MainColor", 3));
@@ -3034,8 +3036,6 @@ fn collect_dynchar_bg_quads(
                         .collect()
                 }),
             )
-        } else {
-            (tint, color_curve)
         };
         // The layer's animated `_MainTex_ST` curve (entrance scenes only). When present it
         // supersedes the static ST bake below (the curve carries the full ST).
@@ -3952,6 +3952,7 @@ pub fn is_uvtween_program(shader: &str) -> bool {
             && shader.ends_with("/Dissolve/Dissolve AB UVTween"))
 }
 
+#[must_use]
 pub fn is_l2d_compositor(shader: &str) -> bool {
     // `Torappu/Particles/<sub>/…` is the SAME compositor family as
     // `Torappu/Particles-L2D/<sub>/…` — the namespace is a packaging split, not a shader
@@ -5116,8 +5117,8 @@ pub fn collect_enemy_spine_assets(
             settle_animation: None,
             bg_camera_size: None,
             bg_max_aspect: None,
-            bg_camera_offset: None,
             bg_max_size: None,
+            bg_camera_offset: None,
             bg_camera_view: None,
             bg_camera_offset2: None,
             bg_camera_view2: None,
@@ -6510,7 +6511,6 @@ fn export_scene(
         if has_vcol {
             layer["col"] = serde_json::json!(col);
         }
-        // ERASE MASK: the material's `_Strength` (see `BgQuad::erase`); the frontend draws the
         // LAYER META (2026-09-07): the quad's GameObject name, so a viewer dump or a register
         // row can name a layer by what the artist called it instead of by a texture index that
         // renumbers on every export. `DYNCHAR_LAYER_META=0` omits it (and `maxSize` below), which
@@ -6518,6 +6518,7 @@ fn export_scene(
         if std::env::var("DYNCHAR_LAYER_META").as_deref() != Ok("0") {
             layer["name"] = serde_json::json!(quad.go_name);
         }
+        // ERASE MASK: the material's `_Strength` (see `BgQuad::erase`); the frontend draws the
         // polygon black at this alpha, skipping every classification rule.
         if let Some(strength) = quad.erase {
             layer["erase"] = serde_json::json!(strength);
@@ -6663,12 +6664,12 @@ fn export_scene(
                     "dissolveSpeed": r.dissolve_speed,
                     "disturbSpeed": r.disturb_speed,
                 });
-            }
                 // Disturb2's second noise, present only on that family so every other ram block
                 // serialises exactly as before.
                 if let Some(d2) = r.disturb2 {
                     layer["ram"]["disturb2"] = serde_json::json!(d2);
                 }
+            }
         }
         // ENTRANCE Transform POSITION curve: `[t, dx, dy]` authored-px offsets the frontend
         // adds to this layer's rest pose (Executor's scope rim pans while ours is pinned).
@@ -6922,7 +6923,6 @@ fn export_scene(
             map.insert("backdropScale".into(), serde_json::json!(s));
             map.insert("backdropOffsetPx".into(), serde_json::json!([o[0], o[1]]));
         }
-        meta
         // The controller's `_maxSize`, absolute (see `Asset::bg_max_size`); appended the same
         // way, and only under `DYNCHAR_LAYER_META` (the layer names' flag), so `=0` leaves the
         // JSON byte-identical to the export before both fields.
@@ -6932,6 +6932,7 @@ fn export_scene(
         {
             map.insert("maxSize".into(), serde_json::json!([x as f32, y as f32]));
         }
+        meta
     };
     if let Ok(text) = serde_json::to_string(&meta)
         && std::fs::write(spine_dir.join(format!("{}[scene].json", asset.name)), text).is_ok()

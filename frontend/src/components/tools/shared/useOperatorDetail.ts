@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
 import type { IEnrichedSkill, IOperatorListItem, IOperatorModule } from "#/types/operators";
+import type { IOperatorListEntry } from "./types";
 
 export interface IOperatorDetail {
     raw: IOperatorListItem | undefined;
@@ -26,12 +27,19 @@ export interface IOperatorDetail {
  * operator that the DPS calculator already knows by id. Backed by the global
  * operator list query so all instances share a single fetch.
  */
-export function useOperatorDetail(operatorId: string): IOperatorDetail {
+export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail {
     const { data: operators } = useQuery(operatorsListQueryOptions());
-    return useMemo(() => buildDetail(operators?.find((op) => op.id === operatorId)), [operators, operatorId]);
+    return useMemo(
+        () =>
+            buildDetail(
+                operators?.find((op) => op.id === entry?.id),
+                entry,
+            ),
+        [operators, entry],
+    );
 }
 
-function buildDetail(op: IOperatorListItem | undefined): IOperatorDetail {
+function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined): IOperatorDetail {
     return {
         raw: op,
         skillName(skillIndex) {
@@ -43,10 +51,12 @@ function buildDetail(op: IOperatorListItem | undefined): IOperatorDetail {
         },
         moduleName(moduleIndex) {
             if (moduleIndex <= 0) return "No module";
-            const fallback = `Mod ${moduleIndex}`;
-            const pick = pickModule(op, moduleIndex);
+            const pick = resolveModule(op, moduleIndex, entry);
+            // Prefer the in-game designator. `Mod N` is the engine's own index
+            // and means nothing to a reader, so it is only a last resort.
+            const label = moduleDesignator(pick) ?? `Mod ${moduleIndex}`;
             const name = pick?.uniEquipName?.trim();
-            return name && name.length > 0 ? `${fallback} · ${name}` : fallback;
+            return name && name.length > 0 ? `${label} · ${name}` : label;
         },
         potentialLabel(potential) {
             const fallback = `P${potential}`;
@@ -61,7 +71,7 @@ function buildDetail(op: IOperatorListItem | undefined): IOperatorDetail {
         },
         moduleAt(moduleIndex) {
             if (moduleIndex <= 0) return undefined;
-            return pickModule(op, moduleIndex);
+            return resolveModule(op, moduleIndex, entry);
         },
         maxLevelForPromotion(promotion) {
             const phase = op?.phases?.[promotion];
@@ -71,13 +81,40 @@ function buildDetail(op: IOperatorListItem | undefined): IOperatorDetail {
     };
 }
 
-function pickModule(op: IOperatorListItem | undefined, moduleIndex: number): IOperatorModule | undefined {
-    // `op.modules` includes the default "Operator's Badge" at index 0 (with
-    // type === "INITIAL" / typeName1 === "ORIGINAL"). The DPS engine's
-    // `availableModules` is 1-indexed against the FILTERED list (excluding
-    // the badge), so to map e.g. moduleIndex 1 → first selectable module we
-    // strip the badge first.
+/** `SUM-X` and friends, or null for the badge and for malformed rows. */
+export function moduleDesignator(mod: IOperatorModule | undefined): string | null {
+    const t1 = mod?.typeName1?.trim();
+    const t2 = mod?.typeName2?.trim();
+    if (!t1 || !t2) return null;
+    return `${t1}-${t2}`;
+}
+
+export function resolveModule(op: IOperatorListItem | undefined, moduleIndex: number, entry: IOperatorListEntry | undefined): IOperatorModule | undefined {
     if (moduleIndex <= 0) return undefined;
+
+    // Join on identity: the DPS payload names the `uniEquipId` that each module
+    // number resolves to, resolved server-side by the same code the engine
+    // simulates with. Counting positions instead used to answer with whatever
+    // the operator endpoint happened to list at that offset - a different list,
+    // in a different order, from a different request.
+    const slot = entry?.availableModules?.indexOf(moduleIndex) ?? -1;
+    const id = slot >= 0 ? entry?.availableModuleIds?.[slot] : undefined;
+    if (id) {
+        const byId = (op?.modules ?? []).find((m) => m.uniEquipId === id);
+        if (byId) return byId;
+    }
+
+    // Backend too old to send ids: fall back to the historical positional
+    // reading rather than showing nothing.
     const optional = (op?.modules ?? []).filter((m) => m.type !== "INITIAL" && m.typeName1?.toUpperCase() !== "ORIGINAL");
     return optional[moduleIndex - 1];
+}
+
+/**
+ * Compact module label for chart exports: the in-game designator when it can be
+ * resolved, the engine's own index only when it cannot.
+ */
+export function moduleShortLabel(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, moduleIndex: number): string {
+    if (moduleIndex <= 0) return "no module";
+    return moduleDesignator(resolveModule(op, moduleIndex, entry)) ?? `Mod${moduleIndex}`;
 }

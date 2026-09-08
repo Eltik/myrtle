@@ -39,7 +39,7 @@ const MASTERY_RANKS = [8, 9, 10] as const;
 export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, onUpdateBuffs }: IInstanceCardProps): React.ReactElement {
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
-    const detail = useOperatorDetail(op.id);
+    const detail = useOperatorDetail(op);
 
     const promotion = config.promotion ?? Math.max(0, detail.phaseCount - 1);
     const maxLevel = detail.maxLevelForPromotion(promotion);

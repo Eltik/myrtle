@@ -1,6 +1,6 @@
 use crate::core::gamedata::types::{GameData, building::BuildingDataFile};
 use crate::core::grade::base::assignment::{
-    compute_current_assignment, compute_sustained_assignment, sustained_assignment_value,
+    compute_live_assignment, compute_sustained_assignment, sustained_assignment_value,
 };
 use crate::database::models::roster::RosterEntry;
 
@@ -90,14 +90,18 @@ pub fn grade_base(
         return BaseGrade::default();
     }
 
-    // The base as the player actually stationed it.
-    let current = compute_current_assignment(
+    // The base as the player actually stationed it, with each bar as the
+    // game last wrote it.
+    let live_morale =
+        building_json.map_or_else(HashMap::new, super::sustain_sim::synced_live_morale);
+    let current = compute_live_assignment(
         &profiles,
         &user_building,
         building_data,
         &registry,
         &morale_drains,
         None,
+        &live_morale,
     );
     let actual = sustained_assignment_value(
         &current,
