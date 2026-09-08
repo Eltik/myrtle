@@ -5582,10 +5582,11 @@ fn opaque_luma(
 /// written to `<skin>/tex/<hash>.png` only when that file does not exist yet, whichever
 /// call reaches it first. The JSON keeps its dense 0-based `tex` indices and `textureCount`
 /// unchanged and gains a `textures` table, index -> path relative to the skin directory,
-/// which the loaders resolve instead of `<dir>/<i>.png`. With the flag off nothing here
-/// runs and the export is byte-identical.
+/// which the loaders resolve instead of `<dir>/<i>.png`. `DYNCHAR_TEX_POOL=0` reverts to the
+/// per-call `<dir>/<i>.png` layout, byte for byte; the harness's control arm is that export.
+/// Default ON since 2026-09-08 (Ian's ruling after the delivery gate: 0.000 on both surfaces).
 pub(crate) fn tex_pool_on() -> bool {
-    std::env::var("DYNCHAR_TEX_POOL").is_ok()
+    std::env::var("DYNCHAR_TEX_POOL").as_deref() != Ok("0")
 }
 
 /// FNV-1a, 64 bit: a stable content key for the pool file names. The exporter carries no
