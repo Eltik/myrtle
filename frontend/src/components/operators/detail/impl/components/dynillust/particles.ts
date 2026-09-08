@@ -131,6 +131,11 @@ export interface IParticleSystemData {
      *  `xiaoyu`/`guang` red streaks); when present the cone aims along it instead of the
      *  `rot`-derived "local +Y" direction. Absent → byte-identical legacy path. */
     emitDir?: [number, number] | null;
+    /** Screen images (Y-up px per local unit, scale stripped) of a LOCAL-aligned mesh
+     *  emitter's x and y axes, `[bx.x, bx.y, by.x, by.y]`, exported only when the emitter is
+     *  turned out of the screen plane (foreshortened, edge-on or mirrored). Absent for every
+     *  in-plane emitter, which keeps the z-angle path byte-identical. */
+    meshBasis?: [number, number, number, number] | null;
     /** Unity `StretchedBillboard` renderer scales (`renderMode:"stretch"` only). The quad is
      *  elongated along the particle's screen velocity to `|lengthScale|·size + velocityScale·speed`
      *  px (the px unit cancels, so no world→screen conversion). `lengthScale` is the size-proportional
@@ -832,6 +837,20 @@ function simSpeedOf(d: IParticleSystemData): number {
 /** See {@link simSpeedOf} - disabled by default; `?prewarm=1` re-enables. Only LOOPING
  *  systems prewarm; Unity ignores the flag on one-shots. */
 const PREWARM_ON = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("prewarm") === "1";
+/** Pose a Local-aligned mesh particle through the emitter's exported screen basis
+ *  (`meshBasis`, see `IParticleSystemData`) instead of the flat z angle. OPT-IN:
+ *  `?meshbasis=1` (or `alt`) enables it; a MISSING parameter keeps the z-angle path and
+ *  every recorded number. Gated 2026-09-08 (register, twenty-seventh run): the exported
+ *  basis reaches only this emitter, not the ram emitter's own mesh draw, and on the
+ *  reachable systems the clips read cel +0.160 (all of it the ring's spin sense at t=17,
+ *  phase-confounded), mue -0.089 settled, wis -2.108 on a below-floor settled clip with
+ *  the DC moving further past the game. Not shipped; the ram path is the missing half. */
+const MESH_BASIS_ON = typeof window !== "undefined" && ["1", "alt"].includes(new URLSearchParams(window.location.search).get("meshbasis") ?? "");
+/** `?meshbasis=alt`: the other handedness. The geometry is built with Y negated, so a basis
+ *  exported in Y-up px can be applied as `B` or as `D B D` (D = diag(1, -1)); the two agree
+ *  on every pure rotation, which is why the in-plane null cannot tell them apart, and differ
+ *  on a mirror or a foreshortening. One bit, pinned by the clip, never by preference. */
+const MESH_BASIS_ALT = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("meshbasis") === "alt";
 function prewarmOf(d: IParticleSystemData): boolean {
     if (!PREWARM_ON) return false;
     return !!d.prewarm && d.looping && d.duration > 0;
@@ -2795,12 +2814,19 @@ class MeshEmitter extends Emitter {
      *  z-angle, which poses a LOCAL-space mesh particle. 0 (the default) for every textured
      *  mesh emitter, whose current orientation measures correct as it stands. */
     private readonly rotOffsetDeg: number;
+    /** The emitter's exported screen basis for an out-of-plane LOCAL-aligned emitter, or
+     *  null: the z-angle path. Columns are the images of local x and y in Y-up px; the
+     *  particle's own spin is applied inside that frame, so a mirrored basis reverses the
+     *  screen sense of the spin the way the emitter's frame does. For an in-plane basis
+     *  (cos rot, sin rot), (-sin rot, cos rot) this reduces exactly to the z-angle path. */
+    private readonly basis: [number, number, number, number] | null;
 
     constructor(data: IParticleSystemData, texture: PIXI.Texture, blend: "additive" | "normal", getBudget: () => number, gain = 1, rotOffsetDeg = 0) {
         super(data, texture, null, blend, getBudget);
         this.meshTexture = texture;
         this.gain = gain;
         this.rotOffsetDeg = rotOffsetDeg;
+        this.basis = MESH_BASIS_ON && Array.isArray(data.meshBasis) && data.meshBasis.length === 4 ? data.meshBasis : null;
         // Build the shared geometry ONCE: mesh-local positions with Y negated and
         // UV V-flipped (authored Y-up / Unity-V → Pixi), exactly like the scene-mesh
         // layers (sceneMesh.buildLayerMesh), plus the per-vertex RGBA edge mask.
@@ -2844,11 +2870,29 @@ class MeshEmitter extends Emitter {
 
     protected override applyDisp(disp: PIXI.Sprite | PIXI.Mesh, p: IParticle, sz: number, hex: number, alpha: number): void {
         const m = disp as PIXI.Mesh;
-        m.position.set(p.x, -p.y);
-        // The geometry is raw mesh-local; Unity scales the mesh by the particle
-        // size, and startSize is already emitter-scaled to px → finalPx = local × sz.
-        m.scale.set(sz);
-        m.rotation = (this.rotOffsetDeg - p.rot) * DEG;
+        if (this.basis) {
+            // M = B * R(-rot) * sz: the basis columns take the place of the z-angle rotation
+            // (they ARE that rotation for an in-plane emitter), and the particle's spin turns
+            // inside the emitter frame with the same sign the z-angle path uses.
+            const [bxx, bxy0, byx0, byy] = this.basis;
+            // `D B D` negates the off-diagonal terms; identical to `B` on a rotation.
+            const bxy = MESH_BASIS_ALT ? -bxy0 : bxy0;
+            const byx = MESH_BASIS_ALT ? -byx0 : byx0;
+            const th = -p.rot * DEG;
+            const c = Math.cos(th);
+            const s = Math.sin(th);
+            const a = (bxx * c + byx * s) * sz;
+            const b = (bxy * c + byy * s) * sz;
+            const cc = (-bxx * s + byx * c) * sz;
+            const d = (-bxy * s + byy * c) * sz;
+            m.transform.setFromMatrix(new PIXI.Matrix(a, b, cc, d, p.x, -p.y));
+        } else {
+            m.position.set(p.x, -p.y);
+            // The geometry is raw mesh-local; Unity scales the mesh by the particle
+            // size, and startSize is already emitter-scaled to px → finalPx = local × sz.
+            m.scale.set(sz);
+            m.rotation = (this.rotOffsetDeg - p.rot) * DEG;
+        }
         const u = (m.shader as PIXI.Shader).uniforms;
         (u.uTint as Float32Array)[0] = ((hex >> 16) & 0xff) / 255;
         (u.uTint as Float32Array)[1] = ((hex >> 8) & 0xff) / 255;

@@ -1307,6 +1307,50 @@ pub(crate) fn collect_dynchar_particles(
                 sys_emit_dir = Some([zv[0] / z_scr, zv[1] / z_scr]);
             }
         }
+        // MESH BASIS (`DYNCHAR_MESH_BASIS=0` reverts): the screen images of the emitter's local
+        // x and y axes for a Local-aligned MESH renderer (`m_RenderAlignment` 2, `m_RenderMode`
+        // 4). Unity poses such a particle in the emitter's own frame, so an emitter turned out
+        // of the screen plane draws its mesh foreshortened (90 degrees: edge-on, a line),
+        // mirrored (a 180 degree turn about an in-plane axis, Cel's `quad_p` and wings), or
+        // both. The frontend draws every mesh face-on with the flat z angle `rot`. Census
+        // 2026-09-08 (`probe_meshbasis`): 1080 Local-aligned mesh systems in the bundles are
+        // turned out of plane, 693 of them mirrors, 231 edge-on or steeper than 60 degrees.
+        //
+        // Columns are unit images of the local axes in the same Y-up frame `rot` and
+        // `emitDir` use (the emitter's scale is stripped here because `startSize` already
+        // carries it), so for an in-plane emitter they are exactly (cos rot, sin rot) and
+        // (-sin rot, cos rot). Emitted ONLY when they differ from that pair by more than a
+        // float rounding, so every in-plane system keeps its byte-identical export and the
+        // frontend's existing z-angle path: the null the gate is measured against.
+        let mut sys_mesh_basis: Option<[f64; 4]> = None;
+        if render_mode == "mesh"
+            && std::env::var("DYNCHAR_MESH_BASIS").as_deref() != Ok("0")
+            && renderer
+                .and_then(|r| r.get("m_RenderAlignment"))
+                .and_then(Value::as_i64)
+                == Some(2)
+        {
+            let unit = |p: [f32; 3]| {
+                let d = [
+                    f64::from(p[0] - origin[0]),
+                    f64::from(p[1] - origin[1]),
+                    f64::from(p[2] - origin[2]),
+                ];
+                let len = d[0].hypot(d[1]).hypot(d[2]);
+                (len > 1e-9).then(|| [d[0] / len, d[1] / len])
+            };
+            if let (Some(bx), Some(by)) = (unit(ex), unit(ey)) {
+                let (s, c) = rot.to_radians().sin_cos();
+                let dev = (bx[0] - c)
+                    .abs()
+                    .max((bx[1] - s).abs())
+                    .max((by[0] + s).abs())
+                    .max((by[1] - c).abs());
+                if dev > 1e-4 {
+                    sys_mesh_basis = Some([bx[0], bx[1], by[0], by[1]]);
+                }
+            }
+        }
 
         // ---- Build the reduced system JSON ------------------------------
         let mut sys = json!({
@@ -1382,6 +1426,9 @@ pub(crate) fn collect_dynchar_particles(
         }
         if b(ps, "prewarm", false) {
             sys["prewarm"] = json!(true);
+        }
+        if let Some(mb) = sys_mesh_basis {
+            sys["meshBasis"] = json!(mb);
         }
         // Faithful stretched-billboard elongation scales (see above) — only for stretch systems.
         if render_mode == "stretch" {
