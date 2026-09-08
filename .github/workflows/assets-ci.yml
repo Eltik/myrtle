@@ -73,16 +73,29 @@ jobs:
         working-directory: assets/downloader
         run: cargo clippy --all-targets -- -D warnings
 
-      # The unpacker is a ~2M-line crate (generated FlatBuffers) with ~150 targets.
-      # A single `--all-targets` pass runs one rustc per target at the runner's default
-      # -j 4, and each of those holds the whole crate's metadata; together they exhaust
-      # the 16 GB runner and the host kills the VM, which surfaces as
-      # "the runner has received a shutdown signal" / exit code 143. Cap the job count
-      # and split the ~130 example probes into their own invocation so the peak is one
-      # cargo process's worth, not two hundred targets' worth.
+      # The unpacker is a ~2M-line crate (generated FlatBuffers) with ~150 targets, and
+      # four files under src/export carry #[cfg(test)] modules, so `--tests` triggers a
+      # SECOND full-crate compile under --cfg test alongside the plain lib one. Run at
+      # --jobs 1: measured peak for a single full pass is 4.74 GB, so serialising the
+      # two heavy passes is what keeps the runner alive. --jobs 2 was still killed
+      # ("the runner has received a shutdown signal" / exit 143).
       - name: Lint unpacker
         working-directory: assets/unpacker
-        run: cargo clippy --lib --bins --tests --jobs 2 -- -D warnings
+        run: |
+          # Emit resource usage live: if the host kills the VM, the last line
+          # logged before the kill tells us whether it was RAM or the 14 GB disk.
+          mon=""
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            ( while :; do
+                echo "[res] mem $(free -m | awk '/^Mem:/{print $3"/"$2" MB"}') | disk $(df -m / | awk 'NR==2{print $4" MB free"}')"
+                sleep 20
+              done ) &
+            mon=$!
+          fi
+          cargo clippy --lib --bins --tests --jobs 1 -- -D warnings
+          rc=$?
+          if [ -n "$mon" ]; then kill "$mon" 2>/dev/null || true; fi
+          exit $rc
 
       - name: Lint unpacker examples
         working-directory: assets/unpacker
@@ -148,16 +161,39 @@ jobs:
           workspaces: assets/unpacker -> target
           key: test-${{ matrix.os }}
 
-      # `--all-targets` also builds the ~130 example probes, which this job never runs;
-      # clippy already compile-checks them. See the note in the Clippy job for why the
-      # unpacker needs --jobs capped.
+      # Each of the 15 integration tests statically links the whole 2M-line lib, so this
+      # job is as close to the runner's 14 GB disk limit as it is to its RAM limit. These
+      # preinstalled toolchains are unused here and free ~20 GB.
+      - name: Reclaim runner disk
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      # `--all-targets` also built the ~130 example probes, which this job never runs;
+      # clippy already compile-checks them. See the Clippy job for why --jobs is 1.
       - name: Build
         working-directory: assets/unpacker
-        run: cargo build --lib --bins --tests --jobs 2
+        shell: bash
+        run: |
+          # Emit resource usage live: if the host kills the VM, the last line
+          # logged before the kill tells us whether it was RAM or the 14 GB disk.
+          mon=""
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            ( while :; do
+                echo "[res] mem $(free -m | awk '/^Mem:/{print $3"/"$2" MB"}') | disk $(df -m / | awk 'NR==2{print $4" MB free"}')"
+                sleep 20
+              done ) &
+            mon=$!
+          fi
+          cargo build --lib --bins --tests --jobs 1
+          rc=$?
+          if [ -n "$mon" ]; then kill "$mon" 2>/dev/null || true; fi
+          exit $rc
 
       - name: Test
         working-directory: assets/unpacker
-        run: cargo test --lib --bins --tests --jobs 2
+        run: cargo test --lib --bins --tests --jobs 1
         env:
           RUST_BACKTRACE: 1
           RUST_MIN_STACK: "33554432"  # 32 MB — fb_json_auto.rs recursive FlatBuffer decoding needs deep stack
