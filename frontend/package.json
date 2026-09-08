@@ -8,7 +8,7 @@
   "packageManager": "bun@1.3.12",
   "scripts": {
     "dev": "vite dev --port 3000",
-    "build": "vite build",
+    "build": "NODE_OPTIONS=--max-old-space-size=6144 vite build",
     "preview": "vite preview",
     "start": "bun .output/server/index.mjs",
     "test": "vitest run",
