@@ -54,6 +54,7 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -72,9 +73,20 @@ jobs:
         working-directory: assets/downloader
         run: cargo clippy --all-targets -- -D warnings
 
+      # The unpacker is a ~2M-line crate (generated FlatBuffers) with ~150 targets.
+      # A single `--all-targets` pass runs one rustc per target at the runner's default
+      # -j 4, and each of those holds the whole crate's metadata; together they exhaust
+      # the 16 GB runner and the host kills the VM, which surfaces as
+      # "the runner has received a shutdown signal" / exit code 143. Cap the job count
+      # and split the ~130 example probes into their own invocation so the peak is one
+      # cargo process's worth, not two hundred targets' worth.
       - name: Lint unpacker
         working-directory: assets/unpacker
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --lib --bins --tests --jobs 2 -- -D warnings
+
+      - name: Lint unpacker examples
+        working-directory: assets/unpacker
+        run: cargo clippy --examples --jobs 2 -- -D warnings
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Downloader: build + test
@@ -115,11 +127,17 @@ jobs:
   test-unpacker:
     name: Test Unpacker
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    # Full debug info for a ~2M-line crate, multiplied over every target, is what puts
+    # both the runner's RAM and its 14 GB disk over the edge. Line tables keep test
+    # backtraces readable at a fraction of the cost.
+    env:
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_TEST_DEBUG: line-tables-only
     steps:
       - uses: actions/checkout@v5
 
@@ -130,13 +148,16 @@ jobs:
           workspaces: assets/unpacker -> target
           key: test-${{ matrix.os }}
 
+      # `--all-targets` also builds the ~130 example probes, which this job never runs;
+      # clippy already compile-checks them. See the note in the Clippy job for why the
+      # unpacker needs --jobs capped.
       - name: Build
         working-directory: assets/unpacker
-        run: cargo build --all-targets
+        run: cargo build --lib --bins --tests --jobs 2
 
       - name: Test
         working-directory: assets/unpacker
-        run: cargo test --all-targets
+        run: cargo test --lib --bins --tests --jobs 2
         env:
           RUST_BACKTRACE: 1
           RUST_MIN_STACK: "33554432"  # 32 MB — fb_json_auto.rs recursive FlatBuffer decoding needs deep stack

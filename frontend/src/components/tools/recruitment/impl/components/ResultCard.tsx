@@ -6,6 +6,7 @@ import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { cn } from "#/lib/utils";
+import { guaranteedFloorRarity } from "../calculator";
 import { PROFESSION_LABELS, RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import type { IRecruitableOperator, ITagCombinationResult } from "../types";
@@ -17,7 +18,7 @@ interface IResultCardProps {
 export function ResultCard({ result }: IResultCardProps): React.ReactElement {
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
                     {result.tagNames.map((name) => (
                         <Badge key={name} variant="outline" size="default">
@@ -38,11 +39,35 @@ export function ResultCard({ result }: IResultCardProps): React.ReactElement {
     );
 }
 
-function GuaranteedBadge({ result }: { result: ITagCombinationResult }): React.ReactElement | null {
-    if (result.guaranteedRarity < 5) return null;
+/** Rarity 1 is the robot tier, and "★" alone would read as an ordinary 1★. */
+function floorLabel(rarity: number): string {
+    return rarity === 1 ? "Robot" : `${rarity}★`;
+}
 
-    const colors = RARITY_COLORS[result.guaranteedRarity];
-    return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", colors?.border, colors?.bg, colors?.text)}>Guaranteed {result.guaranteedRarity}★</span>;
+/**
+ * The guaranteed worst case, shown on every card because it is the key the list
+ * is ranked by - leaving it off the cards below a 5★ lock meant the ordering was
+ * driven by a value the reader could not see.
+ *
+ * A 5★/6★ lock keeps the filled badge it always had: that is a genuinely
+ * different thing, a combination that cannot miss. Everything else gets a quiet
+ * label - no fill, no border, colour only on the value - so the floor is legible
+ * at a glance without competing with the lock.
+ */
+function GuaranteedBadge({ result }: { result: ITagCombinationResult }): React.ReactElement {
+    const floor = guaranteedFloorRarity(result);
+    const colors = RARITY_COLORS[floor];
+
+    if (floor >= 5) {
+        return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", colors?.border, colors?.bg, colors?.text)}>Guaranteed {floor}★</span>;
+    }
+
+    return (
+        <span className="ml-auto inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]" title={`Guaranteed minimum: ${floorLabel(floor)}`}>
+            <span className="text-muted-foreground">Min</span>
+            <span className={cn("font-mono", colors?.text)}>{floorLabel(floor)}</span>
+        </span>
+    );
 }
 
 function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {

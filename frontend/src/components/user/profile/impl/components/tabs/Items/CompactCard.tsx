@@ -15,6 +15,16 @@ function formatCompactQty(n: number): string {
     return String(n);
 }
 
+/*
+ * The quantity badge sits flush in the card's bottom-right corner rather than
+ * hanging 6px outside it. The virtualized row wrapper in ItemsTab carries
+ * `contain: content`, whose paint component clips descendants to the row box,
+ * so an overhanging badge lost its bottom 6px - about 40% of its height, cut
+ * mid-digit - on every card in the row, plus a sliver off the right of the last
+ * column. Dropping paint containment also fixes it, but that is the row's
+ * scroll-performance isolation and the cost of removing it could not be
+ * measured here, so the badge moves instead.
+ */
 export function CompactCard({ item }: ICompactCardProps) {
     const color = RARITY_COLORS[item.rarityNum] ?? "#b5b5b5";
     const nameIsLong = item.name.length > 14;
@@ -40,7 +50,7 @@ export function CompactCard({ item }: ICompactCardProps) {
                 <div className="relative box-content aspect-square w-full overflow-hidden" style={{ borderBottom: `3px solid ${color}` }}>
                     <ItemIcon item={item} className="h-full! w-full! rounded-none!" />
                 </div>
-                <span className="absolute -right-1.5 -bottom-1.5 z-10 rounded-md bg-background/95 px-1.5 py-0.5 font-bold font-mono text-[11px] text-foreground tabular-nums leading-none backdrop-blur-sm" style={{ boxShadow: `inset 0 0 0 1px ${color}80, 0 2px 6px rgba(0,0,0,0.5)` }}>
+                <span className="absolute right-0 bottom-0 z-10 rounded-md bg-background/95 px-1.5 py-0.5 font-bold font-mono text-[11px] text-foreground tabular-nums leading-none backdrop-blur-sm" style={{ boxShadow: `inset 0 0 0 1px ${color}80, 0 2px 6px rgba(0,0,0,0.5)` }}>
                     {formatCompactQty(item.quantity)}
                 </span>
             </DialogTrigger>
