@@ -2050,6 +2050,14 @@ fn collect_dynchar_bg_quads(
         // (`_meshExtResolved`) path — used below to re-validate a color-reveal overlay
         // admitted past the meshExt gate.
         let mut resolved_meshext = false;
+        // The `_MainColorACtrl` of the material the quad resolved to (0.0 = identity), read
+        // inside the material loop because `mat` does not outlive it; applied to the tint
+        // and its curve once both are resolved (see `anchor_ctrl`).
+        let mut anchor_ctrl_v = 0.0f32;
+        // The RAW `_MainColor.a` the fragment forms `k` from. The resolved tint's alpha is
+        // not it: on the half-neutral x2 path that alpha is `min(2a, 1)`, which reads 1.0
+        // for a = 0.5 and for a = 1.0 alike, and those two give k = 0.5 and k = 1.
+        let mut anchor_a_v = 1.0f32;
         for mat_ref in materials {
             let Some(mat_pid) = get_path_id(mat_ref).filter(|&p| p != 0) else {
                 continue;
@@ -2903,6 +2911,14 @@ fn collect_dynchar_bg_quads(
                 }
             };
             resolved_meshext = mat.get("_meshExtResolved").is_some();
+            anchor_ctrl_v = anchor_ctrl(mat);
+            anchor_a_v = mat
+                .get("m_SavedProperties")
+                .and_then(|sp| sp.get("m_Colors"))
+                .and_then(|c| c.get("_MainColor"))
+                .and_then(|c| c.get("a"))
+                .and_then(Value::as_f64)
+                .unwrap_or(1.0) as f32;
             resolved = Some((
                 tex_val,
                 alpha_val,
@@ -2978,6 +2994,49 @@ fn collect_dynchar_bg_quads(
                 additive,
             )
         });
+        // The Anchor `k` (`DYNCHAR_ANCHOR_K=1`, see `anchor_ctrl`): all four channels scaled by
+        // `ctrl * (a - 1) + 1`, on the static tint and on every curve key. `a` is the RAW
+        // `_MainColor.a`: the material's value, or the clip's own alpha track sampled at the
+        // key's time when the clip animates it. Never the resolved tint's alpha, which the
+        // x2 path has already scaled and clamped.
+        let (tint, color_curve) = if anchor_ctrl_v != 0.0 {
+            let alpha_track = color_channels
+                .get(&go_pid)
+                .and_then(|chs| super::anim::prop_channel(chs, "_MainColor", 3));
+            let raw_alpha_at = |t: f32| -> f32 {
+                let Some(track) = alpha_track else {
+                    return anchor_a_v;
+                };
+                let curve = &track.curve;
+                match curve.iter().position(|&(kt, _)| kt >= t) {
+                    None => curve.last().map_or(anchor_a_v, |&(_, v)| v),
+                    Some(0) => curve[0].1,
+                    Some(i) => {
+                        let (t0, v0) = curve[i - 1];
+                        let (t1, v1) = curve[i];
+                        if t1 > t0 {
+                            v0 + (v1 - v0) * (t - t0) / (t1 - t0)
+                        } else {
+                            v1
+                        }
+                    }
+                }
+            };
+            let scale = |v: [f32; 4], a: f32| {
+                let k = anchor_k(anchor_ctrl_v, a);
+                [v[0] * k, v[1] * k, v[2] * k, v[3] * k]
+            };
+            (
+                scale(tint, anchor_a_v),
+                color_curve.map(|c| {
+                    c.into_iter()
+                        .map(|(t, v)| (t, scale(v, raw_alpha_at(t))))
+                        .collect()
+                }),
+            )
+        } else {
+            (tint, color_curve)
+        };
         // The layer's animated `_MainTex_ST` curve (entrance scenes only). When present it
         // supersedes the static ST bake below (the curve carries the full ST).
         let st_curve = st_channels.get(&go_pid).and_then(|chs| {
@@ -3898,6 +3957,55 @@ pub fn is_l2d_compositor(shader: &str) -> bool {
 }
 
 /// Whether this material's shader multiplies by `_MainColor` and then DOUBLES the result,
+/// The `_MainColorACtrl` a material's shader actually READS, or 0.0 (the identity) when it
+/// does not, or when the gate is off.
+///
+/// EXPERIMENT (`DYNCHAR_ANCHOR_K=1`, default OFF). The three `Disturb Anchor` fragments
+/// (`Particles-L2D/Disturb/Disturb Anchor (AlphaBlend)` 7695302872418600095, `(Add)`, and
+/// `Particles/Disturb/Disturb Anchor`) end their colour path with
+///
+/// ```glsl
+/// u_xlat16_0 = texture(_MainTex, uv) * _MainColor * vs_COLOR0;
+/// u_xlat16_0 = u_xlat16_0 + u_xlat16_0;
+/// u_xlat16_9.x = _MainColorACtrl * (_MainColor.w - 1.0) + 1.0;
+/// u_xlat16_0 = u_xlat16_0.wxyz * u_xlat16_9.xxxx;       // all four channels
+/// ```
+///
+/// so with the control at 1 the layer's colour AND alpha are scaled by `_MainColor.a` once
+/// more than a plain `_MainColor` multiply gives. The property is serialized on 709 dynchar
+/// materials, but only these three programs declare it; on `Disturb(CustomData)` sheets it is
+/// residue (see the note on `main_color_doubles`). Census 2026-09-08 (`probe_anchorctrl`):
+/// 323 Anchor materials, 250 with the control set, 163 live (control set and alpha below
+/// 1) on 32 skins, median k 0.578.
+///
+/// Kept SEPARATE from the program's own `x + x`: that doubling is on the refuted footing of
+/// the Disturb x2 gate (register, twenty-second run), and this term is evaluated after it
+/// in the fragment, so the two are independent multiplies and are gated independently.
+pub(crate) fn anchor_ctrl(mat: &Value) -> f32 {
+    if std::env::var("DYNCHAR_ANCHOR_K").is_err() {
+        return 0.0;
+    }
+    let shader = mat
+        .get("_shaderName")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if !shader.contains("Disturb Anchor") {
+        return 0.0;
+    }
+    mat.get("m_SavedProperties")
+        .and_then(|sp| sp.get("m_Floats"))
+        .and_then(|f| f.get("_MainColorACtrl"))
+        .and_then(Value::as_f64)
+        .unwrap_or(0.0) as f32
+}
+
+/// `k = ctrl * (alpha - 1) + 1`, the Anchor scale for one evaluation of `_MainColor.a`. The
+/// fragment evaluates it per frame against the property the clip animates, so a colour curve
+/// applies it per key on that key's own alpha.
+pub(crate) fn anchor_k(ctrl: f32, alpha: f32) -> f32 {
+    ctrl * (alpha - 1.0) + 1.0
+}
+
 /// read out of the shader's own GLSL rather than inferred from how the authored value
 /// looks. `Torappu/Particles-L2D/Disturb/Disturb(CustomData)`:
 ///

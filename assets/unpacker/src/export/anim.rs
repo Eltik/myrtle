@@ -2594,6 +2594,21 @@ pub struct MaterialColorChannel {
 
 /// Whether the entrance clip animates the named colour property on this layer — i.e.
 /// whether the clip itself NAMES the property the shader modulates by.
+/// The animated channel `channel` (0..3, rgba) of `prop`, when the clip carries one. Raw
+/// keyed values, before any tint scale or clamp: for a term that must read the property
+/// the fragment sees (`spine::anchor_k`), the scaled curve is the wrong source.
+#[must_use]
+pub fn prop_channel<'a>(
+    channels: &'a [MaterialColorChannel],
+    prop: &str,
+    channel: usize,
+) -> Option<&'a MaterialColorChannel> {
+    let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
+    channels
+        .iter()
+        .find(|c| c.prop_crc28 == crc28 && c.channel == channel)
+}
+
 #[must_use]
 pub fn animates_prop(channels: &[MaterialColorChannel], prop: &str) -> bool {
     let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
