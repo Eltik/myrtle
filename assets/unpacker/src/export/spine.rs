@@ -3734,6 +3734,28 @@ fn ram_tint_scale(mat: &Value, animated_peak: Option<f32>, rgb_constant: bool) -
         // 1.176) that the frontend's half-float target can carry. Clamping it collapses
         // baseline and peak onto the same ceiling and erases the brightening.
         (2.0, true)
+    } else if std::env::var("DYNCHAR_DISSOLVE_CD_X2").is_ok()
+        && shader.contains("Dissolve/Dissolve(CustomData)")
+    {
+        // THE THIRD TRIAL (`DYNCHAR_DISSOLVE_CD_X2=1`, default OFF). `Dissolve(CustomData)`
+        // (pathID -4346129731114749491, and the plain `Particles/` twin) doubles on the
+        // TEXTURE FETCH rather than after the property multiply:
+        //
+        // ```glsl
+        // tex = texture(_MainTex, uv); tex = tex.wxyz + tex.wxyz;        // x2, rgb and alpha
+        // alpha = tex.x * _MainColor.w;  rgb = tex.yzw * vs_COLOR0.xyz;  // vs = in_COLOR0 * _MainColor.xyz
+        // ```
+        //
+        // so the layer's colour and coverage are both twice a plain `_MainColor` multiply, the
+        // same net factor the Disturb x2 and the Anchor k stated for their families. Both of
+        // those were read correctly, gated correctly, and refuted by the clips (register,
+        // twenty-second and twenty-fourth runs): the frames did not carry what the program
+        // states. This is the last unmeasured member of the family and is gated as the third
+        // trial of that pattern, not as a fix. Clamped, since the two earlier HDR variants
+        // measured worse than their clamped ones. `main_color_doubles`'s comment saying this
+        // family "doubles nowhere" is wrong about the program and is left as the pre-trial
+        // reading; the measurement decides what it becomes.
+        (2.0, false)
     } else if std::env::var("DYNCHAR_RAM_X2_CONST").is_ok()
         && shader.contains("Particles-L2D/")
         && rgb_constant
