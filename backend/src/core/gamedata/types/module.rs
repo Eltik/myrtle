@@ -16,6 +16,11 @@ pub enum ModuleType {
     #[default]
     Initial,
     Advanced,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

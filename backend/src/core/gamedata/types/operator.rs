@@ -23,6 +23,11 @@ pub enum OperatorPosition {
     Melee,
     All,
     None,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -89,6 +94,11 @@ pub enum OperatorProfession {
     Token,
     #[serde(rename = "TRAP")]
     Trap,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(rename = "UNKNOWN", other)]
+    Unknown,
 }
 
 impl OperatorProfession {
@@ -104,6 +114,7 @@ impl OperatorProfession {
             Self::Defender => "TANK",
             Self::Token => "TOKEN",
             Self::Trap => "TRAP",
+            Self::Unknown => "UNKNOWN",
         }
     }
 }

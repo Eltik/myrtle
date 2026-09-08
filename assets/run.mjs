@@ -144,6 +144,55 @@ async function fetchHotUpdateList(serverKey, resVersion) {
  * bundles share an m_Name (the suffix is stable across versions), last write
  * wins and old content can clobber new.
  */
+/**
+ * Drop entries from persistent_res_list.json whose file is no longer on disk.
+ *
+ * The downloader's `Manifest::filter_needed` keeps a file only when the server's
+ * md5 differs from the md5 recorded here - it never stats the file. So a record
+ * left behind for a bundle we deleted makes that bundle permanently
+ * un-redownloadable: the downloader believes it already has it, forever. Since
+ * `anon/` names are content hashes, a bundle re-referenced later at the same
+ * name is skipped and its gamedata table silently goes missing.
+ *
+ * Sweeps the whole record rather than just this run's deletions, so it also
+ * heals entries orphaned by earlier prunes.
+ *
+ * @param {string} savedir
+ * @returns {number} records dropped
+ */
+function reconcileManifest(savedir) {
+	const manifestPath = join(savedir, "persistent_res_list.json");
+	if (!existsSync(manifestPath)) return 0;
+
+	let manifest;
+	try {
+		manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+	} catch (err) {
+		console.warn(`  prune: cannot read ${manifestPath}: ${err.message}`);
+		return 0;
+	}
+
+	const entries = manifest?.entries ?? manifest;
+	if (!entries || typeof entries !== "object") return 0;
+
+	let dropped = 0;
+	for (const name of Object.keys(entries)) {
+		if (existsSync(join(savedir, name))) continue;
+		delete entries[name];
+		dropped++;
+	}
+
+	if (dropped > 0) {
+		try {
+			writeFileSync(manifestPath, JSON.stringify(manifest), "utf-8");
+		} catch (err) {
+			console.warn(`  prune: cannot write ${manifestPath}: ${err.message}`);
+			return 0;
+		}
+	}
+	return dropped;
+}
+
 function pruneOrphans(savedir, hotList) {
 	const keepBin = new Set();
 	for (const a of hotList.abInfos ?? []) {
@@ -183,7 +232,12 @@ function pruneOrphans(savedir, hotList) {
 		}
 	}
 
-	return { deleted, freedBytes };
+	const reconciled = reconcileManifest(savedir);
+	if (reconciled > 0) {
+		console.log(`  prune: dropped ${reconciled} stale manifest record(s)`);
+	}
+
+	return { deleted, freedBytes, reconciled };
 }
 
 function readStoredVersion(savedir) {

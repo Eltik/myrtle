@@ -11,6 +11,7 @@ pub struct HealthResponse {
     status: &'static str,
     cache: CacheHealth,
     database: DatabaseHealth,
+    game_data: GameDataHealth,
     timestamp: String,
     response_time_ms: f64,
 }
@@ -21,6 +22,19 @@ struct CacheHealth {
     backend: &'static str,
     status: &'static str,
     response_time_ms: f64,
+}
+
+/// Tables that fell back to an empty default on the most recent load, per server.
+///
+/// Deliberately does NOT flip the top-level `status`: a degraded table is a data
+/// problem, not an availability one, and paging an uptime monitor for a cosmetic
+/// table would train everyone to ignore it. Report it, don't alarm on it.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GameDataHealth {
+    degraded: bool,
+    /// `{ "cn": ["item_table: ...", ...] }`. Absent servers loaded cleanly.
+    tables: std::collections::BTreeMap<String, Vec<String>>,
 }
 
 #[derive(Serialize)]
@@ -55,8 +69,24 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
 
     let all_ok = cache_ok && db_ok;
 
+    let mut tables: std::collections::BTreeMap<String, Vec<String>> =
+        std::collections::BTreeMap::new();
+    for srv in state.config.servers.iter().copied() {
+        if let Some(sd) = state.try_server_data(srv) {
+            let warnings = sd.game_data.load_full().table_warnings.clone();
+            if !warnings.is_empty() {
+                tables.insert(srv.as_str().to_owned(), warnings);
+            }
+        }
+    }
+    let game_data = GameDataHealth {
+        degraded: !tables.is_empty(),
+        tables,
+    };
+
     Json(HealthResponse {
         status: if all_ok { "ok" } else { "degraded" },
+        game_data,
         cache: CacheHealth {
             backend,
             status: if cache_ok {

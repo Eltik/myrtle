@@ -127,6 +127,7 @@ pub fn decode_texture_object(
 /// `Best` (high) 89.0 MB at 2.3 s a page; on ten random pages 20.0 and 20.4 percent
 /// (2026-09-08, `probe_pngbest`). `default` and `best` select those; anything else, or the
 /// variable missing, keeps `Fast` so the export stays byte-identical.
+#[must_use]
 pub fn png_compression() -> image::codecs::png::CompressionType {
     use image::codecs::png::CompressionType;
     match std::env::var("DYNCHAR_PNG_LEVEL").as_deref() {

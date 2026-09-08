@@ -45,6 +45,11 @@ pub enum PlaceType {
     BuildingTouching,
     BuildingFavorBubble,
     LoadingPanel,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -63,6 +68,11 @@ pub enum LangType {
     Ger,
     Fre,
     Spa,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -72,6 +82,11 @@ pub enum VoiceType {
     Enum,
     #[serde(rename = "ONLY_TEXT")]
     OnlyText,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(rename = "UNKNOWN", other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -82,6 +97,11 @@ pub enum UnlockType {
     Direct,
     Favor,
     Awake,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 // ============================================================================

@@ -167,6 +167,19 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server) {
             let op_count = game_data.operators.len();
             state.swap_game_data(server, game_data);
             state.swap_asset_index(server, asset_index);
+            let warnings = state
+                .server_data(server)
+                .game_data
+                .load_full()
+                .table_warnings
+                .clone();
+            crate::core::alerts::report_degraded_tables(
+                &state.http_client,
+                server.as_str(),
+                &warnings,
+            )
+            .await;
+
             let was_loaded = sd.loaded.swap(true, Ordering::Release);
 
             let prefix = if is_default {

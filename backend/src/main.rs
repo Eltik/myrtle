@@ -183,6 +183,21 @@ async fn main() {
     // Background watchers + cron jobs. These query Postgres and (in the case of
     // `regrade_job`) fan out parallel workers across every user, which is heavy
     // and pointless for local stage-viewer / API work. Set
+    // Report any table that fell back to an empty default at boot. Same alert the
+    // hot-reload path fires; startup needs its own call because `perform_reload`
+    // never runs at startup.
+    for &srv in &state.config.servers {
+        if let Some(sd) = state.try_server_data(srv) {
+            let warnings = sd.game_data.load_full().table_warnings.clone();
+            backend::core::alerts::report_degraded_tables(
+                &state.http_client,
+                srv.as_str(),
+                &warnings,
+            )
+            .await;
+        }
+    }
+
     // `DISABLE_BACKGROUND_JOBS=1` to skip them during local development.
     let jobs_phase = boot.phase("jobs");
     startup::step("spawn");

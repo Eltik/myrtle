@@ -369,6 +369,7 @@ pub fn init_game_data(
 
     Ok((
         GameData {
+            table_warnings: warnings,
             operators,
             skills,
             materials,

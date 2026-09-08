@@ -129,6 +129,11 @@ pub enum ItemOccPer {
     Always,
     Sometimes,
     Often,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -138,6 +143,11 @@ pub enum BuildingRoomType {
     #[default]
     Workshop,
     Manufacture,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -147,6 +157,11 @@ pub enum VoucherItemType {
     #[default]
     OptionalVoucherPick,
     MaterialIssueVoucher,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -156,6 +171,11 @@ pub enum VoucherDisplayType {
     #[default]
     None,
     Divide,
+    /// Catch-all so an unrecognised value degrades to one variant instead of
+    /// failing the record, which fails the whole table. HG ships new values on
+    /// CN first; see `ItemClass` for the outage this prevents.
+    #[serde(other)]
+    Unknown,
 }
 
 // ============================================================================

@@ -7,8 +7,15 @@ struct LangInfo {
     suffix: &'static str,
 }
 
-const fn lang_info(lang: &LangType) -> LangInfo {
-    match lang {
+/// Audio directory + filename suffix for a language, or `None` when the language
+/// is one we don't have a path convention for.
+///
+/// `LangType::Unknown` is the `#[serde(other)]` fallback: HG shipped a voice
+/// language this build doesn't name. There is no correct directory to guess, so
+/// the caller omits the URL rather than emitting one that 404s — every other
+/// language on that character still resolves.
+const fn lang_info(lang: &LangType) -> Option<LangInfo> {
+    Some(match lang {
         LangType::Jp => LangInfo {
             dir: "voice",
             suffix: "",
@@ -53,7 +60,8 @@ const fn lang_info(lang: &LangType) -> LangInfo {
             dir: "voice",
             suffix: "",
         },
-    }
+        LangType::Unknown => return None,
+    })
 }
 
 pub fn enrich_all_voices(
@@ -92,7 +100,7 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang: Option<&VoiceLang>) -> Voi
                     .map(|e| e.cv_name.clone());
 
                 VoiceData {
-                    voice_url: Some(build_voice_url(&raw.voice_asset, lang)),
+                    voice_url: build_voice_url(&raw.voice_asset, lang),
                     language: Some(lang.clone()),
                     cv_name,
                 }
@@ -124,14 +132,14 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang: Option<&VoiceLang>) -> Voi
     }
 }
 
-fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
+fn build_voice_url(voice_asset: &str, lang: &LangType) -> Option<String> {
     // Files on disk are Vorbis-in-Ogg (`.ogg`). Percent-encode `#` (present in
     // skin folder names like `char_245_cello_sale#12`) so the browser doesn't
     // treat it as a URL fragment and truncate the path - matching `audio_url`
     // in `gamedata::assets`.
-    let info = lang_info(lang);
+    let info = lang_info(lang)?;
     let Some((original_dir, file)) = voice_asset.split_once('/') else {
-        return format!("/audio/sound_beta_2/voice/{voice_asset}.ogg").replace('#', "%23");
+        return Some(format!("/audio/sound_beta_2/voice/{voice_asset}.ogg").replace('#', "%23"));
     };
 
     // Strip any existing language suffix from dir, then append the target suffix
@@ -145,5 +153,5 @@ fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
         .replace("_spa", "");
 
     let dir = format!("{base_dir}{}", info.suffix);
-    format!("/audio/sound_beta_2/{}/{dir}/{file}.ogg", info.dir).replace('#', "%23")
+    Some(format!("/audio/sound_beta_2/{}/{dir}/{file}.ogg", info.dir).replace('#', "%23"))
 }

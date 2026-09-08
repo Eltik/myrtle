@@ -1,3 +1,4 @@
+pub mod alerts;
 pub mod asset_watcher;
 pub mod auth;
 pub mod dps_watcher;

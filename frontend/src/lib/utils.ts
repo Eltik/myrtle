@@ -120,7 +120,8 @@ export const formatProfession = (profession: string): string => {
  * SOURCE: assets/output/en/gamedata/excel/uniequip_table.json, SubProfDict[id].SubProfessionName,
  * with the placeholder ids (notchar*, none*) dropped. Caster names carry "Caster" in the
  * game data; every other class is bare. Regenerate this table from that file after a data
- * update. The two ids the table no longer lists (supportiveranger, watchman) keep their last
+ * update. Both `supportiveranger` and `watchman` ARE in uniequip_table.SubProfDict (watchman on
+ * EN and CN, supportiveranger on CN); they keep their last
  * known names so older exports still resolve.
  */
 export const SUB_PROFESSION_NAMES: Record<string, string> = {
@@ -288,6 +289,7 @@ export const SUB_PROFESSION_TO_PROFESSION: Record<string, string> = {
     underminer: "SUPPORT",
     ritualist: "SUPPORT",
     summoner: "SUPPORT",
+    supportiveranger: "SUPPORT",
 
     agent: "PIONEER",
     charger: "PIONEER",

@@ -86,6 +86,14 @@ pub struct GameData {
     pub sandbox_universe: SandboxUniverse,
     pub campaign_rotations: CampaignRotations,
     pub consts: GameDataConst,
+    /// Tables that failed to deserialize and fell back to `T::default()`.
+    /// One entry per table, `"<table>: <error>"`. Empty on a clean load.
+    ///
+    /// These are the quiet failures: `load_table_or_warn` swallows the error and
+    /// hands back an empty table, so the site serves plausible-looking wrong data
+    /// with only a `tracing::warn!` to show for it. Retained here so `/health` can
+    /// report them and a reload can alert on them.
+    pub table_warnings: Vec<String>,
 }
 
 impl GameData {
