@@ -304,6 +304,12 @@ export interface ISceneData {
     entranceVoiceOffset?: number | null;
     skeletonScale?: number;
     textureCount: number;
+    /** Index -> path relative to the SKIN directory, present when the exporter's texture
+     *  pool (`DYNCHAR_TEX_POOL=1`) wrote this scene: a byte-identical texture shared by the
+     *  idle and entrance scenes, or by a scene and a particle set, lives once under
+     *  `<skin>/tex/<hash>.png` and both JSONs point at it, so the viewer fetches, decodes
+     *  and uploads it once. Absent on the legacy export, where index `i` is `<dir>/<i>.png`. */
+    textures?: string[];
     layers: ISceneLayer[];
 }
 
@@ -2049,6 +2055,18 @@ function sceneAperture(data: ISceneData, bases: ISceneTex[]): ISceneAperture | n
  * Returns null when there is no scene JSON (the common case - the skin's scene
  * is fully in the spine), so callers fall back to spine-only rendering.
  */
+/** The URL of texture `i`: the JSON's `textures` table resolved against the SKIN directory
+ *  (the texture base URL minus its own `<name>[scene]/` or `<name>[particles]/` segment,
+ *  which is the last one) when the exporter's pool wrote the table, else the legacy
+ *  `<base>/<i>.png`. A pooled path is `tex/<hash>.png`; a legacy relative path in the table
+ *  can carry `[`, `]` and `#`, so every segment is percent-encoded the way the base was. */
+export function pooledTextureURL(textureBaseURL: string, textures: string[] | undefined, i: number): string {
+    const rel = textures?.[i];
+    if (!rel) return `${textureBaseURL}${i}.png`;
+    const skinBase = textureBaseURL.replace(/[^/]+\/$/, "");
+    return skinBase + rel.split("/").map(encodeURIComponent).join("/");
+}
+
 export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, bust = ""): Promise<ILoadedScene | null> {
     let data: ISceneData;
     try {
@@ -2067,7 +2085,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         return null;
     }
 
-    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${textureBaseURL}${i}.png${bust}`)));
+    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`)));
 
     // Ram mask lookup (see {@link IRamSceneTex}). Null unless the layer carries a mask that
     // actually loaded, which is what switches it onto the Ram compositor at all.

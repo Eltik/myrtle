@@ -5566,6 +5566,97 @@ fn opaque_luma(
     (mean, p90, p98, dark_frac)
 }
 
+/// THE SKIN-SCOPED TEXTURE POOL (`DYNCHAR_TEX_POOL=1`, default OFF).
+///
+/// Every scene and particle export writes its textures as `<name>[scene]/<i>.png` or
+/// `<name>[particles]/<i>.png`, deduplicated by source `path_id` inside that one call and
+/// blind across calls. The idle scene and the `_Start` scene of one skin are separate calls
+/// on the same skin directory, so a texture reachable from both (and every particle sheet
+/// the two rigs share) is decoded and written twice under different numbers: 2026-09-08
+/// census on the CN tree, 88.9 MB of within-skin duplicate bytes, 13.7 MB of Virtuosa's
+/// 42.4, 12.2 of Cetsyr's 45.1, and every one of them cross-directory. The viewer keys its
+/// texture cache on the URL, so each duplicate is also a second decode and a second GPU
+/// upload (43 MB of decoded RGBA on Cetsyr).
+///
+/// Under the pool a decoded texture is encoded once, hashed by its encoded bytes, and
+/// written to `<skin>/tex/<hash>.png` only when that file does not exist yet, whichever
+/// call reaches it first. The JSON keeps its dense 0-based `tex` indices and `textureCount`
+/// unchanged and gains a `textures` table, index -> path relative to the skin directory,
+/// which the loaders resolve instead of `<dir>/<i>.png`. With the flag off nothing here
+/// runs and the export is byte-identical.
+pub(crate) fn tex_pool_on() -> bool {
+    std::env::var("DYNCHAR_TEX_POOL").is_ok()
+}
+
+/// FNV-1a, 64 bit: a stable content key for the pool file names. The exporter carries no
+/// hashing crate, and a pool of a few hundred files per skin needs no more than this.
+fn fnv1a64(bytes: &[u8]) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for &b in bytes {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x0100_0000_01b3);
+    }
+    h
+}
+
+/// Encode a decoded RGBA texture as PNG bytes with the same encoder and settings
+/// `image::save_buffer` uses today (the crate's default, deflate at its fastest level with
+/// adaptive filters), so a pooled file is byte-identical to the file it replaces.
+pub(crate) fn encode_png(rgba: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
+    use image::ImageEncoder;
+    let mut out = Vec::with_capacity(rgba.len() / 4);
+    image::codecs::png::PngEncoder::new(&mut out)
+        .write_image(rgba, w, h, image::ExtendedColorType::Rgba8)
+        .ok()?;
+    Some(out)
+}
+
+/// Write one texture into the skin's pool and return its path relative to the skin
+/// directory. A file that already exists under the same content hash is not rewritten.
+pub(crate) fn pool_write_png(spine_dir: &Path, rgba: &[u8], w: u32, h: u32) -> Option<String> {
+    let bytes = encode_png(rgba, w, h)?;
+    let rel = format!("tex/{:016x}.png", fnv1a64(&bytes));
+    let path = spine_dir.join(&rel);
+    if !path.exists() {
+        std::fs::create_dir_all(path.parent()?).ok()?;
+        std::fs::write(&path, &bytes).ok()?;
+    }
+    Some(rel)
+}
+
+/// The path index `idx` has always had, `<tex_dir>/<idx>.png`, relative to the skin dir.
+fn legacy_tex_rel(tex_dir: &Path, spine_dir: &Path, idx: usize) -> String {
+    let dir = tex_dir.strip_prefix(spine_dir).unwrap_or(tex_dir);
+    format!("{}/{idx}.png", dir.display())
+}
+
+/// Save one decoded texture: through the pool when it is on, else as `<tex_dir>/<idx>.png`
+/// exactly as before. Returns the relative path the `textures` table records for `idx` and
+/// whether a file landed.
+pub(crate) fn save_tex(
+    tex_dir: &Path,
+    spine_dir: &Path,
+    idx: usize,
+    rgba: &[u8],
+    w: u32,
+    h: u32,
+) -> (String, bool) {
+    if tex_pool_on()
+        && let Some(rel) = pool_write_png(spine_dir, rgba, w, h)
+    {
+        return (rel, true);
+    }
+    let ok = image::save_buffer(
+        tex_dir.join(format!("{idx}.png")),
+        rgba,
+        w,
+        h,
+        image::ColorType::Rgba8,
+    )
+    .is_ok();
+    (legacy_tex_rel(tex_dir, spine_dir, idx), ok)
+}
+
 /// Decode a Ram MASK (`_DissolveTex`/`_DisturbTex`) into the scene's shared texture
 /// list, returning its index. Deduped by source `path_id` alongside the drawn artwork, so
 /// a mask that IS the layer's own `_MainTex` costs no extra slot. Unlike the artwork it
@@ -5576,7 +5667,9 @@ fn resolve_scene_mask(
     val: Option<&Value>,
     resources: &HashMap<String, Vec<u8>>,
     tex_dir: &Path,
+    spine_dir: &Path,
     tex_index: &mut HashMap<i64, usize>,
+    tex_names: &mut Vec<String>,
     next_idx: &mut usize,
     saved: &mut usize,
 ) -> Option<usize> {
@@ -5588,17 +5681,11 @@ fn resolve_scene_mask(
         return None;
     };
     let idx = *next_idx;
-    if image::save_buffer(
-        tex_dir.join(format!("{idx}.png")),
-        &tex.rgba,
-        tex.width,
-        tex.height,
-        image::ColorType::Rgba8,
-    )
-    .is_ok()
-    {
+    let (rel, ok) = save_tex(tex_dir, spine_dir, idx, &tex.rgba, tex.width, tex.height);
+    if ok {
         *saved += 1;
     }
+    tex_names.push(rel);
     tex_index.insert(pid, idx);
     *next_idx += 1;
     Some(idx)
@@ -5628,6 +5715,7 @@ fn derive_backdrop_transform(
     layers: &[serde_json::Value],
     tex_dir: &Path,
     spine_dir: &Path,
+    tex_names: &[String],
 ) -> Option<(f64, [f64; 2])> {
     use image::imageops::{FilterType, resize};
     // PARKED (2026-09-01): the instrument FAILED its known-answer control. Three matcher
@@ -5789,7 +5877,13 @@ fn derive_backdrop_transform(
     };
     let mut accepted: Vec<(f32, f64, f64, f64)> = Vec::new(); // score, scene_per_art, ox, oy
     for c in &cands {
-        let Ok(tex) = image::open(tex_dir.join(format!("{}.png", c.idx))) else {
+        // Read the page back through the `textures` table when the pool named it, else
+        // from its legacy `<tex_dir>/<idx>.png` slot.
+        let page = usize::try_from(c.idx)
+            .ok()
+            .and_then(|i| tex_names.get(i))
+            .map_or_else(|| tex_dir.join(format!("{}.png", c.idx)), |rel| spine_dir.join(rel));
+        let Ok(tex) = image::open(page) else {
             continue;
         };
         let tex = tex.to_rgba8();
@@ -5990,6 +6084,8 @@ fn export_scene(
     let mut layers: Vec<serde_json::Value> = Vec::new();
     let mut next_idx = 0usize;
     let mut saved = 0usize;
+    // Index -> path relative to the skin directory (see `tex_pool_on`).
+    let mut tex_names: Vec<String> = Vec::new();
     // Signatures of already-emitted layers, to drop exact duplicates (some scenes
     // stack identical quad GameObjects, e.g. Skadi "Red Countess" — frozen they
     // just overdraw, and double-brighten when additive).
@@ -6401,17 +6497,11 @@ fn export_scene(
                 tex = alpha_merge::combine_with_alpha(&tex, &alpha);
             }
             let idx = next_idx;
-            if image::save_buffer(
-                tex_dir.join(format!("{idx}.png")),
-                &tex.rgba,
-                tex.width,
-                tex.height,
-                image::ColorType::Rgba8,
-            )
-            .is_ok()
-            {
+            let (rel, ok) = save_tex(&tex_dir, spine_dir, idx, &tex.rgba, tex.width, tex.height);
+            if ok {
                 saved += 1;
             }
+            tex_names.push(rel);
             tex_px.insert(quad.tex_pid, (tex.rgba.clone(), tex.width, tex.height));
             tex_index.insert(quad.tex_pid, idx);
             next_idx += 1;
@@ -6596,7 +6686,9 @@ fn export_scene(
                 r.dissolve_val.as_ref(),
                 resources,
                 &tex_dir,
+                spine_dir,
                 &mut tex_index,
+                &mut tex_names,
                 &mut next_idx,
                 &mut saved,
             );
@@ -6605,7 +6697,9 @@ fn export_scene(
                 r.disturb_val.as_ref(),
                 resources,
                 &tex_dir,
+                spine_dir,
                 &mut tex_index,
+                &mut tex_names,
                 &mut next_idx,
                 &mut saved,
             );
@@ -6614,7 +6708,9 @@ fn export_scene(
                 r.dissolve2_val.as_ref(),
                 resources,
                 &tex_dir,
+                spine_dir,
                 &mut tex_index,
+                &mut tex_names,
                 &mut next_idx,
                 &mut saved,
             );
@@ -6623,7 +6719,9 @@ fn export_scene(
                 r.weight_val.as_ref(),
                 resources,
                 &tex_dir,
+                spine_dir,
                 &mut tex_index,
+                &mut tex_names,
                 &mut next_idx,
                 &mut saved,
             );
@@ -6632,7 +6730,9 @@ fn export_scene(
                 r.ram_val.as_ref(),
                 resources,
                 &tex_dir,
+                spine_dir,
                 &mut tex_index,
+                &mut tex_names,
                 &mut next_idx,
                 &mut saved,
             );
@@ -6917,7 +7017,14 @@ fn export_scene(
     // meta afterwards so an absent derivation leaves the JSON byte-identical to before.
     let meta = {
         let mut meta = meta;
-        if let Some((s, o)) = derive_backdrop_transform(&layers, &tex_dir, spine_dir)
+        // The pool's index -> path table; only when the pool is on, so the off arm's
+        // JSON is byte-identical (see `tex_pool_on`).
+        if tex_pool_on()
+            && let Some(map) = meta.as_object_mut()
+        {
+            map.insert("textures".into(), serde_json::json!(tex_names));
+        }
+        if let Some((s, o)) = derive_backdrop_transform(&layers, &tex_dir, spine_dir, &tex_names)
             && let Some(map) = meta.as_object_mut()
         {
             map.insert("backdropScale".into(), serde_json::json!(s));

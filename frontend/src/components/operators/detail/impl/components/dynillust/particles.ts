@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import { type DecodedImage, decodedSize, loadDecoded } from "#/lib/utils";
 import type { IAnimationBounds } from "../chibi/helpers";
 import { baseTextureOf, maskTextureOf } from "../chibi/helpers";
-import { sampleColorCurve } from "./sceneMesh";
+import { pooledTextureURL, sampleColorCurve } from "./sceneMesh";
 
 /**
  * Live particle simulator for a dynamic illustration's Unity ParticleSystems.
@@ -346,6 +346,9 @@ export interface IParticlesData {
      *  `separatorSlots`). Virtuosa: [0, 20]. Empty when the skin has no separator. */
     separatorPartSorts?: number[] | null;
     textureCount: number;
+    /** Index -> path relative to the skin directory when the exporter's texture pool wrote
+     *  this set (see `ISceneData.textures` in sceneMesh.ts); absent on the legacy export. */
+    textures?: string[];
     /** Unity's authored per-texture wrap mode, parallel to the saved PNG indices:
      *  0 Repeat, 1 Clamp, 2 Mirror. Consumed only by the RAM slots - see {@link applyWrap}. */
     textureWrap?: number[];
@@ -4653,7 +4656,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
     const unskip = unskipSet();
     const bases = await Promise.all(
         Array.from({ length: data.textureCount }, (_, i) =>
-            loadTexture(`${textureBaseURL}${i}.png${bust}`)
+            loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`)
                 .then((t) => (unskip.has(i) ? { ...t, skip: false, desatPanel: false, hazePanel: false } : t))
                 .catch(() => null),
         ),

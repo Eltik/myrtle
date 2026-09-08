@@ -3602,6 +3602,8 @@ pub fn export_particles(
     let mut tex_wrap: Vec<i64> = Vec::new();
     let mut next_idx = 0usize;
     let mut saved = 0usize;
+    // Index -> path relative to the skin directory (see `spine::tex_pool_on`).
+    let mut tex_names: Vec<String> = Vec::new();
     let mut systems: Vec<Value> = Vec::with_capacity(particles.len());
 
     // Decode + save a texture once per source path_id, returning its shared
@@ -3637,17 +3639,12 @@ pub fn export_particles(
                 tex = super::alpha_merge::combine_with_alpha(&tex, &alpha);
             }
             let idx = next_idx;
-            if image::save_buffer(
-                tex_dir.join(format!("{idx}.png")),
-                &tex.rgba,
-                tex.width,
-                tex.height,
-                image::ColorType::Rgba8,
-            )
-            .is_ok()
-            {
+            let (rel, ok) =
+                super::spine::save_tex(&tex_dir, spine_dir, idx, &tex.rgba, tex.width, tex.height);
+            if ok {
                 saved += 1;
             }
+            tex_names.push(rel);
             if std::env::var("SCENE_ATTRIB").is_ok() {
                 eprintln!(
                     "    [ptcl-tex] idx={idx} pid={pid} name={:?} {}x{}",
@@ -3721,6 +3718,17 @@ pub fn export_particles(
         "textureWrap": tex_wrap,
         "systems": systems,
     });
+    // The pool's index -> path table; only when the pool is on, so the off arm's JSON is
+    // byte-identical (see `spine::tex_pool_on`).
+    let meta = if super::spine::tex_pool_on() {
+        let mut meta = meta;
+        if let Some(map) = meta.as_object_mut() {
+            map.insert("textures".into(), json!(tex_names));
+        }
+        meta
+    } else {
+        meta
+    };
     if let Ok(text) = serde_json::to_string(&meta)
         && std::fs::write(spine_dir.join(format!("{name}[particles].json")), text).is_ok()
     {
