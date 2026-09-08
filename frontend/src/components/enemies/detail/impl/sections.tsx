@@ -2,6 +2,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { env } from "#/env";
 import type { IEnemyAttributes, IEnemyLevelStats, IEnemySkill } from "#/lib/api/enemies";
+import { emphasizeTagsHtml } from "#/lib/gamedata/richtext";
 import { LevelBadge } from "../../list/impl/components/atoms";
 import { EnemyPlaceholder } from "../../list/impl/components/EnemyPlaceholder";
 import { APPLY_WAY_DISPLAY } from "../../list/impl/constants";
@@ -75,10 +76,6 @@ export function SectionHead({ children }: { children: React.ReactNode }) {
     );
 }
 
-function descToHtml(text: string): string {
-    return text.replace(/<@ba\.[a-z.]+>(.*?)<\/>/g, (_m, inner: string) => `<strong style="color: var(--foreground)">${inner}</strong>`);
-}
-
 function Meta({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
@@ -134,8 +131,8 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
                                         {g.items.map((ab) => (
                                             <li key={`${ab.text}-${ab.textFormat}`} className="flex gap-2.5 font-sans text-[13.5px] leading-[1.55]">
                                                 <span className="mt-2 h-1.25 w-1.25 shrink-0 rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_50%,transparent)]" />
-                                                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: text is from trusted backend handbook data and is sanitized via descToHtml */}
-                                                <span className="text-foreground" dangerouslySetInnerHTML={{ __html: descToHtml(ab.text) }} />
+                                                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: text is from trusted backend handbook data and is sanitized via emphasizeTagsHtml */}
+                                                <span className="text-foreground" dangerouslySetInnerHTML={{ __html: emphasizeTagsHtml(ab.text) }} />
                                             </li>
                                         ))}
                                     </ul>

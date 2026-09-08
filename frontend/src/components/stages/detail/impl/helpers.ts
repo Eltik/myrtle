@@ -7,10 +7,6 @@ import type { IStage, IZone } from "#/types/stages";
 import { DROP_TYPE_META, OCC_FALLBACK, OCC_META } from "./constants";
 import type { IDropGroup, IEnemyTally, IResolvedDrop, ISpawnRow, IStageEnemyStats } from "./types";
 
-export function descToHtml(text: string): string {
-    return text.replace(/<[@$][a-z0-9._]+>(.*?)<\/>/gi, (_m, inner: string) => `<strong style="color: var(--foreground)">${inner}</strong>`).replace(/\\n/g, "<br/>");
-}
-
 export function zoneLabel(zone: IZone | undefined, fallback: string): { title: string; subtitle: string | null } {
     if (!zone) return { title: fallback, subtitle: null };
     const title = zone.zoneNameSecond || zone.zoneNameFirst || zone.zoneNameTitleCurrent || zone.zoneId;

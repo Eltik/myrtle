@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { baseSkillIcon } from "#/components/operators/detail/impl/assets";
-import { colorForTag } from "#/components/operators/detail/impl/description";
 import type { IRosterSkill } from "#/lib/base/roster";
+import { colorForTag, tagTokenRegex } from "#/lib/gamedata/richtext";
 import { cn } from "#/lib/utils";
 
-const TOKEN = /<([@$])([\w.]+)>|<\/>/g;
+const TOKEN = tagTokenRegex();
 
 function emphasis(tag: string, content: ReactNode[], key: number): ReactNode {
     return (
@@ -26,7 +26,7 @@ function renderMarkup(text: string): ReactNode[] {
         last = m.index + m[0].length;
 
         if (m[1]) {
-            stack.push({ tag: m[1] + m[2], children: [] });
+            stack.push({ tag: m[1], children: [] });
             continue;
         }
 

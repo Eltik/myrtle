@@ -1,7 +1,8 @@
 import { Skull } from "lucide-react";
+import { emphasizeTagsHtml } from "#/lib/gamedata/richtext";
 import type { IStage, IZone } from "#/types/stages";
 import { DIFFICULTY_LABEL, STAGE_TYPE_LABEL } from "./constants";
-import { descToHtml, zoneLabel } from "./helpers";
+import { zoneLabel } from "./helpers";
 import { Pill } from "./primitives";
 
 export function StageHeader({ stage, zone }: { stage: IStage; zone: IZone | undefined }) {
@@ -33,8 +34,8 @@ export function StageHeader({ stage, zone }: { stage: IStage; zone: IZone | unde
             </div>
 
             {stage.description && (
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: description is trusted backend handbook data sanitized via descToHtml
-                <p className="mt-3.5 max-w-[72ch] text-pretty font-sans text-[13px] text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: descToHtml(stage.description) }} />
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: description is trusted backend handbook data sanitized via emphasizeTagsHtml
+                <p className="mt-3.5 max-w-[72ch] text-pretty font-sans text-[13px] text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: emphasizeTagsHtml(stage.description) }} />
             )}
         </header>
     );

@@ -1,33 +1,7 @@
+import { atomicTagRegex, colorForTag, renderTags } from "#/lib/gamedata/richtext";
 import type { IBlackboard } from "#/types/operators";
 
-const DESCRIPTION_COLORS = {
-    valueUp: "#6495ED",
-    valueDown: "#ff847d",
-    reminder: "#da9a46",
-    keyword: "#27e8e7",
-    potential: "#27e8e7",
-    skillTooltip: "#27e8e7",
-};
-
-export function colorForTag(tag: string): string {
-    if (tag.startsWith("$")) return DESCRIPTION_COLORS.skillTooltip;
-    // Trailing tag fragment after `@<scope>.` - `ba` is combat, `cc` is base/RIIC.
-    const suffix = tag.includes(".") ? tag.slice(tag.indexOf(".") + 1) : tag;
-    if (suffix === "vup") return DESCRIPTION_COLORS.valueUp;
-    if (suffix === "vdown") return DESCRIPTION_COLORS.valueDown;
-    if (suffix === "rem") return DESCRIPTION_COLORS.reminder;
-    if (suffix === "kw") return DESCRIPTION_COLORS.keyword;
-    if (suffix === "talpu") return DESCRIPTION_COLORS.potential;
-    return DESCRIPTION_COLORS.keyword;
-}
-
-// Nesting-aware: content cannot contain another opening (`<@` / `<$`). Applied
-// repeatedly in renderTagsAndNewlines, this resolves innermost tags first so
-// patterns like `<$scope><@cc.kw>text</></>` collapse correctly instead of
-// leaking the inner opener and a stray `</>` as raw text.
-const tagRegex = /<((?:@[a-z]+\.[a-z]+|\$[^>]+))>((?:(?!<[@$])[\s\S])*?)<\/>/g;
 const interpolationRegex = /-?\{-?([^}:]+)(?::([^}]+))?\}/g;
-const atomicTagRegex = /^<(?:@[a-z]+\.[a-z]+|\$[^>]+)>[\s\S]*?<\/>/;
 const leadingWsRegex = /^\s+/;
 
 function interpolateValues(text: string, blackboard: IBlackboard[] | { key: string; value: number }[]): string {
@@ -47,23 +21,14 @@ function interpolateValues(text: string, blackboard: IBlackboard[] | { key: stri
 }
 
 function renderTagsAndNewlines(text: string): string {
-    const replace = (s: string) =>
-        s.replace(tagRegex, (_match, tag: string, content: string) => {
-            return `<span style="color:${colorForTag(tag)}">${content}</span>`;
-        });
-    let prev = text;
-    let curr = replace(text);
-    while (curr !== prev) {
-        prev = curr;
-        curr = replace(curr);
-    }
-    return curr.replace(/\n/g, "<br/>");
+    return renderTags(text, (tag, content) => `<span style="color:${colorForTag(tag)}">${content}</span>`).replace(/\n/g, "<br/>");
 }
 
 export function descriptionToHtml(description: string, blackboard: IBlackboard[] | { key: string; value: number }[] = []): string {
     if (!description) return "";
-    const escaped = description.replace(/&/g, "&amp;");
-    return renderTagsAndNewlines(interpolateValues(escaped, blackboard));
+    // No pre-escaping here: renderTags escapes each literal text run itself, so
+    // escaping up front would double-encode every `&` in the source.
+    return renderTagsAndNewlines(interpolateValues(description, blackboard));
 }
 
 type DiffOp = { type: "equal" | "delete" | "insert"; tokens: string[] };
@@ -140,8 +105,8 @@ export function renderDescriptionDiffHtml(oldDesc: string | null | undefined, ne
     if (!oldHtml) return newHtml;
     if (!newHtml) return oldHtml;
 
-    const oldPre = interpolateValues((oldDesc ?? "").replace(/&/g, "&amp;"), oldBlackboard);
-    const newPre = interpolateValues((newDesc ?? "").replace(/&/g, "&amp;"), newBlackboard);
+    const oldPre = interpolateValues(oldDesc ?? "", oldBlackboard);
+    const newPre = interpolateValues(newDesc ?? "", newBlackboard);
 
     const ops = lcsDiff(tokenizeRawForDiff(oldPre), tokenizeRawForDiff(newPre));
     return ops
