@@ -40,6 +40,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v012_game_credentials",
         include_str!("v012_game_credentials.sql"),
     ),
+    (
+        "v013_checkin_semantics",
+        include_str!("v013_checkin_semantics.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

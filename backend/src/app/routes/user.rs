@@ -40,8 +40,9 @@ pub async fn get_user_checkin(
     State(state): State<AppState>,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserCheckin>>, ApiError> {
-    // Daily sign-in state: current month's calendar, lifetime total, and the
-    // active monthly series' progress. `null` when the user has never synced.
+    // Daily sign-in state: the month's claim count and per-claim monthly-card
+    // flags, the lifetime total, and the active series' progress. `null` when
+    // the user has never synced.
     let checkin = get_checkin_by_uid(&state.db, &params.uid).await?;
     Ok(Json(checkin))
 }

@@ -52,7 +52,14 @@ impl SandboxUniverse {
             max_recipes: count("FoodData"),
             max_music: count("ArchiveMusicUnlockData"),
             max_base_level: count("BaseUpdate"),
-            max_blueprints: count("BuildingItemData") + count("CraftItemData"),
+            // `BuildingItemData` is a strict SUBSET of `CraftItemData`, not a
+            // disjoint table: every one of its 43 ids reappears in
+            // `CraftItemData` as a `BASE_BUILDING` (19) or `COMBAT_BUILDING`
+            // (24) entry, alongside 53 `TACTICAL` ones. Summing the two counted
+            // every building blueprint twice and put the total at 139 when the
+            // real universe is 96 - the exact key set of `build.book` in the
+            // progress of players who have collected them all.
+            max_blueprints: count("CraftItemData"),
             max_rifts: count("FixedRiftData"),
         }
     }
@@ -155,6 +162,26 @@ mod tests {
         assert_eq!(
             u.max_zones, 3,
             "the tutorial zone is excluded from the zone total"
+        );
+    }
+
+    #[test]
+    fn max_blueprints_does_not_double_count_buildings() {
+        // `BuildingItemData` ids all reappear in `CraftItemData`; the total is
+        // the `CraftItemData` count, never the sum of the two.
+        let raw = json!({ "Detail": { "SANDBOX_V2": [ { "value": {
+            "BuildingItemData": [
+                { "key": "sandbox_1_building_1" }, { "key": "sandbox_1_building_2" },
+            ],
+            "CraftItemData": [
+                { "key": "sandbox_1_building_1" }, { "key": "sandbox_1_building_2" },
+                { "key": "sandbox_1_tactical_1" },
+            ],
+        } } ] } });
+        let u = SandboxUniverse::build(&raw);
+        assert_eq!(
+            u.max_blueprints, 3,
+            "blueprints total is the craftable set, not craft + building"
         );
     }
 }

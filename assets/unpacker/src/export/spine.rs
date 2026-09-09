@@ -13,7 +13,7 @@ use super::texture::decode_texture_object;
 pub enum SpineCategory {
     BattleFront,
     BattleBack,
-    /// The third battle facing: a skeleton hung off a GameObject the game names `Down`, a
+    /// The third battle facing: a skeleton hung off a `GameObject` the game names `Down`, a
     /// sibling of `Front` and `Back` under the prefab's `FaceSwitcher`, with its own muzzle
     /// and special points (three token skins carry one: Ironmn's pile3, Radian's tower2 and
     /// tower3, EN census 2026-09-09 over 917 bundles). Without this category it fell to the
@@ -5313,7 +5313,7 @@ fn follow_skeleton_data(
 /// Step 3 is required for correctness: front and back battle skeletons often
 /// share a single atlas (e.g. `char_1048_orchd2`), so the atlas heuristic
 /// classifies both the same way and one overwrites the other on export. `Down` is the
-/// same failure with a third name: the EN census of owning GameObject names (2026-09-09,
+/// same failure with a third name: the EN census of owning `GameObject` names (2026-09-09,
 /// 917 bundles, 2947 behaviours) reads Front, Back, Down, `Spine` (building, caught by
 /// step 2) and `res_holder` plus the dynchar roots (caught by step 1), nothing else, so
 /// step 3 now names the whole battle set. A name step 3 does not know still falls to
@@ -5366,12 +5366,12 @@ fn classify_spine(
 /// hold one character). Pass `None` for multi-enemy pack bundles: each asset
 /// then derives its own directory from its skel name via [`enemy_dir_name`],
 /// grouping form variants (`enemy_1000_gopro_2`) under the base enemy id.
-#[must_use]
 /// Every skeleton path this process has written, with a hash of its bytes, so a second
 /// asset resolving to the same path is detected instead of silently overwriting the first
 /// (in one bundle through iteration order, or across two bundles through the parallel walk).
-static WRITTEN_SKELS: std::sync::LazyLock<std::sync::Mutex<HashMap<std::path::PathBuf, (u64, usize)>>> =
-    std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+static WRITTEN_SKELS: std::sync::LazyLock<
+    std::sync::Mutex<HashMap<std::path::PathBuf, (u64, usize)>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
 static COLLISIONS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 static DUPLICATES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
@@ -5386,7 +5386,9 @@ enum OutputClaim {
 
 fn claim_output_path(path: &Path, bytes: &[u8]) -> OutputClaim {
     let hash = fnv1a64(bytes);
-    let mut written = WRITTEN_SKELS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut written = WRITTEN_SKELS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     match written.get(path) {
         Some((h, len)) if *h == hash && *len == bytes.len() => OutputClaim::Duplicate,
         Some((_, len)) => OutputClaim::Conflict(*len),

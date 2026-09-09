@@ -11,15 +11,28 @@ interface ICardProps {
 }
 
 const SIGNIN = PALETTE.signin;
-const WEEKDAYS = [
-    { k: "sun", l: "S" },
-    { k: "mon", l: "M" },
-    { k: "tue", l: "T" },
-    { k: "wed", l: "W" },
-    { k: "thu", l: "T" },
-    { k: "fri", l: "F" },
-    { k: "sat", l: "S" },
-] as const;
+
+/**
+ * The month's sign-in state as of the last sync, from the one thing the game
+ * actually tells us: how many of the month's reward slots have been claimed.
+ *
+ * The sign-in calendar is a sequential list of reward slots, not a dated
+ * calendar - miss a day and you fall one slot behind, you never forfeit the
+ * slot. So "which days were claimed" is not answerable and must not be drawn;
+ * "N of D slots claimed, as of the sync" is.
+ */
+function monthState(checkin: IUserCheckin, server: string) {
+    const sync = new Date(checkin.updated_at);
+    // The snapshot belongs to the game day it was taken on, which lives in
+    // SERVER time (04:00 reset) - the viewer's local date may be a day ahead.
+    const { year, month, day } = gameDate(Math.floor(sync.getTime() / 1000), server);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const claimed = Math.max(0, Math.min(checkin.claimed_this_month, daysInMonth));
+    // Days elapsed in the sync's month. `claimed` can never exceed it, but a
+    // stale row shouldn't be able to render "10 / 9".
+    const elapsed = Math.min(daysInMonth, Math.max(day, claimed));
+    return { sync, year, month, daysInMonth, claimed, elapsed, behind: elapsed - claimed };
+}
 
 /** "3 weeks ago", "yesterday", etc. Client-rendered, so `Date.now()` is fine. */
 function relativeTime(date: Date): string {
@@ -56,13 +69,13 @@ function StatRow({ label, value, title }: { label: string; value: string; title?
 export function SignInOverviewCard({ checkin, server }: ICardProps) {
     if (!checkin) return null;
 
-    const { history, cumulative_signin, register_ts, last_online_ts } = checkin;
+    const { cumulative_signin, register_ts, last_online_ts } = checkin;
 
     const ageDays = register_ts ? countGameDays(register_ts, last_online_ts ?? Math.floor(Date.now() / 1000), server) : null;
     // Floor (not round) so e.g. 915/919 reads 99%, never a misleading 100%.
     const rate = ageDays !== null ? Math.min(100, Math.floor((cumulative_signin / ageDays) * 100)) : null;
     const missed = ageDays !== null ? Math.max(0, ageDays - cumulative_signin) : null;
-    const claimedThisMonth = history.filter((d) => d === 1).length;
+    const { claimed, elapsed } = monthState(checkin, server);
 
     return (
         <StatCard color={SIGNIN}>
@@ -79,7 +92,7 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
                 <div className="flex flex-col gap-2.5">
                     {register_ts ? <StatRow label="Member since" value={new Date(register_ts * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} /> : null}
                     {ageDays !== null && <StatRow label="Account age" value={humanAge(ageDays)} />}
-                    <StatRow label="This month" title="Days claimed this month" value={`${claimedThisMonth} / ${history.length}`} />
+                    <StatRow label="This month" title="Sign-ins claimed this month, out of the days elapsed" value={`${claimed} / ${elapsed}`} />
                     {missed !== null && <StatRow label="Days missed" title="Days since joining without a sign-in" value={missed.toLocaleString()} />}
                     {last_online_ts ? <StatRow label="Last online" title={new Date(last_online_ts * 1000).toLocaleString()} value={relativeTime(new Date(last_online_ts * 1000))} /> : null}
                 </div>
@@ -88,7 +101,8 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
     );
 }
 
-type DayState = "claimed" | "missed" | "upcoming";
+/** A reward slot is claimed, still open (you're behind), or not yet reachable. */
+type SlotState = "claimed" | "open" | "upcoming";
 
 const CELL_BASE = "relative flex aspect-square items-center justify-center rounded-md border font-medium text-[10.5px] tabular-nums";
 
@@ -100,43 +114,34 @@ function claimedStyle() {
     };
 }
 
-function LegendSwatch({ state }: { state: DayState }) {
-    return <span aria-hidden className={cn("size-2.5 rounded-[3px] border", state === "missed" && "border-border/60 border-dashed", state === "upcoming" && "border-transparent bg-muted/40", state === "claimed" && "border-transparent")} style={state === "claimed" ? claimedStyle() : undefined} />;
+function LegendSwatch({ state }: { state: SlotState }) {
+    return <span aria-hidden className={cn("size-2.5 rounded-[3px] border", state === "open" && "border-border/60 border-dashed", state === "upcoming" && "border-transparent bg-muted/40", state === "claimed" && "border-transparent")} style={state === "claimed" ? claimedStyle() : undefined} />;
 }
 
-/** Right card: the current month's sign-in calendar (snapshot as of last sync). */
+/**
+ * Right card: the current month's sign-in progress (snapshot as of last sync).
+ *
+ * The cells are the month's reward SLOTS, claimed front-to-back - the same
+ * thing the game itself draws. They are not dates, so there is no weekday
+ * header and no "you missed the 4th": being behind shows up as open slots at
+ * the end of the claimed run.
+ */
 export function SignInCalendarCard({ checkin, server }: ICardProps) {
     if (!checkin) return null;
 
-    const { history, can_check_in, updated_at } = checkin;
+    const { monthly_card_flags, can_check_in } = checkin;
+    const { sync, year, month, daysInMonth, claimed, elapsed, behind } = monthState(checkin, server);
 
-    const sync = new Date(updated_at);
-    // The calendar reflects game days, which live in SERVER time (with the
-    // 04:00 reset) - the viewer's local date may already be a day ahead.
-    const { year, month, day: syncGameDay } = gameDate(Math.floor(sync.getTime() / 1000), server);
     const monthAnchor = new Date(year, month, 1);
     const monthLabel = monthAnchor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const monthShort = monthAnchor.toLocaleDateString("en-US", { month: "short" });
     const syncAbsolute = sync.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    const firstWeekday = monthAnchor.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const elapsed = history.length;
-    const claimedThisMonth = history.filter((d) => d === 1).length;
+    // The next slot the player can take - the one the game highlights.
+    const nextSlot = claimed < daysInMonth ? claimed + 1 : null;
+    const cardDays = monthly_card_flags.filter((f) => f === 1).length;
 
-    // Current streak: trailing claimed days (the final day may be today-still-
-    // pending, so a single trailing 0 doesn't break it).
-    let streak = 0;
-    let i = history.length - 1;
-    if (i >= 0 && history[i] === 0) i--;
-    for (; i >= 0 && history[i] === 1; i--) streak++;
-    // The game only exposes the CURRENT month's calendar, so a streak that fills
-    // the whole month certainly began earlier than we can see -> show "N+".
-    const extendsBeyond = elapsed > 0 && claimedThisMonth === elapsed;
-
-    const summary = `${monthLabel}: ${claimedThisMonth} of ${elapsed} days claimed, as of ${syncAbsolute}`;
-    const leadingBlanks = Array.from({ length: firstWeekday }, (_, b) => `blank-${b}`);
-    const days = Array.from({ length: daysInMonth }, (_, d) => d + 1);
+    const summary = `${monthLabel}: ${claimed} of ${elapsed} days claimed, as of ${syncAbsolute}`;
+    const slots = Array.from({ length: daysInMonth }, (_, d) => d + 1);
 
     return (
         <StatCard color={SIGNIN}>
@@ -153,40 +158,30 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                     <span className={KICKER_TEXT}>{monthLabel}</span>
                     <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                         <span className="font-semibold" style={{ color: SIGNIN }}>
-                            {claimedThisMonth}
+                            {claimed}
                         </span>{" "}
                         / {elapsed} claimed
                     </span>
                 </div>
 
                 <div className="mx-auto w-full max-w-68">
-                    <div aria-hidden className="mb-1 grid grid-cols-7 gap-1">
-                        {WEEKDAYS.map((w) => (
-                            <span className="text-center font-mono font-semibold text-[9px] text-muted-foreground/50 uppercase" key={w.k}>
-                                {w.l}
-                            </span>
-                        ))}
-                    </div>
                     {/* role=img + summary so screen readers get the gist, not 30+ cells.
                         State is conveyed by fill + check + border-style, not color alone. */}
                     <div aria-label={summary} className="grid grid-cols-7 gap-1" role="img">
-                        {leadingBlanks.map((id) => (
-                            <span key={id} />
-                        ))}
-                        {days.map((day) => {
-                            const state: DayState = day > elapsed ? "upcoming" : history[day - 1] === 1 ? "claimed" : "missed";
-                            const isSyncDay = day === syncGameDay;
+                        {slots.map((slot) => {
+                            const state: SlotState = slot <= claimed ? "claimed" : slot <= elapsed ? "open" : "upcoming";
+                            const withCard = state === "claimed" && monthly_card_flags[slot - 1] === 1;
                             return (
                                 <div
-                                    className={cn(CELL_BASE, state === "missed" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
-                                    key={day}
+                                    className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
+                                    key={slot}
                                     style={{
                                         ...(state === "claimed" && claimedStyle()),
-                                        ...(isSyncDay && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
+                                        ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
                                     }}
-                                    title={`${monthShort} ${day}${state === "claimed" ? " · Claimed" : state === "missed" ? " · Missed" : ""}${isSyncDay ? " · Last synced" : ""}`}
+                                    title={`Day ${slot}${state === "claimed" ? " · Claimed" : state === "open" ? " · Unclaimed" : ""}${withCard ? " · Monthly card" : ""}${slot === nextSlot ? " · Next up" : ""}`}
                                 >
-                                    {day}
+                                    {slot}
                                     {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2" style={{ color: SIGNIN }} />}
                                 </div>
                             );
@@ -200,7 +195,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                         <LegendSwatch state="claimed" /> Claimed
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                        <LegendSwatch state="missed" /> Missed
+                        <LegendSwatch state="open" /> Unclaimed
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                         <LegendSwatch state="upcoming" /> Upcoming
@@ -208,13 +203,20 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 </div>
 
                 <div className="mt-auto flex items-center justify-between gap-2 border-border/40 border-t pt-2.5">
-                    <span className={KICKER_TEXT}>Current streak</span>
-                    <span className="font-mono text-[11px] text-foreground tabular-nums" title={extendsBeyond ? "Only the current month's daily record is available - your streak likely extends further back." : undefined}>
-                        <span className="font-semibold" style={{ color: SIGNIN }}>
-                            {streak}
-                            {extendsBeyond ? "+" : ""}
-                        </span>{" "}
-                        {streak === 1 && !extendsBeyond ? "day" : "days"}
+                    <span className={KICKER_TEXT}>Days behind</span>
+                    <span className="font-mono text-[11px] text-foreground tabular-nums" title={cardDays > 0 ? `${cardDays} of this month's ${claimed} claims came with the monthly card` : undefined}>
+                        {behind === 0 ? (
+                            <span className="font-semibold" style={{ color: SIGNIN }}>
+                                All caught up
+                            </span>
+                        ) : (
+                            <>
+                                <span className="font-semibold" style={{ color: SIGNIN }}>
+                                    {behind}
+                                </span>{" "}
+                                {behind === 1 ? "day" : "days"}
+                            </>
+                        )}
                         {can_check_in && (
                             <span className="ml-2 font-semibold" style={{ color: SIGNIN }}>
                                 · claim ready

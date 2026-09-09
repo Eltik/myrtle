@@ -28,7 +28,8 @@ pub async fn get_checkin_by_uid(
 ) -> Result<Option<UserCheckin>, sqlx::Error> {
     sqlx::query_as::<_, UserCheckin>(
         r"
-        SELECT ck.history, ck.cumulative_signin, ck.checkin_group_id,
+        SELECT ck.history, cardinality(ck.history) AS claimed_this_month,
+               ck.cumulative_signin, ck.checkin_group_id,
                ck.reward_index, ck.can_check_in,
                st.register_ts, st.last_online_ts, u.updated_at
         FROM user_checkin ck

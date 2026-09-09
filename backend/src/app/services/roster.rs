@@ -174,8 +174,12 @@ pub struct MedalStore {
 
 #[derive(Deserialize)]
 pub struct CheckIn {
-    /// Current month's daily sign-in calendar (0/1 per day). The raw key is
-    /// `checkInHistory`; the bare `history` key does not exist on this object.
+    /// One flag per sign-in **claimed** this month, in claim order: `1` if the
+    /// monthly-subscription Daily Supply came with that claim, `0` if not.
+    /// Despite the name it is not a dated calendar — a missed day adds no
+    /// entry, so its length is the claim count and its values say nothing
+    /// about which days were claimed. The raw key is `checkInHistory`; the
+    /// bare `history` key does not exist on this object.
     #[serde(rename = "checkInHistory")]
     pub history: Option<Vec<i16>>,
     /// Lifetime cumulative sign-in days — the "X / 1000 total days of sign-ins"
@@ -186,7 +190,8 @@ pub struct CheckIn {
     /// Identifier of the active monthly sign-in series (e.g. `signin<N>`).
     #[serde(rename = "checkInGroupId")]
     pub group_id: Option<String>,
-    /// Days already claimed in the current month's calendar.
+    /// 0-based pointer into the month's reward slots: the claim count while a
+    /// claim is pending, one less just after one is taken.
     #[serde(rename = "checkInRewardIndex")]
     pub reward_index: Option<i64>,
     /// Whether a daily sign-in is claimable right now (0/1, as of this sync).
@@ -563,8 +568,10 @@ fn extract_status(status: Option<&PlayerStatus>) -> serde_json::Value {
 }
 
 /// Flatten the `checkIn` section into the JSONB payload `sp_sync_user_data`
-/// stores in `user_checkin`: the current month's calendar plus the lifetime
-/// sign-in counter and the active monthly series' progress.
+/// stores in `user_checkin`: the month's per-claim monthly-card flags plus the
+/// lifetime sign-in counter and the active monthly series' progress. The
+/// `history` key is kept verbatim from the game (see [`CheckIn::history`] for
+/// what it does and does not encode) — the API layer renames it.
 fn extract_checkin(checkin: &Option<CheckIn>) -> serde_json::Value {
     let Some(c) = checkin else {
         return serde_json::json!({ "history": [] });

@@ -91,17 +91,39 @@ pub struct UserSettings {
 
 /// `user_checkin` table — daily sign-in state from the game's `checkIn` section,
 /// joined with the timestamps needed to render it as a calendar.
+///
+/// The game's monthly sign-in is a *sequential list of reward slots*, not a
+/// dated calendar: missing a day leaves you one slot behind, it never forfeits
+/// the slot. Nothing in this payload maps a claim to the date it happened on,
+/// so no consumer can say "the 4th was missed" — only "N of the month's slots
+/// are claimed, D days have elapsed".
 #[derive(TS)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserCheckin {
-    /// Current month's calendar: one entry per day, `1` = claimed, `0` = not.
-    pub history: Vec<i16>,
+    /// One flag per sign-in **claimed** this month, in claim order: `1` if the
+    /// monthly-subscription Daily Supply came with that claim, `0` if not.
+    ///
+    /// This is the game's raw `checkInHistory`, and it is **not** a per-day
+    /// calendar — a missed day produces no entry at all. Reading `flags[d - 1]`
+    /// as "day `d` was claimed" is wrong, and counting the `1`s counts monthly
+    /// card days, not sign-ins. (Verified against `user_status.monthly_sub_end`
+    /// over the whole user table: the final flag agrees with subscription state
+    /// in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`] for
+    /// the sign-in count.
+    #[sqlx(rename = "history")]
+    pub monthly_card_flags: Vec<i16>,
+    /// Sign-ins claimed in the current month's series — the length of
+    /// `monthly_card_flags`, derived in SQL so no client re-derives it.
+    pub claimed_this_month: i32,
     /// Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
     pub cumulative_signin: i32,
     /// Active monthly sign-in series id (e.g. `signin<N>`).
     pub checkin_group_id: Option<String>,
-    /// Days already claimed in the current month's calendar.
+    /// The game's raw `checkInRewardIndex`: a 0-based pointer into the month's
+    /// reward slots. It equals `claimed_this_month` while a claim is pending
+    /// and `claimed_this_month - 1` just after one, and a handful of rows carry
+    /// a stale `0` across a series rollover — prefer `claimed_this_month`.
     pub reward_index: i16,
     /// Whether a daily sign-in is claimable right now (as of the last sync).
     pub can_check_in: bool,
@@ -112,7 +134,8 @@ pub struct UserCheckin {
     /// sync time below.
     #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
-    /// When this row was last synced to our DB. The `history` is a snapshot as
-    /// of this moment, which may be days/weeks before "now".
+    /// When this row was last synced to our DB. Every field above is a snapshot
+    /// as of this moment, which may be days/weeks before "now" — so the month
+    /// the calendar belongs to is this timestamp's month, not today's.
     pub updated_at: DateTime<Utc>,
 }

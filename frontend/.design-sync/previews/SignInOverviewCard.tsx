@@ -2,22 +2,26 @@ import { SignInOverviewCard } from "frontend";
 
 const DAY = 86_400;
 const NOW = Math.floor(Date.now() / 1000);
-// EN game days roll over at 04:00 UTC-7, so the current game day is what the
-// calendar's `history` array is sized against.
+// EN game days roll over at 04:00 UTC-7, so the month's elapsed-day count comes
+// from the current game day, not the viewer's local date.
 const EN_OFFSET_SEC = (-7 - 4) * 3600;
 const GAME_DAY = new Date((NOW + EN_OFFSET_SEC) * 1000).getUTCDate();
 
-/** `history[i] = 1` when day i+1 of the current month was claimed. */
-const monthHistory = (missedDays: number[], pendingToday = true): number[] => Array.from({ length: GAME_DAY }, (_, i) => (missedDays.includes(i + 1) || (pendingToday && i + 1 === GAME_DAY) ? 0 : 1));
+/**
+ * `monthly_card_flags` has one entry per CLAIM (not per day): 1 when the
+ * monthly-subscription Daily Supply came with it.
+ */
+const cardFlags = (claims: number, cardDays: number): number[] => Array.from({ length: Math.max(0, claims) }, (_, i) => (i < cardDays ? 1 : 0));
 
 export const Veteran = () => (
     <div className="w-full max-w-md">
         <SignInOverviewCard
             checkin={{
-                history: monthHistory([4, 11]),
+                monthly_card_flags: cardFlags(GAME_DAY - 2, GAME_DAY - 2),
+                claimed_this_month: Math.max(0, GAME_DAY - 2),
                 cumulative_signin: 1798,
                 checkin_group_id: "signin12",
-                reward_index: GAME_DAY - 3,
+                reward_index: Math.max(0, GAME_DAY - 2),
                 can_check_in: true,
                 register_ts: Math.floor(new Date("2019-05-01T12:00:00Z").getTime() / 1000),
                 last_online_ts: NOW - 6 * 3600,
@@ -32,10 +36,11 @@ export const NewDoctor = () => (
     <div className="w-full max-w-md">
         <SignInOverviewCard
             checkin={{
-                history: monthHistory([2]),
+                monthly_card_flags: cardFlags(GAME_DAY - 1, 0),
+                claimed_this_month: Math.max(0, GAME_DAY - 1),
                 cumulative_signin: 38,
                 checkin_group_id: "signin12",
-                reward_index: GAME_DAY - 2,
+                reward_index: Math.max(0, GAME_DAY - 1),
                 can_check_in: true,
                 register_ts: NOW - 41 * DAY,
                 last_online_ts: NOW - 2 * 3600,
@@ -46,11 +51,13 @@ export const NewDoctor = () => (
     </div>
 );
 
+/** Stopped playing three months ago - the snapshot's month is not this one. */
 export const LapsedAccount = () => (
     <div className="w-full max-w-md">
         <SignInOverviewCard
             checkin={{
-                history: Array.from({ length: GAME_DAY }, () => 0),
+                monthly_card_flags: cardFlags(4, 0),
+                claimed_this_month: 4,
                 cumulative_signin: 913,
                 checkin_group_id: "signin12",
                 reward_index: 4,
