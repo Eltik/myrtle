@@ -14,8 +14,14 @@ Asset bundles (.ab, .dat, .bin files)
     ├── textures/ (PNG images)
     ├── text/ (JSON, gamedata Excel)
     ├── audio/ (OGG, WAV, M4A)
-    └── spine/ (BattleFront, BattleBack, Building, DynIllust)
+    ├── portraits/ (PNG, sliced from atlases)
+    ├── gamedata/ (excel/, levels/, story/, battle/, building/)
+    └── spine/ (BattleFront, BattleBack, Building, DynIllust, Enemy)
 ```
+
+In production the runner, Docker, and Compose paths all nest output by region, so
+the real tree is `output/<region>/textures/…`. The flat layout above is what you get
+invoking the binaries directly with `-o ./output`.
 
 **Downloader** (`downloader/`):
 - Fetches version metadata from CDN
@@ -30,6 +36,10 @@ Asset bundles (.ab, .dat, .bin files)
 - Decompresses blocks (LZMA, LZ4, LZ4AK custom variant)
 - Deserializes Unity serialized files using type trees
 - Exports assets by class ID (Texture2D, TextAsset, AudioClip, MonoBehaviour for Spine)
+- Composites `foo` / `foo[alpha]` texture pairs into single RGBA PNGs
+- Slices operator portraits out of shared `SpritePacker` atlases
+- Un-squashes stage map previews, which ship as forced 512x512 squares
+- Reconstructs dynamic-illustration (L2D) scenes: particles, meshes, shader maps, camera curves
 - Multi-threaded extraction with rayon (configurable thread pool)
 - FlatBuffer schema support for gamedata Excel files
 
@@ -37,7 +47,14 @@ Asset bundles (.ab, .dat, .bin files)
 - Interactive CLI for 3 workflows: setup, incremental update, WebSocket server
 - Prerequisite checking (Git, Rust 1.85.0+, C compiler)
 - Binary build orchestration
+- Prunes orphaned bundles and reconciles the manifest after every download
+- Detects truncated extracts and retries an OOM-killed unpack single-threaded
 - Progress tracking with indicatif spinners
+
+Two more tools sit alongside the pipeline: `il2cpp-locate/` (a Rust crate for locating
+methods in an IL2CPP dump) and `il2cpp-recover.sh`. Both exist to recover *compiled
+algorithms* that are not present in any asset bundle. See
+[`IL2CPP_RECOVERY.md`](IL2CPP_RECOVERY.md). Normal download and extract never needs them.
 
 ---
 
@@ -122,7 +139,7 @@ npm start
 ```
 
 **Workflow:**
-1. Prompt for server region, asset directory, output directory, content profile (`full` / `operators`)
+1. Prompt for server region, asset directory, output directory, content profile (`full`, `operators`, `stages`, `gamedata`)
 2. Fetch server version info (client + resource version)
 3. Compare with local `.version` file in asset directory
 4. If newer: download + extract + save new version
@@ -130,7 +147,7 @@ npm start
 > **Region nesting:** the runner appends the region key to both directories, so a
 > `cn` run saves to `./ArkAssets/cn` and extracts to `./output/cn`. This lets
 > multiple regions coexist (e.g. full `en` alongside an `operators`-profile `cn`
-> preview). The raw `downloader`/`unpacker` binaries do **not** nest — pass
+> preview). The raw `downloader`/`unpacker` binaries do **not** nest - pass
 > already-region-scoped paths to them directly.
 
 **Version File:** `./ArkAssets/<region>/.version` (single-line resource version string)
@@ -149,14 +166,14 @@ npm start
 
 **Configuration:**
 - Server region
-- Asset download directory (nested per region — see Mode 2)
-- Extraction output directory (nested per region — see Mode 2)
-- Content profile (`full` / `operators`) — also via `--profile` / `WS_PROFILE`
+- Asset download directory (nested per region - see Mode 2)
+- Extraction output directory (nested per region - see Mode 2)
+- Content profile (`full`, `operators`, `stages`, `gamedata`) - also via `--profile` / `WS_PROFILE`
 - WebSocket port (default 9160)
 - Check interval in minutes (default 30)
 
 > Run one instance per region (separate ports/dirs) to monitor several regions at
-> once — e.g. a full `en` server on 9160 and an `operators`-profile `cn` preview on 9161.
+> once - e.g. a full `en` server on 9160 and an `operators`-profile `cn` preview on 9161.
 
 **Behavior:**
 - Starts listening on `ws://localhost:<port>`
@@ -220,7 +237,7 @@ Download asset packs.
 |--------|------|---|
 | `--all` | bool | Download all packs (required unless `--packages` used) |
 | `--packages <list>` | string | Comma-separated pack names (e.g., `pack/chararts,pack/ui`) |
-| `--profile <name>` | string | Content profile applied on top of `--all`: `operators` (gamedata + operator-facing assets only) or `full` (everything). Omit for full. |
+| `--profile <name>` | string | Content profile(s) applied on top of `--all`: `full`, `operators`, `stages`, or `gamedata`. Comma-separate to combine (e.g. `operators,stages`). Omit for `full`. |
 
 **Examples:**
 
@@ -234,24 +251,34 @@ downloader --server en download --packages pack/chararts,pack/ui
 # 8 concurrent downloads to custom directory
 downloader --server cn --threads 8 -d /data/arknights download --all
 
-# Operator-only profile: gamedata + operator art/portraits/avatars/icons
-# (~2.5 GB for CN vs ~17 GB full). Used for the "upcoming operators" preview.
+# Operator-only profile: gamedata + operator art/portraits/avatars/icons.
+# Used for the "upcoming operators" preview.
 downloader --server cn download --all --profile operators
+
+# Gamedata only: the smallest useful download, ~330 MB on CN
+downloader --server cn download --all --profile gamedata
+
+# Combine profiles
+downloader --server cn download --all --profile operators,stages
 ```
 
 ### Content Profiles
 
-The `operators` profile filters the hot-update file list (by `abInfo` name) down to
-only what's needed to display operators, keeping the download small when full-region
-storage is impractical:
+A profile filters the hot-update file list (by `abInfo` name) down to a subset, keeping
+the download small when full-region storage is impractical. Four profiles exist, defined
+in `downloader/src/profile.rs`, and they can be OR-combined with a comma-separated list.
+Every profile retains `.idx` files unconditionally, so the gamedata manifest is never lost.
 
-- **Kept:** `anon/` (all gamedata — ~80 MB, the `.idx` manifest lives here too),
-  `chararts/`, `skinpack/`, `spritepack/char_portrait_*`, `spritepack/ui_char_avatar_*`,
-  `spritepack/skill_icons_*`, `spritepack/ui_equip_*`, `arts/charportraits/`.
-- **Excluded:** `audio/`, `scenes/`, `avg/`, dynamic art, building, etc.
+| Profile | Contents | Approx. size (CN) |
+|---------|----------|-------------------|
+| `full` | Everything. The default when `--profile` is omitted | ~90 GB |
+| `operators` | Gamedata plus operator-facing art: `chararts/`, `skinpack/`, portraits, avatars, skill and equip icons, elite/potential hubs, camp logos, and player/battle/voice audio | ~2.5 GB |
+| `stages` | Stage-viewer level scenes, map-preview thumbnails, and zone/event/IS banner art. Deliberately disjoint from `operators` | - |
+| `gamedata` | Only `anon/` bundles plus the `.idx` manifest. Exactly what `unpacker extract --gamedata` consumes | ~330 MB, ~150 files |
 
-Defined in `downloader/src/profile.rs`. The `.idx` is matched by extension so the
-gamedata manifest is always retained.
+Sizes are order-of-magnitude guidance from `profile.rs`, not guarantees; they grow with
+every game update. For reference, a current full extract runs roughly 18-20 GB of
+downloaded bundles and 35-38 GB of output per region.
 
 ### Server Regions
 
@@ -319,12 +346,17 @@ Extract assets from bundles.
 | `--portrait` | | bool | Extract operator portraits (from `char_portrait` / `charportraits` atlases) |
 | `--gamedata` | | bool | Extract gamedata (requires `--idx`) |
 | `--idx` | | path | Path to `.idx` manifest file (for gamedata) |
+| `--no-merge` | | bool | Do not composite `foo` / `foo[alpha]` texture pairs; write both raw |
 | `--jobs` | `-j` | number | Parallel threads (default: CPU count) |
 
 **Behavior:**
 
 - If **no type flags** are set: extract everything (image + text + audio + spine + portrait + gamedata)
 - If **any type flag** is set: extract only those types
+- Alpha companions are merged by default. Arknights splits transparency into a separate
+  `foo[alpha]` texture; the exporter composites the pair into one RGBA `foo.png` and also
+  writes the raw alpha. Unpaired textures pass through untouched. A page renamed during
+  atlas dedup takes its alpha companion with it.
 - `--gamedata` with no `--idx`: auto-searches input dir and parent dir for `.idx` file; errors if none found and `--gamedata` explicitly requested
 - Multi-threaded: uses rayon to process files in parallel
 
@@ -374,6 +406,23 @@ Bundle: 2 file(s)
   [ 114] MonoBehaviour     path_id=12347        size=   512     SkeletonMecanim
 ```
 
+#### `verify`
+
+Report which FlatBuffer schema each gamedata table verifies against (CN or Yostar). This
+is a diagnostic report, not a gate: it always exits `0`. Use it when a table decodes to
+garbage and you need to know whether the wrong schema family is being applied.
+
+**Flags:**
+
+| Flag | Type | Description |
+|------|------|---|
+| `--input` | path | Input directory containing gamedata bundles |
+| `--idx` | path | Path to the `.idx` manifest |
+
+```bash
+unpacker verify -i ./ArkAssets --idx ./ArkAssets/manifest.idx
+```
+
 ---
 
 ## Asset Types & Export Formats
@@ -392,7 +441,7 @@ Bundle: 2 file(s)
 - `34`: ETC_RGB4 (Ericsson Texture Compression)
 - `45`: ETC2_RGB
 - `47`: ETC2_RGBA8
-- `48–56`: ASTC variants (4x4 to 12x12)
+- `48-56`: ASTC variants (4x4 to 12x12)
 
 **Output Format:** PNG (RGBA, 8-bit per channel, flipped to top-left origin)
 
@@ -456,6 +505,11 @@ Spine animations are organized by category based on bundle path:
 | `BattleBack` | (not yet in typical bundles) | `spine/BattleBack/` |
 | `Building` | `building/vault/characters/` | `spine/Building/` |
 | `DynIllust` | `arts/dynchars`, `arts/dynavatars` | `spine/DynIllust/` |
+| `Enemy` | enemy chibi bundles | `spine/Enemy/` |
+
+Atlas pages carry per-page dimensions parsed from the `.atlas` text. When two pages
+collide on name, the highest-resolution one is kept and its alpha companion is renamed
+with it.
 
 **Reference Chain (MonoBehaviour graph traversal):**
 
@@ -553,9 +607,16 @@ output/
 │   │   └── ...
 │   ├── Building/
 │   │   └── ...
-│   └── DynIllust/
+│   ├── DynIllust/
+│   │   └── ...
+│   └── Enemy/
 │       └── ...
+├── portraits/
+│   └── char_002_amiya_1.png       (sliced from the shared atlas)
+├── derived/
+│   └── gacha_pool_details.json    (backend-facing derived data)
 └── gamedata/
+    ├── levels/ story/ battle/ building/
     └── excel/
         ├── character_table.json
         ├── skill_table.json
@@ -614,7 +675,7 @@ downloader --server en download --all
 # Manifest tracks MD5s of all files
 ```
 
-**Benefit:** Subsequent runs only download changed packs (typically 100–500 MB vs. 5–10 GB)
+**Benefit:** Subsequent runs only download changed packs (typically 100-500 MB vs. 5-10 GB)
 
 ### Low-Resource Mode
 
@@ -870,9 +931,12 @@ Request current directory listing.
 - `progress.rs`: indicatif progress bars
 - `types.rs`: Common types (VersionResponse, HotFile, PipelineStats)
 - `error.rs`: Error types
+- `profile.rs`: Content profiles (`full`, `operators`, `stages`, `gamedata`) and their filters
+- `resource_manifest.rs`: `.idx` resource-manifest handling
+- `client_extract.rs`: Offline APK/XAPK/OBB/IPA triage for IL2CPP recovery. Contacts no server
 
 **Unpacker** (`unpacker/edition 2024`)
-- `cli.rs`: Clap CLI (Extract/List commands)
+- `cli.rs`: Clap CLI (Extract/List/Verify commands)
 - `unity/`:
   - `bundle.rs`: UnityFS parsing (header → block info → block data)
   - `compression.rs`: Decompression (LZMA, LZ4, LZ4AK)
@@ -889,10 +953,23 @@ Request current directory listing.
   - `gamedata.rs`: Manifest-based extraction of Excel tables
   - `fsb5.rs`: FMOD SoundBank → OGG decoding
   - `manifest.rs`: Resource manifest parsing (.idx files)
+  - `alpha_merge.rs`: Composite `foo` / `foo[alpha]` texture pairs into RGBA
+  - `portrait.rs`: Slice operator portraits out of `SpritePacker` atlases
+  - `stage_preview.rs`: Un-squash `stage_mappreview_*` from forced 512x512 to true aspect
+  - `anim.rs` · `particles.rs` · `mesh.rs` · `fx_textures.rs` · `shader_map.rs`:
+    dynamic-illustration (L2D) reconstruction - camera curves, emitters, mesh bases,
+    effect textures, GLSL shader extraction
+  - `cardfields.rs`: Merge measured `backdropScale` / `backdropOffsetPx` into exported
+    DynIllust scenes. These values are solved from real renders, not computable here,
+    so re-exports regenerate them rather than losing them
   - `mod.rs`: Export module exports
 - `flatbuffers_decode.rs`: Generic FlatBuffer schema decoder → JSON
-- `generated_fbs/`: FlatBuffer schema code (60+ table definitions)
+- `generated_fbs/`: FlatBuffer schema code (CN, ~50 table definitions)
 - `generated_fbs_yostar/`: Yostar (global) variant schemas
+- `bin/generate_fbs.rs`: Regenerate the schema decoders (`generate-fbs`)
+- `examples/probe_*.rs`, `diag_*.rs`: ~130 diagnostic binaries from the L2D work
+- `vendor/flatbuffers/`: Patched flatbuffers adding `VerifierOptions.max_alignment`,
+  because Hypergryph ships 4-aligned 8-byte scalars that the stock verifier rejects
 - `main.rs`: Entry point + bundle processing pipeline
 
 ### UnityFS Bundle Format
@@ -900,13 +977,13 @@ Request current directory listing.
 **Header** (big-endian, fixed-size):
 ```
 [C-string]  signature ("UnityFS")
-[u32]       version (typically 6–7)
+[u32]       version (typically 6-7)
 [C-string]  player version (e.g., "2021.3.0f1")
 [C-string]  engine version
 [i64]       file size (bytes)
 [u32]       compressed_block_info_size
 [u32]       uncompressed_block_info_size
-[u32]       data_flags (compression type in bits 0–5, metadata location in bit 7–8)
+[u32]       data_flags (compression type in bits 0-5, metadata location in bit 7-8)
 [alignment] 16-byte align if version >= 7
 ```
 
@@ -917,7 +994,7 @@ Request current directory listing.
 [Per block]:
   [u32]     uncompressed_size
   [u32]     compressed_size
-  [u16]     flags (compression type in bits 0–5)
+  [u16]     flags (compression type in bits 0-5)
 [i32]       directory_entry_count
 [Per directory entry]:
   [i64]     offset (into decompressed data)
@@ -1146,14 +1223,27 @@ cargo test --lib -p unpacker
 
 ### Testing
 
-```bash
-# Unit tests (requires asset files)
-cargo test --lib
+Tests run against **committed fixtures** under `unpacker/tests/assets/` and the
+`wiremock` HTTP mock in the downloader. You do **not** need a populated `./ArkAssets`.
 
-# Integration tests (run full pipeline)
-# Requires ./ArkAssets populated from downloader
-cargo test --test '*'
+```bash
+# Downloader: integration tests against a mocked CDN
+cd downloader && cargo test --all-targets && cargo test --doc
+
+# Unpacker: bundle, texture, audio, spine, gamedata, portrait, alpha-merge tests
+cd unpacker && cargo test --all-targets --jobs 1
 ```
+
+Two constraints are not optional for the unpacker:
+
+- **`--jobs 1`.** The generated FlatBuffer code makes this a roughly 2M-line crate. A
+  full test build peaks near 4.74 GB of RAM; `--jobs 2` gets OOM-killed, which surfaces
+  as **exit code 143**, not as a compile error.
+- **`RUST_MIN_STACK=32MB`.** FlatBuffer decoding recurses deeply enough to overflow the
+  default stack.
+
+The ~130 `examples/probe_*.rs` and `diag_*.rs` binaries are diagnostic instruments from
+the dynamic-illustration work. Clippy compiles them; nothing executes them as tests.
 
 ### Formatting
 
@@ -1162,11 +1252,54 @@ cargo fmt --all
 cargo clippy --lib --bins
 ```
 
+### CI
+
+[`assets-ci.yml`](../.github/workflows/assets-ci.yml) runs rustfmt and Clippy for both
+crates, cross-platform unit and doc tests, release builds with a `--help` smoke test, a
+syntax and import check on `run.mjs`, a non-blocking `cargo audit`, and an integration job
+that exercises `unpacker list` and `extract` against the committed fixtures. That job also
+uploads the extracted `gamedata/` artifact that backend CI consumes for its tests.
+
+---
+
+## Deployment
+
+The pipeline ships as a Docker image (`assets/Dockerfile`) that builds both binaries and
+pins `flatc` to match the vendored `flatbuffers` crate. The root `docker-compose.yml` uses
+it three ways:
+
+| Service | Profile | Role |
+|---------|---------|------|
+| `asset-watcher-en` | always-on | `run.mjs ws` for EN on port 9160 |
+| `asset-watcher-cn` | always-on | `run.mjs ws` for CN on port 9161 |
+| `asset-tools` | `tools` | One-off jobs: `docker compose run --rm asset-tools download.sh en 4` |
+
+`download.sh` takes `SERVER THREADS [PROFILE]`; `unpack.sh` takes `REGION THREADS`. Outside
+Docker, `ecosystem.config.cjs` runs the same watchers under PM2 as `myrtle-ws-en` and
+`myrtle-ws-cn`. The backend consumes the result through `ASSETS_DIR`, `SERVERS`, and
+`ASSET_WS_URLS`; see the [backend README](../backend/README.md).
+
+### Environment
+
+| Variable | Applies to | Description |
+|----------|-----------|-------------|
+| `WS_SERVER` · `WS_SAVEDIR` · `WS_OUTPUT` · `WS_THREADS` · `WS_PROFILE` · `WS_PORT` · `WS_INTERVAL` | `run.mjs ws` | Non-interactive WebSocket-mode configuration |
+| `DYNCHAR_CARDFIELDS` | unpacker | Override the path to `cardfields.json` |
+| `DYNCHAR_NO_CARDFIELDS` | unpacker | Skip the card-field merge pass |
+| `DYNCHAR_TEX_POOL` | unpacker | Content-addressed texture dedup pool. On by default; `=0` reverts to per-call PNGs |
+| `DYNCHAR_PNG_LEVEL` | unpacker | PNG deflate level. Defaults to `fast` |
+
+The source also contains dozens of other `DYNCHAR_*`, `SCENE_*`, and `IDLE_DEBUG` flags.
+Those are A/B measurement toggles left over from matching the dynamic-illustration
+renderer against the real client. They are not stable, not supported, and not intended as
+configuration.
+
 ---
 
 ## License
 
-See LICENSE file in repository.
+License TBD - see the [project root](../README.md). No license file is currently present
+in the repository.
 
 ---
 
@@ -1205,10 +1338,10 @@ cp target/release/unpacker ../binaries/unpacker   # run.mjs uses ./binaries
 
 `generate-fbs`:
 1. Clones/pulls CN schemas from [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) (`main` branch = CN; a separate `YoStar` branch exists for global) into `OpenArknightsFBS/FBS`, and Yostar schemas from [ArknightsAssets/ArknightsFlatbuffers](https://github.com/ArknightsAssets/ArknightsFlatbuffers).
-2. Applies `patch_schemas()` fixes — community schemas occasionally have field-order bugs that misalign FlatBuffers VTables. These pass upstream's JSON validation (JSON is unordered) but corrupt binary decoding.
+2. Applies `patch_schemas()` fixes - community schemas occasionally have field-order bugs that misalign FlatBuffers VTables. These pass upstream's JSON validation (JSON is unordered) but corrupt binary decoding.
 3. Runs `flatc` over every schema and regenerates `fb_json_auto.rs`, `fb_json_auto_yostar.rs`, and `flatbuffers_decode.rs`.
 
-> **Binary sync:** after any `cargo build`, copy the binary into `./binaries/` — `run.mjs`
+> **Binary sync:** after any `cargo build`, copy the binary into `./binaries/` - `run.mjs`
 > and the documented commands invoke `./binaries/{downloader,unpacker}`, not
 > `target/release`. The `Setup` runner mode does this for you.
 
@@ -1217,8 +1350,8 @@ cp target/release/unpacker ../binaries/unpacker   # run.mjs uses ./binaries
 > -- table.fb`. flatc is the canonical oracle: if it also fails, the bug is in the
 > *schema* (field order/count), not the decoder. Compare the binary's real VTable field
 > count against the schema, then add/adjust a `patch_schemas()` entry. Note that a
-> previously-correct patch can go stale — e.g. removing a field that a later CN binary
-> starts shipping — so deletion is sometimes the fix.
+> previously-correct patch can go stale - e.g. removing a field that a later CN binary
+> starts shipping - so deletion is sometimes the fix.
 
 ---
 
@@ -1226,36 +1359,36 @@ cp target/release/unpacker ../binaries/unpacker   # run.mjs uses ./binaries
 
 Audit performed 2026-04-10 after fixing `battle_equip_table`, `skin_table`, `stage_table`, and five other tables affected by upstream commit `4975a03` ("Update 2.7.21", Apr 7 2026) in [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS). All backend-loaded tables are now clean; the items below are residual issues that don't currently block functionality but should be addressed.
 
-**Update 2026-06-09 (CN 2.7.41, upstream commit `6121fa9`):** regenerated all schemas against CN 2.7.41. `skin_table` had re-broken — the historical `patch_schemas()` entry that *removed* `spAvatarId`/`spPortraitId` from `clz_Torappu_CharSkinData` was correct at 2.7.21 (binary lacked them) but wrong at 2.7.41 (binary + upstream both ship them at slots 8/10). Deleting that patch restored a clean 20-field decode (verified end-to-end: `DisplaySkin.SkinName` etc. decode correctly). `shop_client_table` self-resolved (upstream caught up). `activity_table` and `open_server_table` remain broken (below) but are still not backend-loaded.
+**Update 2026-06-09 (CN 2.7.41, upstream commit `6121fa9`):** regenerated all schemas against CN 2.7.41. `skin_table` had re-broken - the historical `patch_schemas()` entry that *removed* `spAvatarId`/`spPortraitId` from `clz_Torappu_CharSkinData` was correct at 2.7.21 (binary lacked them) but wrong at 2.7.41 (binary + upstream both ship them at slots 8/10). Deleting that patch restored a clean 20-field decode (verified end-to-end: `DisplaySkin.SkinName` etc. decode correctly). `shop_client_table` self-resolved (upstream caught up). `activity_table` and `open_server_table` remain broken (below) but are still not backend-loaded.
 
 ### Non-loaded tables with invalid UTF-8 output
 
-These produce JSON files containing raw binary bytes (from FlatBuffers VTable misalignment where the decoder follows garbage offsets and writes the resulting memory contents into string fields). `serde_json::from_reader` rejects these files. The backend does not currently load them, so the breakage is cosmetic — but any future consumer will hit a parse error.
+These produce JSON files containing raw binary bytes (from FlatBuffers VTable misalignment where the decoder follows garbage offsets and writes the resulting memory contents into string fields). `serde_json::from_reader` rejects these files. The backend does not currently load them, so the breakage is cosmetic - but any future consumer will hit a parse error.
 
-- [ ] **`activity_table`** — invalid UTF-8 at byte ~3193552 near `"Id"`. The Apr 7 patch removed `defaultEnemyTag` from `clz_Torappu_ActivityEnemyDuelConstData`, which eliminated most panics, but a second misalignment remains in some nested struct. Needs diagnosis: install a panic-attribution hook in `flatbuffers_decode.rs` and re-extract to pinpoint the offending line in `fb_json_auto.rs`, then find the corresponding struct and add a removal/reorder patch to `patch_schemas()`.
+- [ ] **`activity_table`** - invalid UTF-8 at byte ~3193552 near `"Id"`. The Apr 7 patch removed `defaultEnemyTag` from `clz_Torappu_ActivityEnemyDuelConstData`, which eliminated most panics, but a second misalignment remains in some nested struct. Needs diagnosis: install a panic-attribution hook in `flatbuffers_decode.rs` and re-extract to pinpoint the offending line in `fb_json_auto.rs`, then find the corresponding struct and add a removal/reorder patch to `patch_schemas()`.
 
-- [ ] **`open_server_table`** — invalid UTF-8 at byte ~17160 near `"BindGPGoodId"`. Likely another field in `clz_Torappu_NewbieCheckInPackageData` or a sibling struct that wasn't covered by the `compensateEndDay` removal. Same diagnosis path as above.
+- [ ] **`open_server_table`** - invalid UTF-8 at byte ~17160 near `"BindGPGoodId"`. Likely another field in `clz_Torappu_NewbieCheckInPackageData` or a sibling struct that wasn't covered by the `compensateEndDay` removal. Same diagnosis path as above.
 
 ### Non-loaded tables with panic noise but valid output
 
-These emit panic messages to stderr during extraction but produce syntactically valid JSON. The filter_map safety net drops the bad elements. Low priority — output is parseable and backend doesn't read them.
+These emit panic messages to stderr during extraction but produce syntactically valid JSON. The filter_map safety net drops the bad elements. Low priority - output is parseable and backend doesn't read them.
 
-- [ ] **`climb_tower_table`** — ~63 panics. The `recordNoResetStartTime` field added in `4975a03` is appended (forward-compatible), so the panics must originate elsewhere. Root cause unknown.
-- [ ] **`charm_table`** — ~44 panics, 6 KB output. Not touched by `4975a03`.
-- [ ] **`crisis_v2_table`** — ~4 panics, 3 KB output.
-- [ ] **`retro_table`** — ~2 panics, 3.8 MB output (99.9% success rate).
-- [ ] **`sandbox_perm_table`** — ~1 panic.
+- [ ] **`climb_tower_table`** - ~63 panics. The `recordNoResetStartTime` field added in `4975a03` is appended (forward-compatible), so the panics must originate elsewhere. Root cause unknown.
+- [ ] **`charm_table`** - ~44 panics, 6 KB output. Not touched by `4975a03`.
+- [ ] **`crisis_v2_table`** - ~4 panics, 3 KB output.
+- [ ] **`retro_table`** - ~2 panics, 3.8 MB output (99.9% success rate).
+- [ ] **`sandbox_perm_table`** - ~1 panic.
 
 ### Known noise in already-fixed tables
 
-- [ ] **`battle_equip_table`** — the CN schema path still panics ~867 times on every extraction because `clz_Torappu_EquipTalentData.validModeIndices` doesn't exist in the current CN binary. The `is_content_empty` check in `flatbuffers_decode.rs` detects the resulting `{"Equips": []}` and correctly falls back to the Yostar schema, producing a populated output file. The noise is cosmetic but clutters logs. A cleaner fix would be to remove `validModeIndices` from the CN schema via `patch_schemas()` so the CN path stops panicking in the first place — then the Yostar fallback isn't needed either.
+- [ ] **`battle_equip_table`** - the CN schema path still panics ~867 times on every extraction because `clz_Torappu_EquipTalentData.validModeIndices` doesn't exist in the current CN binary. The `is_content_empty` check in `flatbuffers_decode.rs` detects the resulting `{"Equips": []}` and correctly falls back to the Yostar schema, producing a populated output file. The noise is cosmetic but clutters logs. A cleaner fix would be to remove `validModeIndices` from the CN schema via `patch_schemas()` so the CN path stops panicking in the first place - then the Yostar fallback isn't needed either.
 
 ### stage_table truncation workaround
 
 - [ ] **`stage_table.fbs`** has not been updated upstream since game version 2.7.11 (commit `94bf1f8`), but the live game is at 2.7.21. Ten minor versions of schema drift have accumulated. The immediate symptom was `clz_Torappu_CGGalleryGroupData` producing garbage UTF-8 in `LocationId`, which broke `serde_json::from_reader` for the entire file. The current patch truncates `CGGalleryGroupData` to only its first two fields (`storySetId`, `storylineId`), discarding `locationId` and `displays`. This is safe because the backend's `StageTableFile` only reads the top-level `Stages` field and ignores `CgGalleryGroups` entirely, but it means any future consumer that wants CG gallery metadata will see truncated data. A proper fix requires either:
   - A binary inspection of the actual CN game's `CGGalleryGroupData` VTable layout to determine what fields it contains, or
   - Waiting for upstream `OpenArknightsFBS` to publish a `2.7.21` update for `stage_table.fbs`.
-- [ ] Re-audit `stage_table`'s other nested structs (`RuneStageGroups`, `OverrideUnlockInfo`, `SixStarRuneData`, `CgGalleryDisplays` — all currently empty in output) to see whether additional truncations are needed once a similar drift appears in a backend-consumed field.
+- [ ] Re-audit `stage_table`'s other nested structs (`RuneStageGroups`, `OverrideUnlockInfo`, `SixStarRuneData`, `CgGalleryDisplays` - all currently empty in output) to see whether additional truncations are needed once a similar drift appears in a backend-consumed field.
 
 ### Follow-up
 
