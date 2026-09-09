@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -9,6 +10,8 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SkillBlackboard {
     #[serde(alias = "Key", alias = "key")]
     pub key: String,
@@ -20,6 +23,8 @@ pub struct SkillBlackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SkillSpData {
     #[serde(alias = "SpType", default)]
     pub sp_type: String,
@@ -37,6 +42,8 @@ pub struct SkillSpData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SkillLevel {
     #[serde(alias = "Name", default)]
     pub name: String,
@@ -64,6 +71,8 @@ pub struct SkillLevel {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RawSkill {
     #[serde(alias = "SkillId")]
     pub skill_id: String,
@@ -81,6 +90,8 @@ pub struct RawSkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Skill {
     pub id: Option<String>,
     pub skill_id: String,

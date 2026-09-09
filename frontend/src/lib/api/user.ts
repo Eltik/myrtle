@@ -1,6 +1,64 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+// Generated from `backend/src/app/services/{improvements,stats,gacha}.rs`,
+// `backend/src/database/models/*` and `backend/src/core/grade/grade_operators.rs`.
+// To change a field, edit the Rust struct and run `bun run gen:types`.
+import type { AssignedOperator } from "#/types/generated/AssignedOperator";
+import type { BaseAssignmentDto } from "#/types/generated/BaseAssignmentDto";
+import type { BaseImprovements } from "#/types/generated/BaseImprovements";
+import type { DepletedOperatorDto } from "#/types/generated/DepletedOperatorDto";
+import type { EncounteredEnemiesResponse } from "#/types/generated/EncounteredEnemiesResponse";
+import type { EncounteredEnemy } from "#/types/generated/EncounteredEnemy";
+import type { FacilityOutputDto } from "#/types/generated/FacilityOutputDto";
+import type { ImprovementsResponse } from "#/types/generated/ImprovementsResponse";
+import type { ItemEntry } from "#/types/generated/ItemEntry";
+import type { LeaderboardEntry } from "#/types/generated/LeaderboardEntry";
+import type { LeaderboardMover } from "#/types/generated/LeaderboardMover";
+import type { LeaderboardPage } from "#/types/generated/LeaderboardPage";
+import type { MedalGap } from "#/types/generated/MedalGap";
+import type { MedalImprovements } from "#/types/generated/MedalImprovements";
+import type { MedalOperatorLock } from "#/types/generated/MedalOperatorLock";
+import type { MoraleTimelineDto } from "#/types/generated/MoraleTimelineDto";
+import type { MovedOperator } from "#/types/generated/MovedOperator";
+import type { NonProdEffectDto } from "#/types/generated/NonProdEffectDto";
+import type { OperatorGap } from "#/types/generated/OperatorGap";
+import type { OperatorImprovements } from "#/types/generated/OperatorImprovements";
+import type { PerceptionConsumerDto } from "#/types/generated/PerceptionConsumerDto";
+import type { PerceptionPlanDto } from "#/types/generated/PerceptionPlanDto";
+import type { PerceptionSupportDto } from "#/types/generated/PerceptionSupportDto";
+import type { PlayerStanding } from "#/types/generated/PlayerStanding";
+import type { ProgressPair } from "#/types/generated/ProgressPair";
+import type { RoguelikeCollectibles } from "#/types/generated/RoguelikeCollectibles";
+import type { RoguelikeDifficulty } from "#/types/generated/RoguelikeDifficulty";
+import type { RoguelikeThemeImprovement } from "#/types/generated/RoguelikeThemeImprovement";
+import type { RoomAssignmentDto } from "#/types/generated/RoomAssignmentDto";
+import type { RoomLayoutEntry } from "#/types/generated/RoomLayoutEntry";
+import type { RoomRotationDto } from "#/types/generated/RoomRotationDto";
+import type { RosterEntry } from "#/types/generated/RosterEntry";
+import type { RotationDto } from "#/types/generated/RotationDto";
+import type { RotationInfo } from "#/types/generated/RotationInfo";
+import type { RotationMemberDto } from "#/types/generated/RotationMemberDto";
+import type { RotationSetDto } from "#/types/generated/RotationSetDto";
+import type { RotationSetRoomDto } from "#/types/generated/RotationSetRoomDto";
+import type { SandboxCategory } from "#/types/generated/SandboxCategory";
+import type { SandboxImprovements } from "#/types/generated/SandboxImprovements";
+import type { SandboxPart } from "#/types/generated/SandboxPart";
+import type { ScoreDimension } from "#/types/generated/ScoreDimension";
+import type { ScoreHistoryPoint } from "#/types/generated/ScoreHistoryPoint";
+import type { SearchPage } from "#/types/generated/SearchPage";
+import type { ServerShare } from "#/types/generated/ServerShare";
+import type { ShiftDto } from "#/types/generated/ShiftDto";
+import type { ShiftRoomDto } from "#/types/generated/ShiftRoomDto";
+import type { ShiftRotationDto } from "#/types/generated/ShiftRotationDto";
+import type { SkillLineDto } from "#/types/generated/SkillLineDto";
+import type { StageGap } from "#/types/generated/StageGap";
+import type { StageImprovements } from "#/types/generated/StageImprovements";
+import type { StagePoolImprovements } from "#/types/generated/StagePoolImprovements";
+import type { SustainabilityDto } from "#/types/generated/SustainabilityDto";
+import type { UpgradeDelta } from "#/types/generated/UpgradeDelta";
+import type { UserScore } from "#/types/generated/UserScore";
+import type { Refine } from "#/types/refine";
 import type { IUserCheckin, IUserProfile } from "#/types/user";
 import { optionalSiteToken } from "./_shared.server";
 
@@ -15,45 +73,9 @@ export interface IRosterModule {
     locked: boolean;
 }
 
-export interface IRosterEntry {
-    user_id: string;
-    operator_id: string;
-    elite: number;
-    level: number;
-    exp: number;
-    potential: number;
-    skill_level: number;
-    favor_point: number;
-    skin_id: string | null;
-    default_skill: number | null;
-    voice_lan: string | null;
-    current_equip: string | null;
-    current_tmpl: string | null;
-    obtained_at: number | null;
-    masteries: IRosterMastery[];
-    modules: IRosterModule[];
-}
+export type IRosterEntry = Refine<RosterEntry, { masteries: IRosterMastery[]; modules: IRosterModule[] }>;
 
-export interface IUserScore {
-    user_id: string;
-    total_score: number;
-    operator_score: number;
-    stage_score: number;
-    roguelike_score: number;
-    sandbox_score: number;
-    medal_score: number;
-    base_score: number;
-    /** The base grade's stationing-utilization component (actual vs the
-     *  optimizer's best on the built rooms). Null on rows graded before the
-     *  split was stored. */
-    base_utilization: number | null;
-    /** The base grade's infrastructure-completeness component (built rooms vs
-     *  the same rooms at max level). Null on pre-split rows. */
-    base_infrastructure: number | null;
-    skin_score: number;
-    grade: string | null;
-    calculated_at: string;
-}
+export type IUserScore = UserScore;
 
 export const getUserFn = createServerFn({ method: "GET" })
     .inputValidator((uid: string) => uid)
@@ -116,10 +138,7 @@ export function userRosterOperatorQueryOptions(uid: string, operatorId: string) 
     });
 }
 
-export interface IInventoryItem {
-    item_id: string;
-    quantity: number;
-}
+export type IInventoryItem = ItemEntry;
 
 export const getUserInventoryFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
@@ -142,18 +161,9 @@ export function userInventoryQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
-export interface IEncounteredEnemy {
-    enemyId: string;
-    name: string | null;
-    enemyIndex: string | null;
-    sortId: number | null;
-}
+export type IEncounteredEnemy = EncounteredEnemy;
 
-export interface IEncounteredEnemies {
-    encounteredCount: number;
-    handbookTotal: number;
-    enemies: IEncounteredEnemy[];
-}
+export type IEncounteredEnemies = EncounteredEnemiesResponse;
 
 export const getUserEncounteredEnemiesFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
@@ -219,198 +229,45 @@ export function userCheckinQueryOptions(uid: string) {
 
 // ─── User improvements ──────────────────────────────────────────────────────
 
-export interface IStageRotation {
-    /** "active" = playable now, "past" = rotated out, "future" = not yet open. */
-    status: "active" | "past" | "future";
-    startTs: number;
-    endTs: number;
-}
+export type IStageRotation = Refine<RotationInfo, { status: "active" | "past" | "future" }>;
 
-export interface IStageGap {
-    stage_id: string;
-    code: string;
-    name: string | null;
-    zone_id: string;
-    weight: number;
-    state: number;
-    /** Present only for rotating Annihilation maps (`camp_r_*`). */
-    rotation?: IStageRotation | null;
-}
+export type IStageGap = StageGap;
 
-export interface IStagePoolImprovements {
-    total: number;
-    cleared: number;
-    three_starred: number;
-    missing: IStageGap[];
-    not_three_starred: IStageGap[];
-}
+export type IStagePoolImprovements = StagePoolImprovements;
 
-export interface IStageImprovements {
-    permanent: IStagePoolImprovements;
-    event: IStagePoolImprovements;
-}
+export type IStageImprovements = StageImprovements;
 
-export interface IProgressPair {
-    current: number;
-    max: number;
-}
+export type IProgressPair = ProgressPair;
 
-export interface IRoguelikeDifficulty {
-    highest_cleared: number;
-    max: number;
-}
+export type IRoguelikeDifficulty = RoguelikeDifficulty;
 
-export interface IRoguelikeCollectibles {
-    relics: IProgressPair;
-    capsules: IProgressPair;
-    bands: IProgressPair;
-}
+export type IRoguelikeCollectibles = RoguelikeCollectibles;
 
-export interface IRoguelikeThemeImprovement {
-    theme_id: string;
-    theme_name: string;
-    endings: IProgressPair;
-    difficulty: IRoguelikeDifficulty;
-    collectibles: IRoguelikeCollectibles;
-    bp: IProgressPair;
-    challenges: IProgressPair;
-}
+export type IRoguelikeThemeImprovement = RoguelikeThemeImprovement;
 
-export interface ISandboxPart {
-    label: string;
-    current: number;
-    max: number;
-}
+export type ISandboxPart = SandboxPart;
 
-export interface ISandboxCategory {
-    key: string;
-    label: string;
-    weight: number;
-    score: number;
-    parts: ISandboxPart[];
-}
+export type ISandboxCategory = SandboxCategory;
 
-export interface ISandboxImprovements {
-    total: number;
-    categories: ISandboxCategory[];
-}
+export type ISandboxImprovements = SandboxImprovements;
 
-export interface IMedalOperatorLock {
-    operatorId: string;
-    operatorName: string;
-    /** Human-readable reason, e.g. "collab" or "event reward". */
-    reason: string;
-}
+export type IMedalOperatorLock = MedalOperatorLock;
 
-export interface IMedalGap {
-    medal_id: string;
-    name: string;
-    rarity: string;
-    get_method: string;
-    description: string;
-    is_hidden: boolean;
-    end_time: number | null;
-    /** Set when the medal is locked behind an operator that can't be obtained. */
-    operator_lock?: IMedalOperatorLock | null;
-    /** Share (percent, 0-100) of stat-sharing synced players on the user's server who have earned this medal. Absent until the daily ownership aggregate has run. */
-    owned_pct?: number;
-}
+export type IMedalGap = MedalGap;
 
-export interface IMedalImprovements {
-    permanent_missing: IMedalGap[];
-    event_in_window_missing: IMedalGap[];
-    /** Medals gated on a collab / one-time operator - shown for reference, excluded from scoring. */
-    operator_locked: IMedalGap[];
-    /** Medals whose earnable window has passed and won't reopen. Closed-window event medals still score with recency decay; one-time / retired medals are excluded. Shown for reference. */
-    unobtainable_missing: IMedalGap[];
-}
+export type IMedalImprovements = MedalImprovements;
 
-export interface IUpgradeDelta {
-    /** Matching one of the entries in `IOperatorGap.missing` (ELITE, MAX_LEVEL, M3, SL7, MOD3, POT6, TRUST). */
-    tag: string;
-    /** Change in this operator's own score if the milestone were reached (0.0-1.0). */
-    operator_score_delta: number;
-    /** Change in the user's operator_grade subscore (0.0-1.0). */
-    operator_grade_delta: number;
-    /** Change in the user's overall total_score (0.0-1.0). */
-    total_score_delta: number;
-}
+export type IUpgradeDelta = UpgradeDelta;
 
-export interface IOperatorGap {
-    operator_id: string;
-    name: string;
-    rarity: number;
-    current_elite: number;
-    current_level: number;
-    current_skill_level: number;
-    max_mastery: number;
-    max_module_level: number;
-    current_trust: number;
-    is_support: boolean;
-    missing: string[];
-    /** One delta per tag in `missing` (same order). */
-    deltas: IUpgradeDelta[];
-    /** Combined gain to the Operators subscore (0.0-1.0) if the user did every
-     *  upgrade on this op - ELITE and MAX_LEVEL overlap are deduped. */
-    subscore_potential_gain: number;
-    /** Same combination as `subscore_potential_gain` but in overall total_score units. */
-    total_potential_gain: number;
-}
+export type IOperatorGap = OperatorGap;
 
-export interface IScoreDimension {
-    /** Investment axis: elite, level, skill_level, mastery, module, potential, trust. */
-    kind: string;
-    /** Share of the Operators subscore this dimension carries (0.0-1.0; shares sum to 1.0). */
-    weight_share: number;
-    /** Rarity-weighted completion of this dimension (0.0-1.0). */
-    completion: number;
-    /** `weight_share x completion` - contributions sum to the Operators subscore. */
-    contribution: number;
-}
+export type IScoreDimension = ScoreDimension;
 
-export interface IOperatorImprovements {
-    /** Where the current Operators subscore comes from, one row per investment axis. */
-    score_breakdown: IScoreDimension[];
-    below_milestone: IOperatorGap[];
-}
+export type IOperatorImprovements = OperatorImprovements;
 
-export interface IAssignedOperator {
-    operator_id: string;
-    name: string;
-    /**
-     * True for a spare-seat pick (Control Center bench top-up): parked for
-     * lowest opportunity cost, not for its skills. Badged so a gated skill
-     * text on a benchwarmer doesn't read as the optimizer's reasoning.
-     */
-    bench?: boolean;
-}
+export type IAssignedOperator = AssignedOperator;
 
-export interface IRoomAssignment {
-    slot_id: string;
-    room_type: string;
-    level: number;
-    formula_type: string | null;
-    /** Order-acquisition speed % (the productivity bonus the game shows). */
-    total_efficiency: number;
-    /** Order-value % (LMD per order, e.g. Proviso) - lifts LMD, not speed. */
-    order_value: number;
-    /** True = fixed synergy squad (operators depend on each other); false = flexible. */
-    locked: boolean;
-    operators: IAssignedOperator[];
-    /** Per-room natural yield (trading posts show potential LMD if gold-supplied). */
-    yield_lmd_per_day: number;
-    yield_gold_per_day: number;
-    yield_exp_per_day: number;
-    /** Non-production effects the crew provides (Control Center only): clue /
-     *  training / HR speed in each boosted facility's own units. */
-    non_production: INonProdEffect[];
-    /** Per-skill contribution breakdown (evaluate path only; absent elsewhere). */
-    ledger?: ISkillLine[];
-    /** Output-buffer size: orders (trading, incl. crew capacity skills) or items (factory). */
-    capacity?: number;
-    /** Hours from an empty buffer to full - unattended runtime before the room stalls. */
-    fill_hours?: number;
-}
+export type IRoomAssignment = RoomAssignmentDto;
 
 /**
  * One line of a room's per-skill breakdown. Values are MARGINALS in this exact
@@ -418,240 +275,56 @@ export interface IRoomAssignment {
  * non-stacking rules and faction gates are already folded in. Marginals of
  * coupled skills deliberately do NOT sum to the room total.
  */
-export interface ISkillLine {
-    operator_id: string;
-    operator_name: string;
-    buff_id: string;
-    buff_name: string;
-    /** Marginal speed/efficiency %. */
-    speed_pct: number;
-    /** Marginal order-value %. */
-    value_pct?: number;
-    /** The line's owner sits in the Control Center, not this room. */
-    from_control_center?: boolean;
-    disposition: "contributes" | "inactive" | "covered" | "per_room" | "morale" | "capacity" | "non_production" | "unmodeled";
-}
+export type ISkillLine = SkillLineDto;
 
-export interface INonProdEffect {
-    /** The boosted facility's room type ("MEETING", "TRAINING", "HIRE"). */
-    room_type: string;
-    /** Effect % in that facility's own units. */
-    value: number;
-}
+export type INonProdEffect = NonProdEffectDto;
 
-export interface IBaseAssignment {
-    rooms: IRoomAssignment[];
-    total_production_efficiency: number;
-    /** Realized daily output (gold→trade loop coupled: LMD = min(made, sold) × 500). */
-    yield_lmd_per_day: number;
-    yield_exp_per_day: number;
-    /** LMD-equivalent of everything combined (LMD + EXP at 1:1). */
-    yield_total_value: number;
-}
+export type IBaseAssignment = BaseAssignmentDto;
 
-export interface IRotationMember {
-    operator: IAssignedOperator;
-    /** Approximate hours this operator works before you rotate it out. `null`
-     *  when the operator drains no morale (an infinite f64 serializes to JSON
-     *  null) - they can work indefinitely and never need rotating out. */
-    lasts_hours: number | null;
-}
+export type IRotationMember = RotationMemberDto;
 
-export interface IRoomRotation {
-    slot_id: string;
-    room_type: string;
-    /** Main operators ordered by who needs swapping first (fastest-draining). */
-    members: IRotationMember[];
-    /** The backup to rotate in when a main needs rest. */
-    backup: IAssignedOperator | null;
-}
+export type IRoomRotation = RoomRotationDto;
 
-export interface IRotationSetRoom {
-    slot_id: string;
-    room_type: string;
-    /** The operators working this room in this set. */
-    working: IAssignedOperator[];
-    /** The main resting this set (covered by the backup), if any. */
-    resting: IAssignedOperator | null;
-}
+export type IRotationSetRoom = RotationSetRoomDto;
 
-export interface IRotationSet {
-    rooms: IRotationSetRoom[];
-}
+export type IRotationSet = RotationSetDto;
 
-export interface IRotation {
-    /** Per-room rotation plan: who to swap first, when, and the backup. */
-    rooms: IRoomRotation[];
-    /** The small shared bench that covers every room (one swap at a time). */
-    shared_bench?: IAssignedOperator[];
-    /** The rotation as a few overlapping staffings to cycle through, so the whole
-     * base is never swapped at once. Consecutive sets share all-but-one operator. */
-    sets?: IRotationSet[];
-    /** Sustained 24/7 output - near peak, reduced only by backup-coverage time. */
-    sustained_efficiency: number;
-}
+export type IRotation = RotationDto;
 
-export interface IRoomLayoutEntry {
-    room_type: string;
-    count: number;
-    levels: number[];
-}
+export type IRoomLayoutEntry = RoomLayoutEntry;
 
 /** An operator leaving a cell for another room in the SAME shift. */
-export interface IMovedOperator {
-    operator: IAssignedOperator;
-    to_room_type: string;
-    to_team_label?: string | null;
-}
+export type IMovedOperator = MovedOperator;
 
-export interface IShiftRoom {
-    slot_id: string;
-    room_type: string;
-    formula_type: string | null;
-    /** False when the room is deliberately unstaffed this shift (CC's off shift). */
-    active: boolean;
-    recommended: IAssignedOperator[];
-    /** Per-skill contribution breakdown for this shift's crew. */
-    ledger?: ISkillLine[];
-    /** The player's saved preset for this room and shift (empty if none). */
-    current: IAssignedOperator[];
-    /** Operators to ADD (in the recommendation, not the current preset). */
-    swap_in: IAssignedOperator[];
-    /** Operators to REMOVE (in the current preset, not the recommendation). */
-    swap_out: IAssignedOperator[];
-    /** Preset operators who aren't removed but RELOCATE to another room this same
-     *  shift (they appear as an add there), with their destination. */
-    moved_out?: IMovedOperator[];
-    /** True when the player's preset already matches the recommendation. */
-    matches: boolean;
-    /** True when the player's CURRENT team differs but produces within the leniency band of the
-     *  recommendation (see gap_pct), so no swap is suggested. */
-    equivalent: boolean;
-    /** Signed % gap of the player's team vs the recommendation (negative = slightly behind).
-     *  Present whenever both teams are scoreable. */
-    gap_pct?: number | null;
-    /** The recommended crew's room efficiency % (production/power cells), for judging how
-     *  output is distributed across teams. */
-    efficiency?: number | null;
-    /** Stable identity of the team/squad staffing this cell - spans the two consecutive shift
-     *  columns a production team's 24h block covers, for visual pairing. */
-    team_id?: string | null;
-    /** Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere. */
-    team_label?: string | null;
-}
+export type IShiftRoom = ShiftRoomDto;
 
-export interface IShift {
-    index: number;
-    rooms: IShiftRoom[];
-}
+export type IShift = ShiftDto;
 
-export interface IShiftRotation {
-    shifts: IShift[];
-    /** Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
-     *  shift instead of resting the middle one. Badged as "24/7 · Fiammetta". */
-    sustained: IAssignedOperator[];
-    /** A week-long morale simulation of the recommended rhythm (game-true drain and
-     *  dorm-recovery rates). Optional so older backend payloads render without it. */
-    sustainability?: ISustainability | null;
-}
+export type IShiftRotation = ShiftRotationDto;
 
 /** The rotation validated by a time-stepped morale simulation: honest evidence the
  *  plan survives its own rhythm instead of an unchecked recommendation. */
-export interface ISustainability {
-    /** "holds_up" - nobody runs dry; "depletes" - someone's morale empties mid-shift. */
-    verdict: "holds_up" | "depletes";
-    horizon_hours: number;
-    /** Operators whose morale empties while working, with when and where. */
-    depleted: IDepletedOperator[];
-    /** Peak number of resting operators the dorms could not hold at once. */
-    dorm_overflow: number;
-    /** Every simulated operator's morale over the week, sampled at 12h block
-     *  boundaries. Most-at-risk (lowest week-end bar) first. */
-    timeline: IMoraleTimeline[];
-    /** Per-facility simulated totals over the horizon, with lost hours. */
-    facilities?: IFacilityOutput[];
-}
+export type ISustainability = SustainabilityDto;
 
 /** One production room's simulated totals over the sim horizon. */
-export interface IFacilityOutput {
-    slot_id: string;
-    room_type: string;
-    formula_type: string | null;
-    lmd: number;
-    gold: number;
-    exp: number;
-    /** Hours of lost work: dark shifts plus post-depletion time. */
-    idle_hours: number;
-}
+export type IFacilityOutput = FacilityOutputDto;
 
-export interface IMoraleTimeline {
-    operator: IAssignedOperator;
-    /** The room they call home in the rotation. */
-    room_type: string;
-    slot_id: string;
-    /** Morale at every 12h boundary; samples[0] = t=0 = 24. */
-    samples: number[];
-    /** The bar they end the week on. */
-    end: number;
-}
+export type IMoraleTimeline = MoraleTimelineDto;
 
-export interface IDepletedOperator {
-    operator: IAssignedOperator;
-    at_hours: number;
-    room_type: string;
-}
+export type IDepletedOperator = DepletedOperatorDto;
 
 /** A support operator to station outside production to feed the resource economy. */
-export interface IPerceptionSupport {
-    operator: IAssignedOperator;
-    room_type: string;
-}
+export type IPerceptionSupport = PerceptionSupportDto;
 
 /** A production operator the resource economy powers, with the bonus it gains. */
-export interface IPerceptionConsumer {
-    operator: IAssignedOperator;
-    room_type: string;
-    /** Peak bonus (fresh-operator snapshot). */
-    bonus_pct: number;
-    /** Sustained 24/7 bonus (peak x working uptime). */
-    sustained_pct: number;
-}
+export type IPerceptionConsumer = PerceptionConsumerDto;
 
 /** The base-wide resource economy plan (Rosmontis / Ebenholz "Perception Information"). */
-export interface IPerceptionPlan {
-    support: IPerceptionSupport[];
-    consumers: IPerceptionConsumer[];
-    /** The morale-swap operator (Fiammetta) sustaining the Ling/Dusk rotation, if owned. */
-    rotation_manager?: IAssignedOperator | null;
-    /** True when the plan uses Ling/Dusk but the roster has no morale-swap manager. */
-    needs_rotation_manager: boolean;
-}
+export type IPerceptionPlan = PerceptionPlanDto;
 
-export interface IBaseImprovements {
-    /** The player's current base exactly as stationed right now. */
-    current: IBaseAssignment | null;
-    optimal: IBaseAssignment | null;
-    rotation: IRotation | null;
-    layout: IRoomLayoutEntry[];
-    /** Recommended 3-shift rotation paired with the player's saved presets. */
-    shift_rotation?: IShiftRotation | null;
-    /** The base-wide resource economy plan, if a 243 roster can field it. */
-    perception?: IPerceptionPlan | null;
-    /** Check-in economics for the current base (same model as the planner). */
-    claim?: import("./base").IClaim;
-    /** The current crews simulated with no rotation - "if you never swap". */
-    unrotated?: ISustainability;
-}
+export type IBaseImprovements = BaseImprovements;
 
-export interface IImprovementsResponse {
-    uid: string;
-    stages: IStageImprovements;
-    roguelike: IRoguelikeThemeImprovement[];
-    sandbox: ISandboxImprovements;
-    medals: IMedalImprovements;
-    operators: IOperatorImprovements;
-    base: IBaseImprovements;
-}
+export type IImprovementsResponse = ImprovementsResponse;
 
 export const getUserImprovementsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
@@ -682,10 +355,7 @@ export interface ISearchUsersInput {
     offset?: number;
 }
 
-export interface ISearchPage {
-    entries: IUserProfile[];
-    total: number;
-}
+export type ISearchPage = SearchPage;
 
 export const searchUsersFn = createServerFn({ method: "GET" })
     .inputValidator((data: ISearchUsersInput) => data)
@@ -709,37 +379,9 @@ export function searchUsersQueryOptions(input: ISearchUsersInput) {
     });
 }
 
-export interface ILeaderboardEntry {
-    id: string;
-    uid: string;
-    nickname: string | null;
-    nick_number: string | null;
-    level: number | null;
-    avatar_id: string | null;
-    secretary: string | null;
-    secretary_skin_id: string | null;
-    server: string;
-    total_score: number | null;
-    grade: string | null;
-    operator_score: number | null;
-    stage_score: number | null;
-    roguelike_score: number | null;
-    sandbox_score: number | null;
-    medal_score: number | null;
-    base_score: number | null;
-    skin_score: number | null;
-    rank_global: number | null;
-    rank_server: number | null;
-    /** Rank change vs. the snapshot baseline for the requested movement_interval.
-     *  Positive = climbed. Null when movement wasn't requested or there's no baseline yet. */
-    rank_delta: number | null;
-}
+export type ILeaderboardEntry = LeaderboardEntry;
 
-export interface ILeaderboardPage {
-    entries: ILeaderboardEntry[];
-    total: number;
-    updated_at: string | null;
-}
+export type ILeaderboardPage = LeaderboardPage;
 
 export interface ILeaderboardInput {
     sort?: string;
@@ -783,19 +425,7 @@ export function leaderboardQueryOptions(input: ILeaderboardInput = {}) {
 export type LeaderboardMoverDirection = "up" | "down";
 export type LeaderboardMoverInterval = "1 day" | "7 days" | "30 days";
 
-export interface ILeaderboardMover {
-    uid: string;
-    nickname: string | null;
-    nick_number: string | null;
-    avatar_id: string | null;
-    server: string;
-    current_rank: number;
-    previous_rank: number;
-    /** Positive = climbed (previous_rank - current_rank). */
-    rank_delta: number;
-    current_score: number | null;
-    score_delta: number | null;
-}
+export type ILeaderboardMover = LeaderboardMover;
 
 export interface ILeaderboardMoversInput {
     direction?: LeaderboardMoverDirection;
@@ -827,10 +457,7 @@ export function leaderboardMoversQueryOptions(input: ILeaderboardMoversInput = {
     });
 }
 
-export interface IServerShare {
-    server: string;
-    players: number;
-}
+export type IServerShare = ServerShare;
 
 export interface ILeaderboardDistributionInput {
     top?: number;
@@ -856,14 +483,7 @@ export function leaderboardDistributionQueryOptions(input: ILeaderboardDistribut
     });
 }
 
-export interface IPlayerStanding {
-    player: ILeaderboardEntry;
-    neighbors: ILeaderboardEntry[];
-    /** 0.0 = top, 1.0 = bottom. */
-    percentile: number;
-    /** Positive = climbed since the requested interval's baseline. `null` if no baseline exists. */
-    rank_delta: number | null;
-}
+export type IPlayerStanding = PlayerStanding;
 
 export interface IPlayerStandingInput {
     uid: string;
@@ -887,12 +507,7 @@ export const getPlayerStandingFn = createServerFn({ method: "GET" })
         return (await res.json()) as IPlayerStanding;
     });
 
-export interface IScoreHistoryPoint {
-    taken_at: string;
-    total_score: number | null;
-    rank_global: number;
-    rank_server: number;
-}
+export type IScoreHistoryPoint = ScoreHistoryPoint;
 
 export const getScoreHistoryFn = createServerFn({ method: "GET" })
     .inputValidator((uid: string) => uid)

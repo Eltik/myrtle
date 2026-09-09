@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -9,6 +10,8 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct TokenSkinMapEntry {
     #[serde(alias = "TokenId")]
     pub token_id: String,
@@ -18,6 +21,8 @@ pub struct TokenSkinMapEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct BattleSkin {
     #[serde(alias = "OverwritePrefab", default)]
     pub overwrite_prefab: bool,
@@ -27,6 +32,8 @@ pub struct BattleSkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
     pub skin_name: Option<String>,
@@ -61,6 +68,7 @@ pub struct DisplaySkin {
     #[serde(alias = "DisplayTagId")]
     pub display_tag_id: Option<String>,
     #[serde(alias = "GetTime")]
+    #[ts(type = "number")]
     pub get_time: i64,
     #[serde(alias = "OnYear")]
     pub on_year: i32,
@@ -70,15 +78,20 @@ pub struct DisplaySkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct BrandGroup {
     #[serde(alias = "SkinGroupId")]
     pub skin_group_id: String,
     #[serde(alias = "PublishTime")]
+    #[ts(type = "number")]
     pub publish_time: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct BrandKvImg {
     #[serde(alias = "KvImgId")]
     pub kv_img_id: String,
@@ -88,6 +101,8 @@ pub struct BrandKvImg {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Brand {
     #[serde(alias = "BrandId")]
     pub brand_id: String,
@@ -102,6 +117,7 @@ pub struct Brand {
     #[serde(alias = "Description")]
     pub description: String,
     #[serde(alias = "PublishTime")]
+    #[ts(type = "number")]
     pub publish_time: i64,
     #[serde(alias = "SortId")]
     pub sort_id: i32,
@@ -109,12 +125,16 @@ pub struct Brand {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SpecialSkinInfo {
     #[serde(alias = "SkinId")]
     pub skin_id: String,
     #[serde(alias = "StartTime")]
+    #[ts(type = "number")]
     pub start_time: i64,
     #[serde(alias = "EndTime")]
+    #[ts(type = "number")]
     pub end_time: i64,
 }
 
@@ -124,6 +144,8 @@ pub struct SpecialSkinInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Skin {
     #[serde(alias = "SkinId", default)]
     pub skin_id: String,
@@ -165,6 +187,8 @@ pub struct Skin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SkinData {
     pub char_skins: HashMap<String, Skin>,
     pub buildin_evolve_map: HashMap<String, HashMap<String, String>>,
@@ -178,6 +202,8 @@ pub struct SkinData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SkinImages {
     pub avatar: String,
     pub portrait: String,
@@ -186,6 +212,8 @@ pub struct SkinImages {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct EnrichedSkin {
     pub id: String,
     #[serde(flatten)]

@@ -13,7 +13,10 @@ use crate::dps::operator_unit::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConditionalInfo {
@@ -24,6 +27,8 @@ pub struct ConditionalInfo {
     pub modules: Vec<i32>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorListEntry {

@@ -25,12 +25,15 @@ use crate::core::gamedata::types::stage_index::{StageIndex, StageIndexEntry};
 use crate::core::gamedata::types::zone::Zone;
 use crate::core::startup;
 
-const fn difficulty_str(d: &StageDifficulty) -> &'static str {
+/// The index carries the difficulty as the enum so the generated TS binding is a
+/// union rather than a bare `string`. `Unknown` (a difficulty Hypergryph added
+/// that `StageDifficulty` does not name yet) is still reported as `Normal`,
+/// preserving the wire values the stage-list dedupe was written against.
+const fn indexed_difficulty(d: &StageDifficulty) -> StageDifficulty {
     match d {
-        StageDifficulty::Normal => "NORMAL",
-        StageDifficulty::FourStar => "FOUR_STAR",
-        StageDifficulty::SixStar => "SIX_STAR",
-        StageDifficulty::Unknown => "NORMAL",
+        StageDifficulty::FourStar => StageDifficulty::FourStar,
+        StageDifficulty::SixStar => StageDifficulty::SixStar,
+        StageDifficulty::Normal | StageDifficulty::Unknown => StageDifficulty::Normal,
     }
 }
 
@@ -312,7 +315,7 @@ fn entry_from_stage(
         ap_cost: stage.ap_cost,
         boss: stage.boss_mark,
         is_hard: info.is_hard,
-        difficulty: difficulty_str(&stage.difficulty).to_owned(),
+        difficulty: indexed_difficulty(&stage.difficulty),
         can_view,
     }
 }
@@ -359,7 +362,7 @@ fn entry_from_mode_level(
         ap_cost: 0,
         boss: false,
         is_hard: info.is_hard,
-        difficulty: "NORMAL".to_owned(),
+        difficulty: StageDifficulty::Normal,
         can_view: true,
     }
 }

@@ -2,6 +2,7 @@ import { itemIcon } from "#/components/operators/detail/impl/assets";
 import type { IEnemy, IEnemyAttributes } from "#/lib/api/enemies";
 import type { IEnemyDbRef, ILevel } from "#/lib/api/level";
 import type { IMaterialItem } from "#/lib/api/materials";
+import type { SparseRecord } from "#/lib/records";
 import { getAvatarById } from "#/lib/utils";
 import type { IStage, IZone } from "#/types/stages";
 import { DROP_TYPE_META, OCC_FALLBACK, OCC_META } from "./constants";
@@ -14,7 +15,7 @@ export function zoneLabel(zone: IZone | undefined, fallback: string): { title: s
     return { title, subtitle };
 }
 
-export function tallyEnemies(level: ILevel | null, enemyData: Record<string, IEnemy>): IEnemyTally[] {
+export function tallyEnemies(level: ILevel | null, enemyData: SparseRecord<IEnemy>): IEnemyTally[] {
     if (!level) return [];
     const counts = new Map<string, number>();
     const refIds = new Set((level.enemyDbRefs ?? []).map((r) => r.id));
@@ -40,7 +41,7 @@ export function tallyEnemies(level: ILevel | null, enemyData: Record<string, IEn
         });
 }
 
-export function buildSpawnSchedule(level: ILevel | null, enemyData: Record<string, IEnemy>): { rows: ISpawnRow[]; hiddenGroups: string[] } {
+export function buildSpawnSchedule(level: ILevel | null, enemyData: SparseRecord<IEnemy>): { rows: ISpawnRow[]; hiddenGroups: string[] } {
     if (!level) return { rows: [], hiddenGroups: [] };
     const refIds = new Set((level.enemyDbRefs ?? []).map((r) => r.id));
     const rows: ISpawnRow[] = [];
@@ -115,7 +116,7 @@ export function computeStageEnemyStats(enemy: IEnemy | null, ref: IEnemyDbRef | 
 }
 
 /** Build an `enemyId -> stage-effective stats` lookup for every enemy the stage declares. */
-export function buildStageEnemyStats(level: ILevel | null, enemyData: Record<string, IEnemy>): Record<string, IStageEnemyStats> {
+export function buildStageEnemyStats(level: ILevel | null, enemyData: SparseRecord<IEnemy>): Record<string, IStageEnemyStats> {
     const out: Record<string, IStageEnemyStats> = {};
     if (!level) return out;
     const moveMultiplier = level.options?.moveMultiplier ?? 1;
@@ -137,7 +138,9 @@ export function prettyCharName(id: string): string {
     return stem.charAt(0).toUpperCase() + stem.slice(1);
 }
 
-export function groupDrops(stage: IStage, items: Record<string, IMaterialItem>): IDropGroup[] {
+// `items` comes straight from `/static/materials`, whose generated type models
+// the Rust `HashMap` as an optional index signature - a lookup can miss.
+export function groupDrops(stage: IStage, items: Record<string, IMaterialItem | undefined>): IDropGroup[] {
     const rewards = stage.stageDropInfo?.displayDetailRewards ?? [];
     if (rewards.length === 0) return [];
     const byType = new Map<string, IResolvedDrop[]>();

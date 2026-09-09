@@ -1,0 +1,9 @@
+# ts-rs output. Committed so the frontend typechecks and builds without a Rust
+# toolchain — the VPS deploy runs `cargo build --release`, which does not run the
+# tests that write these files. Regenerate with `bun run gen:types`; never edit
+# by hand.
+#
+# `linguist-generated` collapses these by default in GitHub diffs and keeps them
+# out of language stats. Deliberately NOT marked `-diff`: the churn in this
+# directory IS the API diff, and it should stay readable when expanded.
+frontend/src/types/generated/** linguist-generated=true

@@ -2,11 +2,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map_or_default;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RetroAct {
     #[serde(alias = "RetroId")]
     pub retro_id: String,
@@ -18,6 +21,7 @@ pub struct RetroAct {
     pub index: i32,
 
     #[serde(alias = "StartTime", default)]
+    #[ts(type = "number")]
     pub start_time: i64,
 
     #[serde(alias = "Type_", alias = "Type", default)]

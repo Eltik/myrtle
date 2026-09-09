@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::database::queries::score::count_leaderboard;
 use crate::database::queries::score::get_last_updated;
@@ -13,9 +14,12 @@ use crate::{
     },
 };
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct LeaderboardPage {
     pub entries: Vec<LeaderboardEntry>,
+    #[ts(type = "number")]
     pub total: i64,
     pub updated_at: Option<DateTime<Utc>>,
 }

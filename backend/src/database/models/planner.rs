@@ -3,19 +3,26 @@ use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
+use ts_rs::TS;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TargetSkillPlan {
     pub skill_index: i16,
     pub mastery_level: i16,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TargetModulePlan {
     pub module_id: String,
     pub module_stage: i16,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OperatorPlan {
     pub id: Uuid,
@@ -31,6 +38,8 @@ pub struct OperatorPlan {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRecipeCost {
@@ -38,6 +47,8 @@ pub struct PlanRecipeCost {
     pub item: PlanRequirementItem,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRecipe {
@@ -45,6 +56,8 @@ pub struct PlanRecipe {
     pub costs: Vec<PlanRecipeCost>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequirementItem {
@@ -65,6 +78,8 @@ pub struct PlanRequirementItem {
     pub recipe: Option<PlanRecipe>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PlanGroup {
     pub id: Uuid,
@@ -74,6 +89,8 @@ pub struct PlanGroup {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorPlanResponse {
     #[serde(flatten)]
@@ -82,6 +99,8 @@ pub struct OperatorPlanResponse {
     pub operator: serde_json::Value,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlannerResponse {

@@ -22,8 +22,11 @@ use crate::database::queries::tier_lists::update;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
+use ts_rs::TS;
 use uuid::Uuid;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct TierListDetail {
     #[serde(flatten)]
@@ -34,6 +37,8 @@ pub struct TierListDetail {
     pub author: Option<TierListAuthor>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListAuthor {
     pub id: Uuid,
@@ -42,6 +47,8 @@ pub struct TierListAuthor {
     pub avatar_id: Option<String>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct TierDetail {
     #[serde(flatten)]

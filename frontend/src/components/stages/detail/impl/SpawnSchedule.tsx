@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
+import type { SparseRecord } from "#/lib/records";
 import { cn } from "#/lib/utils";
 import { ENEMY_LEVEL_ACCENT } from "./constants";
 import { buildSpawnSchedule } from "./helpers";
@@ -51,7 +52,7 @@ function SpawnCard({ row, onFocusEnemy }: { row: ISpawnRow; onFocusEnemy: (id: s
     );
 }
 
-export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILevel | null; enemyData: Record<string, IEnemy>; onFocusEnemy: (id: string, time: number) => void }) {
+export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILevel | null; enemyData: SparseRecord<IEnemy>; onFocusEnemy: (id: string, time: number) => void }) {
     const { rows, hiddenGroups } = useMemo(() => buildSpawnSchedule(level, enemyData), [level, enemyData]);
     if (rows.length === 0) return null;
     return (

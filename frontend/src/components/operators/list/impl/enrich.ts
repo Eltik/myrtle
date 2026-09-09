@@ -10,6 +10,7 @@ export function extractVoiceActors(charId: string, voices: IVoices | undefined):
     if (!entry) return [];
     const names = new Set<string>();
     for (const lang of Object.values(entry.dict)) {
+        if (!lang) continue;
         for (const name of lang.cvName) names.add(name);
     }
     return [...names];

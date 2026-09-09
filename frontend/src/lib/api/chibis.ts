@@ -2,34 +2,23 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 
-export interface IChibiSpineFiles {
-    atlas: string | null;
-    skel: string | null;
-    png: string | null;
-}
+// Generated from `backend/src/core/gamedata/types/chibi.rs`. To change a field,
+// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+import type { ChibiCharacter } from "#/types/generated/ChibiCharacter";
+import type { ChibiData } from "#/types/generated/ChibiData";
+import type { ChibiSkin } from "#/types/generated/ChibiSkin";
+import type { SpineFiles } from "#/types/generated/SpineFiles";
+
+export type IChibiSpineFiles = SpineFiles;
 
 /** Whether a spine set is complete enough to load (skel + atlas + png all present). */
 export function isCompleteSpineFiles(files: IChibiSpineFiles | undefined | null): files is IChibiSpineFiles {
     return !!files?.skel && !!files.atlas && !!files.png;
 }
 
-export interface IChibiSkin {
-    name: string;
-    path: string;
-    hasSpineData: boolean;
-    animationTypes: Record<string, IChibiSpineFiles>;
-}
-
-export interface IChibiCharacter {
-    operatorCode: string;
-    name: string;
-    path: string;
-    skins: IChibiSkin[];
-}
-
-export interface IChibiResponse {
-    characters: IChibiCharacter[];
-}
+export type IChibiSkin = ChibiSkin;
+export type IChibiCharacter = ChibiCharacter;
+export type IChibiResponse = ChibiData;
 
 /**
  * A single operator's chibi entry, served by `GET /chibis/{operatorId}` (where

@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use ts_rs::TS;
 
 /// One entry in a Doctor's published support roster (slot 0..2).
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct SupportUnit {
     pub slot: i16,
@@ -21,6 +24,8 @@ pub struct SupportUnit {
 }
 
 /// `v_user_roster` view
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct RosterEntry {
     pub user_id: Uuid,
@@ -36,6 +41,7 @@ pub struct RosterEntry {
     pub voice_lan: Option<String>,
     pub current_equip: Option<String>,
     pub current_tmpl: Option<String>,
+    #[ts(type = "number | null")]
     pub obtained_at: Option<i64>,
     pub masteries: serde_json::Value, // jsonb_agg result
     pub modules: serde_json::Value,   // jsonb_agg result

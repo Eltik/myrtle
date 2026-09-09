@@ -3,8 +3,11 @@ use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
+use ts_rs::TS;
 
 /// `v_user_profile` view
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserProfile {
     pub id: Uuid,
@@ -33,21 +36,30 @@ pub struct UserProfile {
     pub max_sanity: Option<i16>,
     pub gacha_tickets: Option<i32>,
     pub ten_pull_tickets: Option<i32>,
+    #[ts(type = "number | null")]
     pub monthly_sub_end: Option<i64>,
+    #[ts(type = "number | null")]
     pub register_ts: Option<i64>,
+    #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
     pub resume: Option<String>,
     pub friend_num_limit: Option<i16>,
     pub cumulative_signin: Option<i32>,
     // Counts
+    #[ts(type = "number | null")]
     pub operator_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub item_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub skin_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub non_default_skin_count: Option<i64>,
     pub updated_at: DateTime<Utc>,
 }
 
 /// users table
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct User {
     pub id: Uuid,
@@ -66,6 +78,8 @@ pub struct User {
 }
 
 /// `user_settings` table
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UserSettings {
     pub user_id: Uuid,
@@ -77,6 +91,8 @@ pub struct UserSettings {
 
 /// `user_checkin` table — daily sign-in state from the game's `checkIn` section,
 /// joined with the timestamps needed to render it as a calendar.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserCheckin {
     /// Current month's calendar: one entry per day, `1` = claimed, `0` = not.
@@ -90,9 +106,11 @@ pub struct UserCheckin {
     /// Whether a daily sign-in is claimable right now (as of the last sync).
     pub can_check_in: bool,
     /// Account creation time (Unix seconds) — for "days since joining".
+    #[ts(type = "number | null")]
     pub register_ts: Option<i64>,
     /// Player's last in-game online time (Unix seconds) — distinct from the DB
     /// sync time below.
+    #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
     /// When this row was last synced to our DB. The `history` is a snapshot as
     /// of this moment, which may be days/weeks before "now".

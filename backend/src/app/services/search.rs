@@ -1,6 +1,7 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::database::queries::users::count_by_nickname;
 use crate::database::queries::users::search_by_nickname;
@@ -9,9 +10,12 @@ use crate::{
     database::models::user::UserProfile,
 };
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct SearchPage {
     pub entries: Vec<UserProfile>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

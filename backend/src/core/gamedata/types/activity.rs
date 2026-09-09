@@ -2,11 +2,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ActivityBasicInfo {
     #[serde(alias = "Id")]
     pub id: String,
@@ -15,14 +18,17 @@ pub struct ActivityBasicInfo {
     pub name: String,
 
     #[serde(alias = "StartTime", default)]
+    #[ts(type = "number")]
     pub start_time: i64,
 
     #[serde(alias = "EndTime", default)]
+    #[ts(type = "number")]
     pub end_time: i64,
 
     /// When event-medal rewards stop being claimable (often a few days after
     /// `end_time`); 0 if absent. Authoritative close time for event medals.
     #[serde(alias = "RewardEndTime", default)]
+    #[ts(type = "number")]
     pub reward_end_time: i64,
 
     /// Group id tying this activity's medals together (e.g.

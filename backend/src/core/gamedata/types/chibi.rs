@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use ts_rs::TS;
 
 // ============================================================================
 // Chibi Types - Spine animation data for operators
@@ -9,6 +10,8 @@ use std::sync::Arc;
 /// Animation types for different views/poses
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(TS)]
+#[ts(export)]
 pub enum AnimationType {
     Front,
     Back,
@@ -30,6 +33,8 @@ impl AnimationType {
 /// Spine files for an animation type
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct SpineFiles {
     pub atlas: Option<String>,
     pub skel: Option<String>,
@@ -45,6 +50,8 @@ impl SpineFiles {
 /// Character skin with different animation types
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ChibiSkin {
     pub name: String,
     pub path: String,
@@ -55,6 +62,8 @@ pub struct ChibiSkin {
 /// Processed character data for frontend
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ChibiCharacter {
     pub operator_code: String,
     pub name: String,
@@ -121,15 +130,19 @@ pub struct CachedChibiData {
 /// Uses Arc<ChibiCharacter> to share data between Vec and `HashMap` without cloning
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ChibiData {
     /// Raw repo items from crawling
     #[serde(skip)]
+    #[ts(skip)]
     pub raw_items: Vec<RepoItem>,
     /// Processed character data for frontend (uses Arc for zero-copy sharing)
     #[serde(serialize_with = "serialize_arc_vec", skip_deserializing)]
     pub characters: Vec<Arc<ChibiCharacter>>,
     /// Lookup by operator code (shares Arc with characters vec)
     #[serde(skip)]
+    #[ts(skip)]
     pub by_operator: HashMap<String, Arc<ChibiCharacter>>,
 }
 

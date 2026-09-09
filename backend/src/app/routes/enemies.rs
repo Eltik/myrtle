@@ -3,6 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
@@ -21,6 +22,8 @@ pub struct EncounteredEnemiesParams {
     pub uid: Option<String>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemy {
@@ -32,6 +35,8 @@ pub struct EncounteredEnemy {
     pub sort_id: Option<i32>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemiesResponse {
@@ -128,12 +133,15 @@ pub async fn get_encountered_enemies(
     }))
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CommunityEnemyAverageResponse {
     /// Mean number of distinct enemies encountered across every synced user.
     pub average_encountered: f64,
     /// Number of users in the average's denominator (those with synced enemy data).
+    #[ts(type = "number")]
     pub user_count: i64,
     /// Visible handbook size, matching the per-user response's denominator.
     pub handbook_total: usize,

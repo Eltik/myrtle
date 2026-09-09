@@ -142,7 +142,7 @@ export function DeepDive() {
                                             <span className="font-mono tabular-nums">
                                                 {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
                                             </span>
-                                            {evaluation.drones.full_in_hours !== undefined ? (
+                                            {evaluation.drones.full_in_hours != null ? (
                                                 <>
                                                     {" "}
                                                     - full in <span className="font-mono tabular-nums">{hoursLabel(evaluation.drones.full_in_hours)}</span>, spend before then
@@ -165,7 +165,7 @@ export function DeepDive() {
                                     )}
                                     {atRisk.length > 0 && (
                                         <span className="text-[11px]">
-                                            <span className="text-muted-foreground">At risk from their current bar{evaluation.morale_synced_hours_ago !== undefined && ` (projected from your sync ${hoursLabel(evaluation.morale_synced_hours_ago)} ago)`}: </span>
+                                            <span className="text-muted-foreground">At risk from their current bar{evaluation.morale_synced_hours_ago != null && ` (projected from your sync ${hoursLabel(evaluation.morale_synced_hours_ago)} ago)`}: </span>
                                             {atRisk.map((e, i) => (
                                                 <span key={e.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}
@@ -248,7 +248,7 @@ export function DeepDive() {
                             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {rooms.map((room) => {
                                     const daily = room.room_type === "TRADING" ? `${num(room.yield_lmd_per_day)} LMD` : room.formula_type === "F_GOLD" ? `${room.yield_gold_per_day.toFixed(1)} gold` : `${num(room.yield_exp_per_day)} EXP`;
-                                    const overflows = room.fill_hours !== undefined && interval !== undefined && room.fill_hours < interval.hours;
+                                    const overflows = room.fill_hours != null && interval !== undefined && room.fill_hours < interval.hours;
                                     return (
                                         <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/10 px-3 py-2" key={room.slot_id}>
                                             <div className="flex items-baseline justify-between gap-2">
@@ -263,7 +263,7 @@ export function DeepDive() {
                                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{Math.round(room.total_efficiency)}%</span>
                                             </div>
                                             <span className={cn("text-[10.5px]", overflows ? "text-destructive" : "text-muted-foreground")}>
-                                                full in {room.fill_hours === undefined ? "-" : hoursLabel(room.fill_hours)} · {room.capacity} {room.room_type === "TRADING" ? "orders" : "items"}
+                                                full in {room.fill_hours == null ? "-" : hoursLabel(room.fill_hours)} · {room.capacity} {room.room_type === "TRADING" ? "orders" : "items"}
                                                 {overflows && " - overflows at this cadence"}
                                             </span>
                                         </div>

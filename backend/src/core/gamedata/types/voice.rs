@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -9,7 +10,8 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum PlaceType {
     #[default]
     HomePlace,
@@ -54,7 +56,8 @@ pub enum PlaceType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum LangType {
     #[default]
     CnMandarin,
@@ -75,7 +78,8 @@ pub enum LangType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[ts(export)]
 pub enum VoiceType {
     #[serde(rename = "ENUM")]
     #[default]
@@ -91,7 +95,8 @@ pub enum VoiceType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum UnlockType {
     #[default]
     Direct,
@@ -110,6 +115,8 @@ pub enum UnlockType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct UnlockParam {
     #[serde(alias = "ValueStr")]
     pub value_str: Option<String>,
@@ -119,6 +126,8 @@ pub struct UnlockParam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoiceData {
     pub voice_url: Option<String>,
     pub language: Option<LangType>,
@@ -127,6 +136,8 @@ pub struct VoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct CharExtraWord {
     #[serde(alias = "WordKey")]
     pub word_key: String,
@@ -140,6 +151,8 @@ pub struct CharExtraWord {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoiceLangTypeInfo {
     pub name: String,
     pub group_type: String,
@@ -147,6 +160,8 @@ pub struct VoiceLangTypeInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoiceLangGroupType {
     pub name: String,
     pub members: Vec<LangType>,
@@ -154,20 +169,29 @@ pub struct VoiceLangGroupType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct StartTimeWithType {
+    #[ts(type = "number")]
     pub timestamp: i64,
     pub char_set: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FesTimeInterval {
+    #[ts(type = "number")]
     pub start_ts: i64,
+    #[ts(type = "number")]
     pub end_ts: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FesTimeData {
     pub time_type: String,
     pub interval: FesTimeInterval,
@@ -175,6 +199,8 @@ pub struct FesTimeData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FesVoiceData {
     pub show_type: PlaceType,
     pub time_data: Vec<FesTimeData>,
@@ -182,6 +208,8 @@ pub struct FesVoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FesVoiceWeight {
     pub show_type: PlaceType,
     pub weight: i32,
@@ -189,6 +217,8 @@ pub struct FesVoiceWeight {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ExtraVoiceConfigData {
     pub voice_id: String,
     pub valid_voice_lang: Vec<LangType>,
@@ -196,6 +226,8 @@ pub struct ExtraVoiceConfigData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoiceLangDictEntry {
     #[serde(alias = "Wordkey")]
     pub wordkey: String,
@@ -209,6 +241,8 @@ pub struct VoiceLangDictEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoiceLang {
     #[serde(alias = "Wordkeys")]
     pub wordkeys: Vec<String>,
@@ -224,6 +258,8 @@ pub struct VoiceLang {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RawVoice {
     #[serde(alias = "CharWordId")]
     pub char_word_id: String,
@@ -259,6 +295,8 @@ pub struct RawVoice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Voice {
     pub char_word_id: String,
     pub word_key: String,
@@ -285,6 +323,8 @@ pub struct Voice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Voices {
     pub char_words: HashMap<String, Voice>,
     pub char_extra_words: HashMap<String, CharExtraWord>,
@@ -305,6 +345,8 @@ pub struct Voices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RawVoices {
     pub char_words: HashMap<String, RawVoice>,
     pub char_extra_words: HashMap<String, CharExtraWord>,
@@ -325,6 +367,8 @@ pub struct RawVoices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoicesTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub char_words: HashMap<String, RawVoice>,

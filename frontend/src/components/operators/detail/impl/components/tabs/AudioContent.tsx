@@ -331,10 +331,12 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
         // form-specific id (e.g. `char_1001_amiya2_CN_001`). Filter by that
         // prefix so each form only shows its own lines.
         const prefix = `${operator.id}_`;
-        return Object.values(voicesData.charWords).filter((v) => v.charWordId?.startsWith(prefix));
+        // `charWords` is a Record, so values are possibly-undefined; narrow rather
+        // than assert, otherwise a missing key becomes a render crash.
+        return Object.values(voicesData.charWords).filter((v): v is IVoice => !!v && !!v.charWordId?.startsWith(prefix));
     }, [voicesData, operator.id]);
 
-    const availableLanguages = useMemo(() => {
+    const availableLanguages = useMemo<LangType[]>(() => {
         const set = new Set<LangType>();
         for (const v of operatorVoices) {
             for (const l of v.languages ?? []) set.add(l);

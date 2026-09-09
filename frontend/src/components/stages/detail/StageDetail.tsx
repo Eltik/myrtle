@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import type { IMaterialItem } from "#/lib/api/materials";
+import type { SparseRecord } from "#/lib/records";
 import type { IStage, IZone } from "#/types/stages";
 import { DropsSection } from "./impl/DropsSection";
 import { EnemiesSection } from "./impl/EnemiesSection";
@@ -18,7 +19,7 @@ import type { IStageEnemyStats } from "./impl/types";
 import { WavesSection } from "./impl/WavesSection";
 import { type IMapViewHandle, MapView } from "./map";
 
-export function StageDetail({ stage, zone, level, enemyData, materials }: { stage: IStage | null; zone: IZone | null; level: ILevel | null; enemyData: Record<string, IEnemy>; materials: Record<string, IMaterialItem> }) {
+export function StageDetail({ stage, zone, level, enemyData, materials }: { stage: IStage | null; zone: IZone | null; level: ILevel | null; enemyData: SparseRecord<IEnemy>; materials: Record<string, IMaterialItem | undefined> }) {
     const { stageId } = useParams({ from: "/stages_/$stageId" });
 
     const tally = useMemo(() => tallyEnemies(level, enemyData), [level, enemyData]);

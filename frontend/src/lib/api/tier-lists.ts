@@ -7,6 +7,18 @@ import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
+import type { JsonValue } from "#/types/generated/serde_json/JsonValue";
+// The `IBackend*` types are the WIRE shapes, generated from
+// `backend/src/app/services/tier_list.rs` and `backend/src/database/models/tier_list.rs`.
+// The exported `I*` types below are FRONTEND VIEW MODELS: camelCase, joined
+// against the operator index by the `map*` functions. Do not conflate them.
+import type { Tier } from "#/types/generated/Tier";
+import type { TierDetail } from "#/types/generated/TierDetail";
+import type { TierList } from "#/types/generated/TierList";
+import type { TierListDetail } from "#/types/generated/TierListDetail";
+import type { TierListFlair } from "#/types/generated/TierListFlair";
+import type { TierListVersion } from "#/types/generated/TierListVersion";
+import type { TierPlacement } from "#/types/generated/TierPlacement";
 import type { IOperatorIndexEntry, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
@@ -34,74 +46,15 @@ function ensureViewSessionId(): string {
     return fresh;
 }
 
-interface IBackendTierList {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    list_type: string;
-    created_by: string | null;
-    is_active: boolean;
-    is_listed: boolean;
-    flair_id: number | null;
-    created_at: string;
-    updated_at: string;
-}
+type IBackendTierList = TierList;
 
-interface IBackendTier {
-    id: string;
-    tier_list_id: string;
-    name: string;
-    display_order: number;
-    color: string | null;
-    description: string | null;
-    placements: IBackendPlacement[];
-}
+type IBackendTier = TierDetail;
 
-interface IBackendPlacement {
-    tier_id: string;
-    operator_id: string;
-    sub_order: number;
-    description: string | null;
-    updated_at: string;
-}
+type IBackendPlacement = TierPlacement;
 
-interface IBackendTierListStats {
-    tier_list_id: string;
-    view_count: number;
-    unique_view_count: number;
-    favorite_count: number;
-    share_count: number;
-    is_trending: boolean;
-    trending_score: number;
-    views_last_24h: number;
-    views_last_7d: number;
-    last_viewed_at: string | null;
-    stats_updated_at: string;
-}
+type IBackendFlair = TierListFlair;
 
-interface IBackendFlair {
-    id: number;
-    code: string;
-    label: string;
-    color: string | null;
-    display_order: number;
-    is_active: boolean;
-}
-
-interface IBackendAuthor {
-    id: string;
-    uid: string;
-    nickname: string | null;
-    avatar_id: string | null;
-}
-
-interface IBackendTierListDetail extends IBackendTierList {
-    tiers: IBackendTier[];
-    stats: IBackendTierListStats | null;
-    flair: IBackendFlair | null;
-    author: IBackendAuthor | null;
-}
+type IBackendTierListDetail = TierListDetail;
 
 const HOME_TIER_LIST_LIMIT = 6;
 const BROWSE_TIER_LIST_LIMIT = 200;
@@ -117,6 +70,8 @@ const PROFESSION_TO_ROLE: Record<OperatorProfession, string> = {
     SPECIAL: "Specialist",
     TOKEN: "Specialist",
     TRAP: "Specialist",
+    // `#[serde(other)]` catch-all on OperatorProfession.
+    UNKNOWN: "Unknown",
 };
 
 const FLAIR_ACCENT: Record<string, string> = {
@@ -514,7 +469,7 @@ export function tierListFlairsQueryOptions() {
 }
 
 /** Plain JSON value - used for tier list version snapshots. */
-export type TierListJsonValue = string | number | boolean | null | TierListJsonValue[] | { [key: string]: TierListJsonValue };
+export type TierListJsonValue = JsonValue;
 
 export interface ICreateTierListInput {
     name: string;
@@ -631,24 +586,9 @@ export interface ITierListVersion {
     publishedAt: string;
 }
 
-interface IBackendTierRaw {
-    id: string;
-    tier_list_id: string;
-    name: string;
-    display_order: number;
-    color: string | null;
-    description: string | null;
-}
+type IBackendTierRaw = Tier;
 
-interface IBackendTierListVersion {
-    id: string;
-    tier_list_id: string;
-    version: number;
-    snapshot: TierListJsonValue;
-    changelog: string | null;
-    published_by: string | null;
-    published_at: string;
-}
+type IBackendTierListVersion = TierListVersion;
 
 function mapTierListSummary(raw: IBackendTierList): ITierListSummary {
     return {

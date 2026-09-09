@@ -10,12 +10,15 @@ export const STAGE_TYPE_LABEL: Record<StageType, string> = {
     CLIMB_TOWER: "Stationary Security",
     GUIDE: "Tutorial",
     SPECIAL_STORY: "Special Story",
+    // `#[serde(other)]` catch-all: game data can ship a stageType we don't name.
+    UNKNOWN: "Unknown",
 };
 
 export const DIFFICULTY_LABEL: Record<StageDifficulty, string> = {
     NORMAL: "Normal",
     FOUR_STAR: "Challenge Mode",
     SIX_STAR: "Extreme",
+    UNKNOWN: "Unknown",
 };
 
 export const ENEMY_LEVEL_ACCENT: Record<IEnemy["enemyLevel"], string> = {

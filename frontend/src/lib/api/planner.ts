@@ -3,65 +3,36 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { deepCamelize } from "#/lib/api/operators";
 import { backendFetch } from "#/lib/fetch";
+// Generated from `backend/src/database/models/planner.rs`.
+// To change a field, edit the Rust struct and run `bun run gen:types`.
+import type { OperatorPlanResponse } from "#/types/generated/OperatorPlanResponse";
+import type { PlanGroup } from "#/types/generated/PlanGroup";
+import type { PlannerResponse } from "#/types/generated/PlannerResponse";
+import type { PlanRecipe } from "#/types/generated/PlanRecipe";
+import type { PlanRecipeCost } from "#/types/generated/PlanRecipeCost";
+import type { PlanRequirementItem } from "#/types/generated/PlanRequirementItem";
+import type { TargetModulePlan } from "#/types/generated/TargetModulePlan";
+import type { TargetSkillPlan } from "#/types/generated/TargetSkillPlan";
 import type { IOperatorListItem } from "#/types/operators";
+import type { Refine } from "#/types/refine";
 
-export interface IPlanRecipeCost {
-    count: number;
-    item: IPlanRequirementItem;
-}
+export type IPlanRecipeCost = PlanRecipeCost;
 
-export interface IPlanRecipe {
-    count: number;
-    costs: IPlanRecipeCost[];
-}
+export type IPlanRecipe = PlanRecipe;
 
-export interface IPlanRequirementItem {
-    id: string;
-    name: string;
-    iconId: string | null;
-    image: string | null;
-    itemType: string;
-    rarity: number;
-    sortGroup: number;
-    sortSubrank: number;
-    requiredCount: number;
-    inventoryCount: number;
-    craftableCount: number;
-    missingCount: number;
-    canCraft: boolean;
-    craftReason: string;
-    recipe: IPlanRecipe | null;
-}
+export type IPlanRequirementItem = PlanRequirementItem;
 
-export interface IOperatorPlanResponse {
-    id: string;
-    user_id: string;
-    operator_id: string;
-    target_elite: number;
-    target_level: number;
-    target_skill_level: number;
-    target_skills: { skill_index: number; mastery_level: number }[];
-    target_modules: { module_id: string; module_stage: number }[];
-    display_on_profile: boolean;
-    created_at: string;
-    updated_at: string;
-    groups: string[];
-    operator: IOperatorListItem;
-}
+/**
+ * `target_skills` / `target_modules` are jsonb columns, so Rust types them as
+ * `serde_json::Value`; their real shape is `TargetSkillPlan` / `TargetModulePlan`,
+ * which the same module already generates. `operator` is an operator payload the
+ * fetch site runs through `deepCamelize` before anything reads it.
+ */
+export type IOperatorPlanResponse = Refine<OperatorPlanResponse, { operator: IOperatorListItem; target_skills: TargetSkillPlan[]; target_modules: TargetModulePlan[] }>;
 
-export interface IPlanGroup {
-    id: string;
-    user_id: string;
-    name: string;
-    created_at: string;
-    updated_at: string;
-}
+export type IPlanGroup = PlanGroup;
 
-export interface IPlannerResponse {
-    plans: IOperatorPlanResponse[];
-    aggregatedRequirements: IPlanRequirementItem[];
-    groups: IPlanGroup[];
-}
+export type IPlannerResponse = Refine<PlannerResponse, { plans: IOperatorPlanResponse[] }>;
 
 export interface IUpsertPlanInput {
     operatorId: string;

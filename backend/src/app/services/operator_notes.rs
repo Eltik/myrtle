@@ -1,4 +1,5 @@
 use serde::Serialize;
+use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
@@ -10,6 +11,8 @@ use crate::database::queries::operator_notes::get_audit_log_global;
 use crate::database::queries::operator_notes::insert_audit;
 use crate::database::queries::operator_notes::upsert;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct AuditLogActor {
     pub user_id: Uuid,
@@ -19,8 +22,12 @@ pub struct AuditLogActor {
     pub secretary_skin_id: Option<String>,
 }
 
+#[derive(TS)]
+#[ts(export)]
+#[ts(rename = "OperatorNoteAuditLogEntry")]
 #[derive(Debug, Serialize)]
 pub struct AuditLogEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub note_id: Uuid,
     pub operator_id: String,
@@ -31,9 +38,12 @@ pub struct AuditLogEntry {
     pub actor: AuditLogActor,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct GlobalAuditLogResponse {
     pub entries: Vec<AuditLogEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

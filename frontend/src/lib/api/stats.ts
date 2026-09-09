@@ -1,34 +1,20 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+// Generated from `backend/src/app/services/stats.rs`.
+// To change a field, edit the Rust struct and run `bun run gen:types`.
+import type { GameDataStats } from "#/types/generated/GameDataStats";
+import type { RostersStats } from "#/types/generated/RostersStats";
+import type { StatsResponse } from "#/types/generated/StatsResponse";
+import type { TierListSiteStats } from "#/types/generated/TierListSiteStats";
 import { backendFetch } from "../fetch";
 
-export interface IGameDataStats {
-    operators: number;
-    skills: number;
-    modules: number;
-    skins: number;
-    stages: number;
-    zones: number;
-    enemies: number;
-}
+export type IGameDataStats = GameDataStats;
 
-export interface ITierListStats {
-    total: number;
-    active: number;
-    totalVersions: number;
-    totalPlacements: number;
-}
+export type ITierListStats = TierListSiteStats;
 
-export interface IRostersStats {
-    total: number;
-}
+export type IRostersStats = RostersStats;
 
-export interface IStatsResponse {
-    gameData: IGameDataStats;
-    tierLists: ITierListStats;
-    rosters: IRostersStats;
-    computedAt: string;
-}
+export type IStatsResponse = StatsResponse;
 
 export const getStatsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/stats");

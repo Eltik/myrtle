@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
 use sqlx::PgPool;
+use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
@@ -54,6 +55,8 @@ use crate::database::queries::stages::get_known_stage_ids_for_server;
 use crate::database::queries::stages::get_user_stage_clears;
 use crate::database::queries::users::find_by_uid;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ImprovementsResponse {
     pub uid: String,
@@ -65,12 +68,16 @@ pub struct ImprovementsResponse {
     pub base: BaseImprovements,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct StageImprovements {
     pub permanent: StagePoolImprovements,
     pub event: StagePoolImprovements,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct StagePoolImprovements {
     pub total: usize,
@@ -83,6 +90,8 @@ pub struct StagePoolImprovements {
     pub not_three_starred: Vec<StageGap>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct StageGap {
     pub stage_id: String,
@@ -94,19 +103,26 @@ pub struct StageGap {
     /// Rotation window for rotating Annihilation maps (`camp_r_*`). `None` for
     /// permanent Annihilation and every non-Annihilation stage. Lets the client
     /// separate the currently-playable rotation from maps that have rotated out.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rotation: Option<RotationInfo>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RotationInfo {
     /// "active" (playable now), "past" (rotated out), or "future" (not yet open).
     pub status: &'static str,
+    #[ts(type = "number")]
     pub start_ts: i64,
+    #[ts(type = "number")]
     pub end_ts: i64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeThemeImprovement {
     pub theme_id: String,
@@ -118,18 +134,24 @@ pub struct RoguelikeThemeImprovement {
     pub challenges: ProgressPair,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ProgressPair {
     pub current: usize,
     pub max: usize,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeDifficulty {
     pub highest_cleared: i32,
     pub max: i32,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeCollectibles {
     pub relics: ProgressPair,
@@ -137,6 +159,8 @@ pub struct RoguelikeCollectibles {
     pub bands: ProgressPair,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
     /// Overall RA score (0..1) - the weighted sum of every category below. This
@@ -148,6 +172,8 @@ pub struct SandboxImprovements {
     pub categories: Vec<SandboxCategory>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SandboxCategory {
     pub key: &'static str,
@@ -160,6 +186,8 @@ pub struct SandboxCategory {
     pub parts: Vec<SandboxPart>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SandboxPart {
     pub label: &'static str,
@@ -167,6 +195,8 @@ pub struct SandboxPart {
     pub max: usize,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MedalImprovements {
     /// Permanent medals (no expiry / latest entry is `PERM:-1`) the user
@@ -188,6 +218,8 @@ pub struct MedalImprovements {
     pub unobtainable_missing: Vec<MedalGap>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MedalGap {
     pub medal_id: String,
@@ -197,17 +229,22 @@ pub struct MedalGap {
     pub description: String,
     pub is_hidden: bool,
     /// Event end-timestamp in unix seconds, if this is an event medal.
+    #[ts(type = "number | null")]
     pub end_time: Option<i64>,
     /// Set when the medal is locked behind an unobtainable operator.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub operator_lock: Option<MedalOperatorLock>,
     /// Share (percent, 0-100) of stat-sharing synced players on the user's
     /// server who have earned this medal - the medal's community rarity.
     /// None until the daily ownership aggregate has been computed.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub owned_pct: Option<f64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MedalOperatorLock {
@@ -217,6 +254,8 @@ pub struct MedalOperatorLock {
     pub reason: &'static str,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorImprovements {
     /// Where the current Operators subscore comes from: per-dimension weight
@@ -227,6 +266,8 @@ pub struct OperatorImprovements {
     pub below_milestone: Vec<OperatorGap>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorGap {
     pub operator_id: String,
@@ -264,6 +305,8 @@ pub struct OperatorGap {
     pub total_potential_gain: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
     /// The player's CURRENT base exactly as stationed right now - for comparing
@@ -287,15 +330,19 @@ pub struct BaseImprovements {
     pub perception: Option<PerceptionPlanDto>,
     /// Check-in economics for the CURRENT base (same model as the planner's
     /// deep dive), so both tabs read the same numbers.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<crate::app::services::base_planner::ClaimDto>,
     /// The current crews simulated with no rotation at all - "if you never swap".
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<SustainabilityDto>,
 }
 
 /// The base-wide resource economy plan: which support operators to station (and where) to
 /// feed the shared resource pool, and which production operators the economy boosts.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionPlanDto {
     /// Support generators to station outside production (e.g. Mulberry in the HR Office).
@@ -310,12 +357,16 @@ pub struct PerceptionPlanDto {
     pub needs_rotation_manager: bool,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionSupportDto {
     pub operator: AssignedOperator,
     pub room_type: String,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionConsumerDto {
     pub operator: AssignedOperator,
@@ -326,6 +377,8 @@ pub struct PerceptionConsumerDto {
     pub sustained_pct: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseAssignmentDto {
     pub rooms: Vec<RoomAssignmentDto>,
@@ -339,6 +392,8 @@ pub struct BaseAssignmentDto {
     pub yield_total_value: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationDto {
     /// Per-room rotation plan: who to swap first, when, and the backup.
@@ -354,11 +409,15 @@ pub struct RotationDto {
     pub sustained_efficiency: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationSetDto {
     pub rooms: Vec<RotationSetRoomDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationSetRoomDto {
     pub slot_id: String,
@@ -369,6 +428,8 @@ pub struct RotationSetRoomDto {
     pub resting: Option<AssignedOperator>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomRotationDto {
     pub slot_id: String,
@@ -379,6 +440,8 @@ pub struct RoomRotationDto {
     pub backup: Option<AssignedOperator>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationMemberDto {
     pub operator: AssignedOperator,
@@ -386,6 +449,8 @@ pub struct RotationMemberDto {
     pub lasts_hours: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomAssignmentDto {
     pub slot_id: String,
@@ -410,18 +475,23 @@ pub struct RoomAssignmentDto {
     /// into the LMD objective. Empty for other rooms.
     pub non_production: Vec<NonProdEffectDto>,
     /// Per-skill contribution breakdown (evaluate path only; empty elsewhere).
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub ledger: Vec<SkillLineDto>,
     /// Output-buffer size: orders for a trading post (incl. crew capacity
     /// skills), items for a factory. Evaluate path only.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capacity: Option<i32>,
     /// Hours from an empty buffer to full - how long the room runs unattended
     /// before it stalls. Evaluate path only.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fill_hours: Option<f64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct NonProdEffectDto {
     /// The boosted facility's room type ("MEETING", "TRAINING", "HIRE").
@@ -435,6 +505,8 @@ pub struct NonProdEffectDto {
 /// calculated"). Values are MARGINALS in this exact crew - what the room's
 /// number loses if this one skill is removed - so pair riders, non-stacking
 /// rules and faction gates are already folded in.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SkillLineDto {
     pub operator_id: String,
@@ -447,15 +519,17 @@ pub struct SkillLineDto {
     /// Marginal speed/efficiency %.
     pub speed_pct: f64,
     /// Marginal order-value %.
+    #[serde(default)]
     #[serde(skip_serializing_if = "is_zero")]
     pub value_pct: f64,
     /// The line's owner sits in the Control Center, not this room.
+    #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub from_control_center: bool,
-    /// "contributes" | "inactive" (gate unmet here) | "morale" (moves the
-    /// sustain sim, not efficiency) | "capacity" | "`non_production`" |
-    /// "unmodeled" (the engine deliberately prices it 0).
-    pub disposition: &'static str,
+    /// How to read a zero-marginal line. The enum serializes to the same
+    /// strings the hand-written match produced, but the generated TS binding
+    /// is now a union instead of `string`.
+    pub disposition: crate::core::grade::base::skill_ledger::LineDisposition,
 }
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
@@ -467,7 +541,6 @@ fn skill_line_dto(
     l: &crate::core::grade::base::skill_ledger::LedgerLine,
     game_data: &GameData,
 ) -> SkillLineDto {
-    use crate::core::grade::base::skill_ledger::LineDisposition as D;
     SkillLineDto {
         operator_id: l.operator_id.clone(),
         operator_name: game_data
@@ -483,19 +556,12 @@ fn skill_line_dto(
         speed_pct: l.speed_pct,
         value_pct: l.value_pct,
         from_control_center: l.from_control_center,
-        disposition: match l.disposition {
-            D::Contributes => "contributes",
-            D::Inactive => "inactive",
-            D::Covered => "covered",
-            D::PerRoom => "per_room",
-            D::MoraleOnly => "morale",
-            D::CapacityOnly => "capacity",
-            D::NonProduction => "non_production",
-            D::Unmodeled => "unmodeled",
-        },
+        disposition: l.disposition,
     }
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct AssignedOperator {
     pub operator_id: String,
@@ -504,11 +570,14 @@ pub struct AssignedOperator {
     /// value-seated operator): parked for lowest opportunity cost, not for its
     /// skills. The frontend badges these so a gated skill text on a
     /// benchwarmer doesn't read as the optimizer's reasoning.
+    #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub bench: bool,
 }
 
 /// An operator leaving a cell for another room in the SAME shift.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MovedOperator {
     pub operator: AssignedOperator,
@@ -520,6 +589,8 @@ pub struct MovedOperator {
 
 /// A recommended 3-shift rotation alongside the player's saved presets, for the
 /// preset-vs-recommended comparison.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRotationDto {
     pub shifts: Vec<ShiftDto>,
@@ -533,6 +604,8 @@ pub struct ShiftRotationDto {
 /// The rotation validated by a time-stepped morale simulation (game-true drain
 /// and dorm-recovery rates): honest evidence the plan survives its own rhythm,
 /// instead of an unchecked recommendation.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SustainabilityDto {
     /// "`holds_up`" - nobody runs dry; "depletes" - someone's morale hits zero mid-shift.
@@ -547,10 +620,13 @@ pub struct SustainabilityDto {
     pub timeline: Vec<MoraleTimelineDto>,
     /// Per-facility simulated totals over the horizon, with lost hours (dark
     /// shifts + post-depletion time). Absent on older payloads.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub facilities: Vec<FacilityOutputDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct FacilityOutputDto {
     pub slot_id: String,
@@ -565,6 +641,8 @@ pub struct FacilityOutputDto {
     pub idle_hours: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MoraleTimelineDto {
     pub operator: AssignedOperator,
@@ -578,6 +656,8 @@ pub struct MoraleTimelineDto {
     pub end: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DepletedOperatorDto {
     pub operator: AssignedOperator,
@@ -585,6 +665,8 @@ pub struct DepletedOperatorDto {
     pub room_type: String,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftDto {
     /// 1-indexed shift number.
@@ -592,6 +674,8 @@ pub struct ShiftDto {
     pub rooms: Vec<ShiftRoomDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRoomDto {
     pub slot_id: String,
@@ -625,6 +709,7 @@ pub struct ShiftRoomDto {
     pub efficiency: Option<f64>,
     /// Per-skill contribution breakdown for THIS shift's crew (production and
     /// Control-Center cells).
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub ledger: Vec<SkillLineDto>,
     /// Stable identity of the team/squad staffing this cell - the same id spans the two
@@ -638,6 +723,8 @@ pub struct ShiftRoomDto {
 /// good enough to keep, with the small gap surfaced as a note instead of a swap nag.
 const EQUIVALENT_LENIENCY: f64 = 0.05;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomLayoutEntry {
     pub room_type: String,

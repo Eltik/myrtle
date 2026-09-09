@@ -3,7 +3,10 @@ use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
+use ts_rs::TS;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNote {
     pub id: Uuid,
@@ -18,8 +21,11 @@ pub struct OperatorNote {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNoteAuditEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub note_id: Uuid,
     pub field_name: String,
@@ -32,8 +38,11 @@ pub struct OperatorNoteAuditEntry {
 /// Audit entry enriched with the actor's display info, so clients don't have to
 /// fan out N user lookups per page. `actor_uid` is the game UID (used in
 /// `/user/{uid}` routes); `actor_user_id` is the internal DB UUID.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNoteAuditEntryWithContext {
+    #[ts(type = "number")]
     pub id: i64,
     pub note_id: Uuid,
     pub operator_id: String,

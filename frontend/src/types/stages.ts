@@ -1,100 +1,37 @@
-export type StageType = "MAIN" | "SUB" | "ACTIVITY" | "DAILY" | "CAMPAIGN" | "CLIMB_TOWER" | "GUIDE" | "SPECIAL_STORY";
+/**
+ * Stage, zone, activity and retro types - re-exported from the ts-rs bindings
+ * generated out of `backend/src/core/gamedata/types/{stage,zone,activity,retro,
+ * stage_index}.rs` and `backend/src/app/routes/stages.rs`.
+ *
+ * These endpoints (`/static/stages`, `/static/zones`, `/static/activities`,
+ * `/static/retro_acts`, `/static/stage-index`) are consumed RAW - no
+ * `deepCamelize` - and the Rust structs are already `rename_all = "camelCase"`,
+ * so the generated types are the wire format exactly.
+ *
+ * Do not add fields here. Edit the Rust struct and run `bun run gen:types`.
+ */
+export type { AppearanceStyle } from "./generated/AppearanceStyle";
+export type { StageDifficulty } from "./generated/StageDifficulty";
+export type { StageType } from "./generated/StageType";
+export type { ZoneType } from "./generated/ZoneType";
 
-export type StageDifficulty = "NORMAL" | "FOUR_STAR" | "SIX_STAR";
+import type { ActivityBasicInfo } from "./generated/ActivityBasicInfo";
+import type { DisplayDetailReward } from "./generated/DisplayDetailReward";
+import type { RetroAct } from "./generated/RetroAct";
+import type { Stage } from "./generated/Stage";
+import type { StageClearDto } from "./generated/StageClearDto";
+import type { StageDropInfo } from "./generated/StageDropInfo";
+import type { StageUnlockCondition } from "./generated/StageUnlockCondition";
+import type { Zone } from "./generated/Zone";
 
-export type AppearanceStyle = "MAIN_NORMAL" | "SUB" | "TRAINING" | "SPECIAL_STORY" | "HIGH_DIFFICULTY" | "MAIN_PREDEFINED" | "MIST_OPS";
+export type IUnlockCondition = StageUnlockCondition;
+export type IDisplayDetailReward = DisplayDetailReward;
+export type IStageDropInfo = StageDropInfo;
+export type IStage = Stage;
+export type IZone = Zone;
+export type IActivity = ActivityBasicInfo;
+export type IRetroAct = RetroAct;
 
-export interface IUnlockCondition {
-    stageId: string;
-    completeState: string;
-}
-
-/** Drop bucket on the stage results screen. */
-export type IStageDropType = "ONCE" | "NORMAL" | "SPECIAL" | "ADDITIONAL" | "COMPLETE" | "CONDITION_DROP" | (string & {});
-
-/** Qualitative drop-rate band the game shows instead of an exact percentage. */
-export type IStageDropOcc = "ALWAYS" | "ALMOST" | "USUAL" | "OFTEN" | "SOMETIMES" | "RARELY" | (string & {});
-
-export interface IDisplayDetailReward {
-    dropType: IStageDropType;
-    id: string;
-    occPercent: IStageDropOcc;
-    itemType: string;
-}
-
-export interface IStageDropInfo {
-    displayDetailRewards: IDisplayDetailReward[];
-}
-
-export interface IStage {
-    stageId: string;
-    levelId?: string;
-    zoneId: string;
-    code: string;
-    name?: string;
-    description?: string;
-    stageType: StageType;
-    difficulty: StageDifficulty;
-    apCost: number;
-    canPractice: boolean;
-    canBattleReplay: boolean;
-    canMultipleBattle: boolean;
-    isStoryOnly: boolean;
-    isPredefined: boolean;
-    dangerLevel?: string;
-    dangerPoint: number;
-    expGain: number;
-    goldGain: number;
-    appearanceStyle?: AppearanceStyle;
-    hardStagedId?: string;
-    mainStageId?: string;
-    unlockCondition: IUnlockCondition[];
-    loadingPicId?: string;
-    bossMark: boolean;
-    stageDropInfo?: IStageDropInfo;
-}
-
-export type ZoneType = "MAINLINE" | "SIDESTORY" | "BRANCHLINE" | "ACTIVITY" | "WEEKLY" | "CAMPAIGN" | "CLIMB_TOWER" | "ROGUELIKE" | "GUIDE" | "EVOLVE" | "MAINLINE_ACTIVITY" | "MAINLINE_RETRO" | "SPECIAL";
-
-export interface IZone {
-    zoneId: string;
-    zoneIndex: number;
-    type: ZoneType;
-    zoneNameFirst?: string;
-    zoneNameSecond?: string;
-    zoneNameTitleCurrent?: string;
-    zoneNameTitleUnCurrent?: string;
-    zoneNameTitleEx?: string;
-    zoneNameThird?: string;
-    lockedText?: string;
-    canPreview: boolean;
-    hasAdditionalPanel: boolean;
-}
-
-export interface IStageClear {
-    state: number;
-    completeTimes: number;
-    practiceTimes: number;
-}
-
+/** One user's clear record for a stage (`GET /stages/clears`), not game data. */
+export type IStageClear = StageClearDto;
 export type StageClearsMap = Record<string, IStageClear>;
-
-export interface IActivity {
-    id: string;
-    name: string;
-    startTime: number;
-    endTime: number;
-    hasStage: boolean;
-    isReplicate: boolean;
-}
-
-export type RetroActType = "SIDESTORY" | "BRANCHLINE" | string;
-
-export interface IRetroAct {
-    retroId: string;
-    name: string;
-    index: number;
-    startTime: number;
-    type: RetroActType;
-    linkedActId: string[];
-}

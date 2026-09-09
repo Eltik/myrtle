@@ -2,17 +2,13 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 
-export interface IRangeGrid {
-    col: number;
-    row: number;
-}
+// Generated from `backend/src/core/gamedata/types/range.rs`. To change a field,
+// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+import type { Grid } from "#/types/generated/Grid";
+import type { Range } from "#/types/generated/Range";
 
-export interface IRange {
-    id: string;
-    direction: number;
-    grids: IRangeGrid[];
-}
-
+export type IRangeGrid = Grid;
+export type IRange = Range;
 export type IRangesMap = Record<string, IRange>;
 
 export const getRangesFn = createServerFn({ method: "GET" }).handler(async () => {

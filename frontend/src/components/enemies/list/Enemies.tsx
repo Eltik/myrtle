@@ -7,6 +7,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
 import { enemiesExportSchema } from "#/lib/export";
+import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
 import { Pagination } from "../../operators/list/impl/components/Pagination";
 import { EnemyCardGrid } from "./impl/components/EnemyCardGrid";
@@ -23,7 +24,7 @@ export function EnemiesList() {
 
     const enriched = useMemo(() => {
         if (!handbook) return [] as IEnemyView[];
-        const list = Object.values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
+        const list = values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
         return enrichEnemies(list, handbook.raceData);
     }, [handbook]);
 
@@ -37,7 +38,7 @@ export function EnemiesList() {
             if (e.hideInHandbook) continue;
             for (const tag of e.enemyTags ?? []) present.add(tag);
         }
-        return Object.values(handbook.raceData)
+        return values(handbook.raceData)
             .filter((r) => present.has(r.id))
             .sort((a, b) => a.raceName.localeCompare(b.raceName))
             .map((r) => ({ id: r.id, label: r.raceName }));

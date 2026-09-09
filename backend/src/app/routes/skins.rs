@@ -5,6 +5,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
@@ -53,14 +54,18 @@ pub async fn get_owned_skins(
     Ok(Json(entries))
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinPopularityResponse {
     /// Number of users counted in the denominator - every user that has any
     /// skin record (i.e. has imported their data at least once).
+    #[ts(type = "number")]
     pub total_users: i64,
     /// Map of `skin_id` → number of owners. Only non-default skins (`skin_id`
     /// containing `@`) are included; absent IDs imply zero owners.
+    #[ts(type = "Record<string, number>")]
     pub counts: HashMap<String, i64>,
     pub computed_at: String,
 }

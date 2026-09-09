@@ -22,6 +22,7 @@ module.exports = {
                 WS_SERVER: "en",
                 WS_PORT: "9160",
                 WS_PROFILE: "full",
+                WS_THREADS: "2",
             },
         },
         {
@@ -35,6 +36,7 @@ module.exports = {
                 WS_SERVER: "cn",
                 WS_PORT: "9161",
                 WS_PROFILE: "operators",
+                WS_THREADS: "2",
             },
         },
     ],

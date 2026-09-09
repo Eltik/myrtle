@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 // ============================================================================
 // Nested Structs
@@ -7,6 +8,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Grid {
     pub row: i32,
     pub col: i32,
@@ -18,6 +21,8 @@ pub struct Grid {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Range {
     pub id: String,
     pub direction: i32,

@@ -29,6 +29,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// `rarityRank` is 0-indexed in this API: 5 is a 6★, 4 is a 5★.
 pub const RARITY_RANK_6: i32 = 5;
@@ -138,12 +139,15 @@ pub struct PerCharEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct WeightUpChar {
     #[serde(default)]
     pub char_id: String,
     #[serde(default)]
     pub rarity_rank: i32,
     #[serde(default)]
+    #[ts(type = "number")]
     pub weight: i64,
 }
 
@@ -198,6 +202,8 @@ pub struct GachaObjGroup {
 /// Per-rarity headline rate for a banner, flattened for the API.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RarityRate {
     pub rarity_rank: i32,
     pub total_percent: f64,

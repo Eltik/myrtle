@@ -12,6 +12,7 @@ use crate::database::queries::gacha::get_or_create_settings;
 use crate::database::queries::gacha::insert_batch;
 use crate::database::queries::gacha::update_gacha_flags;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use uuid::Uuid;
 
 /// Look up a `char_id`'s canonical rarity from game data. The Yostar API echoes a
@@ -98,6 +99,8 @@ impl GachaApiItem {
     }
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchResult {
@@ -105,10 +108,14 @@ pub struct FetchResult {
     pub new_records: usize,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GlobalGachaStats {
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub total_users: i64,
     pub six_star_rate: f64,
     pub five_star_rate: f64,
@@ -271,20 +278,32 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
 // Enhanced global stats (port from old backend)
 // ============================================
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CollectiveStats {
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub total_users: i64,
+    #[ts(type = "number")]
     pub total_six_stars: i64,
+    #[ts(type = "number")]
     pub total_five_stars: i64,
+    #[ts(type = "number")]
     pub total_four_stars: i64,
+    #[ts(type = "number")]
     pub total_three_stars: i64,
     /// Unix seconds. None when the corpus is empty.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(type = "number | null")]
     pub first_pull_at: Option<i64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PullRates {
@@ -292,49 +311,66 @@ pub struct PullRates {
     pub five_star_rate: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorPopularity {
     pub char_id: String,
     pub char_name: String,
     pub rarity: i16,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HourlyPullData {
     pub hour: i32,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DayOfWeekPullData {
     pub day: i32,
     pub day_name: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DatePullData {
     pub date: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PullTimingData {
     pub by_hour: Vec<HourlyPullData>,
     pub by_day_of_week: Vec<DayOfWeekPullData>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub by_date: Option<Vec<DatePullData>>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaEnhancedStats {
@@ -343,6 +379,7 @@ pub struct GachaEnhancedStats {
     pub most_common_operators: Vec<OperatorPopularity>,
     pub average_pulls_to_six_star: f64,
     pub average_pulls_to_five_star: f64,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pull_timing: Option<PullTimingData>,
     pub computed_at: String,
@@ -592,13 +629,19 @@ pub async fn get_enhanced_stats(
     Ok(result)
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BannerPullStat {
     pub pool_id: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
+    #[ts(type = "number")]
     pub six_star_count: i64,
+    #[ts(type = "number")]
     pub five_star_count: i64,
+    #[ts(type = "number")]
     pub user_count: i64,
 }
 
@@ -681,6 +724,8 @@ pub async fn get_stats(state: &AppState, user_id: Uuid) -> Result<GachaStats, Ap
 // Port: GachaRecords (grouped) + history envelope + settings
 // ============================================
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Clone)]
 pub struct GachaRecordEntryDto {
     pub id: String,
@@ -696,6 +741,7 @@ pub struct GachaRecordEntryDto {
     #[serde(rename = "gachaType")]
     pub gacha_type: String,
     #[serde(rename = "pullTimestamp")]
+    #[ts(type = "number")]
     pub pull_timestamp: i64,
     #[serde(rename = "pullTimestampStr")]
     pub pull_timestamp_str: Option<String>,
@@ -718,6 +764,8 @@ impl From<GachaRecord> for GachaRecordEntryDto {
 }
 
 /// `GachaItem` shape expected by the frontend (camelCase/star-as-string).
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize, Clone)]
 pub struct GachaItemDto {
     #[serde(rename = "charId")]
@@ -732,6 +780,7 @@ pub struct GachaItemDto {
     pub pool_name: String,
     #[serde(rename = "typeName")]
     pub type_name: String,
+    #[ts(type = "number")]
     pub at: i64,
     #[serde(rename = "atStr")]
     pub at_str: String,
@@ -754,6 +803,8 @@ impl From<&GachaRecord> for GachaItemDto {
     }
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct GachaTypeRecordsDto {
     pub gacha_type: &'static str,
@@ -761,6 +812,8 @@ pub struct GachaTypeRecordsDto {
     pub total: usize,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct GachaRecordsDto {
     pub limited: GachaTypeRecordsDto,
@@ -815,15 +868,20 @@ pub async fn get_stored_records(
     })
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct GachaPaginationInfoDto {
     pub limit: u32,
     pub offset: u32,
+    #[ts(type = "number")]
     pub total: i64,
     #[serde(rename = "hasMore")]
     pub has_more: bool,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct HistoryFiltersAppliedDto {
     pub rarity: Option<i16>,
@@ -835,12 +893,18 @@ pub struct HistoryFiltersAppliedDto {
     pub date_range: Option<DateRangeDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct DateRangeDto {
+    #[ts(type = "number | null")]
     pub from: Option<i64>,
+    #[ts(type = "number | null")]
     pub to: Option<i64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct GachaHistoryEnvelopeDto {
     pub records: Vec<GachaRecordEntryDto>,
@@ -918,13 +982,18 @@ pub async fn get_history_for_char(
 // Settings
 // ============================================
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct GachaSettingsDto {
     pub user_id: String,
     pub store_records: bool,
     pub share_anonymous_stats: bool,
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub six_star_count: i64,
+    #[ts(type = "number")]
     pub five_star_count: i64,
     pub last_sync_at: Option<String>,
 }

@@ -14,7 +14,7 @@ export function OperatorDetail() {
 
     if (!operator) return null;
     return (
-        <div className="relative min-h-screen w-full min-w-0 overflow-x-clip">
+        <div className="relative mx-auto min-h-screen w-full min-w-0 max-w-6xl overflow-x-clip">
             <OperatorHero operator={operator} />
             <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-6xl px-3 pb-16 sm:px-4 md:px-8">
                 <OperatorFormSwitcher operator={operator} />

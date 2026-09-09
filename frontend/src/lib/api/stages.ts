@@ -2,7 +2,8 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
-import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap, StageDifficulty } from "#/types/stages";
+import type { StageIndexEntry } from "#/types/generated/StageIndexEntry";
+import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
 import { optionalSiteToken } from "./_shared.server";
 import type { IEnemy } from "./enemies";
 import type { ILevel } from "./level";
@@ -120,31 +121,10 @@ export function stagesQueryOptions() {
 /**
  * One browsable stage in the Stage List, precomputed by the backend across all
  * game modes (story / events / SSS / Annihilation / IS / RA / CC / Paradox).
+ *
+ * Generated from `backend/src/core/gamedata/types/stage_index.rs`.
  */
-export interface IStageIndexEntry {
-    /** `stage_table` id, or the level file's relative id for procedural nodes. */
-    stageId: string;
-    levelId?: string | null;
-    code: string;
-    name?: string | null;
-    zoneId: string;
-    zoneName?: string | null;
-    /** Sort key within a group - episode number for story, else zone index. */
-    zoneOrder: number;
-    /** Fine group: story / events / annihilation / is / ra / sss / paradox / cc / supplies / other. */
-    group: string;
-    category: string;
-    apCost: number;
-    boss: boolean;
-    isHard: boolean;
-    difficulty: StageDifficulty;
-    /** Whether the stage detail / map viewer can render it (level file exists). */
-    canView: boolean;
-    /** Asset-relative path to the stage map preview (under `/api/assets/`), or null. */
-    preview?: string | null;
-    /** Asset-relative path to the zone/event banner key-art, or null. */
-    banner?: string | null;
-}
+export type IStageIndexEntry = StageIndexEntry;
 
 /** Absolute URL for a backend asset-relative path (e.g. a stage preview). */
 export function assetURL(path: string): string {
@@ -163,8 +143,9 @@ export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; z
             stageId: e.stageId,
             zoneId: e.zoneId,
             code: e.code,
-            name: e.name ?? undefined,
-            levelId: e.levelId ?? undefined,
+            name: e.name,
+            description: null,
+            levelId: e.levelId,
             stageType: "ACTIVITY",
             difficulty: e.difficulty,
             apCost: e.apCost,
@@ -173,17 +154,29 @@ export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; z
             canMultipleBattle: false,
             isStoryOnly: false,
             isPredefined: false,
+            dangerLevel: null,
             dangerPoint: 0,
             expGain: 0,
             goldGain: 0,
+            appearanceStyle: null,
+            hardStagedId: null,
+            mainStageId: null,
             unlockCondition: [],
+            loadingPicId: null,
             bossMark: e.boss,
+            stageDropInfo: null,
         },
         zone: {
             zoneId: e.zoneId,
             zoneIndex: e.zoneOrder,
             type: "ACTIVITY",
-            zoneNameSecond: e.zoneName ?? undefined,
+            zoneNameFirst: null,
+            zoneNameSecond: e.zoneName,
+            zoneNameTitleCurrent: null,
+            zoneNameTitleUnCurrent: null,
+            zoneNameTitleEx: null,
+            zoneNameThird: null,
+            lockedText: null,
             canPreview: false,
             hasAdditionalPanel: false,
         },

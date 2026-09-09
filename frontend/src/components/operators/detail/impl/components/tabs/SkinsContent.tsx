@@ -8,6 +8,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { chibiByOperatorQueryOptions, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
 import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
+import { values } from "#/lib/records";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
@@ -28,7 +29,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
         // For Amiya, every skin's `charId` is the base; `tmplId` identifies
         // the form. Match by tmplId when present so each form only shows its
         // own skins. Falls back to charId for regular operators.
-        const operatorSkins: ISkin[] = Object.values(charSkins).filter((s) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id));
+        const operatorSkins: ISkin[] = values(charSkins).filter((s) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id));
         return buildOperatorSkinList({
             skinsFromBackend: operatorSkins,
             operatorId: operator.id ?? "",

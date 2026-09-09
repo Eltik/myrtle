@@ -8,10 +8,13 @@
 
 use serde::Serialize;
 use std::collections::HashMap;
+use ts_rs::TS;
 
 /// A single appearance of an enemy in a stage.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct EnemyStageRef {
     pub stage_id: String,
     /// Human-readable code, e.g. "0-1", "WD-8".

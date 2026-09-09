@@ -3,6 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
@@ -18,6 +19,8 @@ pub struct StageClearsParams {
     pub uid: Option<String>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Serialize)]
 pub struct StageClearDto {
     pub state: i16,

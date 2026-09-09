@@ -1,32 +1,16 @@
 /** Type contracts for the operator-build calculators. */
 
+// The two response shapes are generated from `backend/src/app/services/dps.rs`.
+// The request/config types below have no Rust counterpart - they are
+// deserialize-only on the backend - so they stay hand-written.
+import type { ConditionalInfo } from "#/types/generated/ConditionalInfo";
+import type { OperatorListEntry } from "#/types/generated/OperatorListEntry";
+
 /** One conditional toggle exposed by an operator (trait/talent/skill/module). */
-export interface IConditionalInfo {
-    /** One of: "trait", "talent", "talent2", "skill", "module". */
-    conditionalType: string;
-    name: string;
-    /** Recommended default - match this when initialising the form. */
-    default: boolean;
-    /** Skill indices (1-indexed) where this conditional applies. Empty = all. */
-    skills: number[];
-    /** Module indices where this conditional applies. Empty = all. */
-    modules: number[];
-}
+export type IConditionalInfo = ConditionalInfo;
 
 /** One row from a `/{dps,hps}/operators` listing. */
-export interface IOperatorListEntry {
-    id: string;
-    name: string;
-    availableSkills: number[];
-    availableModules: number[];
-    /** `uniEquipId` for each entry of `availableModules`, same index. Lets a
-     *  module number be resolved to the module the engine actually simulates
-     *  instead of being counted off against a separately-fetched list. */
-    availableModuleIds?: string[];
-    defaultSkill: number;
-    defaultModule: number;
-    conditionals: IConditionalInfo[];
-}
+export type IOperatorListEntry = OperatorListEntry;
 
 /** External buffs applied on top of the operator's own stats. */
 export interface ICalcBuffs {

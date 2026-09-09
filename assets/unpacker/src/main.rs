@@ -231,6 +231,18 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     pb.finish_with_message("done");
     let total = exported.load(Ordering::Relaxed);
     println!("Exported {total} assets");
+    let duplicates = spine::duplicate_count();
+    if duplicates > 0 {
+        println!("{duplicates} skeleton path(s) written twice with identical bytes");
+    }
+    let collisions = spine::collision_count();
+    if collisions > 0 {
+        // Two assets resolved to one skeleton path with different bytes. The first was kept
+        // and the second skipped (see the COLLISION lines), so the export is incomplete and
+        // must not be installed as if it were whole.
+        eprintln!("{collisions} skeleton path collision(s): the export is incomplete");
+        std::process::exit(1);
+    }
     if extract_spine {
         // Regenerate the derived card placement fields into the fresh scene JSONs so an
         // install of this export cannot silently revert fielded cards to square.

@@ -16,6 +16,7 @@ import { SPACING, TILE_SIZE } from "./impl/util/geometry";
 import "./impl/effects.css";
 import "./impl/tiles.css";
 import "./impl/routes.css";
+import { entries, type SparseRecord } from "#/lib/records";
 import { Board } from "./view/Board";
 import type { IChibiWalker } from "./view/ChibiLayer";
 import { DynamicChibiLayer } from "./view/ChibiLayer.lazy";
@@ -70,7 +71,7 @@ export interface IMapViewHandle {
 /** Resolves an enemy's stage-effective stats for the hover tooltip. */
 type StatsForFn = (id: string, enemy: IEnemy | null) => IStageEnemyStats | null;
 
-export const MapView = forwardRef<IMapViewHandle, { level: ILevel | null; code?: string; settings?: IMapSettings; onSettingsChange?: (next: IMapSettings) => void; enemyData?: Record<string, IEnemy>; statsFor?: StatsForFn }>(function MapView(
+export const MapView = forwardRef<IMapViewHandle, { level: ILevel | null; code?: string; settings?: IMapSettings; onSettingsChange?: (next: IMapSettings) => void; enemyData?: SparseRecord<IEnemy>; statsFor?: StatsForFn }>(function MapView(
     { level, code, settings = DEFAULT_MAP_SETTINGS, onSettingsChange, enemyData, statsFor },
     ref,
 ) {
@@ -78,7 +79,7 @@ export const MapView = forwardRef<IMapViewHandle, { level: ILevel | null; code?:
     return <MapBoard ref={ref} code={code} enemyData={enemyData} level={level} onSettingsChange={onSettingsChange} settings={settings} statsFor={statsFor} />;
 });
 
-const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; settings: IMapSettings; onSettingsChange?: (next: IMapSettings) => void; enemyData?: Record<string, IEnemy>; statsFor?: StatsForFn }>(function MapBoard({ level, code, settings, onSettingsChange, enemyData, statsFor }, ref) {
+const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; settings: IMapSettings; onSettingsChange?: (next: IMapSettings) => void; enemyData?: SparseRecord<IEnemy>; statsFor?: StatsForFn }>(function MapBoard({ level, code, settings, onSettingsChange, enemyData, statsFor }, ref) {
     const width = level.mapData.map[0].length;
     const height = level.mapData.map.length;
 
@@ -102,7 +103,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
     const speedByKey = useMemo(() => {
         const mult = level.options?.moveMultiplier ?? 1;
         const map = new Map<string, number>();
-        for (const [id, e] of Object.entries(enemyData ?? {})) {
+        for (const [id, e] of entries(enemyData)) {
             const ms = e.stats?.levels?.[0]?.attributes?.moveSpeed;
             if (ms != null) map.set(id, Math.max(10, ms * mult * SPEED_SCALE));
         }

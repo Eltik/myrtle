@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use super::voice::LangType;
 
@@ -41,6 +42,8 @@ pub struct RawSound {
 /// frontend can group an operator's clips without parsing bank names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub enum AudioCategory {
     /// `ON_UNIT_BORN` - deployment / spawn sound.
     Deploy,
@@ -60,6 +63,8 @@ pub enum AudioCategory {
 /// on-disk files (weighted random variations, e.g. `b_char_kong`, `_1`, `_2`).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct AudioSound {
     /// Original logical asset path from `audio_data.json`.
     pub asset: String,
@@ -70,6 +75,8 @@ pub struct AudioSound {
 /// A single operator-linked `SoundFX` bank, resolved to playable URLs.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct OperatorAudio {
     /// Full bank name, e.g. `battle.ON_UNIT_BORN.char_101_sora`.
     pub bank_name: String,
@@ -77,12 +84,15 @@ pub struct OperatorAudio {
     pub event: String,
     pub category: AudioCategory,
     /// Skill id when the bank is keyed by `skchr_`/`tachr_`, e.g. `skchr_sora_2`.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skill_id: Option<String>,
     /// Skill slot (1/2/3) parsed from the skill id, when present.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skill_slot: Option<u8>,
     /// Language of a voice bark, from the `@LANG` suffix or the `Voice_XX` dir.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<LangType>,
     pub sounds: Vec<AudioSound>,

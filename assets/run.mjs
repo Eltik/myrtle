@@ -287,10 +287,81 @@ function outputMissingOrEmpty(outputDir) {
 	return !existsSync(join(outputDir, "gamedata"));
 }
 
-/** Touch the extraction timestamp file after a successful unpack. */
-function touchExtractStamp(savedir) {
+/**
+ * Record a successful unpack: timestamp plus the number of files the unpacker
+ * said it exported.
+ *
+ * The count is what makes a TRUNCATED extract detectable. `outputMissingOrEmpty`
+ * only checks that the output dir is non-empty and `gamedata/` exists, so a run
+ * killed partway (the unpacker has been OOM-killed on a 10 GiB box more than
+ * once) leaves a half-written tree that looks complete forever — that is how one
+ * region sat for weeks missing thousands of textures and audio files with no
+ * error anywhere.
+ *
+ * @param {string} savedir
+ * @param {number} [exported] files reported by the unpacker
+ */
+function touchExtractStamp(savedir, exported) {
 	mkdirSync(savedir, { recursive: true });
-	writeFileSync(join(savedir, ".last_extract"), new Date().toISOString(), "utf-8");
+	const payload = { at: new Date().toISOString(), exported: exported ?? null };
+	writeFileSync(join(savedir, ".last_extract"), JSON.stringify(payload), "utf-8");
+}
+
+/**
+ * Count files actually present under `outputDir`, for comparison against the
+ * `exported` figure recorded by the last successful unpack.
+ *
+ * @param {string} dir
+ * @returns {number}
+ */
+function countFiles(dir) {
+	let total = 0;
+	const stack = [dir];
+	while (stack.length > 0) {
+		const current = stack.pop();
+		let entries;
+		try {
+			entries = readdirSync(current, { withFileTypes: true });
+		} catch {
+			continue;
+		}
+		for (const entry of entries) {
+			if (entry.isDirectory()) stack.push(join(current, entry.name));
+			else total++;
+		}
+	}
+	return total;
+}
+
+/**
+ * True when the tree holds materially fewer files than the last successful
+ * extract reported. Tolerates a small shortfall so a handful of pruned or
+ * renamed outputs doesn't trigger a pointless multi-hour re-extract.
+ *
+ * @param {string} savedir
+ * @param {string} outputDir
+ * @returns {boolean}
+ */
+function outputLooksTruncated(savedir, outputDir) {
+	let expected;
+	try {
+		const raw = JSON.parse(readFileSync(join(savedir, ".last_extract"), "utf-8"));
+		expected = typeof raw?.exported === "number" ? raw.exported : null;
+	} catch {
+		return false; // no stamp, or the old plain-timestamp format
+	}
+	if (!expected) return false;
+
+	const actual = countFiles(outputDir);
+	const TOLERANCE = 0.98;
+	if (actual >= Math.floor(expected * TOLERANCE)) return false;
+
+	console.log(
+		chalk.yellow(
+			`Output looks truncated: ${actual} files on disk vs ${expected} exported at the last successful unpack`,
+		),
+	);
+	return true;
 }
 
 function binariesExist() {
@@ -975,7 +1046,10 @@ async function runUpdate() {
 
 	const assetsUpToDate = storedVer === serverVer.resVersion;
 	const needsReextract =
-		assetsUpToDate && (unpackerIsNewer(savedir) || outputMissingOrEmpty(outputDir));
+		assetsUpToDate &&
+		(unpackerIsNewer(savedir) ||
+			outputMissingOrEmpty(outputDir) ||
+			outputLooksTruncated(savedir, outputDir));
 
 	if (assetsUpToDate && !needsReextract) {
 		console.log(
@@ -1089,8 +1163,9 @@ async function runUpdate() {
 
 	// Unpack phase
 	const upSpinner = ora("Extracting assets…").start();
+	let upStats;
 	try {
-		const upStats = await runUnpack({
+		upStats = await runUnpack({
 			inputDir: savedir,
 			outputDir,
 			jobs: threads,
@@ -1110,7 +1185,7 @@ async function runUpdate() {
 	if (!assetsUpToDate) {
 		writeStoredVersion(savedir, serverVer.resVersion);
 	}
-	touchExtractStamp(savedir);
+	touchExtractStamp(savedir, upStats?.exported);
 
 	const msg = needsReextract
 		? `Re-extracted with updated unpacker (${serverVer.resVersion})`
@@ -1353,7 +1428,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			// Update stored version and extraction timestamp
 			const serverVer = await fetchServerVersion(config.serverKey);
 			writeStoredVersion(config.savedir, serverVer.resVersion);
-			touchExtractStamp(config.savedir);
+			touchExtractStamp(config.savedir, upStats.exported);
 			currentVersion = serverVer.resVersion;
 
 			currentState = "idle";
@@ -1391,7 +1466,9 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			currentState = "idle";
 
 			const needsReextract =
-				unpackerIsNewer(config.savedir) || outputMissingOrEmpty(config.outputDir);
+				unpackerIsNewer(config.savedir) ||
+				outputMissingOrEmpty(config.outputDir) ||
+				outputLooksTruncated(config.savedir, config.outputDir);
 			if (storedVer === serverVer.resVersion && !needsReextract) {
 				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Up to date (${storedVer})`));
 				broadcast(statusMessage());

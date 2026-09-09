@@ -1,19 +1,24 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::gacha_detail::{RarityRate, WeightUpChar};
 use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct GachaPoolClient {
     #[serde(alias = "GachaPoolId")]
     pub gacha_pool_id: String,
     #[serde(alias = "GachaIndex")]
     pub gacha_index: i32,
     #[serde(alias = "OpenTime")]
+    #[ts(type = "number")]
     pub open_time: i64,
     #[serde(alias = "EndTime")]
+    #[ts(type = "number")]
     pub end_time: i64,
     #[serde(alias = "GachaPoolName")]
     pub gacha_pool_name: String,
@@ -81,6 +86,8 @@ pub struct GachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct NewbeeGachaPoolClient {
     #[serde(alias = "GachaPoolId")]
     pub gacha_pool_id: String,
@@ -100,6 +107,8 @@ pub struct NewbeeGachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct GachaTag {
     #[serde(alias = "TagId")]
     pub tag_id: i32,
@@ -111,6 +120,8 @@ pub struct GachaTag {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RecruitTimeEntry {
     #[serde(alias = "RecruitPrice")]
     pub recruit_price: i32,
@@ -118,6 +129,8 @@ pub struct RecruitTimeEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RecruitPool {
     #[serde(alias = "RecruitTimeTable")]
     pub recruit_time_table: Vec<RecruitTimeEntry>,
@@ -126,6 +139,8 @@ pub struct RecruitPool {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct RecruitRarityEntry {
     #[serde(alias = "RarityStart")]
     pub rarity_start: i32,
@@ -135,6 +150,8 @@ pub struct RecruitRarityEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct GachaData {
     pub gacha_pool_client: Vec<GachaPoolClient>,
     pub newbee_gacha_pool_client: Vec<NewbeeGachaPoolClient>,
@@ -143,7 +160,9 @@ pub struct GachaData {
     pub recruit_pool: RecruitPool,
     pub potential_material_converter: serde_json::Value,
     pub classic_potential_material_converter: serde_json::Value,
+    #[ts(as = "HashMap<String, RecruitRarityEntry>")]
     pub recruit_rarity_table: HashMap<i32, RecruitRarityEntry>,
+    #[ts(as = "HashMap<String, Vec<i32>>")]
     pub special_tag_rarity_table: HashMap<i32, Vec<i32>>,
     pub recruit_detail: String,
     pub show_gacha_log_entry: bool,
@@ -154,11 +173,14 @@ pub struct GachaData {
     pub normal_gacha_item: Vec<serde_json::Value>,
     pub fes_gacha_pool_relate_item: HashMap<String, FesGachaPoolRelateEntry>,
     pub dic_recruit6_star_hint: HashMap<String, String>,
+    #[ts(as = "HashMap<String, f64>")]
     pub special_gacha_percent_dict: HashMap<i32, f64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FesGachaPoolRelateEntry {
     #[serde(alias = "RarityRank5ItemId")]
     pub rarity_rank5_item_id: String,

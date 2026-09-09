@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     core::gamedata::types::{
@@ -168,6 +169,8 @@ fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
 
 /// The investment axes an operator is scored on. Which axes apply varies per
 /// operator (no advanced modules → no `Module` dimension, etc.).
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DimensionKind {
@@ -255,6 +258,8 @@ fn build_dimensions(
 /// One row of the roster-wide operator score breakdown: how much of the
 /// Operators subscore a dimension is worth, and how much of that worth the
 /// user has earned.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ScoreDimension {
     pub kind: DimensionKind,
@@ -538,6 +543,8 @@ fn log_curve_ratio(t: f64) -> f64 {
 /// All deltas are reported as non-negative - if simulating the milestone would
 /// somehow not improve the score (shouldn't happen with the current model,
 /// but defensive), the delta is clamped to 0.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct UpgradeDelta {
     /// Tag from `OperatorGap.missing`, e.g. "ELITE", "M3", "MOD3", "TRUST".

@@ -13,6 +13,12 @@ use super::texture::decode_texture_object;
 pub enum SpineCategory {
     BattleFront,
     BattleBack,
+    /// The third battle facing: a skeleton hung off a GameObject the game names `Down`, a
+    /// sibling of `Front` and `Back` under the prefab's `FaceSwitcher`, with its own muzzle
+    /// and special points (three token skins carry one: Ironmn's pile3, Radian's tower2 and
+    /// tower3, EN census 2026-09-09 over 917 bundles). Without this category it fell to the
+    /// atlas heuristic, landed in `BattleFront` and raced the real Front for one path.
+    BattleDown,
     Building,
     DynIllust,
     Enemy,
@@ -23,6 +29,7 @@ impl fmt::Display for SpineCategory {
         match self {
             Self::BattleFront => write!(f, "BattleFront"),
             Self::BattleBack => write!(f, "BattleBack"),
+            Self::BattleDown => write!(f, "BattleDown"),
             Self::Building => write!(f, "Building"),
             Self::DynIllust => write!(f, "DynIllust"),
             Self::Enemy => write!(f, "Enemy"),
@@ -842,11 +849,17 @@ pub fn collect_spine_assets(
     let mut assets = Vec::new();
 
     // Find SkeletonMecanim MonoBehaviours (class_id=114 with skeletonDataAsset field)
-    let skeleton_mecanims: Vec<(i64, &Value)> = all_objects
+    let mut skeleton_mecanims: Vec<(i64, &Value)> = all_objects
         .iter()
         .filter(|(_, (class_id, val))| *class_id == 114 && val.get("skeletonDataAsset").is_some())
         .map(|(pid, (_, val))| (*pid, val))
         .collect();
+    // `all_objects` is a HashMap, so its order changes from one process to the next. Sort
+    // by path id so two exports of one bundle write the same thing in the same order. This
+    // buys reproducibility only: two skeletons that resolve to one output path are still a
+    // defect, and one sorted order would just make the same wrong one win every time, which
+    // is why `export_spine_assets` also refuses the second write.
+    skeleton_mecanims.sort_by_key(|(pid, _)| *pid);
 
     for (mecanim_pid, mecanim_val) in &skeleton_mecanims {
         // Get _animationName for classification
@@ -5294,12 +5307,18 @@ fn follow_skeleton_data(
 /// Classify a spine asset into a category.
 ///   1. skel name starts with "dyn_" → `DynIllust`
 ///   2. _animationName == "Relax" OR skel name starts with "build_" → Building
-///   3. owning `GameObject` named "Front"/"Back" → `BattleFront`/`BattleBack`
+///   3. owning `GameObject` named "Front"/"Back"/"Down" → `BattleFront`/`BattleBack`/`BattleDown`
 ///   4. fallback: atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
 ///
 /// Step 3 is required for correctness: front and back battle skeletons often
 /// share a single atlas (e.g. `char_1048_orchd2`), so the atlas heuristic
-/// classifies both the same way and one overwrites the other on export.
+/// classifies both the same way and one overwrites the other on export. `Down` is the
+/// same failure with a third name: the EN census of owning GameObject names (2026-09-09,
+/// 917 bundles, 2947 behaviours) reads Front, Back, Down, `Spine` (building, caught by
+/// step 2) and `res_holder` plus the dynchar roots (caught by step 1), nothing else, so
+/// step 3 now names the whole battle set. A name step 3 does not know still falls to
+/// step 4, and `export_spine_assets` refuses to overwrite a path written earlier in the
+/// run, so the next unknown name is reported rather than silently winning.
 fn classify_spine(
     skel_name: &str,
     anim_name: &str,
@@ -5325,6 +5344,9 @@ fn classify_spine(
     if game_object_name.eq_ignore_ascii_case("back") {
         return SpineCategory::BattleBack;
     }
+    if game_object_name.eq_ignore_ascii_case("down") {
+        return SpineCategory::BattleDown;
+    }
 
     // 4. Fallback: front vs back based on atlas region prefixes
     let atlas_lower = atlas_text.to_lowercase();
@@ -5345,6 +5367,48 @@ fn classify_spine(
 /// then derives its own directory from its skel name via [`enemy_dir_name`],
 /// grouping form variants (`enemy_1000_gopro_2`) under the base enemy id.
 #[must_use]
+/// Every skeleton path this process has written, with a hash of its bytes, so a second
+/// asset resolving to the same path is detected instead of silently overwriting the first
+/// (in one bundle through iteration order, or across two bundles through the parallel walk).
+static WRITTEN_SKELS: std::sync::LazyLock<std::sync::Mutex<HashMap<std::path::PathBuf, (u64, usize)>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+static COLLISIONS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static DUPLICATES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+enum OutputClaim {
+    /// First write of this path in the run.
+    New,
+    /// The path was written with these exact bytes already.
+    Duplicate,
+    /// The path was written with different bytes; carries the kept file's byte count.
+    Conflict(usize),
+}
+
+fn claim_output_path(path: &Path, bytes: &[u8]) -> OutputClaim {
+    let hash = fnv1a64(bytes);
+    let mut written = WRITTEN_SKELS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    match written.get(path) {
+        Some((h, len)) if *h == hash && *len == bytes.len() => OutputClaim::Duplicate,
+        Some((_, len)) => OutputClaim::Conflict(*len),
+        None => {
+            written.insert(path.to_path_buf(), (hash, bytes.len()));
+            OutputClaim::New
+        }
+    }
+}
+
+/// Skeleton paths a second asset tried to overwrite with different bytes this run.
+#[must_use]
+pub fn collision_count() -> usize {
+    COLLISIONS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Skeleton paths written twice with identical bytes this run.
+#[must_use]
+pub fn duplicate_count() -> usize {
+    DUPLICATES.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn export_spine_assets(
     spine_assets: &[SpineAsset],
     output_dir: &Path,
@@ -5367,8 +5431,28 @@ pub fn export_spine_assets(
             continue;
         }
 
-        // Write skel
+        // Write skel. A path already written in this run is never overwritten: a second
+        // skeleton resolving to it means the category rules did not tell two assets apart,
+        // and letting iteration order pick the survivor is how three token skins shipped a
+        // random facing (the `Down` race, 2026-09-09). Identical bytes are a harmless
+        // duplicate and are counted; different bytes are a collision, reported, skipped, and
+        // fatal to the run's exit status (main.rs reads `collision_count`).
         let skel_path = spine_dir.join(format!("{}.skel", asset.name));
+        match claim_output_path(&skel_path, &asset.skel_data) {
+            OutputClaim::Conflict(kept) => {
+                COLLISIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                eprintln!(
+                    "COLLISION {}: a second skeleton ({} bytes) resolves to a path already written this run ({kept} bytes, kept); not written. classify_spine must name what tells them apart.",
+                    skel_path.display(),
+                    asset.skel_data.len()
+                );
+                continue;
+            }
+            OutputClaim::Duplicate => {
+                DUPLICATES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
+            OutputClaim::New => {}
+        }
         if std::fs::write(&skel_path, &asset.skel_data).is_ok() {
             count += 1;
         }

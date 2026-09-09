@@ -17,13 +17,21 @@
 use std::collections::HashMap;
 
 use crate::core::gamedata::types::building::BuildingDataFile;
+use serde::Serialize;
+use ts_rs::TS;
 
 use super::assignment::{CcBonusAccumulator, CcCondition, cc_bonuses, compute_team_efficiency};
 use super::buff_registry::BuffResolutionStrategy;
 use super::types::{OperatorBaseProfile, compute_match_tags};
 
 /// How a zero-marginal line should be read.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+///
+/// Serialized straight into `SkillLineDto`, so the generated TS binding is a
+/// union rather than a bare `string` — the frontend switches on these values.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+#[derive(TS)]
+#[ts(export)]
 pub enum LineDisposition {
     /// Non-zero marginal: this line is part of the room's number.
     Contributes,
@@ -38,8 +46,10 @@ pub enum LineDisposition {
     /// their breakdowns), never on the CC row itself.
     PerRoom,
     /// Moves morale/drain (the sustain sim), not room efficiency.
+    #[serde(rename = "morale")]
     MoraleOnly,
     /// Moves the order/stock capacity, not the speed number shown.
+    #[serde(rename = "capacity")]
     CapacityOnly,
     /// Non-production Control-Center value (clue/training/HR) — reported in
     /// the room's `non_production` block, not its efficiency.

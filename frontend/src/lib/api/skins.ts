@@ -1,49 +1,29 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+// Generated from `backend/src/core/gamedata/types/skin.rs`. To change a field,
+// edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
+import type { BattleSkin } from "#/types/generated/BattleSkin";
+import type { Brand } from "#/types/generated/Brand";
+import type { DisplaySkin } from "#/types/generated/DisplaySkin";
+import type { EnrichedSkin } from "#/types/generated/EnrichedSkin";
+import type { Skin } from "#/types/generated/Skin";
+import type { SkinData } from "#/types/generated/SkinData";
+import type { SkinImages } from "#/types/generated/SkinImages";
+import type { SkinPopularityResponse } from "#/types/generated/SkinPopularityResponse";
+import type { SpecialSkinInfo } from "#/types/generated/SpecialSkinInfo";
+import type { TokenSkinMapEntry } from "#/types/generated/TokenSkinMapEntry";
 import { optionalSiteToken } from "./_shared.server";
 
-export interface IDisplaySkin {
-    skinName: string | null;
-    colorList: string[];
-    titleList: string[];
-    modelName: string;
-    drawerList: string[];
-    designerList: string[] | null;
-    skinGroupId: string;
-    skinGroupName: string;
-    skinGroupSortIndex: number;
-    content: string;
-    dialog: string | null;
-    usage: string | null;
-    description: string | null;
-    obtainApproach: string | null;
-    sortId: number;
-    displayTagId: string | null;
-    getTime: number;
-    onYear: number;
-    onPeriod: number;
-}
-
-export interface ISkin {
-    skinId: string;
-    charId: string;
-    /** Template id (form) the skin belongs to. For Amiya, `charId` is always
-     *  the base `char_002_amiya` and `tmplId` identifies the specific form. */
-    tmplId: string | null;
-    illustId: string;
-    portraitId: string;
-    avatarId: string;
-    buildingId: string | null;
-    isBuySkin: boolean;
-    voiceId: string | null;
-    voiceType: string;
-    displaySkin: IDisplaySkin;
-}
-
-export interface ISkinDataResponse {
-    charSkins: Record<string, ISkin>;
-}
+export type IDisplaySkin = DisplaySkin;
+export type ISkin = Skin;
+export type ISkinDataResponse = SkinData;
+export type IBattleSkin = BattleSkin;
+export type ITokenSkinMapEntry = TokenSkinMapEntry;
+export type ISpecialSkinInfo = SpecialSkinInfo;
+export type IBrand = Brand;
+export type ISkinImages = SkinImages;
+export type IEnrichedSkin = EnrichedSkin;
 
 /** The slim per-skin projection served by `GET /skins/index` - exactly the field
  *  set the profile Stats tab and its skin-collection dialog read, over ALL skins. */
@@ -135,11 +115,7 @@ export function userSkinsQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
-export interface ISkinPopularity {
-    totalUsers: number;
-    counts: Record<string, number>;
-    computedAt: string;
-}
+export type ISkinPopularity = SkinPopularityResponse;
 
 export const getSkinPopularityFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/skins/popularity");

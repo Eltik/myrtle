@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 // ============================================================================
 // Nested Structs
@@ -6,6 +7,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FavorFrameData {
     #[serde(alias = "FavorPoint")]
     pub favor_point: i32,
@@ -17,6 +20,8 @@ pub struct FavorFrameData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FavorFrame {
     #[serde(alias = "Level")]
     pub level: i32,
@@ -30,6 +35,8 @@ pub struct FavorFrame {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Favor {
     #[serde(alias = "MaxFavor")]
     pub max_favor: i32,

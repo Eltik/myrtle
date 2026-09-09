@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { checkSample, firstValue, voiceContract } from "#/lib/api/contract";
 import { backendFetch } from "#/lib/fetch";
 import type { IVoices } from "#/types/voices";
 
@@ -8,7 +9,9 @@ export const getVoicesFn = createServerFn({ method: "GET" })
     .handler(async ({ data: server }) => {
         const res = await backendFetch(server === "cn" ? "/cn/static/voices" : "/static/voices");
         if (!res.ok) throw new Error(`Failed to load voices: ${res.status}`);
-        return (await res.json()) as IVoices;
+        const payload = (await res.json()) as IVoices;
+        checkSample("static/voices", voiceContract, firstValue(payload.charWords));
+        return payload;
     });
 
 export function voicesQueryOptions(server: "en" | "cn" = "en") {
@@ -27,7 +30,9 @@ export const getOperatorVoicesFn = createServerFn({ method: "GET" })
         const prefix = server === "cn" ? "/cn" : "";
         const res = await backendFetch(`${prefix}/voices/${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error(`Failed to load operator voices: ${res.status}`);
-        return (await res.json()) as IVoices;
+        const payload = (await res.json()) as IVoices;
+        checkSample("voices/:id", voiceContract, firstValue(payload.charWords));
+        return payload;
     });
 
 export function operatorVoicesQueryOptions(id: string, server: "en" | "cn" = "en") {

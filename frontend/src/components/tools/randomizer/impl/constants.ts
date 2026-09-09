@@ -15,6 +15,8 @@ export const CLASS_LABEL: Record<OperatorProfession, string> = {
     SPECIAL: "Specialist",
     TOKEN: "Token",
     TRAP: "Trap",
+    // `#[serde(other)]` fallback: a class this build does not name yet.
+    UNKNOWN: "Unknown",
 };
 
 /** Operators that are not playable through normal gameplay (event-only, support-only, etc.). */

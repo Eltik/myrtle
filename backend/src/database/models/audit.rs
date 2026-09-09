@@ -3,9 +3,13 @@ use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
+use ts_rs::TS;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct AuditLogEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub table_name: String,
     pub record_id: String,

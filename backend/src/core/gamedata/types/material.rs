@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -7,7 +8,8 @@ use super::serde_helpers::deserialize_fb_map;
 // Enums
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[ts(export)]
 pub enum ItemRarity {
     #[serde(rename = "TIER_1")]
     #[default]
@@ -24,7 +26,8 @@ pub enum ItemRarity {
     Tier6,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[ts(export)]
 pub enum ItemClass {
     #[serde(rename = "MATERIAL")]
     Material,
@@ -46,7 +49,8 @@ pub enum ItemClass {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum ItemType {
     Gold,
     CardExp,
@@ -121,7 +125,8 @@ pub enum ItemType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum ItemOccPer {
     #[default]
     Usual,
@@ -138,7 +143,8 @@ pub enum ItemOccPer {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum BuildingRoomType {
     #[default]
     Workshop,
@@ -152,7 +158,8 @@ pub enum BuildingRoomType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum VoucherItemType {
     #[default]
     OptionalVoucherPick,
@@ -166,7 +173,8 @@ pub enum VoucherItemType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, TS)]
+#[ts(export)]
 pub enum VoucherDisplayType {
     #[default]
     None,
@@ -184,6 +192,8 @@ pub enum VoucherDisplayType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct StageDrop {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -193,6 +203,8 @@ pub struct StageDrop {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct BuildingProduct {
     #[serde(alias = "RoomType")]
     pub room_type: BuildingRoomType,
@@ -202,6 +214,8 @@ pub struct BuildingProduct {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct VoucherRelate {
     #[serde(alias = "VoucherId")]
     pub voucher_id: String,
@@ -211,6 +225,8 @@ pub struct VoucherRelate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct UniqueItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -222,6 +238,8 @@ pub struct UniqueItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct UniCollectionInfo {
     #[serde(alias = "UniCollectionItemId")]
     pub uni_collection_item_id: String,
@@ -231,6 +249,8 @@ pub struct UniCollectionInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ItemPackContent {
     #[serde(alias = "Id")]
     pub id: String,
@@ -242,6 +262,8 @@ pub struct ItemPackContent {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ItemPackInfo {
     #[serde(alias = "PackId")]
     pub pack_id: String,
@@ -251,15 +273,20 @@ pub struct ItemPackInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FullPotentialCharacter {
     #[serde(alias = "ItemId")]
     pub item_id: String,
     #[serde(alias = "Ts")]
+    #[ts(type = "number")]
     pub ts: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ActivityPotentialCharacter {
     #[serde(alias = "CharId")]
     pub char_id: String,
@@ -267,6 +294,8 @@ pub struct ActivityPotentialCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct FavorCharacter {
     #[serde(alias = "ItemId")]
     pub item_id: String,
@@ -278,6 +307,8 @@ pub struct FavorCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ExpItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -287,6 +318,8 @@ pub struct ExpItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ApSupply {
     #[serde(alias = "Id")]
     pub id: String,
@@ -298,6 +331,8 @@ pub struct ApSupply {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct CharVoucherItem {
     #[serde(alias = "Id")]
     pub id: String,
@@ -311,6 +346,8 @@ pub struct CharVoucherItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Item {
     #[serde(alias = "ItemId", default)]
     pub item_id: String,
@@ -352,6 +389,8 @@ pub struct Item {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Materials {
     pub items: HashMap<String, Item>,
     pub exp_items: HashMap<String, ExpItem>,

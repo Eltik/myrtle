@@ -11,11 +11,15 @@
 //!
 //! [`StageClassifier`]: super::super::enrich::stage_class::StageClassifier
 
+use super::stage::StageDifficulty;
 use serde::Serialize;
+use ts_rs::TS;
 
 /// One browsable stage in the Stage List.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct StageIndexEntry {
     /// `stage_table` id when this stage has one; otherwise the level file's
     /// relative id (procedural-mode nodes), so the value is always a stable key.
@@ -31,6 +35,7 @@ pub struct StageIndexEntry {
     /// Resolved zone/event/season display name; `None` falls back to `zone_id`.
     pub zone_name: Option<String>,
     /// Sort key within a group: episode number for story, else the zone index.
+    #[ts(type = "number")]
     pub zone_order: i64,
     /// Fine group (`story` / `events` / `annihilation` / `is` / `ra` / `sss` /
     /// `paradox` / `cc` / `supplies` / `other`). Authoritative.
@@ -45,7 +50,7 @@ pub struct StageIndexEntry {
     pub is_hard: bool,
     /// `NORMAL` / `FOUR_STAR` / `SIX_STAR` (used by the UI to dedupe CM variants
     /// of the same code).
-    pub difficulty: String,
+    pub difficulty: StageDifficulty,
     /// Whether the stage detail / map viewer can currently render it (true when
     /// the backing level file exists on disk).
     pub can_view: bool,

@@ -14,6 +14,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::app::error::ApiError;
 use crate::app::services::improvements::{
@@ -40,6 +41,8 @@ use crate::database::queries::users::find_by_uid;
 
 /// One room of a client-drafted layout. Mirrors `UserRoom` minus the bits only
 /// the live game data can supply (preset queues).
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DraftRoom {
     pub slot_id: String,
@@ -82,6 +85,8 @@ pub struct EvaluateRequest {
 /// dormitories, power plants and every support facility - which then breaks the
 /// power balance AND the scoring, since dorm levels and facility counts feed
 /// the clause engine.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct LayoutResponse {
     pub rooms: Vec<DraftRoomDto>,
@@ -95,6 +100,8 @@ pub struct LayoutResponse {
 }
 
 /// One slot's saved rotation: the crew the player has queued for each shift.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SlotPresetsDto {
     pub slot_id: String,
@@ -103,6 +110,8 @@ pub struct SlotPresetsDto {
 
 /// The serialized twin of [`DraftRoom`] - what the client sends back on every
 /// evaluate/optimize call.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DraftRoomDto {
     pub slot_id: String,
@@ -136,6 +145,8 @@ pub struct OptimizeRequest {
     pub facts: AccountFactsReq,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct EvaluateResponse {
     pub assignment: BaseAssignmentDto,
@@ -147,27 +158,34 @@ pub struct EvaluateResponse {
     pub dorms: DormsDto,
     /// Check-in economics: time until the first room stalls, and what each
     /// claim cadence loses. `None` when nothing produces.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
     /// The drafted crews simulated with NO rotation at all - "if you never
     /// swap". `None` when nothing is staffed. Seeded with PROJECTED live
     /// morale, so its clock starts now, not at a hypothetical full bar.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<crate::app::services::improvements::SustainabilityDto>,
     /// Hours since the newest morale write in the sync - how stale the
     /// "current bar" data is. `None` when the sync carries no morale.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub morale_synced_hours_ago: Option<f64>,
     /// Top trainers for the declared `training_class` fact (empty otherwise,
     /// or when the layout has no Training Room).
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub trainer_hints: Vec<TrainerHintDto>,
     /// Drone buffer, projected to now. `None` when the sync carries none.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub drones: Option<DronesDto>,
 }
 
 /// One trainer suggestion for the declared training class.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct TrainerHintDto {
     pub operator: crate::app::services::improvements::AssignedOperator,
@@ -176,15 +194,20 @@ pub struct TrainerHintDto {
 }
 
 /// The drone (Labor) buffer, projected to now from the synced snapshot.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DronesDto {
     pub current: f64,
     pub max: i32,
     /// Hours until the buffer caps and recovery is wasted. `None` = already full.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub full_in_hours: Option<f64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimDto {
     /// Hours (from an empty buffer, i.e. from a claim now) until the FIRST
@@ -194,6 +217,8 @@ pub struct ClaimDto {
     pub intervals: Vec<ClaimIntervalDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimIntervalDto {
     pub hours: f64,
@@ -206,6 +231,8 @@ pub struct ClaimIntervalDto {
 /// a `BaseAssignment` - but they set how fast workers recover and how many can
 /// rest at once, which is what decides whether a staffing survives its own
 /// rhythm. Surfaced separately so "no yield" doesn't read as "not accounted for".
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormsDto {
     pub count: usize,
@@ -220,6 +247,8 @@ pub struct DormsDto {
     pub per_dorm: Vec<DormDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormDto {
     pub slot_id: String,
@@ -245,6 +274,8 @@ pub struct DormDto {
 /// One operator's endurance in the room the draft puts them in. Drain is the
 /// game's own per-hour figure (including the operator's own morale-cost riders),
 /// not a per-room approximation.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SustainEntryDto {
     pub operator_id: String,
@@ -258,10 +289,13 @@ pub struct SustainEntryDto {
     pub lasts_hours: Option<f64>,
     /// The operator's morale as of the last account sync (0-24). Absent when
     /// the sync doesn't cover them.
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub morale: Option<f64>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PowerDto {
     pub generated: i32,
@@ -271,6 +305,8 @@ pub struct PowerDto {
 
 /// A rotation is whole-base by construction (a shift covers every room at
 /// once), so unlike optimize there is no `scope` - only who must stay put.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RotationRequest {
     pub layout: Vec<DraftRoom>,
@@ -290,6 +326,8 @@ pub struct RotationRequest {
 /// Player-declared account state the sync cannot read (the "account facts"
 /// prompt). With no declaration the never-guess default stands: the dependent
 /// skills price 0.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct AccountFactsReq {
     /// Recruit slots purchased beyond the initial one (0-3). Prices the
@@ -416,6 +454,8 @@ pub async fn save_facts(
     Ok(facts)
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationResponse {
     /// `SHIFT_COUNT` shifts, each room labelled with the squad staffing it, plus
@@ -425,6 +465,8 @@ pub struct RotationResponse {
     pub shift_count: usize,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OptimizeResponse {
     /// The proposed layout, scored.
@@ -438,6 +480,8 @@ pub struct OptimizeResponse {
     pub power: PowerDto,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomDiffDto {
     pub slot_id: String,
@@ -453,6 +497,8 @@ pub struct RoomDiffDto {
 /// The facility catalogue, straight out of `building_data`. The client renders
 /// capacities, power draw and level caps from this instead of carrying its own
 /// copy of numbers the game already publishes.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogResponse {
     /// Shifts in a base day. A game constant, not a property of any one
@@ -472,6 +518,8 @@ pub struct CatalogResponse {
 /// grid tracks: how a half-tile becomes a column is the board's decision, and
 /// the elevator shafts (1 unit wide where every room is 2) only make sense at
 /// this scale.
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogSlotDto {
     pub slot_id: String,
@@ -486,6 +534,8 @@ pub struct CatalogSlotDto {
     pub size_row: i32,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogStoreyDto {
     pub storey_id: String,
@@ -493,6 +543,8 @@ pub struct CatalogStoreyDto {
     pub unlock_control_level: i32,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogRoomDto {
     pub room_type: String,
@@ -506,6 +558,8 @@ pub struct CatalogRoomDto {
     pub phases: Vec<CatalogPhaseDto>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogPhaseDto {
     pub level: i32,
@@ -515,6 +569,8 @@ pub struct CatalogPhaseDto {
     pub manpower_cost: i32,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogFormulaDto {
     pub formula_type: String,

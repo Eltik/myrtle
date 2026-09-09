@@ -4,6 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -13,6 +14,8 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(TS)]
+#[ts(export)]
 pub enum ZoneType {
     #[default]
     Mainline,
@@ -38,6 +41,8 @@ pub enum ZoneType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Zone {
     #[serde(alias = "ZoneID")]
     pub zone_id: String,
@@ -82,6 +87,8 @@ pub struct Zone {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct ZoneData {
     pub zones: HashMap<String, Zone>,
 }

@@ -4,6 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
@@ -13,6 +14,8 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(TS)]
+#[ts(export)]
 pub enum StageType {
     #[default]
     Main,
@@ -29,6 +32,8 @@ pub enum StageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(TS)]
+#[ts(export)]
 pub enum StageDifficulty {
     #[default]
     Normal,
@@ -40,6 +45,8 @@ pub enum StageDifficulty {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(TS)]
+#[ts(export)]
 pub enum AppearanceStyle {
     #[default]
     MainNormal,
@@ -59,6 +66,9 @@ pub enum AppearanceStyle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
+#[ts(rename = "StageUnlockCondition")]
 pub struct UnlockCondition {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -75,6 +85,8 @@ pub struct UnlockCondition {
 /// for forward-compatibility with new game-data values.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct DisplayDetailReward {
     #[serde(alias = "DropType")]
     pub drop_type: String,
@@ -91,6 +103,8 @@ pub struct DisplayDetailReward {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
     pub display_detail_rewards: Vec<DisplayDetailReward>,
@@ -102,6 +116,8 @@ pub struct StageDropInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct Stage {
     #[serde(alias = "StageId")]
     pub stage_id: String,
@@ -175,6 +191,7 @@ pub struct Stage {
     #[serde(alias = "BossMark", default)]
     pub boss_mark: bool,
 
+    #[serde(default)]
     #[serde(alias = "StageDropInfo", skip_serializing_if = "Option::is_none")]
     pub stage_drop_info: Option<StageDropInfo>,
 }
@@ -185,6 +202,8 @@ pub struct Stage {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(TS)]
+#[ts(export)]
 pub struct StageData {
     pub stages: HashMap<String, Stage>,
 }

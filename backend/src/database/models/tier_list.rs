@@ -3,7 +3,10 @@ use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
+use ts_rs::TS;
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierList {
     pub id: Uuid,
@@ -19,6 +22,8 @@ pub struct TierList {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFlair {
     pub id: i16,
@@ -31,10 +36,14 @@ pub struct TierListFlair {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListStats {
     pub tier_list_id: Uuid,
+    #[ts(type = "number")]
     pub view_count: i64,
+    #[ts(type = "number")]
     pub unique_view_count: i64,
     pub favorite_count: i32,
     pub share_count: i32,
@@ -46,6 +55,8 @@ pub struct TierListStats {
     pub stats_updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFavorite {
     pub tier_list_id: Uuid,
@@ -53,6 +64,8 @@ pub struct TierListFavorite {
     pub favorited_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Tier {
     pub id: Uuid,
@@ -63,6 +76,8 @@ pub struct Tier {
     pub description: Option<String>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierPlacement {
     pub tier_id: Uuid,
@@ -72,6 +87,8 @@ pub struct TierPlacement {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListVersion {
     pub id: Uuid,
@@ -83,6 +100,8 @@ pub struct TierListVersion {
     pub published_at: DateTime<Utc>,
 }
 
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListPermission {
     pub tier_list_id: Uuid,

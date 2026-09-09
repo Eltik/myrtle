@@ -124,7 +124,13 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             ...operator.phases.flatMap((p) => p.levelUpCost ?? []),
             ...operator.allSkillLevelUp.flatMap((l) => l.lvlUpCost ?? []),
             ...operator.skills.flatMap((s) => s.levelUpCostCond.flatMap((c) => c.levelUpCost ?? [])),
-            ...operator.modules.flatMap((m) => (m.itemCost ? Object.values(m.itemCost).flat() : [])),
+            ...operator.modules.flatMap((m) =>
+                m.itemCost
+                    ? Object.values(m.itemCost)
+                          .flat()
+                          .filter((c) => c !== undefined)
+                    : [],
+            ),
         ];
         return aggregate(all);
     }, [operator.phases, operator.allSkillLevelUp, operator.skills, operator.modules]);
@@ -227,7 +233,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                         {Object.entries(m.itemCost ?? {})
                                             .sort(([a], [b]) => Number(a) - Number(b))
                                             .map(([stage, items]) => (
-                                                <CostRow items={items} key={stage} label={`Stage ${stage}`} materials={materials} server={operator.server} />
+                                                <CostRow items={items ?? []} key={stage} label={`Stage ${stage}`} materials={materials} server={operator.server} />
                                             ))}
                                     </div>
                                 </div>

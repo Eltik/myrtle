@@ -2,119 +2,45 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
+import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
+// Generated from `backend/src/core/gamedata/types/{enemy,enemy_stages}.rs` and
+// `backend/src/app/routes/enemies.rs`. To change a field, edit the Rust struct
+// and run `bun run gen:types` - do not redeclare it here.
+import type { AbilityInfo } from "#/types/generated/AbilityInfo";
+import type { CommunityEnemyAverageResponse } from "#/types/generated/CommunityEnemyAverageResponse";
+import type { DamageType } from "#/types/generated/DamageType";
+import type { Enemy } from "#/types/generated/Enemy";
+import type { EnemyAttributes } from "#/types/generated/EnemyAttributes";
+import type { EnemyHandbook } from "#/types/generated/EnemyHandbook";
+import type { EnemyInfoList } from "#/types/generated/EnemyInfoList";
+import type { EnemyLevel } from "#/types/generated/EnemyLevel";
+import type { EnemyLevelStats } from "#/types/generated/EnemyLevelStats";
+import type { EnemySkill } from "#/types/generated/EnemySkill";
+import type { EnemyStageRef } from "#/types/generated/EnemyStageRef";
+import type { EnemyStats } from "#/types/generated/EnemyStats";
+import type { RaceData } from "#/types/generated/RaceData";
+import type { SkillBlackboardEntry } from "#/types/generated/SkillBlackboardEntry";
+import type { StatRange } from "#/types/generated/StatRange";
+import type { Refine } from "#/types/refine";
 
-export type IEnemyLevel = "NORMAL" | "ELITE" | "BOSS";
+export type IEnemyLevel = EnemyLevel;
+export type IEnemyDamageType = DamageType;
+export type IStatRange = StatRange;
+export type IEnemyInfoList = EnemyInfoList;
+export type IEnemyRaceData = RaceData;
+export type IEnemyAbilityInfo = AbilityInfo;
+export type IEnemySkillBlackboardEntry = SkillBlackboardEntry;
+export type IEnemyAttributes = EnemyAttributes;
+export type IEnemySkill = EnemySkill;
+export type IEnemyLevelStats = EnemyLevelStats;
+export type IEnemyStats = EnemyStats;
+export type IEnemy = Enemy;
+export type IEnemyHandbook = EnemyHandbook;
 
 /** Backend-served square icon for an enemy, keyed by `enemyId`. */
 export function enemyIconURL(enemyId: string): string {
     return `${env.VITE_BACKEND_URL ?? ""}/api/enemy-icon/${encodeURIComponent(enemyId)}`;
-}
-
-export type IEnemyDamageType = "PHYSIC" | "MAGIC" | "NO_DAMAGE" | "HEAL";
-
-export type IEnemyJsonValue = string | number | boolean | null | IEnemyJsonValue[] | { [key: string]: IEnemyJsonValue };
-
-export interface IStatRange {
-    min: number;
-    max: number;
-}
-
-export interface IEnemyInfoList {
-    classLevel: string;
-    attack: IStatRange;
-    def: IStatRange;
-    magicRes: IStatRange;
-    maxHp: IStatRange;
-    moveSpeed: IStatRange;
-    attackSpeed: IStatRange;
-    enemyDamageRes: IStatRange;
-    enemyRes: IStatRange;
-}
-
-export interface IEnemyRaceData {
-    id: string;
-    raceName: string;
-    sortId: number;
-}
-
-export interface IEnemyAbilityInfo {
-    text: string;
-    textFormat: string;
-}
-
-export interface IEnemySkillBlackboardEntry {
-    key: string;
-    value: number;
-    valueStr: string | null;
-}
-
-export interface IEnemyAttributes {
-    maxHp: number;
-    atk: number;
-    def: number;
-    magicResistance: number;
-    moveSpeed: number;
-    attackSpeed: number;
-    baseAttackTime: number;
-    massLevel: number;
-    hpRecoveryPerSec: number;
-    stunImmune: boolean;
-    silenceImmune: boolean;
-    sleepImmune: boolean;
-    frozenImmune: boolean;
-    levitateImmune: boolean;
-}
-
-export interface IEnemySkill {
-    prefabKey: string;
-    priority: number;
-    cooldown: number;
-    initCooldown: number;
-    spCost: number;
-    blackboard: IEnemySkillBlackboardEntry[];
-}
-
-export interface IEnemyLevelStats {
-    level: number;
-    attributes: IEnemyAttributes;
-    applyWay: string | null;
-    motion: string | null;
-    rangeRadius: number | null;
-    lifePointReduce: number;
-    skills: IEnemySkill[];
-}
-
-export interface IEnemyStats {
-    levels: IEnemyLevelStats[];
-}
-
-export interface IEnemy {
-    enemyId: string;
-    enemyIndex: string;
-    enemyTags: string[] | null;
-    sortId: number;
-    name: string;
-    enemyLevel: IEnemyLevel;
-    description: string;
-    attackType: string | null;
-    ability: string | null;
-    isInvalidKilled: boolean;
-    overrideKillCntInfos: { [key: string]: IEnemyJsonValue } | null;
-    hideInHandbook: boolean;
-    hideInStage: boolean;
-    abilityList: IEnemyAbilityInfo[];
-    linkEnemies: string[];
-    damageType: IEnemyDamageType[];
-    invisibleDetail: boolean;
-    stats: IEnemyStats | null;
-    portrait: string | null;
-}
-
-export interface IEnemyHandbook {
-    levelInfoList: IEnemyInfoList[];
-    enemyData: Record<string, IEnemy>;
-    raceData: Record<string, IEnemyRaceData>;
 }
 
 export const getEnemiesFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -136,7 +62,7 @@ export const getEnemiesListFn = createServerFn({ method: "GET" }).handler(async 
     const res = await backendFetch("/static/enemies");
     if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
     const handbook = (await res.json()) as IEnemyHandbook;
-    return Object.values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
+    return values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
 });
 
 export function enemiesListQueryOptions() {
@@ -148,24 +74,21 @@ export function enemiesListQueryOptions() {
     });
 }
 
-/** A single appearance of an enemy in a stage. */
-export interface IEnemyStageRef {
-    stageId: string;
-    /** Human-readable code, e.g. "0-1", "WD-8". */
-    code: string;
-    zoneId: string;
-    /** Resolved zone/event display name; falls back to zoneId when null. */
-    zoneName: string | null;
-    /** Coarse UI bucket: "stages" (main story), "events", or "modes". */
-    category: "stages" | "events" | "modes";
-    /** Fine group key (see `StageGroupKey`) for grouped UIs; resolved by the backend. */
-    group: StageGroupKey;
-    stageName: string | null;
-    /** True for hard-mode / Adverse variants. */
-    isHard: boolean;
-    /** Total spawned across all waves; 0 = declared but summon-only/conditional. */
-    count: number;
-}
+/**
+ * A single appearance of an enemy in a stage.
+ *
+ * `category` and `group` are `String` on the Rust side - the group keys live in
+ * the frontend registry, not in game data - so they are narrowed here.
+ */
+export type IEnemyStageRef = Refine<
+    EnemyStageRef,
+    {
+        /** Coarse UI bucket: "stages" (main story), "events", or "modes". */
+        category: "stages" | "events" | "modes";
+        /** Fine group key (see `StageGroupKey`) for grouped UIs; resolved by the backend. */
+        group: StageGroupKey;
+    }
+>;
 
 /** `enemyId -> stages it appears in`. */
 export type IEnemyStageIndex = Record<string, IEnemyStageRef[]>;
@@ -186,15 +109,7 @@ export function enemyStagesQueryOptions() {
     });
 }
 
-export interface IEnemyCommunityAverage {
-    /** Mean number of distinct enemies encountered across every synced user. */
-    averageEncountered: number;
-    /** Number of users in the average's denominator. */
-    userCount: number;
-    /** Visible handbook size, matching the per-user response's denominator. */
-    handbookTotal: number;
-    computedAt: string;
-}
+export type IEnemyCommunityAverage = CommunityEnemyAverageResponse;
 
 export const getEnemyCommunityAverageFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/encountered-enemies/community-average");

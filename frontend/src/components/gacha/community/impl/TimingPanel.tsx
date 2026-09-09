@@ -7,7 +7,8 @@ import { fmtPct } from "./format";
 
 interface ITimingPanelProps {
     timing: IPullTimingData | null | undefined;
-    firstPullAt?: number;
+    /** Unix seconds. `null` when the community has no pulls recorded yet. */
+    firstPullAt?: number | null;
     banners: IBanner[];
 }
 

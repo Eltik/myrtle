@@ -1,7 +1,10 @@
 use sqlx::PgPool;
+use ts_rs::TS;
 use uuid::Uuid;
 
 /// Simple key-value pair for inventory
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
 pub struct ItemEntry {
     pub item_id: String,

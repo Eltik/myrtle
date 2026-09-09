@@ -13,3 +13,6 @@ startup_timings.json.tmp
 .session.json
 game_sessions/
 backup
+snapshots
+!tests/snapshots/
+bindings/

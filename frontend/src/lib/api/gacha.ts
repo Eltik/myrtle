@@ -2,43 +2,40 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
-
+// Generated from `backend/src/app/services/gacha.rs`.
+// To change a field, edit the Rust struct and run `bun run gen:types`.
+import type { BannerPullStat } from "#/types/generated/BannerPullStat";
+import type { CollectiveStats } from "#/types/generated/CollectiveStats";
+import type { DatePullData } from "#/types/generated/DatePullData";
+import type { DayOfWeekPullData } from "#/types/generated/DayOfWeekPullData";
+import type { FetchResult } from "#/types/generated/FetchResult";
+import type { GachaEnhancedStats } from "#/types/generated/GachaEnhancedStats";
+import type { GachaHistoryEnvelopeDto } from "#/types/generated/GachaHistoryEnvelopeDto";
+import type { GachaItemDto } from "#/types/generated/GachaItemDto";
+import type { GachaPaginationInfoDto } from "#/types/generated/GachaPaginationInfoDto";
 /**
  * Banner metadata sourced from the static `gacha_table.json` → `GachaPoolClient`.
  *
- * Times are **unix seconds** (not ms)
- * Pull records, by contrast, use unix ms.
+ * Generated from `backend/src/core/gamedata/types/gacha.rs`. Times are **unix
+ * seconds** (not ms); pull records, by contrast, use unix ms.
  */
-export interface IBanner {
-    gachaPoolId: string;
-    gachaIndex: number;
-    /** Unix seconds. Banner start. */
-    openTime: number;
-    /** Unix seconds. Banner end. */
-    endTime: number;
-    gachaPoolName: string;
-    gachaPoolSummary: string;
-    gachaPoolDetail: string | null;
-    guarantee5Avail: number;
-    guarantee5Count: number;
-    /** One of: ATTAIN, CLASSIC, CLASSIC_ATTAIN, CLASSIC_DOUBLE, DOUBLE, FESCLASSIC, LIMITED, LINKAGE, NORMAL, SINGLE, SPECIAL. */
-    /** Kept as string as YoStar or HG might add more types */
-    gachaRuleType: string;
-    lmtgsid?: string | null;
-    cdPrimColor?: string | null;
-    cdSecColor?: string | null;
-    linkageRuleId?: string | null;
-    freeBackColor?: string | null;
-    guaranteeName?: string | null;
-    /**
-     * Featured 6★ rate-up operators, decoded server-side from the base64-BSON
-     * blob in `LimitParam` / `DynMeta`. Empty for banners without a featured
-     * list (e.g. NORMAL/SINGLE/LINKAGE pools).
-     */
-    featured6: string[];
-    /** Featured 5★ operators. For FESCLASSIC/SPECIAL this is the whole selectable pool. */
-    featured5: string[];
-}
+import type { GachaPoolClient } from "#/types/generated/GachaPoolClient";
+import type { GachaRecordEntryDto } from "#/types/generated/GachaRecordEntryDto";
+import type { GachaRecordsDto } from "#/types/generated/GachaRecordsDto";
+import type { GachaSettingsDto } from "#/types/generated/GachaSettingsDto";
+import type { GachaTypeRecordsDto } from "#/types/generated/GachaTypeRecordsDto";
+import type { GlobalGachaStats } from "#/types/generated/GlobalGachaStats";
+import type { HistoryFiltersAppliedDto } from "#/types/generated/HistoryFiltersAppliedDto";
+import type { HourlyPullData } from "#/types/generated/HourlyPullData";
+import type { OperatorPopularity } from "#/types/generated/OperatorPopularity";
+import type { PullRates } from "#/types/generated/PullRates";
+import type { PullTimingData } from "#/types/generated/PullTimingData";
+import type { RarityRate } from "#/types/generated/RarityRate";
+import type { WeightUpChar } from "#/types/generated/WeightUpChar";
+
+export type IBanner = GachaPoolClient;
+export type IWeightUpChar = WeightUpChar;
+export type IRarityRate = RarityRate;
 
 export const getBannersFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/static/banners");
@@ -57,77 +54,28 @@ export function bannersQueryOptions() {
 }
 
 /** Lightweight community summary. Rates are fractions in [0, 1]. */
-export interface IGachaGlobalStats {
-    totalPulls: number;
-    totalUsers: number;
-    sixStarRate: number;
-    fiveStarRate: number;
-}
+export type IGachaGlobalStats = GlobalGachaStats;
 
-export interface IGachaCollectiveStats {
-    totalPulls: number;
-    totalUsers: number;
-    totalSixStars: number;
-    totalFiveStars: number;
-    totalFourStars: number;
-    totalThreeStars: number;
-    /** Unix seconds. Omitted by the server when the corpus is empty. */
-    firstPullAt?: number;
-}
+export type IGachaCollectiveStats = CollectiveStats;
 
-export interface IGachaPullRates {
-    sixStarRate: number;
-    fiveStarRate: number;
-}
+export type IGachaPullRates = PullRates;
 
-export interface IOperatorPopularity {
-    charId: string;
-    /** Server returns an empty string; resolve via the operator index client-side. */
-    charName: string;
-    rarity: number;
-    pullCount: number;
-    /** Fraction of all community pulls in [0, 1]. */
-    percentage: number;
-}
+export type IOperatorPopularity = OperatorPopularity;
 
-export interface IHourlyPullData {
-    hour: number;
-    pullCount: number;
-    percentage: number;
-}
+export type IHourlyPullData = HourlyPullData;
 
-export interface IDayOfWeekPullData {
-    /** 0 = Sunday … 6 = Saturday (Postgres DOW). */
-    day: number;
-    dayName: string;
-    pullCount: number;
-    percentage: number;
-}
+export type IDayOfWeekPullData = DayOfWeekPullData;
 
-export interface IDatePullData {
-    /** YYYY-MM-DD. */
-    date: string;
-    pullCount: number;
-}
+export type IDatePullData = DatePullData;
 
-export interface IPullTimingData {
-    byHour: IHourlyPullData[];
-    byDayOfWeek: IDayOfWeekPullData[];
-    byDate?: IDatePullData[];
-}
+export type IPullTimingData = PullTimingData;
 
 /**
  * Community pull totals grouped by `pool_id`. Served by
  * `GET /gacha/stats/per-banner`. Only `share_stats=true` users contribute.
  * Sorted by `pullCount` desc; pools with zero community pulls are absent.
  */
-export interface IBannerPullStat {
-    poolId: string;
-    pullCount: number;
-    sixStarCount: number;
-    fiveStarCount: number;
-    userCount: number;
-}
+export type IBannerPullStat = BannerPullStat;
 
 export const getPerBannerStatsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/gacha/stats/per-banner");
@@ -144,22 +92,9 @@ export function perBannerStatsQueryOptions() {
     });
 }
 
-export interface IGachaEnhancedStats {
-    collectiveStats: IGachaCollectiveStats;
-    pullRates: IGachaPullRates;
-    /** Top-N is computed *per rarity* server-side (3-stars dominate the global tally otherwise). */
-    mostCommonOperators: IOperatorPopularity[];
-    averagePullsToSixStar: number;
-    averagePullsToFiveStar: number;
-    pullTiming?: PullTimingData | null;
-    /** RFC3339 UTC timestamp. */
-    computedAt: string;
-    /** True when this payload was served from the backend cache. */
-    cached: boolean;
-}
+export type IGachaEnhancedStats = GachaEnhancedStats;
 
 // Alias kept for the optional field above (name matches the server type).
-export type PullTimingData = IPullTimingData;
 
 export const getGachaGlobalStatsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/gacha/global-stats");
@@ -218,46 +153,15 @@ export interface IGachaStats {
     last_pull: number | null;
 }
 
-export interface IGachaRecordEntry {
-    id: string;
-    charId: string;
-    /** Empty from the server; resolve via the operator index. */
-    charName: string;
-    rarity: number;
-    poolId: string;
-    poolName: string;
-    gachaType: string;
-    /** Unix milliseconds (Yostar's `at` field, persisted as-is). Multiply by `* 1` (no-op) for `new Date(...)`. */
-    pullTimestamp: number;
-    pullTimestampStr: string | null;
-}
+export type IGachaRecordEntry = GachaRecordEntryDto;
 
-export interface IGachaItem {
-    charId: string;
-    charName: string;
-    star: string;
-    color: string;
-    poolId: string;
-    poolName: string;
-    typeName: string;
-    /** Unix milliseconds (Yostar's `at` field, persisted as-is). Pass directly to `new Date(...)`. */
-    at: number;
-    atStr: string;
-}
+export type IGachaItem = GachaItemDto;
 
 export type GachaGroup = "limited" | "regular" | "special";
 
-export interface IGachaTypeRecords {
-    gacha_type: GachaGroup;
-    records: IGachaItem[];
-    total: number;
-}
+export type IGachaTypeRecords = GachaTypeRecordsDto;
 
-export interface IGachaRecords {
-    limited: IGachaTypeRecords;
-    regular: IGachaTypeRecords;
-    special: IGachaTypeRecords;
-}
+export type IGachaRecords = GachaRecordsDto;
 
 /**
  * Client-side 4-bucket grouping derived from `IGachaItem.typeName`.
@@ -362,25 +266,11 @@ export function deriveClientGachaRecords(records: IGachaRecords): IClientGachaRe
     };
 }
 
-export interface IGachaPaginationInfo {
-    limit: number;
-    offset: number;
-    total: number;
-    hasMore: boolean;
-}
+export type IGachaPaginationInfo = GachaPaginationInfoDto;
 
-export interface IGachaHistoryFiltersApplied {
-    rarity: number | null;
-    gachaType: string | null;
-    charId: string | null;
-    dateRange: { from: number | null; to: number | null } | null;
-}
+export type IGachaHistoryFiltersApplied = HistoryFiltersAppliedDto;
 
-export interface IGachaHistoryEnvelope {
-    records: IGachaRecordEntry[];
-    pagination: IGachaPaginationInfo;
-    filtersApplied: IGachaHistoryFiltersApplied;
-}
+export type IGachaHistoryEnvelope = GachaHistoryEnvelopeDto;
 
 export interface IGachaHistoryInput {
     bearerToken?: string;
@@ -526,15 +416,7 @@ export function myGachaStatsQueryOptions(authed: boolean) {
     });
 }
 
-export interface IGachaSettings {
-    user_id: string;
-    store_records: boolean;
-    share_anonymous_stats: boolean;
-    total_pulls: number;
-    six_star_count: number;
-    five_star_count: number;
-    last_sync_at: string | null;
-}
+export type IGachaSettings = GachaSettingsDto;
 
 export const getGachaSettingsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { bearerToken?: string }) => data)
@@ -572,10 +454,7 @@ export const updateGachaSettingsFn = createServerFn({ method: "POST" })
         return (await res.json()) as IGachaSettings;
     });
 
-export interface IGachaFetchResult {
-    totalFetched: number;
-    newRecords: number;
-}
+export type IGachaFetchResult = FetchResult;
 
 export const fetchGachaRecordsFn = createServerFn({ method: "POST" })
     .inputValidator((data: { bearerToken?: string }) => data)
