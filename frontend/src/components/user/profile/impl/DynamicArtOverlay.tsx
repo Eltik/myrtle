@@ -7,6 +7,8 @@ import { useDynamicArt } from "./dynamic-art";
 interface IDynamicArtOverlayProps {
     operatorCode: string | null | undefined;
     skinId: string | null | undefined;
+    /** The owner's promotion of the operator; gates the default (E2) set, see `getDynamicFiles`. */
+    elite?: number | null;
     /** Framing to match the static image this overlays (its object-fit/position). */
     fit?: ISpineFit;
     /** The viewer's scene framing; "authored" places the whole scene at the game's frame, which
@@ -36,9 +38,9 @@ interface IDynamicArtOverlayProps {
  * it's layered over, when the page-wide toggle is on and the operator/skin has
  * a dynamic set. Absolutely fills its positioned parent and is click-through.
  */
-export function DynamicArtOverlay({ operatorCode, skinId, fit, framing, backdrop, surface, viewportGated = false, onActiveChange, className }: IDynamicArtOverlayProps) {
+export function DynamicArtOverlay({ operatorCode, skinId, elite, fit, framing, backdrop, surface, viewportGated = false, onActiveChange, className }: IDynamicArtOverlayProps) {
     const ctx = useDynamicArt();
-    const files = ctx?.getDynamicFiles(operatorCode, skinId) ?? null;
+    const files = ctx?.getDynamicFiles(operatorCode, skinId, elite) ?? null;
 
     const hostRef = useRef<HTMLDivElement>(null);
     const [inView, setInView] = useState(!viewportGated);

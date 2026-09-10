@@ -105,7 +105,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                             {/* `scale-105` sets the CSS `scale` property (Tailwind v4), so the transition must name `scale`, not `transform`. */}
                             <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
                             {/* The L2D is composited over the same hero art at the game's authored frame and cropped exactly as the image above (cover, top). */}
-                            <DynamicArtOverlay operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
+                            <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
                             <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
                             <div className="absolute right-0 bottom-0 left-0 p-4">
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>

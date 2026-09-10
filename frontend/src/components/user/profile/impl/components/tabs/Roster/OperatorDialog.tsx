@@ -134,7 +134,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <div ref={artRef} className="absolute inset-x-0 top-0 h-[140%] origin-top" style={{ transform: "translate3d(0, 0, 0) scale(1)" }}>
                         <img alt={entry.name} className={`h-full w-full object-contain object-top transition-opacity duration-500 ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="eager" src={ownedHeroURL(entry)} />
                         {/* Composited over the same hero art at the game's authored frame, cropped as the image above (contain, top). */}
-                        <DynamicArtOverlay operatorCode={entry.operator_id} skinId={entry.skin_id} fit={{ mode: "contain", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
+                        <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} fit={{ mode: "contain", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
                     </div>
                     <div ref={shadeRef} className="pointer-events-none absolute inset-0 bg-linear-to-t from-background via-background/70 to-transparent" style={{ opacity: 0.32 }} />
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-linear-to-r from-background to-transparent" />

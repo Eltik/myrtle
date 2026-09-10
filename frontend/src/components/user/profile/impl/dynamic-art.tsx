@@ -13,9 +13,12 @@ interface IDynamicArtContext {
      * skin, or null when the "animate dynamic art" preference (localStorage, on
      * by default) is off, the catalog isn't loaded, or the operator/skin has no
      * complete dynamic set. `skinId` is the roster/skin id (e.g.
-     * `char_1012_skadi2@boc#4` or null for the default/E2 art).
+     * `char_1012_skadi2@boc#4`, `char_1012_skadi2#1`, or null for the default art).
+     * `elite` is the owner's promotion of that operator; the default dynamic set is the
+     * E2 illustration, so it is withheld when the static art shown is the pre-E2 one
+     * (see `defaultArtIsE2`). Leave it undefined on surfaces that show every skin at E2.
      */
-    getDynamicFiles: (operatorCode: string | null | undefined, skinId: string | null | undefined) => IChibiSpineFiles | null;
+    getDynamicFiles: (operatorCode: string | null | undefined, skinId: string | null | undefined, elite?: number | null) => IChibiSpineFiles | null;
 }
 
 const DynamicArtContext = createContext<IDynamicArtContext | null>(null);
@@ -23,6 +26,21 @@ const DynamicArtContext = createContext<IDynamicArtContext | null>(null);
 /** Only en/cn have dynamic art unpacked; every other server maps to en (no matches). */
 function toArtServer(server: string): ArtServer {
     return server === "cn" ? "cn" : "en";
+}
+
+/**
+ * Whether the DEFAULT (non-outfit) art an owner sees is the E2 illustration, which is the
+ * only default art with a dynamic set. Mirrors the roster's static-art rule
+ * (`ownedHeroURL`): a `#n` template suffix names the phase art outright (`#1` is the E0/E1
+ * art, `#2` the E2 one, whatever the promotion), otherwise the promotion decides. An
+ * unknown promotion keeps the old answer, E2, for surfaces that show the catalog rather
+ * than a roster.
+ */
+export function defaultArtIsE2(skinId: string | null | undefined, elite: number | null | undefined): boolean {
+    if (skinId?.endsWith("_e2")) return true;
+    const tmpl = skinId?.match(/#(\d+)$/);
+    if (tmpl) return Number(tmpl[1]) >= 2;
+    return elite == null || elite >= 2;
 }
 
 export function DynamicArtProvider({ server, children }: { server: string; children: ReactNode }) {
@@ -39,15 +57,18 @@ export function DynamicArtProvider({ server, children }: { server: string; child
     }, [catalog]);
 
     const getDynamicFiles = useCallback<IDynamicArtContext["getDynamicFiles"]>(
-        (operatorCode, skinId) => {
+        (operatorCode, skinId, elite) => {
             if (!enabled || !operatorCode) return null;
             const char = byOperator.get(operatorCode);
             if (!char) return null;
 
-            // The equipped skin's key ("default" -> the E2 illustration, which
-            // matches the E2 static art shown on these surfaces). Match strictly
-            // so an outfit without dynamic art never borrows the default's.
+            // The equipped skin's key ("default" -> the E2 illustration). Match strictly
+            // so an outfit without dynamic art never borrows the default's, and withhold
+            // the default set when the static art under it is the pre-E2 one: an owner
+            // who has not promoted the operator sees the E1 art, and the E2 animation
+            // played over it (the /user/{id} bug, 2026-09-10).
             const key = chibiSkinKey(skinId ?? "").toLowerCase();
+            if (key === "default" && !defaultArtIsE2(skinId, elite)) return null;
             const skin = char.skins.find((s) => s.name.toLowerCase() === key);
             const dyn = skin?.animationTypes.dynamic;
             return isCompleteSpineFiles(dyn) ? dyn : null;
