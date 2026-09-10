@@ -223,6 +223,50 @@ pub struct BuildChoice {
     pub users: i64,
 }
 
+/// One bucket of an investment histogram.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LevelBucket {
+    /// Mastery 0..3 for a skill, or module level 0..3 where 0 means the owner
+    /// has not unlocked it. 0 is a real answer in both cases, and the largest
+    /// bucket in most: it is where people stop, not missing data.
+    pub level: i16,
+    #[ts(type = "number")]
+    pub users: i64,
+}
+
+/// How far E2 owners take one skill's mastery.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillMasteryStats {
+    /// Stable id, resolved from the stored index against the same game data
+    /// that produces the operator's `skills` array.
+    pub skill_id: String,
+    pub skill_index: i16,
+    /// Ascending by level, always covering 0..3 with zero-filled gaps so a
+    /// client can render a fixed strip without reasoning about absence.
+    pub buckets: Vec<LevelBucket>,
+    #[ts(type = "number")]
+    pub total: i64,
+}
+
+/// How far E2 owners take one module's level.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModuleLevelStats {
+    pub uni_equip_id: String,
+    /// Ascending by level, zero-filled across 0..3.
+    pub buckets: Vec<LevelBucket>,
+    #[ts(type = "number")]
+    pub total: i64,
+}
+
 /// What the community defaults to for one operator: which skill they leave
 /// selected, and which module they leave equipped.
 ///
@@ -243,11 +287,32 @@ pub struct OperatorBuildStatsResponse {
     pub default_modules: Vec<BuildChoice>,
     #[ts(type = "number")]
     pub module_total: i64,
+    /// Mastery histogram per skill, and level histogram per module: where
+    /// people STOP investing rather than what they picked. Empty below the
+    /// reporting floor, like the distributions above.
+    pub masteries: Vec<SkillMasteryStats>,
+    pub module_levels: Vec<ModuleLevelStats>,
     /// Below this many samples a distribution is withheld entirely, so a rare
     /// operator's numbers cannot describe a handful of identifiable accounts.
     #[ts(type = "number")]
     pub min_sample: i64,
     pub computed_at: String,
+}
+
+/// Expand a sparse histogram into the fixed 0..3 strip, filling absent levels
+/// with zero. The aggregate emits a row only where a user sits, so absence is
+/// genuinely zero users rather than unknown, and collapsing the two here keeps
+/// every client from re-deciding it.
+fn fill_levels(found: &[LevelBucket]) -> Vec<LevelBucket> {
+    (0..=3)
+        .map(|level| LevelBucket {
+            level,
+            users: found
+                .iter()
+                .find(|b| b.level == level)
+                .map_or(0, |b| b.users),
+        })
+        .collect()
 }
 
 /// Withhold a distribution whose denominator is too thin to be either private
@@ -321,6 +386,8 @@ pub async fn get_build_stats(
     let server_id = server.index() as i16;
     let (skill_rows, module_rows) =
         operator_ownership::get_operator_choices(&state.db, server_id, operator_id).await?;
+    let (mastery_rows, module_level_rows) =
+        operator_ownership::get_operator_levels(&state.db, server_id, operator_id).await?;
 
     let game_data = server_data.game_data.load();
     let skills = game_data
@@ -367,12 +434,68 @@ pub async fn get_build_stats(
         },
     );
 
+    // Group the flat histogram rows by key and zero-fill 0..3, so a client
+    // renders a fixed four-bucket strip and never has to decide whether an
+    // absent level means zero users or missing data. It always means zero here:
+    // the aggregate emits a row only where at least one user sits.
+    let mut mastery_by_index: HashMap<i16, Vec<LevelBucket>> = HashMap::new();
+    for row in mastery_rows {
+        if let Ok(index) = row.key.parse::<i16>() {
+            mastery_by_index
+                .entry(index)
+                .or_default()
+                .push(LevelBucket {
+                    level: row.level,
+                    users: row.users,
+                });
+        }
+    }
+    let masteries: Vec<SkillMasteryStats> = skills
+        .iter()
+        .enumerate()
+        .filter_map(|(index, skill)| {
+            let index = i16::try_from(index).ok()?;
+            let found = mastery_by_index.get(&index)?;
+            let total: i64 = found.iter().map(|b| b.users).sum();
+            (total >= MIN_SAMPLE).then(|| SkillMasteryStats {
+                skill_id: skill.skill_id.clone(),
+                skill_index: index,
+                buckets: fill_levels(found),
+                total,
+            })
+        })
+        .collect();
+
+    let mut levels_by_module: HashMap<String, Vec<LevelBucket>> = HashMap::new();
+    for row in module_level_rows {
+        levels_by_module
+            .entry(row.key)
+            .or_default()
+            .push(LevelBucket {
+                level: row.level,
+                users: row.users,
+            });
+    }
+    let module_levels: Vec<ModuleLevelStats> = levels_by_module
+        .into_iter()
+        .filter_map(|(uni_equip_id, found)| {
+            let total: i64 = found.iter().map(|b| b.users).sum();
+            (total >= MIN_SAMPLE).then(|| ModuleLevelStats {
+                uni_equip_id,
+                buckets: fill_levels(&found),
+                total,
+            })
+        })
+        .collect();
+
     let response = OperatorBuildStatsResponse {
         operator_id: operator_id.to_owned(),
         default_skills,
         skill_total,
         default_modules,
         module_total,
+        masteries,
+        module_levels,
         min_sample: MIN_SAMPLE,
         computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     };

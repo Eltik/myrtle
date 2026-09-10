@@ -17,6 +17,7 @@ import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, get
 import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { BaseSkillsSection } from "../BaseSkillsSection";
 import { CommunitySharePill } from "../CommunitySharePill";
+import { LevelBreakdown } from "../LevelBreakdown";
 import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
@@ -51,7 +52,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     // then the first one this component already chose. Both sources are already
     // filtered to real ADVANCED modules the operator has, so anything non-null
     // here is selectable.
-    const { ownModuleId, communityModuleId, moduleShares, moduleTotal } = useCommunityDefaults(operator);
+    const { ownModuleId, communityModuleId, moduleShares, moduleTotal, moduleLevels, ownModuleLevels } = useCommunityDefaults(operator);
     useEffect(() => {
         if (moduleSettled.current) return;
         const id = ownModuleId ?? communityModuleId;
@@ -360,6 +361,19 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         </Select>
                                     </div>
                                 )}
+
+                                {/* Spans both columns rather than sitting in the
+                                    Module cell: at md and up that cell is half
+                                    the row, which squeezed four labelled bars
+                                    into about 300px while the Module Level
+                                    cell beside it sat mostly empty. */}
+                                {moduleId &&
+                                    moduleLevels.has(moduleId) &&
+                                    (() => {
+                                        const lv = moduleLevels.get(moduleId);
+                                        if (!lv) return null;
+                                        return <LevelBreakdown className="md:col-span-2" buckets={lv.buckets} total={lv.total} title="Community module level" labels={["Not unlocked", "Lv1", "Lv2", "Lv3"]} summary="unlocked this module" cohort="E2 owners" ownLevel={ownModuleLevels.get(moduleId) ?? null} />;
+                                    })()}
                             </div>
                         )}
                     </div>

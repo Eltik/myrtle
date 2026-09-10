@@ -13,6 +13,7 @@ import { descriptionToHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { CommunitySharePill } from "../CommunitySharePill";
+import { LevelBreakdown } from "../LevelBreakdown";
 import { OperatorRange } from "../OperatorRange";
 
 interface ISkillsContentProps {
@@ -84,7 +85,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
     // the last skill this component already chose. `null` means "no answer",
     // which is different from index 0, so it falls through rather than
     // selecting S1.
-    const { ownSkillIndex, communitySkillIndex, skillShares, skillTotal } = useCommunityDefaults(operator);
+    const { ownSkillIndex, communitySkillIndex, skillShares, skillTotal, masteries, ownMasteries } = useCommunityDefaults(operator);
     useEffect(() => {
         if (selectionSettled.current) return;
         const idx = ownSkillIndex ?? communitySkillIndex;
@@ -140,6 +141,16 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     );
                 })}
             </div>
+
+            {/* Where E2 owners stop on THIS skill. Sits under the selector so it
+                tracks whichever skill is open, rather than repeating four
+                strips at once. */}
+            {(() => {
+                const skillId = operator.skills[selectedSkillIndex]?.skillId;
+                const mastery = skillId ? masteries.get(skillId) : undefined;
+                if (!mastery) return null;
+                return <LevelBreakdown className="mb-6" buckets={mastery.buckets} total={mastery.total} title="Community mastery" labels={["No mastery", "M1", "M2", "M3"]} summary="mastered this skill" cohort="E2 owners" ownLevel={skillId ? (ownMasteries.get(skillId) ?? null) : null} />;
+            })()}
 
             <div className="mb-6 rounded-md border border-border bg-secondary/20 p-5">
                 {levelsCount > 7 && (

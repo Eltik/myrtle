@@ -1,6 +1,6 @@
 use crate::app::state::AppState;
 use crate::database::queries::operator_ownership::{
-    latest_ownership_refresh_at, refresh_operator_ownership,
+    latest_ownership_refresh_at, refresh_build_stats,
 };
 use chrono::Utc;
 use std::time::Duration;
@@ -45,7 +45,7 @@ async fn initial_delay(state: &AppState) -> Duration {
 /// aggregate is a legitimate outcome (nobody has opted into stat sharing) and
 /// is indistinguishable from a silent failure without them.
 pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
-    refresh_operator_ownership(&state.db).await?;
+    refresh_build_stats(&state.db).await?;
 
     state
         .cache

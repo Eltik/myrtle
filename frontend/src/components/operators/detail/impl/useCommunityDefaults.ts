@@ -4,6 +4,8 @@ import { useAuth } from "#/hooks/use-auth";
 import { operatorBuildStatsQueryOptions } from "#/lib/api/operators";
 import { userRosterOperatorQueryOptions } from "#/lib/api/user";
 import type { BuildChoice } from "#/types/generated/BuildChoice";
+import type { ModuleLevelStats } from "#/types/generated/ModuleLevelStats";
+import type { SkillMasteryStats } from "#/types/generated/SkillMasteryStats";
 import type { IOperatorListItem } from "#/types/operators";
 
 /**
@@ -15,6 +17,13 @@ import type { IOperatorListItem } from "#/types/operators";
 function communityDefaultsEnabled(): boolean {
     if (typeof window === "undefined") return true;
     return new URLSearchParams(window.location.search).get("defaults") !== "0";
+}
+
+/** `RosterEntry.masteries` and `.modules` arrive as raw `jsonb_agg` output, so
+ *  they are typed as unknown JSON. Narrow them to row objects once, here,
+ *  rather than casting at every read. */
+function asRows(value: unknown): Record<string, unknown>[] {
+    return Array.isArray(value) ? (value.filter((v) => typeof v === "object" && v !== null) as Record<string, unknown>[]) : [];
 }
 
 /** How many people picked one option, and what share of the cohort that is. */
@@ -57,6 +66,17 @@ export interface ICommunityDefaults {
      *  those would report a preference nobody expressed. */
     moduleShares: ReadonlyMap<string, IChoiceShare>;
     moduleTotal: number;
+
+    /** Mastery histogram per skill, keyed by `skillId`. */
+    masteries: ReadonlyMap<string, SkillMasteryStats>;
+    /** Level histogram per module, keyed by `uniEquipId`. */
+    moduleLevels: ReadonlyMap<string, ModuleLevelStats>;
+    /** The viewer's own mastery per skill, keyed by `skillId`. Only populated
+     *  at E2, the same cohort the histogram counts. */
+    ownMasteries: ReadonlyMap<string, number>;
+    /** The viewer's own level per module, keyed by `uniEquipId`, where 0 means
+     *  unlocked-not-yet or locked. Only populated at E2. */
+    ownModuleLevels: ReadonlyMap<string, number>;
 }
 
 const NONE: ICommunityDefaults = {
@@ -70,6 +90,10 @@ const NONE: ICommunityDefaults = {
     skillTotal: 0,
     moduleShares: new Map(),
     moduleTotal: 0,
+    masteries: new Map(),
+    moduleLevels: new Map(),
+    ownMasteries: new Map(),
+    ownModuleLevels: new Map(),
 };
 
 /**
@@ -134,6 +158,26 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
         const rawOwnModule = own?.current_equip ?? null;
         const ownModuleId = rawOwnModule && !rawOwnModule.startsWith("uniequip_001") && modules.some((m) => m.uniEquipId === rawOwnModule) ? rawOwnModule : null;
 
+        // The viewer's own investment, read from the roster view's jsonb
+        // aggregates. Gated on E2 for the same reason the community histogram
+        // is: below E2 neither a mastery nor a module level can exist, so any
+        // value there is a placeholder rather than a stopping point.
+        const ownMasteries = new Map<string, number>();
+        const ownModuleLevels = new Map<string, number>();
+        if (own?.elite === 2) {
+            for (const entry of asRows(own.masteries)) {
+                const index = Number(entry.index);
+                const skillId = Number.isInteger(index) ? skills[index]?.skillId : undefined;
+                if (skillId) ownMasteries.set(skillId, Number(entry.mastery) || 0);
+            }
+            for (const entry of asRows(own.modules)) {
+                const id = typeof entry.id === "string" ? entry.id : undefined;
+                // `locked` mirrors the backend remap: a locked module reports
+                // level 1 in the source but has not actually been unlocked.
+                if (id) ownModuleLevels.set(id, entry.locked ? 0 : Number(entry.level) || 0);
+            }
+        }
+
         // The backend ordered these most-picked first with an explicit
         // `users DESC, id ASC` tie-break, so [0] is the modal choice and is the
         // same across processes. It also withheld the list entirely when the
@@ -167,6 +211,10 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
             skillTotal: stats?.skillTotal ?? 0,
             moduleShares: toShares(stats?.defaultModules, stats?.moduleTotal ?? 0),
             moduleTotal: stats?.moduleTotal ?? 0,
+            masteries: new Map((stats?.masteries ?? []).map((m) => [m.skillId, m])),
+            moduleLevels: new Map((stats?.moduleLevels ?? []).map((m) => [m.uniEquipId, m])),
+            ownMasteries,
+            ownModuleLevels,
         };
     }, [enabled, operator, own, stats]);
 }
