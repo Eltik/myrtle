@@ -55,6 +55,13 @@ pub enum CacheKey<'a> {
     OperatorOwnership {
         server: &'a str,
     },
+    /// Per-operator default-skill and default-module distributions. Keyed under
+    /// its own prefix rather than `operators:ownership:` so the two can be
+    /// invalidated independently, even though today one job refreshes both.
+    OperatorBuildStats {
+        server: &'a str,
+        operator_id: &'a str,
+    },
     CommunityEnemyAverage,
     /// A computed base rotation for one uid + exact request (layout, locks,
     /// promotion flag, facts). Deterministic given the inputs, so a short TTL
@@ -128,6 +135,10 @@ impl CacheKey<'_> {
             }
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
             CacheKey::OperatorOwnership { server } => format!("operators:ownership:{server}"),
+            CacheKey::OperatorBuildStats {
+                server,
+                operator_id,
+            } => format!("operators:buildstats:{server}:{operator_id}"),
             CacheKey::CommunityEnemyAverage => "enemies:community_average".to_owned(),
             CacheKey::BaseRotation { uid, request_hash } => {
                 format!("base:rotation:{uid}:{request_hash}")
@@ -154,6 +165,7 @@ impl CacheKey<'_> {
             CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1),
             CacheKey::SkinPopularity => Duration::from_hours(1),
             CacheKey::OperatorOwnership { .. } => Duration::from_hours(1),
+            CacheKey::OperatorBuildStats { .. } => Duration::from_hours(1),
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
             CacheKey::BaseRotation { .. } => Duration::from_mins(5),
             CacheKey::DpsList { .. } => Duration::from_hours(1),

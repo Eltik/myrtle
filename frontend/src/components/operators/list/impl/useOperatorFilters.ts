@@ -75,6 +75,10 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
         const dir = sortOrder === "asc" ? 1 : -1;
         // Primary sort honors `dir`; name tiebreaker is always A→Z so listings stay readable in either direction.
         const nameTiebreak = (a: IOperatorView, b: IOperatorView) => a.name.localeCompare(b.name);
+        /** 1 when an operator has a real E2 conversion rate, 0 when it has
+         *  none to report. Applied before the direction multiplier so the
+         *  rate-less operators stay at the end in both directions. */
+        const e2Rank = (op: IOperatorView) => (op.ownership?.e2Pct == null ? 0 : 1);
         const cmp = (a: IOperatorView, b: IOperatorView): number => {
             switch (sortBy) {
                 case "name":
@@ -95,6 +99,13 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                     return ((a.stats?.block ?? 0) - (b.stats?.block ?? 0)) * dir || nameTiebreak(a, b);
                 case "ownership":
                     return ((a.ownership?.pct ?? 0) - (b.ownership?.pct ?? 0)) * dir || nameTiebreak(a, b);
+                case "e2":
+                    // `e2Pct` is null both for operators nobody owns and for the
+                    // 36 that cannot reach E2. Coercing either to 0 would rank
+                    // them alongside operators players genuinely declined to
+                    // promote, so they sort to the end regardless of direction
+                    // and the descending view opens on real conversion rates.
+                    return e2Rank(b) - e2Rank(a) || ((a.ownership?.e2Pct ?? 0) - (b.ownership?.e2Pct ?? 0)) * dir || nameTiebreak(a, b);
                 default:
                     return (rarityToNumber(a.rarity) - rarityToNumber(b.rarity)) * dir || (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99) || nameTiebreak(a, b);
             }

@@ -53,6 +53,10 @@ pub struct AppStateInner {
     pub config: Arc<AppConfig>,
     pub http_client: Client,
     pub service_accounts: ServiceAccounts,
+    /// Set when a roster sync changes rows the operator ownership aggregate is
+    /// computed from; cleared by `core::operator_ownership_job` once it has
+    /// recomputed. See [`AppState::mark_ownership_dirty`].
+    ownership_dirty: AtomicBool,
 }
 
 impl AppState {
@@ -74,8 +78,31 @@ impl AppState {
                 config: Arc::new(config),
                 http_client: client,
                 service_accounts,
+                ownership_dirty: AtomicBool::new(false),
             }),
         }
+    }
+
+    /// Record that a roster sync changed rows the operator ownership aggregate
+    /// reads, so the job recomputes on its next tick.
+    ///
+    /// This is the whole cost the refresh request pays: recomputing inline is
+    /// 62.531 ms of work whose size grows with the roster, and because refresh
+    /// frequency also grows with the user count the total goes as users
+    /// squared. Coalescing breaks that term, since one recompute answers every
+    /// sync that arrived inside the window.
+    pub fn mark_ownership_dirty(&self) {
+        self.ownership_dirty.store(true, Ordering::Release);
+    }
+
+    /// Claim a pending recompute, clearing the flag. Returns false when nothing
+    /// has changed since the last pass.
+    ///
+    /// The flag is cleared BEFORE the recompute rather than after, so a sync
+    /// landing mid-recompute re-arms it and gets its own pass. Clearing
+    /// afterwards would swallow that sync until the next one arrived.
+    pub fn take_ownership_dirty(&self) -> bool {
+        self.ownership_dirty.swap(false, Ordering::AcqRel)
     }
 
     /// Resolve a server's data, falling back to the default server when the
@@ -216,6 +243,92 @@ fn parse_asset_ws_urls(default_server: Server) -> HashMap<Server, String> {
 }
 
 /// Per-server asset directory, for example `../assets/output/cn`.
+/// Load every configured server's game data and asset index into the map
+/// `AppState::new` expects.
+///
+/// Lifted out of `main` so binaries build the same map the server does, with
+/// the same fallbacks: a non-default server that fails to load is inserted as a
+/// placeholder pointing at the default server's data with `loaded = false`, and
+/// Bilibili shares CN's cell so the two hot-reload together. A tool that
+/// rebuilt this by hand would drift from the server the first time either
+/// changed, and would drift silently.
+///
+/// `phase` wraps each server's load for startup instrumentation. It returns a
+/// guard the caller drops when the phase ends; pass `|_| ()` from a context
+/// with no boot timeline to report to.
+///
+/// # Panics
+/// If the DEFAULT server's game data cannot be loaded. Every other server
+/// degrades to a placeholder, but nothing can serve without the default.
+pub fn load_server_map<G>(
+    config: &AppConfig,
+    mut phase: impl FnMut(&str) -> G,
+) -> HashMap<Server, Arc<ServerData>> {
+    let mut servers: HashMap<Server, Arc<ServerData>> = HashMap::new();
+
+    for &srv in &config.servers {
+        let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
+        let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
+        let load_result = {
+            let _phase = phase(&format!("gamedata:{}", srv.as_str()));
+            crate::core::gamedata::init_game_data(
+                std::path::Path::new(&game_data_dir),
+                std::path::Path::new(&assets_dir),
+            )
+        };
+
+        match load_result {
+            Ok((game_data, asset_index)) => {
+                tracing::info!(
+                    server = srv.as_str(),
+                    operators = game_data.operators.len(),
+                    "game data loaded"
+                );
+                servers.insert(
+                    srv,
+                    Arc::new(ServerData {
+                        game_data: ArcSwap::from_pointee(game_data),
+                        asset_index: ArcSwap::from_pointee(asset_index),
+                        game_data_dir,
+                        assets_dir,
+                        loaded: AtomicBool::new(true),
+                    }),
+                );
+            }
+            Err(e) if srv == config.default_server => {
+                panic!("failed to load game data for {}: {e}", srv.as_str());
+            }
+            Err(e) => {
+                tracing::error!(
+                    server = srv.as_str(),
+                    error = %e,
+                    "game data failed to load; serving default-server data for this server until a hot reload succeeds"
+                );
+                let default_entry = servers
+                    .get(&config.default_server)
+                    .expect("default server data must be present");
+                servers.insert(
+                    srv,
+                    Arc::new(ServerData {
+                        game_data: ArcSwap::new(default_entry.game_data.load_full()),
+                        asset_index: ArcSwap::new(default_entry.asset_index.load_full()),
+                        game_data_dir,
+                        assets_dir,
+                        loaded: AtomicBool::new(false),
+                    }),
+                );
+            }
+        }
+    }
+
+    // Bilibili shares CN's Hypergryph data (same Arc cell, hot-reloads together).
+    if let Some(cn) = servers.get(&Server::CN).cloned() {
+        servers.entry(Server::Bilibili).or_insert(cn);
+    }
+
+    servers
+}
+
 pub fn derive_assets_dir(base: &str, server: Server) -> String {
     format!("{base}/{}", server.as_str())
 }

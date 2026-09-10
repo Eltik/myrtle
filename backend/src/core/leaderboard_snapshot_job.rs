@@ -21,6 +21,12 @@ async fn delay_until_due(state: &AppState) -> Duration {
     }
 }
 
+/// One pass, shared by the loop and by `core::refresh`.
+pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
+    let id = take_leaderboard_snapshot(&state.db).await?;
+    Ok(format!("snapshot {id} taken"))
+}
+
 async fn run_loop(state: AppState) {
     tracing::info!("leaderboard snapshot job started (daily cadence)");
     loop {

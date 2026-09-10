@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::cache::{CachedJson, cached_json};
@@ -167,17 +168,92 @@ pub async fn get_index(
     Ok(entries)
 }
 
+/// One operator's community counts. Struct-valued rather than a bare owner
+/// tally so the next statistic is a field here instead of a fourth map
+/// travelling alongside in the response.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorOwnershipCounts {
+    #[ts(type = "number")]
+    pub owners: i64,
+    /// Owners who took this operator to E2.
+    ///
+    /// Zero is NOT a community signal for the 36 operators that cannot reach
+    /// E2 at all: one to three stars carry fewer than three phases, so their
+    /// rate is structurally zero. Clients must suppress the figure for those
+    /// rather than rank them last.
+    #[ts(type = "number")]
+    pub e2_owners: i64,
+}
+
 /// Population-level ownership: how many sharing players own each operator, plus
 /// the denominator. Only operators with at least one owner are listed; a missing
 /// id implies zero owners. `totalUsers` is the eligible population on this
 /// server (players who imported a roster and opted into stat sharing).
+#[derive(TS)]
+#[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorOwnershipResponse {
+    #[ts(type = "number")]
     pub total_users: i64,
-    pub counts: HashMap<String, i64>,
+    pub counts: HashMap<String, OperatorOwnershipCounts>,
     pub computed_at: String,
 }
+
+/// One option in a community default distribution, with the count that put it
+/// there. Ordered most-picked first by the query.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildChoice {
+    /// `skillId` for a skill, `uniEquipId` for a module. Always a stable id:
+    /// `skillIndex` is resolved here, against the same game data that produced
+    /// the operator's `skills` array, so no client indexes by position.
+    pub id: String,
+    /// The game's 0-based skill index. Present for skills only, and carried for
+    /// display ("S3") rather than for lookup.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(type = "number | null")]
+    pub skill_index: Option<i16>,
+    #[ts(type = "number")]
+    pub users: i64,
+}
+
+/// What the community defaults to for one operator: which skill they leave
+/// selected, and which module they leave equipped.
+///
+/// The distributions are whole, not just the winner, because 12 of 364
+/// operators have a modal share under 50% and there the runner-up is as
+/// informative as the leader. `skillTotal` and `moduleTotal` are the
+/// denominators, and they differ: skills count E2 owners, modules count only
+/// owners with an ADVANCED module actually equipped, which is 13.63% of rows.
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorBuildStatsResponse {
+    pub operator_id: String,
+    pub default_skills: Vec<BuildChoice>,
+    #[ts(type = "number")]
+    pub skill_total: i64,
+    pub default_modules: Vec<BuildChoice>,
+    #[ts(type = "number")]
+    pub module_total: i64,
+    /// Below this many samples a distribution is withheld entirely, so a rare
+    /// operator's numbers cannot describe a handful of identifiable accounts.
+    #[ts(type = "number")]
+    pub min_sample: i64,
+    pub computed_at: String,
+}
+
+/// Withhold a distribution whose denominator is too thin to be either private
+/// or meaningful. Costs 14 of 378 operators on skills and 147 of 370 on
+/// modules; dropping it to 20 would recover those to 1 and 52.
+const MIN_SAMPLE: i64 = 50;
 
 /// Served from the precomputed aggregate via a short-lived cache, so a request
 /// never scans the roster. Returns 404 for a server that is not loaded.
@@ -197,14 +273,107 @@ pub async fn get_ownership(
     let server_id = server.index() as i16;
     let (total_users, rows) =
         operator_ownership::get_operator_ownership(&state.db, server_id).await?;
-    let counts: HashMap<String, i64> = rows
+    let counts: HashMap<String, OperatorOwnershipCounts> = rows
         .into_iter()
-        .map(|r| (r.operator_id, r.owners))
+        .map(|r| {
+            (
+                r.operator_id,
+                OperatorOwnershipCounts {
+                    owners: r.owners,
+                    e2_owners: r.e2_owners,
+                },
+            )
+        })
         .collect();
 
     let response = OperatorOwnershipResponse {
         total_users,
         counts,
+        computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+    };
+
+    state.cache.set(&key, &response).await;
+    Ok(response)
+}
+
+/// What the community defaults to for one operator.
+///
+/// Served from the precomputed distributions via a short-lived cache, so a
+/// request never scans the roster. Returns 404 for a server that is not loaded,
+/// and an empty distribution (not an error) for an operator nobody has built:
+/// "no consensus yet" is a real answer and the client falls back to its own
+/// default.
+pub async fn get_build_stats(
+    state: &AppState,
+    server: Server,
+    operator_id: &str,
+) -> Result<OperatorBuildStatsResponse, ApiError> {
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+
+    let key = CacheKey::OperatorBuildStats {
+        server: server.as_str(),
+        operator_id,
+    };
+    if let Some(cached) = state.cache.get::<OperatorBuildStatsResponse>(&key).await {
+        return Ok(cached);
+    }
+
+    let server_id = server.index() as i16;
+    let (skill_rows, module_rows) =
+        operator_ownership::get_operator_choices(&state.db, server_id, operator_id).await?;
+
+    let game_data = server_data.game_data.load();
+    let skills = game_data
+        .operators
+        .get(operator_id)
+        .map(|op| op.skills.as_slice())
+        .unwrap_or_default();
+
+    let default_skills: Vec<BuildChoice> = skill_rows
+        .into_iter()
+        .filter_map(|row| {
+            let index: i16 = row.choice.parse().ok()?;
+            let skill = skills.get(usize::try_from(index).ok()?)?;
+            Some(BuildChoice {
+                id: skill.skill_id.clone(),
+                skill_index: Some(index),
+                users: row.users,
+            })
+        })
+        .collect();
+
+    let default_modules: Vec<BuildChoice> = module_rows
+        .into_iter()
+        .map(|row| BuildChoice {
+            id: row.choice,
+            skill_index: None,
+            users: row.users,
+        })
+        .collect();
+
+    let skill_total: i64 = default_skills.iter().map(|c| c.users).sum();
+    let module_total: i64 = default_modules.iter().map(|c| c.users).sum();
+
+    let (default_skills, default_modules) = (
+        if skill_total >= MIN_SAMPLE {
+            default_skills
+        } else {
+            Vec::new()
+        },
+        if module_total >= MIN_SAMPLE {
+            default_modules
+        } else {
+            Vec::new()
+        },
+    );
+
+    let response = OperatorBuildStatsResponse {
+        operator_id: operator_id.to_owned(),
+        default_skills,
+        skill_total,
+        default_modules,
+        module_total,
+        min_sample: MIN_SAMPLE,
         computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     };
 

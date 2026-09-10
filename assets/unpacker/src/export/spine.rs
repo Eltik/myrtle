@@ -895,7 +895,17 @@ pub fn collect_spine_assets(
             .skel_name
             .strip_suffix(".skel")
             .unwrap_or(&chain.skel_name);
-        let category = classify_spine(base_name, anim_name, game_object_name, &chain.atlas_text);
+        let (category, rule) =
+            classify_spine_with_rule(base_name, anim_name, game_object_name, &chain.atlas_text);
+        // CENSUS (`SPINE_GO_CENSUS`, presence-checked, inert by default): one line per
+        // SkeletonMecanim behaviour naming the owning GameObject and the rule that decided
+        // its category. The Front/Back/Down rule set came from an EN-only census; a name it
+        // does not know falls to the atlas heuristic and races a real facing for one path.
+        if std::env::var("SPINE_GO_CENSUS").is_ok() {
+            eprintln!(
+                "GOCENSUS go={game_object_name:?} anim={anim_name:?} rule={rule} cat={category} skel={base_name}"
+            );
+        }
 
         // Claim all path_ids in this spine instance
         claimed.insert(*mecanim_pid);
@@ -5325,27 +5335,39 @@ fn classify_spine(
     game_object_name: &str,
     atlas_text: &str,
 ) -> SpineCategory {
+    classify_spine_with_rule(skel_name, anim_name, game_object_name, atlas_text).0
+}
+
+/// [`classify_spine`], plus a tag naming the rule that decided. The tag exists so the
+/// `SPINE_GO_CENSUS` diagnostic reports which rule fired without a second copy of these
+/// conditions that could drift from them.
+fn classify_spine_with_rule(
+    skel_name: &str,
+    anim_name: &str,
+    game_object_name: &str,
+    atlas_text: &str,
+) -> (SpineCategory, &'static str) {
     let name_lower = skel_name.to_lowercase();
 
     // 1. Dynamic illustration
     if name_lower.starts_with("dyn_") {
-        return SpineCategory::DynIllust;
+        return (SpineCategory::DynIllust, "1-dyn");
     }
 
     // 2. Building: "Relax" animation or build_ prefix
     if anim_name == "Relax" || name_lower.starts_with("build_") {
-        return SpineCategory::Building;
+        return (SpineCategory::Building, "2-building");
     }
 
     // 3. Battle spines hang off GameObjects literally named "Front"/"Back"
     if game_object_name.eq_ignore_ascii_case("front") {
-        return SpineCategory::BattleFront;
+        return (SpineCategory::BattleFront, "3-front");
     }
     if game_object_name.eq_ignore_ascii_case("back") {
-        return SpineCategory::BattleBack;
+        return (SpineCategory::BattleBack, "3-back");
     }
     if game_object_name.eq_ignore_ascii_case("down") {
-        return SpineCategory::BattleDown;
+        return (SpineCategory::BattleDown, "3-down");
     }
 
     // 4. Fallback: front vs back based on atlas region prefixes
@@ -5354,9 +5376,9 @@ fn classify_spine(
     let back_count = atlas_lower.matches("\nb_").count();
 
     if front_count >= back_count {
-        SpineCategory::BattleFront
+        (SpineCategory::BattleFront, "4-atlas-front")
     } else {
-        SpineCategory::BattleBack
+        (SpineCategory::BattleBack, "4-atlas-back")
     }
 }
 

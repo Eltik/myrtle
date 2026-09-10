@@ -28,6 +28,17 @@ async fn initial_delay(state: &AppState) -> Duration {
     }
 }
 
+/// One pass, shared by the loop and by `core::refresh`. Reports the row count
+/// because an empty aggregate is a legitimate outcome (nobody sharing) and is
+/// indistinguishable from a silent failure without it.
+pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
+    refresh_medal_ownership(&state.db).await?;
+    let rows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM medal_ownership_stats")
+        .fetch_one(&state.db)
+        .await?;
+    Ok(format!("{rows} medal ownership rows"))
+}
+
 async fn run_loop(state: AppState) {
     tracing::info!("medal ownership refresh job started (daily cadence)");
     // Pace the loop in memory rather than re-reading the persisted time each

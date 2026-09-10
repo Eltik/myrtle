@@ -1,6 +1,6 @@
 import { formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
-import type { ArrayFilterKey, HasNotesFilter, SortOption, ViewMode } from "./types";
+import type { ArrayFilterKey, HasNotesFilter, SortOption, StatMetric, ViewMode } from "./types";
 
 export { RARITY_HEX as RARITY_COLORS } from "#/lib/utils";
 
@@ -32,7 +32,17 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: "cost", label: "Cost" },
     { value: "block", label: "Block" },
     { value: "ownership", label: "Most owned" },
+    { value: "e2", label: "Most E2'd" },
 ];
+
+/**
+ * Operators below this rarity cannot be promoted to E2 at all: one and two
+ * stars carry a single phase, three stars carry two, and only four stars and up
+ * carry three. That is 36 operators whose E2 rate is a structural 0%, so the
+ * badge is suppressed and they drop out of the E2 sort instead of ranking last
+ * as though players had passed them over.
+ */
+export const MIN_RARITY_FOR_E2 = 4;
 
 export const CLASS_SORT_ORDER: Record<string, number> = {
     PIONEER: 0,
@@ -50,6 +60,7 @@ export const PROFESSION_ORDER = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER
 export const VIEW_MODE_KEY = "operators:view-mode";
 export const FILTERS_VISIBLE_KEY = "operators:filters-visible";
 export const ITEMS_PER_PAGE_KEY = "operators:items-per-page";
+export const STAT_METRIC_KEY = "operators:stat-metric";
 export const ITEMS_PER_PAGE = 30;
 export const ITEMS_PER_PAGE_OPTIONS = [12, 24, 30, 48, 60, 100] as const;
 export type ItemsPerPage = (typeof ITEMS_PER_PAGE_OPTIONS)[number];
@@ -57,6 +68,7 @@ export type ItemsPerPage = (typeof ITEMS_PER_PAGE_OPTIONS)[number];
 export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 88px 32px";
 
 export const VIEW_MODES: ReadonlySet<ViewMode> = new Set(["grid", "compact", "list"]);
+export const STAT_METRICS: ReadonlySet<StatMetric> = new Set(["owned", "e2"]);
 
 export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: string) => string }[] = [
     { key: "rarities", prefix: "rarity", label: (v) => `${rarityToNumber(v as OperatorRarityTier)}★` },

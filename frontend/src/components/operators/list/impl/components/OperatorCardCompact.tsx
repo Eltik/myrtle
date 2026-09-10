@@ -2,16 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { formatSubProfession, getAvatarById, parseOperatorName, rarityToNumber } from "#/lib/utils";
 import { RARITY_COLORS } from "../constants";
-import type { IOperatorView } from "../types";
+import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
 import { OperatorPreview } from "./OperatorPreview";
 import { OwnershipBadge } from "./OwnershipBadge";
 
 interface IOperatorCardCompactProps {
     operator: IOperatorView;
+    /** Which community rate the badge shows. Set on /operators and
+     *  persisted per viewer; independent of the sort key. */
+    statMetric: StatMetric;
 }
 
-export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
+export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompactProps) {
     const rarityColor = RARITY_COLORS[rarityToNumber(operator.rarity)] ?? "#ffffff";
     const operatorId = operator.id ?? "";
     const operatorName = operator.name ?? "Unknown";
@@ -28,7 +31,7 @@ export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
                             <span className="truncate text-[0.625rem] text-foreground leading-tight sm:text-xs sm:leading-4.25">{displayName}</span>
                         </div>
                         <div className="relative box-content aspect-square h-20 overflow-hidden sm:h-30" style={{ borderBottom: `4px solid ${rarityColor}` }}>
-                            {operator.ownership && <OwnershipBadge info={operator.ownership} color={rarityColor} className="absolute top-0.5 left-0.5 z-10" />}
+                            {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} className="absolute top-0.5 left-0.5 z-10" />}
                             <div className="pointer-events-none absolute -translate-x-3 -translate-y-2">
                                 <CampIcon groupId={factionLogoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={140} />
                             </div>

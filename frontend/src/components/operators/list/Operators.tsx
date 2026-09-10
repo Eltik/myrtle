@@ -21,10 +21,10 @@ import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorCardUpcoming } from "./impl/components/OperatorCardUpcoming";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
-import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import { buildSharedChips } from "./impl/shared-filters";
-import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, ViewMode } from "./impl/types";
+import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
 
 const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
@@ -45,10 +45,25 @@ export function OperatorsList() {
     const ownershipMap = useMemo(() => {
         if (!ownership || ownership.totalUsers <= 0) return undefined;
         const total = ownership.totalUsers;
+        const rarityById = new Map(operators.map((op) => [op.id, op.rarity]));
         const map = new Map<string, IOperatorOwnershipInfo>();
-        for (const [id, owners] of Object.entries(ownership.counts)) map.set(id, { owners, pct: owners / total });
+        for (const [id, counts] of Object.entries(ownership.counts)) {
+            if (!counts) continue;
+            const { owners, e2Owners } = counts;
+            // An operator that cannot reach E2 has no conversion rate to report,
+            // and neither does one nobody owns. Both stay `null` rather than
+            // collapsing to 0, which would read as "nobody bothered".
+            const canE2 = (rarityById.get(id) ?? 0) >= MIN_RARITY_FOR_E2;
+            map.set(id, {
+                owners,
+                pct: owners / total,
+                e2Owners,
+                e2Pct: canE2 && owners > 0 ? e2Owners / owners : null,
+                canE2,
+            });
+        }
         return map;
-    }, [ownership]);
+    }, [ownership, operators]);
     const enriched = useMemo(() => enrichOperators(operators, voices, notedIds, ownershipMap), [operators, voices, notedIds, ownershipMap]);
 
     const {
@@ -106,6 +121,13 @@ export function OperatorsList() {
         serialize: (v) => (v ? "1" : "0"),
     });
     const toggleFilters = () => setFiltersVisible((v) => !v);
+
+    // Defaults to "owned", which reproduces the badge exactly as it was before
+    // the E2 metric existed.
+    const [statMetric, setStatMetric] = useLocalStorageState<StatMetric>(STAT_METRIC_KEY, "owned", {
+        parse: (raw) => (STAT_METRICS.has(raw as StatMetric) ? (raw as StatMetric) : undefined),
+        serialize: (v) => v,
+    });
 
     const [itemsPerPage, setItemsPerPage] = useLocalStorageState<ItemsPerPage>(ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE, {
         parse: (raw) => {
@@ -289,6 +311,38 @@ export function OperatorsList() {
                             </Tooltip>
                         </div>
 
+                        {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
+                        <div
+                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:font-medium [&>button]:font-mono [&>button]:text-[10px] [&>button]:text-muted-foreground [&>button]:uppercase [&>button]:tracking-[0.12em] [&>button]:transition-[background-color,color] [&>button]:duration-150"
+                            role="group"
+                            aria-label="Card statistic"
+                        >
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button type="button" data-on={statMetric === "owned" || undefined} onClick={() => setStatMetric("owned")} aria-pressed={statMetric === "owned"}>
+                                            Owned
+                                        </button>
+                                    }
+                                />
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    Share of players who own each operator
+                                </TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button type="button" data-on={statMetric === "e2" || undefined} onClick={() => setStatMetric("e2")} aria-pressed={statMetric === "e2"}>
+                                            E2
+                                        </button>
+                                    }
+                                />
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    Share of owners who promoted each operator to E2
+                                </TooltipPopup>
+                            </Tooltip>
+                        </div>
+
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label="Sort operators">
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
@@ -388,13 +442,13 @@ export function OperatorsList() {
                     ) : viewMode === "grid" ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
                             {paginated.map((op) => (
-                                <OperatorCardGrid key={op.id} operator={op} />
+                                <OperatorCardGrid key={op.id} operator={op} statMetric={statMetric} />
                             ))}
                         </div>
                     ) : viewMode === "compact" ? (
                         <div className="grid grid-cols-3 gap-1 min-[1080px]:grid-cols-6 min-[1280px]:grid-cols-7 min-[1536px]:grid-cols-8 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5">
                             {paginated.map((op) => (
-                                <OperatorCardCompact key={op.id} operator={op} />
+                                <OperatorCardCompact key={op.id} operator={op} statMetric={statMetric} />
                             ))}
                         </div>
                     ) : (
@@ -410,7 +464,7 @@ export function OperatorsList() {
                             </div>
                             <div className="flex flex-col gap-1">
                                 {paginated.map((op) => (
-                                    <OperatorCardList key={op.id} operator={op} />
+                                    <OperatorCardList key={op.id} operator={op} statMetric={statMetric} />
                                 ))}
                             </div>
                         </div>

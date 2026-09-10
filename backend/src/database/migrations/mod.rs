@@ -44,6 +44,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v013_checkin_semantics",
         include_str!("v013_checkin_semantics.sql"),
     ),
+    ("v014_build_stats", include_str!("v014_build_stats.sql")),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -1,16 +1,37 @@
 import type { IOperatorIndexEntry, OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
 export type ViewMode = "grid" | "compact" | "list";
-export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership";
+export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership" | "e2";
 export type SortOrder = "asc" | "desc";
 export type HasNotesFilter = "any" | "yes" | "no";
 export type AvailabilityFilter = "global" | "upcoming";
 
-/** Share of sharing players that own an operator. `pct` is a fraction in
- *  [0, 1]; `null` only when the population denominator is unknown. */
+/** Which community number the card badge shows. Independent of `sortBy`, so
+ *  sorting by E2 rate while displaying ownership is legal. */
+export type StatMetric = "owned" | "e2";
+
+/** Share of sharing players that own an operator, and how many of those owners
+ *  promoted them to E2. */
 export interface IOperatorOwnershipInfo {
+    /** Owners as a fraction of the sharing population, in [0, 1]. `null` only
+     *  when the population denominator is unknown. */
     pct: number | null;
     owners: number;
+    e2Owners: number;
+    /** E2 owners as a fraction of OWNERS, in [0, 1] - conversion, not
+     *  popularity. This is the figure worth showing: measured across the 409
+     *  operators with 50+ owners it has a standard deviation of 31.1 against
+     *  15.5 for the share-of-population form, and it correlates -0.4256 with
+     *  ownership, so it says something "Most owned" does not.
+     *
+     *  `null` when the operator has no owners, or when they cannot reach E2 at
+     *  all - see `canE2`. */
+    e2Pct: number | null;
+    /** False for the 36 operators that cannot be promoted to E2 (one to three
+     *  stars carry fewer than three phases). Their 0% is a fact about the game,
+     *  not about the community, so the badge is suppressed and they are dropped
+     *  from the E2 sort rather than ranked last. */
+    canE2: boolean;
 }
 
 /**

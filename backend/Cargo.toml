@@ -36,6 +36,10 @@ name = "resync-gacha"
 path = "src/bin/resync_gacha.rs"
 
 [[bin]]
+name = "refresh-stats"
+path = "src/bin/refresh_stats.rs"
+
+[[bin]]
 name = "export-gacha"
 path = "src/bin/export_gacha.rs"
 

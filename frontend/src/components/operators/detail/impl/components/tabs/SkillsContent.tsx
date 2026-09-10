@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Columns, GitCompareArrows, Rows } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
@@ -11,6 +11,8 @@ import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
 import { descriptionToHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
+import { useCommunityDefaults } from "../../useCommunityDefaults";
+import { CommunitySharePill } from "../CommunitySharePill";
 import { OperatorRange } from "../OperatorRange";
 
 interface ISkillsContentProps {
@@ -65,8 +67,11 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
         [defaultComparison],
     );
 
+    const selectionSettled = useRef(false);
+
     const handleSkillChange = useCallback(
         (idx: number) => {
+            selectionSettled.current = true;
             setSelectedSkillIndex(idx);
             const next = operator.skills[idx]?.static?.levels?.length ?? 1;
             setSkillLevel(next - 1);
@@ -74,6 +79,20 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
         },
         [operator.skills],
     );
+
+    // Open on the viewer's own default skill, then the community's, then leave
+    // the last skill this component already chose. `null` means "no answer",
+    // which is different from index 0, so it falls through rather than
+    // selecting S1.
+    const { ownSkillIndex, communitySkillIndex, skillShares, skillTotal } = useCommunityDefaults(operator);
+    useEffect(() => {
+        if (selectionSettled.current) return;
+        const idx = ownSkillIndex ?? communitySkillIndex;
+        if (idx == null || idx >= operator.skills.length) return;
+        selectionSettled.current = true;
+        setSelectedSkillIndex(idx);
+        setSkillLevel(Math.max(0, (operator.skills[idx]?.static?.levels ?? []).length - 1));
+    }, [ownSkillIndex, communitySkillIndex, operator.skills]);
 
     if (!operator.skills || operator.skills.length === 0) {
         return (
@@ -109,10 +128,14 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             key={skill.skillId ?? idx}
                             type="button"
                             onClick={() => handleSkillChange(idx)}
-                            className={cn("flex items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
+                            className={cn("flex w-full items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors sm:w-auto", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                         >
                             {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, operator.server)} />}
                             {name}
+                            {/* Keyed by skillId, never by position: the game's
+                                own default index is positional, but matching on
+                                it here would repeat the module-order bug. */}
+                            <CommunitySharePill className="ms-auto sm:ms-0" share={skill.skillId ? skillShares.get(skill.skillId) : undefined} total={skillTotal} cohort="E2 owners use this skill" />
                         </button>
                     );
                 })}

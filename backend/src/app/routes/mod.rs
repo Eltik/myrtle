@@ -182,6 +182,7 @@ pub fn router() -> Router<AppState> {
         .route("/upcoming", get(operators::upcoming))
         .route("/{server}/upcoming", get(operators::upcoming_srv))
         .route("/operators/{id}", get(operators::detail))
+        .route("/operators/{id}/build-stats", get(operators::build_stats))
         .route("/voices/{id}", get(operators::voices_detail))
         .route("/{server}/voices/{id}", get(operators::voices_detail_srv))
         .route("/skins/{id}", get(operators::skins_detail))
@@ -192,6 +193,10 @@ pub fn router() -> Router<AppState> {
             get(operators::ownership_srv),
         )
         .route("/{server}/operators/{id}", get(operators::detail_srv))
+        .route(
+            "/{server}/operators/{id}/build-stats",
+            get(operators::build_stats_srv),
+        )
         .route(
             "/{server}/stages/{stage_id}/detail",
             get(stages::stage_detail_srv),

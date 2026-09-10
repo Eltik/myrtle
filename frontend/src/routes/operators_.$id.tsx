@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
-import { operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { operatorBuildStatsQueryOptions, operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
@@ -26,6 +26,12 @@ export const Route = createFileRoute("/operators_/$id")({
     loader: async ({ context, params }) => {
         const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id));
         if (operator) {
+            // Community build stats decide which skill and module the tabs open
+            // on, so they are prefetched rather than fetched from the tab: a
+            // late arrival would visibly re-select in front of the reader.
+            // Fire-and-forget, because a missing aggregate is a fallback, not
+            // an error, and must never block the page.
+            void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id));
             warmOg("operator", params.id, buildOgData(operator));
             // For operators with alternate forms (Amiya), preload the index so
             // the form switcher renders in SSR without a hydration flash.

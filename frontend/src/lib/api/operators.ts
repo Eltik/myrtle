@@ -1,6 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+import type { OperatorBuildStatsResponse } from "#/types/generated/OperatorBuildStatsResponse";
+import type { OperatorOwnershipResponse } from "#/types/generated/OperatorOwnershipResponse";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 
 // The /static/operators endpoint serves some nested shapes (phases,
@@ -74,12 +76,34 @@ export function operatorsListQueryOptions() {
     });
 }
 
-/** Population-level ownership: how many sharing players own each operator. A
- *  missing id in `counts` means zero owners. `totalUsers` is the denominator. */
-export interface IOperatorOwnership {
-    totalUsers: number;
-    counts: Record<string, number>;
-    computedAt: string;
+/** Population-level ownership: how many sharing players own each operator, and
+ *  how many took them to E2. A missing id in `counts` means zero owners;
+ *  `totalUsers` is the denominator. Generated from the Rust response type. */
+export type IOperatorOwnership = OperatorOwnershipResponse;
+
+/** What the community leaves selected on an operator: default skill and default
+ *  module, each as a whole distribution ordered most-picked first. */
+export type IOperatorBuildStats = OperatorBuildStatsResponse;
+
+export const getOperatorBuildStatsFn = createServerFn({ method: "GET" })
+    .inputValidator((id: string) => id)
+    .handler(async ({ data: id }) => {
+        const res = await backendFetch(`/operators/${encodeURIComponent(id)}/build-stats`);
+        // An operator nobody has built is not an error, and neither is a
+        // backend that predates this route. The detail page falls back to its
+        // own default, so `undefined` is a usable answer.
+        if (res.status === 404) return undefined;
+        if (!res.ok) throw new Error(`Failed to load operator build stats: ${res.status}`);
+        return (await res.json()) as IOperatorBuildStats;
+    });
+
+export function operatorBuildStatsQueryOptions(id: string) {
+    return queryOptions({
+        queryKey: ["operators", "build-stats", id],
+        queryFn: () => getOperatorBuildStatsFn({ data: id }),
+        staleTime: 30 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
 }
 
 export const getOperatorOwnershipFn = createServerFn({ method: "GET" }).handler(async () => {

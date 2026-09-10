@@ -7,8 +7,9 @@ use axum::{
 
 use crate::app::routes::static_data::json_response;
 use crate::app::services::operators::{
-    OperatorIndexEntry, OperatorOwnershipResponse, get_index, get_operator_json,
-    get_operator_skins, get_operator_voices, get_ownership, get_upcoming, resolve_operator_json,
+    OperatorBuildStatsResponse, OperatorIndexEntry, OperatorOwnershipResponse, get_build_stats,
+    get_index, get_operator_json, get_operator_skins, get_operator_voices, get_ownership,
+    get_upcoming, resolve_operator_json,
 };
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::types::skin::SkinData;
@@ -43,6 +44,24 @@ pub async fn ownership_srv(
     Path(server): Path<Server>,
 ) -> Result<Json<OperatorOwnershipResponse>, ApiError> {
     Ok(Json(get_ownership(&state, server).await?))
+}
+
+/// `GET /operators/{id}/build-stats` - default-server community defaults.
+pub async fn build_stats(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Json<OperatorBuildStatsResponse>, ApiError> {
+    Ok(Json(
+        get_build_stats(&state, state.default_server, &id).await?,
+    ))
+}
+
+/// `GET /{server}/operators/{id}/build-stats` - per-server community defaults.
+pub async fn build_stats_srv(
+    State(state): State<AppState>,
+    Path((server, id)): Path<(Server, String)>,
+) -> Result<Json<OperatorBuildStatsResponse>, ApiError> {
+    Ok(Json(get_build_stats(&state, server, &id).await?))
 }
 
 /// `GET /upcoming` - operators on CN not yet on the default (EN) server.

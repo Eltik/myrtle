@@ -2,13 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { cn, formatArchetype, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
-import type { IOperatorView } from "../types";
+import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
 import { OperatorPreview } from "./OperatorPreview";
 import { OwnershipBadge } from "./OwnershipBadge";
 
 interface IOperatorCardListProps {
     operator: IOperatorView;
+    /** Which community rate the badge shows. Set on /operators and
+     *  persisted per viewer; independent of the sort key. */
+    statMetric: StatMetric;
 }
 
 function RarityStars({ rarity, className }: { rarity: number; className?: string }) {
@@ -24,7 +27,7 @@ function RarityStars({ rarity, className }: { rarity: number; className?: string
     );
 }
 
-export function OperatorCardList({ operator }: IOperatorCardListProps) {
+export function OperatorCardList({ operator, statMetric }: IOperatorCardListProps) {
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
@@ -49,7 +52,7 @@ export function OperatorCardList({ operator }: IOperatorCardListProps) {
                                 <span className="truncate text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
                             </div>
                             <span className="justify-self-center truncate text-muted-foreground text-sm">{archetype}</span>
-                            <div className="justify-self-center">{operator.ownership ? <OwnershipBadge info={operator.ownership} color={rarityColor} /> : <span className="text-muted-foreground/40 text-sm">-</span>}</div>
+                            <div className="justify-self-center">{operator.ownership ? <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} /> : <span className="text-muted-foreground/40 text-sm">-</span>}</div>
                             <div className="flex h-6 w-6 items-center justify-center justify-self-center opacity-40 transition-opacity group-hover:opacity-70">
                                 <CampIcon groupId={factionLogoId} size={24} />
                             </div>
@@ -78,7 +81,7 @@ export function OperatorCardList({ operator }: IOperatorCardListProps) {
                                     {operator.ownership && (
                                         <>
                                             <span className="shrink-0 opacity-50">·</span>
-                                            <OwnershipBadge info={operator.ownership} color={rarityColor} className="shrink-0" />
+                                            <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} className="shrink-0" />
                                         </>
                                     )}
                                 </div>

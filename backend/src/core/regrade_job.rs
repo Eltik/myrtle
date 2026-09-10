@@ -158,6 +158,30 @@ async fn regrade_one(
 }
 
 /// Runs one full pass over the users table. Returns (successes, failures).
+/// One full regrade pass, shared by the loop and by `core::refresh`.
+///
+/// Marked HEAVY in the task registry: this walks the entire `users` table and
+/// recomputes every grade, so unlike the other one-shots its cost grows with
+/// the user count rather than being a single aggregate query. It is excluded
+/// from a bare `--all` for that reason.
+///
+/// Unlike the loop, this does not touch the on-disk state file: forcing a pass
+/// by hand should not convince the scheduled job that it has already run.
+pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
+    let cfg = Cfg::from_env();
+    let (ok, failed) = run_pass(state, &cfg).await;
+    if failed > 0 {
+        return Err(anyhow::anyhow!(
+            "regraded {ok} users, {failed} failed (concurrency {})",
+            cfg.concurrency
+        ));
+    }
+    Ok(format!(
+        "regraded {ok} users (concurrency {})",
+        cfg.concurrency
+    ))
+}
+
 async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
     let game_data = state.default_game_data();
     let pool = state.db.clone();

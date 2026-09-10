@@ -3,7 +3,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/p
 import { env } from "#/env";
 import { cn, rarityToNumber } from "#/lib/utils";
 import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
-import type { IOperatorView } from "../types";
+import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
 import styles from "./OperatorCardGrid.module.css";
 import { OperatorPreview } from "./OperatorPreview";
@@ -11,9 +11,12 @@ import { OwnershipBadge } from "./OwnershipBadge";
 
 interface IOperatorCardGridProps {
     operator: IOperatorView;
+    /** Which community rate the badge shows. Set on /operators and
+     *  persisted per viewer; independent of the sort key. */
+    statMetric: StatMetric;
 }
 
-export function OperatorCardGrid({ operator }: IOperatorCardGridProps) {
+export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProps) {
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
 
     return (
@@ -21,7 +24,7 @@ export function OperatorCardGrid({ operator }: IOperatorCardGridProps) {
             <HoverCardTrigger
                 render={
                     <Link to="/operators/$id" params={{ id: operator.id ?? "" }} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
-                        {operator.ownership && <OwnershipBadge info={operator.ownership} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
+                        {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
                         <div className="absolute -translate-x-8 -translate-y-4">
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>

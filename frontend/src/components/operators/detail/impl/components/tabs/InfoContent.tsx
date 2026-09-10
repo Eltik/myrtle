@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Dna, Heart, Info, LibraryBig, MapPin, Package, Palette, User } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -14,7 +14,9 @@ import type { IOperatorListItem } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
 import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
+import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { BaseSkillsSection } from "../BaseSkillsSection";
+import { CommunitySharePill } from "../CommunitySharePill";
 import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
@@ -36,10 +38,30 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
         return initialModule?.data?.phases?.length ?? 0;
     });
 
+    // Set once the viewer picks a module themselves, or once a default lands,
+    // so late-arriving community data cannot override a deliberate choice.
+    const moduleSettled = useRef(false);
+
     const { data: ranges } = useQuery(rangesQueryOptions());
     const currentRange = ranges?.[operator.phases[phaseIndex]?.rangeId ?? ""];
 
     const availableModules = useMemo(() => operator.modules.filter((m) => m.type !== "INITIAL"), [operator.modules]);
+
+    // Open on the viewer's own equipped module, then the community's most-used,
+    // then the first one this component already chose. Both sources are already
+    // filtered to real ADVANCED modules the operator has, so anything non-null
+    // here is selectable.
+    const { ownModuleId, communityModuleId, moduleShares, moduleTotal } = useCommunityDefaults(operator);
+    useEffect(() => {
+        if (moduleSettled.current) return;
+        const id = ownModuleId ?? communityModuleId;
+        if (id == null) return;
+        const m = availableModules.find((x) => x.uniEquipId === id);
+        if (!m) return;
+        moduleSettled.current = true;
+        setModuleId(id);
+        setModuleLevel(m.data?.phases?.length ?? 0);
+    }, [ownModuleId, communityModuleId, availableModules]);
     const currentModule = useMemo(() => (moduleId && moduleId.length > 0 ? (availableModules.find((m) => m.uniEquipId === moduleId) ?? null) : null), [moduleId, availableModules]);
 
     const [showProfile, setShowProfile] = useState(true);
@@ -278,6 +300,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         value={moduleId || "none"}
                                         onValueChange={(v) => {
                                             const value = String(v);
+                                            moduleSettled.current = true;
                                             if (value === "none") {
                                                 setModuleId("");
                                                 setModuleLevel(0);
@@ -302,11 +325,23 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             <SelectItem value="none">No Module</SelectItem>
                                             {availableModules.map((mod) => (
                                                 <SelectItem key={mod.uniEquipId} value={mod.uniEquipId}>
-                                                    {mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : mod.uniEquipName}
+                                                    <span className="flex items-center gap-2">
+                                                        {mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : mod.uniEquipName}
+                                                        <CommunitySharePill share={moduleShares.get(mod.uniEquipId)} total={moduleTotal} cohort="owners with a module equipped use this" />
+                                                    </span>
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {/* The collapsed trigger shows only the
+                                        designator, so the selected module's
+                                        share is restated here rather than being
+                                        reachable only by opening the dropdown. */}
+                                    {moduleId && moduleShares.has(moduleId) && (
+                                        <p className="text-[11px] text-muted-foreground">
+                                            {Math.round((moduleShares.get(moduleId)?.share ?? 0) * 100)}% of the {moduleTotal.toLocaleString()} owners with a module equipped use this one
+                                        </p>
+                                    )}
                                 </div>
                                 {currentModule?.data?.phases && currentModule.data.phases.length > 0 && (
                                     <div className="space-y-1">

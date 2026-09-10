@@ -328,6 +328,8 @@ pub async fn refresh(
         .await?;
     }
 
+    state.mark_ownership_dirty();
+
     Ok(raw)
 }
 
