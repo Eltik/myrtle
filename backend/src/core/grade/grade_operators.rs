@@ -390,7 +390,8 @@ fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) ->
 /// Returns 0.0-1.0 based on mastery milestones.
 ///
 /// Without any M3, partial credit is capped at `PARTIAL_CAP` (0.30).
-/// With M3 skills: 1 → 0.50, 2 → 0.75, all → 1.00, plus partial bonus.
+/// With M3 skills: 1 → 0.50, 2 → 0.75, plus partial bonus. Every skill at M3
+/// is always 1.00, whether the operator has one, two or three of them.
 fn mastery_milestone_score(roster: &RosterEntry, num_skills: usize) -> f64 {
     let masteries = parse_masteries(&roster.masteries);
     mastery_milestone_from_levels(
@@ -411,10 +412,17 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
             0.0
         }
     } else {
-        let base = match m3_count {
-            1 => 0.50,
-            2 => 0.75,
-            _ => 1.00,
+        // Mastering every skill an operator *has* is the milestone - most 4★/5★
+        // ops only ever get two skills, so keying the ladder on the raw M3 count
+        // would cap a fully-mastered one at 0.75 with nothing left to buy.
+        let base = if m3_count >= num_skills {
+            1.00
+        } else {
+            match m3_count {
+                1 => 0.50,
+                2 => 0.75,
+                _ => 1.00,
+            }
         };
 
         let remaining_skills = num_skills - m3_count;

@@ -5,7 +5,9 @@ mod common;
 
 use std::collections::HashSet;
 
-use backend::core::grade::grade_operators::{grade_operators, operator_score_breakdown};
+use backend::core::grade::grade_operators::{
+    DimensionKind, grade_operators, operator_score_breakdown,
+};
 use backend::database::models::roster::RosterEntry;
 use sqlx::types::Uuid;
 
@@ -110,4 +112,47 @@ fn breakdown_is_empty_for_an_uninvested_roster() {
     let roster = vec![entry("char_123_fang", 0, 1)];
     let breakdown = operator_score_breakdown(&roster, game_data, &HashSet::new());
     assert!(breakdown.is_empty());
+}
+
+#[test]
+fn every_skill_at_m3_completes_the_mastery_dimension() {
+    let game_data = common::load_game_data();
+
+    // Most 4★/5★ operators only ever have two skills, so "all skills at M3" is
+    // M6 for them, not M9. Scoring the milestone off the raw M3 count used to
+    // cap them at 0.75 with nothing left to buy - see the ladder in
+    // `mastery_milestone_from_levels`.
+    for (operator_id, masteries) in [
+        (
+            "char_151_myrtle",
+            serde_json::json!([{ "mastery": 3 }, { "mastery": 3 }]),
+        ),
+        (
+            "char_003_kalts",
+            serde_json::json!([{ "mastery": 3 }, { "mastery": 3 }, { "mastery": 3 }]),
+        ),
+    ] {
+        let Some(static_op) = game_data.operators.get(operator_id) else {
+            continue;
+        };
+        assert_eq!(
+            static_op.skills.len(),
+            masteries.as_array().map_or(0, Vec::len),
+            "{operator_id}: fixture must master every skill the operator has"
+        );
+
+        let mut op = entry(operator_id, 2, 1);
+        op.masteries = masteries;
+        let breakdown = operator_score_breakdown(&[op], game_data, &HashSet::new());
+
+        let mastery = breakdown
+            .iter()
+            .find(|d| matches!(d.kind, DimensionKind::Mastery))
+            .unwrap_or_else(|| panic!("{operator_id}: expected a mastery dimension"));
+        assert!(
+            (mastery.completion - 1.0).abs() < 1e-9,
+            "{operator_id}: fully mastered but completion = {}",
+            mastery.completion
+        );
+    }
 }
