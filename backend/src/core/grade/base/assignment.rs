@@ -152,6 +152,27 @@ pub(crate) fn room_presence_relevant(
                     .count()
                     >= *required_count
             }
+            // A facility-count modifier is worth a pass when a scaler reads
+            // the count (Weedy beside Greyy): pass 1 seats the modifier's
+            // holder, pass 2 counts the plants she unlocked.
+            Some(BuffResolutionStrategy::FacilityCountModifier { .. }) => {
+                operators.iter().any(|o| {
+                    o.available_buffs.iter().any(|b| {
+                        matches!(
+                            registry.get(b),
+                            Some(BuffResolutionStrategy::FacilityCountScaling { .. })
+                        )
+                    })
+                })
+            }
+            // A base-wide count is worth a pass when anyone carries the tag.
+            Some(BuffResolutionStrategy::BaseWideMatchCountScaling { token, .. }) => operators
+                .iter()
+                .any(|o| o.match_tags.iter().any(|t| t == token)),
+            // A named-target grant is worth a pass when the target is owned.
+            Some(BuffResolutionStrategy::NamedTargetRoomBoost { target_char_id, .. }) => {
+                roster.contains(target_char_id.as_str())
+            }
             Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
                 required_char_ids,
                 required_faction,
@@ -188,6 +209,10 @@ pub fn resolve_room_presence(
     let faction_tags: HashMap<&str, &Vec<String>> = operators
         .iter()
         .map(|o| (o.char_id.as_str(), &o.faction_tags))
+        .collect();
+    let match_tags: HashMap<&str, &Vec<String>> = operators
+        .iter()
+        .map(|o| (o.char_id.as_str(), &o.match_tags))
         .collect();
     registry
         .iter()
@@ -253,6 +278,53 @@ pub fn resolve_room_presence(
                         }
                     } else {
                         strategy.clone()
+                    }
+                }
+                // Base-wide tag count (Nasti): every deployed operator with
+                // the tag, dormitories included ("in the Base" excludes only
+                // assistants and the activity room), the holder among them.
+                BuffResolutionStrategy::BaseWideMatchCountScaling {
+                    token,
+                    per_match_pct,
+                    cap_count,
+                } => {
+                    let n = deployed_rooms
+                        .keys()
+                        .filter(|id| {
+                            match_tags
+                                .get(id.as_str())
+                                .is_some_and(|tags| tags.iter().any(|t| t == token))
+                        })
+                        .count();
+                    #[allow(clippy::cast_precision_loss)]
+                    let n = cap_count.map_or(n, |cap| n.min(cap)) as f64;
+                    BuffResolutionStrategy::DirectEfficiency {
+                        value: n * per_match_pct,
+                    }
+                }
+                // Named-target grant (Justice Knight): live once its holder
+                // sits in the room the skill names.
+                BuffResolutionStrategy::NamedTargetRoomBoost {
+                    self_room,
+                    target_char_id,
+                    target_room,
+                    bonus_pct,
+                    ..
+                } => {
+                    let holder_seated = operators
+                        .iter()
+                        .filter(|o| o.available_buffs.iter().any(|b| b == id))
+                        .any(|o| {
+                            deployed_rooms
+                                .get(&o.char_id)
+                                .is_some_and(|rt| rt == self_room)
+                        });
+                    BuffResolutionStrategy::NamedTargetRoomBoost {
+                        self_room: self_room.clone(),
+                        target_char_id: target_char_id.clone(),
+                        target_room: target_room.clone(),
+                        bonus_pct: *bonus_pct,
+                        active: holder_seated,
                     }
                 }
                 other => other.clone(),
@@ -363,6 +435,7 @@ fn optimal_inner(
     pins: &[(String, String)],
     cap_aware: bool,
 ) -> BaseAssignment {
+    let pinned_seats: HashMap<String, String> = pins.iter().cloned().collect();
     if !base_wide_relevant(operators, registry) && !room_presence_relevant(operators, registry) {
         return optimal_inner_core(
             operators,
@@ -372,6 +445,7 @@ fn optimal_inner(
             morale_drains,
             pins,
             cap_aware,
+            &pinned_seats,
         );
     }
     // Layout-counted branches (Wang) depend only on the building - resolve
@@ -393,6 +467,7 @@ fn optimal_inner(
         morale_drains,
         pins,
         cap_aware,
+        &pinned_seats,
     );
     // Operators the assignment stationed - all of which are work areas (the optimizer never benches
     // anyone in a dormitory). A resting/benched partner is therefore absent here, so its bonus stays
@@ -419,7 +494,21 @@ fn optimal_inner(
         &deployed_rooms,
         operators,
     );
-    if pass2_registry == pass1_registry {
+    // Facility-count modifiers read the seats pass 1 chose (Greyy in her
+    // plant, Eunectes in the Control Center with Lancet-2 powering), on top
+    // of the caller's pins.
+    let mut pass2_seats = deployed_rooms;
+    pass2_seats.extend(pins.iter().cloned());
+    let counts_unchanged =
+        effective_facility_counts(building, operators, registry, building_data, &pass2_seats)
+            == effective_facility_counts(
+                building,
+                operators,
+                registry,
+                building_data,
+                &pinned_seats,
+            );
+    if pass2_registry == pass1_registry && counts_unchanged {
         return pass1; // nothing unlocked → pass 1 is already correct
     }
     optimal_inner_core(
@@ -430,6 +519,7 @@ fn optimal_inner(
         morale_drains,
         pins,
         cap_aware,
+        &pass2_seats,
     )
 }
 
@@ -442,8 +532,10 @@ fn optimal_inner_core(
     morale_drains: &HashMap<String, f64>,
     pins: &[(String, String)],
     cap_aware: bool,
+    seats: &HashMap<String, String>,
 ) -> BaseAssignment {
-    let facility_counts = effective_facility_counts(building, operators, registry, building_data);
+    let facility_counts =
+        effective_facility_counts(building, operators, registry, building_data, seats);
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
 
@@ -1472,7 +1564,13 @@ pub fn compute_sustained_assignment(
         &[],
         true,
     );
-    let facility_counts = effective_facility_counts(building, operators, registry, building_data);
+    let facility_counts = effective_facility_counts(
+        building,
+        operators,
+        registry,
+        building_data,
+        &seats_of(&main),
+    );
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
     // A base-wide recovery aura from the Control Center (Chongyue, Wiš'adel:
@@ -1718,6 +1816,34 @@ pub fn compute_sustained_assignment(
 
 /// Which operators occupy a room for a given live view: the static stationed
 /// crew (`shift = None`) or one of the player's planned preset rotation shifts.
+/// Every stationed operator's room type this shift, dormitories included.
+pub(crate) fn stationed_seats(
+    building: &UserBuilding,
+    shift: Option<usize>,
+) -> HashMap<String, String> {
+    building
+        .rooms
+        .iter()
+        .flat_map(|r| {
+            room_ops_for_shift(r, shift)
+                .into_iter()
+                .map(|op| (op, r.room_type.clone()))
+        })
+        .collect()
+}
+
+/// A plan's seats as `char id -> room type`.
+pub(crate) fn seats_of(asn: &BaseAssignment) -> HashMap<String, String> {
+    asn.rooms
+        .iter()
+        .flat_map(|r| {
+            r.operators
+                .iter()
+                .map(|op| (op.clone(), r.room_type.clone()))
+        })
+        .collect()
+}
+
 fn room_ops_for_shift(room: &UserRoom, shift: Option<usize>) -> Vec<String> {
     match shift {
         Some(i) => room
@@ -1769,8 +1895,13 @@ pub fn compute_live_assignment(
     shift: Option<usize>,
     live_morale: &HashMap<String, f64>,
 ) -> BaseAssignment {
-    let mut facility_counts =
-        effective_facility_counts(building, operators, registry, building_data);
+    let mut facility_counts = effective_facility_counts(
+        building,
+        operators,
+        registry,
+        building_data,
+        &stationed_seats(building, shift),
+    );
     // The live base has REAL seats, so assignment-fed pools (Senshi's Monster
     // Meals) settle exactly and ride the synthetic channel into the scorer.
     let settled = settle_current_pools(building, operators, registry, building_data, live_morale);
@@ -1846,7 +1977,8 @@ pub fn compute_live_assignment(
     {
         acc.add(&cc_bonuses(op, registry, building_data));
     }
-    let (global_bonuses, cc_conditions) = acc.finish();
+    let (global_bonuses, mut cc_conditions) = acc.finish();
+    cc_conditions.extend(seat_grant_conditions(registry));
 
     let mut rooms: Vec<RoomAssignment> = Vec::new();
 
@@ -2017,18 +2149,46 @@ pub(crate) fn effective_facility_counts(
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
+    seats: &HashMap<String, String>,
 ) -> HashMap<String, usize> {
+    use super::buff_registry::FacilityGate;
     let mut counts = count_facilities(building);
     let mut seen_families: HashSet<&str> = HashSet::new();
+    // A modifier counts only when `seats` (char id -> room type: the live
+    // crews, or the plan's pins) satisfies both the holder's own seat and the
+    // text's gate - Eunectes' +2 needs her in the Control Center AND Lancet-2
+    // in a Power Plant (user-verified 2026-09-10: a 1/5/3 read 6 plants with
+    // her in a factory).
+    let robot_in = |room: &str| {
+        seats.iter().any(|(id, rt)| {
+            rt == room
+                && operators
+                    .iter()
+                    .find(|o| &o.char_id == id)
+                    .is_some_and(|o| o.match_tags.iter().any(|t| t == "robot"))
+        })
+    };
     for op in operators {
         for buff_id in &op.available_buffs {
             if let Some(BuffResolutionStrategy::FacilityCountModifier {
                 target_room,
                 amount,
+                owner_room,
+                gate,
             }) = registry.get(buff_id)
             {
+                if seats.get(&op.char_id) != Some(owner_room) {
+                    continue;
+                }
+                let gate_ok = match gate {
+                    FacilityGate::None => true,
+                    FacilityGate::NamedCharInRoom { char_id, room } => {
+                        seats.get(char_id) == Some(room)
+                    }
+                    FacilityGate::NoRobotsInOtherRooms => !robot_in(target_room),
+                };
                 let family = buff_id.split('[').next().unwrap_or(buff_id);
-                if *amount > 0 && seen_families.insert(family) {
+                if gate_ok && *amount > 0 && seen_families.insert(family) {
                     *counts.entry(target_room.clone()).or_insert(0) += *amount as usize;
                 }
             }
@@ -2401,6 +2561,9 @@ pub struct CcCondition {
     /// speed conditionals). Suppression-agnostic - capacity is not a metric a
     /// nullifier targets.
     pub(crate) order_limit: f64,
+    /// Product-split bonuses (`formula -> pct`): Flametail's +10% on Battle
+    /// Records / -10% on Precious Metals. Empty = `bonus_pct` on every product.
+    pub(crate) formula_bonuses: Vec<(String, f64)>,
 }
 
 /// Does an operator satisfy a CC-condition gate token? Faction tokens match
@@ -2412,19 +2575,38 @@ pub(crate) fn cc_token_matches(op: &OperatorBaseProfile, token: &str) -> bool {
 }
 
 impl CcCondition {
-    /// This condition's contribution to a room of `room_type` staffed by `team`.
-    pub(crate) fn contribution(&self, room_type: &str, team: &[&OperatorBaseProfile]) -> f64 {
+    /// The percentage this condition grants in a room running `formula`: the
+    /// flat bonus, or the product-split entry for that formula (an
+    /// unconfigured or unlisted product earns 0 - never a guess).
+    pub(crate) fn bonus_for(&self, formula: Option<&str>) -> f64 {
+        if self.formula_bonuses.is_empty() {
+            return self.bonus_pct;
+        }
+        formula
+            .and_then(|f| self.formula_bonuses.iter().find(|(k, _)| k == f))
+            .map_or(0.0, |(_, v)| *v)
+    }
+
+    /// This condition's contribution to a room of `room_type` running
+    /// `formula`, staffed by `team`.
+    pub(crate) fn contribution(
+        &self,
+        room_type: &str,
+        team: &[&OperatorBaseProfile],
+        formula: Option<&str>,
+    ) -> f64 {
         if self.target_room != room_type {
             return 0.0;
         }
+        let bonus = self.bonus_for(formula);
         let count = team
             .iter()
             .filter(|op| cc_token_matches(op, &self.faction_token))
             .count();
         if self.per_operator {
-            self.bonus_pct * count as f64
+            bonus * count as f64
         } else if count >= self.required_count {
-            self.bonus_pct
+            bonus
         } else {
             0.0
         }
@@ -2577,6 +2759,7 @@ pub(crate) fn cc_bonus_for(
             required_count,
             per_operator,
             bonus_pct,
+            formula_bonuses,
         }) => Some(CcBonus {
             room: target_room.clone(),
             family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
@@ -2591,6 +2774,7 @@ pub(crate) fn cc_bonus_for(
                 per_operator: *per_operator,
                 bonus_pct: *bonus_pct,
                 order_limit: 0.0,
+                formula_bonuses: formula_bonuses.clone(),
             }),
         }),
         Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
@@ -2617,6 +2801,7 @@ pub(crate) fn cc_bonus_for(
                         per_operator: false,
                         bonus_pct: 0.0,
                         order_limit: g.order_limit,
+                        formula_bonuses: Vec::new(),
                     }),
                 })
         }
@@ -2816,7 +3001,41 @@ pub(crate) fn assign_control_center(
         level: control_room.map_or(1, |r| r.level),
         total_global_pct: global_bonuses.values().sum(),
     };
+    let mut conditions = conditions;
+    conditions.extend(seat_grant_conditions(registry));
     (cc, global_bonuses, conditions)
+}
+
+/// Conditions granted from NON-Control-Center seats that the deployment pass
+/// switched on (Justice Knight in a Power Plant -> Wild Mane's Factory +5%):
+/// per-operator grants keyed by the target's char id, landing in the ledger
+/// exactly like a per-operator faction global.
+pub(crate) fn seat_grant_conditions(
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> Vec<CcCondition> {
+    let mut out: Vec<CcCondition> = registry
+        .values()
+        .filter_map(|s| match s {
+            BuffResolutionStrategy::NamedTargetRoomBoost {
+                target_char_id,
+                target_room,
+                bonus_pct,
+                active: true,
+                ..
+            } => Some(CcCondition {
+                target_room: target_room.clone(),
+                faction_token: target_char_id.clone(),
+                required_count: 1,
+                per_operator: true,
+                bonus_pct: *bonus_pct,
+                order_limit: 0.0,
+                formula_bonuses: Vec::new(),
+            }),
+            _ => None,
+        })
+        .collect();
+    out.sort_by(|a, b| a.faction_token.cmp(&b.faction_token));
+    out
 }
 
 /// The rotation's Control-Center plan: Squad 1 (the best global-bonus crew) plus the
@@ -4231,7 +4450,13 @@ pub fn team_value(
     morale_drains: &HashMap<String, f64>,
 ) -> f64 {
     let op_index = build_op_index(operators);
-    let facility_counts = effective_facility_counts(building, operators, registry, building_data);
+    let facility_counts = effective_facility_counts(
+        building,
+        operators,
+        registry,
+        building_data,
+        &stationed_seats(building, None),
+    );
     let (speed, value) = compute_team_efficiency(
         team,
         room_type,

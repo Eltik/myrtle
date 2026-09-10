@@ -27,7 +27,7 @@ export default function ThemeToggle() {
             <PopoverTrigger
                 render={
                     <Button variant="ghost" size="icon" aria-label={`${triggerLabel}. Open appearance settings.`} title={triggerLabel}>
-                        <TriggerIcon className="h-4.5 w-4.5" />
+                        <TriggerIcon className="h-4 w-4" />
                     </Button>
                 }
             />

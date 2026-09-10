@@ -2016,6 +2016,7 @@ pub fn shift_rotation_to_dto(
         profiles,
         registry,
         &game_data.building,
+        &crate::core::grade::base::assignment::stationed_seats(building, None),
     );
     let ledger_ctx = crate::core::grade::base::skill_ledger::LedgerCtx {
         op_index: &op_index_ledger,

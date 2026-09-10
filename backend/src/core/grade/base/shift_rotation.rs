@@ -375,6 +375,7 @@ pub fn recommend_shift_rotation(
     morale_drains: &HashMap<String, f64>,
     pins: &[(String, String)],
 ) -> ShiftRotation {
+    let pinned_seats: HashMap<String, String> = pins.iter().cloned().collect();
     if !base_wide_relevant(operators, registry) && !room_presence_relevant(operators, registry) {
         return rotation_core(
             operators,
@@ -383,6 +384,7 @@ pub fn recommend_shift_rotation(
             registry,
             morale_drains,
             pins,
+            &pinned_seats,
         );
     }
     let layout_registry =
@@ -400,6 +402,7 @@ pub fn recommend_shift_rotation(
         &pass1_registry,
         morale_drains,
         pins,
+        &pinned_seats,
     );
     let deployed: HashSet<String> = pass1
         .shifts
@@ -424,7 +427,18 @@ pub fn recommend_shift_rotation(
         &deployed_rooms,
         operators,
     );
-    if pass2_registry == pass1_registry {
+    let mut pass2_seats = deployed_rooms;
+    pass2_seats.extend(pins.iter().cloned());
+    let counts_unchanged =
+        effective_facility_counts(building, operators, registry, building_data, &pass2_seats)
+            == effective_facility_counts(
+                building,
+                operators,
+                registry,
+                building_data,
+                &pinned_seats,
+            );
+    if pass2_registry == pass1_registry && counts_unchanged {
         return pass1;
     }
     rotation_core(
@@ -434,6 +448,7 @@ pub fn recommend_shift_rotation(
         &pass2_registry,
         morale_drains,
         pins,
+        &pass2_seats,
     )
 }
 
@@ -444,8 +459,10 @@ fn rotation_core(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
     pins: &[(String, String)],
+    seats: &HashMap<String, String>,
 ) -> ShiftRotation {
-    let facility_counts = effective_facility_counts(building, operators, registry, building_data);
+    let facility_counts =
+        effective_facility_counts(building, operators, registry, building_data, seats);
     let total_dorm_levels = building.total_dorm_levels();
     let production_rooms: Vec<&UserRoom> = building
         .rooms
@@ -830,7 +847,7 @@ fn rotation_core(
             let weight: f64 = cc_plan
                 .conditions
                 .iter()
-                .map(|c| c.contribution(&g.room_type, &profiles))
+                .map(|c| c.contribution(&g.room_type, &profiles, g.formula_type.as_deref()))
                 .sum();
             if weight > best_weight {
                 best_weight = weight;

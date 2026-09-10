@@ -221,6 +221,39 @@ fn room_type_from_global_label(label: &str) -> &'static str {
 
 /// One named-operator-gated Control-Center grant: the payload fires while
 /// `char_id` is seated in a `target_room`-type room, and lands ON that room.
+/// The rider a facility-count modifier needs met, read off the deployment.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FacilityGate {
+    None,
+    /// "if Lancet-2 is assigned to a Power Plant" (Eunectes).
+    NamedCharInRoom {
+        char_id: String,
+        room: String,
+    },
+    /// "if there are no Operation Platforms in other Power Plants" (Greyy the
+    /// Lightningbearer): no Robot-tagged operator seated in the target room type.
+    NoRobotsInOtherRooms,
+}
+
+/// A facility-count modifier's named gate ("if <NAME> is assigned to a <Room>").
+static RE_FACILITY_GATE_CHAR: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"if <@cc\.kw>([^<]+)</> is assigned to (?:a|an|the) <@cc\.kw>([A-Za-z ]+?)</>")
+        .unwrap()
+});
+
+/// A production-room skill that boosts the room a NAMED operator occupies
+/// ("increases the productivity of the Factory <Wild Mane> is assigned to by +5%").
+static RE_TARGET_ROOM_BOOST: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"increases the productivity of the (Factory|Trading Post) <@cc\.kw>([^<]+)</> is assigned to by <@cc\.vup>\+([\d.]+)%</>",
+    )
+    .unwrap()
+});
+
+/// "caps at <N>" on a base-wide count.
+static RE_CAPS_AT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"caps at <@cc\.kw>(\d+)</>").unwrap());
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct NamedCharGrant {
     pub char_id: String,
@@ -278,7 +311,31 @@ static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
 /// "per Standardization Skill"), as opposed to an operator ("per Glasgow Gang
 /// Operator").
 static RE_COUNT_SKILLS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:for each|per) [A-Za-z' -]+?[Ss]kills?\b").unwrap());
+    LazyLock::new(|| Regex::new(r"(?:for each|for every|per) [A-Za-z' -]+?[Ss]kills?\b").unwrap());
+
+/// A Control-Center faction global split by PRODUCT (Flametail: "+10%
+/// productivity towards Battle Records and -10% productivity towards
+/// Precious Metals"): each signed percentage with the product it targets.
+static RE_TOWARDS_PRODUCT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<@cc\.v(?:up|down)>([+-]?[\d.]+)%</> productivity towards <@cc\.kw>([^<]+)</>")
+        .unwrap()
+});
+
+/// The factory formula family a product name belongs to (game mechanic: the
+/// three factory product lines). Unknown names resolve to nothing - a
+/// product-split bonus the model cannot place is worth 0, never a guess.
+fn formula_for_product(name: &str) -> Option<&'static str> {
+    let n = name.to_lowercase();
+    if n.contains("battle record") {
+        Some("F_EXP")
+    } else if n.contains("precious metal") || n.contains("pure gold") {
+        Some("F_GOLD")
+    } else if n.contains("originium") {
+        Some("F_DIAMOND")
+    } else {
+        None
+    }
+}
 
 /// A dormitory single-target healer: "restores +X to an(other) Operator in
 /// that Dormitory (whose Morale is not full)".
@@ -546,7 +603,38 @@ pub enum BuffResolutionStrategy {
     /// productivity itself, but every `FacilityCountScaling` buff that scales per that facility
     /// (factory automation - Weedy/Eunectes/Pudding) reads the boosted count, so it powers those
     /// combos. Resolved by adjusting the facility counts the optimizer scores against.
-    FacilityCountModifier { target_room: String, amount: i32 },
+    FacilityCountModifier {
+        target_room: String,
+        amount: i32,
+        /// The room the holder must be seated in for the count to apply
+        /// (Eunectes: the Control Center; Greyy: a Power Plant).
+        owner_room: String,
+        gate: FacilityGate,
+    },
+
+    /// A count of same-tag operators anywhere IN THE BASE (Nasti's "for each
+    /// Rhine Lab Operator in the Base (caps at 5), Precious Metal
+    /// productivity +3%"): the holder counts too. Resolved against the
+    /// deployment like the room-presence gates - `DirectEfficiency` once the
+    /// seats are known, 0 before.
+    BaseWideMatchCountScaling {
+        token: String,
+        per_match_pct: f64,
+        cap_count: Option<usize>,
+    },
+
+    /// A grant from the holder's OWN room seat onto the room a NAMED operator
+    /// occupies (Justice Knight in a Power Plant: "+5% to the Factory Wild
+    /// Mane is assigned to"). `active` is set by the deployment pass when the
+    /// holder sits in `self_room`; the Control-Center condition collector
+    /// then lands it on the target's room like a per-operator faction global.
+    NamedTargetRoomBoost {
+        self_room: String,
+        target_char_id: String,
+        target_room: String,
+        bonus_pct: f64,
+        active: bool,
+    },
 
     /// Efficiency scales with the number of teammates that match a keyword the
     /// buff names for itself. The keyword is parsed straight from the buff text
@@ -576,6 +664,10 @@ pub enum BuffResolutionStrategy {
         /// never of operators by faction (Rosmontis is Rhine Lab but carries
         /// no Rhine Tech skill). False for "per <faction> Operator" counts.
         count_skills: bool,
+        /// True when the counted amount is STORAGE CAPACITY (Astgenne the
+        /// Lightchaser's "+5 Storage Capacity for each Rhine Tech-type
+        /// skill"), not productivity.
+        capacity: bool,
     },
 
     /// A base efficiency that's always applied, plus a bonus that applies when ANY
@@ -660,6 +752,10 @@ pub enum BuffResolutionStrategy {
         required_count: usize,
         per_operator: bool,
         bonus_pct: f64,
+        /// Product-split bonuses (`formula -> pct`, Flametail's +10% on Battle
+        /// Records / -10% on Precious Metals). Empty = `bonus_pct` on every
+        /// product; non-empty = only the listed formulas, 0 elsewhere.
+        formula_bonuses: Vec<(String, f64)>,
     },
 
     /// A Control-Center global that branches on two LAYOUT-COUNTED resources
@@ -914,11 +1010,31 @@ pub fn build_registry(
                 "MANUFACTURE"
             };
             let amount = parse_first_float(&buff.description).unwrap_or(1.0) as i32;
+            // The gate the text states; a named gate whose operator cannot be
+            // resolved makes the modifier unmeetable (never guess).
+            let gate = if let Some(c) = RE_FACILITY_GATE_CHAR.captures(&buff.description) {
+                match (
+                    name_to_char.get(&c[1].to_lowercase()),
+                    room_type_from_label(c[2].trim()),
+                ) {
+                    (Some(id), Some(room)) => FacilityGate::NamedCharInRoom {
+                        char_id: id.clone(),
+                        room: room.to_string(),
+                    },
+                    _ => continue,
+                }
+            } else if buff.description.contains("no <$cc.tag.op>") {
+                FacilityGate::NoRobotsInOtherRooms
+            } else {
+                FacilityGate::None
+            };
             registry.insert(
                 buff_id.clone(),
                 BuffResolutionStrategy::FacilityCountModifier {
                     target_room: target_room.to_string(),
                     amount,
+                    owner_room: buff.room_type.clone(),
+                    gate,
                 },
             );
             continue;
@@ -1180,7 +1296,10 @@ pub fn build_registry(
                     // family (audited: exactly control_bd_spd's "for each
                     // <Blacksteel Worldwide> Operator assigned to Factories,
                     // productivity +5%"; its drain rider rides the side-map).
-                    || (buff.description.contains("for each <$cc.g.")
+                    // (also Flametail's "each <Pinus Sylvestris> Operator
+                    // assigned to Factories have +10% ... towards Battle
+                    // Records", which has no leading "for").
+                    || (RE_EACH_FACTION.is_match(&buff.description)
                         && (desc_lower.contains("factor") || desc_lower.contains("trading")))
                 {
                     let tag = parse_tag_keyword(&buff.description).unwrap_or_default();
@@ -1197,12 +1316,22 @@ pub fn build_registry(
                         } else {
                             "MANUFACTURE"
                         };
+                        let formula_bonuses: Vec<(String, f64)> = RE_TOWARDS_PRODUCT
+                            .captures_iter(&buff.description)
+                            .filter_map(|c| {
+                                Some((
+                                    formula_for_product(&c[2])?.to_string(),
+                                    c[1].parse::<f64>().ok()?,
+                                ))
+                            })
+                            .collect();
                         BuffResolutionStrategy::ConditionalGlobalEffect {
                             target_room: target_room.to_string(),
                             faction_token: tag,
                             required_count: 1,
                             per_operator: true,
                             bonus_pct: bonus,
+                            formula_bonuses,
                         }
                     } else {
                         BuffResolutionStrategy::TagBased {
@@ -1286,6 +1415,7 @@ pub fn build_registry(
                             required_count: required_count.unwrap_or(1),
                             per_operator: required_count.is_none(),
                             bonus_pct: bonus,
+                            formula_bonuses: Vec::new(),
                         }
                     } else {
                         // Unconditional global ("all Trading Posts +7%").
@@ -1367,6 +1497,25 @@ pub fn build_registry(
                     // phrasing carries no efficiency payload for the other
                     // branches to misread.
                     BuffResolutionStrategy::MoraleDrainAuraImmunity
+                } else if let Some((target_room, target_char_id, bonus_pct)) = RE_TARGET_ROOM_BOOST
+                    .captures(&buff.description)
+                    .and_then(|c| {
+                        Some((
+                            room_type_from_label(&c[1])?.to_string(),
+                            name_to_char.get(&c[2].to_lowercase())?.clone(),
+                            c[3].parse::<f64>().ok()?,
+                        ))
+                    })
+                {
+                    // Justice Knight's "'Beep beep, activate!'": from a Power
+                    // Plant seat, +5% to the Factory Wild Mane works in.
+                    BuffResolutionStrategy::NamedTargetRoomBoost {
+                        self_room: buff.room_type.clone(),
+                        target_char_id,
+                        target_room,
+                        bonus_pct,
+                        active: false,
+                    }
                 } else if let Some(gate) = parse_room_presence_gate(
                     &buff.description,
                     f64::from(buff.efficiency),
@@ -1464,7 +1613,22 @@ pub fn build_registry(
                 // is a faction or skill type (NOT a number - those are resource
                 // mechanics, handled elsewhere). One data-driven strategy for every
                 // faction/skill synergy; the token comes straight from the text.
-                else if let Some(token) = parse_count_keyword(&buff.description) {
+                else if let Some(token) = parse_count_keyword(&buff.description)
+                    && plain_text(&buff.description)
+                        .to_lowercase()
+                        .contains("in the base")
+                {
+                    // Base-wide count ("for each Rhine Lab Operator in the Base
+                    // (caps at 5)"): resolved against the deployment, the
+                    // holder included.
+                    BuffResolutionStrategy::BaseWideMatchCountScaling {
+                        token,
+                        per_match_pct: parse_first_pct(&buff.description).unwrap_or(0.0),
+                        cap_count: RE_CAPS_AT
+                            .captures(&buff.description)
+                            .and_then(|c| c[1].parse::<usize>().ok()),
+                    }
+                } else if let Some(token) = parse_count_keyword(&buff.description) {
                     let per_match_pct = parse_first_pct(&buff.description).unwrap_or(5.0);
                     let cap_pct = parse_scaling_cap(&buff.description);
                     // Optional named-teammate rider (Morgan "Gang Compass": +35%
@@ -1483,7 +1647,9 @@ pub fn build_registry(
                         });
                     // "each <X>-type skill" / "per <X> Skill" counts skills by
                     // name; "per <faction> Operator" counts operators by tag.
-                    let count_skills = RE_COUNT_SKILLS.is_match(&plain_text(&buff.description));
+                    let plain = plain_text(&buff.description);
+                    let count_skills = RE_COUNT_SKILLS.is_match(&plain);
+                    let capacity = plain.to_lowercase().contains("capacity");
                     BuffResolutionStrategy::MatchCountScaling {
                         token,
                         per_match_pct,
@@ -1491,6 +1657,7 @@ pub fn build_registry(
                         bonus_char_id,
                         bonus_pct,
                         count_skills,
+                        capacity,
                     }
                 }
                 // Order-VALUE trading skills: raise LMD *per order* rather than

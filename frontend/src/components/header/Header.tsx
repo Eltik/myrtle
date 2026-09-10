@@ -1,13 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, Settings } from "lucide-react";
 import { useMemo } from "react";
+import { WhatsNewButton } from "#/components/changelog/WhatsNewButton";
 import { Button } from "#/components/ui/button";
-import { GithubIcon } from "#/components/ui/github-icon";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { useCommand } from "#/lib/command-context";
-import { REPO_URL } from "#/lib/constants";
 import { getToolsByCategory, modKey } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
 import styles from "./impl/Header.module.css";
@@ -86,42 +85,36 @@ export default function Header() {
                         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
                         <ThemeToggle />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hidden sm:inline-flex"
-                            render={
-                                <Link to="/donate" target="_blank" aria-label="Support myrtle.moe">
-                                    <Heart className="h-4 w-4" aria-hidden="true" />
-                                    <span className="sr-only">Support myrtle.moe</span>
-                                </Link>
-                            }
-                        />
-                        {user !== null ? (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hidden sm:inline-flex"
-                                render={
-                                    <a href={REPO_URL} target="_blank" rel="noreferrer" aria-label="GitHub">
-                                        <GithubIcon className="h-4 w-4" />
-                                        <span className="sr-only">GitHub</span>
-                                    </a>
-                                }
-                            />
-                        ) : (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hidden sm:inline-flex"
-                                render={
-                                    <Link to="/settings" aria-label="Settings">
-                                        <Settings className="h-4 w-4" />
-                                        <span className="sr-only">Settings</span>
-                                    </Link>
-                                }
-                            />
-                        )}
+                        <WhatsNewButton />
+                        {/* Signed-out visitors have no avatar menu, so the two
+                            outbound links stay in the bar for them. Signed-in
+                            visitors find both inside UserMenu instead. */}
+                        {user === null ? (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="hidden sm:inline-flex"
+                                    render={
+                                        <Link to="/donate" target="_blank" aria-label="Support">
+                                            <Heart className="h-4 w-4" aria-hidden="true" />
+                                            <span className="sr-only">Support</span>
+                                        </Link>
+                                    }
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="hidden sm:inline-flex"
+                                    render={
+                                        <Link to="/settings" aria-label="Settings">
+                                            <Settings className="h-4 w-4" />
+                                            <span className="sr-only">Settings</span>
+                                        </Link>
+                                    }
+                                />
+                            </>
+                        ) : null}
 
                         <UserMenu loading={loading} user={user} logout={logout} />
                     </div>

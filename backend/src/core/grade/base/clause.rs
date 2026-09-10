@@ -631,6 +631,7 @@ pub fn clauses_from_strategy(
         S::FacilityCountModifier {
             target_room,
             amount,
+            ..
         } => {
             out.push(Clause::base(
                 buff_id,
@@ -648,19 +649,30 @@ pub fn clauses_from_strategy(
             bonus_char_id,
             bonus_pct,
             count_skills,
+            capacity,
         } => {
             // Skill counts include the holder's own skill (Dorothy's Rhine
-            // Tech β counts toward her per-Rhine-Tech-skill bonus); operator
-            // counts are of teammates.
+            // Tech β counts toward her per-Rhine-Tech-skill bonus). Operator
+            // counts "in the same room" include the holder too when they
+            // carry the tag (Morgan's Gang Compass reads +20% for herself and
+            // +20% for Siege, user-verified 2026-09-10) unless the text says
+            // "other".
             let (subject, include_self) = if *count_skills {
                 (Subject::SkillTag(token.clone()), true)
             } else {
-                (Subject::Tag(token.clone()), false)
+                (
+                    Subject::Tag(token.clone()),
+                    !buff.description.to_lowercase().contains("other"),
+                )
             };
             let mut c = Clause::base(
                 buff_id,
                 buff,
-                speed(),
+                if *capacity {
+                    Metric::CapacityLimit
+                } else {
+                    speed()
+                },
                 ClauseKind::ScalingCount {
                     subject,
                     include_self,
@@ -819,6 +831,7 @@ pub fn clauses_from_strategy(
             required_count,
             per_operator,
             bonus_pct,
+            ..
         } => {
             let mut c = Clause::base(
                 buff_id,
@@ -840,7 +853,10 @@ pub fn clauses_from_strategy(
 
         // Resolved by registry rewrite before scoring (`resolve_layout_branches`,
         // `resolve_room_presence`); context-free they contribute exactly 0.
-        S::LayoutCountBranch { .. } | S::RoomPresenceGatedGlobal { .. } => {}
+        S::LayoutCountBranch { .. }
+        | S::RoomPresenceGatedGlobal { .. }
+        | S::BaseWideMatchCountScaling { .. }
+        | S::NamedTargetRoomBoost { .. } => {}
 
         S::NamedCharRoomGrants { grants } => {
             // Each grant lands on the room seating the named operator, gated

@@ -2593,31 +2593,45 @@ fn team_value_is_order_independent_and_rewards_staffing() {
 }
 
 #[test]
-fn facility_count_enabler_boosts_power_scaling_automation() {
+fn facility_count_enabler_counts_only_from_her_seat() {
     // Greyy the Lightningbearer E2 raises the EFFECTIVE Power Plant count by 1 ("only affects
-    // facility quantity"), so a per-power automation operator (Weedy) in a factory produces MORE
-    // when Greyy is on the roster - even though Greyy herself only staffs a power plant.
+    // facility quantity") - but only while she is seated in a Power Plant. The core search
+    // never seats her there on its own (the plan carries no plant crews), so without a pin
+    // Weedy reads the real plants; the improvements oracle offers her seat as a bundle, and
+    // with that pin Weedy's per-plant output rises.
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let building = UserBuilding {
         rooms: vec![room("f", "MANUFACTURE", 3), room("p0", "POWER", 3)],
     };
-    let factory_eff = |roster: &[OperatorBaseProfile]| -> f64 {
-        compute_optimal_assignment(roster, &building, &gd.building, &registry, &drains)
-            .rooms
-            .iter()
-            .find(|r| r.room_type == "MANUFACTURE")
-            .map_or(0.0, |r| r.total_efficiency)
-    };
-    let weedy_only = vec![profile(gd, "char_400_weedy")];
-    let weedy_greyy = vec![
+    let roster = vec![
         profile(gd, "char_400_weedy"),
         profile(gd, "char_1027_greyy2"),
     ];
-    let (a, b) = (factory_eff(&weedy_greyy), factory_eff(&weedy_only));
+    let factory_eff = |pins: &[(String, String)]| -> f64 {
+        compute_optimal_assignment_with_pins(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            pins,
+        )
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MANUFACTURE")
+        .map_or(0.0, |r| r.total_efficiency)
+    };
+    let unseated = factory_eff(&[]);
+    let seated = factory_eff(&[("char_1027_greyy2".to_string(), "POWER".to_string())]);
     assert!(
-        a > b,
-        "Greyy E2's +1 Power Plant should raise Weedy's per-power output ({a} vs {b})"
+        (unseated - 15.0).abs() < 1e-9,
+        "one real plant without her seat: {unseated}"
+    );
+    assert!(
+        (seated - 30.0).abs() < 1e-9,
+        "her plant seat unlocks the second count: {seated}"
     );
 }
 
@@ -3654,6 +3668,369 @@ fn gold_starved_post_sustains_tequila_and_rotates_shamare_and_bibeak() {
     );
 }
 
+/// The Sui Control-Center economy feeds ONE shared Worldly Plight pool that
+/// every reader sees whole (base expert, 2026-09-08): Mr. Nothing's 18 dorm
+/// points + Ling 15 (above 12) + Dusk 15 (below 12) + Chongyue 25 (five Sui
+/// deployed, capped) = 73. Jieyun's converter (5 Plight -> 1 Crystal) copies,
+/// it never drains Shu's or Mr. Nothing's read. With no bars synced the
+/// morale-conditional grants weigh their steady-state half (58).
+#[test]
+fn sui_worldly_plight_is_one_shared_pool_read_whole_by_every_consumer() {
+    use backend::core::grade::base::assignment::compute_live_assignment;
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("tp", "TRADING", 2),
+        room("mf", "MANUFACTURE", 2),
+    ];
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let cc = [
+        "char_2023_ling",
+        "char_2024_chyue",
+        "char_2015_dusk",
+        "char_2014_nian",
+        "char_4119_wanqin",
+    ];
+    let mut ids: Vec<&str> = cc.to_vec();
+    ids.extend([
+        "char_4032_provs",
+        "char_455_nothin",
+        "char_2025_shu",
+        "char_4078_bdhkgt",
+    ]);
+    let fillers: Vec<String> = gd
+        .building
+        .chars
+        .keys()
+        .filter(|id| id.starts_with("char_") && !ids.contains(&id.as_str()))
+        .take(18)
+        .cloned()
+        .collect();
+    ids.extend(fillers.iter().map(String::as_str));
+    let roster: Vec<OperatorBaseProfile> = ids.iter().map(|id| profile(gd, id)).collect();
+    rooms[0].current_operators = cc.iter().map(|s| (*s).to_string()).collect();
+    rooms[1].current_operators = vec!["char_4032_provs".into(), "char_455_nothin".into()];
+    rooms[2].current_operators = vec!["char_2025_shu".into(), "char_4078_bdhkgt".into()];
+    rooms[2].current_formula = Some("F_GOLD".into());
+    for (i, id) in fillers.iter().enumerate() {
+        rooms[3 + i / 5].current_operators.push(id.clone());
+    }
+    let building = UserBuilding { rooms };
+    let eff = |live: HashMap<String, f64>| {
+        let asn = compute_live_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+            &live,
+        );
+        let of = |slot: &str| {
+            asn.rooms
+                .iter()
+                .find(|r| r.slot_id == slot)
+                .map_or(0.0, |r| r.total_efficiency)
+        };
+        (of("tp"), of("mf"))
+    };
+    let (tp, mf) = eff(HashMap::from([
+        ("char_2023_ling".to_string(), 20.0),
+        ("char_2015_dusk".to_string(), 8.0),
+    ]));
+    assert!(
+        (tp - 73.0).abs() < 1e-9,
+        "Mr. Nothing reads the whole pool: {tp}"
+    );
+    // Shu floor(73/3) = 24, Jieyun 2 x floor(73/5) = 28.
+    assert!(
+        (mf - 52.0).abs() < 1e-9,
+        "Shu and Jieyun read the same whole pool: {mf}"
+    );
+    let (tp_half, _) = eff(HashMap::new());
+    assert!(
+        (tp_half - 58.0).abs() < 1e-9,
+        "no bars: Ling and Dusk at half weight: {tp_half}"
+    );
+}
+
+/// Counts include the holder (user-verified 2026-09-10 on uid 44947595):
+/// Mizuki's "+5% for every Standardization Skill in the same Factory" counts
+/// his own Standardization β (3 -> +15 beside Vanilla and Jessica); Morgan's
+/// Gang Compass counts herself as a Glasgow Gang member (2 x 20 + 35 beside
+/// Siege = 75; Siege has no trading skill of her own).
+#[test]
+fn room_counts_include_the_holder_mizuki_and_morgan() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const MIZUKI: &str = "char_437_mizuki";
+    const VANILLA: &str = "char_240_wyvern";
+    const JESSICA: &str = "char_235_jesica";
+    const MORGAN: &str = "char_154_morgan";
+    const SIEGE: &str = "char_112_siege";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("tp", "TRADING", 3)];
+    rooms[0].current_operators = vec![VANILLA.into(), JESSICA.into(), MIZUKI.into()];
+    rooms[0].current_formula = Some("F_EXP".into());
+    rooms[1].current_operators = vec![MORGAN.into(), SIEGE.into()];
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [MIZUKI, VANILLA, JESSICA, MORGAN, SIEGE]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let of = |slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (of("mf") - 90.0).abs() < 1e-9,
+        "25 x 3 + 5 x 3 Standardization skills: {}",
+        of("mf")
+    );
+    assert!(
+        (of("tp") - 75.0).abs() < 1e-9,
+        "Morgan 20 x 2 Glasgow + 35 with Siege: {}",
+        of("tp")
+    );
+}
+
+/// Astgenne the Lightchaser's "+5 Storage Capacity for each Rhine Tech-type
+/// skill in that Factory" is CAPACITY, not productivity: her room's speed is
+/// her Rhine Tech β plus Dorothy's counts, and her capacity is 5 per Rhine
+/// Tech skill (her own, Dorothy's, Silence's = 15).
+#[test]
+fn astgenne_backpack_is_storage_capacity_not_productivity() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::ledger::op_capacity_limit;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const ASTGENNE: &str = "char_1047_halo2";
+    const DOROTHY: &str = "char_4048_doroth";
+    const SILENCE2: &str = "char_1031_slent2";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
+    rooms[0].current_operators = vec![ASTGENNE.into(), DOROTHY.into(), SILENCE2.into()];
+    rooms[0].current_formula = Some("F_GOLD".into());
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [ASTGENNE, DOROTHY, SILENCE2]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let eff = asn.rooms[0].total_efficiency;
+    // Rhine Tech: Astgenne 25 + Dorothy 25 + Silence 30, Dorothy +5 x 3 skills.
+    assert!(
+        (eff - 95.0).abs() < 1e-9,
+        "no productivity from the backpack: {eff}"
+    );
+    let present: std::collections::HashSet<String> = [ASTGENNE, DOROTHY, SILENCE2]
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect();
+    let cap = op_capacity_limit(
+        &roster[0],
+        "MANUFACTURE",
+        Some("F_GOLD"),
+        &registry,
+        &gd.building,
+        &present,
+    );
+    assert!(
+        cap >= 5.0,
+        "her own Rhine Tech skill is the capacity floor: {cap}"
+    );
+}
+
+/// Flametail's "each Pinus Sylvestris Operator assigned to Factories have
+/// +10% productivity towards Battle Records and -10% towards Precious
+/// Metals" is a product-split faction global: three Pinus knights making
+/// Battle Records read +30 from her seat, making Pure Gold -30.
+#[test]
+fn flametail_buffs_pinus_operators_by_product() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const FLAMETAIL: &str = "char_420_flamtl";
+    let knights = ["char_430_fartth", "char_431_ashlok", "char_496_wildmn"];
+    let eff_for = |formula: &str| {
+        let mut rooms = vec![room("cc", "CONTROL", 5), room("mf", "MANUFACTURE", 3)];
+        rooms[0].current_operators = vec![FLAMETAIL.into()];
+        rooms[1].current_operators = knights.iter().map(|s| (*s).to_string()).collect();
+        rooms[1].current_formula = Some(formula.into());
+        let building = UserBuilding { rooms };
+        let mut ids = vec![FLAMETAIL];
+        ids.extend(knights);
+        let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff_for("F_EXP") - 105.0).abs() < 1e-9,
+        "75 + 3 x 10 on Battle Records: {}",
+        eff_for("F_EXP")
+    );
+    assert!(
+        (eff_for("F_GOLD") - 45.0).abs() < 1e-9,
+        "75 - 3 x 10 on Precious Metals: {}",
+        eff_for("F_GOLD")
+    );
+}
+
+/// Eunectes' "+2 Power Plant count" needs her in the Control Center AND
+/// Lancet-2 in a Power Plant (user-verified 2026-09-10: a 1/5/3 read six
+/// plants with her in the factory). Weedy's Bionic Seadragon reads +15 per
+/// plant: 45 on three real plants, 75 only when both seats are met.
+#[test]
+fn eunectes_plant_count_needs_her_seat_and_lancet_in_a_plant() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const WEEDY: &str = "char_400_weedy";
+    const EUNECTES: &str = "char_416_zumama";
+    const LANCET: &str = "char_285_medic2";
+    const KROOS: &str = "char_124_kroos";
+    let roster: Vec<_> = [WEEDY, EUNECTES, LANCET, KROOS]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let weedy_eff = |eunectes_room: &str, lancet_room: &str| {
+        let mut rooms = vec![
+            room("cc", "CONTROL", 5),
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", 5),
+        ];
+        rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
+        rooms
+            .iter_mut()
+            .find(|r| r.slot_id == "mf")
+            .unwrap()
+            .current_operators
+            .push(WEEDY.into());
+        rooms
+            .iter_mut()
+            .find(|r| r.slot_id == "mf")
+            .unwrap()
+            .current_formula = Some("F_GOLD".into());
+        for (id, target) in [(EUNECTES, eunectes_room), (LANCET, lancet_room)] {
+            rooms
+                .iter_mut()
+                .find(|r| r.slot_id == target)
+                .unwrap()
+                .current_operators
+                .push(id.into());
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (weedy_eff("cc", "pp0") - 75.0).abs() < 1e-9,
+        "both seats met: 5 plants: {}",
+        weedy_eff("cc", "pp0")
+    );
+    assert!(
+        (weedy_eff("d0", "pp0") - 45.0).abs() < 1e-9,
+        "Eunectes resting: 3 plants: {}",
+        weedy_eff("d0", "pp0")
+    );
+    assert!(
+        (weedy_eff("cc", "d0") - 45.0).abs() < 1e-9,
+        "Lancet-2 resting: 3 plants: {}",
+        weedy_eff("cc", "d0")
+    );
+}
+
+/// Nasti's "for each Rhine Lab Operator in the Base (caps at 5), Precious
+/// Metal productivity +3%" counts herself: three Rhine Lab operators in the
+/// factory = +9, on top of the Rhine Tech skills (25 + 25 + 30) and Dorothy's
+/// three-skill count (15) = 104 (user-verified 106 with Wang's +2).
+#[test]
+fn nasti_counts_every_rhine_lab_operator_in_the_base_including_herself() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const NASTI: &str = "char_4212_nasti";
+    const DOROTHY: &str = "char_4048_doroth";
+    const SILENCE2: &str = "char_1031_slent2";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
+    rooms[0].current_operators = vec![NASTI.into(), DOROTHY.into(), SILENCE2.into()];
+    rooms[0].current_formula = Some("F_GOLD".into());
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [NASTI, DOROTHY, SILENCE2]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let eff = asn.rooms[0].total_efficiency;
+    assert!(
+        (eff - 104.0).abs() < 1e-9,
+        "80 + Dorothy 15 + Nasti 3 x 3: {eff}"
+    );
+}
+
+/// Justice Knight's "'Beep beep, activate!'" from a Power Plant seat boosts
+/// the Factory Wild Mane works in by +5%: her Pinus Sylvestris β 25 reads 30
+/// while he powers a plant, 25 while he rests.
+#[test]
+fn justice_knight_in_a_plant_boosts_wild_manes_factory() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const WILD_MANE: &str = "char_496_wildmn";
+    const JUSTICE_KNIGHT: &str = "char_4000_jnight";
+    let roster: Vec<_> = [WILD_MANE, JUSTICE_KNIGHT]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let eff = |knight_room: &str| {
+        let mut rooms = vec![
+            room("mf", "MANUFACTURE", 3),
+            room("pp", "POWER", 3),
+            room("d0", "DORMITORY", 5),
+        ];
+        rooms[0].current_operators = vec![WILD_MANE.into()];
+        rooms[0].current_formula = Some("F_EXP".into());
+        rooms
+            .iter_mut()
+            .find(|r| r.slot_id == knight_room)
+            .unwrap()
+            .current_operators
+            .push(JUSTICE_KNIGHT.into());
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff("pp") - 30.0).abs() < 1e-9,
+        "Justice Knight in the plant: {}",
+        eff("pp")
+    );
+    assert!(
+        (eff("d0") - 25.0).abs() < 1e-9,
+        "Justice Knight resting: {}",
+        eff("d0")
+    );
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
@@ -4432,6 +4809,7 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
             required_count,
             per_operator,
             bonus_pct,
+            ..
         }) => {
             assert_eq!(target_room, "TRADING");
             assert_eq!(faction_token, "glasgow");

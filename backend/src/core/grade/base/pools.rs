@@ -360,17 +360,22 @@ pub(crate) fn settle_current_pools(
     // the pool state as it stood at the round's start and applies all moves
     // together, so the result never depends on clause order. `ratio` is
     // from-points-per-to-point, floored like every stepped game counter.
+    // Converters COPY (base expert, 2026-09-08: every reader of a pool sees
+    // the whole of it - Jieyun's Witchcraft Crystals do not take Worldly
+    // Plight away from Shu or Mr. Nothing), each converter once, so a chain
+    // still settles over the rounds.
+    let mut done: HashSet<usize> = HashSet::new();
     for _ in 0..MAX_POOL_ROUNDS {
         let snapshot = points.clone();
         let mut moved = 0.0f64;
-        for (from, to, ratio) in &converts {
-            let available = snapshot.get(from).copied().unwrap_or(0.0);
-            if *ratio <= 0.0 {
+        for (ci, (from, to, ratio)) in converts.iter().enumerate() {
+            if done.contains(&ci) || *ratio <= 0.0 {
                 continue;
             }
+            let available = snapshot.get(from).copied().unwrap_or(0.0);
             let converted = (available / ratio).floor();
             if converted > 0.0 {
-                *points.entry(from.clone()).or_insert(0.0) -= converted * ratio;
+                done.insert(ci);
                 *points.entry(to.clone()).or_insert(0.0) += converted;
                 moved += converted;
             }
@@ -763,6 +768,57 @@ fn shared_pool_bundles(
     bundles
 }
 
+/// Facility-count modifiers as seat bundles: Eunectes' "+2 Power Plants"
+/// needs her in the Control Center and Lancet-2 in a Power Plant, Greyy's
+/// "+1" needs her plant seat. Offered only when the roster fields an
+/// automation scaler that reads the count (Weedy, Eunectes, Pudding); the
+/// oracle keeps the seats if the boosted count pays for them.
+fn facility_count_bundles(
+    profiles: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> Vec<EconomyPlan> {
+    use super::buff_registry::FacilityGate;
+    let owned: HashSet<&str> = profiles.iter().map(|p| p.char_id.as_str()).collect();
+    let has_scaler = profiles.iter().any(|p| {
+        p.available_buffs.iter().any(|b| {
+            matches!(
+                registry.get(b),
+                Some(BuffResolutionStrategy::FacilityCountScaling { .. })
+            )
+        })
+    });
+    if !has_scaler {
+        return Vec::new();
+    }
+    let mut bundles = Vec::new();
+    for op in profiles {
+        for buff_id in &op.available_buffs {
+            let Some(BuffResolutionStrategy::FacilityCountModifier {
+                owner_room, gate, ..
+            }) = registry.get(buff_id)
+            else {
+                continue;
+            };
+            let mut pins = vec![(op.char_id.clone(), owner_room.clone())];
+            match gate {
+                FacilityGate::NamedCharInRoom { char_id, room } => {
+                    if !owned.contains(char_id.as_str()) {
+                        continue;
+                    }
+                    pins.push((char_id.clone(), room.clone()));
+                }
+                FacilityGate::None | FacilityGate::NoRobotsInOtherRooms => {}
+            }
+            bundles.push(EconomyPlan {
+                overrides: Vec::new(),
+                pins,
+                globals: Vec::new(),
+            });
+        }
+    }
+    bundles
+}
+
 /// The co-feeder sets a shared pool offers the oracle: every non-empty
 /// subset while there are at most three co-feeders, else the full set and
 /// each singleton (bounded, and the two shapes that matter: everyone, or
@@ -813,6 +869,7 @@ pub fn candidate_bundles(
     registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> Vec<EconomyPlan> {
     let mut bundles = shared_pool_bundles(profiles, building, building_data, registry);
+    bundles.extend(facility_count_bundles(profiles, registry));
 
     // Robot displacement (Alanna's Operation Platforms): a consumer whose buff
     // scales with Robot-tagged operators seated in Power Plants. Pin the

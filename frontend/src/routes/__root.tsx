@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useSelector } from "@tanstack/react-store";
 import { lazy, Suspense, useEffect, useRef } from "react";
+import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
 import { AuthDialog } from "#/components/header/impl/AuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 import { getSessionFn } from "#/lib/auth/server";
@@ -56,6 +57,7 @@ function RootComponent() {
         <>
             <Outlet />
             <GlobalAuthDialog />
+            <ReleaseNoteDialog />
         </>
     );
 }

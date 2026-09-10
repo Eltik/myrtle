@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Cog, LayoutList, LogOut, ShieldIcon } from "lucide-react";
+import { ChevronDown, Cog, Heart, LayoutList, LogOut, ShieldIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
+import { GithubIcon } from "#/components/ui/github-icon";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Spinner } from "#/components/ui/spinner";
 import { isAnyAdminRole } from "#/lib/api/admin";
+import { REPO_URL } from "#/lib/constants";
 import { getAvatarSkinId } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { AuthDialog } from "./AuthDialog";
@@ -53,6 +55,20 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
                             Settings
                         </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer">
+                        <a href={REPO_URL} target="_blank" rel="noreferrer" className="flex flex-row items-center gap-2">
+                            <GithubIcon className="h-4 w-4 text-muted-foreground" />
+                            GitHub
+                        </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                        <Link to="/donate" target="_blank" className="flex flex-row items-center gap-2">
+                            <Heart className="h-4 w-4 text-muted-foreground" />
+                            Support
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     {isAnyAdminRole(user.role) ? (
                         <DropdownMenuItem className="cursor-pointer">
                             <Link to="/admin" className="flex flex-row items-center gap-2">

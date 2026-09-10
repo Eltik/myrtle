@@ -534,6 +534,18 @@ function staticCamOn(): boolean {
     return new URLSearchParams(window.location.search).get("statcam") === "1";
 }
 
+/** Whether the entrance (`_Start`) set is fetched IN PARALLEL with the idle set rather than after
+ *  it. On by default since 2026-09-10 (register "DELIVERY, FIFTH PASS"): the two builds share no
+ *  state (the entrance build reads nothing from the idle composite; `entranceOpts` carries only
+ *  the hand-off callback), and sequencing them put the idle skeleton, atlas, page, scene and
+ *  particles (7.3 MB on Kal'tsit) in front of the first correct frame, which on an entrance skin
+ *  is the entrance's. `?entrancefirst=0` restores the sequential order exactly. The `#n` spelling
+ *  retry and the hand-off are untouched in both orders. */
+function entranceFirstOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("entrancefirst") !== "0";
+}
+
 /** DIAGNOSTIC (`?statbox=<zoom>[,<dx>,<dy>]`): scale the {@link staticCamOn} framing box about its
  *  own centre by `zoom` and shift it by `dx,dy` box-space px. Inert unless `?statcam=1`.
  *
@@ -4931,22 +4943,80 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
         const load = async () => {
             try {
-                // Build the settled main L2D first (it determines the authored framing).
+                // The in-game L2D viewer PERFORMS the skin's `_Start` cinematic as its entrance
+                // (verified against game recordings: seated form → transform → dissolve, then the
+                // standing idle). Play it ONCE on open over the bright env-bg, then hand off to the
+                // standing idle + dolly. Probe by string-replacing the skel/atlas path; skins with
+                // no `_Start` fall straight through to the plain open. The hand-off is DEFERRED out
+                // of the entrance spine's `complete` listener (via doSwapRef) so freeing it can't
+                // corrupt the update it fired from.
+                const startSkel = skelPath.replace(/\.skel$/, "_Start.skel");
+                const startAtlas = atlasPath.replace(/\.atlas$/, "_Start.atlas");
+                // One exported skin names its entrance set with the skin suffix AFTER the marker,
+                // `dyn_illust_char_2023_ling_nian_Start#12`; when the plain `_Start` set is missing
+                // and the stem ends in `#<n>`, that spelling is tried second.
+                const suffixed = skelPath.match(/#\d+\.skel$/) ? [skelPath.replace(/(#\d+)\.skel$/, "_Start$1.skel"), atlasPath.replace(/(#\d+)\.atlas$/, "_Start$1.atlas")] : null;
+                // `?statcam=1` declines to build the entrance at all, so the fall-through below opens
+                // the standing idle STATIC at the settled frame - the game's own preview shot. Gating
+                // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
+                // the wire, so a statcam render is not perturbed by the entrance's assets at all.
+                // The entrance BUILDS AND PLAYS ON EVERY SURFACE. What differs by surface is where
+                // it ENDS, which `openStandingIdle` handles: a panel terminates at the contain box
+                // the non-entrance skins settle into, a viewer keeps the full-bleed authored frame.
+                //
+                // ⚠️ An earlier pass gated the BUILD here so a panel skipped the cinematic entirely.
+                // That framed the idle correctly by deleting the thing being framed. The cinematic
+                // is wanted on the surface people browse; only its terminus was wrong.
+                //
+                // `swapToMainIdle` is declared below, after the idle composite it closes over; the
+                // callback runs when the entrance ENDS, long after that declaration has executed.
+                const entranceOpts = {
+                    mode: "entrance" as const,
+                    onEntranceEnd: () => {
+                        doSwapRef.current = swapToMainIdle;
+                    },
+                };
+                // Start the entrance set's fetches NOW, before the idle set's, so the two chains
+                // overlap (see `entranceFirstOn`). The result is settled where it used to be built,
+                // after the idle composite is up, so everything downstream sees the same order of
+                // events. A rejection is held here and rethrown at that await, so one landing while
+                // the idle build is still running is not an unhandled one.
+                const entranceP =
+                    entranceFirstOn() && !staticCamOn()
+                        ? buildComposite(startSkel, startAtlas, entranceOpts).then(
+                              (value) => ({ value, error: null as unknown }),
+                              (error: unknown) => ({ value: null, error }),
+                          )
+                        : null;
+                // The idle composite is not built if this run is superseded before it finishes; the
+                // entrance build, already in flight, is dropped the same way.
+                const dropEntrance = () => {
+                    entranceP?.then((r) => {
+                        if (r.value && r.value !== "unsupported") r.value.destroy();
+                    });
+                };
+                // Build the settled main L2D (it determines the authored framing).
                 const main = await buildComposite(skelPath, atlasPath, { mode: "main" });
                 if (main === "unsupported") {
+                    dropEntrance();
                     if (!aborted()) {
                         setIsLoading(false);
                         setUnsupported(true);
                     }
                     return;
                 }
-                if (!main) return; // superseded/aborted during build
+                if (!main) {
+                    dropEntrance();
+                    return; // superseded/aborted during build
+                }
                 if (aborted()) {
+                    dropEntrance();
                     main.destroy();
                     return;
                 }
                 const app = appRef.current;
                 if (!app) {
+                    dropEntrance();
                     main.destroy();
                     return;
                 }
@@ -5663,19 +5733,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     }
                 };
 
-                // The in-game L2D viewer PERFORMS the skin's `_Start` cinematic as its entrance
-                // (verified against game recordings: seated form → transform → dissolve, then the
-                // standing idle). Play it ONCE on open over the bright env-bg, then hand off to the
-                // standing idle + dolly. Probe by string-replacing the skel/atlas path; skins with
-                // no `_Start` fall straight through to the plain open. The hand-off is DEFERRED out
-                // of the entrance spine's `complete` listener (via doSwapRef) so freeing it can't
-                // corrupt the update it fired from.
-                const startSkel = skelPath.replace(/\.skel$/, "_Start.skel");
-                const startAtlas = atlasPath.replace(/\.atlas$/, "_Start.atlas");
-                // One exported skin names its entrance set with the skin suffix AFTER the marker,
-                // `dyn_illust_char_2023_ling_nian_Start#12`; when the plain `_Start` set is missing
-                // and the stem ends in `#<n>`, that spelling is tried second.
-                const suffixed = skelPath.match(/#\d+\.skel$/) ? [skelPath.replace(/(#\d+)\.skel$/, "_Start$1.skel"), atlasPath.replace(/(#\d+)\.atlas$/, "_Start$1.atlas")] : null;
+                // The entrance probe paths (`startSkel`, `startAtlas`, `suffixed`) and its options
+                // are declared at the top of `load`, where its build is started.
                 const swapToMainIdle = () => {
                     // Page background at settle (see `pageBgOn`): the fill served the cinematic.
                     // On the panel the fill becomes the archive page instead (see `cardGroundOn`).
@@ -5742,24 +5801,16 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         if (i >= 0) composites.splice(i, 1);
                     }
                 };
-                // `?statcam=1` declines to build the entrance at all, so the fall-through below opens
-                // the standing idle STATIC at the settled frame - the game's own preview shot. Gating
-                // the BUILD (rather than the playback) also keeps the `_Start` skel/atlas/scene off
-                // the wire, so a statcam render is not perturbed by the entrance's assets at all.
-                // The entrance BUILDS AND PLAYS ON EVERY SURFACE. What differs by surface is where
-                // it ENDS, which `openStandingIdle` handles: a panel terminates at the contain box
-                // the non-entrance skins settle into, a viewer keeps the full-bleed authored frame.
-                //
-                // ⚠️ An earlier pass gated the BUILD here so a panel skipped the cinematic entirely.
-                // That framed the idle correctly by deleting the thing being framed. The cinematic
-                // is wanted on the surface people browse; only its terminus was wrong.
-                const entranceOpts = {
-                    mode: "entrance" as const,
-                    onEntranceEnd: () => {
-                        doSwapRef.current = swapToMainIdle;
-                    },
-                };
-                let entrance = staticCamOn() ? null : await buildComposite(startSkel, startAtlas, entranceOpts);
+                // Settle the entrance build started at the top of `load` (or, with the parallel
+                // fetch off, build it here as before).
+                let entrance: IComposite | "unsupported" | null;
+                if (entranceP) {
+                    const settled = await entranceP;
+                    if (settled.error != null) throw settled.error;
+                    entrance = settled.value;
+                } else {
+                    entrance = staticCamOn() ? null : await buildComposite(startSkel, startAtlas, entranceOpts);
+                }
                 if (entrance === null && suffixed && !staticCamOn() && !aborted()) entrance = await buildComposite(suffixed[0], suffixed[1], entranceOpts);
                 if (aborted()) {
                     if (entrance && entrance !== "unsupported") entrance.destroy();

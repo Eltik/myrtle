@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock, ExternalLink, GitBranch, ScrollText, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ReleaseNotesList } from "#/components/changelog/ReleaseNotesList";
 import { Kicker } from "#/components/ui/kicker";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { CHANGELOG_RANGES, type ChangelogRangeId, changelogQueryOptions, commitsWithinDays, type IChangelogCommit } from "#/lib/api/changelog";
@@ -9,6 +10,8 @@ import { formatRelative } from "#/lib/utils";
 import { ActivityStrip } from "./impl/ActivityStrip";
 import styles from "./impl/ChangelogPage.module.css";
 import { CommitItem } from "./impl/CommitItem";
+
+type ChangelogSurface = "notes" | "commits";
 
 interface ICommitGroup {
     key: string;
@@ -81,6 +84,8 @@ export function ChangelogPage() {
     const groups = useMemo(() => groupByDay(filtered), [filtered]);
     const contributors = useMemo(() => new Set(filtered.map((c) => c.author.login ?? c.author.name)).size, [filtered]);
 
+    const [surface, setSurface] = useState<ChangelogSurface>("notes");
+
     const repoLabel = data?.repo ?? "GitHub";
     const repoURL = data?.repoURL ?? "https://github.com";
 
@@ -112,60 +117,77 @@ export function ChangelogPage() {
                     </div>
                 </header>
 
-                {/* Summary + activity */}
-                <section className="mb-7 overflow-hidden rounded-2xl border border-border bg-card">
-                    <div className="grid grid-cols-3 divide-x divide-border max-[560px]:grid-cols-1 max-[560px]:divide-x-0 max-[560px]:divide-y">
-                        <StatCell icon={<ScrollText strokeWidth={1.8} />} label={`commits · ${range.label.toLowerCase()}`} value={isLoading ? "-" : counts[range.id]} />
-                        <StatCell icon={<Users strokeWidth={1.8} />} label={contributors === 1 ? "contributor" : "contributors"} value={isLoading ? "-" : contributors} />
-                        <StatCell icon={data?.branch ? <GitBranch strokeWidth={1.8} /> : <CalendarClock strokeWidth={1.8} />} label={data?.branch ? "branch" : "last synced"} value={<span className="font-sans text-[14px]">{data?.branch ? data.branch : data?.fetchedAt ? formatRelative(data.fetchedAt) : "-"}</span>} />
-                    </div>
-                    {range.days >= 7 && filtered.length > 0 ? (
-                        <div className="border-border border-t px-4 py-4 sm:px-5">
-                            <ActivityStrip commits={filtered} days={range.days} />
-                        </div>
-                    ) : null}
-                </section>
-
-                {/* Range tabs */}
-                <Tabs value={rangeId} onValueChange={(v) => setPicked(v as ChangelogRangeId)} className="mb-7">
-                    <TabsList className="w-full max-[560px]:overflow-x-auto">
-                        {CHANGELOG_RANGES.map((r) => (
-                            <TabsTab key={r.id} value={r.id} className="gap-1.5">
-                                <span className="max-[420px]:hidden">{r.label}</span>
-                                <span className="min-[421px]:hidden">{r.shortLabel}</span>
-                                <span className="rounded-full bg-muted-foreground/12 px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground tabular-nums leading-none">{isLoading ? "·" : counts[r.id]}</span>
-                            </TabsTab>
-                        ))}
+                {/* Surface tabs: curated notes vs the raw commit feed */}
+                <Tabs className="mb-7" onValueChange={(v) => setSurface(v as ChangelogSurface)} value={surface}>
+                    <TabsList variant="underline">
+                        <TabsTab value="notes">Release notes</TabsTab>
+                        <TabsTab value="commits">Commits</TabsTab>
                     </TabsList>
                 </Tabs>
 
-                {/* Timeline */}
-                {isLoading ? (
-                    <TimelineSkeleton />
-                ) : groups.length === 0 ? (
-                    <EmptyState rangeLabel={range.label} />
+                {surface === "notes" ? (
+                    <ReleaseNotesList />
                 ) : (
-                    <div className="flex flex-col gap-7">
-                        {groups.map((group) => (
-                            <section key={group.key}>
-                                <div className="mb-3.5 flex items-center gap-3">
-                                    <h2 className="m-0 font-sans font-semibold text-[14px] text-foreground leading-none tracking-[-0.01em]">{group.label}</h2>
-                                    <span className="font-sans text-[12px] text-muted-foreground leading-none">
-                                        {group.commits.length} commit{group.commits.length === 1 ? "" : "s"}
-                                    </span>
-                                    <span className="h-px flex-1 bg-border" aria-hidden="true" />
+                    <>
+                        {/* Summary + activity */}
+                        <section className="mb-7 overflow-hidden rounded-2xl border border-border bg-card">
+                            <div className="grid grid-cols-3 divide-x divide-border max-[560px]:grid-cols-1 max-[560px]:divide-x-0 max-[560px]:divide-y">
+                                <StatCell icon={<ScrollText strokeWidth={1.8} />} label={`commits · ${range.label.toLowerCase()}`} value={isLoading ? "-" : counts[range.id]} />
+                                <StatCell icon={<Users strokeWidth={1.8} />} label={contributors === 1 ? "contributor" : "contributors"} value={isLoading ? "-" : contributors} />
+                                <StatCell
+                                    icon={data?.branch ? <GitBranch strokeWidth={1.8} /> : <CalendarClock strokeWidth={1.8} />}
+                                    label={data?.branch ? "branch" : "last synced"}
+                                    value={<span className="font-sans text-[14px]">{data?.branch ? data.branch : data?.fetchedAt ? formatRelative(data.fetchedAt) : "-"}</span>}
+                                />
+                            </div>
+                            {range.days >= 7 && filtered.length > 0 ? (
+                                <div className="border-border border-t px-4 py-4 sm:px-5">
+                                    <ActivityStrip commits={filtered} days={range.days} />
                                 </div>
-                                <ul className="m-0 list-none p-0">
-                                    {group.commits.map((commit) => (
-                                        <CommitItem key={commit.sha} commit={commit} />
-                                    ))}
-                                </ul>
-                            </section>
-                        ))}
-                    </div>
-                )}
+                            ) : null}
+                        </section>
+                        {/* Range tabs */}
+                        <Tabs value={rangeId} onValueChange={(v) => setPicked(v as ChangelogRangeId)} className="mb-7">
+                            <TabsList className="w-full max-[560px]:overflow-x-auto">
+                                {CHANGELOG_RANGES.map((r) => (
+                                    <TabsTab key={r.id} value={r.id} className="gap-1.5">
+                                        <span className="max-[420px]:hidden">{r.label}</span>
+                                        <span className="min-[421px]:hidden">{r.shortLabel}</span>
+                                        <span className="rounded-full bg-muted-foreground/12 px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground tabular-nums leading-none">{isLoading ? "·" : counts[r.id]}</span>
+                                    </TabsTab>
+                                ))}
+                            </TabsList>
+                        </Tabs>
 
-                {data?.truncated && !isLoading ? <p className="mt-8 text-center font-sans text-[12.5px] text-muted-foreground">Older history is capped - see the full log on GitHub.</p> : null}
+                        {/* Timeline */}
+                        {isLoading ? (
+                            <TimelineSkeleton />
+                        ) : groups.length === 0 ? (
+                            <EmptyState rangeLabel={range.label} />
+                        ) : (
+                            <div className="flex flex-col gap-7">
+                                {groups.map((group) => (
+                                    <section key={group.key}>
+                                        <div className="mb-3.5 flex items-center gap-3">
+                                            <h2 className="m-0 font-sans font-semibold text-[14px] text-foreground leading-none tracking-[-0.01em]">{group.label}</h2>
+                                            <span className="font-sans text-[12px] text-muted-foreground leading-none">
+                                                {group.commits.length} commit{group.commits.length === 1 ? "" : "s"}
+                                            </span>
+                                            <span className="h-px flex-1 bg-border" aria-hidden="true" />
+                                        </div>
+                                        <ul className="m-0 list-none p-0">
+                                            {group.commits.map((commit) => (
+                                                <CommitItem key={commit.sha} commit={commit} />
+                                            ))}
+                                        </ul>
+                                    </section>
+                                ))}
+                            </div>
+                        )}
+
+                        {data?.truncated && !isLoading ? <p className="mt-8 text-center font-sans text-[12.5px] text-muted-foreground">Older history is capped - see the full log on GitHub.</p> : null}
+                    </>
+                )}
 
                 <div className="mt-10 border-border border-t pt-6 text-center">
                     <Link to="/stats" className="font-sans text-[13px] text-primary no-underline hover:underline">

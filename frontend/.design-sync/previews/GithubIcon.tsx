@@ -10,7 +10,7 @@ export const HeaderActions = () => (
             <span className="text-muted-foreground text-sm">Tools</span>
         </div>
         <div className="flex items-center gap-1">
-            <Button aria-label="Support myrtle.moe" size="icon" variant="ghost">
+            <Button aria-label="Support" size="icon" variant="ghost">
                 <Heart className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button aria-label="GitHub" size="icon" variant="ghost">

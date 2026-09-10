@@ -230,6 +230,26 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     {
                         c.value
                     }
+                    // Counted capacity (Astgenne's "+5 Storage Capacity for
+                    // each Rhine Tech-type skill in that Factory"): the count
+                    // is over skills/tags, never over capacity tiers, so no
+                    // capacity basis is needed here.
+                    ClauseKind::ScalingCount {
+                        subject,
+                        include_self,
+                    } => {
+                        let n = count_matches(
+                            subject,
+                            i,
+                            &members,
+                            &tags,
+                            &skill_tags,
+                            &[],
+                            *include_self,
+                        );
+                        let raw = n * c.value;
+                        c.cap.map_or(raw, |cap| raw.min(cap))
+                    }
                     _ => 0.0,
                 })
                 .sum()
@@ -538,12 +558,13 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             if !cond.per_operator || cond.target_room != ev.room_type {
                 continue;
             }
+            let amount = cond.bonus_for(ev.formula_type);
             for (i, m) in members.iter().enumerate() {
-                if m.match_tags.iter().any(|t| t == &cond.faction_token) {
+                if super::assignment::cc_token_matches(m, &cond.faction_token) {
                     entries.push(Entry {
                         entity: i,
                         metric: speed_metric.clone(),
-                        amount: cond.bonus_pct,
+                        amount,
                         source: Source::Granted,
                     });
                 }
@@ -629,7 +650,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .cc_conditions
         .iter()
         .filter(|c| !c.per_operator)
-        .map(|c| c.contribution(ev.room_type, &members))
+        .map(|c| c.contribution(ev.room_type, &members, ev.formula_type))
         .sum::<f64>();
 
     // Trading throughput is bounded by the order buffer: a slashed limit
@@ -914,6 +935,12 @@ pub fn op_capacity_limit(
                 chars,
                 scope: CondScope::Room,
             } if chars.iter().any(|req| present.contains(req)) => c.value,
+            // A counted capacity has no roster here: the holder's own match
+            // is the floor (Astgenne's own Rhine Tech skill), the ledger
+            // prices the rest.
+            ClauseKind::ScalingCount {
+                include_self: true, ..
+            } => c.value,
             _ => 0.0,
         })
         .sum()
