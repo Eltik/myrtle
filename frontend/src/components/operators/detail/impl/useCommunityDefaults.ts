@@ -105,16 +105,32 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
         const skills = operator.skills ?? [];
         const modules = operator.modules ?? [];
 
-        // -1 is the game's "this operator has no skills" sentinel. Reading it as
-        // an index would select the last skill via negative indexing, so it is
-        // excluded explicitly rather than by a falsy check, which would also
-        // have swallowed a legitimate 0 (S1).
-        const rawOwnSkill = own?.default_skill;
+        // The viewer's own default counts only once they have E2'd this
+        // operator, the same cohort the community aggregate uses.
+        //
+        // Below E2 the value is the game's placeholder, not a choice: 100.0% of
+        // E0 rows carry `default_skill = 0` (all 323,521 of them) because S1 is
+        // the only skill unlocked, and 65.0% of E1 rows do. Honouring it meant
+        // that for any operator the viewer owned but had not promoted, the
+        // Skills tab opened on S1 and the community statistic was discarded.
+        // Measured across owned-but-not-E2 rows, that value disagrees with the
+        // community modal 68.75% of the time, against 24.54% at E2.
+        //
+        // -1 is separately the game's "this operator has no skills" sentinel.
+        // Reading it as an index would select the last skill via negative
+        // indexing, so it is excluded explicitly rather than by a falsy check,
+        // which would also have swallowed a legitimate 0 (S1).
+        const rawOwnSkill = own?.elite === 2 ? own.default_skill : null;
         const ownSkillIndex = typeof rawOwnSkill === "number" && rawOwnSkill >= 0 && rawOwnSkill < skills.length ? rawOwnSkill : null;
 
         // A null current_equip and a `uniequip_001_*` id both mean "no module
         // chosen" - 72.75% and 13.62% of roster rows respectively. Only a module
         // this operator actually has counts.
+        //
+        // No elite gate here, unlike the skill above: a module cannot be
+        // equipped before E2, and the data agrees with the rule. Zero of the
+        // 448,046 rows below E2 name an ADVANCED module, so the filter already
+        // implies the cohort and an explicit check could never fire.
         const rawOwnModule = own?.current_equip ?? null;
         const ownModuleId = rawOwnModule && !rawOwnModule.startsWith("uniequip_001") && modules.some((m) => m.uniEquipId === rawOwnModule) ? rawOwnModule : null;
 
