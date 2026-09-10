@@ -159,7 +159,122 @@ pub fn write_png(path: &Path, rgba: &[u8], w: u32, h: u32) -> Result<(), io::Err
 /// Save a decoded texture to disk as PNG.
 pub fn save_decoded_texture(tex: &DecodedTexture, output_dir: &Path) -> Result<(), io::Error> {
     let path = output_dir.join(format!("{}.png", tex.name));
+    if output_case_insensitive(output_dir) && !claim_texture_path(&path, tex) {
+        return Ok(());
+    }
     write_png(&path, &tex.rgba, tex.width, tex.height)
+}
+
+/// Content hash and byte count of the RGBA kept at a folded path, and the texture's name.
+type ClaimedTex = (u64, usize, String);
+/// Every texture path written this run, keyed by the CASE-FOLDED path, so two textures whose
+/// names differ only in case are detected on a filesystem that folds them onto one file.
+static CLAIMED_TEX: std::sync::LazyLock<std::sync::Mutex<HashMap<String, ClaimedTex>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+static TEX_COLLISION_REPORT: std::sync::LazyLock<std::sync::Mutex<Vec<String>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(Vec::new()));
+static OUTPUT_CASE_INSENSITIVE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+
+/// Whether the output filesystem folds letter case, probed once on the first texture
+/// directory written (every texture lands on the one output volume). On a case-sensitive
+/// filesystem (the Linux VPS) two textures named `BG` and `bg` are two files and nothing
+/// here runs; on the default macOS volume they are one file, and which of the two survives
+/// was the write order of a parallel walk (the determinism instrument's first nonzero read,
+/// 2026-09-10: `[uc]multiv3` and `[uc]recalrune` each ship a distinct `BG` and `bg`).
+fn output_case_insensitive(dir: &Path) -> bool {
+    *OUTPUT_CASE_INSENSITIVE.get_or_init(|| {
+        let pid = std::process::id();
+        let probe = dir.join(format!(".case-probe-{pid}"));
+        if std::fs::write(&probe, b"").is_err() {
+            return false;
+        }
+        let folded = std::fs::metadata(dir.join(format!(".CASE-PROBE-{pid}"))).is_ok();
+        let _ = std::fs::remove_file(&probe);
+        folded
+    })
+}
+
+/// Claim `path` for `tex` on a case-folding filesystem. Returns whether to write.
+///
+/// Two textures folding onto one path is upstream's naming, and the export cannot keep
+/// both without renaming one, which would break the game's own case-sensitive address. So
+/// exactly one survives, and the choice is made by the CONTENT rather than by which thread
+/// arrived first: the larger RGBA wins, a size tie falls to the byte-smaller name (`BG`
+/// before `bg`), a trade for reproducibility rather than a judgement of the art. The loser
+/// is reported (`texture_collision_report`) and the winner's own name casing is what lands
+/// on disk: the incumbent file is removed before the winner is written, because a folding
+/// filesystem keeps the FIRST creator's spelling on an overwrite.
+fn claim_texture_path(path: &Path, tex: &DecodedTexture) -> bool {
+    let key = path.to_string_lossy().to_lowercase();
+    let hash = fnv1a64(&tex.rgba);
+    let mut claimed = CLAIMED_TEX
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    match claimed.get(&key) {
+        None => {
+            claimed.insert(key, (hash, tex.rgba.len(), tex.name.clone()));
+            true
+        }
+        Some((h, len, _)) if *h == hash && *len == tex.rgba.len() => true,
+        Some((_, kept_len, kept_name)) => {
+            let (kept_len, kept_name) = (*kept_len, kept_name.clone());
+            let we_win = match tex.rgba.len().cmp(&kept_len) {
+                std::cmp::Ordering::Greater => true,
+                std::cmp::Ordering::Less => false,
+                std::cmp::Ordering::Equal => tex.name.as_str() < kept_name.as_str(),
+            };
+            let (winner, wlen, loser, llen) = if we_win {
+                (
+                    tex.name.as_str(),
+                    tex.rgba.len(),
+                    kept_name.as_str(),
+                    kept_len,
+                )
+            } else {
+                (
+                    kept_name.as_str(),
+                    kept_len,
+                    tex.name.as_str(),
+                    tex.rgba.len(),
+                )
+            };
+            TEX_COLLISION_REPORT
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push(format!(
+                    "{}: the output filesystem folds `{loser}` onto `{winner}`; kept {winner} ({wlen} RGBA bytes), dropped {loser} ({llen})",
+                    path.display()
+                ));
+            if we_win {
+                if let Some(parent) = path.parent() {
+                    let _ = std::fs::remove_file(parent.join(format!("{kept_name}.png")));
+                }
+                claimed.insert(key, (hash, tex.rgba.len(), tex.name.clone()));
+            }
+            we_win
+        }
+    }
+}
+
+/// One line per texture whose name the output filesystem folded onto another's, sorted.
+#[must_use]
+pub fn texture_collision_report() -> Vec<String> {
+    let mut lines = TEX_COLLISION_REPORT
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    lines.sort_unstable();
+    lines
+}
+
+/// FNV-1a over the decoded pixels, the same identity the skeleton claim uses.
+fn fnv1a64(bytes: &[u8]) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for &b in bytes {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x0100_0000_01b3);
+    }
+    h
 }
 
 /// Decode and save a `Texture2D` object as PNG (convenience wrapper).

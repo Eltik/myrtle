@@ -255,6 +255,19 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             println!("  {line}");
         }
     }
+    let folded = export::texture::texture_collision_report();
+    if !folded.is_empty() {
+        // Two textures whose names differ only in case, on a filesystem that folds case: one
+        // survives (the larger, then the byte-smaller name) and the other is named here. A
+        // case-sensitive filesystem writes both and never reaches this.
+        println!(
+            "{} texture(s) dropped because the output filesystem folds their names onto another's",
+            folded.len()
+        );
+        for line in folded {
+            println!("  {line}");
+        }
+    }
     let collisions = spine::collision_count();
     if collisions > 0 {
         // Two assets resolved to one skeleton path with different bytes. The winner is the

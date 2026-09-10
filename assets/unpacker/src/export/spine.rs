@@ -5697,6 +5697,20 @@ fn claim_output_path(path: &Path, bytes: &[u8], source: &str) -> OutputClaim {
     }
 }
 
+/// One lock per skeleton output path, held from the claim to the asset's last file write.
+static PATH_LOCKS: std::sync::LazyLock<
+    std::sync::Mutex<HashMap<std::path::PathBuf, std::sync::Arc<std::sync::Mutex<()>>>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+
+fn asset_path_lock(path: &Path) -> std::sync::Arc<std::sync::Mutex<()>> {
+    PATH_LOCKS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .entry(path.to_path_buf())
+        .or_default()
+        .clone()
+}
+
 /// One line per collision, naming the path, the source kept and the source dropped.
 #[must_use]
 pub fn collision_report() -> Vec<String> {
@@ -5751,6 +5765,17 @@ pub fn export_spine_assets(
         // awarded by source order (see `claim_output_path`) and the loser is reported rather
         // than deciding the tree by which rayon thread arrived first.
         let skel_path = spine_dir.join(format!("{}.skel", asset.name));
+        // The claim below is decided at the skeleton, but the asset's atlas and pages are
+        // written seconds later (the pages are decoded first), so a bundle that claimed the
+        // path as New can still be writing its page when a later bundle WINS the path and
+        // writes its own: whichever page lands last is the one served, and the determinism
+        // instrument read Sora's `char_101_sora.png` at two sizes across two runs with the
+        // skeleton and atlas identical (2026-09-10). Hold the path for the whole asset, so a
+        // later winner waits for the incumbent's last file and then replaces every file.
+        let path_lock = asset_path_lock(&skel_path);
+        let _held = path_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let claim = claim_output_path(&skel_path, &asset.skel_data, source);
         // A `Won` claim replaces files a losing asset already wrote and already counted.
         // Counting them again makes the run's "Exported N" wobble by the size of the file
