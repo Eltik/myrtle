@@ -2,6 +2,7 @@ import { ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import type { IChibiSpineFiles } from "#/lib/api/chibis";
 import type { ISpineFit } from "../chibi/helpers";
+import type { ISceneIllustHandle } from "./SceneIllust";
 
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
@@ -15,6 +16,7 @@ interface ISceneIllustProps {
      *  lazy wrapper does not pull the renderer into the SSR bundle; both must be edited together. */
     surface?: "viewer" | "panel";
     onReady?: () => void;
+    onHandle?: (handle: ISceneIllustHandle | null) => void;
 }
 
 const LazySceneIllust = lazy(() => import("./SceneIllust").then((m) => ({ default: m.SceneIllust })));

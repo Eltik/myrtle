@@ -1,7 +1,7 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Download, FileText, Maximize2, MessageCircle, Palette, RotateCcw, Sparkles, ZoomIn, ZoomOut } from "lucide-react";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { Calendar, Download, FileText, Maximize2, MessageCircle, Palette, RotateCcw, Sparkles, Square, Video, ZoomIn, ZoomOut } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -9,10 +9,11 @@ import { useTheme } from "#/hooks/use-theme";
 import { chibiByOperatorQueryOptions, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
 import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
 import { values } from "#/lib/records";
-import { cn } from "#/lib/utils";
+import { cn, downloadBlob } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
+import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
 import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
 
 interface ISkinsContentProps {
@@ -257,6 +258,12 @@ interface ITransform {
 }
 
 const INITIAL_TRANSFORM: ITransform = { zoom: 1, pan: { x: 0, y: 0 } };
+/** How long the fullscreen viewer records the animation for one download. */
+const RECORD_SECONDS = 10;
+/** A pointer that travels further than this between down and up was a pan, not a tap. */
+const TAP_SLOP_PX = 4;
+/** Containers the browser can record; the first supported one names the file's extension. */
+const RECORD_MIME_TYPES = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
 
 const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
 
@@ -266,6 +273,12 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const panStartRef = useRef({ x: 0, y: 0 });
     const panOffsetRef = useRef({ x: 0, y: 0 });
     const wheelCleanupRef = useRef<(() => void) | null>(null);
+    /** Set once a pointer has moved past the tap slop, so the click that ends a pan does not
+     *  reach the L2D's tap handler. */
+    const movedRef = useRef(false);
+    const [handle, setHandle] = useState<ISceneIllustHandle | null>(null);
+    const [recordingLeft, setRecordingLeft] = useState<number | null>(null);
+    const recorderRef = useRef<MediaRecorder | null>(null);
 
     const reset = useCallback(() => setTransform(INITIAL_TRANSFORM), []);
 
@@ -307,6 +320,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
         (e: React.PointerEvent) => {
             e.preventDefault();
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            movedRef.current = false;
             setIsPanning(true);
             panStartRef.current = { x: e.clientX, y: e.clientY };
             panOffsetRef.current = { x: transform.pan.x, y: transform.pan.y };
@@ -319,6 +333,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             if (!isPanning) return;
             const dx = e.clientX - panStartRef.current.x;
             const dy = e.clientY - panStartRef.current.y;
+            if (Math.hypot(dx, dy) > TAP_SLOP_PX) movedRef.current = true;
             setTransform((prev) => ({
                 ...prev,
                 pan: { x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy },
@@ -328,6 +343,12 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     );
 
     const onPointerUp = useCallback(() => setIsPanning(false), []);
+    /** A pan ends with a click on whatever the pointer was captured on; swallow it. */
+    const onClickCapture = useCallback((e: React.MouseEvent) => {
+        if (!movedRef.current) return;
+        e.stopPropagation();
+        e.preventDefault();
+    }, []);
     const onDoubleClick = useCallback(() => {
         setTransform((prev) => (prev.zoom === 1 ? { ...prev, zoom: 2 } : INITIAL_TRANSFORM));
     }, []);
@@ -349,11 +370,52 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
         }
     }, [imageSrc, skinName]);
 
+    // Recording: the live WebGL canvas is captured as a media stream for RECORD_SECONDS (or
+    // until the button is pressed again) and saved in the first container the browser can
+    // encode. What is recorded is exactly what is on screen, entrance, particles and all.
+    const stopRecording = useCallback(() => {
+        recorderRef.current?.stop();
+    }, []);
+    const startRecording = useCallback(() => {
+        const canvas = handle?.canvas;
+        if (!canvas || recorderRef.current || typeof MediaRecorder === "undefined") return;
+        const mimeType = RECORD_MIME_TYPES.find((m) => MediaRecorder.isTypeSupported(m));
+        if (!mimeType) return;
+        const stream = canvas.captureStream(60);
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+        };
+        recorder.onstop = () => {
+            recorderRef.current = null;
+            setRecordingLeft(null);
+            for (const track of stream.getTracks()) track.stop();
+            const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+            downloadBlob(new Blob(chunks, { type: mimeType }), `${skinName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.${ext}`);
+        };
+        recorderRef.current = recorder;
+        recorder.start(250);
+        setRecordingLeft(RECORD_SECONDS);
+    }, [handle, skinName]);
+    useEffect(() => {
+        if (recordingLeft == null) return;
+        if (recordingLeft <= 0) {
+            stopRecording();
+            return;
+        }
+        const t = setTimeout(() => setRecordingLeft((n) => (n == null ? null : n - 1)), 1000);
+        return () => clearTimeout(t);
+    }, [recordingLeft, stopRecording]);
+
     const onOpenChange = useCallback(
         (open: boolean) => {
-            if (!open) reset();
+            if (!open) {
+                reset();
+                stopRecording();
+            }
         },
-        [reset],
+        [reset, stopRecording],
     );
 
     return (
@@ -363,45 +425,72 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    {!dynamic && (
+                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
+                        <ZoomOut className="h-4 w-4" />
+                    </ToolButton>
+                    <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
+                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
+                        <ZoomIn className="h-4 w-4" />
+                    </ToolButton>
+                    <div className="mx-1 h-4 w-px bg-border" />
+                    <ToolButton onClick={reset} label="Reset view">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                    </ToolButton>
+                    {dynamic ? (
                         <>
-                            <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
-                                <ZoomOut className="h-4 w-4" />
-                            </ToolButton>
-                            <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
-                            <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
-                                <ZoomIn className="h-4 w-4" />
-                            </ToolButton>
                             <div className="mx-1 h-4 w-px bg-border" />
-                            <ToolButton onClick={reset} label="Reset view">
-                                <RotateCcw className="h-3.5 w-3.5" />
+                            <ToolButton onClick={() => void handle?.interact()} disabled={!handle} label="Play the interact animation">
+                                <Sparkles className="h-3.5 w-3.5" />
+                            </ToolButton>
+                            <ToolButton onClick={recordingLeft == null ? startRecording : stopRecording} disabled={!handle} label={recordingLeft == null ? `Record ${RECORD_SECONDS} s of the animation` : `Stop recording (${recordingLeft} s left)`}>
+                                {recordingLeft == null ? (
+                                    <Video className="h-3.5 w-3.5" />
+                                ) : (
+                                    <span className="flex items-center gap-1 font-mono text-xs">
+                                        <Square className="h-3 w-3 fill-current text-red-500" />
+                                        {recordingLeft}
+                                    </span>
+                                )}
                             </ToolButton>
                         </>
+                    ) : (
+                        <ToolButton onClick={onDownload} label="Download">
+                            <Download className="h-3.5 w-3.5" />
+                        </ToolButton>
                     )}
-                    <ToolButton onClick={onDownload} label="Download">
-                        <Download className="h-3.5 w-3.5" />
-                    </ToolButton>
                 </div>
 
-                {dynamic ? (
-                    // Fullscreen L2D with the game's authored (`_adjustes`) framing -
-                    // the large, roughly-square viewport where the full-scene
-                    // composition looks right (unlike the narrow card).
-                    <div className="relative h-full w-full overflow-hidden">
-                        <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" backdrop={imageSrc} />
-                    </div>
-                ) : (
-                    <div ref={setContainerRef} role="application" className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
-                        <div
-                            className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
-                            style={{
-                                transform: `scale(${BASE_SCALE * transform.zoom}) translate(${transform.pan.x / (BASE_SCALE * transform.zoom)}px, ${transform.pan.y / (BASE_SCALE * transform.zoom)}px)`,
-                            }}
-                        >
+                {/* One pan-and-zoom surface for both the static art and the L2D. The L2D keeps its
+                    own canvas size (a CSS transform does not change the host's client box) and its
+                    tap handler: a click that ends a pan is swallowed by `onClickCapture`. The static
+                    art alone carries BASE_SCALE, which makes the contained image fill the dialog. */}
+                <div
+                    ref={setContainerRef}
+                    role="application"
+                    className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")}
+                    onDoubleClick={onDoubleClick}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                    onClickCapture={onClickCapture}
+                >
+                    <div
+                        className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
+                        style={{
+                            transform: `scale(${(dynamic ? 1 : BASE_SCALE) * transform.zoom}) translate(${transform.pan.x / ((dynamic ? 1 : BASE_SCALE) * transform.zoom)}px, ${transform.pan.y / ((dynamic ? 1 : BASE_SCALE) * transform.zoom)}px)`,
+                        }}
+                    >
+                        {dynamic ? (
+                            // Fullscreen L2D with the game's authored (`_adjustes`) framing -
+                            // the large, roughly-square viewport where the full-scene
+                            // composition looks right (unlike the narrow card).
+                            <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" backdrop={imageSrc} onHandle={setHandle} />
+                        ) : (
                             <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />
-                        </div>
+                        )}
                     </div>
-                )}
+                </div>
             </DialogContent>
         </Dialog>
     );

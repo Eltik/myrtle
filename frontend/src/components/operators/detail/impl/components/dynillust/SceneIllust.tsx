@@ -34,6 +34,16 @@ interface AttachmentLike {
     computeWorldVertices?: (slot: never, start: number, count: number, out: Float32Array, offset: number, stride: number) => void;
 }
 
+/** What a host can drive once the renderer is up: the live canvas (for a recording) and the
+ *  tap response. Handed out through `onHandle` after the PIXI app mounts, withdrawn (null)
+ *  when the effect cleans up. */
+export interface ISceneIllustHandle {
+    canvas: HTMLCanvasElement;
+    /** Play the tap response on the settled main composite: the one-shot "Interact" clip, or
+     *  the next "Special" when the rig has no Interact. False when nothing can play yet. */
+    interact: () => boolean;
+}
+
 interface ISceneIllustProps {
     files: IChibiSpineFiles;
     server?: "en" | "cn";
@@ -78,6 +88,8 @@ interface ISceneIllustProps {
      */
     surface?: "viewer" | "panel";
     onReady?: () => void;
+    /** Receives the live handle once the renderer mounts and null when it unmounts. */
+    onHandle?: (handle: ISceneIllustHandle | null) => void;
 }
 
 const IDLE_ANIMATION = "Idle";
@@ -1743,7 +1755,7 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
     }
 }
 
-export function SceneIllust({ files, server, fit, framing = "character", backdrop, surface = "viewer", onReady }: ISceneIllustProps) {
+export function SceneIllust({ files, server, fit, framing = "character", backdrop, surface = "viewer", onReady, onHandle }: ISceneIllustProps) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const boundsRef = useRef<IAnimationBounds | null>(null);
@@ -1915,6 +1927,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
     const loadIdRef = useRef(0);
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
+    const onHandleRef = useRef(onHandle);
+    onHandleRef.current = onHandle;
     // "authored" (the in-game viewer) scales the crop to the container HEIGHT - the character
     // fills a constant fraction of the frame height on ANY container aspect (tall mobile card,
     // wide desktop card, fullscreen dialog), and the excess/short width shows more/less scene.
@@ -2082,6 +2096,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         }
         appRef.current = app;
         container.appendChild(app.view as HTMLCanvasElement);
+        onHandleRef.current?.({
+            canvas: app.view as HTMLCanvasElement,
+            interact: () => compositesRef.current.find((x) => x.spine === spineRef.current)?.interact() ?? false,
+        });
 
         let lastTick = performance.now();
         let sceneClock = 0;
@@ -2931,12 +2949,18 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             // clip when the character is touched, then returns to the idle. Ian's SilverAsh Alter
             // clip showed it at 26..29 s, the raised-sword slash our card never reached. Plays on
             // the settled main composite only; the entrance and a rig without the clip ignore it.
+            // A rig with no "Interact" answers a tap with its next "Special" instead (the clips the
+            // idle interleaves on its own schedule), so every dynamic skin has a tap response.
+            let tapSpecial = 0;
             const interact = (): boolean => {
-                if (opts.mode === "entrance" || !animations.includes("Interact")) return false;
+                if (opts.mode === "entrance") return false;
+                const clip = animations.includes("Interact") ? "Interact" : specials[tapSpecial % Math.max(1, specials.length)];
+                if (!clip) return false;
                 const state = spine.state;
                 const cur = (state.tracks?.[0] as unknown as { animation?: { name?: string } } | undefined)?.animation?.name;
-                if (cur === "Interact") return true;
-                state.setAnimation(0, "Interact", false);
+                if (cur === clip) return true;
+                if (clip !== "Interact") tapSpecial++;
+                state.setAnimation(0, clip, false);
                 state.addAnimation(0, settleClip, true, 0);
                 return true;
             };
@@ -6085,6 +6109,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
         return () => {
             mountedRef.current = false;
+            onHandleRef.current?.(null);
             resizeObserver.disconnect();
             cleanup();
         };
