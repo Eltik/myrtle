@@ -81,6 +81,15 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     // simply keep their static illustration (the player errors out quietly).
     const showDynamic = dynamicArtwork && !!dynamicFiles;
     const dynamicReady = !!dynSkel && readySkel === dynSkel;
+    // While the fullscreen viewer is open its renderer is the only one running: the card's
+    // player is unmounted underneath it (two scene renderers at once, one of them at the
+    // dialog's size, is what heated the machine), and the card's static art shows again
+    // until the remounted player reports ready.
+    const [fullscreenOpen, setFullscreenOpen] = useState(false);
+    const onFullscreenChange = useCallback((open: boolean) => {
+        setFullscreenOpen(open);
+        if (open) setReadySkel(null);
+    }, []);
 
     if (skinsLoading)
         return (
@@ -117,10 +126,10 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 animation is ready; the L2D then draws the same art as its backdrop
                                 (aligned behind the spine) so the full painted vista fills in even
                                 when the dynamic asset omits it (sky/interior). */}
-                            <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
-                            {showDynamic && dynamicFiles && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
+                            <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && !fullscreenOpen && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
+                            {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
-                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null}>
+                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null} onOpenChange={onFullscreenChange}>
                                 <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
@@ -243,7 +252,18 @@ interface ISkinViewerDialogProps {
     /** When set, the fullscreen viewer plays the animated L2D (authored framing)
      * instead of the static zoom/pan image. */
     dynamic?: { files: IChibiSpineFiles; server?: "en" | "cn" } | null;
+    /** Told when the dialog opens and closes, so the host can pause what sits beneath it. */
+    onOpenChange?: (open: boolean) => void;
     children: React.ReactNode;
+}
+
+/** Keep the view inside the zoomed content: the pan may travel only as far as the scaled box
+ *  overflows the container, so the box's edge (and the black beneath it) never comes into
+ *  view. At 100 percent there is nothing outside the container and the pan is zero. */
+function clampPan(pan: { x: number; y: number }, scale: number, width: number, height: number): { x: number; y: number } {
+    const lx = Math.max(0, ((scale - 1) * width) / 2);
+    const ly = Math.max(0, ((scale - 1) * height) / 2);
+    return { x: Math.min(Math.max(pan.x, -lx), lx), y: Math.min(Math.max(pan.y, -ly), ly) };
 }
 
 const MIN_ZOOM = 0.5;
@@ -267,8 +287,20 @@ const RECORD_MIME_TYPES = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;cod
 
 const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
 
-export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, children }: ISkinViewerDialogProps) {
+export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, onOpenChange: onOpenChangeProp, children }: ISkinViewerDialogProps) {
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
+    const containerElRef = useRef<HTMLDivElement | null>(null);
+    /** The static art alone carries BASE_SCALE, which makes the contained image fill the dialog. */
+    const baseScale = dynamic ? 1 : BASE_SCALE;
+    const baseScaleRef = useRef(baseScale);
+    baseScaleRef.current = baseScale;
+    /** The transform with its pan clamped to the container the content is shown in. */
+    const clamped = useCallback((t: ITransform): ITransform => {
+        const el = containerElRef.current;
+        if (!el) return t;
+        const pan = clampPan(t.pan, baseScaleRef.current * t.zoom, el.clientWidth, el.clientHeight);
+        return pan.x === t.pan.x && pan.y === t.pan.y ? t : { ...t, pan };
+    }, []);
     const [isPanning, setIsPanning] = useState(false);
     const panStartRef = useRef({ x: 0, y: 0 });
     const panOffsetRef = useRef({ x: 0, y: 0 });
@@ -282,39 +314,46 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
 
     const reset = useCallback(() => setTransform(INITIAL_TRANSFORM), []);
 
-    const zoomBy = useCallback((delta: number) => {
-        setTransform((prev) => {
-            const next = clampZoom(prev.zoom + delta);
-            return next === prev.zoom ? prev : { ...prev, zoom: next };
-        });
-    }, []);
-
-    const setContainerRef = useCallback((el: HTMLDivElement | null) => {
-        wheelCleanupRef.current?.();
-        wheelCleanupRef.current = null;
-        if (!el) return;
-        const onWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            const rect = el.getBoundingClientRect();
-            const fx = e.clientX - rect.left - rect.width / 2;
-            const fy = e.clientY - rect.top - rect.height / 2;
-            const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+    const zoomBy = useCallback(
+        (delta: number) => {
             setTransform((prev) => {
-                const nextZoom = clampZoom(prev.zoom * factor);
-                if (nextZoom === prev.zoom) return prev;
-                const ratio = nextZoom / prev.zoom;
-                return {
-                    zoom: nextZoom,
-                    pan: {
-                        x: fx + (prev.pan.x - fx) * ratio,
-                        y: fy + (prev.pan.y - fy) * ratio,
-                    },
-                };
+                const next = clampZoom(prev.zoom + delta);
+                return next === prev.zoom ? prev : clamped({ ...prev, zoom: next });
             });
-        };
-        el.addEventListener("wheel", onWheel, { passive: false });
-        wheelCleanupRef.current = () => el.removeEventListener("wheel", onWheel);
-    }, []);
+        },
+        [clamped],
+    );
+
+    const setContainerRef = useCallback(
+        (el: HTMLDivElement | null) => {
+            wheelCleanupRef.current?.();
+            wheelCleanupRef.current = null;
+            containerElRef.current = el;
+            if (!el) return;
+            const onWheel = (e: WheelEvent) => {
+                e.preventDefault();
+                const rect = el.getBoundingClientRect();
+                const fx = e.clientX - rect.left - rect.width / 2;
+                const fy = e.clientY - rect.top - rect.height / 2;
+                const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+                setTransform((prev) => {
+                    const nextZoom = clampZoom(prev.zoom * factor);
+                    if (nextZoom === prev.zoom) return prev;
+                    const ratio = nextZoom / prev.zoom;
+                    return clamped({
+                        zoom: nextZoom,
+                        pan: {
+                            x: fx + (prev.pan.x - fx) * ratio,
+                            y: fy + (prev.pan.y - fy) * ratio,
+                        },
+                    });
+                });
+            };
+            el.addEventListener("wheel", onWheel, { passive: false });
+            wheelCleanupRef.current = () => el.removeEventListener("wheel", onWheel);
+        },
+        [clamped],
+    );
 
     const onPointerDown = useCallback(
         (e: React.PointerEvent) => {
@@ -334,12 +373,14 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             const dx = e.clientX - panStartRef.current.x;
             const dy = e.clientY - panStartRef.current.y;
             if (Math.hypot(dx, dy) > TAP_SLOP_PX) movedRef.current = true;
-            setTransform((prev) => ({
-                ...prev,
-                pan: { x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy },
-            }));
+            setTransform((prev) =>
+                clamped({
+                    ...prev,
+                    pan: { x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy },
+                }),
+            );
         },
-        [isPanning],
+        [isPanning, clamped],
     );
 
     const onPointerUp = useCallback(() => setIsPanning(false), []);
@@ -414,8 +455,9 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 reset();
                 stopRecording();
             }
+            onOpenChangeProp?.(open);
         },
-        [reset, stopRecording],
+        [reset, stopRecording, onOpenChangeProp],
     );
 
     return (
@@ -478,7 +520,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     <div
                         className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
                         style={{
-                            transform: `scale(${(dynamic ? 1 : BASE_SCALE) * transform.zoom}) translate(${transform.pan.x / ((dynamic ? 1 : BASE_SCALE) * transform.zoom)}px, ${transform.pan.y / ((dynamic ? 1 : BASE_SCALE) * transform.zoom)}px)`,
+                            transform: `scale(${baseScale * transform.zoom}) translate(${transform.pan.x / (baseScale * transform.zoom)}px, ${transform.pan.y / (baseScale * transform.zoom)}px)`,
                         }}
                     >
                         {dynamic ? (
