@@ -47,6 +47,10 @@ path = "src/bin/export_gacha.rs"
 name = "set-session"
 path = "src/bin/set_session.rs"
 
+[[bin]]
+name = "user-data"
+path = "src/bin/user_data.rs"
+
 # jemalloc: glibc malloc retains freed memory across tokio's many per-thread arenas,
 # so transient load spikes (daily regrade, cache-miss recomputes, login parsing) leave
 # the server's RSS permanently inflated to 1-2GB. jemalloc fragments far less and returns

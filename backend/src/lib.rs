@@ -52,4 +52,5 @@ pub mod core;
 pub mod database;
 pub mod db_export;
 pub mod dps;
+pub mod user_export;
 pub mod utils;
